@@ -1,0 +1,54 @@
+Here's a file listing of backups from aus2-staging.m.o as of Dec 12 2010.
+
+-rw-r--r-- 1 cltbld users  4708856 Dec 12 02:27 20101212-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  4708856 Dec 11 02:27 20101211-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  4729253 Dec 10 02:32 20101210-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users   136407 Dec  9 17:35 20101209-6-pre-20101203-Firefox-3.5.16-3.6.13-MU-beta.tar.gz
+-rw-r--r-- 1 cltbld users   125684 Dec  9 15:20 20101209-5-pre-20101203-Firefox-3.5.16-3.6.13-MU-beta.tar.gz
+-rw-r--r-- 1 cltbld users   114906 Dec  9 12:32 20101209-4-pre-20101203-Firefox-3.5.16-3.6.13-MU.tar.gz
+-rw-r--r-- 1 cltbld users    71228 Dec  9 09:02 20101209-3-pre-20101208-Firefox-3.0.19-3.6.13-MU.tar.gz
+-rw-r--r-- 1 cltbld users  2028395 Dec  9 08:39 20101209-2-pre-20101203-Firefox-3.6.13.tar.gz
+-rw-r--r-- 1 cltbld users  2051358 Dec  9 08:11 20101209-1-pre-20101130-Firefox-3.5.16.tar.gz
+-rw-r--r-- 1 cltbld users  5594645 Dec  9 01:58 20101209-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users    53313 Dec  8 06:25 20101208-1-pre-20101208-Firefox-3.0.19-3.6.13-MU-test.tar.gz
+-rw-r--r-- 1 cltbld users  5575319 Dec  8 02:01 20101208-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  5575319 Dec  7 01:48 20101207-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  2553565 Dec  6 07:08 20101206-1-pre-20101203-Firefox-3.6.13-beta.tar.gz
+-rw-r--r-- 1 cltbld users  5865450 Dec  6 01:58 20101206-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  5865450 Dec  5 02:03 20101205-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  5865450 Dec  4 02:01 20101204-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users   102253 Dec  3 16:04 20101203-2-pre-20101203-Firefox-3.5.16-3.6.13-MU-test.tar.gz
+-rw-r--r-- 1 cltbld users  2146237 Dec  3 14:17 20101203-1-pre-20101203-Firefox-3.6.13-test.tar.gz
+-rw-r--r-- 1 cltbld users  5544440 Dec  3 01:53 20101203-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  5544440 Dec  2 02:03 20101202-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users    45827 Dec  1 09:16 20101201-3-pre-20101201-Firefox-3.5.16-3.6.13-MU-test.tar.gz
+-rw-r--r-- 1 cltbld users  2620700 Dec  1 07:02 20101201-2-pre-20101130-Firefox-3.5.16-beta.tar.gz
+-rw-r--r-- 1 cltbld users  2475093 Dec  1 06:53 20101201-1-pre-20101130-Firefox-3.6.13-beta.tar.gz
+-rw-r--r-- 1 cltbld users  6094226 Dec  1 02:05 20101201-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  2164659 Nov 30 15:44 20101130-2-pre-20101130-Firefox-3.5.16-test.tar.gz
+-rw-r--r-- 1 cltbld users  2090045 Nov 30 15:32 20101130-1-pre-20101130-Firefox-3.6.13-test.tar.gz
+-rw-r--r-- 1 cltbld users  5440056 Nov 30 01:52 20101130-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  5440056 Nov 29 01:56 20101129-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  5440056 Nov 28 02:03 20101128-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  5440056 Nov 27 01:51 20101127-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  5440056 Nov 26 01:57 20101126-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  5440056 Nov 25 01:53 20101125-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  5439922 Nov 24 01:58 20101124-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  2186474 Nov 23 13:41 20101123-2-pre-20101122-Firefox-3.5.16-beta.tar.gz
+-rw-r--r-- 1 cltbld users  2153592 Nov 23 07:15 20101123-1-pre-20101122-Firefox-3.6.13-beta.tar.gz
+-rw-r--r-- 1 cltbld users  5358188 Nov 23 01:48 20101123-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  1743209 Nov 22 14:07 20101122-2-pre-20101122-Firefox-3.6.13-test.tar.gz
+-rw-r--r-- 1 cltbld users  1671808 Nov 22 11:24 20101122-1-pre-20101122-Firefox-3.5.16-test.tar.gz
+-rw-r--r-- 1 cltbld users  4458755 Nov 22 01:54 20101122-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  4458755 Nov 21 02:01 20101121-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  4458755 Nov 20 01:57 20101120-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  4458755 Nov 19 01:46 20101119-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  4458755 Nov 18 01:55 20101118-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  4458755 Nov 17 01:49 20101117-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  4458755 Nov 16 02:25 20101116-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  4458755 Nov 15 01:32 20101115-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  4458755 Nov 14 01:34 20101114-nightly-1.tar.bz2
+-rw-r--r-- 1 cltbld users  4458755 Nov 13 01:31 20101113-nightly-1.tar.bz2
+
+So 20101208-nightly-1.tar.bz2 is with 3.6.13-build3 and 3.5.16-build1 live on beta, no MU refresh yet, 
+and still 3.6.12 and 3.5.15 live on release

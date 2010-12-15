@@ -1,0 +1,39 @@
+{
+    "name": "Firefox-3.6.12-build1",
+    "data_version": 1,
+    "extv": "3.6.12",
+    "appv": "3.6.12",
+    "detailsUrl": "http://www.mozilla.com/en-US/firefox/3.6.12/releasenotes/",
+    "fileUrls": {
+        "betatest":    "http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.12-candidates/build1/update/%OS_FTP%/%LOCALE%/firefox-3.6.12.complete.mar",
+        "beta":        "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.12-candidates/build1/update/%OS_FTP%/%LOCALE%/firefox-3.6.12.complete.mar",
+        "releasetest": "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%",
+        "release":     "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%"
+    },
+    "bouncerProducts": {
+        "partial":  "firefox-3.6.12-partial-3.6.11",
+        "complete": "firefox-3.6.12-complete"
+    },
+    "hashFunction": "SHA512",
+    "platforms": {
+        "WINNT_x86-msvc": {
+            "buildID": "20101026210630",
+            "OS_BOUNCER": "win",
+            "OS_FTP": "win32",
+            "locales": {
+                "en-US": {
+                    "partial": {
+                        "from": "Firefox-3.6.11-build3",
+                        "filesize": 1494658,
+                        "hashValue": "3a637939c2fde266b6878a3f7737d55856edb293fe6e808495507287338a1dc3d6d52b26ea126795dd6a28c4e2720827ce9b9af1cd4a8b55696f3e46ba2810dd"
+                    },
+                    "complete": {
+                        "from": "*",
+                        "filesize": 11513828,
+                        "hashValue": "07dbfc908c0b541dfb395bf75116648d217e8f6857cfd5b633f42975eac305429b45aad520634242d7f58a5c086edfc5966612b6c50f91dc45620c08a63e9e3c"
+                    }
+                }
+            }
+        }
+    }
+}
