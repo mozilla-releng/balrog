@@ -5,10 +5,14 @@
     "appv": "3.6.13",
     "detailsUrl": "http://www.mozilla.com/en-US/firefox/3.6.13/releasenotes/",
     "fileUrls": {
-        "betatest":    "http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/%OS_FTP%/%LOCALE%/firefox-3.6.13.complete.mar",
-        "beta":        "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/%OS_FTP%/%LOCALE%/firefox-3.6.13.complete.mar",
+        "betatest":    "http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/%OS_FTP%/%LOCALE%/%FILENAME%",
+        "beta":        "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/%OS_FTP%/%LOCALE%/%FILENAME%",
         "releasetest": "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%",
         "release":     "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%"
+    },
+    "ftpFilenames": {
+        "partial":  "firefox-3.6.12-3.6.13.partial.mar",
+        "complete": "firefox-3.6.13.complete.mar"
     },
     "bouncerProducts": {
         "partial":  "firefox-3.6.13-partial-3.6.12",

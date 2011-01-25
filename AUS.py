@@ -98,8 +98,8 @@ class AUS3:
         return r
 
     def getMatchingRules(self, updateQuery):
-        print "\nlooking for rules that apply to"
-        print updateQuery
+        #print "\nlooking for rules that apply to"
+        #print updateQuery
         # get anything that must match or is undefined in rules
         res = self.db.execute("""
             SELECT * from update_paths
@@ -125,10 +125,10 @@ class AUS3:
                   ))
         # evaluate wildcard parameters
         rules = []
-        print "\nraw matches:"
+        #print "\nraw matches:"
         row = res.fetchone()
         while row:
-            print row, updateQuery['name']
+            #print row, updateQuery['name']
             # ignore any rules which would update ourselves to the same version
             if row['mapping'] != updateQuery['name']:
                 # now resolve our special meanings
@@ -172,6 +172,7 @@ class AUS3:
         locale = updateQuery['locale']
         if buildTarget not in relData['platforms'].keys() or \
           locale not in relData['platforms'][buildTarget]['locales'].keys():
+            # print "AUS.expandRelease: no update to %s for %s/%s" % (rule['mapping'],buildTarget,locale)
             return updateData
 
         # this is for the properties AUS2 can cope with today
@@ -193,8 +194,9 @@ class AUS3:
                     else:
                         url = relData['fileUrls'][updateQuery['channel']]
                     url = url.replace('%LOCALE%',updateQuery['locale'])
-                    url = url.replace('%PRODUCT%',relData['bouncerProducts'][patchKey])
                     url = url.replace('%OS_FTP%',relData['platforms'][buildTarget]['OS_FTP'])
+                    url = url.replace('%FILENAME%', relData['ftpFilenames'][patchKey])
+                    url = url.replace('%PRODUCT%',relData['bouncerProducts'][patchKey])
                     url = url.replace('%OS_BOUNCER%',relData['platforms'][buildTarget]['OS_BOUNCER'])
                     updateData['patches'].append({
                         'type': patchKey,
@@ -208,7 +210,9 @@ class AUS3:
     def createSnippet(self, updateQuery, release):
         rel = self.expandRelease(updateQuery, release)
         if not rel:
-            return None
+            # handle this better, both for prod and debugging
+            # print "AUS.createSnippet: couldn't expand rule for update target"
+            return {}
 
         snippets = {}
         for patch in rel['patches']:
@@ -224,7 +228,10 @@ class AUS3:
                         "detailsUrl=%s" % rel['detailsUrl']]
             if rel['type'] == 'major':
                 snippets.append('updateType=major')
-            snippets[patch['type']] = "\n".join(snippet)
+            # AUS2 snippets have a trailing newline, add one here for easy diffing
+            snippets[patch['type']] = "\n".join(snippet) + '\n'
+        # XXX: need to handle old releases needing completes duplicating partials
+        # add another parameter in the rule table and use it here
         return snippets
 
     def createXML(self, updateQuery, release):
@@ -239,6 +246,8 @@ class AUS3:
                 for patch in rel['patches']:
                     xml.append('        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
                                (patch['type'], patch['URL'], patch['hashFunction'], patch['hashValue'], patch['size']))
+                # XXX: need to handle old releases needing completes duplicating partials
+                # add another parameter in the rule table and use it here
                 xml.append('    </update>')
             # else you're out of luck
             xml.append('</updates>')
