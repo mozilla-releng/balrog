@@ -1,9 +1,7 @@
 import sqlite3, re
 from collections import defaultdict
-try:
-    import json
-except:
-    import simplejson as json
+# the json module in python 2.6 is really slow in comparison to simplejson
+import simplejson as json
 
 class AUS3:
     def __init__(self, dbname=None):
@@ -178,8 +176,9 @@ class AUS3:
         # this is for the properties AUS2 can cope with today
         if relData['data_version'] == 1:
             updateData['type'] = rule['update_type']
-            for key in ('appv','extv','detailsUrl', 'data_version'):
+            for key in ('appv','extv', 'data_version'):
                 updateData[key] = relData[key]
+            updateData['detailsUrl'] = relData['detailsUrl'].replace('%LOCALE%',updateQuery['locale'])
             updateData['build'] = relData['platforms'][buildTarget]['buildID']
 
             # evaluate types of updates and see if we can use them
