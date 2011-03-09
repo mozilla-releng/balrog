@@ -1,4 +1,4 @@
-import sqlite3, re
+import sqlite3, re, copy
 from collections import defaultdict
 # the json module in python 2.6 is really slow in comparison to simplejson
 import simplejson as json
@@ -76,7 +76,8 @@ class AUS3:
             if buildTarget in release['data']['platforms'].keys() and \
               buildID == release['data']['platforms'][buildTarget]['buildID']:
                 return release['name']
-            release = self.convertRelease(res.fetchone())
+            else:
+                release = self.convertRelease(res.fetchone())
         return None
 
     def convertRow(self, row):
@@ -91,9 +92,11 @@ class AUS3:
 
     def convertRelease(self, release):
         # takes a sqlite3.Row of a release and returns a dict w/ json 'data'
-        r = self.convertRow(release)
-        r['data'] = json.loads(r['data'])
-        return r
+        if release:
+            r = self.convertRow(release)
+            r['data'] = json.loads(r['data'])
+            return r
+        return None
 
     def getMatchingRules(self, updateQuery):
         #print "\nlooking for rules that apply to"
@@ -204,6 +207,14 @@ class AUS3:
                         'hashValue': patch['hashValue'],
                         'size': patch['filesize']
                     })
+
+            # older branches required a <partial> in the update.xml, which we
+            # used to fake by repeating the complete data.
+            if relData['fakePartials']:
+                patch = copy.copy(updateData['patches'][0])
+                patch['type'] = 'partial'
+                updateData['patches'].append(patch)
+
         return updateData
 
     def createSnippet(self, updateQuery, release):

@@ -19,6 +19,7 @@
         "complete": "firefox-3.6.13-complete"
     },
     "hashFunction": "SHA512",
+    "fakePartials": 1,
     "platforms": {
         "Darwin_Universal-gcc3": {
             "OS_BOUNCER": "osx", 

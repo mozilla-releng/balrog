@@ -1,4 +1,4 @@
-import os, glob, re, difflib
+import os, glob, re, difflib, time
 
 try:
     import json
@@ -38,7 +38,19 @@ def staticTest(AUS):
                   'headerArchitecture': 'Intel',
                   'name': ''
                  }
-    
+    testUpdate = {'product': 'Firefox',
+                  'version': '3.6.11',
+                  'buildID': '20100930123656',
+                  'buildTarget': 'Darwin_Universal-gcc3',
+                  'locale': 'af',
+                  'channel': 'releasetest',
+                  'osVersion': 'foo',
+                  'distribution': 'foo',
+                  'distVersion': 'foo',
+                  'headerArchitecture': 'Intel',
+                  'name': ''
+                 }
+
     testUpdate['name'] = AUS.identifyRequest(testUpdate)
     print "\nThe request is from %s" % testUpdate['name']
     
@@ -89,6 +101,8 @@ def getQueryFromPath(snippetPath):
         pass
 
 def walkSnippets(AUS, testPath):
+    start = time.time()
+
     # walk tree of snippets and create sorted list, I/O intensive
     AUS2snippets = []
     for root, dirs, files in os.walk(testPath):
@@ -118,18 +132,21 @@ def walkSnippets(AUS, testPath):
                            AUS3snippet.splitlines(),
                            lineterm='',
                            n=20)
-                print "FAIL: %s" % f
+                print "FAIL: different results for %s" % f
                 failCount += 1
                 for line in diff:
                     print 'DIFF: %s' % line
             else:
-                print "PASS: %s" % f
+                if options.verbose:
+                    print "PASS: %s" % f
                 passCount += 1
         else:
             print "FAIL: no snippet for %s" % f
             failCount += 1
 
-    print "walkSnippets: %s snippets, %s PASS, %s FAIL" % (len(AUS2snippets), passCount, failCount)
+    finish = time.time()
+    print "walkSnippets: %s snippets, %s PASS, %s FAIL  (in %1.1f tests/second)" % \
+      (len(AUS2snippets), passCount, failCount, len(AUS2snippets)/(finish-start))
 
     # notes:
     # use this to fill out rules (ignore locales for now ? lots of hashes/sizes)
@@ -147,7 +164,8 @@ if __name__ == "__main__":
     parser.add_option("-d", "--db", dest="db", help="database to use, relative to inputdir")
     parser.add_option("", "--dump-rules", dest="dumprules", action="store_true", help="dump rules to stdout")
     parser.add_option("", "--dump-releases", dest="dumpreleases", action="store_true", help="dump release data to stdout")
-    parser.add_option("-w","--walk", dest="walksnippetspath", help="snippet directory to walk testing snippet creation based on rules, otherwise static test")
+    parser.add_option("-w", "--walk", dest="walksnippetspath", help="snippet directory to walk testing snippet creation based on rules, otherwise static test")
+    parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="verbose output for snippet checking")
 
     options, args = parser.parse_args()
     if not options.inputdir or not os.path.isdir(options.inputdir):

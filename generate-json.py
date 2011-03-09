@@ -46,14 +46,15 @@ if __name__ == "__main__":
     parser.add_option("-w","--walk", dest="walkdir", help="snippet directory to walk for data")
     parser.add_option("-n","--name", dest="name", help="name of the release we're capturing")
     parser.add_option("-p","--partial", dest="partial", help="name of the release we have partials from")
+    parser.add_option("-e","--exclude-partials", dest="exclude_partials", action="store_true", help="exclude partials where we fake them")
 
     options, args = parser.parse_args()
     if not options.walkdir or not isdir(options.walkdir):
         parser.error('Must specify a directory to read with -w/--walk, eg Firefox/3.6.12')
     if not options.name:
         parser.error('Must specify the name of the release we capturing, eg Firefox-3.6.13-build1')
-    if not options.partial:
-        parser.error('Must specify the name of the release we have partials for, eg Firefox-3.6.12-build1')
+    if not options.exclude_partials and not options.partial:
+        parser.error('Must specify the name of the release we have partials, eg Firefox-3.6.12-build1, if not excluding partials')
 
     relData = {"platforms": {}}
 
@@ -85,6 +86,8 @@ if __name__ == "__main__":
             snipFiles = listdir(lbase)
             for snipFile in snipFiles:
                 type,ext = splitext(snipFile)
+                if options.exclude_partials and type == 'partial':
+                    continue
                 lrelData[type] = {}
                 snip = readFile(join(lbase,snipFile))
                 if type == 'partial':
@@ -95,5 +98,4 @@ if __name__ == "__main__":
                 lrelData[type]["hashValue"] = getParameter(snip,'hashValue')
 
 
-    print "data is:"
     print json.dumps(relData, sort_keys=True, indent=4)
