@@ -210,7 +210,8 @@ class AUS3:
 
             # older branches required a <partial> in the update.xml, which we
             # used to fake by repeating the complete data.
-            if relData['fakePartials']:
+            if relData['fakePartials'] and len(updateData['patches']) == 1 and \
+              updateData['patches'][0]['type'] == 'complete':
                 patch = copy.copy(updateData['patches'][0])
                 patch['type'] = 'partial'
                 updateData['patches'].append(patch)
@@ -245,11 +246,12 @@ class AUS3:
         return snippets
 
     def createXML(self, updateQuery, release):
+        rel = self.expandRelease(updateQuery, release)
+
         # this will fall down all sorts of interesting ways by hardcoding fields
         xml = ['<?xml version="1.0"?>']
-        rel = self.expandRelease(updateQuery, release)
+        xml.append('<updates>')
         if rel:
-            xml.append('<updates>')
             if rel['data_version'] == 1:
                 xml.append('    <update type="%s" version="%s" extensionVersion="%s" buildID="%s" detailsURL="%s">' % \
                            (rel['type'], rel['appv'], rel['extv'], rel['build'], rel['detailsUrl']))
@@ -259,6 +261,5 @@ class AUS3:
                 # XXX: need to handle old releases needing completes duplicating partials
                 # add another parameter in the rule table and use it here
                 xml.append('    </update>')
-            # else you're out of luck
-            xml.append('</updates>')
+        xml.append('</updates>')
         return '\n'.join(xml)
