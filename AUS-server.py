@@ -1,6 +1,5 @@
 import BaseHTTPServer, SocketServer
-import re, pprint
-pp = pprint.PrettyPrinter(indent=4)
+import re
 
 from AUS import *
 
@@ -14,9 +13,12 @@ class AUS3HTTPServer(BaseHTTPServer.BaseHTTPRequestHandler):
 
         # resolve update
         query = self.getQueryFromURL()
-        rule = AUS.evaluateRules(query)
+        if query:
+            rule = AUS.evaluateRules(query)
+        else:
+            rule = {}
+        # passing {},{} returns empty xml
         xml = AUS.createXML(query, rule)
-        # error handling on above, make sure empty updates work reliably
         self.send_response(200)
         self.send_header("Content-Length", len(xml))
         self.end_headers()
@@ -40,7 +42,7 @@ class AUS3HTTPServer(BaseHTTPServer.BaseHTTPRequestHandler):
                       'name': ''
                      }
         """
-        # TODO support older URL versions
+        # TODO support older URL versions. catlee suggests splitting on /, easy to use conditional assignment then
         # TODO support force queries to void throttling, and pass through to downloads
         m = re.match("/update/3/(?P<product>.*?)/(?P<version>.*?)/(?P<buildID>.*?)/(?P<buildTarget>.*?)/(?P<locale>.*?)/(?P<channel>.*?)/(?P<osVersion>.*?)/(?P<distribution>.*?)/(?P<distVersion>.*?)/update.xml", self.path)
         if m:
@@ -54,8 +56,7 @@ class AUS3HTTPServer(BaseHTTPServer.BaseHTTPRequestHandler):
                     query['headerArchitecture'] = 'Intel'
             return query
         else:
-            # better handling here, what does the next function down the line expect ?
-            pass
+            return {}
 
 if __name__ == "__main__":
     from optparse import OptionParser
