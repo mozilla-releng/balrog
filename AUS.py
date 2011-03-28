@@ -235,8 +235,9 @@ class AUS3:
                         "size=%s" % patch['size'],
                         "build=%s" % rel['build'],
                         "appv=%s" % rel['appv'],
-                        "extv=%s" % rel['extv'],
-                        "detailsUrl=%s" % rel['detailsUrl']]
+                        "extv=%s" % rel['extv']]
+            if rel['detailsUrl']:
+                snippet.append("detailsUrl=%s" % rel['detailsUrl'])
             if rel['type'] == 'major':
                 snippets.append('updateType=major')
             # AUS2 snippets have a trailing newline, add one here for easy diffing
@@ -253,8 +254,11 @@ class AUS3:
         xml.append('<updates>')
         if rel:
             if rel['data_version'] == 1:
-                xml.append('    <update type="%s" version="%s" extensionVersion="%s" buildID="%s" detailsURL="%s">' % \
-                           (rel['type'], rel['appv'], rel['extv'], rel['build'], rel['detailsUrl']))
+                xml.append('    <update type="%s" version="%s" extensionVersion="%s" buildID="%s" detailsURL="%s"' % \
+                           (rel['type'], rel['appv'], rel['extv'], rel['build']))
+                if rel['detailsUrl']:
+                    xml.append(' detailsURL="%s"' % rel['detailsUrl'])
+                xml.append('>')
                 for patch in rel['patches']:
                     xml.append('        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
                                (patch['type'], patch['URL'], patch['hashFunction'], patch['hashValue'], patch['size']))
