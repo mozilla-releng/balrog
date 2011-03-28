@@ -3,8 +3,6 @@ import re
 
 from AUS import *
 
-PORT = 8000
-
 class AUS3HTTPServer(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
         """Serve a GET request to AUS3."""
@@ -62,15 +60,17 @@ if __name__ == "__main__":
     from optparse import OptionParser
     parser = OptionParser()
     parser.set_defaults(
-        db='update.db'
+        db='update.db',
+        port=8000
     )
     parser.add_option("-d", "--db", dest="db", help="database to use, relative to inputdir")
+    parser.add_option("-p", "--port", dest="port", help="port for server")
     options, args = parser.parse_args()
 
     AUS = AUS3(dbname=options.db)
 
     Handler = AUS3HTTPServer
-    httpd = SocketServer.TCPServer(("", PORT), Handler)
+    httpd = SocketServer.TCPServer(("", options.port), Handler)
 
-    print "serving at port", PORT
+    print "serving at port", options.port
     httpd.serve_forever()

@@ -24,6 +24,15 @@ Content-Length: 911
 </updates>
 
 
+Verify snippets
+---------------
+$ python test-rules.py -i aus-data-snapshots/20101208/ -d update.db  -w Firefox/3.6.12; done
+walkSnippets: 1368 snippets, 1368 PASS, 0 FAIL  (in 512.1 tests/second)
+
+$ python test-rules.py -i aus-data-snapshots/20101208/ -d update.db  -w Firefox/3.6.13; done
+walkSnippets: 2736 snippets, 2736 PASS, 0 FAIL  (in 473.3 tests/second)
+
+
 test-rules.py
 -------------
 

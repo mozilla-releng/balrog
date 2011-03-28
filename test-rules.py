@@ -20,7 +20,7 @@ def populateDB(AUS):
         data = json.load(open(f,'r'))
         product,version = data['name'].split('-')[0:2]
         AUS.db.execute("INSERT INTO releases VALUES ('%s', '%s', '%s','%s')" %
-                   (data['name'], product, version, json.dumps(data)))
+                   (data['name'], product, data['extv'], json.dumps(data)))
     AUS.db.commit()
     # TODO - create a proper importer that walks the snippet store to find hashes ?
 
@@ -170,9 +170,9 @@ if __name__ == "__main__":
     options, args = parser.parse_args()
     if not options.inputdir or not os.path.isdir(options.inputdir):
         parser.error('Must specify a directory to read with -i/--inputdir')
+    os.chdir(options.inputdir)
     if options.walksnippetspath:
         options.walksnippetspath = os.path.abspath(options.walksnippetspath)
-    os.chdir(options.inputdir)
 
     if options.clobber and os.path.exists(options.db):
         os.remove(options.db)

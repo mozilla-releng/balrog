@@ -62,7 +62,7 @@ class AUS3:
         if releases:
             print "Releases are \n(name, data:"
             for release in releases:
-                print "(%s, %s " % (release[0],json.dumps(json.loads(release[1]),indent=2))
+                print "(%s, %s " % (release['name'],json.dumps(json.loads(release['data']),indent=2))
             print "-"*50
 
     def identifyRequest(self, updateQuery):
