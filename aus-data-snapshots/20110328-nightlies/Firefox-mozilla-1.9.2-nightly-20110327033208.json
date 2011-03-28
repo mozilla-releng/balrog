@@ -1,0 +1,28 @@
+{
+    "name": "Firefox-mozilla-1.9.2-nightly-20110327033208",
+    "data_version": 1,
+    "extv": "3.6.17pre",
+    "appv": "3.6.17pre",
+    "hashFunction": "sha512",
+    "platforms": {
+        "Darwin_Universal-gcc3": {
+            "buildID": "20110327033208",
+            "locales": {
+                "en-US": {
+                    "complete": {
+                        "from": "*", 
+                        "fileUrl": "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2011/03/2011-03-27-03-mozilla-1.9.2/firefox-3.6.17pre.en-US.mac.complete.mar",
+                        "filesize": "24985844", 
+                        "hashValue": "6b97a2350b2fdd6345c88bb50f23626bc23cad4983a85393875141e0ec149f7d01e081ceb2a67cb6e6a1a18a3b557ec783b778a777b55522a55e06f1cb45862d"
+                    }, 
+                    "partial": {
+                        "from": "Firefox-mozilla-1.9.2-nightly-20110326033206",
+                        "fileUrl": "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2011/03/2011-03-27-03-mozilla-1.9.2/firefox-3.6.17pre.en-US.mac.partial.20110326033206-20110327033208.mar",
+                        "filesize": "29367", 
+                        "hashValue": "67e1eb1388f896982a3bf0a0c6474e500697ead7473aa6e0ef7e5bf3f75ac0adbb0ca4f1df62bdbe28781ecb4d736a1f07ef88ebc78f7352e6112d3ab0aff8fe"
+                    }
+                }
+            }
+        }
+    }
+}

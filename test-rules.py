@@ -70,7 +70,7 @@ def staticTest(AUS):
     print "\nxml is:\n%s" % xml
 
 def getQueryFromPath(snippetPath):
-    """ Use regexp to turn
+    """ Use regexp to turn a path to a release snippet like
             "Firefox/3.6.13/WINNT_x86-msvc/20101122053531/af/beta/complete.txt"
         into
             testUpdate = {

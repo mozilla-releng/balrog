@@ -165,6 +165,10 @@ class AUS3:
         # read data from releases table
         res = self.db.execute("SELECT * from releases WHERE name=?;",
                          (rule['mapping'],)).fetchone()
+        if not res:
+            # need to log some sort of data inconsistency error here
+            print "AUS.expandRelease failed to get release data from db"
+            return None
         relData = json.loads(res['data'])
         updateData = defaultdict(list)
 
@@ -181,7 +185,8 @@ class AUS3:
             updateData['type'] = rule['update_type']
             for key in ('appv','extv', 'data_version'):
                 updateData[key] = relData[key]
-            updateData['detailsUrl'] = relData['detailsUrl'].replace('%LOCALE%',updateQuery['locale'])
+            if 'detailsUrl' in relData:
+                updateData['detailsUrl'] = relData['detailsUrl'].replace('%LOCALE%',updateQuery['locale'])
             updateData['build'] = relData['platforms'][buildTarget]['buildID']
 
             # evaluate types of updates and see if we can use them
@@ -190,16 +195,15 @@ class AUS3:
                     continue
                 patch = relData['platforms'][buildTarget]['locales'][locale][patchKey]
                 if patch['from'] == updateQuery['name'] or patch['from'] == '*':
-                    if 'fileurls' in patch and \
-                       'channel' in patch['fileurls']:
-                        url = patch['fileurls'][updateQuery['channel']]
+                    if 'fileUrl' in patch:
+                        url = patch['fileUrl']
                     else:
                         url = relData['fileUrls'][updateQuery['channel']]
-                    url = url.replace('%LOCALE%',updateQuery['locale'])
-                    url = url.replace('%OS_FTP%',relData['platforms'][buildTarget]['OS_FTP'])
-                    url = url.replace('%FILENAME%', relData['ftpFilenames'][patchKey])
-                    url = url.replace('%PRODUCT%',relData['bouncerProducts'][patchKey])
-                    url = url.replace('%OS_BOUNCER%',relData['platforms'][buildTarget]['OS_BOUNCER'])
+                        url = url.replace('%LOCALE%', updateQuery['locale'])
+                        url = url.replace('%OS_FTP%', relData['platforms'][buildTarget]['OS_FTP'])
+                        url = url.replace('%FILENAME%', relData['ftpFilenames'][patchKey])
+                        url = url.replace('%PRODUCT%', relData['bouncerProducts'][patchKey])
+                        url = url.replace('%OS_BOUNCER%', relData['platforms'][buildTarget]['OS_BOUNCER'])
                     updateData['patches'].append({
                         'type': patchKey,
                         'URL':  url,
@@ -210,7 +214,7 @@ class AUS3:
 
             # older branches required a <partial> in the update.xml, which we
             # used to fake by repeating the complete data.
-            if relData['fakePartials'] and len(updateData['patches']) == 1 and \
+            if 'fakePartials' in relData and relData['fakePartials'] and len(updateData['patches']) == 1 and \
               updateData['patches'][0]['type'] == 'complete':
                 patch = copy.copy(updateData['patches'][0])
                 patch['type'] = 'partial'
@@ -259,7 +263,7 @@ class AUS3:
                 if rel['detailsUrl']:
                     xml.append(' detailsURL="%s"' % rel['detailsUrl'])
                 xml.append('>')
-                for patch in rel['patches']:
+                for patch in sorted(rel['patches']):
                     xml.append('        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
                                (patch['type'], patch['URL'], patch['hashFunction'], patch['hashValue'], patch['size']))
                 # XXX: need to handle old releases needing completes duplicating partials
