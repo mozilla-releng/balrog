@@ -254,7 +254,7 @@ class AUS3:
         xml.append('<updates>')
         if rel:
             if rel['data_version'] == 1:
-                xml.append('    <update type="%s" version="%s" extensionVersion="%s" buildID="%s" detailsURL="%s"' % \
+                xml.append('    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
                            (rel['type'], rel['appv'], rel['extv'], rel['build']))
                 if rel['detailsUrl']:
                     xml.append(' detailsURL="%s"' % rel['detailsUrl'])
