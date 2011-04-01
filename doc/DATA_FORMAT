@@ -1,0 +1,154 @@
+{
+    // name - required
+    //  a unique name for the build set, matches releases.name in db
+    //  eg "Firefox-3.6.13-build1"
+    "name": <string>,
+
+    // data_version - required
+    //  xml style versioning, should be renamed
+    //  eg 1 == the style supported prior to bug 459972 (Fx4.0b3)
+    //     2 == the style available after bug 459972
+    "data_version": <integer>,
+
+    // extv - required (only for version 1?)
+    //  parameter for version 1 xml, for add-on compatibility
+    //  eg "3.6.13"
+    "extv": <string>,
+
+    // appv - required (only for version 1?)
+    //  Parameter for version 1 xml, displayed as version in offers
+    //  eg "3.6.13"
+    "appv": <string>,
+
+    // detailsUrl - required for data_version=1
+    //  Parameter for version 1 xml, used for 'More details' link
+    //  for minor updates, and major update billboards
+    //  %LOCALE% is substituted during xml creation
+    //  eg "http://www.mozilla.com/%LOCALE%/firefox/3.6.13/releasenotes/" (minor)
+    //  eg "https://www.mozilla.com/%LOCALE%/firefox/4.0/details/" (major)
+    "detailsUrl": url <string>,
+
+    // fileUrls - optional (see also fileUrl at platform:locale:update level)
+    //  lookup dictionary for generic URLs, in channel:location pairs
+    //  %LOCALE%, %OS_FTP%, %OS_BOUNCER% and %FILENAME% are subsitutions from
+    //  the request, platform:OS_FTP, platform:OS_BOUNCER, and ftpFilenames
+    //  respectively
+    //  eg  "fileUrls": {
+    //        "beta":  "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/%OS_FTP%/%LOCALE%/%FILENAME%",
+    //        "releasetest": "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%"}
+    //       },
+    "fileUrls": {
+        channel <string>: url <string>
+        ...
+    },
+
+    // ftpFilenames - optional, unless you use %FILENAME% in fileUrls
+    //  lookup dictionary for partial/complete filenames
+    //  eg: "ftpFilenames": {
+    //        "partial":  "firefox-3.6.12-3.6.13.partial.mar",
+    //        "complete": "firefox-3.6.13.complete.mar"
+    //      },
+    "ftpFilenames": {
+        update type <string>:  filename <string>
+        ...
+    },
+
+    // bouncerProducts: optional, unless you use %PRODUCT% in fileUrls
+    //  lookup dictionary for partial/complete bouncer products
+    //  eg "bouncerProducts": {
+    //        "partial":  "firefox-3.6.13-partial-3.6.12",
+    //        "complete": "firefox-3.6.13-complete"
+    //      },
+    "bouncerProducts": {
+        update type <string>: <string>
+        ...
+    },
+
+    // hashFunction - required
+    //  the hash function used for all hashValues in this set, used in xml
+    //  eg "SHA512"
+    "hashFunction": <string>,
+
+    // fakePartials - optional, defaults false if missing
+    //  when True, create a <partial> in xml which is a copy of <complete>/
+    //  bug 538533/514040
+    //  0 = False; Fx4.0a1 and later
+    //  1 = True; Fx3.6 and older
+    "fakePartials": <integer>,
+
+    // platforms - required (to actually do anything)
+    //  The main dictionary for listing platforms and locales,
+    //  and the updates for each
+    //  eg: "platforms": {
+    //         "Darwin_Universal-gcc3": {
+    //              "OS_BOUNCER": "osx",
+    //              "OS_FTP": "mac",
+    //              "buildID": "20101203074432",
+    //              "locales": {
+    //                  "af": {
+    //                      "complete": {
+    //                          "filesize": "18841149",
+    //                          "from": "*",
+    //                          "hashValue": "48abfe10f28f1e3ff1ddc96098630d833e861113917b272fa608fed212ca1dbef2be0c62feb49517d43e5b2cff29d783df048e182980fe5f53431aa8dbeaf94d"
+    //                      },
+    //                      "partial": {
+    //                          "filesize": "1453529",
+    //                          "from": "Firefox-3.6.12-build1",
+    //                          "hashValue": "92d1604a911e9310a2c1e9b617541a06013d4d3d6c331495566f655a0efd47db6711d85cb8965cb8cac260b311116ed7a535305af3408a81d23dcb99813aee32"
+    //                      }
+    //                  },
+    //      }
+    "platforms": {
+        // platform - required (to actually do anything)
+        //  The buildTarget coming in from the query
+        //  eg "WINNT_x86-msvc", "Darwin_x86-gcc3-u-i386-x86_64", "Linux_x86-gcc3"
+        platform <string>: {
+            // OS_BOUNCER - optional, unless you use %OS_BOUNCER% in fileUrls
+            //  a substitution to use in bouncer URLs
+            //  eg "win", "osx", "linux", "linux64"
+            "OS_BOUNCER": <string>
+
+            // OS_FTP - optional, unless you use OS_FTP in fileUrls
+            //  a substitution to use for the OS directory on the mirrors/ftp
+            //  eg "win32", "mac", "linux-i686", "linux-x86_64"
+            "OS_FTP:": <string>
+
+            // buildID - required
+            //  the YYYYMMDDHHMMSS build identifier for all the builds
+            //  of this platform. Becomes buildID parameter in the final xml
+            "buildID": <string>
+
+            // locales - required (to actually do anything)
+            //  a dictionary with locale code as key
+            "locales": {
+
+                // locale - required (to actually do anything)
+                //  the locale code from shipped-locales etc
+                //  eg: "af", "en-US", "ja-JP-mac"
+                locale <string>: {
+
+                    // update type - required (to actually do anything)
+                    //  generally always a complete here, possibly a partial
+                    //  eg "complete", "partial"
+                    update type <string>: {
+
+                        // from - required
+                        //  the name of the buildset this update can be used for
+                        //  eg "*" (anything), "Firefox-3.6.12-build1"
+                        "from": <string>,
+
+                        // filesize - required
+                        //  the size (in bytes) of the mar file, used in xml
+                        //  eg "18841149"   (should be integer ?)
+                        "filesize": <string>,
+
+                        // hashValue - required
+                        //  the base16 hash for the mar file, using hashFunction
+                        //  used in xml
+                        "hashValue": <string>
+                    }
+                }
+            }
+        }
+    }
+}
