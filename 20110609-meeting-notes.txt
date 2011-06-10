@@ -1,0 +1,30 @@
+- Design goal: Shouldn't hit datastore per request
+- Design goal: Make it easier to find out where builds are going *to*
+-- Probably want to use application level caching
+
+- Admin API needs:
+-- Logging
+-- ACLs
+-- Rollback
+
+- Business logic that's still needed:
+-- Nightly updates
+-- Channel fallback (bhearsum)
+-- Support for additional properties
+-- Blocking by user agent (PPC support already here, need to genercize it)
+
+- How do handle multiple matching rules?
+-- Rules that match by more fields should take priority over those that match fewer
+-- When ties exist, use priority
+-- Can we be even smarter here to avoid unnecessary rules?
+
+- How do avoid DB cruft, while still being able to compare against AUS2?
+-- Possibly could emulate the existing cruft, then remove it later
+-- Compare end points instead of just the 1st update
+--- Need to add support for following update paths to comparison scripts
+
+- Need to figure out the workflows for the Application API and Release Automation before we get too deep into designing them.
+
+- Need a test suite (bhearsum)
+
+- How do we serve minor+major updates at the same time?
