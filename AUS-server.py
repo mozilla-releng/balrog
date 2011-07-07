@@ -70,7 +70,7 @@ if __name__ == "__main__":
     AUS = AUS3(dbname=options.db)
 
     Handler = AUS3HTTPServer
-    httpd = SocketServer.TCPServer(("", options.port), Handler)
+    httpd = SocketServer.TCPServer(("", int(options.port)), Handler)
 
     print "serving at port", options.port
     httpd.serve_forever()
