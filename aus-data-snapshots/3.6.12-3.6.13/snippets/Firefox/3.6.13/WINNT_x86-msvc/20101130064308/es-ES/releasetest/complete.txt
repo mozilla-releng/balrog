@@ -1,0 +1,10 @@
+version=1
+type=complete
+url=http://download.mozilla.org/?product=firefox-3.6.13-complete&os=win&lang=es-ES
+hashFunction=SHA512
+hashValue=e383b8d5e6455f7ba91d20739d7889fcbe7aee2008b7556458eac131b18c86ab22dc8ce71f8c942ee08d434a64a41a0c654610390da6c7f2774e50dcbf486f44
+size=11296585
+build=20101203075014
+appv=3.6.13
+extv=3.6.13
+detailsUrl=http://www.mozilla.com/es-ES/firefox/3.6.13/releasenotes/

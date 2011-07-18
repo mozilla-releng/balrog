@@ -1,0 +1,10 @@
+version=1
+type=partial
+url=http://download.mozilla.org/?product=firefox-3.6.12-complete&os=osx&lang=en-US
+hashFunction=SHA512
+hashValue=f3ced2f212080020c6d31b11bf46d85ec8dad2c6d1740ced953f9ee941bb1090654a4eb48f9f36cdecd9e0581146275712e097ef41eca149d9f03c1eff30d26f
+size=19002137
+build=20101026200743
+appv=3.6.12
+extv=3.6.12
+detailsUrl=http://www.mozilla.com/en-US/firefox/3.6.12/releasenotes/

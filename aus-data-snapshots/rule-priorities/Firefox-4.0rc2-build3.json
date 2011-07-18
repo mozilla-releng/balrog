@@ -1,0 +1,44 @@
+{
+    "name": "Firefox-4.0rc2-build3",
+    "data_version": 1,
+    "extv": "4.0",
+    "appv": "4.0",
+    "detailsUrl": "https://www.mozilla.com/%LOCALE%/firefox/4.0/releasenotes/",
+    "fileUrls": {
+        "betatest":    "http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/4.0rc2-candidates/build3/update/%OS_FTP%/%LOCALE%/%FILENAME%",
+        "beta":        "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/4.0rc2-candidates/build3/update/%OS_FTP%/%LOCALE%/%FILENAME%",
+        "releasetest": "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%",
+        "release":     "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%"
+    },
+    "ftpFilenames": {
+        "partial":  "firefox-4.0rc1-4.0rc2.partial.mar",
+        "complete": "firefox-4.0rc2.complete.mar"
+    },
+    "bouncerProducts": {
+        "partial":  "firefox-4.0rc2-partial-4.0rc1",
+        "complete": "firefox-4.0rc2-complete"
+    },
+    "hashFunction": "SHA512",
+    "fakePartials": 1,
+    "platforms": {
+        "Linux_x86_64-gcc3": {
+            "OS_BOUNCER": "linux64",
+            "OS_FTP": "linux-x86_64",
+            "buildID": "20110318052756",
+            "locales": {
+                "zu": {
+                    "complete": {
+                        "filesize": "15377862",
+                        "from": "*",
+                        "hashValue": "a7b28d926beb9de3e4e5fd75825fb2e229dfdd19233883612ba84864c78e873a268af8caf7a96c6f66e93e639f6e2125ad14cd3013c4689cb77f1ed31b86d583"
+                    },
+                    "partial": {
+                        "filesize": "1100400",
+                        "from": "Firefox-4.0rc1-build1",
+                        "hashValue": "5e79ff0e9c530cefe62369f2322b02647f4420fa6a14c97f9cc94c2ec345c1ec90a4ccb083cc423b54ef19e47e44d4c025eed03eecc838e7f7a993e86219bc42"
+                    }
+                }
+            }
+        }
+    }
+}

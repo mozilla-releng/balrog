@@ -1,0 +1,10 @@
+version=1
+type=partial
+url=http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/linux-i686/es-ES/firefox-3.6.12-3.6.13.partial.mar
+hashFunction=SHA512
+hashValue=3c6ac9aea6b861400526d5d44fafbc91644d610dc83f1150c1ca6c1d228d9889272dadc4b636913c12b8d2eb336448884913893908ca2ebc37f5553a3c0ae6c2
+size=854056
+build=20101203074139
+appv=3.6.13
+extv=3.6.13
+detailsUrl=http://www.mozilla.com/es-ES/firefox/3.6.13/releasenotes/

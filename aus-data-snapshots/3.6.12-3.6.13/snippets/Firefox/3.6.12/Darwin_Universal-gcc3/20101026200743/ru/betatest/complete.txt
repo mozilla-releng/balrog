@@ -1,0 +1,10 @@
+version=1
+type=complete
+url=http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/mac/ru/firefox-3.6.13.complete.mar
+hashFunction=SHA512
+hashValue=705e4420cd426e0c92b492d0ddde15153b11d9a5a51eb8f5f4435bae8e66977d638b39dbd830f71715c526e9c234f6ed74099f29b879dabccf28553cb1775241
+size=19354660
+build=20101203074432
+appv=3.6.13
+extv=3.6.13
+detailsUrl=http://www.mozilla.com/ru/firefox/3.6.13/releasenotes/

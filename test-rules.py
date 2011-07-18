@@ -1,73 +1,30 @@
-import os, glob, re, difflib, time
+import os, os.path, glob, re, difflib, time
 
 try:
     import json
+    assert json # to shut pyflakes up
 except:
     import simplejson as json
 from AUS import *
 
-def populateDB(AUS):
+def populateDB(AUS, testdir):
     # assuming we're already in the right directory with a db connection
     # read any rules we already have
-    if os.path.exists('rules.sql'):
-        f = open('rules.sql','r')
+    rules = os.path.join(testdir, 'rules.sql')
+    if os.path.exists(rules):
+        f = open(rules,'r')
         for line in f:
             if line.startswith('#'):
                 continue
             AUS.db.execute(line.strip())
     # and add any json blobs we created painstakingly, converting to compact json
-    for f in glob.glob('*.json'):
+    for f in glob.glob('%s/*.json' % testdir):
         data = json.load(open(f,'r'))
         product,version = data['name'].split('-')[0:2]
         AUS.db.execute("INSERT INTO releases VALUES ('%s', '%s', '%s','%s')" %
                    (data['name'], product, data['extv'], json.dumps(data)))
     AUS.db.commit()
     # TODO - create a proper importer that walks the snippet store to find hashes ?
-
-def staticTest(AUS):
-    # version 3 update + UA arch
-    testUpdate = {'product': 'Firefox',
-                  'version': '3.6.12',
-                  'buildID': '20101026210630',
-                  'buildTarget': 'WINNT_x86-msvc',
-                  'locale': 'en-US',
-                  'channel': 'releasetest',
-                  'osVersion': 'foo',
-                  'distribution': 'foo',
-                  'distVersion': 'foo',
-                  'headerArchitecture': 'Intel',
-                  'name': ''
-                 }
-    testUpdate = {'product': 'Firefox',
-                  'version': '3.6.11',
-                  'buildID': '20100930123656',
-                  'buildTarget': 'Darwin_Universal-gcc3',
-                  'locale': 'af',
-                  'channel': 'releasetest',
-                  'osVersion': 'foo',
-                  'distribution': 'foo',
-                  'distVersion': 'foo',
-                  'headerArchitecture': 'Intel',
-                  'name': ''
-                 }
-
-    testUpdate['name'] = AUS.identifyRequest(testUpdate)
-    print "\nThe request is from %s" % testUpdate['name']
-    
-    rule = AUS.evaluateRules(testUpdate)
-    print "\nthe one rule to rule them all is:"
-    print rule
-    
-    snippets = AUS.createSnippet(testUpdate,rule)
-    if snippets:
-        for type in snippets.keys():
-            print "\n%s snippet:" % type
-            print snippets[type]
-    else:
-        print "\nno snippets"
-        
-    xml = AUS.createXML(testUpdate,rule)
-    print "\nxml is:\n%s" % xml
 
 def getQueryFromPath(snippetPath):
     """ Use regexp to turn a path to a release snippet like
@@ -118,7 +75,7 @@ def walkSnippets(AUS, testPath):
         snipType = os.path.splitext(os.path.basename(f))[0]
 
         # generate the AUS3 snippets
-        testQuery = getQueryFromPath(f)
+        testQuery = getQueryFromPath(f.lstrip(testPath))
         testQuery['name'] = AUS.identifyRequest(testQuery)
         rule = AUS.evaluateRules(testQuery)
         AUS3snippets = AUS.createSnippet(testQuery, rule)
@@ -132,7 +89,7 @@ def walkSnippets(AUS, testPath):
                            AUS3snippet.splitlines(),
                            lineterm='',
                            n=20)
-                print "FAIL: different results for %s" % f
+                print "FAIL: %s" % f
                 failCount += 1
                 for line in diff:
                     print 'DIFF: %s' % line
@@ -144,49 +101,53 @@ def walkSnippets(AUS, testPath):
             print "FAIL: no snippet for %s" % f
             failCount += 1
 
-    finish = time.time()
-    print "walkSnippets: %s snippets, %s PASS, %s FAIL  (in %1.1f tests/second)" % \
-      (len(AUS2snippets), passCount, failCount, len(AUS2snippets)/(finish-start))
+    elapsed = time.time() - start
+    common_return = "(%s PASS, %s FAIL" % (passCount, failCount)
 
-    # notes:
-    # use this to fill out rules (ignore locales for now ? lots of hashes/sizes)
-    # create a way to programaticaly generate the json ?
-    pass
+    if elapsed > 0.5:
+        rate = (passCount + failCount)/elapsed
+        common_return += ", %1.2f sec, %1.1f tests/second)" % (elapsed, rate)
+    else:
+        common_return += ")"
+    if failCount:
+      return "FAIL   %s" % common_return
+    else:
+      return "PASS   %s" % common_return
+
+def isValidTestDir(d):
+    if not os.path.exists(os.path.join(d, 'rules.sql')):
+        return False
+    if not os.path.exists(os.path.join(d, 'snippets')):
+        return False
+    if not glob.glob('%s/*.json' % d):
+        return False
+    return True
 
 if __name__ == "__main__":
     from optparse import OptionParser
     parser = OptionParser()
     parser.set_defaults(
-        db='update.db'
+        testDirs=[]
     )
-    parser.add_option("-c", "--clobber", dest="clobber", action="store_true", help="clobber existing db")
-    parser.add_option("-i", "--inputdir", dest="inputdir", help="aus datastore to read")
-    parser.add_option("-d", "--db", dest="db", help="database to use, relative to inputdir")
+    parser.add_option("-t", "--test-dir", dest="testDirs", action="append")
     parser.add_option("", "--dump-rules", dest="dumprules", action="store_true", help="dump rules to stdout")
     parser.add_option("", "--dump-releases", dest="dumpreleases", action="store_true", help="dump release data to stdout")
-    parser.add_option("-w", "--walk", dest="walksnippetspath", help="snippet directory to walk testing snippet creation based on rules, otherwise static test")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="verbose output for snippet checking")
 
     options, args = parser.parse_args()
-    if not options.inputdir or not os.path.isdir(options.inputdir):
-        parser.error('Must specify a directory to read with -i/--inputdir')
-    os.chdir(options.inputdir)
-    if options.walksnippetspath:
-        options.walksnippetspath = os.path.abspath(options.walksnippetspath)
+    if not options.testDirs:
+        for dirname in os.listdir('aus-data-snapshots'):
+            d = os.path.join('aus-data-snapshots', dirname)
+            if isValidTestDir(d):
+                options.testDirs.append(d)
 
-    if options.clobber and os.path.exists(options.db):
-        os.remove(options.db)
-    AUS = AUS3(dbname=options.db)
-    if options.clobber:
-        populateDB(AUS)
-
-    # "pretty" printing
-    if options.dumprules:
-        AUS.dumpRules()
-    if options.dumpreleases:
-        AUS.dumpReleases()
-
-    if options.walksnippetspath:
-        walkSnippets(AUS, options.walksnippetspath)
-    else:
-        staticTest(AUS)
+    for td in options.testDirs:
+        print "Testing %s" % td
+        AUS = AUS3(dbname=':memory:')
+        populateDB(AUS, td)
+        if options.dumprules:
+            AUS.dumpRules()
+        if options.dumpreleases:
+            AUS.dumpReleases()
+        result = walkSnippets(AUS, os.path.join(td, 'snippets'))
+        print "%s\n" % result

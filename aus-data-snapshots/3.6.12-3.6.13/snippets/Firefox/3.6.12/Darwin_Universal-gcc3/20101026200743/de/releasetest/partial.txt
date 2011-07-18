@@ -1,0 +1,10 @@
+version=1
+type=partial
+url=http://download.mozilla.org/?product=firefox-3.6.13-partial-3.6.12&os=osx&lang=de
+hashFunction=SHA512
+hashValue=ca47dd0b3a1cc758a2c1a04f57b9b7e9e28cd0f92701598fe85be3fa842d4d49dde438074a42763d6264a03dcd1d3346c60ffda558b6d8fe433ef8853fa5666a
+size=1453565
+build=20101203074432
+appv=3.6.13
+extv=3.6.13
+detailsUrl=http://www.mozilla.com/de/firefox/3.6.13/releasenotes/

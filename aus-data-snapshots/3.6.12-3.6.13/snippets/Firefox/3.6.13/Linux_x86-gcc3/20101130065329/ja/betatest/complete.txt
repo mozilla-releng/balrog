@@ -1,0 +1,10 @@
+version=1
+type=complete
+url=http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/linux-i686/ja/firefox-3.6.13.complete.mar
+hashFunction=SHA512
+hashValue=df0f96f5c72d20835ee23f5c5e223d9d5f0a0f545b88dd99c41c26ebabead446b7e44079fd500f733c7a02b9dbd3b0877546d8882c406892bd988c855296fd88
+size=10812181
+build=20101203074139
+appv=3.6.13
+extv=3.6.13
+detailsUrl=http://www.mozilla.com/ja/firefox/3.6.13/releasenotes/

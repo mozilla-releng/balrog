@@ -1,0 +1,10 @@
+version=1
+type=complete
+url=http://download.mozilla.org/?product=firefox-3.6.13-complete&os=linux&lang=en-US
+hashFunction=SHA512
+hashValue=7ac01b0c2cf0a7e5e3993e4863aba9110645b67ec056b33aac0daa7d870cf3aa37fa253c63c16eaca9d67af0cd19a6f57f33be883f7164672b0656b9de2b0f5a
+size=10807461
+build=20101203074139
+appv=3.6.13
+extv=3.6.13
+detailsUrl=http://www.mozilla.com/en-US/firefox/3.6.13/releasenotes/

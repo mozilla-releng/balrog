@@ -1,0 +1,10 @@
+version=1
+type=partial
+url=http://download.mozilla.org/?product=firefox-3.6.13-partial-3.6.12&os=linux&lang=ja
+hashFunction=SHA512
+hashValue=861fbfe8d4b9359e99e9366977ae829cfe3aeadaea454e6ef00f77652bb18d9f3e9674c18dc047b000f1c370a86fd9c17e23f5bf246eded6fe8156b077469df8
+size=854142
+build=20101203074139
+appv=3.6.13
+extv=3.6.13
+detailsUrl=http://www.mozilla.com/ja/firefox/3.6.13/releasenotes/

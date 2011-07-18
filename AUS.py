@@ -167,7 +167,7 @@ class AUS3:
                          (rule['mapping'],)).fetchone()
         if not res:
             # need to log some sort of data inconsistency error here
-            print "AUS.expandRelease failed to get release data from db"
+            # print "AUS.expandRelease failed to get release data from db"
             return None
         relData = json.loads(res['data'])
         updateData = defaultdict(list)
@@ -227,7 +227,10 @@ class AUS3:
         if not rel:
             # handle this better, both for prod and debugging
             # print "AUS.createSnippet: couldn't expand rule for update target"
-            return {}
+            # XXX: Not sure we should be specifying patch types here, but it's
+            # required for tests that have null snippets in them at the time
+            # of writing.
+            return {"partial": "", "complete": ""}
 
         snippets = {}
         for patch in rel['patches']:

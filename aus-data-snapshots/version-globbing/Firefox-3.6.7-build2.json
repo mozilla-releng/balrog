@@ -1,0 +1,15 @@
+{
+    "name": "Firefox-3.6.7-build1",
+    "extv": "3.6.7",
+    "platforms": {
+        "Darwin_Universal-gcc3": {
+            "buildID": "20100713121444"
+        },
+        "Linux_x86-gcc3": {
+            "buildID": "20100713120425"
+        },
+        "WINNT_x86-msvc": {
+            "buildID": "20100713130626"
+        }
+    }
+}

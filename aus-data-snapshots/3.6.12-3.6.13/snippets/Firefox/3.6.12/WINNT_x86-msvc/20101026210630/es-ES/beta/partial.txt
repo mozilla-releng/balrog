@@ -1,0 +1,10 @@
+version=1
+type=partial
+url=http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/win32/es-ES/firefox-3.6.12-3.6.13.partial.mar
+hashFunction=SHA512
+hashValue=692f98dfd4b2fea74e9a6779c7ab34deeeeddf44474aca1b70ef20916c095367a4822d93b01e12afbcfb0f87d6a2d7cbf193e429a2d1db08cb27388c1add0a80
+size=2725082
+build=20101203075014
+appv=3.6.13
+extv=3.6.13
+detailsUrl=http://www.mozilla.com/es-ES/firefox/3.6.13/releasenotes/

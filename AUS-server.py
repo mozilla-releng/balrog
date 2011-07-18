@@ -52,6 +52,8 @@ class AUS3HTTPServer(BaseHTTPServer.BaseHTTPRequestHandler):
                     query['headerArchitecture'] = 'PPC'
                 else:
                     query['headerArchitecture'] = 'Intel'
+            else:
+                query['headerArchitecture'] = 'Intel'
             return query
         else:
             return {}
@@ -64,13 +66,13 @@ if __name__ == "__main__":
         port=8000
     )
     parser.add_option("-d", "--db", dest="db", help="database to use, relative to inputdir")
-    parser.add_option("-p", "--port", dest="port", help="port for server")
+    parser.add_option("-p", "--port", dest="port", type="int", help="port for server")
     options, args = parser.parse_args()
 
     AUS = AUS3(dbname=options.db)
 
     Handler = AUS3HTTPServer
-    httpd = SocketServer.TCPServer(("", int(options.port)), Handler)
+    httpd = SocketServer.TCPServer(("", options.port), Handler)
 
     print "serving at port", options.port
     httpd.serve_forever()

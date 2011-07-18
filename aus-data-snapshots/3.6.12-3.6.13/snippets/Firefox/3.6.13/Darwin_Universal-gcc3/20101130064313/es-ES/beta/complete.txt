@@ -1,0 +1,10 @@
+version=1
+type=complete
+url=http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/mac/es-ES/firefox-3.6.13.complete.mar
+hashFunction=SHA512
+hashValue=441f0afd3e352887073fb718060ff546b7d5a4a07a0e6b1e47916271655c078313df17293c37ffd5fff22a814168b23577321e991c9de8482f040f06491dd0d8
+size=18826485
+build=20101203074432
+appv=3.6.13
+extv=3.6.13
+detailsUrl=http://www.mozilla.com/es-ES/firefox/3.6.13/releasenotes/
