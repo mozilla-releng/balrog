@@ -98,6 +98,37 @@ class AUS3:
             return r
         return None
 
+    def matchesRegex(self, foo, bar):
+        # Expand wildcards and use ^/$ to make sure we don't succeed on partial
+        # matches.
+        test = foo.replace('.','\.').replace('*','.*')
+        test = '^%s$' % test
+        if re.match(test, bar):
+            return True
+        return False
+
+    def _versionMatchesRule(self, ruleVersion, queryVersion):
+        """Decides whether a version from the rules matches an incoming version.
+           If the ruleVersion is null, we match any queryVersion. If it's not
+           null, we must either match exactly, or match a potential wildcard."""
+        if ruleVersion == None:
+            return True
+        if self.matchesRegex(ruleVersion, queryVersion):
+            return True
+
+    def _channelMatchesRule(self, ruleChannel, queryChannel):
+        """Decides whether a channel from the rules matchs an incoming one.
+           If the ruleChannel is null, we match any queryChannel. We also match
+           if the channels match exactly, or match after wildcards in ruleChannel
+           are resolved. Channels may have a fallback specified, too, so we must
+           check if the fallback version of the queryChannel matches the ruleChannel."""
+        if ruleChannel == None:
+            return True
+        if self.matchesRegex(ruleChannel, queryChannel):
+            return True
+        if self.matchesRegex(ruleChannel, self.getFallbackChannel(queryChannel)):
+            return True
+
     def getMatchingRules(self, updateQuery):
         #print "\nlooking for rules that apply to"
         #print updateQuery
@@ -106,7 +137,6 @@ class AUS3:
             SELECT * from update_paths
             WHERE throttle > 0
               AND (product=? OR product IS NULL)
-              AND (channel=? OR channel IS NULL)
               AND (buildTarget=? OR buildTarget IS NULL)
               AND (buildID=? OR buildID IS NULL)
               AND (locale=? OR locale IS NULL)
@@ -115,7 +145,6 @@ class AUS3:
               AND (distVersion=? OR distVersion IS NULL)
               AND (headerArchitecture=? OR headerArchitecture IS NULL)
             """, (updateQuery['product'],
-                  updateQuery['channel'],
                   updateQuery['buildTarget'],
                   updateQuery['buildID'],
                   updateQuery['locale'],
@@ -132,13 +161,9 @@ class AUS3:
             #print row, updateQuery['name']
             # ignore any rules which would update ourselves to the same version
             if row['mapping'] != updateQuery['name']:
-                # now resolve our special meanings
-                if row['version'] is None:
+                if self._versionMatchesRule(row['version'], updateQuery['version']) and \
+                  self._channelMatchesRule(row['channel'], updateQuery['channel']):
                     rules.append(self.convertRule(row))
-                else:
-                    test = row['version'].replace('.','\.').replace('*','.*')
-                    if re.match(test, updateQuery['version']):
-                        rules.append(self.convertRule(row))
             row = res.fetchone()
     #    print "\nreduced matches:"
     #    for r in rules:
@@ -158,6 +183,9 @@ class AUS3:
         #for r in rules:
         #    print r
         return None
+
+    def getFallbackChannel(self, channel):
+        return channel.split('-cck-')[0]
 
     def expandRelease(self, updateQuery, rule):
         if not rule:
@@ -198,7 +226,14 @@ class AUS3:
                     if 'fileUrl' in patch:
                         url = patch['fileUrl']
                     else:
-                        url = relData['fileUrls'][updateQuery['channel']]
+                        # When we're using a fallback channel it's unlikely
+                        # we'll have a fileUrl specifically for it, but we
+                        # should try nonetheless. Non-fallback cases shouldn't
+                        # be hitting any exceptions here.
+                        try:
+                            url = relData['fileUrls'][updateQuery['channel']]
+                        except KeyError:
+                            url = relData['fileUrls'][self.getFallbackChannel(updateQuery['channel'])]
                         url = url.replace('%LOCALE%', updateQuery['locale'])
                         url = url.replace('%OS_FTP%', relData['platforms'][buildTarget]['OS_FTP'])
                         url = url.replace('%FILENAME%', relData['ftpFilenames'][patchKey])

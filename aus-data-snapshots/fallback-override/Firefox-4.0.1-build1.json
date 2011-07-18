@@ -1,0 +1,9 @@
+{
+    "name": "Firefox-4.0.1-build1",
+    "extv": "4.0.1",
+    "platforms": {
+        "WINNT_x86-msvc": {
+            "buildID": "20110413222027"
+        }
+    }
+}

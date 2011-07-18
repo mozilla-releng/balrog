@@ -1,0 +1,10 @@
+version=1
+type=partial
+url=http://download.mozilla.org/?product=firefox-5.0-partial-4.0.1&os=osx&lang=de
+hashFunction=SHA512
+hashValue=acab18bc97b885c0615bfff58a3199c3e2969e0d21451e575609e93fb5e12c1943ba4c4a46f7d5e798dc5488aa8f8381eea7761f7116db93a6b069a4b46b4810
+size=9639850
+build=20110615151330
+appv=5.0
+extv=5.0
+detailsUrl=https://www.mozilla.com/de/firefox/5.0/releasenotes/

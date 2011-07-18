@@ -1,0 +1,44 @@
+{
+    "name": "Firefox-5.0-build1",
+    "data_version": 1,
+    "extv": "5.0",
+    "appv": "5.0",
+    "detailsUrl": "https://www.mozilla.com/%LOCALE%/firefox/5.0/releasenotes/",
+    "fileUrls": {
+        "betatest":    "http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/5.0-candidates/build1/update/%OS_FTP%/%LOCALE%/%FILENAME%",
+        "beta":        "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/5.0-candidates/build1/update/%OS_FTP%/%LOCALE%/%FILENAME%",
+        "releasetest": "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%",
+        "release":     "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%"
+    },
+    "ftpFilenames": {
+        "partial":  "firefox-4.0.1-5.0.partial.mar",
+        "complete": "firefox-5.0.complete.mar"
+    },
+    "bouncerProducts": {
+        "partial":  "firefox-5.0-partial-4.0.1",
+        "complete": "firefox-5.0-complete"
+    },
+    "hashFunction": "SHA512",
+    "fakePartials": 0,
+    "platforms": {
+        "WINNT_x86-msvc": {
+            "OS_BOUNCER": "win",
+            "OS_FTP": "win32",
+            "buildID": "20110615151330",
+            "locales": {
+                "ja": {
+                    "complete": {
+                        "filesize": "17394996",
+                        "from": "*",
+                        "hashValue": "2e29c467a0e6d5ebda79a43621936a2b0b2b5a0d684dd4c6e3e634791b4439c82ec7122dd927c7d712fb36f8db53075ca51a9196810704bd668bc64bbc04fa09"
+                    },
+                    "partial": {
+                        "filesize": "8892302",
+                        "from": "Firefox-4.0.1-build1",
+                        "hashValue": "cc75583081964e8d1941fbce23c9d8bdbb81b69d8978d6222989372b38fea7c89d21505954d76e7baaddfe176315ef1a5d539e2dc042a268f75ac1a8fb28456f"
+                    }
+                }
+            }
+        }
+    }
+}
