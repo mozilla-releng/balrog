@@ -157,7 +157,7 @@ if __name__ == "__main__":
         if options.dumprules:
             log.info("Rules are \n(id, priority, mapping, throttle, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")
             for rule in AUS.getRules():
-                log.info(rule)
+                log.info(", ".join([str(rule[k]) for k in rule.keys()]))
             log.info("-"*50)
 
         if options.dumpreleases:

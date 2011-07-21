@@ -24,79 +24,93 @@ Content-Length: 911
 </updates>
 
 
-Verify snippets
----------------
-$ python test-rules.py -i aus-data-snapshots/20101208/ -d update.db  -w Firefox/3.6.12; done
-walkSnippets: 1368 snippets, 1368 PASS, 0 FAIL  (in 512.1 tests/second)
+Running snippet tests
+---------------------
+aus-data-snapshots contains directories that have tests for specific functionality. To run all of the tests, use the following command:
+$ python test-rules.py
 
-$ python test-rules.py -i aus-data-snapshots/20101208/ -d update.db  -w Firefox/3.6.13; done
-walkSnippets: 2736 snippets, 2736 PASS, 0 FAIL  (in 473.3 tests/second)
+Testing aus-data-snapshots/3.6.12-3.6.13
+PASS   (324 PASS, 0 FAIL, 1.42 sec, 227.5 tests/second)
+Testing aus-data-snapshots/fallback-override
+PASS   (1 PASS, 0 FAIL)
+Testing aus-data-snapshots/fallback-falls-back
+PASS   (2 PASS, 0 FAIL)
 
+You can also run specific tests with -t:
+$ python test-rules.py -t aus-data-snapshots/alias
 
-test-rules.py
--------------
+Testing aus-data-snapshots/alias
+PASS   (8 PASS, 0 FAIL)
 
-For dummy request:
-    testUpdate = {'product': 'Firefox',
-                  'version': '3.6.12',
-                  'buildID': '20101026210630',
-                  'buildTarget': 'WINNT_x86-msvc',
-                  'locale': 'en-US',
-                  'channel': 'releasetest',
-                  'osVersion': 'foo',
-                  'distribution': 'foo',
-                  'distVersion': 'foo',
-                  'headerArchitecture': 'Intel',
-                  'name': ''
-                 }
+To print the rules or releases table prior to running each test, use --dump-rules or --dump-releases:
+$ python test-rules.py --dump-rules --dump-releases -t aus-data-snapshots/alias
 
-Command:
-$ python test-rules.py -i aus-data-snapshots/20101208/ -c
-
-Output:
-The request is from Firefox-3.6.12-build1
-
-looking for rules that apply to
-{'product': 'Firefox', 'buildID': '20101026210630', 'headerArchitecture': 'Intel', 'buildTarget': 'WINNT_x86-msvc', 'osVersion': 'foo', 'distVersion': 'foo', 'name': u'Firefox-3.6.12-build1', 'locale': 'en-US', 'version': '3.6.12', 'distribution': 'foo', 'channel': 'releasetest'}
-
-raw matches:
-(3, 50, u'Firefox-3.6.13-build3', 100, u'minor', u'Firefox', u'3.6*', u'releasetest', None, None, None, None, None, None, None, None) Firefox-3.6.12-build1
-
-the one rule to rule them all is:
-{'comment': None, 'product': u'Firefox', 'throttle': 100, 'buildID': None, 'mapping': u'Firefox-3.6.13-build3', 'priority': 50, 'locale': None, 'version': u'3.6*', 'headerArchitecture': None, 'update_type': u'minor', 'buildTarget': None, 'distribution': None, 'osVersion': None, 'rule_id': 3, 'channel': u'releasetest', 'distVersion': None}
-
-partial snippet:
-version=1
-type=partial
-url=http://download.mozilla.org/?product=firefox-3.6.13-partial-3.6.12&os=win&lang=en-US
-hashFunction=SHA512
-hashValue=9cb8770fbe03367b4697d0a01485c7595544c9a6e558bf914ed5075532debdfe39fbbb48fd83d519bb93c314f94936c5b6c860f55be256b357de00aac74173a6
-size=2725258
-build=20101203075014
-appv=3.6.13
-extv=3.6.13
-detailsUrl=http://www.mozilla.com/en-US/firefox/3.6.13/releasenotes/
-
-complete snippet:
-version=1
-type=complete
-url=http://download.mozilla.org/?product=firefox-3.6.13-complete&os=win&lang=en-US
-hashFunction=SHA512
-hashValue=8d4e976db87cb670c7f47571b816f3fb9f998ae1286e924c9837e7caf9d001e15a6d2febf07d3784683e4bbd1a424d0559a152605e173fee6c31d0d8e2eb57c9
-size=11536582
-build=20101203075014
-appv=3.6.13
-extv=3.6.13
-detailsUrl=http://www.mozilla.com/en-US/firefox/3.6.13/releasenotes/
-
-xml is:
-<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="3.6.13" extensionVersion="3.6.13" buildID="20101203075014" detailsURL="http://www.mozilla.com/en-US/firefox/3.6.13/releasenotes/">
-        <patch type="partial" URL="http://download.mozilla.org/?product=firefox-3.6.13-partial-3.6.12&os=win&lang=en-US" hashFunction="SHA512" hashValue="9cb8770fbe03367b4697d0a01485c7595544c9a6e558bf914ed5075532debdfe39fbbb48fd83d519bb93c314f94936c5b6c860f55be256b357de00aac74173a6" size="2725258"/>
-        <patch type="complete" URL="http://download.mozilla.org/?product=firefox-3.6.13-complete&os=win&lang=en-US" hashFunction="SHA512" hashValue="8d4e976db87cb670c7f47571b816f3fb9f998ae1286e924c9837e7caf9d001e15a6d2febf07d3784683e4bbd1a424d0559a152605e173fee6c31d0d8e2eb57c9" size="11536582"/>
-    </update>
-</updates>
-
------
-which matches the snippets and AUS output
+Testing aus-data-snapshots/alias
+Rules are 
+(id, priority, mapping, throttle, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):
+1, 100, Firefox-5.0.1-build1, 100, minor, Firefox, 5.0*, release, None, None, None, None, None, None, None, None
+2, 100, Firefox-5.0.1-build1, 100, minor, Firefox, 5.0*, betatest, None, None, None, None, None, None, None, None
+--------------------------------------------------
+Releases are 
+(name, data):
+(Firefox-5.0-build1, {
+  "extv": "5.0", 
+  "name": "Firefox-5.0-build1", 
+  "platforms": {
+    "Darwin_x86_64-gcc3-u-i386-x86_64": {
+      "buildID": "20110615151330"
+    }, 
+    "Darwin_x86-gcc3-u-i386-x86_64": {
+      "alias": "Darwin_x86_64-gcc3-u-i386-x86_64"
+    }
+  }
+} 
+(Firefox-5.0.1-build1, {
+  "extv": "5.0.1", 
+  "hashFunction": "SHA512", 
+  "name": "Firefox-5.0.1-build1", 
+  "data_version": 1, 
+  "appv": "5.0.1", 
+  "detailsUrl": "https://www.mozilla.com/%LOCALE%/firefox/5.0.1/releasenotes/", 
+  "fileUrls": {
+    "release": "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%", 
+    "beta": "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/5.0.1-candidates/build1/update/%OS_FTP%/%LOCALE%/%FILENAME%", 
+    "releasetest": "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%", 
+    "betatest": "http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/5.0.1-candidates/build1/update/%OS_FTP%/%LOCALE%/%FILENAME%"
+  }, 
+  "platforms": {
+    "Darwin_x86_64-gcc3-u-i386-x86_64": {
+      "buildID": "20110707182747", 
+      "OS_FTP": "mac", 
+      "locales": {
+        "en-US": {
+          "partial": {
+            "hashValue": "aafcd1548521844108b44efd6a5c2ab627f910bbce803d59fc8fc7b914896176a54b9ea8dd14a8fdde443a31425e87481cbe929dff83506f7d65ad1b497affff", 
+            "from": "Firefox-5.0-build1", 
+            "filesize": "1823339"
+          }, 
+          "complete": {
+            "hashValue": "960de0a85fdcb0cd9307253b98b4ae810c7da5ad317f8f7b7275fb8f6a60ffe9596a909ce332174e0d312707b298fb33551596fed6c2a9804ac4b07499efbb0f", 
+            "from": "*", 
+            "filesize": "28330937"
+          }
+        }
+      }, 
+      "OS_BOUNCER": "osx"
+    }, 
+    "Darwin_x86-gcc3-u-i386-x86_64": {
+      "alias": "Darwin_x86_64-gcc3-u-i386-x86_64"
+    }
+  }, 
+  "bouncerProducts": {
+    "partial": "firefox-5.0.1-partial-5.0", 
+    "complete": "firefox-5.0.1-complete"
+  }, 
+  "fakePartials": 0, 
+  "ftpFilenames": {
+    "partial": "firefox-5.0-5.0.1.partial.mar", 
+    "complete": "firefox-5.0.1.complete.mar"
+  }
+} 
+--------------------------------------------------
+PASS   (8 PASS, 0 FAIL)
