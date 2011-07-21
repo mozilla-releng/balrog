@@ -1,0 +1,10 @@
+version=1
+type=partial
+url=http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/5.0.1-candidates/build1/update/mac/en-US/firefox-5.0-5.0.1.partial.mar
+hashFunction=SHA512
+hashValue=aafcd1548521844108b44efd6a5c2ab627f910bbce803d59fc8fc7b914896176a54b9ea8dd14a8fdde443a31425e87481cbe929dff83506f7d65ad1b497affff
+size=1823339
+build=20110707182747
+appv=5.0.1
+extv=5.0.1
+detailsUrl=https://www.mozilla.com/en-US/firefox/5.0.1/releasenotes/

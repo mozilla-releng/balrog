@@ -1,0 +1,47 @@
+{
+    "name": "Firefox-5.0.1-build1",
+    "data_version": 1,
+    "extv": "5.0.1",
+    "appv": "5.0.1",
+    "detailsUrl": "https://www.mozilla.com/%LOCALE%/firefox/5.0.1/releasenotes/",
+    "fileUrls": {
+        "betatest":    "http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/5.0.1-candidates/build1/update/%OS_FTP%/%LOCALE%/%FILENAME%",
+        "beta":        "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/5.0.1-candidates/build1/update/%OS_FTP%/%LOCALE%/%FILENAME%",
+        "releasetest": "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%",
+        "release":     "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%"
+    },
+    "ftpFilenames": {
+        "partial":  "firefox-5.0-5.0.1.partial.mar",
+        "complete": "firefox-5.0.1.complete.mar"
+    },
+    "bouncerProducts": {
+        "partial":  "firefox-5.0.1-partial-5.0",
+        "complete": "firefox-5.0.1-complete"
+    },
+    "hashFunction": "SHA512",
+    "fakePartials": 0,
+    "platforms": {
+        "Darwin_x86_64-gcc3-u-i386-x86_64": {
+            "OS_BOUNCER": "osx",
+            "OS_FTP": "mac",
+            "buildID": "20110707182747",
+            "locales": {
+                "en-US": {
+                    "complete": {
+                        "filesize": "28330937",
+                        "from": "*",
+                        "hashValue": "960de0a85fdcb0cd9307253b98b4ae810c7da5ad317f8f7b7275fb8f6a60ffe9596a909ce332174e0d312707b298fb33551596fed6c2a9804ac4b07499efbb0f"
+                    },
+                    "partial": {
+                        "filesize": "1823339",
+                        "from": "Firefox-5.0-build1",
+                        "hashValue": "aafcd1548521844108b44efd6a5c2ab627f910bbce803d59fc8fc7b914896176a54b9ea8dd14a8fdde443a31425e87481cbe929dff83506f7d65ad1b497affff"
+                    }
+                }
+            }
+        },
+        "Darwin_x86-gcc3-u-i386-x86_64": {
+            "alias": "Darwin_x86_64-gcc3-u-i386-x86_64"
+        }
+    }
+}

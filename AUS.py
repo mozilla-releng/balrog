@@ -73,11 +73,16 @@ class AUS3:
                          (updateQuery['product'],updateQuery['version']))
         release = self.convertRelease(res.fetchone())
         while release:
-            if buildTarget in release['data']['platforms'].keys() and \
-              buildID == release['data']['platforms'][buildTarget]['buildID']:
-                return release['name']
-            else:
-                release = self.convertRelease(res.fetchone())
+            if buildTarget in release['data']['platforms']:
+                releasePlat = release['data']['platforms'][buildTarget]
+                if 'alias' in releasePlat:
+                    alternateTarget = releasePlat['alias']
+                    releasePlat = release['data']['platforms'][alternateTarget]
+
+                if buildID == releasePlat['buildID']:
+                    return release['name']
+            # otherwise, try the next match
+            release = self.convertRelease(res.fetchone())
         return None
 
     def convertRow(self, row):
@@ -200,13 +205,27 @@ class AUS3:
         relData = json.loads(res['data'])
         updateData = defaultdict(list)
 
-        # return early if we don't have an update for this platform and locale
         buildTarget = updateQuery['buildTarget']
         locale = updateQuery['locale']
-        if buildTarget not in relData['platforms'].keys() or \
-          locale not in relData['platforms'][buildTarget]['locales'].keys():
+
+	# return early if we don't have an update for this platform
+	if buildTarget not in relData['platforms']:
+            return updateData
+
+        # platforms may be aliased to another platform in the case
+        # of identical data, minimizing the json size
+        alias = relData['platforms'][buildTarget].get('alias')
+        if alias and alias in relData['platforms']:
+            relDataPlat = relData['platforms'][alias]
+        else:
+            relDataPlat = relData['platforms'][buildTarget]
+
+        # return early if we don't have an update for this locale
+        if locale not in relDataPlat['locales']:
             # print "AUS.expandRelease: no update to %s for %s/%s" % (rule['mapping'],buildTarget,locale)
             return updateData
+        else:
+            relDataPlatLoc = relDataPlat['locales'][locale]
 
         # this is for the properties AUS2 can cope with today
         if relData['data_version'] == 1:
@@ -215,13 +234,13 @@ class AUS3:
                 updateData[key] = relData[key]
             if 'detailsUrl' in relData:
                 updateData['detailsUrl'] = relData['detailsUrl'].replace('%LOCALE%',updateQuery['locale'])
-            updateData['build'] = relData['platforms'][buildTarget]['buildID']
+            updateData['build'] = relDataPlat['buildID']
 
             # evaluate types of updates and see if we can use them
-            for patchKey in relData['platforms'][buildTarget]['locales'][locale]:
+            for patchKey in relDataPlatLoc:
                 if patchKey not in ('partial','complete'):
                     continue
-                patch = relData['platforms'][buildTarget]['locales'][locale][patchKey]
+                patch = relDataPlatLoc[patchKey]
                 if patch['from'] == updateQuery['name'] or patch['from'] == '*':
                     if 'fileUrl' in patch:
                         url = patch['fileUrl']
@@ -235,10 +254,10 @@ class AUS3:
                         except KeyError:
                             url = relData['fileUrls'][self.getFallbackChannel(updateQuery['channel'])]
                         url = url.replace('%LOCALE%', updateQuery['locale'])
-                        url = url.replace('%OS_FTP%', relData['platforms'][buildTarget]['OS_FTP'])
+                        url = url.replace('%OS_FTP%', relDataPlat['OS_FTP'])
                         url = url.replace('%FILENAME%', relData['ftpFilenames'][patchKey])
                         url = url.replace('%PRODUCT%', relData['bouncerProducts'][patchKey])
-                        url = url.replace('%OS_BOUNCER%', relData['platforms'][buildTarget]['OS_BOUNCER'])
+                        url = url.replace('%OS_BOUNCER%', relDataPlat['OS_BOUNCER'])
                     updateData['patches'].append({
                         'type': patchKey,
                         'URL':  url,
