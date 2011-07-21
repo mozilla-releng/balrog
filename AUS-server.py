@@ -1,5 +1,8 @@
 import BaseHTTPServer, SocketServer
 import re
+import logging
+
+log = logging.getLogger(__name__)
 
 from AUS import *
 
@@ -63,16 +66,23 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.set_defaults(
         db='update.db',
-        port=8000
+        port=8000,
     )
     parser.add_option("-d", "--db", dest="db", help="database to use, relative to inputdir")
     parser.add_option("-p", "--port", dest="port", type="int", help="port for server")
+    parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
+        help="Verbose output")
     options, args = parser.parse_args()
+
+    log_level = logging.INFO
+    if options.verbose:
+        log_level = logging.DEBUG
+    logging.basicConfig(level=log_level, format="%(asctime)s: %(message)s")
 
     AUS = AUS3(dbname=options.db)
 
     Handler = AUS3HTTPServer
     httpd = SocketServer.TCPServer(("", options.port), Handler)
 
-    print "serving at port", options.port
+    log.info("Serving on port %s", options.port)
     httpd.serve_forever()

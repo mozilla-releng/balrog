@@ -7,6 +7,9 @@ except:
     import simplejson as json
 from AUS import *
 
+import logging
+log = logging.getLogger(__name__)
+
 def populateDB(AUS, testdir):
     # assuming we're already in the right directory with a db connection
     # read any rules we already have
@@ -89,16 +92,15 @@ def walkSnippets(AUS, testPath):
                            AUS3snippet.splitlines(),
                            lineterm='',
                            n=20)
-                print "FAIL: %s" % f
+                log.info("FAIL: %s", f)
                 failCount += 1
                 for line in diff:
-                    print 'DIFF: %s' % line
+                    log.info('DIFF: %s', line)
             else:
-                if options.verbose:
-                    print "PASS: %s" % f
+                log.debug("PASS: %s", f)
                 passCount += 1
         else:
-            print "FAIL: no snippet for %s" % f
+            log.info("FAIL: no snippet for %s", f)
             failCount += 1
 
     elapsed = time.time() - start
@@ -135,6 +137,13 @@ if __name__ == "__main__":
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="verbose output for snippet checking")
 
     options, args = parser.parse_args()
+
+    log_level = logging.INFO
+    if options.verbose:
+        log_level = logging.DEBUG
+
+    logging.basicConfig(level=log_level, format='%(message)s')
+
     if not options.testDirs:
         for dirname in os.listdir('aus-data-snapshots'):
             d = os.path.join('aus-data-snapshots', dirname)
@@ -142,12 +151,20 @@ if __name__ == "__main__":
                 options.testDirs.append(d)
 
     for td in options.testDirs:
-        print "Testing %s" % td
+        log.info("Testing %s", td)
         AUS = AUS3(dbname=':memory:')
         populateDB(AUS, td)
         if options.dumprules:
-            AUS.dumpRules()
+            log.info("Rules are \n(id, priority, mapping, throttle, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")
+            for rule in AUS.getRules():
+                log.info(rule)
+            log.info("-"*50)
+
         if options.dumpreleases:
-            AUS.dumpReleases()
+            log.info("Releases are \n(name, data):")
+            for release in AUS.getReleases():
+                log.info("(%s, %s " % (release['name'],json.dumps(json.loads(release['data']),indent=2)))
+            log.info("-"*50)
+
         result = walkSnippets(AUS, os.path.join(td, 'snippets'))
-        print "%s\n" % result
+        log.info(result)

@@ -3,6 +3,9 @@ from collections import defaultdict
 # the json module in python 2.6 is really slow in comparison to simplejson
 import simplejson as json
 
+import logging
+log = logging.getLogger(__name__)
+
 class AUS3:
     def __init__(self, dbname=None):
         if dbname == None:
@@ -49,21 +52,11 @@ class AUS3:
         )
         """)
 
-    def dumpRules(self):
-        rules = self.db.execute("SELECT * FROM update_paths ORDER BY priority,version,mapping;")
-        if rules:
-            print "Rules are \n(id, priority, mapping, throttle, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch)"
-            for rule in rules:
-                print rule
-            print "-"*50
+    def getRules(self):
+        return self.db.execute("SELECT * FROM update_paths ORDER BY priority,version,mapping;")
 
-    def dumpReleases(self):
-        releases = self.db.execute("SELECT * FROM releases;")
-        if releases:
-            print "Releases are \n(name, data:"
-            for release in releases:
-                print "(%s, %s " % (release['name'],json.dumps(json.loads(release['data']),indent=2))
-            print "-"*50
+    def getReleases(self):
+        return self.db.execute("SELECT * FROM releases;")
 
     def identifyRequest(self, updateQuery):
         buildTarget = updateQuery['buildTarget']
@@ -135,8 +128,8 @@ class AUS3:
             return True
 
     def getMatchingRules(self, updateQuery):
-        #print "\nlooking for rules that apply to"
-        #print updateQuery
+        log.debug("AUS.getMatchingRules: Looking for rules that apply to:")
+        log.debug("AUS.getMatchingRules: %s", updateQuery)
         # get anything that must match or is undefined in rules
         res = self.db.execute("""
             SELECT * from update_paths
@@ -160,33 +153,30 @@ class AUS3:
                   ))
         # evaluate wildcard parameters
         rules = []
-        #print "\nraw matches:"
+        log.debug("AUS.getMatchingRules: Raw matches:")
         row = res.fetchone()
         while row:
-            #print row, updateQuery['name']
+            log.debug("AUS.getMatchingRules: %s", self.convertRule(row))
             # ignore any rules which would update ourselves to the same version
             if row['mapping'] != updateQuery['name']:
                 if self._versionMatchesRule(row['version'], updateQuery['version']) and \
                   self._channelMatchesRule(row['channel'], updateQuery['channel']):
                     rules.append(self.convertRule(row))
             row = res.fetchone()
-    #    print "\nreduced matches:"
-    #    for r in rules:
-    #        print r
+        log.debug("AUS.getMatchingRules: Reduced matches:")
+        for r in rules:
+            log.debug("AUS.getMatchingRules: %s", r)
         return rules
 
     def evaluateRules(self, updateQuery):
         rules = self.getMatchingRules(updateQuery)
-        #print "\nrules before"
-        #for r in rules:
-        #    print r
+
         ### XXX throw any N->N update rules and keep the highest priority remaining one
         if len(rules) >= 1:
             rules = sorted(rules,key=lambda rule: rule['priority'], reverse=True)
+            log.debug("AUS.evaluateRules: Returning rule:")
+            log.debug("AUS.evaluateRules: %s", rules[0])
             return rules[0]
-        #print "\nrules after"
-        #for r in rules:
-        #    print r
         return None
 
     def getFallbackChannel(self, channel):
@@ -200,7 +190,8 @@ class AUS3:
                          (rule['mapping'],)).fetchone()
         if not res:
             # need to log some sort of data inconsistency error here
-            # print "AUS.expandRelease failed to get release data from db"
+            log.debug("AUS.expandRelease: Failed to get release data from db for:")
+            log.debug("AUS.expandRelease: %s", updateQuery)
             return None
         relData = json.loads(res['data'])
         updateData = defaultdict(list)
@@ -222,7 +213,7 @@ class AUS3:
 
         # return early if we don't have an update for this locale
         if locale not in relDataPlat['locales']:
-            # print "AUS.expandRelease: no update to %s for %s/%s" % (rule['mapping'],buildTarget,locale)
+            log.debug("AUS.expandRelease: No update to %s for %s/%s", rule['mapping'], buildTarget, locale)
             return updateData
         else:
             relDataPlatLoc = relDataPlat['locales'][locale]
@@ -280,7 +271,7 @@ class AUS3:
         rel = self.expandRelease(updateQuery, release)
         if not rel:
             # handle this better, both for prod and debugging
-            # print "AUS.createSnippet: couldn't expand rule for update target"
+            log.debug("AUS.createSnippet: Couldn't expand rule for update target")
             # XXX: Not sure we should be specifying patch types here, but it's
             # required for tests that have null snippets in them at the time
             # of writing.
