@@ -191,7 +191,7 @@ class AUS3:
         if not res:
             # need to log some sort of data inconsistency error here
             log.debug("AUS.expandRelease: Failed to get release data from db for:")
-            log.debug("AUS.expandRelease: %s", updateQuery)
+            log.debug("AUS.expandRelease: %s", rule['mapping'])
             return None
         relData = json.loads(res['data'])
         updateData = defaultdict(list)
