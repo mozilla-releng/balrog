@@ -19,14 +19,13 @@ def populateDB(AUS, testdir):
         for line in f:
             if line.startswith('#'):
                 continue
-            AUS.db.execute(line.strip())
+            AUS.db.engine.execute(line.strip())
     # and add any json blobs we created painstakingly, converting to compact json
     for f in glob.glob('%s/*.json' % testdir):
         data = json.load(open(f,'r'))
         product,version = data['name'].split('-')[0:2]
-        AUS.db.execute("INSERT INTO releases VALUES ('%s', '%s', '%s','%s')" %
+        AUS.db.engine.execute("INSERT INTO releases VALUES ('%s', '%s', '%s','%s')" %
                    (data['name'], product, data['extv'], json.dumps(data)))
-    AUS.db.commit()
     # TODO - create a proper importer that walks the snippet store to find hashes ?
 
 def getQueryFromPath(snippetPath):
@@ -152,18 +151,18 @@ if __name__ == "__main__":
 
     for td in options.testDirs:
         log.info("Testing %s", td)
-        AUS = AUS3(dbname=':memory:')
+        AUS = AUS3(dbname='sqlite:///:memory:')
         populateDB(AUS, td)
         if options.dumprules:
             log.info("Rules are \n(id, priority, mapping, throttle, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")
-            for rule in AUS.getRules():
+            for rule in AUS.rules.getRules():
                 log.info(", ".join([str(rule[k]) for k in rule.keys()]))
             log.info("-"*50)
 
         if options.dumpreleases:
             log.info("Releases are \n(name, data):")
-            for release in AUS.getReleases():
-                log.info("(%s, %s " % (release['name'],json.dumps(json.loads(release['data']),indent=2)))
+            for release in AUS.releases.getReleases():
+                log.info("(%s, %s " % (release['name'],json.dumps(release['data'],indent=2)))
             log.info("-"*50)
 
         result = walkSnippets(AUS, os.path.join(td, 'snippets'))
