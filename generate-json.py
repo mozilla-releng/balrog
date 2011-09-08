@@ -108,7 +108,7 @@ def getPlatforms(platform, version):
         # Older universal builds use the old style mapping
         if (version.startswith('3.5') and versionLt(version, '3.5.16')) or \
           (version.startswith('3.6') and versionLt(version, '3.6.13')) or \
-          versionLt(version, '4.0b5'):
+          (version.startswith('4.0') and versionLt(version, '4.0b5')):
             return findPlatforms(deprecated_platform_map, platform)[0]
         # Newer 3.5, 3.6, and a couple of 4.0 builds are ppc+i386
         # which are uniquely identifiable by "macosx"
