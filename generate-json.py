@@ -10,6 +10,9 @@ try:
 except:
     import simplejson as json
 
+from auslib.db import AUSDatabase
+
+DATA_VERSION = 1
 IGNORE_PLATFORMS = ('WINCE_arm-msvc',)
 
 platform_map = {
@@ -221,7 +224,7 @@ def processCandidatesDir(d, version, partial, exclude_partials, hash_func, local
                 lrelData[marType]["filesize"] = str(stat(mar).st_size)
                 lrelData[marType]["hashValue"] = hashFile(mar, hash_func)
 
-def processSnippetDir(walkdir, platform, version, partial, exclude_partials, locales, relData):
+def processReleaseSnippetDir(walkdir, platform, version, partial, exclude_partials, locales, relData):
     buildIDs = sorted(listdir(join(walkdir,platform)))
     # read snippets from last build of previous release
     if buildIDs:
@@ -259,6 +262,41 @@ def processSnippetDir(walkdir, platform, version, partial, exclude_partials, loc
             lrelData[type]["filesize"] = getParameter(snip,'size')
             lrelData[type]["hashValue"] = getParameter(snip,'hashValue')
 
+def processNightlySnippetDir(walkdir, platform, version, partial, exclude_partials, locales, relData):
+    buildIDs = sorted(listdir(join(walkdir,platform)))
+    if buildIDs:
+        buildID = buildIDs[-2]
+    else:
+        return
+    base = join(walkdir,platform,buildID)
+    relData["platforms"][platform] = {}
+
+    # get params for all platforms
+    snip = readFile(join(base,'en-US','partial.txt'))
+    relData["extv"] = getParameter(snip,'extv')
+    relData["appv"] = getParameter(snip,'appv')
+    relData["platforms"][platform]["buildID"] = getParameter(snip,'build')
+
+    relData["platforms"][platform]["locales"] = {}
+    for locale in listdir(base):
+        if locales and locale not in locales:
+            continue
+        lrelData = relData["platforms"][platform]["locales"][locale] = {}
+        lbase = join(base,locale)
+        for snipFile in listdir(lbase):
+            type,ext = splitext(snipFile)
+            if exclude_partials and type == 'partial':
+                continue
+            lrelData[type] = {}
+            snip = readFile(join(lbase,snipFile))
+            if type == 'partial':
+                lrelData[type]["from"] = partial
+            else:
+                lrelData[type]["from"] = "*"
+            lrelData[type]["filesize"] = getParameter(snip,'size')
+            lrelData[type]["hashValue"] = getParameter(snip,'hashValue')
+            lrelData[type]["fileUrl"] = getParameter(snip,'url')
+
 
 if __name__ == "__main__":
     from optparse import OptionParser
@@ -269,8 +307,10 @@ if __name__ == "__main__":
     parser.add_option("-p","--partial", dest="partial", help="name of the release we have partials from")
     parser.add_option("-e","--exclude-partials", dest="exclude_partials", action="store_true", help="exclude partials where we fake them")
     parser.add_option("-v", "--version", dest="version", help="version being processed")
+    parser.add_option("--product", dest="product", help="product name. Required when --db is present.")
     parser.add_option("--hash-func", dest="hash_func", default="sha512")
     parser.add_option("-l", "--limit-locale", dest="locales", action="append", default=[], help="Limit locales to only those specified. This option may be passed multiple times. If not specified, all locales will be processed")
+    parser.add_option("--db", dest="db", help="When present, specifies a database to import the release into. Eg, sqlite:///test.db")
 
     options, args = parser.parse_args()
     if not options.walkdir or not isdir(options.walkdir):
@@ -280,18 +320,33 @@ if __name__ == "__main__":
     if not options.exclude_partials and not options.partial:
         parser.error('Must specify the name of the release we have partials, eg Firefox-3.6.12-build1, if not excluding partials')
 
-    relData = {"name": options.name, "platforms": {}}
+    db = None
+    if options.db:
+        if not options.product:
+            parser.error('Must specify product name when inserting to a database')
+        db = AUSDatabase(options.db)
 
-    # start with platforms
+    relData = {"name": options.name, "data_version": DATA_VERSION, "platforms": {},
+               "hashFunction": options.hash_func}
+
+    # Candidates directories start with 'build'
     if options.walkdir.startswith('build'):
         processCandidatesDir(options.walkdir, options.version, options.partial, options.exclude_partials, options.hash_func, options.locales, relData)
     else:
+        # Nightly snippet directories are named after branches, which always start with an alpha char
+        if re.match('^[a-zA-Z]', options.walkdir):
+            fn = processNightlySnippetDir
+        # And release snippet directories are named after version numbers, which never start with an alpha char
+        else:
+            fn = processReleaseSnippetDir
         for d in sorted(listdir(options.walkdir)):
             if d in IGNORE_PLATFORMS:
                 continue
             else:
-                processSnippetDir(options.walkdir, d, options.version, options.partial, options.exclude_partials, options.locales, relData)
+                fn(options.walkdir, d, options.version, options.partial, options.exclude_partials, options.locales, relData)
 
     print json.dumps(relData, sort_keys=True, indent=4)
-
-
+    if options.db:
+        # XXX: use db.releases.addRelease() when it exists
+        db.releases.insert(changed_by='generate-json.py', name=options.name, product=options.product, version=options.version,
+                           data=json.dumps(relData, separators=(',', ':')))
