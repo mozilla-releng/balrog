@@ -1,6 +1,6 @@
 {
     "name": "Firefox-mozilla-1.9.2-nightly-20110327033208",
-    "data_version": 1,
+    "schema_version": 1,
     "extv": "3.6.17pre",
     "appv": "3.6.17pre",
     "hashFunction": "sha512",

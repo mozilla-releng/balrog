@@ -12,7 +12,7 @@ except:
 
 from auslib.db import AUSDatabase
 
-DATA_VERSION = 1
+SCHEMA_VERSION = 1
 IGNORE_PLATFORMS = ('WINCE_arm-msvc',)
 
 platform_map = {
@@ -326,7 +326,7 @@ if __name__ == "__main__":
             parser.error('Must specify product name when inserting to a database')
         db = AUSDatabase(options.db)
 
-    relData = {"name": options.name, "data_version": DATA_VERSION, "platforms": {},
+    relData = {"name": options.name, "schema_version": SCHEMA_VERSION, "platforms": {},
                "hashFunction": options.hash_func}
 
     # Candidates directories start with 'build'

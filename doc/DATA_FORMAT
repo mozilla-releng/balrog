@@ -4,11 +4,11 @@
     //  eg "Firefox-3.6.13-build1"
     "name": <string>,
 
-    // data_version - required
+    // schema_version - required
     //  xml style versioning, should be renamed
     //  eg 1 == the style supported prior to bug 459972 (Fx4.0b3)
     //     2 == the style available after bug 459972
-    "data_version": <integer>,
+    "schema_version": <integer>,
 
     // extv - required (only for version 1?)
     //  parameter for version 1 xml, for add-on compatibility
@@ -20,7 +20,7 @@
     //  eg "3.6.13"
     "appv": <string>,
 
-    // detailsUrl - required for data_version=1
+    // detailsUrl - required for schema_version=1
     //  Parameter for version 1 xml, used for 'More details' link
     //  for minor updates, and major update billboards
     //  %LOCALE% is substituted during xml creation

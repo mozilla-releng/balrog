@@ -65,7 +65,7 @@ if __name__ == "__main__":
     from optparse import OptionParser
     parser = OptionParser()
     parser.set_defaults(
-        db='update.db',
+        db='sqlite:///update.db',
         port=8000,
     )
     parser.add_option("-d", "--db", dest="db", help="database to use, relative to inputdir")

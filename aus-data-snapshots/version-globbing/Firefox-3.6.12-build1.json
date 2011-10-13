@@ -1,6 +1,6 @@
 {
     "name": "Firefox-3.6.12-build1",
-    "data_version": 1,
+    "schema_version": 1,
     "extv": "3.6.12",
     "appv": "3.6.12",
     "detailsUrl": "http://www.mozilla.com/%LOCALE%/firefox/3.6.12/releasenotes/",

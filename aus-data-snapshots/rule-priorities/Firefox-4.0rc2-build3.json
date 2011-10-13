@@ -1,6 +1,6 @@
 {
     "name": "Firefox-4.0rc2-build3",
-    "data_version": 1,
+    "schema_version": 1,
     "extv": "4.0",
     "appv": "4.0",
     "detailsUrl": "https://www.mozilla.com/%LOCALE%/firefox/4.0/releasenotes/",

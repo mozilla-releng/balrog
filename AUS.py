@@ -11,10 +11,10 @@ from auslib.db import AUSDatabase
 class AUS3:
     def __init__(self, dbname=None):
         if dbname == None:
-            dbname = "update.db"
+            dbname = "sqlite:///update.db"
         self.db = AUSDatabase(dbname)
         self.releases = self.db.releases
-        self.updatePaths = self.db.updatePaths
+        self.rules = self.db.rules
 
     def identifyRequest(self, updateQuery):
         buildTarget = updateQuery['buildTarget']
@@ -31,35 +31,13 @@ class AUS3:
                     return release['name']
         return None
 
-    def getMatchingRules(self, updateQuery):
-        log.debug("AUS.getMatchingRules: Looking for rules that apply to:")
-        log.debug("AUS.getMatchingRules: %s", updateQuery)
-        # get anything that must match or is undefined in rules
-        rules = self.updatePaths.getRulesMatchingQuery(
-            name=updateQuery['name'],
-            product=updateQuery['product'],
-            version=updateQuery['version'],
-            channel=updateQuery['channel'],
-            fallbackChannel=self.getFallbackChannel(updateQuery['channel']),
-            buildTarget=updateQuery['buildTarget'],
-            buildID=updateQuery['buildID'],
-            locale=updateQuery['locale'],
-            osVersion=updateQuery['osVersion'],
-            distribution=updateQuery['distribution'],
-            distVersion=updateQuery['distVersion'],
-            headerArchitecture=updateQuery['headerArchitecture']
-        )
-        # evaluate wildcard parameters
-        matchingRules = []
-        for rule in rules:
-            matchingRules.append(rule)
-        log.debug("AUS.getMatchingRules: Reduced matches:")
-        for r in rules:
-            log.debug("AUS.getMatchingRules: %s", r)
-        return rules
-
     def evaluateRules(self, updateQuery):
-        rules = self.getMatchingRules(updateQuery)
+        log.debug("AUS.evaluateRules: Looking for rules that apply to:")
+        log.debug("AUS.evaluateRules: %s", updateQuery)
+        rules = self.rules.getRulesMatchingQuery(
+            updateQuery,
+            fallbackChannel=self.getFallbackChannel(updateQuery['channel'])
+        )
 
         ### XXX throw any N->N update rules and keep the highest priority remaining one
         if len(rules) >= 1:
@@ -109,9 +87,9 @@ class AUS3:
             relDataPlatLoc = relDataPlat['locales'][locale]
 
         # this is for the properties AUS2 can cope with today
-        if relData['data_version'] == 1:
+        if relData['schema_version'] == 1:
             updateData['type'] = rule['update_type']
-            for key in ('appv','extv', 'data_version'):
+            for key in ('appv','extv', 'schema_version'):
                 updateData[key] = relData[key]
             if 'detailsUrl' in relData:
                 updateData['detailsUrl'] = relData['detailsUrl'].replace('%LOCALE%',updateQuery['locale'])
@@ -195,7 +173,7 @@ class AUS3:
         xml = ['<?xml version="1.0"?>']
         xml.append('<updates>')
         if rel:
-            if rel['data_version'] == 1:
+            if rel['schema_version'] == 1:
                 xml.append('    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
                            (rel['type'], rel['appv'], rel['extv'], rel['build']))
                 if rel['detailsUrl']:

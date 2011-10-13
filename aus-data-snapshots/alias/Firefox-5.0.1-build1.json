@@ -1,6 +1,6 @@
 {
     "name": "Firefox-5.0.1-build1",
-    "data_version": 1,
+    "schema_version": 1,
     "extv": "5.0.1",
     "appv": "5.0.1",
     "detailsUrl": "https://www.mozilla.com/%LOCALE%/firefox/5.0.1/releasenotes/",
