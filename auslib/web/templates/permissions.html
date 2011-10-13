@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}AUS3 Admin - Permissions{% endblock %}
+{% block content %}
+<ul id='users'>
+    {% for user in users %}
+        <li><a href='/user_permissions.html?username={{ user }}'>{{ user }}</a></li>
+    {% endfor %}
+</ul>
+{% endblock %}

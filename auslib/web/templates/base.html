@@ -1,0 +1,17 @@
+<!DOCTYPE HTML>
+<html lang='en-US'>
+<head>
+<title>{% block title %}{% endblock %}</title>
+<script type='text/javascript' src='{{ url_for('static', filename='ausadmin.js') }}'></script>
+</head>
+<body>
+<div id='nav'>
+    <a href='/rules.html'>Rules</a>
+    <a href='/releases.html'>Releases</a>
+    <a href='/permissions.html'>Permissions</a>
+</div>
+<div id='content'>
+{% block content %}{% endblock %}
+</div>
+</body>
+</html>

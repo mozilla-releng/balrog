@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}AUS3 Admin - Permissions for {{ username }}{% endblock %}
+{% block content %}
+<h2>Permissions for {{ username }}</h2>
+<div id='permissions'>
+<ul>
+{% for perm, values in permissions.items() %}
+{% set perm = perm.lstrip('/') %}
+    <li>
+    <form method='post' id='{{ perm }}' action='/users/{{ username }}/permissions/{{ perm }}'>
+        <label for='{{ perm }}'>Permission:</label>
+        <input type='text' name='permission' id='{{ perm }}' value='{{ perm }}' disabled='disabled' />
+        <label for='{{ perm.options }}'>Options:</label>
+        <input type='text' name='options' id='{{ values.options }}' value='{{ values.options }}' />
+        <input type='hidden' name='data_version' value='{{ values.data_version }}' />
+        <input type='submit' value='Update' />
+    </form>
+    </li>
+{% endfor %}
+</ul>
+</div>
+{% endblock %}
