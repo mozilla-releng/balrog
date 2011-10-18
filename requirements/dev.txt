@@ -1,0 +1,4 @@
+-r prod.txt
+
+nose==0.11.4
+mock

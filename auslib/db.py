@@ -147,6 +147,7 @@ class AUSTable(object):
             raise WrongNumberOfRowsError("where clause matched no rows")
         if len(rows) > 1:
             raise WrongNumberOfRowsError("where clause matches multiple rows (primary keys: %s)" % rows)
+        log.debug("AUSTable._returnRowOrRaise: returning %s" % rows[0])
         return rows[0]
 
     def _selectStatement(self, columns=None, where=None, order_by=None, limit=None, distinct=False):
@@ -411,18 +412,24 @@ class History(AUSTable):
     def forDelete(self, rowData, changed_by):
         """Deletes cause a single row to be created, which only contains the
            primary key data. This represents that the row no longer exists."""
-        row = rowData.copy()
+        row = {}
+        for k in rowData:
+            row[str(k)] = rowData[k]
         # Tack on history table information to the row
         row['changed_by'] = changed_by
         row['timestamp'] = self.getTimestamp()
+        log.debug("History.forDelete: inserting %s to history table" % row)
         return self._insertStatement(**row)
 
     def forUpdate(self, rowData, changed_by):
         """Updates cause a single row to be created, which contains the full,
            new data of the row at the time of the update."""
-        row = rowData.copy()
+        row = {}
+        for k in rowData:
+            row[str(k)] = rowData[k]
         row['changed_by'] = changed_by
         row['timestamp'] = self.getTimestamp()
+        log.debug("History.forUpdate: inserting %s to history table" % row)
         return self._insertStatement(**row)
 
 class Rules(AUSTable):

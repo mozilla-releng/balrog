@@ -102,8 +102,8 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         TestTableMixin.setUp(self)
 
     def testColumnMirroring(self):
-        self.assertIn(self.test.id, self.test.table.get_children())
-        self.assertIn(self.test.foo, self.test.table.get_children())
+        self.assertTrue(self.test.id in self.test.table.get_children())
+        self.assertTrue(self.test.foo in self.test.table.get_children())
 
     def testSelect(self):
         expected = [dict(id=1, foo=33, data_version=1),
@@ -190,15 +190,15 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         TestTableMixin.setUp(self)
 
     def testHasHistoryTable(self):
-        self.assertIsNotNone(getattr(self.test, 'history', None))
+        self.assertTrue(self.test.history)
 
     def testHistoryTableHasAllColumns(self):
         columns = [c.name for c in self.test.history.t.get_children()]
-        self.assertIn('change_id', columns)
-        self.assertIn('id', columns)
-        self.assertIn('foo', columns)
-        self.assertIn('changed_by', columns)
-        self.assertIn('timestamp', columns)
+        self.assertTrue('change_id' in columns)
+        self.assertTrue('id' in columns)
+        self.assertTrue('foo' in columns)
+        self.assertTrue('changed_by' in columns)
+        self.assertTrue('timestamp' in columns)
 
     def testHistoryUponInsert(self):
         with mock.patch('time.time') as t:
@@ -476,7 +476,7 @@ class TestDB(unittest.TestCase):
         db = AUSDatabase()
         db.setDburi('sqlite:///:memory:')
         insp = Inspector.from_engine(db.engine)
-        self.assertIsNot(insp.get_table_names(), [])
+        self.assertNotEqual(insp.get_table_names(), [])
 
     def testSetDburiAlreadySetup(self):
         db = AUSDatabase('sqlite:///:memory:')
@@ -488,4 +488,4 @@ class TestDB(unittest.TestCase):
         # If we can set the dburi again, reset worked!
         db.setDburi('sqlite:///:memory:')
         insp = Inspector.from_engine(db.engine)
-        self.assertIsNot(insp.get_table_names(), [])
+        self.assertNotEqual(insp.get_table_names(), [])

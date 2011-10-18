@@ -5,7 +5,7 @@ from auslib.test.web.views.base import ViewTest, HTMLTestMixin
 
 class TestUserPermissionsPage(ViewTest, HTMLTestMixin):
     def testGet(self):
-        self.assertIn('admin', self._get('/user_permissions.html', query_string=dict(username='bill')).data)
+        self.assertTrue('admin' in self._get('/user_permissions.html', query_string=dict(username='bill')).data)
 
     def testPost(self):
         ret = self._post('/users/bill/permissions/admin', data=dict(options="", data_version=1))
