@@ -29,18 +29,17 @@ class ViewTest(unittest.TestCase):
     def tearDown(self):
         db.reset()
 
-    def _getAuth(self, username='bill', password='secret'):
-        auth = b64encode('%s:%s' % (username, password))
-        return {'Authorization': 'Basic %s' % auth}
+    def _getAuth(self, username='bill'):
+        return {'REMOTE_USER': 'bill'}
 
     def _post(self, url, data={}):
-        return self.client.post(url, data=data, headers=self._getAuth())
+        return self.client.post(url, data=data, environ_base=self._getAuth())
 
     def _put(self, url, data={}):
-        return self.client.put(url, data=data, headers=self._getAuth())
+        return self.client.put(url, data=data, environ_base=self._getAuth())
 
     def _delete(self, url, qs={}):
-        return self.client.delete(url, query_string=qs, headers=self._getAuth())
+        return self.client.delete(url, query_string=qs, environ_base=self._getAuth())
 
     def assertStatusCode(self, response, expected):
         self.assertEquals(response.status_code, expected, '%d - %s' % (response.status_code, response.data))

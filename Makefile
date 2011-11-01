@@ -6,6 +6,7 @@ NOSE ?= nosetests
 VIRTUALENV_DIR ?= $(error VIRTUALENV_DIR must be set when running virtualenv or ci-tests targets)
 # The Python binary to use when running tests.
 TEST_PYTHON ?= $(PYTHON)
+PYTHONPATH ?= vendor/lib/python
 # A pip requirements file describing the dependencies that should be installed
 # into the virtualenv.
 REQUIREMENTS=requirements/dev.txt
@@ -22,7 +23,7 @@ ALL_PY_FILES := $(shell find . -iname "*.py")
 test: test.done
 test.done: $(ALL_PY_FILES)
 	@echo Running unit tests
-	$(NOSE) $(NOSE_ARGS)
+	PYTHONPATH=$(PYTHONPATH) $(NOSE) $(NOSE_ARGS)
 	@echo Running rules tests
 	$(TEST_PYTHON) test-rules.py $(TEST_ARGS)
 	touch $@

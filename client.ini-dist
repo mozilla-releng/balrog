@@ -1,0 +1,8 @@
+[database]
+;Database to be used by AUS applications, in URI format
+;dburi=sqlite:////var/www/aus/update.db
+;dburi=mysql://user:password@host/database
+
+[logging]
+;Where to put the application log. No rotation is done on this file.
+logfile=/var/log/aus.log

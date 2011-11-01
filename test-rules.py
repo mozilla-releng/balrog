@@ -1,11 +1,16 @@
-import os, os.path, glob, re, difflib, time
+import os, os.path, glob, re, difflib, time, site
 
 try:
     import json
     assert json # to shut pyflakes up
 except:
     import simplejson as json
-from AUS import *
+
+mydir = os.path.dirname(os.path.abspath(__file__))
+site.addsitedir(mydir)
+site.addsitedir(os.path.join(mydir, 'vendor/lib/python'))
+
+from auslib.AUS import *
 
 import logging
 log = logging.getLogger(__name__)

@@ -1,7 +1,5 @@
-import re, copy
+import copy
 from collections import defaultdict
-# the json module in python 2.6 is really slow in comparison to simplejson
-import simplejson as json
 
 import logging
 log = logging.getLogger(__name__)
@@ -10,6 +8,10 @@ from auslib.db import AUSDatabase
 
 class AUS3:
     def __init__(self, dbname=None):
+        if dbname:
+            self.setDb(dbname)
+
+    def setDb(self, dbname):
         if dbname == None:
             dbname = "sqlite:///update.db"
         self.db = AUSDatabase(dbname)
@@ -52,6 +54,7 @@ class AUS3:
 
     def expandRelease(self, updateQuery, rule):
         if not rule or not rule['mapping']:
+            log.debug("AUS.expandRelease: Couldn't find rule or mapping for %s" % rule)
             return None
         # read data from releases table
         try:
@@ -69,6 +72,7 @@ class AUS3:
 
         # return early if we don't have an update for this platform
         if buildTarget not in relData['platforms']:
+            log.debug("AUS.expandRelease: No platform %s in release %s", buildTarget, rule['mapping'])
             return updateData
 
         # platforms may be aliased to another platform in the case
@@ -133,6 +137,7 @@ class AUS3:
                 patch['type'] = 'partial'
                 updateData['patches'].append(patch)
 
+        log.debug("AUS.expandRelease: Returning %s", updateData)
         return updateData
 
     def createSnippet(self, updateQuery, release):
