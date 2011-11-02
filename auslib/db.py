@@ -77,7 +77,7 @@ class AUSTransaction(object):
             # informative than one starting from this point.
             klass, e, tb = sys.exc_info()
             self.rollback()
-            e = TransactionError(e.message)
+            e = TransactionError(e.args)
             raise TransactionError, e, tb
 
     def commit(self):
@@ -86,7 +86,7 @@ class AUSTransaction(object):
         except:
             klass, e, tb = sys.exc_info()
             self.rollback()
-            e = TransactionError(e.message)
+            e = TransactionError(e.args)
             raise TransactionError, e, tb
 
     def rollback(self):
