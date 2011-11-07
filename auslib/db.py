@@ -371,7 +371,7 @@ class History(AUSTable):
     def __init__(self, metadata, baseTable):
         self.table = Table('%s_history' % baseTable.t.name, metadata,
             Column('change_id', Integer, primary_key=True, autoincrement=True),
-            Column('changed_by', String, nullable=False),
+            Column('changed_by', String(100), nullable=False),
             # Timestamps are stored as an Integer, but actually contain
             # precision down to the millisecond, achieved through
             # multiplication.
@@ -437,20 +437,20 @@ class Rules(AUSTable):
         self.table = Table('rules', metadata,
             Column('rule_id', Integer, primary_key=True, autoincrement=True),
             Column('priority', Integer),
-            Column('mapping', String),
+            Column('mapping', String(100)),
             Column('throttle', Integer, CheckConstraint('0 <= throttle <= 100')),
-            Column('update_type', String, nullable=False),
-            Column('product', String),
-            Column('version', String),
-            Column('channel', String),
-            Column('buildTarget', String),
-            Column('buildID', String),
-            Column('locale', String),
-            Column('osVersion', String),
-            Column('distribution', String),
-            Column('distVersion', String),
-            Column('headerArchitecture', String),
-            Column('comment', String)
+            Column('update_type', String(15), nullable=False),
+            Column('product', String(15)),
+            Column('version', String(10)),
+            Column('channel', String(75)),
+            Column('buildTarget', String(75)),
+            Column('buildID', String(20)),
+            Column('locale', String(10)),
+            Column('osVersion', String(100)),
+            Column('distribution', String(100)),
+            Column('distVersion', String(100)),
+            Column('headerArchitecture', String(10)),
+            Column('comment', String(500))
         )
         AUSTable.__init__(self)
 
@@ -531,9 +531,9 @@ class Rules(AUSTable):
 class Releases(AUSTable):
     def __init__(self, metadata):
         self.table = Table('releases', metadata,
-            Column('name', String, primary_key=True),
-            Column('product', String, nullable=False),
-            Column('version', String, nullable=False),
+            Column('name', String(100), primary_key=True),
+            Column('product', String(15), nullable=False),
+            Column('version', String(10), nullable=False),
             Column('data', Text, nullable=False)
         )
         AUSTable.__init__(self)
@@ -573,9 +573,9 @@ class Permissions(AUSTable):
 
     def __init__(self, metadata):
         self.table = Table('permissions', metadata,
-            Column('permission', String, primary_key=True),
-            Column('username', String, primary_key=True),
-            Column('options', String)
+            Column('permission', String(50), primary_key=True),
+            Column('username', String(100), primary_key=True),
+            Column('options', Text)
         )
         AUSTable.__init__(self)
 
