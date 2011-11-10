@@ -8,8 +8,7 @@ from auslib.db import AUSDatabase
 
 class AUS3:
     def __init__(self, dbname=None):
-        if dbname:
-            self.setDb(dbname)
+        self.setDb(dbname)
 
     def setDb(self, dbname):
         if dbname == None:
@@ -17,6 +16,9 @@ class AUS3:
         self.db = AUSDatabase(dbname)
         self.releases = self.db.releases
         self.rules = self.db.rules
+
+    def createTables(self):
+        self.db.createTables()
 
     def identifyRequest(self, updateQuery):
         buildTarget = updateQuery['buildTarget']

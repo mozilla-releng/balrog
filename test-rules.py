@@ -157,6 +157,7 @@ if __name__ == "__main__":
     for td in options.testDirs:
         log.info("Testing %s", td)
         AUS = AUS3(dbname='sqlite:///:memory:')
+        AUS.createTables()
         populateDB(AUS, td)
         if options.dumprules:
             log.info("Rules are \n(id, priority, mapping, throttle, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")

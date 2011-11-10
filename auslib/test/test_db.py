@@ -247,6 +247,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
+        self.db.createTables()
         self.paths = self.db.rules
         self.paths.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', throttle=100, mapping='c', update_type='z', data_version=1)
         self.paths.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', throttle=100, mapping='b', update_type='z', data_version=1)
@@ -311,6 +312,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
+        self.db.createTables()
         self.rules = self.db.rules
         self.rules.t.insert().execute(id=1, priority=100, version='4.0*', throttle=100, update_type='z', data_version=1)
         self.rules.t.insert().execute(id=2, priority=100, channel='release*', throttle=100, update_type='z', data_version=1)
@@ -370,6 +372,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
+        self.db.createTables()
         self.releases = self.db.releases
         self.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(one=1)), data_version=1)
         self.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(one=1)), data_version=1)
@@ -390,6 +393,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
+        self.db.createTables()
         self.permissions = self.db.permissions
         self.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         self.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
@@ -472,9 +476,10 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertTrue(self.permissions.hasUrlPermission('bob', '/releases/:name', 'DELETE', dict(product='fake')))
 
 class TestDB(unittest.TestCase):
-    def testSetDburi(self):
+    def testCreateTables(self):
         db = AUSDatabase()
         db.setDburi('sqlite:///:memory:')
+        db.createTables()
         insp = Inspector.from_engine(db.engine)
         self.assertNotEqual(insp.get_table_names(), [])
 
@@ -487,5 +492,6 @@ class TestDB(unittest.TestCase):
         db.reset()
         # If we can set the dburi again, reset worked!
         db.setDburi('sqlite:///:memory:')
+        db.createTables()
         insp = Inspector.from_engine(db.engine)
         self.assertNotEqual(insp.get_table_names(), [])

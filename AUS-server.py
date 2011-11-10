@@ -23,6 +23,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=log_level, format="%(asctime)s: %(message)s")
 
     AUS.setDb(options.db)
+    AUS.createTables()
 
     app.config['SECRET_KEY'] = 'abc123'
     app.config['DEBUG'] = True

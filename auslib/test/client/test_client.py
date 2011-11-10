@@ -8,6 +8,7 @@ class ClientTest(unittest.TestCase):
     def setUp(self):
         app.config['DEBUG'] = True
         AUS.setDb('sqlite:///:memory:')
+        AUS.createTables()
         self.client = app.test_client()
         self.view = ClientRequestView()
         AUS.rules.t.insert().execute(throttle=100, mapping='b', update_type='minor', product='b', data_version=1)

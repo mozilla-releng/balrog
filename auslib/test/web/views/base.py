@@ -12,6 +12,7 @@ class ViewTest(unittest.TestCase):
         app.config['SECRET_KEY'] = 'abc123'
         app.config['DEBUG'] = True
         db.setDburi('sqlite:///:memory:')
+        db.createTables()
         db.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         db.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
         db.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product='fake')), data_version=1)

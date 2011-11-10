@@ -701,6 +701,8 @@ class AUSDatabase(object):
             raise AlreadySetupError()
         self.engine = create_engine(self.dburi)
         self.metadata.bind = self.engine
+
+    def createTables(self):
         self.metadata.create_all()
 
     def reset(self):
