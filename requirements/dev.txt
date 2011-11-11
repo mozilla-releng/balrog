@@ -2,3 +2,4 @@
 
 nose==0.11.4
 mock
+Paste
