@@ -699,7 +699,7 @@ class AUSDatabase(object):
         self.dburi = dburi
         if self.engine:
             raise AlreadySetupError()
-        self.engine = create_engine(self.dburi)
+        self.engine = create_engine(self.dburi, pool_recycle=60)
         self.metadata.bind = self.engine
 
     def createTables(self):
