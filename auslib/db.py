@@ -5,7 +5,7 @@ import sys
 import time
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-  CheckConstraint, create_engine, select
+  CheckConstraint, create_engine, select, BigInteger
 from sqlalchemy.exc import SQLAlchemyError
 
 import logging
@@ -372,10 +372,12 @@ class History(AUSTable):
         self.table = Table('%s_history' % baseTable.t.name, metadata,
             Column('change_id', Integer, primary_key=True, autoincrement=True),
             Column('changed_by', String(100), nullable=False),
-            # Timestamps are stored as an Integer, but actually contain
+            # Timestamps are stored as an integer, but actually contain
             # precision down to the millisecond, achieved through
             # multiplication.
-            Column('timestamp', Integer, nullable=False)
+            # BigInteger is used here because SQLAlchemy's Integer translates
+            # to Integer(11) in MySQL, which is too small for our needs.
+            Column('timestamp', BigInteger, nullable=False)
         )
         self.base_primary_key = [pk.name for pk in baseTable.primary_key]
         for col in baseTable.t.get_children():
