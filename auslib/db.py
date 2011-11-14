@@ -433,7 +433,7 @@ class History(AUSTable):
         return self._insertStatement(**row)
 
 class Rules(AUSTable):
-    def __init__(self, metadata):
+    def __init__(self, metadata, dialect):
         self.table = Table('rules', metadata,
             Column('rule_id', Integer, primary_key=True, autoincrement=True),
             Column('priority', Integer),
@@ -529,13 +529,18 @@ class Rules(AUSTable):
         return matchingRules
 
 class Releases(AUSTable):
-    def __init__(self, metadata):
+    def __init__(self, metadata, dialect):
         self.table = Table('releases', metadata,
             Column('name', String(100), primary_key=True),
             Column('product', String(15), nullable=False),
             Column('version', String(10), nullable=False),
-            Column('data', Text, nullable=False)
         )
+        if dialect == 'mysql':
+            from sqlalchemy.dialects.mysql import LONGTEXT
+            dataType = LONGTEXT
+        else:
+            dataType = Text
+        self.table.append_column(Column('data', dataType, nullable=False))
         AUSTable.__init__(self)
 
     def getReleases(self, name=None, product=None, version=None, limit=None):
@@ -571,7 +576,7 @@ class Permissions(AUSTable):
         '/users/:id/permissions/:permission': ['method']
     }
 
-    def __init__(self, metadata):
+    def __init__(self, metadata, dialect):
         self.table = Table('permissions', metadata,
             Column('permission', String(50), primary_key=True),
             Column('username', String(100), primary_key=True),
@@ -682,10 +687,6 @@ class Permissions(AUSTable):
 
 class AUSDatabase(object):
     engine = None
-    metadata = MetaData()
-    rulesTable = Rules(metadata)
-    releasesTable = Releases(metadata)
-    permissionsTable = Permissions(metadata)
 
     def __init__(self, dburi=None):
         """Create a new AUSDatabase. Before this object is useful, dburi must be
@@ -696,10 +697,15 @@ class AUSDatabase(object):
     def setDburi(self, dburi):
         """Setup the database connection. Note that SQLAlchemy only opens a connection
            to the database when it needs to, however."""
-        self.dburi = dburi
         if self.engine:
             raise AlreadySetupError()
+        self.dburi = dburi
+        self.metadata = MetaData()
         self.engine = create_engine(self.dburi, pool_recycle=60)
+        dialect = self.engine.name
+        self.rulesTable = Rules(self.metadata, dialect)
+        self.releasesTable = Releases(self.metadata, dialect)
+        self.permissionsTable = Permissions(self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def createTables(self):
