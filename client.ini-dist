@@ -6,3 +6,4 @@
 [logging]
 ;Where to put the application log. No rotation is done on this file.
 logfile=/var/log/aus.log
+;level=ERROR

@@ -19,5 +19,5 @@ if errors:
         print >>sys.stderr, err
     sys.exit(1)
 
-logging.basicConfig(filename=cfg.getLogfile())
+logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel())
 AUS.setDb(cfg.getDburi())
