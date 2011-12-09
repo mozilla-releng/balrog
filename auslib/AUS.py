@@ -21,18 +21,23 @@ class AUS3:
         self.db.createTables()
 
     def identifyRequest(self, updateQuery):
+        log.debug("AUS.identifyRequest: got updateQuery: %s", updateQuery)
         buildTarget = updateQuery['buildTarget']
         buildID = updateQuery['buildID']
 
         for release in self.releases.getReleases(product=updateQuery['product'], version=updateQuery['version']):
+            log.debug("AUS.identifyRequest: Trying to match request to %s", release['name'])
             if buildTarget in release['data']['platforms']:
                 releasePlat = release['data']['platforms'][buildTarget]
                 if 'alias' in releasePlat:
                     alternateTarget = releasePlat['alias']
                     releasePlat = release['data']['platforms'][alternateTarget]
 
+                log.debug("AUS.identifyRequest: releasePlat buildID is: %s", releasePlat['buildID'])
                 if buildID == releasePlat['buildID']:
+                    log.debug("AUS.identifyRequest: Identified query as %s", release['name'])
                     return release['name']
+        log.debug("AUS.identifyRequest: Couldn't identify query")
         return None
 
     def evaluateRules(self, updateQuery):
