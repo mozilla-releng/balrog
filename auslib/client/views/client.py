@@ -48,14 +48,15 @@ class ClientRequestView(MethodView):
     """/update/3/<product>/<version>/<buildID>/<build target>/<locale>/<channel>/<os version>/<distribution>/<distribution version>"""
     def get(self, queryVersion, **url):
         query = self.getQueryFromURL(queryVersion, url)
+        log.debug("ClientRequestView.get: Got query: %s", query)
         if query:
             rule = AUS.evaluateRules(query)
         else:
             rule = {}
         # passing {},{} returns empty xml
-        log.debug("ClientRequestView.getQueryFromURL: Got rule: %s", rule)
+        log.debug("ClientRequestView.get: Got rule: %s", rule)
         xml = AUS.createXML(query, rule)
-        log.debug("ClientRequestView.getQueryFromURL: Sending XML: %s", xml)
+        log.debug("ClientRequestView.get: Sending XML: %s", xml)
         response = make_response(xml)
         response.mimetype = 'text/xml'
         return response
