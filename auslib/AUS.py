@@ -104,6 +104,7 @@ class AUS3:
             # evaluate types of updates and see if we can use them
             for patchKey in relDataPlatLoc:
                 if patchKey not in ('partial','complete'):
+                    log.debug("AUS.expandRelease: Skipping patchKey '%s'", patchKey)
                     continue
                 patch = relDataPlatLoc[patchKey]
                 if patch['from'] == updateQuery['name'] or patch['from'] == '*':
@@ -130,6 +131,8 @@ class AUS3:
                         'hashValue': patch['hashValue'],
                         'size': patch['filesize']
                     })
+                else:
+                    log.debug("AUS.expandRelease: Didn't add patch for patchKey '%s'; from is '%s', updateQuery name is '%s'", patchKey, patch['from'], updateQuery['name'])
 
             # older branches required a <partial> in the update.xml, which we
             # used to fake by repeating the complete data.
