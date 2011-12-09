@@ -14,5 +14,4 @@ Some things suck or maybe suck
    they aren't needed
  * do we still like json encoded into text field ? does it create more hassles than it solves ?
  * the db are just flat tables, s'ok ?
- * lack of tests
  * no support of Rob Strong's new attributes
