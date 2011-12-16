@@ -1,5 +1,5 @@
 [database]
-;Database to be used by the client-facing application. Should be r/o.
+;Database to be used by the Admin application. Must be r/w.
 ;dburi=sqlite:////var/www/aus/update.db
 ;dburi=mysql://user:password@host/database
 

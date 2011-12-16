@@ -8,6 +8,8 @@ from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
   CheckConstraint, create_engine, select, BigInteger
 from sqlalchemy.exc import SQLAlchemyError
 
+from auslib.blob import ReleaseBlobV1
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -329,7 +331,7 @@ class AUSTable(object):
         if self.history:
             trans.execute(self.history.forUpdate(row, changed_by))
         if ret.rowcount != 1:
-            raise OutdatedDataError("Failed to delet row, old_data_version doesn't match current data_version")
+            raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
 
     def update(self, where, what, changed_by=None, old_data_version=None):
@@ -555,8 +557,64 @@ class Releases(AUSTable):
             where.append(self.version==version)
         rows = self.select(where=where, limit=limit)
         for row in rows:
-            row['data'] = json.loads(row['data'])
+            blob = ReleaseBlobV1()
+            blob.loadJSON(row['data'])
+            row['data'] = blob
         return rows
+
+    def getReleaseBlob(self, name):
+        try:
+            row = self.select(where=[self.name==name], columns=[self.data], limit=1)[0]
+        except IndexError:
+            raise KeyError("Couldn't find release with name '%s'" % name)
+        blob = ReleaseBlobV1()
+        blob.loadJSON(row['data'])
+        return blob
+
+    def addRelease(self, name, product, version, blob, changed_by):
+        if not blob.isValid():
+            log.debug("Releases.addRelease: invalid blob is %s" % blob)
+            raise ValueError("Release blob is invalid.")
+        columns = dict(name=name, product=product, version=version, data=blob.getJSON())
+        # Raises DuplicateDataError if the release already exists.
+        self.insert(changed_by, **columns)
+
+    def updateRelease(self, name, changed_by, old_data_version, product=None, version=None):
+        what = {}
+        if product:
+            what['product'] = product
+        if version:
+            what['version'] = version
+        self.update(where=[self.name==name], what=what, changed_by=changed_by, old_data_version=old_data_version)
+
+    def addLocaleToRelease(self, name, platform, locale, blob, old_data_version, changed_by):
+        """Adds or update's the existing data for a specific platform + locale
+           combination, in the release identified by 'name'. The data is
+           validated before commiting it, and a ValueError is raised if it is
+           invalid.
+        """
+        releaseBlob = self.getReleaseBlob(name)
+        if 'platforms' not in releaseBlob:
+            releaseBlob['platforms'] = {
+                platform: {
+                    'locales': {
+                    }
+                }
+            }
+        releaseBlob['platforms'][platform]['locales'][locale] = blob
+        if not releaseBlob.isValid():
+            log.debug("Releases.addLocaleToRelease: invalid releaseBlob is %s" % releaseBlob)
+            raise ValueError("New release blob is invalid.")
+        where = [self.name==name]
+        what = dict(data=releaseBlob.getJSON())
+        self.update(where, what, changed_by, old_data_version)
+
+    def getLocale(self, name, platform, locale):
+        try:
+            blob = self.getReleaseBlob(name)
+            return blob['platforms'][platform]['locales'][locale]
+        except KeyError:
+            raise KeyError("Couldn't find locale identified by: %s, %s, %s" % (name, platform ,locale))
 
 class Permissions(AUSTable):
     """allPermissions defines the structure and possible options for all
@@ -664,7 +722,9 @@ class Permissions(AUSTable):
 
     def hasUrlPermission(self, username, url, method, urlOptions={}):
         """Check if a user has access to an URL via a specific HTTP method.
-           GETs are always allowed."""
+           GETs are always allowed, and admins can always access everything."""
+        if self.select(where=[self.username==username, self.permission=='admin']):
+            return True
         try:
             options = self.getOptions(username, url)
         except ValueError:

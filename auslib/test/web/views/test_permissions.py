@@ -1,7 +1,5 @@
 import simplejson as json
 
-from sqlalchemy import select
-
 from auslib.web.base import db
 from auslib.test.web.views.base import ViewTest, JSONTestMixin, HTMLTestMixin
 

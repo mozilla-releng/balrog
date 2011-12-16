@@ -4,7 +4,7 @@ from flask import render_template, request, Response, jsonify
 from flask.views import MethodView
 
 from auslib.web.base import app, db
-from auslib.web.views.base import requirelogin
+from auslib.web.views.base import requirelogin, requirepermission
 
 def setpermission(f):
     def decorated(*args, **kwargs):
@@ -40,6 +40,7 @@ class SpecificPermissionView(MethodView):
 
     @setpermission
     @requirelogin
+    @requirepermission(options=[])
     def put(self, username, permission, changed_by):
         try:
             options = self._getOptions()
@@ -59,6 +60,7 @@ class SpecificPermissionView(MethodView):
 
     @setpermission
     @requirelogin
+    @requirepermission(options=[])
     def post(self, username, permission, changed_by):
         if not db.permissions.getUserPermissions(username).get(permission):
             return Response(status=404)
@@ -74,6 +76,7 @@ class SpecificPermissionView(MethodView):
 
     @setpermission
     @requirelogin
+    @requirepermission(options=[])
     def delete(self, username, permission, changed_by):
         if not db.permissions.getUserPermissions(username).get(permission):
             return Response(status=404)

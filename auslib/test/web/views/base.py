@@ -1,8 +1,6 @@
-from base64 import b64encode
 import simplejson as json
 import unittest
 
-from auslib.db import AUSDatabase
 from auslib.web.base import app, db
 
 class ViewTest(unittest.TestCase):
@@ -16,10 +14,26 @@ class ViewTest(unittest.TestCase):
         db.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         db.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
         db.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product='fake')), data_version=1)
-        db.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(one=1)), data_version=1)
-        db.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(one=1)), data_version=1)
-        db.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(two=2)), data_version=1)
-        db.releases.t.insert().execute(name='c', product='c', version='c', data=json.dumps(dict(three=3)), data_version=1)
+        db.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name='a')), data_version=1)
+        db.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name='ab')), data_version=1)
+        db.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name='b')), data_version=1)
+        db.releases.t.insert().execute(name='c', product='c', version='c', data=json.dumps(dict(name='c')), data_version=1)
+        db.releases.t.insert().execute(name='d', product='d', version='d', data_version=1, data="""
+{
+    "name": "d",
+    "platforms": {
+        "p": {
+            "locales": {
+                "d": {
+                    "complete": {
+                        "filesize": 1234
+                    }
+                }
+            }
+        }
+    }
+}
+""")
         db.rules.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', throttle=100, mapping='c', update_type='minor', data_version=1)
         db.rules.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', throttle=100, mapping='b', update_type='minor', data_version=1)
         db.rules.t.insert().execute(id=3, priority=100, version='3.5', buildTarget='a', throttle=100, mapping='a', update_type='minor', data_version=1)
