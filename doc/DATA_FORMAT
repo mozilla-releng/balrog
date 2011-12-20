@@ -10,12 +10,12 @@
     //     2 == the style available after bug 459972
     "schema_version": <integer>,
 
-    // extv - required (only for version 1?)
+    // extv - optional (unless not specified at platform:locale level)
     //  parameter for version 1 xml, for add-on compatibility
     //  eg "3.6.13"
     "extv": <string>,
 
-    // appv - required (only for version 1?)
+    // appv - optional (unless not specified at platform:locale level)
     //  Parameter for version 1 xml, displayed as version in offers
     //  eg "3.6.13"
     "appv": <string>,
@@ -30,7 +30,7 @@
 
     // fileUrls - optional (see also fileUrl at platform:locale:update level)
     //  lookup dictionary for generic URLs, in channel:location pairs
-    //  %LOCALE%, %OS_FTP%, %OS_BOUNCER% and %FILENAME% are subsitutions from
+    //  %LOCALE%, %OS_FTP%, %OS_BOUNCER% and %FILENAME% are substitutions from
     //  the request, platform:OS_FTP, platform:OS_BOUNCER, and ftpFilenames
     //  respectively
     //  eg  "fileUrls": {
@@ -103,6 +103,16 @@
         //  The buildTarget coming in from the query
         //  eg "WINNT_x86-msvc", "Darwin_x86-gcc3-u-i386-x86_64", "Linux_x86-gcc3"
         platform <string>: {
+            // alias - optional
+            //  A platform that this one is equivalent to.
+            //  When specified, the named platform will be used to find
+            //  all information about this platform. For example,
+            //  if platform "b" has all the same bits as platform "a",
+            //  platform "b" can be aliased to "a", and all the locales
+            //  and other details can be specified only in "a".
+            //  eg "Darwin_x86-gcc3-u-i386-x86_64"
+            "alias": <string>
+
             // OS_BOUNCER - optional, unless you use %OS_BOUNCER% in fileUrls
             //  a substitution to use in bouncer URLs
             //  eg "win", "osx", "linux", "linux64"
@@ -113,7 +123,7 @@
             //  eg "win32", "mac", "linux-i686", "linux-x86_64"
             "OS_FTP:": <string>
 
-            // buildID - required
+            // buildID - optional (unless not specified at platform:locale level)
             //  the YYYYMMDDHHMMSS build identifier for all the builds
             //  of this platform. Becomes buildID parameter in the final xml
             "buildID": <string>
@@ -126,6 +136,17 @@
                 //  the locale code from shipped-locales etc
                 //  eg: "af", "en-US", "ja-JP-mac"
                 locale <string>: {
+                    // extv - optional (unless not specified at the top level)
+                    //  see above for description
+                    "extv": <string>
+
+                    // appv - optional (unless not specified at the top level)
+                    //  see above for description
+                    "appv": <string>
+
+                    // buildID - optional (unless not specified at the platform level)
+                    //  see above for description
+                    "buildID": <string>
 
                     // update type - required (to actually do anything)
                     //  generally always a complete here, possibly a partial
@@ -146,6 +167,11 @@
                         //  the base16 hash for the mar file, using hashFunction
                         //  used in xml
                         "hashValue": <string>
+
+                        // fileurl - optional (see also fileUrls at top level)
+                        //  the URL to use for this update type.
+                        //  unlike the top level fileUrls, no substitution is done here
+                        "fileUrl": <string>
                     }
                 }
             }

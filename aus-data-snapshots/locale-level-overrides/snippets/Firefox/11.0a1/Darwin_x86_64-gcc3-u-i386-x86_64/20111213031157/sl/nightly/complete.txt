@@ -1,0 +1,9 @@
+version=1
+type=complete
+url=http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2011/12/2011-12-14-03-11-34-mozilla-central-l10n/firefox-11.0a1.sl.mac.complete.mar
+hashFunction=SHA512
+hashValue=3b89ec63fa932ba0daacf7643c9ad443a9701da2b63c96aa6d28f9ab41c14b313184fd92e7721e9d0ce4c3cfa49c262e3c130f2047496f699d36c1072e25f205
+size=39844328
+build=20111214031134
+appv=11.0a1
+extv=11.0a1

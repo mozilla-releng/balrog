@@ -1,0 +1,31 @@
+{
+    "name": "Firefox-mozilla-central-nightly-latest",
+    "hashFunction": "SHA512",
+    "schema_version": 1,
+    "platforms": {
+        "Darwin_x86_64-gcc3-u-i386-x86_64": {
+            "locales": {
+                "sl": {
+                    "buildID": "20111214031134",
+                    "extv": "11.0a1",
+                    "appv": "11.0a1",
+                    "partial": {
+                        "fileUrl": "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2011/12/2011-12-14-03-11-34-mozilla-central-l10n/firefox-11.0a1.sl.mac.partial.20111213031157-20111214031134.mar",
+                        "from": "Firefox-mozilla-central-nightly-20111213031157",
+                        "hashValue": "ad017b578cb0d3ec50d773f02e834c7b425e6bd1d5c2ad53be32bc86489a3bfc1bd3476c6c6c98cb3f8674971ec849878ff5544ba025a423afb3ac69b3a4e6e6",
+                        "filesize": "3640853"
+                    },
+                    "complete": {
+                        "fileUrl": "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2011/12/2011-12-14-03-11-34-mozilla-central-l10n/firefox-11.0a1.sl.mac.complete.mar",
+                        "from": "*",
+                        "hashValue": "3b89ec63fa932ba0daacf7643c9ad443a9701da2b63c96aa6d28f9ab41c14b313184fd92e7721e9d0ce4c3cfa49c262e3c130f2047496f699d36c1072e25f205",
+                        "filesize": "39844328"
+                    }
+                }
+            }
+        },
+        "Darwin_x86-gcc3-u-i386-x86_64": {
+            "alias": "Darwin_x86_64-gcc3-u-i386_x86_64"
+        }
+    }
+}

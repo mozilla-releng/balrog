@@ -79,6 +79,9 @@ class ReleaseBlobV1(Blob):
                 'OS_FTP': None,
                 'locales': {
                     '*': {
+                        'buildID': None,
+                        'extv': None,
+                        'appv': None,
                         'partial': {
                             'filesize': None,
                             'from': None,
@@ -96,4 +99,29 @@ class ReleaseBlobV1(Blob):
             }
         }
     }
+    def getResolvedPlatform(self, platform):
+        return self['platforms'][platform].get('alias', platform)
 
+    def getPlatformData(self, platform):
+        platform = self.getResolvedPlatform(platform)
+        return self['platforms'][platform]
+
+    def getLocaleOrTopLevelParam(self, platform, locale, param):
+        try:
+            platform = self.getResolvedPlatform(platform)
+            return self['platforms'][platform]['locales'][locale][param]
+        except:
+            return self[param]
+
+    def getBuildID(self, platform, locale):
+        try:
+            platform = self.getResolvedPlatform(platform)
+            return self['platforms'][platform]['locales'][locale]['buildID']
+        except:
+            return self['platforms'][platform]['buildID']
+
+    def getAppv(self, platform, locale):
+        return self.getLocaleOrTopLevelParam(platform, locale, 'appv')
+
+    def getExtv(self, platform, locale):
+        return self.getLocaleOrTopLevelParam(platform, locale, 'extv')
