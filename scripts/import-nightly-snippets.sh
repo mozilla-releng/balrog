@@ -12,7 +12,7 @@ AUS_REPO=$4
 
 PRODUCT=Firefox
 BRANCH=mozilla-central
-VERSION=11.0a1
+VERSION=12.0a1
 
 export PYTHONPATH=$AUS_REPO
 
