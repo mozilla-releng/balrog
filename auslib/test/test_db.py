@@ -172,6 +172,34 @@ class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileD
         NamedFileDatabaseMixin.setUp(self)
         TestTableMixin.setUp(self)
 
+    def testDeleteWithTransaction(self):
+        trans = AUSTransaction(self.metadata.bind.connect())
+        self.test.delete(changed_by='bill', transaction=trans, where=[self.test.id==2], old_data_version=1)
+        ret = self.test.t.select().execute().fetchall()
+        self.assertEquals(len(ret), 3)
+        trans.commit()
+        ret = self.test.t.select().execute().fetchall()
+        self.assertEquals(len(ret), 2)
+
+    def testInsertWithTransaction(self):
+        trans = AUSTransaction(self.metadata.bind.connect())
+        self.test.insert(changed_by='bob', transaction=trans, id=5, foo=1)
+        ret = self.test.t.select().execute().fetchall()
+        self.assertEquals(len(ret), 3)
+        trans.commit()
+        ret = self.test.t.select().execute().fetchall()
+        self.assertEquals(ret[-1], (5, 1, 1))
+
+    def testUpdateWithTransaction(self):
+        trans = AUSTransaction(self.metadata.bind.connect())
+        self.test.update(changed_by='bill', transaction=trans, where=[self.test.id==1], what=dict(foo=222),
+            old_data_version=1)
+        ret = self.test.t.select(self.test.id==1).execute().fetchone()
+        self.assertEquals(ret, (1, 33, 1))
+        trans.commit()
+        ret = self.test.t.select(self.test.id==1).execute().fetchone()
+        self.assertEquals(ret, (1, 222, 2))
+
 # TODO: Find some way of testing this with SQLite, or testing it with some other backend.
 # Because it's impossible to have multiple simultaneous transaction with sqlite, you
 # can't test the behaviour of concurrent transactions with it.

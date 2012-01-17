@@ -34,7 +34,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/d/builds/p/g', data=dict(details=details, product='d', version='d'))
         self.assertStatusCode(ret, 201)
         ret = select([db.releases.data]).where(db.releases.name=='d').execute().fetchone()[0]
-        self.assertEquals(json.loads(ret), json.loads("""
+        self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "d",
     "platforms": {
@@ -114,7 +114,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
         newVersion = select([db.releases.version]).where(db.releases.name=='a').execute().fetchone()[0]
-        self.assertEquals(newVersion, 'b')
+        self.assertEqual(newVersion, 'b')
 
     def testLocalePutRetry(self):
         # In order to test the retry logic we need to mock out the method used
@@ -157,7 +157,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     def testLocaleGet(self):
         ret = self._get('/releases/d/builds/p/d')
         self.assertStatusCode(ret, 200)
-        self.assertEquals(json.loads(ret.data), dict(complete=dict(filesize=1234)))
+        self.assertEqual(json.loads(ret.data), dict(complete=dict(filesize=1234)))
 
     def testLocalePutNotAllowed(self):
         ret = self.client.put('/releases/d/builds/p/d', data=dict(product='a'))
@@ -167,3 +167,14 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         details = json.dumps(dict(complete=dict(filesize=435)))
         ret = self._put('/releases/a/builds/p/l', data=dict(details=details, product='b', version='a'))
         self.assertStatusCode(ret, 400)
+
+    def testLocaleRevertsPartialUpdate(self):
+        details = json.dumps(dict(complete=dict(filesize=1)))
+        with mock.patch('auslib.web.base.db.releases.addLocaleToRelease') as r:
+            r.side_effect = Exception("Fail")
+            ret = self._put('/releases/a/builds/p/l', data=dict(details=details, product='a', version='c'))
+            self.assertStatusCode(ret, 500)
+            ret = db.releases.t.select().where(db.releases.name=='a').execute().fetchone()
+            self.assertEqual(ret['product'], 'a')
+            self.assertEqual(ret['version'], 'a')
+            self.assertEqual(json.loads(ret['data']), dict(name='a'))

@@ -141,10 +141,10 @@ class AUSTable(object):
             cond.append(col==primary_key_values[col.name])
         return cond
 
-    def _returnRowOrRaise(self, where, columns=None):
+    def _returnRowOrRaise(self, where, columns=None, transaction=None):
         """Return the row matching the where clause supplied. If no rows match or multiple rows match,
            a WrongNumberOfRowsError will be raised."""
-        rows = self.select(where=where, columns=columns)
+        rows = self.select(where=where, columns=columns, transaction=transaction)
         if len(rows) == 0:
             raise WrongNumberOfRowsError("where clause matched no rows")
         if len(rows) > 1:
@@ -178,14 +178,17 @@ class AUSTable(object):
         return query
 
     @rowsToDicts
-    def select(self, **kwargs):
+    def select(self, transaction=None, **kwargs):
         """Perform a SELECT statement on this table.
            See AUSTable._selectStatement for possible arguments.
            
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         query = self._selectStatement(**kwargs)
-        return query.execute().fetchall()
+        if transaction:
+            return transaction.execute(query).fetchall()
+        else:
+            return query.execute().fetchall()
 
     def _insertStatement(self, **columns):
         """Create an INSERT statement for this table
@@ -214,7 +217,7 @@ class AUSTable(object):
                 trans.execute(q)
         return ret
 
-    def insert(self, changed_by=None, **columns):
+    def insert(self, changed_by=None, transaction=None, **columns):
         """Perform an INSERT statement on this table. See AUSTable._insertStatement for
            a description of columns.
 
@@ -222,14 +225,21 @@ class AUSTable(object):
                               history is enabled. Unused otherwise. No authorization checks are done
                               at this level.
            @type changed_by: str
+           @param transaction: A transaction object to add the insert statement (and history changes) to.
+                               If provided, you must commit the transaction yourself. If None, they will
+                               be added to a locally-scoped transaction and committed.
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
 
-        with AUSTransaction(self.getEngine().connect()) as trans:
+        if transaction:
+            return self._prepareInsert(transaction, changed_by, **columns)
+        else:
+            trans = AUSTransaction(self.getEngine().connect())
             ret = self._prepareInsert(trans, changed_by, **columns)
+            trans.commit()
             return ret
 
     def _deleteStatement(self, where):
@@ -255,7 +265,7 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        row = self._returnRowOrRaise(where=where, columns=self.primary_key)
+        row = self._returnRowOrRaise(where=where, columns=self.primary_key, transaction=trans)
 
         if self.versioned:
             where = copy(where)
@@ -268,7 +278,7 @@ class AUSTable(object):
             trans.execute(self.history.forDelete(row, changed_by))
         return ret
 
-    def delete(self, where, changed_by=None, old_data_version=None):
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
         """Perform a DELETE statement on this table. See AUSTable._deleteStatement for
            a description of `where'. To simplify versioning, this method can only
            delete a single row per invocation. If the where clause given would delete
@@ -290,8 +300,12 @@ class AUSTable(object):
         if self.versioned and not old_data_version:
             raise ValueError("old_data_version must be passed for Tables that are versioned")
 
-        with AUSTransaction(self.getEngine().connect()) as trans:
+        if transaction:
+            return self._prepareDelete(transaction, where, changed_by, old_data_version)
+        else:
+            trans = AUSTransaction(self.getEngine().connect())
             ret = self._prepareDelete(trans, where, changed_by, old_data_version)
+            trans.commit()
             return ret
 
     def _updateStatement(self, where, what):
@@ -317,7 +331,8 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        row = self._returnRowOrRaise(where=where)
+        row = self._returnRowOrRaise(where=where, transaction=trans)
+        log.debug("AUSTable._prepareUpdate: Preparing update to row: %s, updating as follows: %s", row, what)
         if self.versioned:
             where = copy(where)
             where.append(self.data_version==old_data_version)
@@ -334,7 +349,7 @@ class AUSTable(object):
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
 
-    def update(self, where, what, changed_by=None, old_data_version=None):
+    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None):
         """Perform an UPDATE statement on this stable. See AUSTable._updateStatement for
            a description of `where' and `what'. This method can only update a single row
            per invocation. If the where clause given would update zero or multiple rows, a
@@ -356,8 +371,12 @@ class AUSTable(object):
         if self.versioned and not old_data_version:
             raise ValueError("old_data_version must be passed for Tables that are versioned")
 
-        with AUSTransaction(self.getEngine().connect()) as trans:
+        if transaction:
+            return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
+        else:
+            trans = AUSTransaction(self.getEngine().connect())
             ret = self._prepareUpdate(trans, where, what, changed_by, old_data_version)
+            trans.commit()
             return ret
 
 class History(AUSTable):
@@ -489,11 +508,11 @@ class Rules(AUSTable):
         if self._matchesRegex(ruleChannel, fallbackChannel):
             return True
 
-    def getOrderedRules(self):
+    def getOrderedRules(self, transaction=None):
         """Returns all of the rules, sorted in ascending order"""
-        return self.select(order_by=(self.priority, self.version, self.mapping))
+        return self.select(order_by=(self.priority, self.version, self.mapping), transaction=transaction)
 
-    def getRulesMatchingQuery(self, updateQuery, fallbackChannel):
+    def getRulesMatchingQuery(self, updateQuery, fallbackChannel, transaction=None):
         """Returns all of the rules that match the given update query.
            For cases where a particular updateQuery channel has no
            fallback, fallbackChannel should match the channel from the query."""
@@ -509,7 +528,8 @@ class Rules(AUSTable):
                 ((self.distribution==updateQuery['distribution']) | (self.distribution==None)) &
                 ((self.distVersion==updateQuery['distVersion']) | (self.distVersion==None)) &
                 ((self.headerArchitecture==updateQuery['headerArchitecture']) | (self.headerArchitecture==None))
-            ]
+            ],
+            transaction=transaction
         )
         log.debug("Rules.getRulesMatchingQuery: Raw matches:")
         for rule in rules:
@@ -547,7 +567,11 @@ class Releases(AUSTable):
         self.table.append_column(Column('data', dataType, nullable=False))
         AUSTable.__init__(self)
 
-    def getReleases(self, name=None, product=None, version=None, limit=None):
+    def getReleases(self, name=None, product=None, version=None, limit=None, transaction=None):
+        log.debug("Releases.getReleases: Looking for releases with:")
+        log.debug("Releases.getReleases: name: %s", name)
+        log.debug("Releases.getReleases: product: %s", product)
+        log.debug("Releases.getReleases: version: %s", version)
         where = []
         if name:
             where.append(self.name==name)
@@ -555,45 +579,46 @@ class Releases(AUSTable):
             where.append(self.product==product)
         if version:
             where.append(self.version==version)
-        rows = self.select(where=where, limit=limit)
+        rows = self.select(where=where, limit=limit, transaction=transaction)
         for row in rows:
             blob = ReleaseBlobV1()
             blob.loadJSON(row['data'])
             row['data'] = blob
         return rows
 
-    def getReleaseBlob(self, name):
+    def getReleaseBlob(self, name, transaction=None):
         try:
-            row = self.select(where=[self.name==name], columns=[self.data], limit=1)[0]
+            row = self.select(where=[self.name==name], columns=[self.data], limit=1, transaction=transaction)[0]
         except IndexError:
             raise KeyError("Couldn't find release with name '%s'" % name)
         blob = ReleaseBlobV1()
         blob.loadJSON(row['data'])
         return blob
 
-    def addRelease(self, name, product, version, blob, changed_by):
+    def addRelease(self, name, product, version, blob, changed_by, transaction=None):
         if not blob.isValid():
             log.debug("Releases.addRelease: invalid blob is %s" % blob)
             raise ValueError("Release blob is invalid.")
         columns = dict(name=name, product=product, version=version, data=blob.getJSON())
         # Raises DuplicateDataError if the release already exists.
-        self.insert(changed_by, **columns)
+        self.insert(changed_by=changed_by, transaction=transaction, **columns)
 
-    def updateRelease(self, name, changed_by, old_data_version, product=None, version=None):
+    def updateRelease(self, name, changed_by, old_data_version, product=None, version=None, transaction=None):
         what = {}
         if product:
             what['product'] = product
         if version:
             what['version'] = version
-        self.update(where=[self.name==name], what=what, changed_by=changed_by, old_data_version=old_data_version)
+        log.debug("Releases.updateRelease: Updating %s with %s", name, what)
+        self.update(where=[self.name==name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
-    def addLocaleToRelease(self, name, platform, locale, blob, old_data_version, changed_by):
+    def addLocaleToRelease(self, name, platform, locale, blob, old_data_version, changed_by, transaction=None):
         """Adds or update's the existing data for a specific platform + locale
            combination, in the release identified by 'name'. The data is
            validated before commiting it, and a ValueError is raised if it is
            invalid.
         """
-        releaseBlob = self.getReleaseBlob(name)
+        releaseBlob = self.getReleaseBlob(name, transaction=transaction)
         if 'platforms' not in releaseBlob:
             releaseBlob['platforms'] = {
                 platform: {
@@ -607,11 +632,12 @@ class Releases(AUSTable):
             raise ValueError("New release blob is invalid.")
         where = [self.name==name]
         what = dict(data=releaseBlob.getJSON())
-        self.update(where, what, changed_by, old_data_version)
+        self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
+            transaction=transaction)
 
-    def getLocale(self, name, platform, locale):
+    def getLocale(self, name, platform, locale, transaction=None):
         try:
-            blob = self.getReleaseBlob(name)
+            blob = self.getReleaseBlob(name, transaction=transaction)
             return blob['platforms'][platform]['locales'][locale]
         except KeyError:
             raise KeyError("Couldn't find locale identified by: %s, %s, %s" % (name, platform ,locale))
@@ -644,17 +670,17 @@ class Permissions(AUSTable):
         )
         AUSTable.__init__(self)
 
-    def canEditUsers(self, username):
+    def canEditUsers(self, username, transaction=None):
         where=[
             (self.username==username) &
             ((self.permission=='admin') | (self.permission=='/users/:id/permissions/:permission'))
         ]
-        if self.select(where=where):
+        if self.select(where=where, transaction=transaction):
             return True
         return False
 
-    def assertCanEdit(self, username):
-        if not self.canEditUsers(username):
+    def assertCanEdit(self, username, transaction=None):
+        if not self.canEditUsers(username, transaction=transaction):
             raise PermissionDeniedError('%s is not allowed to change permissions' % username)
 
     def assertPermissionExists(self, permission):
@@ -666,22 +692,22 @@ class Permissions(AUSTable):
             if opt not in self.allPermissions[permission]:
                 raise ValueError('Unknown option "%s" for permission "%s"' % (opt, permission))
 
-    def getAllUsers(self):
-        res = self.select(columns=[self.username], distinct=True)
+    def getAllUsers(self, transaction=None):
+        res = self.select(columns=[self.username], distinct=True, transaction=transaction)
         return [r['username'] for r in res]
 
-    def grantPermission(self, changed_by, username, permission, options=None):
-        self.assertCanEdit(changed_by)
+    def grantPermission(self, changed_by, username, permission, options=None, transaction=None):
+        self.assertCanEdit(changed_by, transaction=transaction)
         self.assertPermissionExists(permission)
         if options:
             self.assertOptionsExist(permission, options)
         columns = dict(username=username, permission=permission)
         if options:
             columns['options'] = json.dumps(options)
-        self.insert(changed_by=changed_by, **columns)
+        self.insert(changed_by=changed_by, transaction=transaction, **columns)
 
-    def updatePermission(self, changed_by, username, permission, old_data_version, options=None):
-        self.assertCanEdit(changed_by)
+    def updatePermission(self, changed_by, username, permission, old_data_version, options=None, transaction=None):
+        self.assertCanEdit(changed_by, transaction=transaction)
         self.assertPermissionExists(permission)
         if options:
             self.assertOptionsExist(permission, options)
@@ -689,15 +715,15 @@ class Permissions(AUSTable):
         else:
             what = dict(options=None)
         where = [self.username==username, self.permission==permission]
-        self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version)
+        self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
-    def revokePermission(self, changed_by, username, permission, old_data_version):
-        self.assertCanEdit(changed_by)
+    def revokePermission(self, changed_by, username, permission, old_data_version, transaction=None):
+        self.assertCanEdit(changed_by, transaction=transaction)
         where = [self.username==username, self.permission==permission]
-        self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version)
+        self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
-    def getUserPermissions(self, username):
-        rows = self.select(columns=[self.permission, self.options, self.data_version], where=[self.username==username])
+    def getUserPermissions(self, username, transaction=None):
+        rows = self.select(columns=[self.permission, self.options, self.data_version], where=[self.username==username], transaction=transaction)
         ret = dict()
         for row in rows:
             perm = row['permission']
@@ -710,8 +736,8 @@ class Permissions(AUSTable):
                 ret[perm]['options'] = None
         return ret
 
-    def getOptions(self, username, permission):
-        ret = self.select(columns=[self.options], where=[self.username==username, self.permission==permission])
+    def getOptions(self, username, permission, transaction=None):
+        ret = self.select(columns=[self.options], where=[self.username==username, self.permission==permission], transaction=transaction)
         if ret:
             if ret[0]['options']:
                 return json.loads(ret[0]['options'])
@@ -720,13 +746,13 @@ class Permissions(AUSTable):
         else:
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
 
-    def hasUrlPermission(self, username, url, method, urlOptions={}):
+    def hasUrlPermission(self, username, url, method, urlOptions={}, transaction=None):
         """Check if a user has access to an URL via a specific HTTP method.
            GETs are always allowed, and admins can always access everything."""
-        if self.select(where=[self.username==username, self.permission=='admin']):
+        if self.select(where=[self.username==username, self.permission=='admin'], transaction=transaction):
             return True
         try:
-            options = self.getOptions(username, url)
+            options = self.getOptions(username, url, transaction=transaction)
         except ValueError:
             return False
 
@@ -776,6 +802,9 @@ class AUSDatabase(object):
     def reset(self):
         self.engine = None
         self.metadata.bind = None
+
+    def begin(self):
+        return AUSTransaction(self.engine.connect())
 
     @property
     def rules(self):

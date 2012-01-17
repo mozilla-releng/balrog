@@ -1,4 +1,5 @@
 from flask import request, Response
+from flask.views import MethodView
 
 from auslib.web.base import db
 
@@ -28,3 +29,16 @@ def requirepermission(options=['product']):
                 return Response(status=400, response="Couldn't find 'product' in form")
         return decorated
     return wrap
+
+class AdminView(MethodView):
+    def post(self, *args, **kwargs):
+        with db.begin() as trans:
+            return self._post(*args, transaction=trans, **kwargs)
+
+    def put(self, *args, **kwargs):
+        with db.begin() as trans:
+            return self._put(*args, transaction=trans, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        with db.begin() as trans:
+            return self._delete(*args, transaction=trans, **kwargs)

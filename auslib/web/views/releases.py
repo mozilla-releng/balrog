@@ -3,18 +3,17 @@ import simplejson as json
 from sqlalchemy.exc import SQLAlchemyError
 
 from flask import request, Response, jsonify
-from flask.views import MethodView
 
 from buildtools.retry import retry
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
 from auslib.web.base import app, db
-from auslib.web.views.base import requirelogin, requirepermission
+from auslib.web.views.base import requirelogin, requirepermission, AdminView
 
 import logging
 log = logging.getLogger(__name__)
 
-class SingleLocaleView(MethodView):
+class SingleLocaleView(AdminView):
     """/releases/[release]/builds/[platform]/[locale]"""
     def get(self, release, platform, locale):
         locale = db.releases.getLocale(release, platform, locale)
@@ -22,7 +21,7 @@ class SingleLocaleView(MethodView):
 
     @requirelogin
     @requirepermission()
-    def put(self, release, platform, locale, changed_by):
+    def _put(self, release, platform, locale, changed_by, transaction):
         new = True
         try:
             # Collect all of the release names that we should put the data into
@@ -34,7 +33,7 @@ class SingleLocaleView(MethodView):
             return Response(status=400, response=e.args)
 
         for rel in [release] + copyTo:
-            releaseObj = db.releases.getReleases(name=rel)[0]
+            releaseObj = db.releases.getReleases(name=rel, transaction=transaction)[0]
             # If the release already exists, do some verification on it, and possibly update
             # the version.
             if releaseObj:
@@ -47,15 +46,17 @@ class SingleLocaleView(MethodView):
                 # However, we _should_ update the version because some rows (specifically,
                 # the ones that nightly update rules point at) have their version change over time.
                 if version != releaseObj['version']:
+                    log.debug("SingleLocaleView.put: database version for %s is %s, updating it to %s", rel, releaseObj['version'], version)
                     def updateVersion():
-                        old_data_version = db.releases.getReleases(name=rel)[0]['data_version']
-                        db.releases.updateRelease(name=rel, version=version, changed_by=changed_by, old_data_version=old_data_version)
+                        old_data_version = db.releases.getReleases(name=rel, transaction=transaction)[0]['data_version']
+                        db.releases.updateRelease(name=rel, version=version, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+                        releaseObj['version'] = version
                     retry(updateVersion, sleeptime=5, retry_exceptions=(SQLAlchemyError,))
                 # If it does exist, and this is this is the first release (aka, the one in the URL),
                 # see if the locale exists, for purposes of setting the correct Response code.
                 if rel == release:
                     try:
-                        db.releases.getLocale(rel, platform, locale)
+                        db.releases.getLocale(rel, platform, locale, transaction=transaction)
                         new = False
                     except:
                         pass
@@ -63,11 +64,11 @@ class SingleLocaleView(MethodView):
             else:
                 releaseBlob = ReleaseBlobV1(name=rel, schema_version=CURRENT_SCHEMA_VERSION)
                 retry(db.releases.addRelease, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
-                      kwargs=dict(name=rel, product=product, version=version, blob=releaseBlob, changed_by=changed_by))
+                      kwargs=dict(name=rel, product=product, version=version, blob=releaseBlob, changed_by=changed_by, transaction=transaction))
             # We need to wrap this in order to make it retry-able.
             def updateLocale():
-                old_data_version = db.releases.getReleases(name=rel)[0]['data_version']
-                db.releases.addLocaleToRelease(rel, platform, locale, localeBlob, old_data_version, changed_by)
+                old_data_version = db.releases.getReleases(name=rel, transaction=transaction)[0]['data_version']
+                db.releases.addLocaleToRelease(rel, platform, locale, localeBlob, old_data_version, changed_by, transaction)
             retry(updateLocale, sleeptime=5, retry_exceptions=(SQLAlchemyError,))
         if new:
             return Response(status=201)

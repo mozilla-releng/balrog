@@ -1,7 +1,16 @@
 import simplejson as json
 import unittest
 
+from flask import Response
+
 from auslib.web.base import app, db
+
+# When running tests, there's no web server to convert uncaught exceptions to
+# 500 errors, so we need to do it here. Maybe we should just do it globally
+# anyways?
+@app.errorhandler(Exception)
+def uncaughtexceptions(error):
+    return Response(response=error, status=500)
 
 class ViewTest(unittest.TestCase):
     """Base class for all view tests. Sets up some sample data, and provides

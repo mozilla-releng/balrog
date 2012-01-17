@@ -1,10 +1,9 @@
 import simplejson as json
 
 from flask import render_template, request, Response, jsonify
-from flask.views import MethodView
 
 from auslib.web.base import app, db
-from auslib.web.views.base import requirelogin, requirepermission
+from auslib.web.views.base import requirelogin, requirepermission, AdminView
 
 def setpermission(f):
     def decorated(*args, **kwargs):
@@ -13,7 +12,7 @@ def setpermission(f):
         return f(*args, **kwargs)
     return decorated
         
-class UsersView(MethodView):
+class UsersView(AdminView):
     """/users"""
     def get(self):
         users = db.permissions.getAllUsers()
@@ -21,13 +20,13 @@ class UsersView(MethodView):
         # http://flask.pocoo.org/docs/security/#json-security
         return jsonify(dict(users=users))
 
-class PermissionsView(MethodView):
+class PermissionsView(AdminView):
     """/users/[user]/permissions"""
     def get(self, username):
         permissions = db.permissions.getUserPermissions(username)
         return jsonify(permissions)
 
-class SpecificPermissionView(MethodView):
+class SpecificPermissionView(AdminView):
     """/users/[user]/permissions/[permission]"""
     def _getOptions(self):
             if 'options' in request.form and request.form['options']:
@@ -41,17 +40,17 @@ class SpecificPermissionView(MethodView):
     @setpermission
     @requirelogin
     @requirepermission(options=[])
-    def put(self, username, permission, changed_by):
+    def _put(self, username, permission, changed_by, transaction):
         try:
             options = self._getOptions()
-            if db.permissions.getUserPermissions(username).get(permission):
+            if db.permissions.getUserPermissions(username, transaction=transaction).get(permission):
                 # Raises ValueError if it can't convert the data, which (properly)
                 # causes us to return 400 below.
                 data_version = int(request.form['data_version'])
-                db.permissions.updatePermission(changed_by, username, permission, data_version, options)
+                db.permissions.updatePermission(changed_by, username, permission, data_version, options, transaction=transaction)
                 return Response(status=200)
             else:
-                db.permissions.grantPermission(changed_by, username, permission, options)
+                db.permissions.grantPermission(changed_by, username, permission, options, transaction=transaction)
                 return Response(status=201)
         except ValueError, e:
             return Response(status=400, response=e.args)
@@ -61,13 +60,13 @@ class SpecificPermissionView(MethodView):
     @setpermission
     @requirelogin
     @requirepermission(options=[])
-    def post(self, username, permission, changed_by):
-        if not db.permissions.getUserPermissions(username).get(permission):
+    def _post(self, username, permission, changed_by, transaction):
+        if not db.permissions.getUserPermissions(username, transaction=transaction).get(permission):
             return Response(status=404)
         try:
             options = self._getOptions()
             data_version = int(request.form['data_version'])
-            db.permissions.updatePermission(changed_by, username, permission, data_version, options)
+            db.permissions.updatePermission(changed_by, username, permission, data_version, options, transaction=transaction)
             return Response(status=200)
         except ValueError, e:
             return Response(status=400, response=e.args)
@@ -77,25 +76,25 @@ class SpecificPermissionView(MethodView):
     @setpermission
     @requirelogin
     @requirepermission(options=[])
-    def delete(self, username, permission, changed_by):
-        if not db.permissions.getUserPermissions(username).get(permission):
+    def _delete(self, username, permission, changed_by, transaction):
+        if not db.permissions.getUserPermissions(username, transaction=transaction).get(permission):
             return Response(status=404)
         try:
             data_version = int(request.args['data_version'])
-            db.permissions.revokePermission(changed_by, username, permission, data_version)
+            db.permissions.revokePermission(changed_by, username, permission, data_version, transaction=transaction)
             return Response(status=200)
         except ValueError, e:
             return Response(status=400, response=e.args)
         except Exception, e:
             return Response(status=500, response=e.args)
 
-class PermissionsPageView(MethodView):
+class PermissionsPageView(AdminView):
     """/permissions.html"""
     def get(self):
         users = db.permissions.getAllUsers()
         return render_template('permissions.html', users=users)
 
-class UserPermissionsPageView(MethodView):
+class UserPermissionsPageView(AdminView):
     """/user_permissions.html"""
     def get(self):
         username = request.args.get('username')
