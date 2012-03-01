@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from flask import request, Response, jsonify
 
-from buildtools.retry import retry
+from mozilla_buildtools.retry import retry
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
 from auslib.web.base import app, db
