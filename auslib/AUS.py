@@ -1,14 +1,29 @@
 import copy
 from collections import defaultdict
+from random import randint
 
 import logging
 log = logging.getLogger(__name__)
 
 from auslib.db import AUSDatabase
 
+class AUSRandom:
+    """Abstract getting a randint to make it easier to test the range of
+    possible values"""
+    def __init__(self, min=0, max=99):
+        self.min = min
+        self.max = max
+
+    def getInt(self):
+        return randint(self.min, self.max)
+
+    def getRange(self):
+        return range(self.min, self.max+1)
+
 class AUS3:
     def __init__(self, dbname=None):
         self.setDb(dbname)
+        self.rand = AUSRandom()
 
     def setDb(self, dbname):
         if dbname == None:
@@ -16,6 +31,9 @@ class AUS3:
         self.db = AUSDatabase(dbname)
         self.releases = self.db.releases
         self.rules = self.db.rules
+
+    def setSpecialHosts(self, specialForceHosts):
+        self.specialForceHosts = specialForceHosts
 
     def createTables(self):
         self.db.createTables()
@@ -48,9 +66,21 @@ class AUS3:
         ### XXX throw any N->N update rules and keep the highest priority remaining one
         if len(rules) >= 1:
             rules = sorted(rules,key=lambda rule: rule['priority'], reverse=True)
+            rule = rules[0]
+
+            # for background checks (force=1 missing from query), we might not
+            # serve every request an update
+            # throttle=100 means all requests are served
+            # throttle=25 means only one quarter of requests are served
+            if not updateQuery['force'] and rule['throttle'] < 100:
+                log.debug("AUS.evaluateRules: throttle < 100, rolling the dice")
+                if self.rand.getInt() >= rule['throttle']:
+                    log.debug("AUS.evaluateRules: request was dropped")
+                    rule = None
+
             log.debug("AUS.evaluateRules: Returning rule:")
-            log.debug("AUS.evaluateRules: %s", rules[0])
-            return rules[0]
+            log.debug("AUS.evaluateRules: %s", rule)
+            return rule
         return None
 
     def getFallbackChannel(self, channel):
@@ -122,6 +152,13 @@ class AUS3:
                         url = url.replace('%FILENAME%', relData['ftpFilenames'][patchKey])
                         url = url.replace('%PRODUCT%', relData['bouncerProducts'][patchKey])
                         url = url.replace('%OS_BOUNCER%', relDataPlat['OS_BOUNCER'])
+                    # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
+                    if updateQuery['force'] and url.startswith(self.specialForceHosts):
+                        if '?' in url:
+                            url += '&force=1'
+                        else:
+                            url += '?force=1'
+
                     updateData['patches'].append({
                         'type': patchKey,
                         'URL':  url,
@@ -190,8 +227,6 @@ class AUS3:
                 for patch in sorted(rel['patches']):
                     xml.append('        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
                                (patch['type'], patch['URL'], patch['hashFunction'], patch['hashValue'], patch['size']))
-                # XXX: need to handle old releases needing completes duplicating partials
-                # add another parameter in the rule table and use it here
                 xml.append('    </update>')
         xml.append('</updates>')
         return '\n'.join(xml)

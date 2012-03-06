@@ -517,20 +517,20 @@ class Rules(AUSTable):
            For cases where a particular updateQuery channel has no
            fallback, fallbackChannel should match the channel from the query."""
         matchingRules = []
-        rules = self.select(
-            where=[
-                (self.throttle > 0) &
-                ((self.product==updateQuery['product']) | (self.product==None)) &
-                ((self.buildTarget==updateQuery['buildTarget']) | (self.buildTarget==None)) &
-                ((self.buildID==updateQuery['buildID']) | (self.buildID==None)) &
-                ((self.locale==updateQuery['locale']) | (self.locale==None)) &
-                ((self.osVersion==updateQuery['osVersion']) | (self.osVersion==None)) &
-                ((self.distribution==updateQuery['distribution']) | (self.distribution==None)) &
-                ((self.distVersion==updateQuery['distVersion']) | (self.distVersion==None)) &
-                ((self.headerArchitecture==updateQuery['headerArchitecture']) | (self.headerArchitecture==None))
-            ],
-            transaction=transaction
-        )
+        where=[
+            ((self.product==updateQuery['product']) | (self.product==None)) &
+            ((self.buildTarget==updateQuery['buildTarget']) | (self.buildTarget==None)) &
+            ((self.buildID==updateQuery['buildID']) | (self.buildID==None)) &
+            ((self.locale==updateQuery['locale']) | (self.locale==None)) &
+            ((self.osVersion==updateQuery['osVersion']) | (self.osVersion==None)) &
+            ((self.distribution==updateQuery['distribution']) | (self.distribution==None)) &
+            ((self.distVersion==updateQuery['distVersion']) | (self.distVersion==None)) &
+            ((self.headerArchitecture==updateQuery['headerArchitecture']) | (self.headerArchitecture==None))
+        ]
+        if updateQuery['force'] == False:
+            where.append(self.throttle > 0)
+        rules = self.select(where=where, transaction=transaction)
+        log.debug("Rules.getRulesMatchingQuery: where: %s" % where)
         log.debug("Rules.getRulesMatchingQuery: Raw matches:")
         for rule in rules:
             log.debug("Rules.getRulesMatchingQuery: %s", rule)

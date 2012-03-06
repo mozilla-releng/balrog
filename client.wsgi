@@ -21,3 +21,4 @@ if errors:
 
 logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel())
 AUS.setDb(cfg.getDburi())
+AUS.setSpecialHosts(cfg.getSpecialForceHosts())

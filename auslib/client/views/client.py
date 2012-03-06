@@ -31,17 +31,18 @@ class ClientRequestView(MethodView):
                       'distribution': 'default',
                       'distVersion': 'default',
                       'headerArchitecture': 'Intel',
+                      'force': True,
                       'name': ''
                      }
         """
         # TODO support older URL versions. catlee suggests splitting on /, easy to use conditional assignment then
-        # TODO support force queries to void throttling, and pass through to downloads
         query = url.copy()
         # TODO: Better way of dispatching different versions when we actually have to deal with them.
         if queryVersion == 3:
             query['name'] = AUS.identifyRequest(query)
             ua = request.headers.get('User-Agent')
             query['headerArchitecture'] = self.getHeaderArchitecture(query['buildTarget'], ua)
+            query['force'] = (int(request.args.get('force', 0)) == 1)
             return query
         return {}
 

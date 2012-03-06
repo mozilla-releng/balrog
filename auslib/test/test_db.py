@@ -299,7 +299,8 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self.paths.getRulesMatchingQuery(
             dict(name='', product='', version='3.5', channel='',
                  buildTarget='a', buildID='', locale='', osVersion='',
-                 distribution='', distVersion='', headerArchitecture=''
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False
             ),
             fallbackChannel=''
         )
@@ -311,7 +312,8 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self.paths.getRulesMatchingQuery(
             dict(name='', product='', version='3.5', channel='',
                  buildTarget='d', buildID='', locale='', osVersion='',
-                 distribution='', distVersion='', headerArchitecture=''
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False
             ),
             fallbackChannel=''
         )
@@ -326,7 +328,8 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self.paths.getRulesMatchingQuery(
             dict(name='', product='', version='3.3', channel='',
                  buildTarget='d', buildID='', locale='', osVersion='',
-                 distribution='', distVersion='', headerArchitecture=''
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False
             ),
             fallbackChannel=''
         )
@@ -336,6 +339,24 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(rule_id=4, priority=80, throttle=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
         ]
         self.assertEquals(rules, expected)
+
+    def testGetRulesMatchingQueryReturnThrottled(self):
+        rules = self.paths.getRulesMatchingQuery(
+            dict(name='', product='', version='3.3', channel='',
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=True
+            ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=2, priority=100, throttle=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
+            dict(rule_id=4, priority=80, throttle=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=5, priority=80, throttle=0, version='3.3', buildTarget='d', mapping='c', update_type='z', data_version=1)
+        ]
+        self.assertEquals(rules, expected)
+
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def setUp(self):
@@ -351,7 +372,8 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='4.0', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
-                 distribution='', distVersion='', headerArchitecture=''
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False
             ),
             fallbackChannel=''
         )
@@ -360,7 +382,8 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='4.0b2', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
-                 distribution='', distVersion='', headerArchitecture=''
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False
             ),
             fallbackChannel=''
         )
@@ -369,7 +392,8 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='4.0.1', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
-                 distribution='', distVersion='', headerArchitecture=''
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False
             ),
             fallbackChannel=''
         )
@@ -381,7 +405,8 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='', channel='releasetest',
                  buildTarget='', buildID='', locale='', osVersion='', distribution='',
-                 distVersion='', headerArchitecture=''
+                 distVersion='', headerArchitecture='',
+                 force=False
             ),
             fallbackChannel='releasetest'
         )
@@ -390,7 +415,8 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='', channel='releasetest-cck-blah',
                  buildTarget='', buildID='', locale='', osVersion='',
-                 distribution='', distVersion='', headerArchitecture=''
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False
             ),
             fallbackChannel='releasetest'
         )

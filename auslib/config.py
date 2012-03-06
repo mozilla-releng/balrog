@@ -1,4 +1,4 @@
-from ConfigParser import RawConfigParser, NoOptionError
+from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
 import logging
 
 class AUSConfig(object):
@@ -44,3 +44,9 @@ class AUSConfig(object):
 
     def getDburi(self):
         return self.cfg.get('database', 'dburi')
+
+    def getSpecialForceHosts(self):
+        try:
+            return tuple(a.strip() for a in self.cfg.get('site-specific','specialforcehosts').split(','))
+        except (NoSectionError, NoOptionError):
+            return None

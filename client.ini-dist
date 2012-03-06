@@ -7,3 +7,7 @@
 ;Where to put the application log. No rotation is done on this file.
 logfile=/var/log/aus.log
 ;level=ERROR
+
+[site-specific]
+;Sites that get the force=1 appended to download urls, comma separated supported
+;specialforcehosts=http://example.org

@@ -66,6 +66,7 @@ def getQueryFromPath(snippetPath):
         update['distribution'] = 'foo'
         update['distVersion'] = 'foo'
         update['headerArchitecture'] = 'Intel'
+        update['force'] = False
         update['name'] = ''
         return update
     else:
