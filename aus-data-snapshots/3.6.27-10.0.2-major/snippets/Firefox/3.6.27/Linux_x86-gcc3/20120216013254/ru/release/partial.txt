@@ -1,0 +1,11 @@
+version=1
+type=partial
+url=http://download.mozilla.org/?product=firefox-10.0.2-complete&os=linux&lang=ru
+hashFunction=SHA512
+hashValue=b3b531afa21170e1f4579529b0fa20cd057f8b9bd28cdb2df4df55cdbb30bc616feb065dd29c8ed8b22992c94caf4fc932ead283065b591c1ef11a583385922f
+size=17490574
+build=20120215223356
+appv=10.0.2
+extv=10.0.2
+detailsUrl=https://www.mozilla.org/ru/firefox/latest/details/from-3.6.html
+updateType=major

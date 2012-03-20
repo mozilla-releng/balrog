@@ -1,0 +1,11 @@
+version=1
+type=complete
+url=http://download.mozilla.org/?product=firefox-10.0.2-complete&os=osx&lang=ja-JP-mac
+hashFunction=SHA512
+hashValue=0d5b48ff74d416cc649c071da479c34061ae90a12e03b680f565a5485ecbe3d69e2920e7b31dac208413654a1e3954e9e183f414495f3324ab088c26e3c1158e
+size=31970459
+build=20120215223356
+appv=10.0.2
+extv=10.0.2
+detailsUrl=https://www.mozilla.org/ja-JP-mac/firefox/latest/details/from-3.6.html
+updateType=major

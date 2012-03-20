@@ -1,0 +1,11 @@
+version=1
+type=complete
+url=http://download.mozilla.org/?product=firefox-10.0.2-complete&os=win&lang=en-US
+hashFunction=SHA512
+hashValue=1355ab14ee9cecdfb87a1f2cd079d5a46bf9862ab76ef711a80e4f3d6d269e9337aee14808e764c84e3088f14435c8a2707ffac1f99825929fbf5b9b5d834eb3
+size=19748753
+build=20120215223356
+appv=10.0.2
+extv=10.0.2
+detailsUrl=https://www.mozilla.org/en-US/firefox/latest/details/from-3.6.html
+updateType=major

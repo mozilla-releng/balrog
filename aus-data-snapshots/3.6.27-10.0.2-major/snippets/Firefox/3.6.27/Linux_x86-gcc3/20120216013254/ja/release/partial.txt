@@ -1,0 +1,11 @@
+version=1
+type=partial
+url=http://download.mozilla.org/?product=firefox-10.0.2-complete&os=linux&lang=ja
+hashFunction=SHA512
+hashValue=10fa5f1207e9d25f6c42be8d52a3d790bb64ae411d53efd598a3982d9d5b20b8455087c6777e071a86f021031587233f35571a60111cfbd82f959a3531a2434b
+size=17211776
+build=20120215223356
+appv=10.0.2
+extv=10.0.2
+detailsUrl=https://www.mozilla.org/ja/firefox/latest/details/from-3.6.html
+updateType=major

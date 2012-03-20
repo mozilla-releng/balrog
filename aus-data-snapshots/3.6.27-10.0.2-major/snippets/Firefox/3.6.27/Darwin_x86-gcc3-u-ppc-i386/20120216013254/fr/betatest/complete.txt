@@ -1,0 +1,11 @@
+version=1
+type=complete
+url=http://stage.mozilla.org/pub/mozilla.org/firefox/nightly/10.0.2-candidates/build1/update/mac/fr/firefox-10.0.2.complete.mar
+hashFunction=SHA512
+hashValue=4065e456fbc0886c76c3707a29e74d6454c3380345bc3169fac60d180e7afefe07a30ce67bdb5634d398aca7a2408ac355194e4154702161454ffd9035354d4b
+size=32058171
+build=20120215223356
+appv=10.0.2
+extv=10.0.2
+detailsUrl=https://www.mozilla.org/fr/firefox/latest/details/from-3.6.html
+updateType=major

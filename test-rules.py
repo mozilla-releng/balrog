@@ -91,6 +91,7 @@ def walkSnippets(AUS, testPath):
         snipType = os.path.splitext(os.path.basename(f))[0]
 
         # generate the AUS3 snippets
+        log.debug('test-rules.walkSnippets: %s' % f)
         testQuery = getQueryFromPath(f.lstrip(testPath))
         testQuery['name'] = AUS.identifyRequest(testQuery)
         rule = AUS.evaluateRules(testQuery)

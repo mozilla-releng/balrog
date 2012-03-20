@@ -1,0 +1,11 @@
+version=1
+type=complete
+url=http://stage.mozilla.org/pub/mozilla.org/firefox/nightly/10.0.2-candidates/build1/update/linux-i686/de/firefox-10.0.2.complete.mar
+hashFunction=SHA512
+hashValue=d7b890f66d9108b76b47b3637f5e6e1e9a74512a6b333a7917138de67fa2824ccc0f000bb11a4409a39e2f0529423b277e79aac4fd974f74a2a625a6fe501df7
+size=16960064
+build=20120215223356
+appv=10.0.2
+extv=10.0.2
+detailsUrl=https://www.mozilla.org/de/firefox/latest/details/from-3.6.html
+updateType=major

@@ -1,0 +1,15 @@
+{
+    "name": "Firefox-3.6.27-build1",
+    "extv": "3.6.27",
+    "platforms": {
+        "Darwin_x86-gcc3-u-ppc-i386": {
+            "buildID": "20120216013254"
+        },
+        "Linux_x86-gcc3": {
+            "buildID": "20120216013254"
+        },
+        "WINNT_x86-msvc": {
+            "buildID": "20120216013254"
+        }
+    }
+}

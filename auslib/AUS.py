@@ -204,11 +204,12 @@ class AUS3:
             if rel['detailsUrl']:
                 snippet.append("detailsUrl=%s" % rel['detailsUrl'])
             if rel['type'] == 'major':
-                snippets.append('updateType=major')
+                snippet.append('updateType=major')
             # AUS2 snippets have a trailing newline, add one here for easy diffing
             snippets[patch['type']] = "\n".join(snippet) + '\n'
-        # XXX: need to handle old releases needing completes duplicating partials
-        # add another parameter in the rule table and use it here
+
+        for s in snippets.keys():
+            log.debug('AUS.createSnippets: %s\n%s' % (s, snippets[s].rstrip()))
         return snippets
 
     def createXML(self, updateQuery, release):

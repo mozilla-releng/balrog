@@ -1,0 +1,11 @@
+version=1
+type=complete
+url=http://stage.mozilla.org/pub/mozilla.org/firefox/nightly/10.0.2-candidates/build1/update/win32/ru/firefox-10.0.2.complete.mar
+hashFunction=SHA512
+hashValue=93c0b54eec7a10e1f6a77f1f8cf65ca8d03dd892078fcd30f9d13067576489e65dfd40e4544eade1f7474d6e20542abc95cebd17cf64f99241d8f70ff155e47a
+size=20052158
+build=20120215223356
+appv=10.0.2
+extv=10.0.2
+detailsUrl=https://www.mozilla.org/ru/firefox/latest/details/from-3.6.html
+updateType=major

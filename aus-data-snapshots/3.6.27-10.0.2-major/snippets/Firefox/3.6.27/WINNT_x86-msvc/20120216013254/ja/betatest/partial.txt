@@ -1,0 +1,11 @@
+version=1
+type=partial
+url=http://stage.mozilla.org/pub/mozilla.org/firefox/nightly/10.0.2-candidates/build1/update/win32/ja/firefox-10.0.2.complete.mar
+hashFunction=SHA512
+hashValue=a81561e5765ccf82b38032950c0678e085b075b925e013a19d4a32a7bbded4e08dfe425817734faec1329b20a3b31ab49b8a54f47b0ff6cbc293f14b09c7ad7c
+size=19768186
+build=20120215223356
+appv=10.0.2
+extv=10.0.2
+detailsUrl=https://www.mozilla.org/ja/firefox/latest/details/from-3.6.html
+updateType=major

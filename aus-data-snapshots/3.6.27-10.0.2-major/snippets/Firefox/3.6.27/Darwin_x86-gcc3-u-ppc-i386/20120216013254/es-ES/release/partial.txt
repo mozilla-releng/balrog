@@ -1,0 +1,11 @@
+version=1
+type=partial
+url=http://download.mozilla.org/?product=firefox-10.0.2-complete&os=osx&lang=es-ES
+hashFunction=SHA512
+hashValue=6fb514787195badd0b33a474b7973cfaffcaaa816b2aeec2a7622f0f7b116073ee057edb40846d4e7b623dfd62dba6c25a0a5b8a9ef3fbe31148dba7c46033d1
+size=31679582
+build=20120215223356
+appv=10.0.2
+extv=10.0.2
+detailsUrl=https://www.mozilla.org/es-ES/firefox/latest/details/from-3.6.html
+updateType=major

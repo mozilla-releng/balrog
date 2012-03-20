@@ -1,0 +1,11 @@
+version=1
+type=complete
+url=http://download.mozilla.org/?product=firefox-10.0.2-complete&os=linux&lang=fr
+hashFunction=SHA512
+hashValue=56b06209a7fe35008f596fefa8ae6bde7415d92e8f0f4b00d50f719df6a897c29ec8fd460214153a7391abd0a5a529218b79f158c1363d2db0da6dc7067f05da
+size=17301086
+build=20120215223356
+appv=10.0.2
+extv=10.0.2
+detailsUrl=https://www.mozilla.org/fr/firefox/latest/details/from-3.6.html
+updateType=major
