@@ -17,5 +17,4 @@ def isa(error):
 
 # All of our View modules contain routing information that needs to be imported
 # to be active.
-from auslib.web.views.permissions import *
-from auslib.web.views.releases import *
+from auslib.web.views import *

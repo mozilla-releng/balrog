@@ -13,6 +13,8 @@ from auslib.web.views.base import requirelogin, requirepermission, AdminView
 import logging
 log = logging.getLogger(__name__)
 
+__all__ = ["SingleLocaleView"]
+
 class SingleLocaleView(AdminView):
     """/releases/[release]/builds/[platform]/[locale]"""
     def get(self, release, platform, locale):

@@ -9,6 +9,8 @@ from auslib.web.views.forms import NewPermissionForm, ExistingPermissionForm
 import logging
 log = logging.getLogger(__name__)
 
+__all__ = ["UsersView", "PermissionsView", "SpecificPermissionView", "PermissionsPageView", "UserPermissionsPageView"]
+
 def setpermission(f):
     def decorated(*args, **kwargs):
         if kwargs['permission'] != 'admin' and not kwargs['permission'].startswith('/'):
