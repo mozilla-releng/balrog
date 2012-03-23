@@ -36,13 +36,14 @@ class JSONTextField(TextField):
             log.debug('JSONTextField: No value list, setting self.data to {}')
             self.data = {}
 
-class PermissionForm(Form):
+class DbEditableForm(Form):
+    data_version = HiddenField('data_version', validators=[Required(), NumberRange()])
+
+class PermissionForm(DbEditableForm):
     options = JSONTextField('Options')
 
 class NewPermissionForm(PermissionForm):
     permission = TextField('Permission', validators=[Required()])
-    data_version = HiddenField('data_version', validators=[Required(), NumberRange()])
 
 class ExistingPermissionForm(PermissionForm):
     permission = TextField('Permission', validators=[Required()], widget=DisableableTextInput(disabled=True))
-    data_version = HiddenField('data_version', validators=[Required(), NumberRange()])
