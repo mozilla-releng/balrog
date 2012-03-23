@@ -185,6 +185,7 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         query = self._selectStatement(**kwargs)
+        log.debug("AUSTable.select: Executing query: '%s'", query)
         if transaction:
             return transaction.execute(query).fetchall()
         else:
@@ -211,7 +212,9 @@ class AUSTable(object):
         data = columns.copy()
         if self.versioned:
             data['data_version'] = 1
-        ret = trans.execute(self._insertStatement(**data))
+        query = self._insertStatement(**data)
+        log.debug("AUSTable._prepareInsert: Executing query: '%s' with values: %s", query, data)
+        ret = trans.execute(query)
         if self.history:
             for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
                 trans.execute(q)
@@ -239,7 +242,6 @@ class AUSTable(object):
         else:
             trans = AUSTransaction(self.getEngine().connect())
             ret = self._prepareInsert(trans, changed_by, **columns)
-            trans.commit()
             return ret
 
     def _deleteStatement(self, where):
@@ -271,7 +273,9 @@ class AUSTable(object):
             where = copy(where)
             where.append(self.data_version==old_data_version)
 
-        ret = trans.execute(self._deleteStatement(where))
+        query = self._deleteStatement(where)
+        log.debug("AUSTable._prepareDelete: Executing query: '%s'", query)
+        ret = trans.execute(query)
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to delete row, old_data_version doesn't match current data_version")
         if self.history:
@@ -305,7 +309,6 @@ class AUSTable(object):
         else:
             trans = AUSTransaction(self.getEngine().connect())
             ret = self._prepareDelete(trans, where, changed_by, old_data_version)
-            trans.commit()
             return ret
 
     def _updateStatement(self, where, what):
@@ -342,7 +345,9 @@ class AUSTable(object):
         for col in what:
             row[col] = what[col]
 
-        ret = trans.execute(self._updateStatement(where, row))
+        query = self._updateStatement(where, row)
+        log.debug("AUSTable._prepareUpdate: Executing query: '%s' with values: %s", query, row)
+        ret = trans.execute(query)
         if self.history:
             trans.execute(self.history.forUpdate(row, changed_by))
         if ret.rowcount != 1:
@@ -376,7 +381,6 @@ class AUSTable(object):
         else:
             trans = AUSTransaction(self.getEngine().connect())
             ret = self._prepareUpdate(trans, where, what, changed_by, old_data_version)
-            trans.commit()
             return ret
 
 class History(AUSTable):

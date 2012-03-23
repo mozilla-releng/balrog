@@ -1,16 +1,67 @@
-function getHTML(url) {
-    return $.get(url, {'format': 'html'})
-    .error(function(req, code, error) {
-        alert(req);
-        alert(code);
-        alert(error);
+function handleError(response, code, error) {
+    alert(response.responseText);
+}
+
+function getPermissionUrl(username, permission) {
+    return SCRIPT_ROOT + '/users/' + username + '/permissions/' + permission;
+}
+
+function addNewPermission(username, permission, options, element) {
+    url = getPermissionUrl(username, permission);
+    data = {
+        'options': options
+    };
+    $.ajax(url, {'type': 'put', 'data': data})
+    .error(handleError
+    ).success(function(data) {
+        $.get(url, {'format': 'html'})
+        .error(handleError
+        ).success(function(data) {
+            element.append(data);
+        });
     });
 }
 
-function getUsers() {
-    return getHTML('/users');
+function updatePermission(username, permission, options, data_version) {
+    url = getPermissionUrl(username, permission);
+    data = {
+        'options': options,
+        'data_version': data_version
+    };
+    return $.ajax(url, {'type': 'post', 'data': data})
+    .error(handleError
+    );
 }
 
-function getUserPermissions(username) {
-    return getHTML('/users/' + username + '/permissions');
+function deletePermission(username, permission, data_version) {
+    url = getPermissionUrl(username, permission);
+    data = {
+        'data_version': data_version
+    };
+    url += '?' + $.param(data);
+    // Can't put the data version in the request body, because Flask
+    // and many web servers/proxies don't support DELETE + request body.
+    return $.ajax(url, {'type': 'delete'})
+    .error(handleError
+    );
+}
+
+function submitPermissionForm(username, permissionForm, element) {
+    clicked = permissionForm.data('clicked');
+    permission = $('[name*=permission]', permissionForm).val()
+    options = $('[name*=options]', permissionForm).val()
+    data_version = $('[name*=data_version]', permissionForm).val()
+    if (clicked == 'update') {
+        updatePermission(username, permission, options, data_version);
+    }
+    else if (clicked == 'delete') {
+        deletePermission(username, permission, data_version)
+        .success(function() {
+            element.remove();
+        });
+    }
+}
+
+function redirect(page, args) {
+    window.location.assign(page + '?' + $.param(args));
 }

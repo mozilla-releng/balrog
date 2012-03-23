@@ -1,0 +1,5 @@
+<form onsubmit='redirect("{{ url_for("user_permissions.html") }}", {"username": $("#newuser").val()}); return false'>
+    <label for='newuser'>Edit permissions for a new user:</label>
+    <input type='text' id='newuser' name='newuser' />
+    <input type='submit' />
+</form>

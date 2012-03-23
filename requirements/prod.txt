@@ -1,2 +1,4 @@
 flask==0.7.2
 Werkzeug==0.8.1
+wtforms==0.6.2
+flask-wtf==0.5.2
