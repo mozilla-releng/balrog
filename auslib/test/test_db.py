@@ -590,11 +590,6 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         query = query.where(self.permissions.permission=='/releases/:name')
         self.assertEquals(query.execute().fetchall(), [('/releases/:name', 'cathy', json.dumps(dict(product='SeaMonkey')), 1)])
 
-    def testGrantPermissionsNotAllowed(self):
-        self.assertRaises(PermissionDeniedError, self.permissions.grantPermission,
-            'cathy', 'bob', '/rules/:id'
-        )
-
     def testGrantPermissionsUnknownPermission(self):
         self.assertRaises(ValueError, self.permissions.grantPermission,
             'bob', 'bud', 'bad'
@@ -610,13 +605,6 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         query = self.permissions.t.select().where(self.permissions.username=='bob')
         query = query.where(self.permissions.permission=='/releases/:name')
         self.assertEquals(len(query.execute().fetchall()), 0)
-
-    def testCanEditUsers(self):
-        self.assertTrue(self.permissions.canEditUsers('bill'))
-        self.assertTrue(self.permissions.canEditUsers('bob'))
-
-    def testCanEditUsersFalse(self):
-        self.assertFalse(self.permissions.canEditUsers('cathy'))
 
     def testGetAllUsers(self):
         self.assertEquals(self.permissions.getAllUsers(), ['bill', 'bob', 'cathy'])
