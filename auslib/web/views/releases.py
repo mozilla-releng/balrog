@@ -35,7 +35,10 @@ class SingleLocaleView(AdminView):
             return Response(status=400, response=e.args)
 
         for rel in [release] + copyTo:
-            releaseObj = db.releases.getReleases(name=rel, transaction=transaction)[0]
+            try:
+                releaseObj = db.releases.getReleases(name=rel, transaction=transaction)[0]
+            except IndexError:
+                releaseObj = None
             # If the release already exists, do some verification on it, and possibly update
             # the version.
             if releaseObj:
