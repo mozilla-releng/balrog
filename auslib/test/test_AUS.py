@@ -101,29 +101,47 @@ class TestAUS(unittest.TestCase):
             dict(name=None, buildTarget='p', locale='l', channel='foo', force=False),
             dict(mapping='b', update_type='minor'),
         )
-        for patch in updateData['patches']:
-            self.assertEqual(patch['URL'],'http://special.org/?foo=a')
+        self.assertEqual(updateData['patches'][0]['URL'],
+                         'http://special.org/?foo=a')
 
     def testSpecialQueryParamForced(self):
         updateData = self.AUS.expandRelease(
             dict(name=None, buildTarget='p', locale='l', channel='foo', force=True),
             dict(mapping='b', update_type='minor'),
         )
-        for patch in updateData['patches']:
-            self.assertEqual(patch['URL'],'http://special.org/?foo=a&force=1')
+        self.assertEqual(updateData['patches'][0]['URL'],
+                         'http://special.org/?foo=a&force=1')
 
     def testNonSpecialQueryParam(self):
         updateData = self.AUS.expandRelease(
             dict(name=None, buildTarget='p', locale='m', channel='foo', force=False),
             dict(mapping='b', update_type='minor'),
         )
-        for patch in updateData['patches']:
-            self.assertEqual(patch['URL'],'http://boring.org/a')
+        self.assertEqual(updateData['patches'][0]['URL'],
+                         'http://boring.org/a')
 
     def testSpecialQueryParamForced(self):
         updateData = self.AUS.expandRelease(
             dict(name=None, buildTarget='p', locale='m', channel='foo', force=True),
             dict(mapping='b', update_type='minor'),
         )
-        for patch in updateData['patches']:
-            self.assertEqual(patch['URL'],'http://boring.org/a')
+        self.assertEqual(updateData['patches'][0]['URL'],
+                         'http://boring.org/a')
+
+    def testMultipleSpecialHosts(self):
+        self.AUS.setSpecialHosts(('http://special.org/', 'http://veryspecial.org'))
+        updateData = self.AUS.expandRelease(
+            dict(name=None, buildTarget='p', locale='l', channel='foo', force=True),
+            dict(mapping='b', update_type='minor'),
+        )
+        self.assertEqual(updateData['patches'][0]['URL'],
+                         'http://special.org/?foo=a&force=1')
+
+    def testNoSpecialDefined(self):
+        self.AUS.setSpecialHosts(None)
+        updateData = self.AUS.expandRelease(
+            dict(name=None, buildTarget='p', locale='m', channel='foo', force=True),
+            dict(mapping='b', update_type='minor'),
+        )
+        self.assertEqual(updateData['patches'][0]['URL'],
+                         'http://boring.org/a')

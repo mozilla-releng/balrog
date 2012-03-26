@@ -35,6 +35,14 @@ class AUS3:
     def setSpecialHosts(self, specialForceHosts):
         self.specialForceHosts = specialForceHosts
 
+    def isSpecialURL(self, url):
+        if not self.specialForceHosts:
+            return False
+        for s in self.specialForceHosts:
+            if url.startswith(s):
+                return True
+        return False
+
     def createTables(self):
         self.db.createTables()
 
@@ -153,7 +161,7 @@ class AUS3:
                         url = url.replace('%PRODUCT%', relData['bouncerProducts'][patchKey])
                         url = url.replace('%OS_BOUNCER%', relDataPlat['OS_BOUNCER'])
                     # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
-                    if updateQuery['force'] and url.startswith(self.specialForceHosts):
+                    if updateQuery['force'] and self.isSpecialURL(url):
                         if '?' in url:
                             url += '&force=1'
                         else:
