@@ -4,7 +4,7 @@ import simplejson as json
 from sqlalchemy import select
 
 from auslib.web.base import db
-from auslib.test.web.views.base import ViewTest, JSONTestMixin
+from auslib.test.web.views.base import ViewTest, JSONTestMixin, HTMLTestMixin
 
 class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     def testLocalePut(self):
@@ -178,3 +178,35 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             self.assertEqual(ret['product'], 'a')
             self.assertEqual(ret['version'], 'a')
             self.assertEqual(json.loads(ret['data']), dict(name='a'))
+
+    # Test get of a release's full data column, queried by name
+    def testGetSingleRelease(self):
+        ret = self._get("/releases/d")
+        self.assertStatusCode(ret, 200)
+        self.assertEqual(json.loads(ret.data), json.loads("""
+{
+    "name": "d",
+    "platforms": {
+        "p": {
+            "locales": {
+                "d": {
+                    "complete": {
+                        "filesize": 1234
+                    }
+                }
+            }
+        }
+    }
+}
+"""), msg=ret.data)
+
+
+
+
+class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
+
+    def testGetReleases(self):
+        ret = self._get("/releases.html")
+        self.assertStatusCode(ret, 200)
+        self.assertTrue("<td> <a href='releases/ab'>link</a></td>" in ret.data, msg=ret.data)
+

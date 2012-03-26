@@ -2,7 +2,7 @@ import simplejson as json
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from flask import request, Response, jsonify
+from flask import render_template, request, Response, jsonify
 
 from mozilla_buildtools.retry import retry
 
@@ -77,4 +77,20 @@ class SingleLocaleView(AdminView):
         else:
             return Response(status=200)
 
+
+class ReleasesPageView(AdminView):
+    """ /releases.html """
+    def get(self):
+        releases = db.releases.getReleases()
+        return render_template('releases.html', releases=releases)
+
+class SingleReleaseView(AdminView):
+    """ /releases/[release]"""
+    def get(self, release):
+        release = db.releases.getReleaseBlob(release)
+        return jsonify(release)
+
+
 app.add_url_rule('/releases/<release>/builds/<platform>/<locale>', view_func=SingleLocaleView.as_view('single_locale'))
+app.add_url_rule('/releases/<release>', view_func=SingleReleaseView.as_view('release'))
+app.add_url_rule('/releases.html', view_func=ReleasesPageView.as_view('releases.html'))

@@ -1,0 +1,22 @@
+{% if releases %}
+Below is a complete list of all of the releases
+Click through to access the data field
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Product</th>
+        <th>Version</th>
+        <th>Data</th>
+    </tr>
+    {% for row in releases %}
+    <tr>
+        <td>{{ row['name'] }}</td>
+        <td>{{ row['product'] }}</td>
+        <td>{{ row['version'] }}</td>
+        <td> <a href='releases/{{ row.name }}'>link</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+There were no releases provided.
+{% endif %}
