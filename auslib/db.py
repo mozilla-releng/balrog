@@ -242,6 +242,7 @@ class AUSTable(object):
         else:
             trans = AUSTransaction(self.getEngine().connect())
             ret = self._prepareInsert(trans, changed_by, **columns)
+            trans.commit()
             return ret
 
     def _deleteStatement(self, where):
@@ -309,6 +310,7 @@ class AUSTable(object):
         else:
             trans = AUSTransaction(self.getEngine().connect())
             ret = self._prepareDelete(trans, where, changed_by, old_data_version)
+            trans.commit()
             return ret
 
     def _updateStatement(self, where, what):
@@ -381,6 +383,7 @@ class AUSTable(object):
         else:
             trans = AUSTransaction(self.getEngine().connect())
             ret = self._prepareUpdate(trans, where, what, changed_by, old_data_version)
+            trans.commit()
             return ret
 
 class History(AUSTable):
@@ -694,7 +697,9 @@ class Permissions(AUSTable):
         columns = dict(username=username, permission=permission)
         if options:
             columns['options'] = json.dumps(options)
+        log.debug("Permissions.grantPermission: granting %s to %s with options %s" % (permission, username, options))
         self.insert(changed_by=changed_by, transaction=transaction, **columns)
+        log.debug("Permissions.grantPermission: successfully granted %s to %s with options %s" % (permission, username, options))
 
     def updatePermission(self, changed_by, username, permission, old_data_version, options=None, transaction=None):
         self.assertPermissionExists(permission)

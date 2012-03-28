@@ -73,11 +73,11 @@ class SpecificPermissionView(AdminView):
     @requirepermission(options=[])
     def _put(self, username, permission, changed_by, transaction):
         try:
-            if db.permissions.getUserPermissions(username).get(permission):
+            if db.permissions.getUserPermissions(username, transaction).get(permission):
                 form = ExistingPermissionForm()
                 if not form.data_version.data:
                     raise ValueError("Must provide the data version when updating an existing permission.")
-                db.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data)
+                db.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
                 return Response(status=200)
             else:
                 form = NewPermissionForm()
@@ -96,7 +96,7 @@ class SpecificPermissionView(AdminView):
             return Response(status=404)
         try:
             form = ExistingPermissionForm()
-            db.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data)
+            db.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
             return Response(status=200)
         except ValueError, e:
             return Response(status=400, response=e.args)
