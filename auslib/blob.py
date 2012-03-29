@@ -5,7 +5,7 @@ log = logging.getLogger(__name__)
 
 CURRENT_SCHEMA_VERSION=1
 
-def isValidBlob(format, blob):
+def isValidBlob(format_, blob):
     """Decides whether or not 'blob' is valid based on the format provided.
        Validation follows these rules:
        1) If there's no format at all, the blob is valid.
@@ -16,32 +16,32 @@ def isValidBlob(format, blob):
        4) If the value for the key is a dictionary, validate it.
     """
     # If there's no format at all, we assume the blob is valid.
-    if not format:
+    if not format_:
         return True
     # If the blob isn't a dictionary-like object, it's not valid!
     if not hasattr(blob, 'keys') or not callable(blob.keys):
         return False
     for key in blob.keys():
         # A '*' key in the format means that all key names in the blob are accepted.
-        if '*' in format:
+        if '*' in format_:
             # But we still need to validate the sub-blob, if it exists.
-            if format['*'] and not isValidBlob(format['*'], blob[key]):
+            if format_['*'] and not isValidBlob(format_['*'], blob[key]):
                 log.debug("blob is not valid because of key '%s'" % key)
                 return False
         # If there's no '*' key, we need to make sure the key name is valid
         # and the sub-blob is valid, if it exists.
-        elif key not in format or not isValidBlob(format[key], blob[key]):
+        elif key not in format_ or not isValidBlob(format_[key], blob[key]):
             log.debug("blob is not valid because of key '%s'" % key)
             return False
     return True
 
 class Blob(dict):
     """See isValidBlob for details on how format is used to validate blobs."""
-    format = {}
+    format_ = {}
 
     def isValid(self):
         """Decides whether or not this blob is valid based."""
-        return isValidBlob(self.format, self)
+        return isValidBlob(self.format_, self)
 
     def loadJSON(self, data):
         """Replaces this blob's contents with parsed contents of the json
@@ -54,7 +54,7 @@ class Blob(dict):
         return json.dumps(self)
 
 class ReleaseBlobV1(Blob):
-    format = {
+    format_ = {
         'name': None,
         'schema_version': None,
         'detailsUrl': None,

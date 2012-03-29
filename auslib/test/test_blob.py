@@ -3,10 +3,10 @@ import unittest
 from auslib.blob import Blob, ReleaseBlobV1
 
 class SimpleBlob(Blob):
-    format = {'foo': None}
+    format_ = {'foo': None}
 
 class MultiLevelBlob(Blob):
-    format = {
+    format_ = {
         'foo': {
             'bar': {
                 'baz': None
@@ -15,7 +15,7 @@ class MultiLevelBlob(Blob):
     }
 
 class BlobWithWildcard(Blob):
-    format = {
+    format_ = {
         'foo': {
             '*': None
         }
