@@ -59,6 +59,13 @@ class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
         ret = self.table.select().execute().fetchall()
         self.assertEquals(ret, [(1, 33), (2, 22), (3, 11)])
 
+    # bug 740360
+    def testContextManagerClosesConnection(self):
+        with AUSTransaction(self.metadata.bind.connect()) as trans:
+            self.assertEqual(trans.conn.closed, False, "Connection closed at start of transaction, expected it to be open.")
+            trans.execute(self.table.insert(values=dict(id=5, foo=41)))
+        self.assertEqual(trans.conn.closed, True, "Connection not closed after __exit__ is called")
+
 class TestAUSTransactionRequiresRealFile(unittest.TestCase, NamedFileDatabaseMixin):
     def setUp(self):
         NamedFileDatabaseMixin.setUp(self)
@@ -141,6 +148,19 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEquals(len(ret), 4)
         self.assertEquals(ret[-1], (4, 0, 1))
 
+    def testInsertClosesConnectionOnImplicitTransaction(self):
+        with mock.patch('sqlalchemy.engine.base.Connection.close') as close:
+            self.test.insert(changed_by='bob', id=5, foo=1)
+            self.assertTrue(close.called, "Connection.close() never called by insert()")
+
+    def testInsertClosesConnectionOnImplicitTransactionWithError(self):
+        with mock.patch('sqlalchemy.engine.base.Connection.close') as close:
+            try:
+                self.test.insert(changed_by='bob', id=1, foo=1)
+            except:
+                pass
+            self.assertTrue(close.called, "Connection.close() never called by insert()")
+
     def testDelete(self):
         ret = self.test.delete(changed_by='bill', where=[self.test.id==1, self.test.foo==33],
             old_data_version=1)
@@ -151,6 +171,11 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertRaises(OutdatedDataError, self.test.delete, changed_by='bill',
             where=[self.test.id==3], old_data_version=1)
 
+    def testDeleteClosesConnectionOnImplicitTransaction(self):
+        with mock.patch('sqlalchemy.engine.base.Connection.close') as close:
+            self.test.delete(changed_by='bill', where=[self.test.id==1], old_data_version=1)
+            self.assertTrue(close.called, "Connection.close() never called by delete()")
+
     def testUpdate(self):
         ret = self.test.update(changed_by='bob', where=[self.test.id==1], what=dict(foo=123),
             old_data_version=1)
@@ -160,6 +185,11 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
     def testUpdateFailsOnVersionMismatch(self):
         self.assertRaises(OutdatedDataError, self.test.update, changed_by='bill',
             where=[self.test.id==3], what=dict(foo=99), old_data_version=1)
+
+    def testUpdateClosesConnectionOnImplicitTransaction(self):
+        with mock.patch('sqlalchemy.engine.base.Connection.close') as close:
+            self.test.update(changed_by='bob', where=[self.test.id==1], what=dict(foo=432), old_data_version=1)
+            self.assertTrue(close.called, "Connection.close() never called by update()")
 
     def testWherePkMatches(self):
         expected = self.test.id==1
