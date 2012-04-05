@@ -639,6 +639,18 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def testGetAllUsers(self):
         self.assertEquals(self.permissions.getAllUsers(), ['bill', 'bob', 'cathy'])
 
+    def testGetPermission(self):
+        expected = {
+            'permission': '/releases/:name',
+            'username': 'bob',
+            'options': dict(product='fake'),
+            'data_version': 1
+        }
+        self.assertEquals(self.permissions.getPermission('bob', '/releases/:name'), expected)
+
+    def testGetPermissionNonExistant(self):
+        self.assertEquals(self.permissions.getPermission('bob', '/rules'), {})
+
     def testGetUserPermissions(self):
         expected = {'/users/:id/permissions/:permission': dict(options=None, data_version=1),
                     '/releases/:name': dict(options=dict(product='fake'), data_version=1),

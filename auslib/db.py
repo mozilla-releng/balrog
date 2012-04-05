@@ -722,6 +722,15 @@ class Permissions(AUSTable):
         where = [self.username==username, self.permission==permission]
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
+    def getPermission(self, username, permission, transaction=None):
+        try:
+            row = self.select(where=[self.username==username, self.permission==permission], transaction=transaction)[0]
+            if row['options']:
+                row['options'] = json.loads(row['options'])
+            return row
+        except IndexError:
+            return {}
+
     def getUserPermissions(self, username, transaction=None):
         rows = self.select(columns=[self.permission, self.options, self.data_version], where=[self.username==username], transaction=transaction)
         ret = dict()

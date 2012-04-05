@@ -11,6 +11,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         details = json.dumps(dict(complete=dict(filesize=435)))
         ret = self._put('/releases/a/builds/p/l', data=dict(details=details, product='a', version='a'))
         self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='a').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
@@ -33,6 +34,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         details = json.dumps(dict(complete=dict(filesize=678)))
         ret = self._put('/releases/e/builds/p/a', data=dict(details=details, product='e', version='e'))
         self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='e').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
@@ -56,6 +58,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         details = json.dumps(dict(partial=dict(fileUrl='abc')))
         ret = self._put('/releases/d/builds/p/g', data=dict(details=details, product='d', version='d'))
         self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='d').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
@@ -84,6 +87,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         data = dict(details=details, product='a', version='a', copyTo=json.dumps(['ab']))
         ret = self._put('/releases/a/builds/p/l', data=data)
         self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='a').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
@@ -122,6 +126,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     def testLocalePutChangeVersion(self):
         ret = self._put('/releases/a/builds/p/l', data=dict(details="{}", product='a', version='b'))
         self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=3)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='a').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
@@ -146,7 +151,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         # through it needs to return the correct one, to make sure retrying
         # results in success still.
         with mock.patch('auslib.web.base.db.releases.getReleases') as r:
-            results = [[dict(data_version=1, product='a', version='a')], [dict(data_version=431, product='a', version='a')]]
+            results = [[dict(data_version=2, product='a', version='a')], [dict(data_version=1, product='a', version='a')], [dict(data_version=431, product='a', version='a')]]
             def se(*args, **kwargs):
                 print results
                 return results.pop()
@@ -154,7 +159,10 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             details = json.dumps(dict(complete=dict(filesize=435)))
             ret = self._put('/releases/a/builds/p/l', data=dict(details=details, product='a', version='a'))
             self.assertStatusCode(ret, 201)
-            self.assertEqual(r.call_count, 2)
+            # getReleases gets called once when it returns the wrong data_version, once with the right one
+            # and then once again at the end, when the new data version is retrieved
+            self.assertEqual(r.call_count, 3)
+            self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
             ret = select([db.releases.data]).where(db.releases.name=='a').execute().fetchone()[0]
             self.assertEqual(json.loads(ret), json.loads("""
 {

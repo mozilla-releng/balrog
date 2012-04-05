@@ -22,6 +22,7 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
     def testPermissionPut(self):
         ret = self._put('/users/bob/permissions/admin')
         self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
         query = db.permissions.t.select()
         query = query.where(db.permissions.username=='bob')
         query = query.where(db.permissions.permission=='admin')
@@ -29,7 +30,8 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
 
     def testPermissionsPost(self):
         ret = self._post('/users/bill/permissions/admin', data=dict(options="", data_version=1))
-        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d" % ret.status_code)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         r = db.permissions.t.select().where(db.permissions.username=='bill').execute().fetchall()
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0], ('admin', 'bill', None, 2))
@@ -37,6 +39,7 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
     def testPermissionUrl(self):
         ret = self._put('/users/cathy/permissions/releases/:name')
         self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
         query = db.permissions.t.select()
         query = query.where(db.permissions.username=='cathy')
         query = query.where(db.permissions.permission=='/releases/:name')
@@ -45,6 +48,7 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
     def testPermissionPutWithOption(self):
         ret = self._put('/users/bob/permissions/rules', data=dict(options=json.dumps(dict(product='fake'))))
         self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
         query = db.permissions.t.select()
         query = query.where(db.permissions.username=='bob')
         query = query.where(db.permissions.permission=='/rules')
@@ -54,6 +58,7 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/users/bob/permissions/releases/:name',
             data=dict(options=json.dumps(dict(product='different')), data_version=1))
         self.assertStatusCode(ret, 200)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         query = db.permissions.t.select()
         query = query.where(db.permissions.username=='bob')
         query = query.where(db.permissions.permission=='/releases/:name')
