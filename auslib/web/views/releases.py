@@ -31,7 +31,8 @@ class SingleLocaleView(AdminView):
             version = request.form['version']
             localeBlob = json.loads(request.form['details'])
             copyTo = json.loads(request.form.get('copyTo', '[]'))
-        except (KeyError, json.JSONDecodeError), e:
+        # XXX: use JSONDecodeError instead of ValueError when the servers support it
+        except (KeyError, ValueError), e:
             return Response(status=400, response=e.args)
 
         for rel in [release] + copyTo:

@@ -1,4 +1,3 @@
-from simplejson import JSONDecodeError
 import simplejson as json
 import sys
 
@@ -24,14 +23,13 @@ class JSONTextField(TextField):
             log.debug("JSONTextField.process_formdata: valuelist[0] is: %s", valuelist[0])
             try:
                 self.data = json.loads(valuelist[0])
-            except JSONDecodeError, e:
+            # XXX: use JSONDecodeError when the servers support it
+            except ValueError, e:
                 # WTForms catches ValueError, which JSONDecodeError is a child
                 # of. Because of this, we need to wrap this error in something
                 # else in order for it to be properly raised.
-                log.debug('JSONTextField.process_formdata: Caught JSONDecodeError')
-                raise Exception("Couldn't process JSONTextField %s, caught JSONDecodeError" % self.name)
-                klass, e, tb = sys.exc_info()
-                raise Exception, e, tb
+                log.debug('JSONTextField.process_formdata: Caught ValueError')
+                raise Exception("Couldn't process JSONTextField %s, caught ValueError" % self.name)
         else:
             log.debug('JSONTextField: No value list, setting self.data to {}')
             self.data = {}
