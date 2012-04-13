@@ -14,11 +14,10 @@ def requirelogin(f):
         return f(*args, changed_by=username, **kwargs)
     return decorated
 
-def requirepermission(options=['product']):
+def requirepermission(url, options=['product']):
     def wrap(f):
         def decorated(*args, **kwargs):
             username = request.environ.get('REMOTE_USER')
-            url = request.path
             method = request.method
             extra = dict()
             for opt in options:

@@ -22,7 +22,7 @@ class SingleLocaleView(AdminView):
         return jsonify(locale)
 
     @requirelogin
-    @requirepermission()
+    @requirepermission('/releases/:name/builds/:platform/:locale')
     def _put(self, release, platform, locale, changed_by, transaction):
         new = True
         try:

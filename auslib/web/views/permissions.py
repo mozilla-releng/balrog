@@ -70,7 +70,7 @@ class SpecificPermissionView(AdminView):
 
     @setpermission
     @requirelogin
-    @requirepermission(options=[])
+    @requirepermission('/users/:id/permissions/:permission', options=[])
     def _put(self, username, permission, changed_by, transaction):
         try:
             if db.permissions.getUserPermissions(username, transaction).get(permission):
@@ -91,7 +91,7 @@ class SpecificPermissionView(AdminView):
 
     @setpermission
     @requirelogin
-    @requirepermission(options=[])
+    @requirepermission('/users/:id/permissions/:permission', options=[])
     def _post(self, username, permission, changed_by, transaction):
         if not db.permissions.getUserPermissions(username, transaction=transaction).get(permission):
             return Response(status=404)
@@ -107,7 +107,7 @@ class SpecificPermissionView(AdminView):
 
     @setpermission
     @requirelogin
-    @requirepermission(options=[])
+    @requirepermission('/users/:id/permissions/:permission', options=[])
     def _delete(self, username, permission, changed_by, transaction):
         if not db.permissions.getUserPermissions(username, transaction=transaction).get(permission):
             return Response(status=404)
