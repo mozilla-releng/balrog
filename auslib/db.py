@@ -640,6 +640,8 @@ class Releases(AUSTable):
                     }
                 }
             }
+        if platform not in releaseBlob['platforms']:
+            releaseBlob['platforms'][platform] = dict(locales=dict())
         releaseBlob['platforms'][platform]['locales'][locale] = blob
         if not releaseBlob.isValid():
             log.debug("Releases.addLocaleToRelease: invalid releaseBlob is %s" % releaseBlob)

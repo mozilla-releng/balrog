@@ -511,7 +511,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             "locales": {
                 "l": {
                     "complete": {
-                        "filesize": "1234"
+                        "filesize": 1234
                     }
                 }
             }
@@ -542,7 +542,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 },
                 "l": {
                     "complete": {
-                        "filesize": "1234"
+                        "filesize": 1234
                     }
                 }
             }
@@ -595,6 +595,36 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
 }
 """)
         self.assertEqual(ret, expected)
+
+    def testAddLocaleToReleaseSecondPlatform(self):
+        blob = dict(complete=dict(filesize=324))
+        self.releases.addLocaleToRelease(name='a', platform='q', locale='l', blob=blob, old_data_version=1, changed_by='bill')
+        ret = json.loads(select([self.releases.data]).where(self.releases.name=='a').execute().fetchone()[0])
+        expected = json.loads("""
+{
+    "name": "b",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 1234
+                    }
+                }
+            }
+        },
+        "q": {
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 324
+                    }
+                }
+            }
+        }
+    }
+}
+""")
 
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
