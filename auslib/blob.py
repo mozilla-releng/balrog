@@ -114,10 +114,12 @@ class ReleaseBlobV1(Blob):
             return self[param]
 
     def getBuildID(self, platform, locale):
+        platform = self.getResolvedPlatform(platform)
+        if locale not in self['platforms'][platform]['locales']:
+            raise KeyError("No such locale '%s' in platform '%s'" % (locale, platform))
         try:
-            platform = self.getResolvedPlatform(platform)
             return self['platforms'][platform]['locales'][locale]['buildID']
-        except:
+        except KeyError:
             return self['platforms'][platform]['buildID']
 
     def getAppv(self, platform, locale):

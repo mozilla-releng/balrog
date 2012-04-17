@@ -55,7 +55,10 @@ class AUS3:
         for release in self.releases.getReleases(product=updateQuery['product'], version=updateQuery['version']):
             log.debug("AUS.identifyRequest: Trying to match request to %s", release['name'])
             if buildTarget in release['data']['platforms']:
-                releaseBuildID = release['data'].getBuildID(buildTarget, locale)
+                try:
+                    releaseBuildID = release['data'].getBuildID(buildTarget, locale)
+                except KeyError:
+                    continue
                 log.debug("AUS.identifyRequest: releasePlat buildID is: %s", releaseBuildID)
                 if buildID == releaseBuildID:
                     log.debug("AUS.identifyRequest: Identified query as %s", release['name'])

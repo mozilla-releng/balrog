@@ -145,3 +145,9 @@ class TestAUS(unittest.TestCase):
         )
         self.assertEqual(updateData['patches'][0]['URL'],
                          'http://boring.org/a')
+
+    # Make sure identifyRequest gracefully handles missing locales, and doesn't
+    # raise up exceptions because of it.
+    def testIdentifyRequestMissingLocale(self):
+        query = dict(buildTarget='p', buildID=1, locale='g', product='b', version='b')
+        self.assertEqual(None, self.AUS.identifyRequest(query))

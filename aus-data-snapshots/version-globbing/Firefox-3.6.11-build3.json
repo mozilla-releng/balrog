@@ -3,13 +3,11 @@
     "extv": "3.6.11",
     "platforms": {
         "Darwin_Universal-gcc3": {
-            "buildID": "20101012104758"
-        },
-        "Linux_x86-gcc3": {
-            "buildID": "20101012110043"
-        },
-        "WINNT_x86-msvc": {
-            "buildID": "20101012113537"
+            "buildID": "20101012104758",
+            "locales": {
+                "en-US": {
+                }
+            }
         }
     }
 }

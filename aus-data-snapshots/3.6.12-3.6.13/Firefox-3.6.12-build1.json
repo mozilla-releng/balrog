@@ -3,13 +3,55 @@
     "extv": "3.6.12",
     "platforms": {
         "Darwin_Universal-gcc3": {
-            "buildID": "20101026200743"
+            "buildID": "20101026200743",
+            "locales": {
+                "de": {
+                },
+                "en-US": {
+                },
+                "es-ES": {
+                },
+                "fr": {
+                },
+                "ja-JP-mac": {
+                },
+                "ru": {
+                }
+            }
         },
         "Linux_x86-gcc3": {
-            "buildID": "20101026200835"
+            "buildID": "20101026200835",
+            "locales": {
+                "de": {
+                },
+                "en-US": {
+                },
+                "es-ES": {
+                },
+                "fr": {
+                },
+                "ja": {
+                },
+                "ru": {
+                }
+            }
         },
         "WINNT_x86-msvc": {
-            "buildID": "20101026210630"
+            "buildID": "20101026210630",
+            "locales": {
+                "de": {
+                },
+                "en-US": {
+                },
+                "es-ES": {
+                },
+                "fr": {
+                },
+                "ja": {
+                },
+                "ru": {
+                }
+            }
         }
     }
 }
