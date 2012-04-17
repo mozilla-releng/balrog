@@ -4,8 +4,9 @@
 <title>{% block title %}{% endblock %}</title>
 <link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='ausadmin.css') }}' />
 <script type='text/javascript'>var SCRIPT_ROOT = {{ request.script_root|tojson|safe }};</script>
-<script type='text/javascript' src='{{ url_for('static', filename='ausadmin.js') }}'></script>
 <script type='text/javascript' src='{{ url_for('static', filename='jquery-1.6.4.js') }}'></script>
+<script type='text/javascript' src='{{ url_for('static', filename='jquery.dataTables.1.9.0.min.js') }}'></script>
+<script type='text/javascript' src='{{ url_for('static', filename='ausadmin.js') }}'></script>
 {% block head %}{% endblock %}
 </head>
 <body>

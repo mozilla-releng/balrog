@@ -18,6 +18,7 @@ class ViewTest(unittest.TestCase):
     def setUp(self):
         app.config['SECRET_KEY'] = 'abc123'
         app.config['DEBUG'] = True
+        app.config['CSRF_ENABLED'] = False
         db.setDburi('sqlite:///:memory:')
         db.createTables()
         db.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
@@ -53,11 +54,18 @@ class ViewTest(unittest.TestCase):
     def tearDown(self):
         db.reset()
 
+    
+    def _getBadAuth(self):
+        return {'REMOTE_USER': 'NotAuth!'}
+
     def _getAuth(self, username):
         return {'REMOTE_USER': username}
 
     def _post(self, url, data={}, username='bill'):
         return self.client.post(url, data=data, environ_base=self._getAuth(username))
+
+    def _badAuthPost(self, url, data={}):
+        return self.client.post(url, data=data, environ_base=self._getBadAuth())
 
     def _put(self, url, data={}, username='bill'):
         return self.client.put(url, data=data, environ_base=self._getAuth(username))

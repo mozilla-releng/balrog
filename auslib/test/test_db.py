@@ -95,10 +95,17 @@ class TestTableMixin(object):
         self.metadata = MetaData(self.engine)
         class TestTable(AUSTable):
             def __init__(self, metadata):
-                self.table = Table('test', metadata, Column('id', Integer, primary_key=True),
+                self.table = Table('test', metadata, Column('id', Integer, primary_key=True, autoincrement=True),
                                                      Column('foo', Integer))
                 AUSTable.__init__(self)
+        class TestAutoincrementTable(AUSTable):
+            def __init__(self, metadata):
+                self.table = Table('test-autoincrement', metadata, 
+                                                    Column('id', Integer, primary_key=True, autoincrement=True),
+                                                    Column('foo', Integer))
+                AUSTable.__init__(self)
         self.test = TestTable(self.metadata)
+        self.testAutoincrement = TestAutoincrementTable(self.metadata)
         self.metadata.create_all()
         self.test.t.insert().execute(id=1, foo=33, data_version=1)
         self.test.t.insert().execute(id=2, foo=22, data_version=1)
@@ -267,6 +274,14 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             self.assertEquals(ret, [(1, 'george', 999, 4, None, None),
                                     (2, 'george', 1000, 4, 0, 1)])
 
+    def testHistoryUponAutoincrementInsert(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+            self.test.insert(changed_by='george', foo=0)
+            ret = self.test.history.t.select().execute().fetchall()
+            self.assertEquals(ret, [(1, 'george', 999, 4, None, None),
+                                    (2, 'george', 1000, 4, 0, 1)])
+
     def testHistoryUponDelete(self):
         with mock.patch('time.time') as t:
             t.return_value = 1.0
@@ -387,6 +402,40 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         ]
         self.assertEquals(rules, expected)
 
+    def testGetRuleById(self):
+        rule = self._stripNullColumns([self.paths.getRuleById(1)])
+        expected = [dict(rule_id=1, priority=100, throttle=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1)]
+        self.assertEquals(rule, expected)
+
+    def testAddRule(self):
+        what = dict(throttle=11,   
+                    mapping='c',
+                    update_type='z',
+                    priority=60)
+        rule_id = self.paths.addRule(changed_by='bill', what=what) 
+        rule_id = rule_id[0]
+        rules = self.paths.t.select().where(self.paths.rule_id==rule_id).execute().fetchall()
+        copy_rule = dict(rules[0].items())
+        rule = self._stripNullColumns( [copy_rule] )
+        what['rule_id']=rule_id
+        what['data_version']=1
+        what = [what]
+        self.assertEquals(rule, what)
+
+    def testUpdateRule(self):
+        rules = self.paths.t.select().where(self.paths.rule_id==1).execute().fetchall()
+        what = dict(rules[0].items())
+
+        what['mapping'] = 'd'
+        self.paths.updateRule(changed_by='bill', rule_id=1, what=what, old_data_version=1)
+
+        rules = self.paths.t.select().where(self.paths.rule_id==1).execute().fetchall()
+        copy_rule = dict(rules[0].items())
+        rule = self._stripNullColumns( [copy_rule] )
+
+        expected = [dict(rule_id=1, priority=100, throttle=100, version='3.5', buildTarget='d', mapping='d', update_type='z', data_version=1)]
+        self.assertEquals(rule, expected)
+
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def setUp(self):
@@ -496,6 +545,27 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.updateRelease(name='b', product='z', version='y', blob=blob, changed_by='bill', old_data_version=1)
         expected = [('b', 'z', 'y', json.dumps(dict(name='a')), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name=='b').execute().fetchall(), expected)
+
+    def testGetReleaseNames(self):
+        releases = self.releases.getReleaseNames()
+        expected = [ dict(name='a'), 
+                dict(name='ab'), 
+                dict(name='b'), 
+                dict(name='c')] 
+        self.assertEquals(releases, expected)
+
+        releases = self.releases.getReleaseNames(product='a')
+        expected = [ dict(name='a'), 
+                dict(name='ab')] 
+        self.assertEquals(releases, expected)
+
+        releases = self.releases.getReleaseNames(version='b')
+        expected = [ dict(name='b'), ] 
+        self.assertEquals(releases, expected)
+
+        releases = self.releases.getReleaseNames(product='a', version='b')
+        expected = [ ] 
+        self.assertEquals(releases, expected)
 
 class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     """Tests for the Releases class that depend on version 1 of the blob schema."""

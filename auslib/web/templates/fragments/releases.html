@@ -6,6 +6,7 @@ Click through to access the data field
         <th>Name</th>
         <th>Product</th>
         <th>Version</th>
+        <th>Release ID</th>
         <th>Data</th>
     </tr>
     {% for row in releases %}
@@ -13,6 +14,7 @@ Click through to access the data field
         <td>{{ row['name'] }}</td>
         <td>{{ row['product'] }}</td>
         <td>{{ row['version'] }}</td>
+        <td>{{ row['release_id'] }}</td>
         <td> <a href='releases/{{ row.name }}'>link</a></td>
     </tr>
     {% endfor %}

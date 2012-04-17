@@ -1,0 +1,13 @@
+{% if rule and form %}
+<tr>
+    {% set rule_id = rule['rule_id'] %}
+    {% set suffix = '_r'~rule_id %}
+    {% include 'fragments/rule_form_row.html' %}
+    <td id='Update{{ suffix }}' name='Update{{ suffix }}'>
+        <input type='submit' name='submit' value='Update' onclick='$("#rules_form").data("rule_id", "{{ rule_id }}");' />
+    </td>
+    <td id='Clone{{ suffix }}' name='Clone{{ suffix }}'>
+        <input type='button' name='clone' value='Clone' onclick='cloneRule($("#rules_form"), $("#new_rule_form"), "{{ rule_id }}")' />
+    </td>
+</tr>
+{% endif %}

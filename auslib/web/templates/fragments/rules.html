@@ -1,0 +1,77 @@
+<form id='new_rule_form' onsubmit='submitNewRuleForm($("#new_rule_form"), $("#rules_table")); return false;'>
+<table id='new_rule_table'>
+    <thead> <tr>
+        <th>Mapping</th>
+        <th>Throttle</th>
+        <th>Priority</th>
+        <th>Product</th>
+        <th>Version</th>
+        <th>Build ID</th>
+        <th>Channel</th>
+        <th>Locale</th>
+        <th>Distribution</th>
+        <th>Build Target</th>
+        <th>OS Version</th>
+        <th>Dist Version</th>
+        <th>Comment</th>
+        <th>Update Type</th>
+        <th>Header Architecture</th>
+        <th>Update</th>
+    </tr></thead>
+    <tbody>
+        <tr>
+            {% set form = new_rule_form %}
+            {% set suffix = '_new' %}
+            {% include 'fragments/rule_form_row.html' %}
+            <td id='Update_new'>
+                <input type='submit' name='submit' value='Add' />
+            </td>
+        </tr>
+    </tbody>
+</table>
+</form>
+
+
+{% if rules %}
+Below is a complete list of all of the rules
+<form id='rules_form' onsubmit='submitRuleForm($("#rules_form")); return false;'>
+<table id='rules_table'>
+    <thead> <tr>
+        <th>Mapping</th>
+        <th>Throttle</th>
+        <th>Priority</th>
+        <th>Product</th>
+        <th>Version</th>
+        <th>Build ID</th>
+        <th>Channel</th>
+        <th>Locale</th>
+        <th>Distribution</th>
+        <th>Build Target</th>
+        <th>OS Version</th>
+        <th>Dist Version</th>
+        <th>Comment</th>
+        <th>Update Type</th>
+        <th>Header Architecture</th>
+        <th>Update</th>
+        <th>Clone</th>
+    </tr></thead>
+        {% for row in rules %}
+        <tr>
+            {% set rule_id = row['rule_id'] %}
+            {% set form = forms[rule_id] %}
+            {% set suffix = '_r'~rule_id %}
+            {% include 'fragments/rule_form_row.html' %}
+            <td id='Update{{ suffix }}' name='Update{{ suffix }}'>
+                <input type='submit' name='submit' value='Update' onclick='$("#rules_form").data("rule_id", "{{ rule_id }}");' />
+            </td>
+            <td id='Clone{{ suffix }}' name='Clone{{ suffix }}'>
+                <input type='button' name='clone' value='Clone' onclick='cloneRule($("#rules_form"), $("#new_rule_form"), "{{ rule_id }}")' />
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</form>
+{% else %}
+No rules were provided.
+{% endif %}

@@ -385,7 +385,7 @@ class AUSTable(object):
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
-            raise ValueError("old_data_version must be passed for Tables that are versioned")
+            raise ValueError("update: old_data_version must be passed for Tables that are versioned")
 
         if transaction:
             return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
@@ -441,6 +441,9 @@ class History(AUSTable):
         for i in range(0, len(self.base_primary_key)):
             name = self.base_primary_key[i]
             primary_key_data[name] = insertedKeys[i]
+            # Make sure the primary keys are included in the second row as well
+            columns[name]=insertedKeys[i]
+
         ts = self.getTimestamp()
         queries.append(self._insertStatement(changed_by=changed_by, timestamp=ts-1, **primary_key_data))
         queries.append(self._insertStatement(changed_by=changed_by, timestamp=ts, **columns))
@@ -522,6 +525,10 @@ class Rules(AUSTable):
         if self._matchesRegex(ruleChannel, fallbackChannel):
             return True
 
+    def addRule(self, changed_by, what, transaction=None):
+        ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
+        return ret.inserted_primary_key
+
     def getOrderedRules(self, transaction=None):
         """Returns all of the rules, sorted in ascending order"""
         return self.select(order_by=(self.priority, self.version, self.mapping), transaction=transaction)
@@ -566,6 +573,22 @@ class Rules(AUSTable):
                 log.debug("Rules.getRulesMatchingQuery: %s", r)
         return matchingRules
 
+    def getRuleById(self, rule_id, transaction=None):
+        """ Returns the unique rule that matches the give rule_id """
+        rules = self.select( where=[self.rule_id==rule_id], transaction=transaction)
+        found = len(rules)
+        if found > 1 or found == 0:
+            log.debug("Rules.getRuleById: Found %s rules, should have been 1", found)
+            return None
+        return rules[0]
+
+    def updateRule(self, changed_by, rule_id, what, old_data_version, transaction=None):
+        """ Update the rule given by rule_id with the parameter what """
+        where = [self.rule_id==rule_id]
+        self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
+            
+
+
 class Releases(AUSTable):
     def __init__(self, metadata, dialect):
         self.table = Table('releases', metadata,
@@ -598,6 +621,16 @@ class Releases(AUSTable):
             blob = ReleaseBlobV1()
             blob.loadJSON(row['data'])
             row['data'] = blob
+        return rows
+
+    def getReleaseNames(self, product=None, version=None, limit=None, transaction=None):
+        where = []
+        if product:
+            where.append(self.product==product)
+        if version:
+            where.append(self.version==version)
+        column = [self.name]
+        rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
         return rows
 
     def getReleaseBlob(self, name, transaction=None):
