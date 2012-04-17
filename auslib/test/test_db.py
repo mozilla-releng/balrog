@@ -492,8 +492,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(TransactionError, self.releases.addRelease, name='a', product='a', version='a', blob=blob, changed_by='bill')
 
     def testUpdateRelease(self):
-        self.releases.updateRelease(name='b', product='z', version='y', changed_by='bill', old_data_version=1)
-        expected = [('b', 'z', 'y', json.dumps(dict(name=2)), 2)]
+        blob = ReleaseBlobV1(name='a')
+        self.releases.updateRelease(name='b', product='z', version='y', blob=blob, changed_by='bill', old_data_version=1)
+        expected = [('b', 'z', 'y', json.dumps(dict(name='a')), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name=='b').execute().fetchall(), expected)
 
 class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):

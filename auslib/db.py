@@ -617,12 +617,17 @@ class Releases(AUSTable):
         # Raises DuplicateDataError if the release already exists.
         self.insert(changed_by=changed_by, transaction=transaction, **columns)
 
-    def updateRelease(self, name, changed_by, old_data_version, product=None, version=None, transaction=None):
+    def updateRelease(self, name, changed_by, old_data_version, product=None, version=None, blob=None, transaction=None):
         what = {}
         if product:
             what['product'] = product
         if version:
             what['version'] = version
+        if blob:
+            if not blob.isValid():
+                log.debug("Releases.updateRelease: invalid blob is %s" % blob)
+                raise ValueError("Release blob is invalid.")
+            what['data'] = blob.getJSON()
         log.debug("Releases.updateRelease: Updating %s with %s", name, what)
         self.update(where=[self.name==name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
