@@ -86,8 +86,6 @@ class SpecificPermissionView(AdminView):
                 return make_response(json.dumps(dict(new_data_version=1)), 201)
         except ValueError, e:
             return Response(status=400, response=e.args)
-        except Exception, e:
-            return Response(status=500, response=e.args)
 
     @setpermission
     @requirelogin
@@ -102,8 +100,6 @@ class SpecificPermissionView(AdminView):
             return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
         except ValueError, e:
             return Response(status=400, response=e.args)
-        except Exception, e:
-            return Response(status=500, response=e.args)
 
     @setpermission
     @requirelogin
@@ -119,11 +115,7 @@ class SpecificPermissionView(AdminView):
             db.permissions.revokePermission(changed_by, username, permission, form.data_version.data, transaction=transaction)
             return Response(status=200)
         except ValueError, e:
-            raise
             return Response(status=400, response=e.args)
-        except Exception, e:
-            raise
-            return Response(status=500, response=e.args)
 
 class PermissionsPageView(AdminView):
     """/permissions.html"""
