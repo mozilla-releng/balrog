@@ -9,9 +9,9 @@ site.addsitedir(path.join(mydir, 'vendor/lib/python'))
 
 from auslib.client.base import app as application
 from auslib.client.base import AUS
-from auslib.config import AUSConfig
+from auslib.config import ClientConfig
 
-cfg = AUSConfig('/etc/aus/client.ini')
+cfg = ClientConfig('/etc/aus/client.ini')
 errors = cfg.validate()
 if errors:
     print >>sys.stderr, "Invalid configuration file:"
