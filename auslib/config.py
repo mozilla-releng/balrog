@@ -45,8 +45,18 @@ class AUSConfig(object):
     def getDburi(self):
         return self.cfg.get('database', 'dburi')
 
+class AdminConfig(AUSConfig):
+    required_options = {
+        'logging': ['logfile'],
+        'database': ['dburi'],
+        'app': ['secret_key'],
+    }
+
     def getSpecialForceHosts(self):
         try:
             return tuple(a.strip() for a in self.cfg.get('site-specific','specialforcehosts').split(','))
         except (NoSectionError, NoOptionError):
             return None
+
+    def getSecretKey(self):
+        return self.cfg.get("app", "secret_key")

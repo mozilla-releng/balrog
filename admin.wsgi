@@ -8,9 +8,9 @@ site.addsitedir(mydir)
 site.addsitedir(path.join(mydir, 'vendor/lib/python'))
 
 from auslib.web.base import db, app as application
-from auslib.config import AUSConfig
+from auslib.config import AdminConfig
 
-cfg = AUSConfig('/etc/aus/admin.ini')
+cfg = AdminConfig('/etc/aus/admin.ini')
 errors = cfg.validate()
 if errors:
     print >>sys.stderr, "Invalid configuration file:"
@@ -20,3 +20,4 @@ if errors:
 
 logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel())
 db.setDburi(cfg.getDburi())
+application.config['SECRET_KEY'] = cfg.getSecretKey()

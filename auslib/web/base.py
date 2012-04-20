@@ -8,7 +8,7 @@ db = AUSDatabase()
 
 @app.errorhandler(500)
 def isa(error):
-    log.error("Caught ISA 500 error.")
+    log.error("Caught ISE 500 error.")
     log.debug("Balrog version is: %s", version)
     log.debug("Request path is: %s", request.path)
     log.debug("Request environment is: %s", request.environ)

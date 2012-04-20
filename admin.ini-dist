@@ -7,3 +7,7 @@
 ;Where to put the application log. No rotation is done on this file.
 logfile=/var/log/aus.log
 ;level=ERROR
+
+[app]
+; encryption key for session cookies. should be a few hundred bits
+secret_key=
