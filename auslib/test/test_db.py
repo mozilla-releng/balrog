@@ -111,6 +111,23 @@ class TestTableMixin(object):
         self.test.t.insert().execute(id=2, foo=22, data_version=1)
         self.test.t.insert().execute(id=3, foo=11, data_version=2)
 
+class TestMultiplePrimaryTableMixin(object):
+    def setUp(self):
+        self.engine = create_engine(self.dburi)
+        self.metadata = MetaData(self.engine)
+        class TestTable(AUSTable):
+            def __init__(self, metadata):
+                self.table = Table('test', metadata, Column('id1', Integer, primary_key=True), 
+                                                     Column('id2', Integer, primary_key=True),
+                                                     Column('foo', Integer))
+                AUSTable.__init__(self)
+        self.test = TestTable(self.metadata)
+        self.metadata.create_all()
+        self.test.t.insert().execute(id1=1, id2=1, foo=33, data_version=1)
+        self.test.t.insert().execute(id1=1, id2=2, foo=22, data_version=1)
+        self.test.t.insert().execute(id1=2, id2=1, foo=11, data_version=1)
+        self.test.t.insert().execute(id1=2, id2=2, foo=44, data_version=1)
+
 class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
@@ -305,6 +322,170 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             ret = select([self.test.history.timestamp]).where(self.test.history.id==4).execute().fetchone()[0]
             # Insert decrements the timestamp
             self.assertEquals(ret, 1234567890122)
+
+    def testHistoryUpdateRollback(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+
+            # Update one of the rows
+            self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id==2).execute()
+            self.test.history.t.insert(values=dict(changed_by='heather', change_id=1, timestamp=1000, id=2, data_version=2, foo=99)).execute()
+
+            # Update it again (this is the update we will rollback)
+            self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id==2).execute()
+            self.test.history.t.insert(values=dict(changed_by='heather', change_id=2, timestamp=1000, id=2, data_version=3, foo=100)).execute()
+
+            # Rollback the second update
+            self.test.history.rollbackChange(2, 'heather')
+
+            ret = self.test.history.t.select().execute().fetchall()
+            self.assertEquals(ret[-1], (3, 'heather', 1000, 2, 99, 4))
+
+            ret = self.test.t.select().where(self.test.id==2).execute().fetchall()
+            self.assertEquals(ret, [(2, 99, 4)])
+
+    def testHistoryInsertRollback(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+
+            ret = self.test.t.select().execute().fetchall()
+    
+            # Insert the item
+            self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
+            self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
+            self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id=4, data_version=1, foo=271)).execute()
+
+            # Rollback the 'insert'
+            self.test.history.rollbackChange(2, 'george')
+
+            ret = self.test.history.t.select().execute().fetchall()
+            self.assertEquals(ret[-1], (3, 'george', 1000, 4, None, None))
+
+            ret = self.test.t.select().execute().fetchall()
+            self.assertEquals(len(ret), 3, msg=ret)
+
+    def testHistoryDeleteRollback(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+
+            ret = self.test.t.select().execute().fetchall()
+            
+            # Insert the thing we are going to delete
+            self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
+            self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
+            self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id=4, data_version=1, foo=271)).execute()
+
+            # Delete it
+            self.test.t.delete().where(self.test.id==4).execute()
+            self.test.history.t.insert(values=dict(changed_by='bobby', change_id=3, timestamp=1000, id=4, data_version=None, foo=None)).execute()
+
+            # Rollback the 'delete'
+            self.test.history.rollbackChange(3, 'george')
+
+            ret = self.test.history.t.select().execute().fetchall()
+            self.assertEquals(ret[-1], (5, 'george', 1000, 4, 271, 1))
+
+            ret = self.test.t.select().execute().fetchall()
+            self.assertEquals(len(ret), 4, msg=ret)
+            
+class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTableMixin, MemoryDatabaseMixin):
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        TestMultiplePrimaryTableMixin.setUp(self)
+
+    def testHasHistoryTable(self):
+        self.assertTrue(self.test.history)
+
+    def testMultiplePrimaryHistoryTableHasAllColumns(self):
+        columns = [c.name for c in self.test.history.t.get_children()]
+        self.assertTrue('change_id' in columns)
+        self.assertTrue('id1' in columns)
+        self.assertTrue('id2' in columns)
+        self.assertTrue('foo' in columns)
+        self.assertTrue('changed_by' in columns)
+        self.assertTrue('timestamp' in columns)
+
+    def testMultiplePrimaryHistoryUponInsert(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+            self.test.insert(changed_by='george', id1=4, id2=5, foo=0)
+            ret = self.test.history.t.select().execute().fetchall()
+            self.assertEquals(ret, [(1, 'george', 999, 4, 5, None, None),
+                                    (2, 'george', 1000, 4, 5, 0, 1)])
+
+    def testMultiplePrimaryHistoryUponDelete(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+            self.test.delete(changed_by='bobby', where=[self.test.id1==1, self.test.id2==2],
+                old_data_version=1)
+            ret = self.test.history.t.select().execute().fetchone()
+            self.assertEquals(ret, (1, 'bobby', 1000, 1, 2, None, None))
+
+    def testMultiplePrimaryHistoryUponUpdate(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+            self.test.update(changed_by='heather', where=[self.test.id1==2, self.test.id2==1], what=dict(foo=99),
+                old_data_version=1)
+            ret = self.test.history.t.select().execute().fetchone()
+            self.assertEquals(ret, (1, 'heather', 1000, 2, 1, 99, 2))
+
+    def testMultiplePrimaryHistoryUpdateRollback(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+            self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id1==2).where(self.test.id2==1).execute()
+            self.test.history.t.insert(values=dict(changed_by='heather', change_id=1, timestamp=1000, id1=2, id2=1, data_version=2, foo=99)).execute()
+
+            self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id1==2).where(self.test.id2==1).execute()
+            self.test.history.t.insert(values=dict(changed_by='heather', change_id=2, timestamp=1000, id1=2, id2=1, data_version=3, foo=100)).execute()
+
+            self.test.history.rollbackChange(2, 'heather')
+
+            ret = self.test.history.t.select().execute().fetchall()
+            self.assertEquals(ret[-1], (3, 'heather', 1000, 2, 1, 99, 4))
+
+            ret = self.test.t.select().where(self.test.id1==2).where(self.test.id2==1).execute().fetchall()
+            self.assertEquals(ret, [(2, 1, 99, 4)])
+
+    def testMultiplePrimaryHistoryInsertRollback(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+
+            ret = self.test.t.select().execute().fetchall()
+
+            self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=31)).execute()
+            self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id1=4, id2=31, data_version=None, foo=None)).execute()
+            self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id1=4, id2=31, data_version=1, foo=271)).execute()
+
+            self.test.history.rollbackChange(2, 'george')
+
+            ret = self.test.history.t.select().execute().fetchall()
+            self.assertEquals(ret[-1], (3, 'george', 1000, 4, 31, None, None))
+
+            ret = self.test.t.select().execute().fetchall()
+            self.assertEquals(len(ret), 4, msg=ret)
+
+    def testMultiplePrimaryHistoryDeleteRollback(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+
+            ret = self.test.t.select().execute().fetchall()
+
+            self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=3)).execute()
+            self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id1=4, id2=3, data_version=None, foo=None)).execute()
+            self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id1=4, id2=3, data_version=1, foo=271)).execute()
+            
+
+            self.test.t.delete().where(self.test.id1==4).where(self.test.id2==3).execute()
+            self.test.history.t.insert(values=dict(changed_by='bobby', change_id=3, timestamp=1000, id1=4, id2=3, data_version=None, foo=None)).execute()
+
+            self.test.history.rollbackChange(3, 'george')
+
+            ret = self.test.history.t.select().execute().fetchall()
+            self.assertEquals(ret[-1], (5, 'george', 1000, 4, 3, 271, 1))
+
+            ret = self.test.t.select().execute().fetchall()
+            self.assertEquals(len(ret), 5, msg=ret)
+            
 
 class RulesTestMixin(object):
     def _stripNullColumns(self, rules):
