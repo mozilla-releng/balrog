@@ -34,6 +34,20 @@ class JSONTextField(TextField):
             log.debug('JSONTextField: No value list, setting self.data to {}')
             self.data = {}
 
+class NullableTextField(TextField):
+    """TextField that parses incoming data converting empty strings to None's."""
+    def process_formdata(self, valuelist):
+        log.debug("NullableTextField.process_formdata: data %s", valuelist)
+        if valuelist and valuelist[0]:
+            if valuelist[0] == '':
+                log.debug("NullableTextField.process_formdata: data is empty string, setting it to NULL", valuelist[0])
+                self.data = None
+            else:
+                self.data = valuelist[0]
+        else:
+            log.debug('NullableTextField: No value list, setting self.data to None')
+            self.data = None
+
 class DbEditableForm(Form):
     data_version = HiddenField('data_version', validators=[Required(), NumberRange()])
 
@@ -50,18 +64,18 @@ class RuleForm(Form):
     throttle = IntegerField('Throttle', validators=[Required(), validators.NumberRange(0, 100) ])
     priority = IntegerField('Priority', validators=[Required()])
     mapping = SelectField('Mapping', validators=[])
-    product = TextField('Product', validators=[validators.Length(0, 15)] ) #Required()?
-    version = TextField('Version', validators=[validators.Length(0,10) ])
-    build_id = TextField('BuildID', validators=[validators.Length(0,20) ])
-    channel = TextField('Channel', validators=[validators.Length(0,75) ]) #Required()?
-    locale = TextField('Locale', validators=[validators.Length(0,10) ])
-    distribution = TextField('Distrubution', validators=[validators.Length(0,100) ])
-    build_target = TextField('Build Target', validators=[validators.Length(0,75) ]) #Required()?
-    os_version = TextField('OS Version', validators=[validators.Length(0,100) ])
-    dist_version = TextField('Dist Version', validators=[validators.Length(0,100) ])
-    comment = TextField('Comment', validators=[validators.Length(0,500) ])
-    update_type = TextField('Update Type', validators=[validators.Length(0,15) ]) #Required()?
-    header_arch = TextField('Header Architecture', validators=[validators.Length(0,10) ])
+    product = NullableTextField('Product', validators=[validators.Length(0, 15)] ) 
+    version = NullableTextField('Version', validators=[validators.Length(0,10) ])
+    build_id = NullableTextField('BuildID', validators=[validators.Length(0,20) ])
+    channel = NullableTextField('Channel', validators=[validators.Length(0,75) ]) 
+    locale = NullableTextField('Locale', validators=[validators.Length(0,10) ])
+    distribution = NullableTextField('Distrubution', validators=[validators.Length(0,100) ])
+    build_target = NullableTextField('Build Target', validators=[validators.Length(0,75) ]) 
+    os_version = NullableTextField('OS Version', validators=[validators.Length(0,100) ])
+    dist_version = NullableTextField('Dist Version', validators=[validators.Length(0,100) ])
+    comment = NullableTextField('Comment', validators=[validators.Length(0,500) ])
+    update_type = SelectField('Update Type', choices=[('minor','minor'), ('major', 'major')], validators=[]) 
+    header_arch = NullableTextField('Header Architecture', validators=[validators.Length(0,10) ])
 
 class EditRuleForm(RuleForm, DbEditableForm):
     pass

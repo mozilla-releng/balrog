@@ -55,7 +55,7 @@ function submitPermissionForm(username, permissionForm, element) {
         updatePermission(username, permission.val(), options.val(), data_version.val())
         .success(function(data) {
             data = JSON.parse(data);
-            data_version.val(data['new_data_version']);
+            data_version.val(data.new_data_version);
         });
     }
     else if (clicked === 'delete') {
