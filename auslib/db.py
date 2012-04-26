@@ -706,7 +706,7 @@ class Releases(AUSTable):
         self.table = Table('releases', metadata,
             Column('name', String(100), primary_key=True),
             Column('product', String(15), nullable=False),
-            Column('version', String(10), nullable=False),
+            Column('version', String(25), nullable=False),
         )
         if dialect == 'mysql':
             from sqlalchemy.dialects.mysql import LONGTEXT
