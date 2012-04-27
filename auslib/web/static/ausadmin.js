@@ -1,9 +1,15 @@
 function handleError(response, code, error) {
+    console.log(response);
     alert(response.responseText);
 }
 
 function getPermissionUrl(username, permission) {
     return SCRIPT_ROOT + '/users/' + username + '/permissions/' + permission;
+}
+
+
+function getReleaseUrl(release) {
+    return SCRIPT_ROOT + '/releases/' + release;
 }
 
 function addNewPermission(username, permission, options, element) {
@@ -65,6 +71,48 @@ function submitPermissionForm(username, permissionForm, element) {
         });
     }
 }
+
+
+function submitNewReleaseForm(releaseForm, table){
+    name = $('[name*=name]', releaseForm).val();
+
+    var url = getReleaseUrl(name);
+
+    var data_version = $('[name*=data_version]', releaseForm).val();
+    var version = $('[name*=version]', releaseForm).val();
+    var product = $('[name*=product]', releaseForm).val();
+    var blob_field = $('[name*=blob]', releaseForm);
+    var csrf =    $('[name*=csrf]', releaseForm).val();
+
+    console.log(csrf);
+    file = blob_field[0].files[0];
+
+    var fr = new FileReader();
+    fr.onload = receivedText;
+    fr.readAsText(file);
+
+    function receivedText() {
+        result = fr.result;
+        data = {
+            'name': name,
+            'version':version,
+            'product': product,
+            'blob': result,
+            'data_version': data_version,
+            'csrf': csrf
+        };
+        $.ajax(url, {'type': 'put', 'data': data})
+            .error(handleError)
+            .success(function(data) {
+                  $.get(url)
+                  .error(handleError).
+                  success(function(data) {
+                          table.append(data);
+                      });
+              });
+    }
+}
+
 
 function redirect(page, args) {
     window.location.assign(page + '?' + $.param(args));

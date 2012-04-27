@@ -211,8 +211,8 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             self.assertEqual(json.loads(ret['data']), dict(name='a'))
 
     # Test get of a release's full data column, queried by name
-    def testGetSingleRelease(self):
-        ret = self._get("/releases/d")
+    def testGetSingleReleaseBlob(self):
+        ret = self._get("/releases/d/data")
         self.assertStatusCode(ret, 200)
         self.assertEqual(json.loads(ret.data), json.loads("""
 {
@@ -232,12 +232,54 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """), msg=ret.data)
 
 
-
-
 class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
 
     def testGetReleases(self):
         ret = self._get("/releases.html")
         self.assertStatusCode(ret, 200)
-        self.assertTrue("<td> <a href='releases/ab'>link</a></td>" in ret.data, msg=ret.data)
+        self.assertTrue('<table id="Releases_table">' in ret.data, msg=ret.data)
+
+    # Test get of a release's full data column, queried by name
+    def testGetSingleRelease(self):
+        ret = self._get("/releases/d")
+        self.assertStatusCode(ret, 200)
+        self.assertTrue("<td> <a href='releases/d/data'>link</a></td>" in ret.data, msg=ret.data)
+
+    def testNewReleasePut(self):
+
+        ret = self._put('/releases/new_release', data=dict(name='new_release', version='11', product='Firefox',
+                                                            blob="""
+{
+    "name": "a",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                }
+            }
+        }
+    }
+}
+"""))
+                                                            
+                                                        #json.dumps(newReleaseFile.getvalue())))
+        self.assertEquals(ret.status_code, 201, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = db.releases.t.select().where(db.releases.name=='new_release').execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['name'], 'new_release')
+        self.assertEquals(r[0]['version'], '11')
+        self.assertEquals(r[0]['product'], 'Firefox')
+        self.assertEquals(json.loads(r[0]['data']), json.loads("""
+{
+    "name": "a",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                }
+            }
+        }
+    }
+}
+"""))
 

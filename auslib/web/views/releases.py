@@ -9,6 +9,7 @@ from mozilla_buildtools.retry import retry
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
 from auslib.web.base import app, db
 from auslib.web.views.base import requirelogin, requirepermission, AdminView
+from auslib.web.views.forms import NewReleaseForm
 
 import logging
 log = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ class SingleLocaleView(AdminView):
         return jsonify(locale)
 
     @requirelogin
-    @requirepermission('/releases/:name/builds/:platform/:locale')
+    @requirepermission('/releases/:name/builds/:platform/:locale', options=[])
     def _put(self, release, platform, locale, changed_by, transaction):
         new = True
         try:
@@ -87,15 +88,36 @@ class ReleasesPageView(AdminView):
     """ /releases.html """
     def get(self):
         releases = db.releases.getReleases()
-        return render_template('releases.html', releases=releases)
+        form = NewReleaseForm(prefix="new_release")
+        return render_template('releases.html', releases=releases, addForm=form)
+
+class SingleBlobView(AdminView):
+    """ /releases/[release]/data"""
+    def get(self, release):
+        release_blob = retry(db.releases.getReleaseBlob, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
+                kwargs=dict(name=release))
+        return jsonify(release_blob)
 
 class SingleReleaseView(AdminView):
     """ /releases/[release]"""
     def get(self, release):
-        release = db.releases.getReleaseBlob(release)
-        return jsonify(release)
+        release = retry(db.releases.getReleases, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
+                kwargs=dict(name=release, limit=1))
+        return render_template('fragments/release_row.html', row=release[0])
 
+
+    @requirelogin
+    @requirepermission('/releases/:name', options=[])
+    def _put(self, release, changed_by, transaction):
+        form = NewReleaseForm()
+        if not form.validate():
+            return Response(status=400, response=form.errors)
+
+        retry(db.releases.addRelease, sleeptime=5, retry_exceptions=(SQLAlchemyError,), 
+                kwargs=dict(name=release, product=form.product.data, version=form.version.data, blob=form.blob.data, changed_by=changed_by,  transaction=transaction))
+        return Response(status=201)
 
 app.add_url_rule('/releases/<release>/builds/<platform>/<locale>', view_func=SingleLocaleView.as_view('single_locale'))
+app.add_url_rule('/releases/<release>/data', view_func=SingleBlobView.as_view('release_data'))
 app.add_url_rule('/releases/<release>', view_func=SingleReleaseView.as_view('release'))
 app.add_url_rule('/releases.html', view_func=ReleasesPageView.as_view('releases.html'))
