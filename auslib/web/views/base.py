@@ -36,16 +36,13 @@ class AdminView(MethodView):
         log.debug("AdminView.post: processing POST request to %s" % request.path)
         with db.begin() as trans:
             return self._post(*args, transaction=trans, **kwargs)
-        log.debug("AdminView.post: finished processing POST request to %s" % request.path)
 
     def put(self, *args, **kwargs):
         log.debug("AdminView.post: processing PUT request to %s" % request.path)
         with db.begin() as trans:
             return self._put(*args, transaction=trans, **kwargs)
-        log.debug("AdminView.post: finished processing PUT request to %s" % request.path)
 
     def delete(self, *args, **kwargs):
         log.debug("AdminView.post: processing DELETE request to %s" % request.path)
         with db.begin() as trans:
             return self._delete(*args, transaction=trans, **kwargs)
-        log.debug("AdminView.post: finished processing DELETE request to %s" % request.path)

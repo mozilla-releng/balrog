@@ -19,6 +19,6 @@ if errors:
         print >>sys.stderr, err
     sys.exit(1)
 
-logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel())
+logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel(), format="%(asctime)s: %(message)s")
 AUS.setDb(cfg.getDburi())
 AUS.setSpecialHosts(cfg.getSpecialForceHosts())

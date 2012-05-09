@@ -61,7 +61,7 @@ class AUSTransaction(object):
         try:
             # If something that executed in the context raised an Exception,
             # rollback and re-raise it.
-            log.debug("AUSTransaction.__exit__: exc is: %s" % str(exc))
+            log.debug("AUSTransaction.__exit__: exc is:", exc_info=True)
             if exc[0]:
                 self.rollback()
                 raise exc[0], exc[1], exc[2]
@@ -776,7 +776,7 @@ class Releases(AUSTable):
         log.debug("Releases.updateRelease: Updating %s with %s", name, what)
         self.update(where=[self.name==name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
-    def addLocaleToRelease(self, name, platform, locale, blob, old_data_version, changed_by, transaction=None):
+    def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None):
         """Adds or update's the existing data for a specific platform + locale
            combination, in the release identified by 'name'. The data is
            validated before commiting it, and a ValueError is raised if it is
@@ -792,7 +792,7 @@ class Releases(AUSTable):
             }
         if platform not in releaseBlob['platforms']:
             releaseBlob['platforms'][platform] = dict(locales=dict())
-        releaseBlob['platforms'][platform]['locales'][locale] = blob
+        releaseBlob['platforms'][platform]['locales'][locale] = data
         if not releaseBlob.isValid():
             log.debug("Releases.addLocaleToRelease: invalid releaseBlob is %s" % releaseBlob)
             raise ValueError("New release blob is invalid.")
@@ -807,6 +807,13 @@ class Releases(AUSTable):
             return blob['platforms'][platform]['locales'][locale]
         except KeyError:
             raise KeyError("Couldn't find locale identified by: %s, %s, %s" % (name, platform ,locale))
+
+    def localeExists(self, name, platform, locale, transaction=None):
+        try:
+            self.getLocale(name, platform, locale, transaction)
+            return True
+        except KeyError:
+            return False
 
 class Permissions(AUSTable):
     """allPermissions defines the structure and possible options for all

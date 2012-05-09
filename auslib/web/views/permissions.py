@@ -49,7 +49,7 @@ class PermissionsView(AdminView):
             for perm, values in permissions.items():
                 prefix = permission2selector(perm)
                 forms.append(ExistingPermissionForm(prefix=prefix, permission=perm, options=values['options'], data_version=values['data_version']))
-            return render_template('fragments/user_permissions.html', username=username, permissions=permissions)
+            return render_template('fragments/user_permissions.html', username=username, permissions=forms)
 
 class SpecificPermissionView(AdminView):
     """/users/[user]/permissions/[permission]"""

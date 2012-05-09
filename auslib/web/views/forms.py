@@ -1,9 +1,6 @@
 import simplejson as json
-import sys
 
-import traceback
-
-from flaskext.wtf import Form, TextField, HiddenField, Required, TextInput, FileInput, NumberRange, IntegerField, SelectField, FileField, file_required, validators
+from flaskext.wtf import Form, TextField, HiddenField, Required, TextInput, FileInput, NumberRange, IntegerField, SelectField, FileField, file_required, validators, HiddenInput
 
 from auslib.blob import ReleaseBlobV1
 
@@ -31,8 +28,7 @@ class JSONFieldMixin(object):
                 # of. Because of this, we need to wrap this error in something
                 # else in order for it to be properly raised.
                 log.debug('JSONTextField.process_formdata: Caught ValueError')
-
-                raise Exception("Couldn't process JSONTextField %s, caught ValueError" % self.name)
+                self.process_errors.append(e.message)
         else:
             log.debug('JSONBlobField: No value list, setting self.data to default')
             self._set_default()
@@ -73,7 +69,7 @@ class NullableTextField(TextField):
             self.data = None
 
 class DbEditableForm(Form):
-    data_version = HiddenField('data_version', validators=[Required(), NumberRange()])
+    data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 
 class PermissionForm(DbEditableForm):
     options = JSONTextField('Options')
@@ -83,6 +79,16 @@ class NewPermissionForm(PermissionForm):
 
 class ExistingPermissionForm(PermissionForm):
     permission = TextField('Permission', validators=[Required()], widget=DisableableTextInput(disabled=True))
+
+class ReleaseForm(Form):
+    # Because we do implicit release creation in the Releases views, we can't
+    # have data_version be Required(). The views are responsible for checking
+    # for its existence in this case.
+    data_version = IntegerField('data_version', widget=HiddenInput())
+    product = TextField('Product', validators=[Required()])
+    version = TextField('Version', validators=[Required()])
+    data = JSONTextField('Data', validators=[Required()])
+    copyTo = JSONTextField('Copy To', default=list)
 
 class RuleForm(Form):
     throttle = IntegerField('Throttle', validators=[Required(), validators.NumberRange(0, 100) ])
