@@ -28,7 +28,7 @@ class JSONFieldMixin(object):
                 # of. Because of this, we need to wrap this error in something
                 # else in order for it to be properly raised.
                 log.debug('JSONTextField.process_formdata: Caught ValueError')
-                self.process_errors.append(e.message)
+                self.process_errors.append(e.args[0])
         else:
             log.debug('JSONBlobField: No value list, setting self.data to default')
             self._set_default()

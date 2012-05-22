@@ -120,7 +120,7 @@ class TestAUS(unittest.TestCase):
         self.assertEqual(updateData['patches'][0]['URL'],
                          'http://boring.org/a')
 
-    def testSpecialQueryParamForced(self):
+    def testNonSpecialQueryParamForced(self):
         updateData = self.AUS.expandRelease(
             dict(name=None, buildTarget='p', locale='m', channel='foo', force=True),
             dict(mapping='b', update_type='minor'),
