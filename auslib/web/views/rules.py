@@ -1,11 +1,9 @@
-import simplejson as json
-
-from flask import render_template, request, Response, jsonify
+from flask import render_template, Response
 
 from mozilla_buildtools.retry import retry
 from sqlalchemy.exc import SQLAlchemyError
 
-from auslib.web.base import app, db
+from auslib.web.base import db
 from auslib.web.views.base import requirelogin, requirepermission, AdminView
 from auslib.web.views.forms import EditRuleForm, RuleForm
 
@@ -157,8 +155,3 @@ class SingleRuleView(AdminView):
         retry(db.rules.updateRule, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
                   kwargs=dict(changed_by=changed_by, rule_id=rule_id, what=what, old_data_version=form.data_version.data, transaction=transaction))
         return Response(status=200)
-
-
-app.add_url_rule('/rules.html', view_func=RulesPageView.as_view('rules.html'))
-app.add_url_rule('/rules', view_func=RulesAPIView.as_view('rules'))
-app.add_url_rule('/rules/<rule_id>', view_func=SingleRuleView.as_view('setrule'))

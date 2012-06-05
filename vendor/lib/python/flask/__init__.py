@@ -6,15 +6,16 @@
     A microframework based on Werkzeug.  It's extensively documented
     and follows best practice patterns.
 
-    :copyright: (c) 2010 by Armin Ronacher.
+    :copyright: (c) 2011 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 
-__version__ = '0.7.2'
+__version__ = '0.8'
 
 # utilities we import from Werkzeug and Jinja2 that are unused
 # in the module but are exported as public interface.
-from werkzeug import abort, redirect
+from werkzeug.exceptions import abort
+from werkzeug.utils import redirect
 from jinja2 import Markup, escape
 
 from .app import Flask, Request, Response
@@ -27,7 +28,6 @@ from .ctx import has_request_context
 from .module import Module
 from .blueprints import Blueprint
 from .templating import render_template, render_template_string
-from .session import Session
 
 # the signals
 from .signals import signals_available, template_rendered, request_started, \
@@ -36,3 +36,6 @@ from .signals import signals_available, template_rendered, request_started, \
 # only import json if it's available
 if json_available:
     from .helpers import json
+
+# backwards compat, goes away in 1.0
+from .sessions import SecureCookieSession as Session

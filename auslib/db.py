@@ -5,7 +5,7 @@ import sys
 import time
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-  CheckConstraint, create_engine, select, BigInteger, desc
+  CheckConstraint, create_engine, select, BigInteger
 from sqlalchemy.exc import SQLAlchemyError
 
 from auslib.blob import ReleaseBlobV1

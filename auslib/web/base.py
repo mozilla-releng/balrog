@@ -6,6 +6,13 @@ from auslib.db import AUSDatabase
 app = Flask(__name__)
 db = AUSDatabase()
 
+from auslib.web.views.csrf import CSRFView
+from auslib.web.views.permissions import UsersView, PermissionsView, \
+  SpecificPermissionView, PermissionsPageView, UserPermissionsPageView
+from auslib.web.views.releases import SingleLocaleView, SingleBlobView, \
+  SingleReleaseView, ReleasesPageView
+from auslib.web.views.rules import RulesPageView, RulesAPIView, SingleRuleView
+
 @app.errorhandler(500)
 def isa(error):
     log.error("Caught ISE 500 error.")
@@ -15,6 +22,18 @@ def isa(error):
     log.debug("Request headers are: %s", request.headers)
     return error
 
-# All of our View modules contain routing information that needs to be imported
-# to be active.
-from auslib.web.views import *
+app.add_url_rule('/csrf_token', view_func=CSRFView.as_view('csrf'))
+app.add_url_rule('/users', view_func=UsersView.as_view('users'))
+app.add_url_rule('/users/<username>/permissions', view_func=PermissionsView.as_view('permissions'))
+app.add_url_rule('/users/<username>/permissions/<path:permission>', view_func=SpecificPermissionView.as_view('specific_permission'))
+# Some permissions may start with a slash, and the <path> converter won't match them, so we need an extra rule to cope.
+app.add_url_rule('/users/<username>/permissions//<path:permission>', view_func=SpecificPermissionView.as_view('specific_permission'))
+app.add_url_rule('/permissions.html', view_func=PermissionsPageView.as_view('permissions.html'))
+app.add_url_rule('/user_permissions.html', view_func=UserPermissionsPageView.as_view('user_permissions.html'))
+app.add_url_rule('/releases/<release>/builds/<platform>/<locale>', view_func=SingleLocaleView.as_view('single_locale'))
+app.add_url_rule('/releases/<release>/data', view_func=SingleBlobView.as_view('release_data'))
+app.add_url_rule('/releases/<release>', view_func=SingleReleaseView.as_view('release'))
+app.add_url_rule('/releases.html', view_func=ReleasesPageView.as_view('releases.html'))
+app.add_url_rule('/rules.html', view_func=RulesPageView.as_view('rules.html'))
+app.add_url_rule('/rules', view_func=RulesAPIView.as_view('rules'))
+app.add_url_rule('/rules/<rule_id>', view_func=SingleRuleView.as_view('setrule'))

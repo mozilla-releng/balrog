@@ -82,9 +82,9 @@ function submitNewReleaseForm(releaseForm, table){
     var version = $('[name*=version]', releaseForm).val();
     var product = $('[name*=product]', releaseForm).val();
     var blob_field = $('[name*=blob]', releaseForm);
-    var csrf =    $('[name*=csrf]', releaseForm).val();
+    var csrf_token = $('[name*=csrf_token]', releaseForm).val();
 
-    console.log(csrf);
+    console.log(csrf_token);
     file = blob_field[0].files[0];
 
     var fr = new FileReader();
@@ -99,7 +99,7 @@ function submitNewReleaseForm(releaseForm, table){
             'product': product,
             'blob': result,
             'data_version': data_version,
-            'csrf': csrf
+            'csrf_token': csrf_token
         };
         $.ajax(url, {'type': 'put', 'data': data})
             .error(handleError)

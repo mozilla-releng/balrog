@@ -5,7 +5,7 @@
 
     Implements the bridge to Jinja2.
 
-    :copyright: (c) 2010 by Armin Ronacher.
+    :copyright: (c) 2011 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 import posixpath
@@ -78,6 +78,8 @@ class DispatchingJinjaLoader(BaseLoader):
             pass
 
         for blueprint in self.app.blueprints.itervalues():
+            if blueprint_is_module(blueprint):
+                continue
             loader = blueprint.jinja_loader
             if loader is not None:
                 yield loader, template
@@ -93,7 +95,7 @@ class DispatchingJinjaLoader(BaseLoader):
             if loader is not None:
                 for template in loader.list_templates():
                     prefix = ''
-                    if not blueprint_is_module(blueprint):
+                    if blueprint_is_module(blueprint):
                         prefix = name + '/'
                     result.add(prefix + template)
 

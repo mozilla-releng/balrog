@@ -6,8 +6,9 @@ from flask import render_template, Response, jsonify, make_response
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
 from auslib.util.retry import retry
-from auslib.web.base import app, db
+from auslib.web.base import db
 from auslib.web.views.base import requirelogin, requirepermission, AdminView
+from auslib.web.views.csrf import get_csrf_headers
 from auslib.web.views.forms import ReleaseForm, NewReleaseForm
 
 import logging
@@ -119,8 +120,14 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
 class SingleLocaleView(AdminView):
     """/releases/[release]/builds/[platform]/[locale]"""
     def get(self, release, platform, locale):
-        locale = db.releases.getLocale(release, platform, locale)
-        return jsonify(locale)
+        try:
+            locale = db.releases.getLocale(release, platform, locale)
+        except KeyError, e:
+            return Response(status=404, response=e.args)
+        data_version = db.releases.getReleases(name=release)[0]['data_version']
+        headers = {'X-Data-Version': data_version}
+        headers.update(get_csrf_headers())
+        return Response(response=json.dumps(locale), mimetype='application/json', headers=headers)
 
     @requirelogin
     @requirepermission('/releases/:name/builds/:platform/:locale', options=[])
@@ -188,8 +195,3 @@ class SingleReleaseView(AdminView):
             return retry(db.releases.updateRelease, kwargs=dict(name=rel, blob=releaseData, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction))
 
         return changeRelease(release, changed_by, transaction, exists, commit)
-
-app.add_url_rule('/releases/<release>/builds/<platform>/<locale>', view_func=SingleLocaleView.as_view('single_locale'))
-app.add_url_rule('/releases/<release>/data', view_func=SingleBlobView.as_view('release_data'))
-app.add_url_rule('/releases/<release>', view_func=SingleReleaseView.as_view('release'))
-app.add_url_rule('/releases.html', view_func=ReleasesPageView.as_view('releases.html'))

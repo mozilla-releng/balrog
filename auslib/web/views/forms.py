@@ -1,6 +1,6 @@
 import simplejson as json
 
-from flaskext.wtf import Form, TextField, HiddenField, Required, TextInput, FileInput, NumberRange, IntegerField, SelectField, FileField, file_required, validators, HiddenInput
+from flaskext.wtf import Form, TextField, Required, TextInput, FileInput, IntegerField, SelectField, FileField, validators, HiddenInput
 
 from auslib.blob import ReleaseBlobV1
 
@@ -28,7 +28,7 @@ class JSONFieldMixin(object):
                 # of. Because of this, we need to wrap this error in something
                 # else in order for it to be properly raised.
                 log.debug('JSONTextField.process_formdata: Caught ValueError')
-                self.process_errors.append(e.message)
+                self.process_errors.append(e.args[0])
         else:
             log.debug('JSONBlobField: No value list, setting self.data to default')
             self._set_default()

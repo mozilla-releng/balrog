@@ -1,6 +1,3 @@
-import unittest
-
-from auslib.web.views.base import requirepermission
 from auslib.test.web.views.base import ViewTest
 
 class TestRequirepermission(ViewTest):

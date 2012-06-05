@@ -2,7 +2,7 @@ import simplejson as json
 
 from flask import render_template, request, Response, jsonify, make_response
 
-from auslib.web.base import app, db
+from auslib.web.base import db
 from auslib.web.views.base import requirelogin, requirepermission, AdminView
 from auslib.web.views.forms import NewPermissionForm, ExistingPermissionForm
 
@@ -135,11 +135,3 @@ class UserPermissionsPageView(AdminView):
             prefix = permission2selector(perm)
             forms.append(ExistingPermissionForm(prefix=prefix, permission=perm, options=values['options'], data_version=values['data_version']))
         return render_template('user_permissions.html', username=username, permissions=forms, newPermission=NewPermissionForm())
-
-app.add_url_rule('/users', view_func=UsersView.as_view('users'))
-app.add_url_rule('/users/<username>/permissions', view_func=PermissionsView.as_view('permissions'))
-app.add_url_rule('/users/<username>/permissions/<path:permission>', view_func=SpecificPermissionView.as_view('specific_permission'))
-# Some permissions may start with a slash, and the <path> converter won't match them, so we need an extra rule to cope.
-app.add_url_rule('/users/<username>/permissions//<path:permission>', view_func=SpecificPermissionView.as_view('specific_permission'))
-app.add_url_rule('/permissions.html', view_func=PermissionsPageView.as_view('permissions.html'))
-app.add_url_rule('/user_permissions.html', view_func=UserPermissionsPageView.as_view('user_permissions.html'))

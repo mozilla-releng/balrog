@@ -1,7 +1,6 @@
 import logging
 from os import path
 import site
-import sys
 
 from paste.auth.basic import AuthBasicHandler
 

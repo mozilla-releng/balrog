@@ -177,7 +177,7 @@ function getData(prefix, ruleForm){
         'update_type' : $('[name='+prefix+'-update_type]', ruleForm).val(),
         'header_arch' : $('[name='+prefix+'-header_arch]', ruleForm).val(),
         'data_version': $('[name='+prefix+'-data_version]', ruleForm).val(),
-        'csrf': $('[name='+prefix+'-csrf]', ruleForm).val()
+        'csrf_token': $('[name='+prefix+'-csrf_token]', ruleForm).val()
     };
     return data;
 }

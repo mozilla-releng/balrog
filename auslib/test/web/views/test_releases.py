@@ -201,6 +201,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._get('/releases/d/builds/p/d')
         self.assertStatusCode(ret, 200)
         self.assertEqual(json.loads(ret.data), dict(complete=dict(filesize=1234)))
+        self.assertEqual(ret.headers['X-Data-Version'], '1')
 
     def testLocalePutNotAllowed(self):
         ret = self.client.put('/releases/d/builds/p/d', data=dict(product='a'))

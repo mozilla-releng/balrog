@@ -5,13 +5,15 @@
 
     Implements the WSGI wrappers (request and response).
 
-    :copyright: (c) 2010 by Armin Ronacher.
+    :copyright: (c) 2011 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 
-from werkzeug import Request as RequestBase, Response as ResponseBase, \
-    cached_property
+from werkzeug.wrappers import Request as RequestBase, Response as ResponseBase
+from werkzeug.exceptions import BadRequest
+from werkzeug.utils import cached_property
 
+from .debughelpers import attach_enctype_error_multidict
 from .helpers import json, _assert_have_json
 from .globals import _request_ctx_stack
 
@@ -23,6 +25,10 @@ class Request(RequestBase):
     It is what ends up as :class:`~flask.request`.  If you want to replace
     the request object used you can subclass this and set
     :attr:`~flask.Flask.request_class` to your subclass.
+
+    The request object is a :class:`~werkzeug.wrappers.Request` subclass and
+    provides all of the attributes Werkzeug defines plus a few Flask
+    specific ones.
     """
 
     #: the internal URL rule that matched the request.  This can be
@@ -85,18 +91,39 @@ class Request(RequestBase):
     @cached_property
     def json(self):
         """If the mimetype is `application/json` this will contain the
-        parsed JSON data.
+        parsed JSON data.  Otherwise this will be `None`.
+
+        This requires Python 2.6 or an installed version of simplejson.
         """
         if __debug__:
             _assert_have_json()
         if self.mimetype == 'application/json':
             request_charset = self.mimetype_params.get('charset')
-            if request_charset is not None:
-                j = json.loads(self.data, encoding=request_charset )
-            else:
-                j = json.loads(self.data)
+            try:
+                if request_charset is not None:
+                    return json.loads(self.data, encoding=request_charset)
+                return json.loads(self.data)
+            except ValueError, e:
+                return self.on_json_loading_failed(e)
 
-            return j
+    def on_json_loading_failed(self, e):
+        """Called if decoding of the JSON data failed.  The return value of
+        this method is used by :attr:`json` when an error ocurred.  The
+        default implementation raises a :class:`~werkzeug.exceptions.BadRequest`.
+
+        .. versionadded:: 0.8
+        """
+        raise BadRequest()
+
+    def _load_form_data(self):
+        RequestBase._load_form_data(self)
+
+        # in debug mode we're replacing the files multidict with an ad-hoc
+        # subclass that raises a different error for key errors.
+        ctx = _request_ctx_stack.top
+        if ctx is not None and ctx.app.debug and \
+           self.mimetype != 'multipart/form-data' and not self.files:
+            attach_enctype_error_multidict(self)
 
 
 class Response(ResponseBase):

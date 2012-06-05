@@ -1,7 +1,6 @@
 import mock
 from tempfile import NamedTemporaryFile
 import unittest
-from math import sqrt
 
 from auslib.AUS import AUS3
 
@@ -120,7 +119,7 @@ class TestAUS(unittest.TestCase):
         self.assertEqual(updateData['patches'][0]['URL'],
                          'http://boring.org/a')
 
-    def testSpecialQueryParamForced(self):
+    def testNonSpecialQueryParamForced(self):
         updateData = self.AUS.expandRelease(
             dict(name=None, buildTarget='p', locale='m', channel='foo', force=True),
             dict(mapping='b', update_type='minor'),

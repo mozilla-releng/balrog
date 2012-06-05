@@ -5,7 +5,7 @@
 
     Implements various helpers.
 
-    :copyright: (c) 2010 by Armin Ronacher.
+    :copyright: (c) 2011 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 
@@ -36,8 +36,14 @@ except ImportError:
             json_available = False
 
 
-from werkzeug import Headers, wrap_file
+from werkzeug.datastructures import Headers
 from werkzeug.exceptions import NotFound
+
+# this was moved in 0.7
+try:
+    from werkzeug.wsgi import wrap_file
+except ImportError:
+    from werkzeug.utils import wrap_file
 
 from jinja2 import FileSystemLoader
 
@@ -138,6 +144,13 @@ def make_response(*args):
     code::
 
         response = make_response(render_template('not_found.html'), 404)
+
+    The other use case of this function is to force the return value of a
+    view function into a response which is helpful with view
+    decorators::
+
+        response = make_response(view_function())
+        response.headers['X-Parachutes'] = 'parachutes are cool'
 
     Internally this function does the following things:
 
@@ -415,7 +428,7 @@ def safe_join(directory, filename):
 
     :param directory: the base directory.
     :param filename: the untrusted filename relative to that directory.
-    :raises: :class:`~werkzeug.exceptions.NotFound` if the retsulting path
+    :raises: :class:`~werkzeug.exceptions.NotFound` if the resulting path
              would fall out of `directory`.
     """
     filename = posixpath.normpath(filename)
@@ -460,12 +473,62 @@ def send_from_directory(directory, filename, **options):
     return send_file(filename, conditional=True, **options)
 
 
-def _get_package_path(name):
-    """Returns the path to a package or cwd if that cannot be found."""
+def get_root_path(import_name):
+    """Returns the path to a package or cwd if that cannot be found.  This
+    returns the path of a package or the folder that contains a module.
+
+    Not to be confused with the package path returned by :func:`find_package`.
+    """
+    __import__(import_name)
     try:
-        return os.path.abspath(os.path.dirname(sys.modules[name].__file__))
-    except (KeyError, AttributeError):
+        directory = os.path.dirname(sys.modules[import_name].__file__)
+        return os.path.abspath(directory)
+    except AttributeError:
+        # this is necessary in case we are running from the interactive
+        # python shell.  It will never be used for production code however
         return os.getcwd()
+
+
+def find_package(import_name):
+    """Finds a package and returns the prefix (or None if the package is
+    not installed) as well as the folder that contains the package or
+    module as a tuple.  The package path returned is the module that would
+    have to be added to the pythonpath in order to make it possible to
+    import the module.  The prefix is the path below which a UNIX like
+    folder structure exists (lib, share etc.).
+    """
+    __import__(import_name)
+    root_mod = sys.modules[import_name.split('.')[0]]
+    package_path = getattr(root_mod, '__file__', None)
+    if package_path is None:
+        # support for the interactive python shell
+        package_path = os.getcwd()
+    else:
+        package_path = os.path.abspath(os.path.dirname(package_path))
+    if hasattr(root_mod, '__path__'):
+        package_path = os.path.dirname(package_path)
+
+    # leave the egg wrapper folder or the actual .egg on the filesystem
+    test_package_path = package_path
+    if os.path.basename(test_package_path).endswith('.egg'):
+        test_package_path = os.path.dirname(test_package_path)
+
+    site_parent, site_folder = os.path.split(test_package_path)
+    py_prefix = os.path.abspath(sys.prefix)
+    if test_package_path.startswith(py_prefix):
+        return py_prefix, package_path
+    elif site_folder.lower() == 'site-packages':
+        parent, folder = os.path.split(site_parent)
+        # Windows like installations
+        if folder.lower() == 'lib':
+            base_dir = parent
+        # UNIX like installations
+        elif os.path.basename(parent).lower() == 'lib':
+            base_dir = os.path.dirname(parent)
+        else:
+            base_dir = site_parent
+        return base_dir, package_path
+    return None, package_path
 
 
 class locked_cached_property(object):
@@ -506,7 +569,7 @@ class _PackageBoundObject(object):
         self.template_folder = template_folder
 
         #: Where is the app root located?
-        self.root_path = _get_package_path(self.import_name)
+        self.root_path = get_root_path(self.import_name)
 
         self._static_folder = None
         self._static_url_path = None
@@ -559,7 +622,7 @@ class _PackageBoundObject(object):
             raise RuntimeError('No static folder for this object')
         return send_from_directory(self.static_folder, filename)
 
-    def open_resource(self, resource):
+    def open_resource(self, resource, mode='rb'):
         """Opens a resource from the application's resource folder.  To see
         how this works, consider the following folder structure::
 
@@ -581,4 +644,6 @@ class _PackageBoundObject(object):
         :param resource: the name of the resource.  To access resources within
                          subfolders use forward slashes as separator.
         """
-        return open(os.path.join(self.root_path, resource), 'rb')
+        if mode not in ('r', 'rb'):
+            raise ValueError('Resources can only be opened for reading')
+        return open(os.path.join(self.root_path, resource), mode)

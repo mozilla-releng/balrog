@@ -157,7 +157,8 @@ class Blueprint(_PackageBoundObject):
         :func:`url_for` function is prefixed with the name of the blueprint.
         """
         def decorator(f):
-            self.add_url_rule(rule, f.__name__, f, **options)
+            endpoint = options.pop("endpoint", f.__name__)
+            self.add_url_rule(rule, endpoint, f, **options)
             return f
         return decorator
 
@@ -165,6 +166,8 @@ class Blueprint(_PackageBoundObject):
         """Like :meth:`Flask.add_url_rule` but for a blueprint.  The endpoint for
         the :func:`url_for` function is prefixed with the name of the blueprint.
         """
+        if endpoint:
+            assert '.' not in endpoint, "Blueprint endpoint's should not contain dot's"
         self.record(lambda s:
             s.add_url_rule(rule, endpoint, view_func, **options))
 
@@ -197,6 +200,13 @@ class Blueprint(_PackageBoundObject):
         """
         self.record_once(lambda s: s.app.before_request_funcs
             .setdefault(None, []).append(f))
+        return f
+
+    def before_app_first_request(self, f):
+        """Like :meth:`Flask.before_first_request`.  Such a function is
+        executed before the first request to the application.
+        """
+        self.record_once(lambda s: s.app.before_first_request_funcs.append(f))
         return f
 
     def after_request(self, f):
@@ -282,8 +292,8 @@ class Blueprint(_PackageBoundObject):
     def app_url_value_preprocessor(self, f):
         """Same as :meth:`url_value_preprocessor` but application wide.
         """
-        self.record_once(lambda s: s.app.url_value_preprocessor
-            .setdefault(self.name, []).append(f))
+        self.record_once(lambda s: s.app.url_value_preprocessors
+            .setdefault(None, []).append(f))
         return f
 
     def app_url_defaults(self, f):

@@ -6,18 +6,19 @@
     Defines all the global objects that are proxies to the current
     active context.
 
-    :copyright: (c) 2010 by Armin Ronacher.
+    :copyright: (c) 2011 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 
 from functools import partial
-from werkzeug import LocalStack, LocalProxy
+from werkzeug.local import LocalStack, LocalProxy
 
 def _lookup_object(name):
     top = _request_ctx_stack.top
     if top is None:
         raise RuntimeError('working outside of request context')
     return getattr(top, name)
+
 
 # context locals
 _request_ctx_stack = LocalStack()

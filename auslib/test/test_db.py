@@ -6,7 +6,7 @@ import unittest
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select
 from sqlalchemy.engine.reflection import Inspector
 
-from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, PermissionDeniedError, \
+from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
   AUSTransaction, TransactionError, OutdatedDataError
 from auslib.blob import ReleaseBlobV1
 
@@ -890,7 +890,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         ret = json.loads(select([self.releases.data]).where(self.releases.name=='a').execute().fetchone()[0])
         expected = json.loads("""
 {
-    "name": "b",
+    "name": "a",
     "platforms": {
         "p": {
             "locales": {
@@ -913,6 +913,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
+        self.assertEqual(ret, expected)
 
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
