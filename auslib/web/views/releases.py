@@ -2,7 +2,7 @@ import simplejson as json
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from flask import render_template, Response, jsonify, make_response
+from flask import render_template, Response, jsonify, make_response, request
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
 from auslib.util.retry import retry
@@ -168,8 +168,11 @@ class SingleReleaseView(AdminView):
     def get(self, release):
         release = retry(db.releases.getReleases, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
                 kwargs=dict(name=release, limit=1))
-        return render_template('fragments/release_row.html', row=release[0])
-
+        if not release:
+            return Response(status=404)
+        headers = {'X-Data-Version': release[0]['data_version']}
+        headers.update(get_csrf_headers())
+        return Response(response=render_template('fragments/release_row.html', row=release[0]), headers=headers)
 
     @requirelogin
     @requirepermission('/releases/:name', options=[])
