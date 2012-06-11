@@ -1,4 +1,4 @@
-import copy
+import copy, re
 from collections import defaultdict
 from random import randint
 
@@ -231,14 +231,17 @@ class AUS3:
         xml.append('<updates>')
         if rel:
             if rel['schema_version'] == 1:
-                xml.append('    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
-                           (rel['type'], rel['appv'], rel['extv'], rel['build']))
+                updateLine='    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
+                           (rel['type'], rel['appv'], rel['extv'], rel['build'])
                 if rel['detailsUrl']:
-                    xml.append(' detailsURL="%s"' % rel['detailsUrl'])
-                xml.append('>')
+                    updateLine += ' detailsURL="%s"' % rel['detailsUrl']
+                updateLine += '>'
+                xml.append(updateLine)
                 for patch in sorted(rel['patches']):
                     xml.append('        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
                                (patch['type'], patch['URL'], patch['hashFunction'], patch['hashValue'], patch['size']))
                 xml.append('    </update>')
         xml.append('</updates>')
-        return '\n'.join(xml)
+        # ensure valid xml by using the right entity for ampersand
+        payload = re.sub('&(?!amp;)','&amp;', '\n'.join(xml))
+        return payload
