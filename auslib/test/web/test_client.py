@@ -1,8 +1,8 @@
 import unittest
 from xml.dom import minidom
 
-from auslib.client.base import app, AUS
-from auslib.client.views.client import ClientRequestView
+from auslib.web.base import app, AUS
+from auslib.web.views.client import ClientRequestView
 
 class ClientTest(unittest.TestCase):
     def setUp(self):

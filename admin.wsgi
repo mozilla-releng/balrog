@@ -7,7 +7,7 @@ mydir = path.dirname(path.abspath(__file__))
 site.addsitedir(mydir)
 site.addsitedir(path.join(mydir, 'vendor/lib/python'))
 
-from auslib.web.base import db, app as application
+from auslib.admin.base import db, app as application
 from auslib.config import AdminConfig
 
 cfg = AdminConfig('/etc/aus/admin.ini')

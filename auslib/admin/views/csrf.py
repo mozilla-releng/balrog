@@ -1,7 +1,7 @@
 from flask import Response
 from flaskext.wtf import Form
 
-from auslib.web.views.base import AdminView
+from auslib.admin.views.base import AdminView
 
 import logging
 log = logging.getLogger(__name__)

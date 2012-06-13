@@ -28,7 +28,7 @@ if __name__ == '__main__':
         log_level = logging.DEBUG
     logging.basicConfig(level=log_level, format="%(asctime)s: %(message)s")
 
-    from auslib.web.base import app, db
+    from auslib.admin.base import app, db
 
     db.setDburi(options.db)
     db.createTables()

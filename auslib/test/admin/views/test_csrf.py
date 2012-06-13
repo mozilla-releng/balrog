@@ -3,8 +3,8 @@ import simplejson as json
 
 import flaskext.wtf.form
 
-from auslib.web.base import app
-from auslib.test.web.views.base import ViewTest, HTMLTestMixin
+from auslib.admin.base import app
+from auslib.test.admin.views.base import ViewTest, HTMLTestMixin
 
 class TestCSRFEndpoint(ViewTest, HTMLTestMixin):
     def setUp(self):

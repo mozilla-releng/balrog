@@ -6,10 +6,10 @@ from flask import render_template, Response, jsonify, make_response, request
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
 from auslib.util.retry import retry
-from auslib.web.base import db
-from auslib.web.views.base import requirelogin, requirepermission, AdminView
-from auslib.web.views.csrf import get_csrf_headers
-from auslib.web.views.forms import ReleaseForm, NewReleaseForm
+from auslib.admin.base import db
+from auslib.admin.views.base import requirelogin, requirepermission, AdminView
+from auslib.admin.views.csrf import get_csrf_headers
+from auslib.admin.views.forms import ReleaseForm, NewReleaseForm
 
 import logging
 log = logging.getLogger(__name__)

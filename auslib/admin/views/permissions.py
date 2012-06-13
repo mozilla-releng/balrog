@@ -2,9 +2,9 @@ import simplejson as json
 
 from flask import render_template, request, Response, jsonify, make_response
 
-from auslib.web.base import db
-from auslib.web.views.base import requirelogin, requirepermission, AdminView
-from auslib.web.views.forms import NewPermissionForm, ExistingPermissionForm
+from auslib.admin.base import db
+from auslib.admin.views.base import requirelogin, requirepermission, AdminView
+from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm
 
 import logging
 log = logging.getLogger(__name__)

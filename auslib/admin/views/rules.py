@@ -3,9 +3,9 @@ from flask import render_template, Response
 from mozilla_buildtools.retry import retry
 from sqlalchemy.exc import SQLAlchemyError
 
-from auslib.web.base import db
-from auslib.web.views.base import requirelogin, requirepermission, AdminView
-from auslib.web.views.forms import EditRuleForm, RuleForm
+from auslib.admin.base import db
+from auslib.admin.views.base import requirelogin, requirepermission, AdminView
+from auslib.admin.views.forms import EditRuleForm, RuleForm
 
 import logging
 log = logging.getLogger(__name__)

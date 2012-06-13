@@ -3,7 +3,7 @@ import unittest
 
 from flask import Response
 
-from auslib.web.base import app, db
+from auslib.admin.base import app, db
 
 # When running tests, there's no web server to convert uncaught exceptions to
 # 500 errors, so we need to do it here. Maybe we should just do it globally

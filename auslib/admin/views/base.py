@@ -1,7 +1,7 @@
 from flask import request, Response
 from flask.views import MethodView
 
-from auslib.web.base import db
+from auslib.admin.base import db
 
 import logging
 log = logging.getLogger(__name__)

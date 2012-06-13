@@ -1,7 +1,7 @@
 from flask import make_response, request
 from flask.views import MethodView
 
-from auslib.client.base import app, AUS
+from auslib.web.base import app, AUS
 
 import logging
 log = logging.getLogger(__name__)
@@ -61,5 +61,3 @@ class ClientRequestView(MethodView):
         response = make_response(xml)
         response.mimetype = 'text/xml'
         return response
-
-app.add_url_rule('/update/<int:queryVersion>/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml', view_func=ClientRequestView.as_view('clientrequest'))

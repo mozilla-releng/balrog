@@ -1,7 +1,7 @@
 import simplejson as json
 
-from auslib.web.base import db
-from auslib.test.web.views.base import ViewTest, JSONTestMixin, HTMLTestMixin
+from auslib.admin.base import db
+from auslib.test.admin.views.base import ViewTest, JSONTestMixin, HTMLTestMixin
 
 class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
     def testUsers(self):

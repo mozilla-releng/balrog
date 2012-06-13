@@ -1,4 +1,4 @@
-from auslib.test.web.views.base import ViewTest
+from auslib.test.admin.views.base import ViewTest
 
 class TestRequirepermission(ViewTest):
     def testAdmin(self):
