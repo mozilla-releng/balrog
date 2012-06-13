@@ -2,7 +2,7 @@ import simplejson as json
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from flask import render_template, Response, jsonify, make_response, request
+from flask import render_template, Response, jsonify, make_response
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
 from auslib.util.retry import retry
@@ -11,9 +11,6 @@ from auslib.admin.views.base import requirelogin, requirepermission, AdminView
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import ReleaseForm, NewReleaseForm
 
-import logging
-log = logging.getLogger(__name__)
-
 __all__ = ["SingleReleaseView", "SingleLocaleView", "ReleasesPageView"]
 
 def createRelease(release, product, version, changed_by, transaction, releaseData):
@@ -21,7 +18,7 @@ def createRelease(release, product, version, changed_by, transaction, releaseDat
     retry(db.releases.addRelease, kwargs=dict(name=release, product=product, version=version, blob=blob, changed_by=changed_by, transaction=transaction))
     return retry(db.releases.getReleases, kwargs=dict(name=release, transaction=transaction))[0]
 
-def changeRelease(release, changed_by, transaction, existsCallback, commitCallback):
+def changeRelease(release, changed_by, transaction, existsCallback, commitCallback, log):
     """Generic function to change an aspect of a release. It relies on a
        ReleaseForm existing and does some upfront work and checks before
        doing anything. It will, for the named release and any found in the
@@ -103,7 +100,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         # If the version doesn't match, just update it. This will be the case for nightlies
         # every time there's a version bump.
         if version != releaseInfo['version']:
-            log.debug("SingleLocaleView.put: database version for %s is %s, updating it to %s", rel, releaseInfo['version'], version)
+            log.debug("database version for %s is %s, updating it to %s", rel, releaseInfo['version'], version)
             retry(db.releases.updateRelease, kwargs=dict(name=rel, version=version, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction))
             old_data_version += 1
 
@@ -147,7 +144,7 @@ class SingleLocaleView(AdminView):
         def commit(rel, product, version, localeData, releaseData, old_data_version):
             return retry(db.releases.addLocaleToRelease, kwargs=dict(name=rel, platform=platform, locale=locale, data=localeData, old_data_version=old_data_version, changed_by=changed_by, transaction=transaction))
 
-        return changeRelease(release, changed_by, transaction, exists, commit)
+        return changeRelease(release, changed_by, transaction, exists, commit, self.log)
 
 class ReleasesPageView(AdminView):
     """ /releases.html """
@@ -197,4 +194,4 @@ class SingleReleaseView(AdminView):
             releaseData.update(newReleaseData)
             return retry(db.releases.updateRelease, kwargs=dict(name=rel, blob=releaseData, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction))
 
-        return changeRelease(release, changed_by, transaction, exists, commit)
+        return changeRelease(release, changed_by, transaction, exists, commit, self.log)

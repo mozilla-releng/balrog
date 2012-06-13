@@ -1,12 +1,15 @@
 from flask import make_response, request
 from flask.views import MethodView
 
-from auslib.web.base import app, AUS
+from auslib.web.base import AUS
 
 import logging
-log = logging.getLogger(__name__)
 
 class ClientRequestView(MethodView):
+    def __init__(self, *args, **kwargs):
+        self.log = logging.getLogger(self.__class__.__name__)
+        MethodView.__init__(self, *args, **kwargs)
+
     def getHeaderArchitecture(self, buildTarget, ua):
         if buildTarget.startswith('Darwin'):
             if ua and 'PPC' in ua:
@@ -49,15 +52,15 @@ class ClientRequestView(MethodView):
     """/update/3/<product>/<version>/<buildID>/<build target>/<locale>/<channel>/<os version>/<distribution>/<distribution version>"""
     def get(self, queryVersion, **url):
         query = self.getQueryFromURL(queryVersion, url)
-        log.debug("ClientRequestView.get: Got query: %s", query)
+        self.log.debug("Got query: %s", query)
         if query:
             rule = AUS.evaluateRules(query)
         else:
             rule = {}
         # passing {},{} returns empty xml
-        log.debug("ClientRequestView.get: Got rule: %s", rule)
+        self.log.debug("Got rule: %s", rule)
         xml = AUS.createXML(query, rule)
-        log.debug("ClientRequestView.get: Sending XML: %s", xml)
+        self.log.debug("Sending XML: %s", xml)
         response = make_response(xml)
         response.mimetype = 'text/xml'
         return response

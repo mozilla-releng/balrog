@@ -6,9 +6,6 @@ from auslib.admin.base import db
 from auslib.admin.views.base import requirelogin, requirepermission, AdminView
 from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm
 
-import logging
-log = logging.getLogger(__name__)
-
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView", "PermissionsPageView", "UserPermissionsPageView"]
 
 def setpermission(f):
@@ -26,9 +23,8 @@ class UsersView(AdminView):
     """/users"""
     def get(self):
         users = db.permissions.getAllUsers()
-        log.debug("UsersView.get: Found users: %s", users)
+        self.log.debug("Found users: %s", users)
         fmt = request.args.get('format', 'html')
-        log.debug("UsersView.get: format is '%s'", fmt)
         if fmt == 'json':
             # We don't return a plain jsonify'ed list here because of:
             # http://flask.pocoo.org/docs/security/#json-security
@@ -41,7 +37,6 @@ class PermissionsView(AdminView):
     def get(self, username):
         permissions = db.permissions.getUserPermissions(username)
         fmt = request.args.get('format', 'html')
-        log.debug("PermissionsView.get: format is '%s':", fmt)
         if fmt == 'json':
             return jsonify(permissions)
         else:
@@ -60,7 +55,6 @@ class SpecificPermissionView(AdminView):
         except KeyError:
             return Response(status=404)
         fmt = request.args.get('format', 'html')
-        log.debug("SpecificPermissionsView.get: format is '%s':", fmt)
         if fmt == 'json':
             return jsonify(perm)
         else:

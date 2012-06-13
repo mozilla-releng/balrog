@@ -7,9 +7,6 @@ from auslib.admin.base import db
 from auslib.admin.views.base import requirelogin, requirepermission, AdminView
 from auslib.admin.views.forms import EditRuleForm, RuleForm
 
-import logging
-log = logging.getLogger(__name__)
-
 class RulesPageView(AdminView):
     """/rules.html"""
     def get(self):
@@ -25,8 +22,7 @@ class RulesPageView(AdminView):
 
         for rule in rules:
             _id = rule['rule_id']
-            log.debug("auslib.web.views.rules.RulesPageView: ")
-            log.debug(rule)
+            self.log.debug(rule)
             forms[_id] = EditRuleForm(prefix=str(_id), 
                                     throttle = rule['throttle'],  
                                     mapping = rule['mapping'], 
@@ -62,10 +58,9 @@ class RulesAPIView(AdminView):
         form.mapping.choices = [(item['name'],item['name']) for item in releaseNames]
         form.mapping.choices.insert(0, ('', 'NULL' ) )
         if not form.validate():
-            log.debug("auslib.web.views.rules.RulesAPIView:")
-            log.debug(form.errors)
-
+            self.log.debug(form.errors)
             return Response(status=400, response=form.errors)
+
         what = dict(throttle=form.throttle.data,   
                 mapping=form.mapping.data,
                 priority=form.priority.data,
@@ -151,7 +146,7 @@ class SingleRuleView(AdminView):
                     comment = form.comment.data,
                     update_type = form.update_type.data,
                     header_arch = form.header_arch.data)
-        log.debug("auslib.web.views.rules.SingleRuleView: POST: old_data_version: %s", form.data_version.data)
+        self.log.debug("old_data_version: %s", form.data_version.data)
         retry(db.rules.updateRule, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
                   kwargs=dict(changed_by=changed_by, rule_id=rule_id, what=what, old_data_version=form.data_version.data, transaction=transaction))
         return Response(status=200)

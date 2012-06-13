@@ -4,7 +4,6 @@ from flask.views import MethodView
 from auslib.admin.base import db
 
 import logging
-log = logging.getLogger(__name__)
 
 def requirelogin(f):
     def decorated(*args, **kwargs):
@@ -32,17 +31,21 @@ def requirepermission(url, options=['product']):
     return wrap
 
 class AdminView(MethodView):
+    def __init__(self, *args, **kwargs):
+        self.log = logging.getLogger(self.__class__.__name__)
+        MethodView.__init__(self, *args, **kwargs)
+
     def post(self, *args, **kwargs):
-        log.debug("AdminView.post: processing POST request to %s" % request.path)
+        self.log.debug("processing POST request to %s" % request.path)
         with db.begin() as trans:
             return self._post(*args, transaction=trans, **kwargs)
 
     def put(self, *args, **kwargs):
-        log.debug("AdminView.post: processing PUT request to %s" % request.path)
+        self.log.debug("processing PUT request to %s" % request.path)
         with db.begin() as trans:
             return self._put(*args, transaction=trans, **kwargs)
 
     def delete(self, *args, **kwargs):
-        log.debug("AdminView.post: processing DELETE request to %s" % request.path)
+        self.log.debug("processing DELETE request to %s" % request.path)
         with db.begin() as trans:
             return self._delete(*args, transaction=trans, **kwargs)

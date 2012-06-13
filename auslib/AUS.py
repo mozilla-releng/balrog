@@ -3,7 +3,6 @@ from collections import defaultdict
 from random import randint
 
 import logging
-log = logging.getLogger(__name__)
 
 from auslib.db import AUSDatabase
 
@@ -24,6 +23,7 @@ class AUS3:
     def __init__(self, dbname=None):
         self.setDb(dbname)
         self.rand = AUSRandom()
+        self.log = logging.getLogger(self.__class__.__name__)
 
     def setDb(self, dbname):
         if dbname == None:
@@ -47,28 +47,28 @@ class AUS3:
         self.db.createTables()
 
     def identifyRequest(self, updateQuery):
-        log.debug("AUS.identifyRequest: got updateQuery: %s", updateQuery)
+        self.log.debug("Got updateQuery: %s", updateQuery)
         buildTarget = updateQuery['buildTarget']
         buildID = updateQuery['buildID']
         locale = updateQuery['locale']
 
         for release in self.releases.getReleases(product=updateQuery['product'], version=updateQuery['version']):
-            log.debug("AUS.identifyRequest: Trying to match request to %s", release['name'])
+            self.log.debug("Trying to match request to %s", release['name'])
             if buildTarget in release['data']['platforms']:
                 try:
                     releaseBuildID = release['data'].getBuildID(buildTarget, locale)
                 except KeyError:
                     continue
-                log.debug("AUS.identifyRequest: releasePlat buildID is: %s", releaseBuildID)
+                self.log.debug("releasePlat buildID is: %s", releaseBuildID)
                 if buildID == releaseBuildID:
-                    log.debug("AUS.identifyRequest: Identified query as %s", release['name'])
+                    self.log.debug("Identified query as %s", release['name'])
                     return release['name']
-        log.debug("AUS.identifyRequest: Couldn't identify query")
+        self.log.debug("Couldn't identify query")
         return None
 
     def evaluateRules(self, updateQuery):
-        log.debug("AUS.evaluateRules: Looking for rules that apply to:")
-        log.debug("AUS.evaluateRules: %s", updateQuery)
+        self.log.debug("Looking for rules that apply to:")
+        self.log.debug(updateQuery)
         rules = self.rules.getRulesMatchingQuery(
             updateQuery,
             fallbackChannel=self.getFallbackChannel(updateQuery['channel'])
@@ -84,13 +84,13 @@ class AUS3:
             # throttle=100 means all requests are served
             # throttle=25 means only one quarter of requests are served
             if not updateQuery['force'] and rule['throttle'] < 100:
-                log.debug("AUS.evaluateRules: throttle < 100, rolling the dice")
+                self.log.debug("throttle < 100, rolling the dice")
                 if self.rand.getInt() >= rule['throttle']:
-                    log.debug("AUS.evaluateRules: request was dropped")
+                    self.log.debug("request was dropped")
                     rule = None
 
-            log.debug("AUS.evaluateRules: Returning rule:")
-            log.debug("AUS.evaluateRules: %s", rule)
+            self.log.debug("Returning rule:")
+            self.log.debug("%s", rule)
             return rule
         return None
 
@@ -99,15 +99,15 @@ class AUS3:
 
     def expandRelease(self, updateQuery, rule):
         if not rule or not rule['mapping']:
-            log.debug("AUS.expandRelease: Couldn't find rule or mapping for %s" % rule)
+            self.log.debug("Couldn't find rule or mapping for %s" % rule)
             return None
         # read data from releases table
         try:
             res = self.releases.getReleases(name=rule['mapping'], limit=1)[0]
         except IndexError:
             # need to log some sort of data inconsistency error here
-            log.debug("AUS.expandRelease: Failed to get release data from db for:")
-            log.debug("AUS.expandRelease: %s", rule['mapping'])
+            self.log.debug("Failed to get release data from db for:")
+            self.log.debug(rule['mapping'])
             return None
         relData = res['data']
         updateData = defaultdict(list)
@@ -120,12 +120,12 @@ class AUS3:
 
         # return early if we don't have an update for this platform
         if buildTarget not in relData['platforms']:
-            log.debug("AUS.expandRelease: No platform %s in release %s", buildTarget, rule['mapping'])
+            self.log.debug("No platform %s in release %s", buildTarget, rule['mapping'])
             return updateData
 
         # return early if we don't have an update for this locale
         if locale not in relDataPlat['locales']:
-            log.debug("AUS.expandRelease: No update to %s for %s/%s", rule['mapping'], buildTarget, locale)
+            self.log.debug("No update to %s for %s/%s", rule['mapping'], buildTarget, locale)
             return updateData
         else:
             relDataPlatLoc = relDataPlat['locales'][locale]
@@ -143,7 +143,7 @@ class AUS3:
             # evaluate types of updates and see if we can use them
             for patchKey in relDataPlatLoc:
                 if patchKey not in ('partial','complete'):
-                    log.debug("AUS.expandRelease: Skipping patchKey '%s'", patchKey)
+                    self.log.debug("Skipping patchKey '%s'", patchKey)
                     continue
                 patch = relDataPlatLoc[patchKey]
                 if patch['from'] == updateQuery['name'] or patch['from'] == '*':
@@ -178,7 +178,7 @@ class AUS3:
                         'size': patch['filesize']
                     })
                 else:
-                    log.debug("AUS.expandRelease: Didn't add patch for patchKey '%s'; from is '%s', updateQuery name is '%s'", patchKey, patch['from'], updateQuery['name'])
+                    self.log.debug("Didn't add patch for patchKey '%s'; from is '%s', updateQuery name is '%s'", patchKey, patch['from'], updateQuery['name'])
 
             # older branches required a <partial> in the update.xml, which we
             # used to fake by repeating the complete data.
@@ -188,14 +188,14 @@ class AUS3:
                 patch['type'] = 'partial'
                 updateData['patches'].append(patch)
 
-        log.debug("AUS.expandRelease: Returning %s", updateData)
+        self.log.debug("Returning %s", updateData)
         return updateData
 
     def createSnippet(self, updateQuery, release):
         rel = self.expandRelease(updateQuery, release)
         if not rel:
             # handle this better, both for prod and debugging
-            log.debug("AUS.createSnippet: Couldn't expand rule for update target")
+            self.log.debug("Couldn't expand rule for update target")
             # XXX: Not sure we should be specifying patch types here, but it's
             # required for tests that have null snippets in them at the time
             # of writing.
@@ -220,7 +220,7 @@ class AUS3:
             snippets[patch['type']] = "\n".join(snippet) + '\n'
 
         for s in snippets.keys():
-            log.debug('AUS.createSnippets: %s\n%s' % (s, snippets[s].rstrip()))
+            self.log.debug('%s\n%s' % (s, snippets[s].rstrip()))
         return snippets
 
     def createXML(self, updateQuery, release):

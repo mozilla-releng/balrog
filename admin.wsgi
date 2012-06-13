@@ -7,6 +7,7 @@ mydir = path.dirname(path.abspath(__file__))
 site.addsitedir(mydir)
 site.addsitedir(path.join(mydir, 'vendor/lib/python'))
 
+from auslib import log_format
 from auslib.admin.base import db, app as application
 from auslib.config import AdminConfig
 
@@ -18,6 +19,6 @@ if errors:
         print >>sys.stderr, err
     sys.exit(1)
 
-logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel(), format="%(asctime)s: %(message)s")
+logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel(), format=log_format)
 db.setDburi(cfg.getDburi())
 application.config['SECRET_KEY'] = cfg.getSecretKey()

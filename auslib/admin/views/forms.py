@@ -1,6 +1,6 @@
 import simplejson as json
 
-from flaskext.wtf import Form, TextField, Required, TextInput, FileInput, IntegerField, SelectField, FileField, validators, HiddenInput
+from flaskext.wtf import Form, TextField, Required, TextInput, FileInput, IntegerField, SelectField, validators, HiddenInput
 
 from auslib.blob import ReleaseBlobV1
 
@@ -27,10 +27,10 @@ class JSONFieldMixin(object):
                 # WTForms catches ValueError, which JSONDecodeError is a child
                 # of. Because of this, we need to wrap this error in something
                 # else in order for it to be properly raised.
-                log.debug('JSONTextField.process_formdata: Caught ValueError')
+                log.debug('Caught ValueError')
                 self.process_errors.append(e.args[0])
         else:
-            log.debug('JSONBlobField: No value list, setting self.data to default')
+            log.debug('No value list, setting self.data to default')
             self._set_default()
 
 # We need to be sure that we list JSONFieldMixin BEFORE the FileField in the derived classes list
@@ -60,12 +60,12 @@ class NullableTextField(TextField):
     def process_formdata(self, valuelist):
         if valuelist and valuelist[0]:
             if valuelist[0] == '':
-                log.debug("NullableTextField.process_formdata: data is empty string, setting it to NULL", valuelist[0])
+                log.debug("data is empty string, setting it to NULL")
                 self.data = None
             else:
                 self.data = valuelist[0]
         else:
-            log.debug('NullableTextField: No value list, setting self.data to None')
+            log.debug('No value list, setting self.data to None')
             self.data = None
 
 class DbEditableForm(Form):

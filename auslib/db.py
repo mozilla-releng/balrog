@@ -11,7 +11,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from auslib.blob import ReleaseBlobV1
 
 import logging
-log = logging.getLogger(__name__)
 
 def rowsToDicts(fn):
     """Decorator that converts the result of any function returning a dict-like
@@ -53,6 +52,7 @@ class AUSTransaction(object):
         self.engine = engine
         self.conn = self.engine.connect()
         self.trans = self.conn.begin()
+        self.log = logging.getLogger(self.__class__.__name__)
 
     def __enter__(self):
         return self
@@ -61,7 +61,7 @@ class AUSTransaction(object):
         try:
             # If something that executed in the context raised an Exception,
             # rollback and re-raise it.
-            log.debug("AUSTransaction.__exit__: exc is:", exc_info=True)
+            self.log.debug("exc is:", exc_info=True)
             if exc[0]:
                 self.rollback()
                 raise exc[0], exc[1], exc[2]
@@ -82,10 +82,10 @@ class AUSTransaction(object):
 
     def execute(self, statement):
         try:
-            log.debug("AUSTransaction.execute: Attempting to execute %s" % statement)
+            self.log.debug("Attempting to execute %s" % statement)
             return self.conn.execute(statement)
         except:
-            log.debug("AUSTransaction.execute: Caught exception")
+            self.log.debug("Caught exception")
             # We want to raise our own Exception, so that errors are easily
             # caught by consumers. The dance below lets us do that without
             # losing the original Traceback, which will be much more
@@ -141,6 +141,7 @@ class AUSTable(object):
             self.history = History(self.t.metadata, self)
         else:
             self.history = None
+        self.log = logging.getLogger(self.__class__.__name__)
 
     # Can't do this in the constructor, because the engine is always
     # unset when we're instantiated
@@ -162,7 +163,6 @@ class AUSTable(object):
             raise WrongNumberOfRowsError("where clause matched no rows")
         if len(rows) > 1:
             raise WrongNumberOfRowsError("where clause matches multiple rows (primary keys: %s)" % rows)
-        log.debug("AUSTable._returnRowOrRaise: returning %s" % rows[0])
         return rows[0]
 
     def _selectStatement(self, columns=None, where=None, order_by=None, limit=None, distinct=False):
@@ -198,7 +198,6 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         query = self._selectStatement(**kwargs)
-        log.debug("AUSTable.select: Executing query: '%s'", query)
         if transaction:
             return transaction.execute(query).fetchall()
         else:
@@ -226,7 +225,6 @@ class AUSTable(object):
         if self.versioned:
             data['data_version'] = 1
         query = self._insertStatement(**data)
-        log.debug("AUSTable._prepareInsert: Executing query: '%s' with values: %s", query, data)
         ret = trans.execute(query)
         if self.history:
             for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
@@ -286,7 +284,6 @@ class AUSTable(object):
             where.append(self.data_version==old_data_version)
 
         query = self._deleteStatement(where)
-        log.debug("AUSTable._prepareDelete: Executing query: '%s'", query)
         ret = trans.execute(query)
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to delete row, old_data_version doesn't match current data_version")
@@ -346,7 +343,6 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         row = self._returnRowOrRaise(where=where, transaction=trans)
-        log.debug("AUSTable._prepareUpdate: Preparing update to row: %s, updating as follows: %s", row, what)
         if self.versioned:
             where = copy(where)
             where.append(self.data_version==old_data_version)
@@ -357,7 +353,6 @@ class AUSTable(object):
             row[col] = what[col]
 
         query = self._updateStatement(where, row)
-        log.debug("AUSTable._prepareUpdate: Executing query: '%s' with values: %s", query, row)
         ret = trans.execute(query)
         if self.history:
             trans.execute(self.history.forUpdate(row, changed_by))
@@ -427,7 +422,6 @@ class History(AUSTable):
 
     def getTimestamp(self):
         t = int(time.time() * 1000)
-        log.debug("History.getTimestamp: returning %d" % t)
         return t
 
     def forInsert(self, insertedKeys, columns, changed_by):
@@ -459,7 +453,6 @@ class History(AUSTable):
         # Tack on history table information to the row
         row['changed_by'] = changed_by
         row['timestamp'] = self.getTimestamp()
-        log.debug("History.forDelete: inserting %s to history table" % row)
         return self._insertStatement(**row)
 
     def forUpdate(self, rowData, changed_by):
@@ -470,7 +463,6 @@ class History(AUSTable):
             row[str(k)] = rowData[k]
         row['changed_by'] = changed_by
         row['timestamp'] = self.getTimestamp()
-        log.debug("History.forUpdate: inserting %s to history table" % row)
         return self._insertStatement(**row)
 
     def getChange(self, change_id, transaction=None):
@@ -478,7 +470,7 @@ class History(AUSTable):
         changes = self.select( where=[self.change_id==change_id], transaction=transaction)
         found = len(changes)
         if found > 1 or found == 0:
-            log.debug("History.getChange: Found %s changes, should have been 1", found)
+            self.log.debug("Found %s changes, should have been 1", found)
             return None
         return changes[0]
 
@@ -492,7 +484,7 @@ class History(AUSTable):
         changes = self.select( where=where, transaction=transaction, limit=1, order_by=self.change_id.desc())
         length = len(changes)
         if(length == 0):   
-            log.debug("History.getPrevChange: No previous changes found")
+            self.log.debug("No previous changes found")
             return None
         return changes[0]
 
@@ -507,7 +499,6 @@ class History(AUSTable):
 
     def _stripHistoryColumns(self, change):
         """ Will strip history specific columns as well as data_version from the given change """
-        log.debug(change)
         del change['change_id']
         del change['changed_by']
         del change['timestamp']
@@ -555,13 +546,13 @@ class History(AUSTable):
         # If the row has all NULLS, then the operation we're rolling back is a DELETE
         # We need to do an insert, with the data from the previous change
         if self._isDelete(cur_base_state, row_primary_keys):
-            log.debug("History.rollbackChange: reverting a DELETE")
+            self.log.debug("reverting a DELETE")
             self.baseTable.insert(changed_by=changed_by, transaction=transaction, **prev_base_state)
 
         # If the previous change is NULL, then the operation is an INSERT
         # We will need to do a delete.
         elif self._isInsert(prev_base_state, row_primary_keys): 
-                log.debug("History.rollbackChange: reverting an INSERT")
+                self.log.debug("reverting an INSERT")
                 where = []
                 for i in range(0, len(self.base_primary_key)):
                     self_prim = getattr(self.baseTable, self.base_primary_key[i])
@@ -572,7 +563,7 @@ class History(AUSTable):
         elif self._isUpdate(cur_base_state, prev_base_state, row_primary_keys): 
         # If this operation is an UPDATE
         # We will need to do an update to the previous change's state
-            log.debug("History.rollbackChange: reverting an UPDATE")
+            self.log.debug("reverting an UPDATE")
             where = []
             for i in range(0, len(self.base_primary_key)):
                 self_prim = getattr(self.baseTable, self.base_primary_key[i])
@@ -582,7 +573,7 @@ class History(AUSTable):
             old_data_version = change['data_version']
             self.baseTable.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
         else:
-            log.debug("History.rollbackChange: ERROR, change doesn't correspond to any known operation")
+            self.log.debug("ERROR, change doesn't correspond to any known operation")
 
 
 class Rules(AUSTable):
@@ -664,26 +655,26 @@ class Rules(AUSTable):
         if updateQuery['force'] == False:
             where.append(self.throttle > 0)
         rules = self.select(where=where, transaction=transaction)
-        log.debug("Rules.getRulesMatchingQuery: where: %s" % where)
-        log.debug("Rules.getRulesMatchingQuery: Raw matches:")
+        self.log.debug("where: %s" % where)
+        self.log.debug("Raw matches:")
         for rule in rules:
-            log.debug("Rules.getRulesMatchingQuery: %s", rule)
+            self.log.debug(rule)
             # Resolve special means for version and channel, dropping
             # rules that don't match after resolution.
             if not self._versionMatchesRule(rule['version'], updateQuery['version']):
-                log.debug("Rules.getRulesMatchingQuery: %s doesn't match %s", rule['version'], updateQuery['version'])
+                self.log.debug("%s doesn't match %s", rule['version'], updateQuery['version'])
                 continue
             if not self._channelMatchesRule(rule['channel'], updateQuery['channel'], fallbackChannel):
-                log.debug("Rules.getRulesMatchingQuery: %s doesn't match %s", rule['channel'], updateQuery['channel'])
+                self.log.debug("%s doesn't match %s", rule['channel'], updateQuery['channel'])
                 continue
             # Drop any rules which would update ourselves to the same version
             if rule['mapping'] == updateQuery['name']:
                 continue
             matchingRules.append(rule)
-        log.debug("Rules.getRulesMatchingQuery: Reduced matches:")
-        if log.isEnabledFor(logging.DEBUG):
+        self.log.debug("Reduced matches:")
+        if self.log.isEnabledFor(logging.DEBUG):
             for r in matchingRules:
-                log.debug("Rules.getRulesMatchingQuery: %s", r)
+                self.log.debug(r)
         return matchingRules
 
     def getRuleById(self, rule_id, transaction=None):
@@ -691,7 +682,7 @@ class Rules(AUSTable):
         rules = self.select( where=[self.rule_id==rule_id], transaction=transaction)
         found = len(rules)
         if found > 1 or found == 0:
-            log.debug("Rules.getRuleById: Found %s rules, should have been 1", found)
+            self.log.debug("Found %s rules, should have been 1", found)
             return None
         return rules[0]
 
@@ -717,10 +708,10 @@ class Releases(AUSTable):
         AUSTable.__init__(self)
 
     def getReleases(self, name=None, product=None, version=None, limit=None, transaction=None):
-        log.debug("Releases.getReleases: Looking for releases with:")
-        log.debug("Releases.getReleases: name: %s", name)
-        log.debug("Releases.getReleases: product: %s", product)
-        log.debug("Releases.getReleases: version: %s", version)
+        self.log.debug("Looking for releases with:")
+        self.log.debug("name: %s", name)
+        self.log.debug("product: %s", product)
+        self.log.debug("version: %s", version)
         where = []
         if name:
             where.append(self.name==name)
@@ -756,7 +747,6 @@ class Releases(AUSTable):
 
     def addRelease(self, name, product, version, blob, changed_by, transaction=None):
         if not blob.isValid():
-            log.debug("Releases.addRelease: invalid blob is %s" % blob)
             raise ValueError("Release blob is invalid.")
         columns = dict(name=name, product=product, version=version, data=blob.getJSON())
         # Raises DuplicateDataError if the release already exists.
@@ -770,10 +760,8 @@ class Releases(AUSTable):
             what['version'] = version
         if blob:
             if not blob.isValid():
-                log.debug("Releases.updateRelease: invalid blob is %s" % blob)
                 raise ValueError("Release blob is invalid.")
             what['data'] = blob.getJSON()
-        log.debug("Releases.updateRelease: Updating %s with %s", name, what)
         self.update(where=[self.name==name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
     def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None):
@@ -794,7 +782,6 @@ class Releases(AUSTable):
             releaseBlob['platforms'][platform] = dict(locales=dict())
         releaseBlob['platforms'][platform]['locales'][locale] = data
         if not releaseBlob.isValid():
-            log.debug("Releases.addLocaleToRelease: invalid releaseBlob is %s" % releaseBlob)
             raise ValueError("New release blob is invalid.")
         where = [self.name==name]
         what = dict(data=releaseBlob.getJSON())
@@ -863,9 +850,9 @@ class Permissions(AUSTable):
         columns = dict(username=username, permission=permission)
         if options:
             columns['options'] = json.dumps(options)
-        log.debug("Permissions.grantPermission: granting %s to %s with options %s" % (permission, username, options))
+        self.log.debug("granting %s to %s with options %s" % (permission, username, options))
         self.insert(changed_by=changed_by, transaction=transaction, **columns)
-        log.debug("Permissions.grantPermission: successfully granted %s to %s with options %s" % (permission, username, options))
+        self.log.debug("successfully granted %s to %s with options %s" % (permission, username, options))
 
     def updatePermission(self, changed_by, username, permission, old_data_version, options=None, transaction=None):
         self.assertPermissionExists(permission)

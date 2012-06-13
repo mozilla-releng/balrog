@@ -1,6 +1,3 @@
-import mock
-import simplejson as json
-
 import flaskext.wtf.form
 
 from auslib.admin.base import app

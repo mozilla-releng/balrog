@@ -1,4 +1,7 @@
-from flask import Flask, make_response
+import logging
+log = logging.getLogger(__name__)
+
+from flask import Flask, make_response, request
 
 from auslib import version
 from auslib.AUS import AUS3

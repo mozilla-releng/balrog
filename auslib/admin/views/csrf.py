@@ -3,9 +3,6 @@ from flaskext.wtf import Form
 
 from auslib.admin.views.base import AdminView
 
-import logging
-log = logging.getLogger(__name__)
-
 __all__ = ["CSRFView"]
 
 def get_csrf_headers():
