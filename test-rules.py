@@ -35,9 +35,9 @@ def populateDB(AUS, testdir):
         # less accurate, but the best we can do.
         version = data.get('appVersion', data.get('extv'))
         if not version:
-            version = extv = data.get('platforms').values()[0].get('locales').values()[0]['extv']
-            if not extv:
-                raise Exception("Couldn't find extv for %s" % data['name'])
+            version = data.get('platforms').values()[0].get('locales').values()[0].get('extv')
+            if not version:
+                raise Exception("Couldn't find version for %s" % data['name'])
         AUS.db.engine.execute("INSERT INTO releases VALUES ('%s', '%s', '%s','%s', 1)" %
                    (data['name'], product, version, json.dumps(data)))
     # TODO - create a proper importer that walks the snippet store to find hashes ?
@@ -156,8 +156,9 @@ if __name__ == "__main__":
     log_level = logging.INFO
     if options.verbose:
         log_level = logging.DEBUG
-
-    logging.basicConfig(level=log_level, format=log_format)
+        logging.basicConfig(level=log_level, format=log_format)
+    else:
+        logging.basicConfig(level=log_level, format="%(message)s")
 
     if not options.testDirs:
         for dirname in os.listdir('aus-data-snapshots'):

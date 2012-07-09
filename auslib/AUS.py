@@ -278,10 +278,21 @@ class AUS3:
                     updateLine += ' detailsURL="%s"' % rel['detailsUrl']
                 updateLine += '>'
                 xml.append(updateLine)
-                for patch in sorted(rel['patches']):
-                    xml.append('        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
-                               (patch['type'], patch['URL'], patch['hashFunction'], patch['hashValue'], patch['size']))
-                xml.append('    </update>')
+
+            if rel['schema_version'] == 2:
+                updateLine='    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"' % \
+                           (rel['type'], rel['displayVersion'], rel['appVersion'], rel['platformVersion'], rel['build'])
+                if rel['detailsUrl']:
+                    updateLine += ' detailsURL="%s"' % rel['detailsUrl']
+                if rel['actions']:
+                    updateLine += ' actions="%s"' % rel['actions']
+                updateLine += '>'
+                xml.append(updateLine)
+
+            for patch in sorted(rel['patches']):
+                xml.append('        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
+                           (patch['type'], patch['URL'], patch['hashFunction'], patch['hashValue'], patch['size']))
+            xml.append('    </update>')
         xml.append('</updates>')
         # ensure valid xml by using the right entity for ampersand
         payload = re.sub('&(?!amp;)','&amp;', '\n'.join(xml))

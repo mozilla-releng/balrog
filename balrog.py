@@ -16,7 +16,7 @@ if __name__ == "__main__":
     options, args = parser.parse_args()
 
     from auslib import log_format
-    from auslib.client.base import app, AUS
+    from auslib.web.base import app, AUS
 
     log_level = logging.INFO
     if options.verbose:
