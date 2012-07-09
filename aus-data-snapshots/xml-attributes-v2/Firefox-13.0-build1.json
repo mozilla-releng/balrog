@@ -1,7 +1,6 @@
 {
     "name": "Firefox-13.0-build1",
     "schema_version": 2,
-    "extv": "13.0",
     "platforms": {
         "WINNT_x86-msvc": {
             "buildID": "20120601045813",

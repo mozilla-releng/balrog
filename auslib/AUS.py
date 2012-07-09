@@ -130,63 +130,69 @@ class AUS3:
         else:
             relDataPlatLoc = relDataPlat['locales'][locale]
 
-        # this is for the properties AUS2 can cope with today
         if relData['schema_version'] == 1:
-            updateData['type'] = rule['update_type']
             updateData['appv'] = relData.getAppv(buildTarget, locale)
             updateData['extv'] = relData.getExtv(buildTarget, locale)
-            updateData['schema_version'] = relData['schema_version']
-            if 'detailsUrl' in relData:
-                updateData['detailsUrl'] = relData['detailsUrl'].replace('%LOCALE%',updateQuery['locale'])
-            updateData['build'] = relData.getBuildID(buildTarget, locale)
+        elif relData['schema_version'] == 2:
+            updateData['displayVersion'] = relData.getDisplayVersion(buildTarget, locale)
+            updateData['appVersion'] = relData.getAppVersion(buildTarget, locale)
+            updateData['platformVersion'] = relData.getPlatformVersion(buildTarget, locale)
+            updateData['actions'] = relData.get('actions', None)
 
-            # evaluate types of updates and see if we can use them
-            for patchKey in relDataPlatLoc:
-                if patchKey not in ('partial','complete'):
-                    self.log.debug("Skipping patchKey '%s'", patchKey)
-                    continue
-                patch = relDataPlatLoc[patchKey]
-                if patch['from'] == updateQuery['name'] or patch['from'] == '*':
-                    if 'fileUrl' in patch:
-                        url = patch['fileUrl']
-                    else:
-                        # When we're using a fallback channel it's unlikely
-                        # we'll have a fileUrl specifically for it, but we
-                        # should try nonetheless. Non-fallback cases shouldn't
-                        # be hitting any exceptions here.
-                        try:
-                            url = relData['fileUrls'][updateQuery['channel']]
-                        except KeyError:
-                            url = relData['fileUrls'][self.getFallbackChannel(updateQuery['channel'])]
-                        url = url.replace('%LOCALE%', updateQuery['locale'])
-                        url = url.replace('%OS_FTP%', relDataPlat['OS_FTP'])
-                        url = url.replace('%FILENAME%', relData['ftpFilenames'][patchKey])
-                        url = url.replace('%PRODUCT%', relData['bouncerProducts'][patchKey])
-                        url = url.replace('%OS_BOUNCER%', relDataPlat['OS_BOUNCER'])
-                    # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
-                    if updateQuery['force'] and self.isSpecialURL(url):
-                        if '?' in url:
-                            url += '&force=1'
-                        else:
-                            url += '?force=1'
+        # general properties
+        updateData['type'] = rule['update_type']
+        updateData['schema_version'] = relData['schema_version']
+        updateData['build'] = relData.getBuildID(buildTarget, locale)
+        if 'detailsUrl' in relData:
+            updateData['detailsUrl'] = relData['detailsUrl'].replace('%LOCALE%',updateQuery['locale'])
 
-                    updateData['patches'].append({
-                        'type': patchKey,
-                        'URL':  url,
-                        'hashFunction': relData['hashFunction'],
-                        'hashValue': patch['hashValue'],
-                        'size': patch['filesize']
-                    })
+        # evaluate types of updates and see if we can use them
+        for patchKey in relDataPlatLoc:
+            if patchKey not in ('partial','complete'):
+                self.log.debug("Skipping patchKey '%s'", patchKey)
+                continue
+            patch = relDataPlatLoc[patchKey]
+            if patch['from'] == updateQuery['name'] or patch['from'] == '*':
+                if 'fileUrl' in patch:
+                    url = patch['fileUrl']
                 else:
-                    self.log.debug("Didn't add patch for patchKey '%s'; from is '%s', updateQuery name is '%s'", patchKey, patch['from'], updateQuery['name'])
+                    # When we're using a fallback channel it's unlikely
+                    # we'll have a fileUrl specifically for it, but we
+                    # should try nonetheless. Non-fallback cases shouldn't
+                    # be hitting any exceptions here.
+                    try:
+                        url = relData['fileUrls'][updateQuery['channel']]
+                    except KeyError:
+                        url = relData['fileUrls'][self.getFallbackChannel(updateQuery['channel'])]
+                    url = url.replace('%LOCALE%', updateQuery['locale'])
+                    url = url.replace('%OS_FTP%', relDataPlat['OS_FTP'])
+                    url = url.replace('%FILENAME%', relData['ftpFilenames'][patchKey])
+                    url = url.replace('%PRODUCT%', relData['bouncerProducts'][patchKey])
+                    url = url.replace('%OS_BOUNCER%', relDataPlat['OS_BOUNCER'])
+                # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
+                if updateQuery['force'] and self.isSpecialURL(url):
+                    if '?' in url:
+                        url += '&force=1'
+                    else:
+                        url += '?force=1'
 
-            # older branches required a <partial> in the update.xml, which we
-            # used to fake by repeating the complete data.
-            if 'fakePartials' in relData and relData['fakePartials'] and len(updateData['patches']) == 1 and \
-              updateData['patches'][0]['type'] == 'complete':
-                patch = copy.copy(updateData['patches'][0])
-                patch['type'] = 'partial'
-                updateData['patches'].append(patch)
+                updateData['patches'].append({
+                    'type': patchKey,
+                    'URL':  url,
+                    'hashFunction': relData['hashFunction'],
+                    'hashValue': patch['hashValue'],
+                    'size': patch['filesize']
+                })
+            else:
+                self.log.debug("Didn't add patch for patchKey '%s'; from is '%s', updateQuery name is '%s'", patchKey, patch['from'], updateQuery['name'])
+
+        # older branches required a <partial> in the update.xml, which we
+        # used to fake by repeating the complete data.
+        if 'fakePartials' in relData and relData['fakePartials'] and len(updateData['patches']) == 1 and \
+          updateData['patches'][0]['type'] == 'complete':
+            patch = copy.copy(updateData['patches'][0])
+            patch['type'] = 'partial'
+            updateData['patches'].append(patch)
 
         self.log.debug("Returning %s", updateData)
         return updateData
@@ -201,6 +207,14 @@ class AUS3:
             # of writing.
             return {"partial": "", "complete": ""}
 
+        if rel['schema_version'] == 1:
+            return self.createSnippetV1(updateQuery, rel)
+        elif rel['schema_version'] == 2:
+            return self.createSnippetV2(updateQuery, rel)
+        else:
+            return {"partial": "", "complete": ""}
+
+    def createSnippetV1(self, updateQuery, rel):
         snippets = {}
         for patch in rel['patches']:
             snippet  = ["version=1",
@@ -216,6 +230,33 @@ class AUS3:
                 snippet.append("detailsUrl=%s" % rel['detailsUrl'])
             if rel['type'] == 'major':
                 snippet.append('updateType=major')
+            # AUS2 snippets have a trailing newline, add one here for easy diffing
+            snippets[patch['type']] = "\n".join(snippet) + '\n'
+
+        for s in snippets.keys():
+            self.log.debug('%s\n%s' % (s, snippets[s].rstrip()))
+        return snippets
+
+    def createSnippetV2(self, updateQuery, rel):
+        snippets = {}
+        for patch in rel['patches']:
+            snippet  = ["version=2",
+                        "type=%s" % patch['type'],
+                        "url=%s" % patch['URL'],
+                        "hashFunction=%s" % patch['hashFunction'],
+                        "hashValue=%s" % patch['hashValue'],
+                        "size=%s" % patch['size'],
+                        "build=%s" % rel['build'],
+                        "displayVersion=%s" % rel['displayVersion'],
+                        "appVersion=%s" % rel['appVersion'],
+                        "platformVersion=%s" % rel['platformVersion']
+                        ]
+            if rel['detailsUrl']:
+                snippet.append("detailsUrl=%s" % rel['detailsUrl'])
+            if rel['type'] == 'major':
+                snippet.append('updateType=major')
+            if rel['actions']:
+                snippet.append('actions=%s' % rel['actions'])
             # AUS2 snippets have a trailing newline, add one here for easy diffing
             snippets[patch['type']] = "\n".join(snippet) + '\n'
 

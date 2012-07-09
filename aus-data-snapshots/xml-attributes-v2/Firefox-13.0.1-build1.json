@@ -1,13 +1,13 @@
 {
     "name": "Firefox-13.0.1-build1",
     "schema_version": 2,
-    "appVersion": "13.0.1",
     "displayVersion": "13.0.1",
+    "appVersion": "13.0.1",
     "platformVersion": "13.0.1",
     "actions": "silent",
     "detailsUrl": "https://www.mozilla.com/%LOCALE%/firefox/13.0.1/releasenotes/",
     "fileUrls": {
-        "betatest":    "http://stage-old.mozilla.org/pub/mozilla.org/firefox/candidates/13.0.1-candidates/build1/update/%OS_FTP%/%LOCALE%/%FILENAME%",
+        "betatest":    "http://stage.mozilla.org/pub/mozilla.org/firefox/nightly/13.0.1-candidates/build1/update/%OS_FTP%/%LOCALE%/%FILENAME%",
         "beta":        "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/13.0.1-candidates/build1/update/%OS_FTP%/%LOCALE%/%FILENAME%",
         "releasetest": "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%",
         "release":     "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%"

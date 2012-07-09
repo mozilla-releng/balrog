@@ -127,3 +127,13 @@ class ReleaseBlobV1(Blob):
 
     def getExtv(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'extv')
+
+    # v2 stuff that probably needs to move
+    def getAppVersion(self, platform, locale):
+        return self.getLocaleOrTopLevelParam(platform, locale, 'appVersion')
+
+    def getDisplayVersion(self, platform, locale):
+        return self.getLocaleOrTopLevelParam(platform, locale, 'displayVersion')
+
+    def getPlatformVersion(self, platform, locale):
+        return self.getLocaleOrTopLevelParam(platform, locale, 'platformVersion')

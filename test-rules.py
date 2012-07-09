@@ -10,6 +10,7 @@ mydir = os.path.dirname(os.path.abspath(__file__))
 site.addsitedir(mydir)
 site.addsitedir(os.path.join(mydir, 'vendor/lib/python'))
 
+from auslib import log_format
 from auslib.AUS import *
 
 import logging
@@ -28,17 +29,17 @@ def populateDB(AUS, testdir):
     # and add any json blobs we created painstakingly, converting to compact json
     for f in glob.glob('%s/*.json' % testdir):
         data = json.load(open(f,'r'))
-        product,version = data['name'].split('-')[0:2]
+        product = data['name'].split('-')[0]
         # JSON files can have the extv version at the top level, or in the locales
         # If we can't find it at the top level, look for it in a locale. This is
         # less accurate, but the best we can do.
-        extv = data.get('extv')
-        if not extv:
-            extv = data.get('platforms').values()[0].get('locales').values()[0]['extv']
+        version = data.get('appVersion', data.get('extv'))
+        if not version:
+            version = extv = data.get('platforms').values()[0].get('locales').values()[0]['extv']
             if not extv:
                 raise Exception("Couldn't find extv for %s" % data['name'])
         AUS.db.engine.execute("INSERT INTO releases VALUES ('%s', '%s', '%s','%s', 1)" %
-                   (data['name'], product, extv, json.dumps(data)))
+                   (data['name'], product, version, json.dumps(data)))
     # TODO - create a proper importer that walks the snippet store to find hashes ?
 
 def getQueryFromPath(snippetPath):
@@ -156,7 +157,7 @@ if __name__ == "__main__":
     if options.verbose:
         log_level = logging.DEBUG
 
-    logging.basicConfig(level=log_level, format='%(message)s')
+    logging.basicConfig(level=log_level, format=log_format)
 
     if not options.testDirs:
         for dirname in os.listdir('aus-data-snapshots'):
@@ -171,14 +172,16 @@ if __name__ == "__main__":
         populateDB(AUS, td)
         if options.dumprules:
             log.info("Rules are \n(id, priority, mapping, throttle, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")
-            for rule in AUS.rules.getRules():
+            for rule in AUS.rules.getOrderedRules():
                 log.info(", ".join([str(rule[k]) for k in rule.keys()]))
             log.info("-"*50)
 
         if options.dumpreleases:
-            log.info("Releases are \n(name, data):")
+            log.info("Releases are \n(name, product, version, data):")
             for release in AUS.releases.getReleases():
-                log.info("(%s, %s " % (release['name'],json.dumps(release['data'],indent=2)))
+                log.info("(%s, %s, %s, %s " % (release['name'], release['product'],
+                                       release['version'],
+                                       json.dumps(release['data'],indent=2)))
             log.info("-"*50)
 
         result = walkSnippets(AUS, os.path.join(td, 'snippets'))
