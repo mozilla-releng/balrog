@@ -1,0 +1,58 @@
+{
+    "name": "Firefox-13.0.1-build1",
+    "schema_version": 2,
+    "appVersion": "13.0.1",
+    "displayVersion": "13.0.1",
+    "platformVersion": "13.0.1",
+    "actions": "silent",
+    "detailsUrl": "https://www.mozilla.com/%LOCALE%/firefox/13.0.1/releasenotes/",
+    "fileUrls": {
+        "betatest":    "http://stage-old.mozilla.org/pub/mozilla.org/firefox/candidates/13.0.1-candidates/build1/update/%OS_FTP%/%LOCALE%/%FILENAME%",
+        "beta":        "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/13.0.1-candidates/build1/update/%OS_FTP%/%LOCALE%/%FILENAME%",
+        "releasetest": "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%",
+        "release":     "http://download.mozilla.org/?product=%PRODUCT%&os=%OS_BOUNCER%&lang=%LOCALE%"
+    },
+    "ftpFilenames": {
+        "partial":  "firefox-13.0-13.0.1.partial.mar",
+        "complete": "firefox-13.0.1.complete.mar"
+    },
+    "bouncerProducts": {
+        "partial":  "firefox-13.0.1-partial-13.0",
+        "complete": "firefox-13.0.1-complete"
+    },
+    "hashFunction": "SHA512",
+    "fakePartials": 0,
+    "platforms": {
+        "WINNT_x86-msvc": {
+            "OS_BOUNCER": "win",
+            "OS_FTP": "win32",
+            "buildID": "20120614114901",
+            "locales": {
+                "en-US": {
+                    "complete": {
+                        "filesize": "20645936",
+                        "from": "*",
+                        "hashValue": "9dac4d27108d15bbeaa27dc7996e9639a000ceb6091f1f008357fc19a64254a31300f6574bda72129ae49a0ff5c780eadbf2706401591781bf941b6f446ecb01"
+                    },
+                    "partial": {
+                        "filesize": "2105344",
+                        "from": "Firefox-13.0-build1",
+                        "hashValue": "42ad9b84532e86ea980ea24d37257136b779c68666a1615c861fcb0e7bbed6040b1773815f0ffabd8295c1b83359307a48bb0d5fea7b99af1240ed783d65b967"
+                    }
+                },
+                "de": {
+                    "complete": {
+                        "filesize": "20476449",
+                        "from": "*",
+                        "hashValue": "5b2d89905a2c7b6779789d6b495dd152c4fecc8674391c4e9d004057ca378da602121819b76fa7d20cc57ffbd4105290cef3eca23c35b27f76b2ff4469aa3202"
+                    },
+                    "partial": {
+                        "filesize": "2101507",
+                        "from": "Firefox-13.0-build1",
+                        "hashValue": "b000cf7e527950551dfc4644ae2d91eea32d2ade4a541e6e59a6dd52944137c718c18e7a12e669ecc49148e07dcad90c8ab3d75da812e2de877c4c429b9c8c42"
+                    }
+                }
+            }
+        }
+    }
+}
