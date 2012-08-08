@@ -150,6 +150,7 @@ if __name__ == "__main__":
     parser.add_option("", "--dump-rules", dest="dumprules", action="store_true", help="dump rules to stdout")
     parser.add_option("", "--dump-releases", dest="dumpreleases", action="store_true", help="dump release data to stdout")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="verbose output for snippet checking")
+    parser.add_option("-k", "--keep-db", dest="keepDB", action="store_true", help="save a copy of the test db in thetest dir")
 
     options, args = parser.parse_args()
 
@@ -168,7 +169,15 @@ if __name__ == "__main__":
 
     for td in options.testDirs:
         log.info("Testing %s", td)
-        AUS = AUS3(dbname='sqlite:///:memory:')
+        if options.keepDB:
+            dbPath = os.path.join(td, 'update.db')
+            if os.path.exists(dbPath):
+                os.remove(dbPath)
+            log.info('saving db at %s' % dbPath)
+            dbPath = 'sqlite:///%s' % dbPath
+        else:
+            dbPath = 'sqlite:///:memory:'
+        AUS = AUS3(dbname=dbPath)
         AUS.createTables()
         populateDB(AUS, td)
         if options.dumprules:
