@@ -20,6 +20,10 @@ class AUSRandom:
         return range(self.min, self.max+1)
 
 class AUS3:
+    SCHEMA_2_OPTIONAL_ATTRIBUTES = (
+        'showPrompt', 'showNeverForVersion', 'showSurvey', 'actions',
+        'billboardURL', 'openURL', 'notificationURL', 'alertURL')
+
     def __init__(self, dbname=None):
         self.setDb(dbname)
         self.rand = AUSRandom()
@@ -228,6 +232,8 @@ class AUS3:
                         "extv=%s" % rel['extv']]
             if rel['detailsUrl']:
                 snippet.append("detailsUrl=%s" % rel['detailsUrl'])
+            if rel['licenseUrl']:
+                snippet.append("licenseUrl=%s" % rel['licenseUrl'])
             if rel['type'] == 'major':
                 snippet.append('updateType=major')
             # AUS2 snippets have a trailing newline, add one here for easy diffing
@@ -253,10 +259,13 @@ class AUS3:
                         ]
             if rel['detailsUrl']:
                 snippet.append("detailsUrl=%s" % rel['detailsUrl'])
+            if rel['licenseUrl']:
+                snippet.append("licenseUrl=%s" % rel['licenseUrl'])
             if rel['type'] == 'major':
                 snippet.append('updateType=major')
-            if rel['actions']:
-                snippet.append('actions=%s' % rel['actions'])
+            for attr in self.SCHEMA_2_OPTIONAL_ATTRIBUTES:
+                if attr in rel:
+                    snippet.append('%s=%s' % (attr, rel[attr]))
             # AUS2 snippets have a trailing newline, add one here for easy diffing
             snippets[patch['type']] = "\n".join(snippet) + '\n'
 
@@ -276,6 +285,8 @@ class AUS3:
                            (rel['type'], rel['appv'], rel['extv'], rel['build'])
                 if rel['detailsUrl']:
                     updateLine += ' detailsURL="%s"' % rel['detailsUrl']
+                if rel['licenseUrl']:
+                    updateLine += ' licenseURL="%s"' % rel['detailsUrl']
                 updateLine += '>'
                 xml.append(updateLine)
 
@@ -284,8 +295,11 @@ class AUS3:
                            (rel['type'], rel['displayVersion'], rel['appVersion'], rel['platformVersion'], rel['build'])
                 if rel['detailsUrl']:
                     updateLine += ' detailsURL="%s"' % rel['detailsUrl']
-                if rel['actions']:
-                    updateLine += ' actions="%s"' % rel['actions']
+                if rel['licenseUrl']:
+                    updateLine += ' licenseURL="%s"' % rel['detailsUrl']
+                for attr in self.SCHEMA_2_OPTIONAL_ATTRIBUTES:
+                    if attr in rel:
+                        updateLine += ' %s="%s"' % (attr, rel[attr])
                 updateLine += '>'
                 xml.append(updateLine)
 
