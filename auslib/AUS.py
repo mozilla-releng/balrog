@@ -21,8 +21,8 @@ class AUSRandom:
 
 class AUS3:
     SCHEMA_2_OPTIONAL_ATTRIBUTES = (
-        'showPrompt', 'showNeverForVersion', 'showSurvey', 'actions',
-        'billboardURL', 'openURL', 'notificationURL', 'alertURL')
+        'billboardURL', 'showPrompt', 'showNeverForVersion', 'showSurvey',
+        'actions', 'openURL', 'notificationURL', 'alertURL')
 
     def __init__(self, dbname=None):
         self.setDb(dbname)
@@ -141,7 +141,9 @@ class AUS3:
             updateData['displayVersion'] = relData.getDisplayVersion(buildTarget, locale)
             updateData['appVersion'] = relData.getAppVersion(buildTarget, locale)
             updateData['platformVersion'] = relData.getPlatformVersion(buildTarget, locale)
-            updateData['actions'] = relData.get('actions', None)
+            for attr in self.SCHEMA_2_OPTIONAL_ATTRIBUTES:
+                if attr in relData:
+                    updateData[attr] = relData[attr]
 
         # general properties
         updateData['type'] = rule['update_type']
@@ -149,6 +151,8 @@ class AUS3:
         updateData['build'] = relData.getBuildID(buildTarget, locale)
         if 'detailsUrl' in relData:
             updateData['detailsUrl'] = relData['detailsUrl'].replace('%LOCALE%',updateQuery['locale'])
+        if 'licenseUrl' in relData:
+            updateData['licenseUrl'] = relData['licenseUrl'].replace('%LOCALE%',updateQuery['locale'])
 
         # evaluate types of updates and see if we can use them
         for patchKey in relDataPlatLoc:
@@ -286,7 +290,7 @@ class AUS3:
                 if rel['detailsUrl']:
                     updateLine += ' detailsURL="%s"' % rel['detailsUrl']
                 if rel['licenseUrl']:
-                    updateLine += ' licenseURL="%s"' % rel['detailsUrl']
+                    updateLine += ' licenseURL="%s"' % rel['licenseUrl']
                 updateLine += '>'
                 xml.append(updateLine)
 
@@ -296,7 +300,7 @@ class AUS3:
                 if rel['detailsUrl']:
                     updateLine += ' detailsURL="%s"' % rel['detailsUrl']
                 if rel['licenseUrl']:
-                    updateLine += ' licenseURL="%s"' % rel['detailsUrl']
+                    updateLine += ' licenseURL="%s"' % rel['licenseUrl']
                 for attr in self.SCHEMA_2_OPTIONAL_ATTRIBUTES:
                     if attr in rel:
                         updateLine += ' %s="%s"' % (attr, rel[attr])

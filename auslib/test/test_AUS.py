@@ -69,6 +69,8 @@ class TestAUS(unittest.TestCase):
     "appv": "b",
     "extv": "b",
     "hashFunction": "sha512",
+    "detailsUrl": "http://example.org/details",
+    "licenseUrl": "http://example.org/license",
     "platforms": {
         "p": {
             "buildID": 1,
@@ -87,6 +89,41 @@ class TestAUS(unittest.TestCase):
                         "from": "*",
                         "hashValue": "1",
                         "fileUrl": "http://boring.org/a"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+        self.AUS.db.releases.t.insert().execute(name='c', product='c', version='c', data_version=1, data="""
+{
+    "name": "c",
+    "schema_version": 2,
+    "appVersion": "c",
+    "displayVersion": "c",
+    "platformVersion": "c",
+    "hashFunction": "sha512",
+    "detailsUrl": "http://example.org/details",
+    "licenseUrl": "http://example.org/license",
+    "actions": "silent",
+    "billboardURL": "http://example.com/billboard",
+    "openURL": "http://example.com/url",
+    "notificationURL": "http://example.com/notification",
+    "alertURL": "http://example.com/alert",
+    "showPrompt": "false",
+    "showNeverForVersion": "true",
+    "showSurvey": "false",
+    "platforms": {
+        "p": {
+            "buildID": 2,
+            "locales": {
+                "o": {
+                    "complete": {
+                        "filesize": 2,
+                        "from": "*",
+                        "hashValue": "2",
+                        "fileUrl": "http://example.com/mar"
                     }
                 }
             }
@@ -150,3 +187,31 @@ class TestAUS(unittest.TestCase):
     def testIdentifyRequestMissingLocale(self):
         query = dict(buildTarget='p', buildID=1, locale='g', product='b', version='b')
         self.assertEqual(None, self.AUS.identifyRequest(query))
+
+    def testSchemaV1XML(self):
+        expected = """\
+<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="b" extensionVersion="b" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
+        <patch type="complete" URL="http://special.org/?foo=a&amp;force=1" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>\n</updates>\
+"""
+        xml = self.AUS.createXML(
+            dict(name=None, buildTarget='p', locale='l', channel='foo', force=True),
+            dict(mapping='b', update_type='minor'),
+        )
+        self.assertEqual(xml, expected)
+
+    def testSchemaV2XML(self):
+        expected = """\
+<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="c" appVersion="c" platformVersion="c" buildID="2" detailsURL="http://example.org/details" licenseURL="http://example.org/license" billboardURL="http://example.com/billboard" showPrompt="false" showNeverForVersion="true" showSurvey="false" actions="silent" openURL="http://example.com/url" notificationURL="http://example.com/notification" alertURL="http://example.com/alert">
+        <patch type="complete" URL="http://example.com/mar" hashFunction="sha512" hashValue="2" size="2"/>
+    </update>\n</updates>\
+"""
+        xml = self.AUS.createXML(
+            dict(name=None, buildTarget='p', locale='o', channel='foo', force=True),
+            dict(mapping='c', update_type='minor'),
+        )
+        self.assertEqual(xml, expected)
