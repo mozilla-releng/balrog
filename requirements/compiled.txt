@@ -1,3 +1,4 @@
+MySQL-python==1.2.3
 jinja2==2.5.5
 SQLAlchemy==0.7.1
 simplejson==2.0.9

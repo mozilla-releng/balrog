@@ -1,3 +1,4 @@
 *.pyc
 test.done
 *.db
+.vagrant
