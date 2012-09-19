@@ -778,7 +778,11 @@ class Releases(AUSTable):
                     }
                 }
             }
-        if platform not in releaseBlob['platforms']:
+        if platform in releaseBlob['platforms']:
+            if 'locales' not in releaseBlob['platforms'][platform]:
+                self.log.debug("WEIRD: platform %s exists in %s blob, but has no locales. Current platform blob is: %s" % (platform, name, releaseBlob['platforms'][platform]))
+                releaseBlob['platforms'][platform]['locales'] = {}
+        else:
             releaseBlob['platforms'][platform] = dict(locales=dict())
         releaseBlob['platforms'][platform]['locales'][locale] = data
         if not releaseBlob.isValid():
