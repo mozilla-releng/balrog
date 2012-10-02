@@ -711,58 +711,6 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testGetReleaseBlobNonExistentRelease(self):
         self.assertRaises(KeyError, self.releases.getReleaseBlob, name='z')
 
-class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
-    """Tests for the Releases class that depend on version 1 of the blob schema."""
-    def setUp(self):
-        MemoryDatabaseMixin.setUp(self)
-        self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
-        self.releases = self.db.releases
-        blob = json.dumps(dict(
-            name='a',
-            platforms=dict(
-                p=dict(
-                    locales=dict(
-                        l=dict(
-                            complete=dict(
-                                filesize=1234)
-                            )
-                        )
-                    )
-                )
-            )
-        )
-        self.releases.t.insert().execute(name='a', product='a', version='a', data_version=1, data=blob)
-        blob = json.dumps(dict(name='b'))
-        self.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data=blob)
-
-    def testAddRelease(self):
-        blob = ReleaseBlobV1(name=4)
-        self.releases.addRelease(name='d', product='d', version='d', blob=blob, changed_by='bill')
-        expected = [('d', 'd', 'd', json.dumps(dict(name=4)), 1)]
-        self.assertEquals(self.releases.t.select().where(self.releases.name=='d').execute().fetchall(), expected)
-
-    def testAddReleaseAlreadyExists(self):
-        blob = ReleaseBlobV1(name=1)
-        self.assertRaises(TransactionError, self.releases.addRelease, name='a', product='a', version='a', blob=blob, changed_by='bill')
-
-    def testUpdateRelease(self):
-        blob = ReleaseBlobV1(name='a')
-        self.releases.updateRelease(name='b', product='z', version='y', blob=blob, changed_by='bill', old_data_version=1)
-        expected = [('b', 'z', 'y', json.dumps(dict(name='a')), 2)]
-        self.assertEquals(self.releases.t.select().where(self.releases.name=='b').execute().fetchall(), expected)
-
-    def testUpdateReleaseWithBlob(self):
-        blob = ReleaseBlobV1(name='b', schema_version=3)
-        self.releases.updateRelease(name='b', product='z', version='y', changed_by='bill', blob=blob, old_data_version=1)
-        expected = [('b', 'z', 'y', json.dumps(dict(name='b', schema_version=3)), 2)]
-        self.assertEquals(self.releases.t.select().where(self.releases.name=='b').execute().fetchall(), expected)
-
-    def testUpdateReleaseInvalidBlob(self):
-        blob = ReleaseBlobV1(name=2)
-        blob['foo'] = 'bar'
-        self.assertRaises(ValueError, self.releases.updateRelease, changed_by='bill', name='b', blob=blob, old_data_version=1)
-
     def testGetReleaseNames(self):
         releases = self.releases.getReleaseNames()
         expected = [ dict(name='a'), 
@@ -803,6 +751,9 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     }
                 }
             }
+        },
+        "p2": {
+            "alias": "p"
         }
     }
 }
@@ -812,6 +763,33 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     "name": "b"
 }
 """)
+
+    def testAddRelease(self):
+        blob = ReleaseBlobV1(name=4)
+        self.releases.addRelease(name='d', product='d', version='d', blob=blob, changed_by='bill')
+        expected = [('d', 'd', 'd', json.dumps(dict(name=4)), 1)]
+        self.assertEquals(self.releases.t.select().where(self.releases.name=='d').execute().fetchall(), expected)
+
+    def testAddReleaseAlreadyExists(self):
+        blob = ReleaseBlobV1(name=1)
+        self.assertRaises(TransactionError, self.releases.addRelease, name='a', product='a', version='a', blob=blob, changed_by='bill')
+
+    def testUpdateRelease(self):
+        blob = ReleaseBlobV1(name='a')
+        self.releases.updateRelease(name='b', product='z', version='y', blob=blob, changed_by='bill', old_data_version=1)
+        expected = [('b', 'z', 'y', json.dumps(dict(name='a')), 2)]
+        self.assertEquals(self.releases.t.select().where(self.releases.name=='b').execute().fetchall(), expected)
+
+    def testUpdateReleaseWithBlob(self):
+        blob = ReleaseBlobV1(name='b', schema_version=3)
+        self.releases.updateRelease(name='b', product='z', version='y', changed_by='bill', blob=blob, old_data_version=1)
+        expected = [('b', 'z', 'y', json.dumps(dict(name='b', schema_version=3)), 2)]
+        self.assertEquals(self.releases.t.select().where(self.releases.name=='b').execute().fetchall(), expected)
+
+    def testUpdateReleaseInvalidBlob(self):
+        blob = ReleaseBlobV1(name=2)
+        blob['foo'] = 'bar'
+        self.assertRaises(ValueError, self.releases.updateRelease, changed_by='bill', name='b', blob=blob, old_data_version=1)
 
     def testAddLocaleToRelease(self):
         data = dict(complete=dict(hashValue='abc'))
@@ -834,6 +812,9 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     }
                 }
             }
+        },
+        "p2": {
+            "alias": "p"
         }
     }
 }
@@ -856,6 +837,9 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     }
                 }
             }
+        },
+        "p2": {
+            "alias": "p"
         }
     }
 }
@@ -901,6 +885,9 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 }
             }
         },
+        "p2": {
+            "alias": "p"
+        },
         "q": {
             "locales": {
                 "l": {
@@ -909,6 +896,36 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     }
                 }
             }
+        }
+    }
+}
+""")
+        self.assertEqual(ret, expected)
+
+    def testAddLocaleToReleaseResolveAlias(self):
+        data = dict(complete=dict(filesize=444))
+        self.releases.addLocaleToRelease(name='a', platform='p2', locale='j', data=data, old_data_version=1, changed_by='bill')
+        ret = json.loads(select([self.releases.data]).where(self.releases.name=='a').execute().fetchone()[0])
+        expected = json.loads("""
+{
+    "name": "a",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 1234
+                    }
+                },
+                "j": {
+                    "complete": {
+                        "filesize": 444
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
         }
     }
 }

@@ -778,10 +778,12 @@ class Releases(AUSTable):
                     }
                 }
             }
+
         if platform in releaseBlob['platforms']:
-            if 'locales' not in releaseBlob['platforms'][platform]:
-                self.log.debug("WEIRD: platform %s exists in %s blob, but has no locales. Current platform blob is: %s" % (platform, name, releaseBlob['platforms'][platform]))
-                releaseBlob['platforms'][platform]['locales'] = {}
+            # If the platform we're given is aliased to another one, we need
+            # to resolve that before doing any updating. If we don't, the data
+            # will go into an aliased platform and be ignored!
+            platform = releaseBlob.getResolvedPlatform(platform)
         else:
             releaseBlob['platforms'][platform] = dict(locales=dict())
         releaseBlob['platforms'][platform]['locales'][locale] = data
