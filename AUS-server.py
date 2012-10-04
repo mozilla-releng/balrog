@@ -24,7 +24,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=log_level, format=log_format)
 
     AUS.setDb(options.db)
-    AUS.createTables()
+    AUS.db.create()
 
     app.config['SECRET_KEY'] = 'abc123'
     app.config['DEBUG'] = True

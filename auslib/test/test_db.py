@@ -1,10 +1,13 @@
 import mock
+import os
 import simplejson as json
-from tempfile import NamedTemporaryFile
+from tempfile import mkstemp
 import unittest
 
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select
 from sqlalchemy.engine.reflection import Inspector
+
+import migrate.versioning.api
 
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
   AUSTransaction, TransactionError, OutdatedDataError
@@ -26,7 +29,18 @@ class NamedFileDatabaseMixin(object):
         http://www.sqlalchemy.org/trac/wiki/FAQ#IamusingmultipleconnectionswithaSQLitedatabasetypicallytotesttransactionoperationandmytestprogramisnotworking
        """
     def setUp(self):
-        self.dburi = 'sqlite:///%s' % NamedTemporaryFile().name
+        self.tmpfiles = []
+        self.dburi = 'sqlite:///%s' % self.getTempfile()
+
+    def tearDown(self):
+        for fd, t in tmpfiles:
+            os.close(fd)
+            os.remove(t)
+
+    def getTempfile(self):
+        fd, t = mkstemp()
+        self.tmpfiles.append((fd, t))
+        return t
 
 class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
@@ -97,13 +111,13 @@ class TestTableMixin(object):
             def __init__(self, metadata):
                 self.table = Table('test', metadata, Column('id', Integer, primary_key=True, autoincrement=True),
                                                      Column('foo', Integer))
-                AUSTable.__init__(self)
+                AUSTable.__init__(self, 'sqlite')
         class TestAutoincrementTable(AUSTable):
             def __init__(self, metadata):
                 self.table = Table('test-autoincrement', metadata, 
                                                     Column('id', Integer, primary_key=True, autoincrement=True),
                                                     Column('foo', Integer))
-                AUSTable.__init__(self)
+                AUSTable.__init__(self, 'sqlite')
         self.test = TestTable(self.metadata)
         self.testAutoincrement = TestAutoincrementTable(self.metadata)
         self.metadata.create_all()
@@ -120,7 +134,7 @@ class TestMultiplePrimaryTableMixin(object):
                 self.table = Table('test', metadata, Column('id1', Integer, primary_key=True), 
                                                      Column('id2', Integer, primary_key=True),
                                                      Column('foo', Integer))
-                AUSTable.__init__(self)
+                AUSTable.__init__(self, 'sqlite')
         self.test = TestTable(self.metadata)
         self.metadata.create_all()
         self.test.t.insert().execute(id1=1, id2=1, foo=33, data_version=1)
@@ -502,7 +516,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
+        self.db.create()
         self.paths = self.db.rules
         self.paths.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', throttle=100, mapping='c', update_type='z', data_version=1)
         self.paths.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', throttle=100, mapping='b', update_type='z', data_version=1)
@@ -622,7 +636,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
+        self.db.create()
         self.rules = self.db.rules
         self.rules.t.insert().execute(id=1, priority=100, version='4.0*', throttle=100, update_type='z', data_version=1)
         self.rules.t.insert().execute(id=2, priority=100, channel='release*', throttle=100, update_type='z', data_version=1)
@@ -687,7 +701,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
+        self.db.create()
         self.releases = self.db.releases
         self.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name=1)), data_version=1)
         self.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name=1)), data_version=1)
@@ -737,7 +751,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
+        self.db.create()
         self.releases = self.db.releases
         self.releases.t.insert().execute(name='a', product='a', version='a', data_version=1, data="""
 {
@@ -936,7 +950,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
+        self.db.create()
         self.permissions = self.db.permissions
         self.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         self.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
@@ -1019,13 +1033,6 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertTrue(self.permissions.hasUrlPermission('bob', '/releases/:name', 'DELETE', dict(product='fake')))
 
 class TestDB(unittest.TestCase):
-    def testCreateTables(self):
-        db = AUSDatabase()
-        db.setDburi('sqlite:///:memory:')
-        db.createTables()
-        insp = Inspector.from_engine(db.engine)
-        self.assertNotEqual(insp.get_table_names(), [])
-
     def testSetDburiAlreadySetup(self):
         db = AUSDatabase('sqlite:///:memory:')
         self.assertRaises(AlreadySetupError, db.setDburi, 'sqlite:///:memory:')
@@ -1035,6 +1042,19 @@ class TestDB(unittest.TestCase):
         db.reset()
         # If we can set the dburi again, reset worked!
         db.setDburi('sqlite:///:memory:')
-        db.createTables()
+        db.create()
         insp = Inspector.from_engine(db.engine)
         self.assertNotEqual(insp.get_table_names(), [])
+
+class TestDBUpgrade(unittest.TestCase, NamedFileDatabaseMixin):
+    def setUp(self):
+        NamedFileDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.metadata.create_all()
+
+    def testModelIsSameAsRepository(self):
+        db2 = AUSDatabase('sqlite:///' + self.getTempfile())
+        db2.create()
+        diff = migrate.versioning.api.compare_model_to_db(db2.engine, self.db.migrate_repo, self.db.metadata)
+        if diff:
+            self.fail(str(diff))

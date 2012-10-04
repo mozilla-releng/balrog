@@ -37,7 +37,7 @@ def populateDB(AUS, testdir):
             extv = data.get('platforms').values()[0].get('locales').values()[0]['extv']
             if not extv:
                 raise Exception("Couldn't find extv for %s" % data['name'])
-        AUS.db.engine.execute("INSERT INTO releases VALUES ('%s', '%s', '%s','%s', 1)" %
+        AUS.db.engine.execute("INSERT INTO releases (name, product, version, data, data_version) VALUES ('%s', '%s', '%s','%s', 1)" %
                    (data['name'], product, extv, json.dumps(data)))
     # TODO - create a proper importer that walks the snippet store to find hashes ?
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     for td in options.testDirs:
         log.info("Testing %s", td)
         AUS = AUS3(dbname='sqlite:///:memory:')
-        AUS.createTables()
+        AUS.db.create()
         populateDB(AUS, td)
         if options.dumprules:
             log.info("Rules are \n(id, priority, mapping, throttle, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")

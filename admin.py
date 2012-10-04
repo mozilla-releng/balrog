@@ -32,7 +32,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=log_level, format=log_format)
 
     db.setDburi(options.db)
-    db.createTables()
+    db.create()
 
     app.config['SECRET_KEY'] = 'abc123'
     app.config['DEBUG'] = True

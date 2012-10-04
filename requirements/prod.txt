@@ -2,3 +2,5 @@ flask==0.8
 Werkzeug==0.8.3
 wtforms==1.0.1
 flask-wtf==0.6
+sqlalchemy-migrate==0.7.2
+tempita==0.5.1
