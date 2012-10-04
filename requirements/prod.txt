@@ -4,3 +4,4 @@ wtforms==1.0.1
 flask-wtf==0.6
 sqlalchemy-migrate==0.7.2
 tempita==0.5.1
+decorator==3.3.3
