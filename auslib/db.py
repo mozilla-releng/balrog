@@ -48,7 +48,7 @@ class WrongNumberOfRowsError(SQLAlchemyError):
 
 class AUSTransaction(object):
     """Manages a single transaction. Requires a connection object.
-    
+
        @param conn: connection object to perform the transaction on
        @type conn: sqlalchemy.engine.base.Connection
     """
@@ -115,7 +115,7 @@ class AUSTable(object):
     """Base class for all AUS Tables. By default, all tables have a history
        table created for them, too, which mirrors their own structure and adds
        a record of who made a change, and when the change happened.
-       
+
        @param history: Whether or not to create a history table for this table.
                        When True, a History object will be created for this
                        table, and all changes will be logged to it. Defaults
@@ -171,7 +171,7 @@ class AUSTable(object):
 
     def _selectStatement(self, columns=None, where=None, order_by=None, limit=None, distinct=False):
         """Create a SELECT statement on this table.
-           
+
            @param columns: Column objects to select. Defaults to None, meaning select all columns
            @type columns: A sequence of sqlalchemy.schema.Column objects or column names as strings
            @param where: Conditions to apply on this select. Defaults to None, meaning no conditions
@@ -198,7 +198,7 @@ class AUSTable(object):
     def select(self, transaction=None, **kwargs):
         """Perform a SELECT statement on this table.
            See AUSTable._selectStatement for possible arguments.
-           
+
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         query = self._selectStatement(**kwargs)
@@ -209,7 +209,7 @@ class AUSTable(object):
 
     def _insertStatement(self, **columns):
         """Create an INSERT statement for this table
-           
+
            @param columns: Data to insert
            @type colmuns: dict
 
@@ -222,7 +222,7 @@ class AUSTable(object):
            data_version will be set to 1. If this table has history enabled, two rows
            will be created in that table: one representing the current state (NULL),
            and one representing the new state.
-           
+
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         data = columns.copy()
@@ -263,7 +263,7 @@ class AUSTable(object):
 
            @param where: Conditions to apply on this select.
            @type where: A sequence of sqlalchemy.sql.expression.ClauseElement objects
-           
+
            @rtype: sqlalchemy.sql.expression.Delete
         """
         query = self.t.delete()
@@ -493,7 +493,7 @@ class History(AUSTable):
 
         changes = self.select( where=where, transaction=transaction, limit=1, order_by=self.change_id.desc())
         length = len(changes)
-        if(length == 0):   
+        if(length == 0):
             self.log.debug("No previous changes found")
             return None
         return changes[0]
@@ -561,7 +561,7 @@ class History(AUSTable):
 
         # If the previous change is NULL, then the operation is an INSERT
         # We will need to do a delete.
-        elif self._isInsert(prev_base_state, row_primary_keys): 
+        elif self._isInsert(prev_base_state, row_primary_keys):
                 self.log.debug("reverting an INSERT")
                 where = []
                 for i in range(0, len(self.base_primary_key)):
@@ -570,7 +570,7 @@ class History(AUSTable):
 
                 self.baseTable.delete(changed_by = changed_by, transaction=transaction, where=where, old_data_version = change['data_version'])
 
-        elif self._isUpdate(cur_base_state, prev_base_state, row_primary_keys): 
+        elif self._isUpdate(cur_base_state, prev_base_state, row_primary_keys):
         # If this operation is an UPDATE
         # We will need to do an update to the previous change's state
             self.log.debug("reverting an UPDATE")
@@ -646,6 +646,11 @@ class Rules(AUSTable):
     def getOrderedRules(self, transaction=None):
         """Returns all of the rules, sorted in ascending order"""
         return self.select(order_by=(self.priority, self.version, self.mapping), transaction=transaction)
+
+    def countRules(self, transaction=None):
+        """Returns a number of the count of rules"""
+        count, = self.t.count().execute().fetchone()
+        return count
 
     def getRulesMatchingQuery(self, updateQuery, fallbackChannel, transaction=None):
         """Returns all of the rules that match the given update query.
@@ -735,6 +740,11 @@ class Releases(AUSTable):
             blob.loadJSON(row['data'])
             row['data'] = blob
         return rows
+
+    def countReleases(self, transaction=None):
+        """Returns a number of the count of releases"""
+        count, = self.t.count().execute().fetchone()
+        return count
 
     def getReleaseNames(self, product=None, version=None, limit=None, transaction=None):
         where = []
@@ -858,6 +868,10 @@ class Permissions(AUSTable):
     def getAllUsers(self, transaction=None):
         res = self.select(columns=[self.username], distinct=True, transaction=transaction)
         return [r['username'] for r in res]
+
+    def countAllUsers(self, transaction=None):
+        res = self.select(columns=[self.username], distinct=True, transaction=transaction)
+        return len(res)
 
     def grantPermission(self, changed_by, username, permission, options=None, transaction=None):
         self.assertPermissionExists(permission)

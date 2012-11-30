@@ -1,7 +1,6 @@
 {% extends "base.html" %}
-{% block title %}AUS3 Admin - Permissions{% endblock %}
-{% block head %}
-{% endblock %}
+{% block title %}{{ super() }} - Permissions{% endblock %}
+
 {% block content %}
 <div>
     {% include 'fragments/new_user.html' %}
