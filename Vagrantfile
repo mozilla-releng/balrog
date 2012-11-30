@@ -11,7 +11,7 @@ Vagrant::Config.run do |config|
 
     config.vm.share_folder("v-root", MOUNT_POINT, ".")
 
-    config.vm.forward_port 80, 8000
+    config.vm.forward_port 80, 9000
 
     config.vm.provision :puppet do |puppet|
         puppet.manifests_path = "puppet/manifests"

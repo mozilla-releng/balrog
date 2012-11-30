@@ -25,6 +25,7 @@ if __name__ == '__main__':
 
     from auslib import log_format
     from auslib.admin.base import app, db
+    from migrate.exceptions import DatabaseAlreadyControlledError
 
     log_level = logging.INFO
     if options.verbose:
@@ -32,6 +33,10 @@ if __name__ == '__main__':
     logging.basicConfig(level=log_level, format=log_format)
 
     db.setDburi(options.db)
+    try:
+        db.create()
+    except DatabaseAlreadyControlledError:
+        pass
 
     app.config['SECRET_KEY'] = 'abc123'
     app.config['DEBUG'] = True

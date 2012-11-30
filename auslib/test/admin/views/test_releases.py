@@ -250,7 +250,7 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
     def testGetReleases(self):
         ret = self._get("/releases.html")
         self.assertStatusCode(ret, 200)
-        self.assertTrue('<table id="Releases_table">' in ret.data, msg=ret.data)
+        self.assertTrue('<table id="Releases_table"' in ret.data, msg=ret.data)
 
     # Test get of a release's full data column, queried by name
     def testGetSingleRelease(self):
@@ -274,7 +274,7 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
     }
 }
 """))
-                                                            
+
                                                         #json.dumps(newReleaseFile.getvalue())))
         self.assertEquals(ret.status_code, 201, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         r = db.releases.t.select().where(db.releases.name=='new_release').execute().fetchall()
@@ -295,4 +295,3 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
     }
 }
 """))
-

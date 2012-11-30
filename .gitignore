@@ -2,3 +2,4 @@
 test.done
 *.db
 .vagrant
+admin.ini

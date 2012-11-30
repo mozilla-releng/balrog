@@ -1,21 +1,21 @@
 {% if releases %}
 <h3>Below is a complete list of all of the releases. Click through to access the data field.</h3>
-<table id="Releases_table">
-    <tr>
-        <th>Name</th>
-        <th>Product</th>
-        <th>Version</th>
-        <th>Data</th>
-    </tr> </thead>
+<table id="Releases_table" class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Product</th>
+            <th>Version</th>
+            <th>Data</th>
+        </tr>
+    </thead>
     <tbody>
     {% for row in releases %}
         {% include 'fragments/release_row.html' %}
     {% endfor %}
     </tbody>
 </table>
-</form>
 {% else %}
 
 There were no releases provided.
 {% endif %}
-

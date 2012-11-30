@@ -1,21 +1,25 @@
 {% extends "base.html" %}
 {% block title %}AUS3 Admin - Releases{% endblock %}
-{% block head %}
-<script type='text/javascript' src='{{ url_for('static', filename='releases.js') }}'></script>
+{% block bottom %}
+{{ super() }}
+<script type='text/javascript' src='{{ url_for('static', filename='js/releases.js') }}'></script>
 {% endblock %}
 {% block content %}
     {% if addForm %}
     <h3>Add a new release: </h3>
     <div id='new_release'>
-        <form id='ReleasesForm' onsubmit='submitNewReleaseForm($("#ReleasesForm"), $("#Releases_table")); return false;'>
+        <form id='ReleasesForm'
+	      onsubmit='submitNewReleaseForm($("#ReleasesForm"), $("#Releases_table")); return false;'>
             {{ addForm.hidden_tag() }}
-            {{ addForm.name.label()|safe }}:{{ addForm.name|safe }} 
-            {{ addForm.product.label()|safe }}:{{ addForm.product|safe }} 
-            {{ addForm.version.label()|safe }}:{{ addForm.version|safe }} 
-            {{ addForm.blob.label()|safe }}:{{ addForm.blob|safe }} 
-            <input type='submit' name='submit' value='Submit!' /> 
+            {{ addForm.name.label()|safe }} {{ addForm.name|safe }}
+            {{ addForm.product.label()|safe }} {{ addForm.product|safe }}
+            {{ addForm.version.label()|safe }} {{ addForm.version|safe }}
+            {{ addForm.blob.label()|safe }} {{ addForm.blob|safe }}
+	    <div>
+    	        <button type="submit" class="btn">Submit!</button>
+	    </div>
+	</form>
     </div>
-    </tr>
     {% endif %}
 <div id='releases'>
     {% include 'fragments/releases.html' %}
