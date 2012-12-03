@@ -1,4 +1,3 @@
 $(document).ready(function() {
-    $('#release_table').dataTable();
+    $('#Releases_table').dataTable();
 } );
-

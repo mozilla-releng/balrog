@@ -1,9 +1,16 @@
 {% extends "base.html" %}
 {% block title %}AUS3 Admin - Releases{% endblock %}
+
+{% block head %}
+<link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='css/jquery.dataTables.css') }}' />
+{% endblock %}
+
 {% block bottom %}
 {{ super() }}
+<script type='text/javascript' src='{{ url_for('static', filename='js/jquery.dataTables.min.js') }}'></script><!-- really needed on every page? -->
 <script type='text/javascript' src='{{ url_for('static', filename='js/releases.js') }}'></script>
 {% endblock %}
+
 {% block content %}
     {% if addForm %}
     <h3>Add a new release: </h3>
