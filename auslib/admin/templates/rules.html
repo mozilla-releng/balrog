@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ super() }} - Rules{% endblock %}
 {% block head %}
+<link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='css/jquery.dataTables.css') }}' />
 <link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='css/smoothness/jquery-ui-1.9.2.custom.min.css') }}' />
 <style>
     .ui-button { margin-left: -1px; }
@@ -11,6 +12,7 @@
 {% endblock %}
 {% block bottom %}
 {{ super() }}
+<script type='text/javascript' src='{{ url_for('static', filename='js/jquery.dataTables.min.js') }}'></script><!-- really needed on every page? -->
 <script type='text/javascript' src='{{ url_for('static', filename='js/jquery-ui-1.9.2.custom.min.js') }}'></script>
 <script type='text/javascript' src='{{ url_for('static', filename='js/rules.js') }}'></script>
 {% endblock %}
