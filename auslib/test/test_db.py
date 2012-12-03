@@ -114,7 +114,7 @@ class TestTableMixin(object):
                 AUSTable.__init__(self, 'sqlite')
         class TestAutoincrementTable(AUSTable):
             def __init__(self, metadata):
-                self.table = Table('test-autoincrement', metadata, 
+                self.table = Table('test-autoincrement', metadata,
                                                     Column('id', Integer, primary_key=True, autoincrement=True),
                                                     Column('foo', Integer))
                 AUSTable.__init__(self, 'sqlite')
@@ -131,7 +131,7 @@ class TestMultiplePrimaryTableMixin(object):
         self.metadata = MetaData(self.engine)
         class TestTable(AUSTable):
             def __init__(self, metadata):
-                self.table = Table('test', metadata, Column('id1', Integer, primary_key=True), 
+                self.table = Table('test', metadata, Column('id1', Integer, primary_key=True),
                                                      Column('id2', Integer, primary_key=True),
                                                      Column('foo', Integer))
                 AUSTable.__init__(self, 'sqlite')
@@ -363,7 +363,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             t.return_value = 1.0
 
             ret = self.test.t.select().execute().fetchall()
-    
+
             # Insert the item
             self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
             self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
@@ -383,7 +383,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             t.return_value = 1.0
 
             ret = self.test.t.select().execute().fetchall()
-            
+
             # Insert the thing we are going to delete
             self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
             self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
@@ -401,7 +401,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
             ret = self.test.t.select().execute().fetchall()
             self.assertEquals(len(ret), 4, msg=ret)
-            
+
 class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTableMixin, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
@@ -487,7 +487,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
             self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=3)).execute()
             self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id1=4, id2=3, data_version=None, foo=None)).execute()
             self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id1=4, id2=3, data_version=1, foo=271)).execute()
-            
+
 
             self.test.t.delete().where(self.test.id1==4).where(self.test.id2==3).execute()
             self.test.history.t.insert(values=dict(changed_by='bobby', change_id=3, timestamp=1000, id1=4, id2=3, data_version=None, foo=None)).execute()
@@ -499,7 +499,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
 
             ret = self.test.t.select().execute().fetchall()
             self.assertEquals(len(ret), 5, msg=ret)
-            
+
 
 class RulesTestMixin(object):
     def _stripNullColumns(self, rules):
@@ -603,11 +603,11 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEquals(rule, expected)
 
     def testAddRule(self):
-        what = dict(throttle=11,   
+        what = dict(throttle=11,
                     mapping='c',
                     update_type='z',
                     priority=60)
-        rule_id = self.paths.addRule(changed_by='bill', what=what) 
+        rule_id = self.paths.addRule(changed_by='bill', what=what)
         rule_id = rule_id[0]
         rules = self.paths.t.select().where(self.paths.rule_id==rule_id).execute().fetchall()
         copy_rule = dict(rules[0].items())
@@ -630,6 +630,10 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
         expected = [dict(rule_id=1, priority=100, throttle=100, version='3.5', buildTarget='d', mapping='d', update_type='z', data_version=1)]
         self.assertEquals(rule, expected)
+
+    def testGetNumberOfRules(self):
+        # because 5 rules were set up in the setUp()
+        self.assertEquals(self.paths.countRules(), 5)
 
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
@@ -727,24 +731,29 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseNames(self):
         releases = self.releases.getReleaseNames()
-        expected = [ dict(name='a'), 
-                dict(name='ab'), 
-                dict(name='b'), 
-                dict(name='c')] 
+        expected = [ dict(name='a'),
+                dict(name='ab'),
+                dict(name='b'),
+                dict(name='c')]
         self.assertEquals(releases, expected)
 
         releases = self.releases.getReleaseNames(product='a')
-        expected = [ dict(name='a'), 
-                dict(name='ab')] 
+        expected = [ dict(name='a'),
+                dict(name='ab')]
         self.assertEquals(releases, expected)
 
         releases = self.releases.getReleaseNames(version='b')
-        expected = [ dict(name='b'), ] 
+        expected = [ dict(name='b'), ]
         self.assertEquals(releases, expected)
 
         releases = self.releases.getReleaseNames(product='a', version='b')
-        expected = [ ] 
+        expected = [ ]
         self.assertEquals(releases, expected)
+
+    def testGetNumberOfReleases(self):
+        # because 4 releases were set up in the setUp()
+        self.assertEquals(self.releases.countReleases(), 4)
+
 
 class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     """Tests for the Releases class that depend on version 1 of the blob schema."""
@@ -988,6 +997,10 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetAllUsers(self):
         self.assertEquals(self.permissions.getAllUsers(), ['bill', 'bob', 'cathy'])
+
+    def testCountAllUsers(self):
+        # bill, bob and cathy
+        self.assertEquals(self.permissions.countAllUsers(),  3)
 
     def testGetPermission(self):
         expected = {
