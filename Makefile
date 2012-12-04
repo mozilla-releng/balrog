@@ -23,7 +23,7 @@ ALL_PY_FILES := $(shell find . -iname "*.py")
 test: test.done
 test.done: $(ALL_PY_FILES)
 	@echo Running unit tests
-	PYTHONPATH=$(PYTHONPATH) $(NOSE) $(NOSE_ARGS)
+	PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$(PYTHONPATH) $(NOSE) $(NOSE_ARGS)
 	@echo Running rules tests
 	$(TEST_PYTHON) test-rules.py $(TEST_ARGS)
 	touch $@
