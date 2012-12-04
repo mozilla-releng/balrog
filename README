@@ -1,5 +1,5 @@
 State:
-This is a first cut at storing and retrieving data. There's no doubt it needs more work, 
+This is a first cut at storing and retrieving data. There's no doubt it needs more work,
 and the data is very incomplete, but it does do simple things (see EXAMPLE) correctly.
 
 Some things that don't suck
@@ -9,8 +9,8 @@ Some things that don't suck
 
 Some things suck or maybe suck
  * lots of data manipulation, need some Classes and sqlalchemy goo to handle that all
-   automatically; similarly, need to shove some code out to 
- * same data is stored lots of different ways in different places, cull the middlemen if 
+   automatically; similarly, need to shove some code out to
+ * same data is stored lots of different ways in different places, cull the middlemen if
    they aren't needed
  * do we still like json encoded into text field ? does it create more hassles than it solves ?
  * the db are just flat tables, s'ok ?
