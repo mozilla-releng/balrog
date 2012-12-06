@@ -22,21 +22,27 @@ $.fn.dataTableExt.afnSortData['dom-select'] = function  ( oSettings, iColumn )
 };
 
 $(document).ready(function() {
-        $('#rules_table').dataTable({
-            "aoColumnDefs": [
-                // The aTarget numbers refer to the columns in the dataTable on which to apply the functions
-                { "sSortDataType": "dom-select", "aTargets":[0] },
-                { "sSortDataType": "dom-text", "aTargets":[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
-                { "sType": "numeric", "aTargets": [1, 2] }
-            ],
-            "fnDrawCallback": function(){
-                $("select","[id*=mapping]").combobox();
-            }
-            });
 
-        $( "#toggle" ).click(function() {
-            $( "select","[id*=mapping]").toggle();
-        });
+    $('#rules_table').dataTable({
+        "aoColumnDefs": [
+             // The aTarget numbers refer to the columns in the dataTable on which to apply the functions
+             { "sSortDataType": "dom-select", "aTargets":[0] },
+             { "sSortDataType": "dom-text", "aTargets":[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
+             { "sType": "numeric", "aTargets": [1, 2] }
+        ],
+        "fnDrawCallback": function(){
+            $("select","[id*=mapping]").combobox();
+        }
+    });
+
+    $( "#toggle" ).click(function() {
+        $( "select","[id*=mapping]").toggle();
+    });
+
+    $('#rules_form').submit(function() {
+        submitRuleForm($(this));
+        return false;
+    });
 } );
 
 
@@ -197,13 +203,17 @@ function submitNewRuleForm(ruleForm, table) {
     url = getRuleAPIUrl();
     data = getData('new_rule', ruleForm);
 
-    console.log(data);
+    //console.log(data);
+    preAJAXLoad(ruleForm);
+
     $.ajax(url, {'type': 'post', 'data': data})
     .error(handleError)
     .success(function(data) {
         $.get(getRuleUrl(data))
         .error(handleError)
         .success(function(data) {
+            postAJAXLoad(ruleForm);
+            alertify.success('Rule added!');
             table.append(data);
             table.dataTable().fnDraw();
         });

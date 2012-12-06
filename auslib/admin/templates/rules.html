@@ -12,10 +12,13 @@
 {% endblock %}
 {% block bottom %}
 {{ super() }}
-<script type='text/javascript' src='{{ url_for('static', filename='js/jquery.dataTables.min.js') }}'></script><!-- really needed on every page? -->
+<script type='text/javascript' src='{{ url_for('static', filename='js/jquery.dataTables.min.js') }}'></script>
 <script type='text/javascript' src='{{ url_for('static', filename='js/jquery-ui-1.9.2.custom.min.js') }}'></script>
 <script type='text/javascript' src='{{ url_for('static', filename='js/rules.js') }}'></script>
 {% endblock %}
+
+{% block container_class %}container-fluid{% endblock %}
+
 {% block content %}
 <div id='rules'>
     {% include 'fragments/rules.html' %}

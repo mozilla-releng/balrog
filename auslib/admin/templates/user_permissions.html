@@ -2,6 +2,12 @@
 {% block title %}AUS3 Admin - Permissions for {{ username }}{% endblock %}
 {% block head %}
 {% endblock %}
+
+{% block bottom %}
+{{ super() }}
+<script type='text/javascript' src='{{ url_for('static', filename='js/permissions.js') }}'></script>
+{% endblock %}
+
 {% block content %}
 <h2>Give {{ username }} a new permission:</h2>
 <div>

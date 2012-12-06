@@ -7,7 +7,7 @@
 
 {% block bottom %}
 {{ super() }}
-<script type='text/javascript' src='{{ url_for('static', filename='js/jquery.dataTables.min.js') }}'></script><!-- really needed on every page? -->
+<script type='text/javascript' src='{{ url_for('static', filename='js/jquery.dataTables.min.js') }}'></script>
 <script type='text/javascript' src='{{ url_for('static', filename='js/releases.js') }}'></script>
 {% endblock %}
 
@@ -15,8 +15,7 @@
     {% if addForm %}
     <h3>Add a new release: </h3>
     <div id='new_release'>
-        <form id='ReleasesForm'
-	      onsubmit='submitNewReleaseForm($("#ReleasesForm"), $("#Releases_table")); return false;'>
+        <form id='ReleasesForm' method='post' enctype='multipart/form-data'>
             {{ addForm.hidden_tag() }}
             {{ addForm.name.label()|safe }} {{ addForm.name|safe }}
             {{ addForm.product.label()|safe }} {{ addForm.product|safe }}
