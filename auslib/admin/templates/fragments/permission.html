@@ -1,6 +1,6 @@
 {% set permission = form.permission.id %}
 <div id='{{ permission }}_li'>
-<form id='{{ permission }}_form' onsubmit='submitPermissionForm("{{ username }}", $("#{{ permission }}_form"), $("#{{ permission }}_li")); return false;'>
+<form id='{{ permission }}_form' onsubmit='submitPermissionForm($(this), "{{ username }}", $("#{{ permission }}_form"), $("#{{ permission }}_li")); return false;'>
     {{ form.permission.label()|safe }}
     {{ form.permission()|safe }}
     {{ form.options.label()|safe }}

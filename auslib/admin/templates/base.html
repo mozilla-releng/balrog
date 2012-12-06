@@ -13,6 +13,8 @@
       }
     </style>
     <link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='css/bootstrap-responsive.min.css') }}' />
+    <link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='css/alertify.core.css') }}' />
+    <link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='css/alertify.default.css') }}' />
     <link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='css/ausadmin.css') }}' />
     {% block head %}
     {% endblock %}
@@ -42,15 +44,20 @@
       </div>
     </div>
 
-    <div class="container">
+    <div class="{% block container_class %}container{% endblock %}">
 
    {% block content %}{% endblock %}
 
     </div> <!-- /container -->
 
+    <div id='loading' style='display:none'>
+    {% include 'fragments/loading.html' %}
+    </div>
+
 {% block bottom %}
 <script type='text/javascript'>var SCRIPT_ROOT = {{ request.script_root|tojson|safe }};</script>
 <script type='text/javascript' src='{{ url_for('static', filename='js/jquery-1.8.3.min.js') }}'></script>
+<script type='text/javascript' src='{{ url_for('static', filename='js/alertify.min.js') }}'></script>
 <script type='text/javascript' src='{{ url_for('static', filename='js/ausadmin.js') }}'></script>
 {% endblock %}
   </body>

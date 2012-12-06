@@ -18,7 +18,7 @@ def setpermission(f):
 def permission2selector(permission):
     """Converts a permission to a valid CSS selector."""
     return permission.replace('/', '').replace(':', '')
-        
+
 class UsersView(AdminView):
     """/users"""
     def get(self):
