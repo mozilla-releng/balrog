@@ -1,5 +1,31 @@
 {% extends "base.html" %}
+
+{% block head %}
+<link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='css/bootstrap-modal.css') }}' />
+{% endblock %}
+
+{% block bottom %}
+{{ super() }}
+<!-- thank you http://jschr.github.com/bootstrap-modal/ -->
+<script type='text/javascript' src='{{ url_for('static', filename='js/bootstrap-modal.js') }}'></script>
+<script type='text/javascript' src='{{ url_for('static', filename='js/bootstrap-modalmanager.js') }}'></script>
+<script>
+$(function() {
+    $('#recent-changes-outer').load('/recent_changes_table.html');
+});
+</script>
+{% endblock %}
+
 {% block content %}
+
+     <div class="row">
+       <div class="span12">
+         <h2>Recent changes</h2>
+
+         <div id="recent-changes-outer">Loading recent changes ...</div>
+
+       </div>
+     </div>
 
      <div class="row">
         <div class="span4">
@@ -21,8 +47,5 @@
         </div>
      </div>
 
-     <div class="row">
-         <h2>Recent changes</h2>
-         <p>...</p>
-     </div>
+
 {% endblock %}

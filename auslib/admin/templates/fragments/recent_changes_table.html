@@ -1,0 +1,40 @@
+         <table class="table">
+           <thead>
+             <tr>
+               <th>What</th>
+               <th>Who</th>
+               <th>When</th>
+               <th>Change</th>
+             </tr>
+           </thead>
+           <tbody>
+           {% for type, change in recent_changes %}
+             <tr>
+               <td>{{ type }} <!--({{ change['change_id']}})--></td>
+               <td>{{ change['changed_by'] }}</td>
+               <td>{{ change['time_ago'] }}</td>
+               <td>
+
+                 {% if inserts.get(type, {}).get(change['change_id']) %}
+                 <a data-toggle="modal" href="#modal_{{ change['change_id'] }}"
+                    title="Shows the change in a modal window">{{ change['change'] }}</a>
+                 {% include 'fragments/insert.html' %}
+                 {% endif %}
+
+                 {% if diffs.get(type, {}).get(change['change_id']) %}
+                 <a data-toggle="modal" href="#modal_{{ change['change_id'] }}"
+                    title="Shows the change in a modal window">{{ change['change'] }}</a>
+                 {% include 'fragments/update.html' %}
+                 {% endif %}
+
+                 {% if deletes.get(type, {}).get(change['change_id']) %}
+                 <a data-toggle="modal" href="#modal_{{ change['change_id'] }}"
+                    title="Shows the deleted data in a modal window">{{ change['change'] }}</a>
+                 {% include 'fragments/delete.html' %}
+                 {% endif %}
+
+               </td>
+             </tr>
+           {% endfor %}
+           </tbody>
+         </table>
