@@ -392,6 +392,12 @@ class AUSTable(object):
             with AUSTransaction(self.getEngine()) as trans:
                 return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
 
+    def getRecentChanges(self, limit=10, transaction=None):
+        print self.history
+        return []
+        print self.history.select(transaction=transaction, limit=limit, order_by=self.timestamp.desc())
+
+
 class History(AUSTable):
     """Represents a history table that may be attached to another AUSTable.
        History tables mirror the structure of their `baseTable', with the exception
@@ -584,6 +590,7 @@ class History(AUSTable):
             self.baseTable.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
         else:
             self.log.debug("ERROR, change doesn't correspond to any known operation")
+
 
 
 class Rules(AUSTable):
