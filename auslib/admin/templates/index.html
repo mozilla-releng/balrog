@@ -1,5 +1,61 @@
 {% extends "base.html" %}
+
+{% block head %}
+<link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='css/bootstrap-modal.css') }}' />
+{% endblock %}
+
+{% block bottom %}
+{{ super() }}
+<!-- thank you http://jschr.github.com/bootstrap-modal/ -->
+<script type='text/javascript' src='{{ url_for('static', filename='js/bootstrap-modal.js') }}'></script>
+<script type='text/javascript' src='{{ url_for('static', filename='js/bootstrap-modalmanager.js') }}'></script>
+{% endblock %}
+
 {% block content %}
+
+     <div class="row">
+       <div class="span12">
+         <h2>Recent changes</h2>
+         <table class="table">
+           <thead>
+             <tr>
+               <th>What</th>
+               <th>Who</th>
+               <th>When</th>
+               <th>Change</th>
+             </tr>
+           </thead>
+           <tbody>
+           {% for type, change in recent_changes %}
+             <tr>
+               <td>{{ type }} ({{ change['change_id']}})</td>
+               <td>{{ change['changed_by'] }}</td>
+               <td>{{ change['time_ago'] }}</td>
+               <td>
+
+                 {% if inserts.get(type, {}).get(change['change_id']) %}
+                 <a data-toggle="modal" href="#modal_{{ change['change_id'] }}"
+                    title="Shows the change in a modal window">{{ change['change'] }}</a>
+                 {% include 'fragments/insert.html' %}
+                 {% endif %}
+
+                 {% if diffs.get(type, {}).get(change['change_id']) %}
+                 <a data-toggle="modal" href="#modal_{{ change['change_id'] }}"
+                    title="Shows the change in a modal window">{{ change['change'] }}</a>
+                 {% include 'fragments/update.html' %}
+                 {% endif %}
+
+                 {% if change['change'] == 'delete' %}
+                 delete
+                 {% endif %}
+
+               </td>
+             </tr>
+           {% endfor %}
+           </tbody>
+         </table>
+       </div>
+     </div>
 
      <div class="row">
         <div class="span4">
@@ -21,8 +77,5 @@
         </div>
      </div>
 
-     <div class="row">
-         <h2>Recent changes</h2>
-         <p>...</p>
-     </div>
+
 {% endblock %}

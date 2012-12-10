@@ -393,9 +393,9 @@ class AUSTable(object):
                 return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
 
     def getRecentChanges(self, limit=10, transaction=None):
-        print self.history
-        return []
-        print self.history.select(transaction=transaction, limit=limit, order_by=self.timestamp.desc())
+        return self.history.select(transaction=transaction,
+                                   limit=limit,
+                                   order_by=self.history.timestamp.desc())
 
 
 class History(AUSTable):
@@ -590,6 +590,62 @@ class History(AUSTable):
             self.baseTable.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
         else:
             self.log.debug("ERROR, change doesn't correspond to any known operation")
+
+    def describeChange(self, change_id, transaction=None):
+        #print "CHANGE_ID", repr(change_id)
+        change = self.getChange(change_id , transaction)  # optimize?
+        #print "CHANGE", repr(change)
+
+        # Get the values of the primary keys for the given row
+        row_primary_keys = [0]*len(self.base_primary_key)
+        for i in range(0, len(self.base_primary_key)):
+            row_primary_keys[i] = change[self.base_primary_key[i]]
+
+        # Strip the History Specific Columns from the cahgnes
+        prev_change = self.getPrevChange(change_id, row_primary_keys, transaction)
+        if not prev_change:
+            print "No previous change for", change_id
+            return
+        prev_base_state = self._stripHistoryColumns(prev_change)
+        cur_base_state = self._stripHistoryColumns(change.copy())
+
+        # Define a row that's empty except for the primary keys
+        # This is what the NULL rows for inserts and deletes will look like.
+        null_row = dict()
+        for i in range(0, len(self.base_primary_key)):
+            null_row[self.base_primary_key[i]] = row_primary_keys[i]
+
+        # If the row has all NULLS, then the operation we're rolling back is a DELETE
+        # We need to do an insert, with the data from the previous change
+        if self._isDelete(cur_base_state, row_primary_keys):
+            return "is delete"
+
+        elif self._isInsert(prev_base_state, row_primary_keys):
+            return "is insert"
+            self.log.debug("reverting an INSERT")
+            where = []
+            for i in range(0, len(self.base_primary_key)):
+                self_prim = getattr(self.baseTable, self.base_primary_key[i])
+                where.append((self_prim == row_primary_keys[i]))
+
+            self.baseTable.delete(changed_by = changed_by, transaction=transaction, where=where, old_data_version = change['data_version'])
+
+        elif self._isUpdate(cur_base_state, prev_base_state, row_primary_keys):
+            return "is update"
+            # If this operation is an UPDATE
+            # We will need to do an update to the previous change's state
+            #self.log.debug("reverting an UPDATE")
+            #where = []
+            #for i in range(0, len(self.base_primary_key)):
+            #    self_prim = getattr(self.baseTable, self.base_primary_key[i])
+            #    where.append((self_prim == row_primary_keys[i]))
+
+            #what = prev_base_state
+            #old_data_version = change['data_version']
+            #self.baseTable.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
+        else:
+            pass#self.log.debug("ERROR, change doesn't correspond to any known operation"
+
 
 
 

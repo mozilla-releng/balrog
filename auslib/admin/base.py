@@ -16,6 +16,7 @@ from auslib.admin.views.releases import SingleLocaleView, SingleBlobView, \
   SingleReleaseView, ReleasesPageView
 from auslib.admin.views.rules import RulesPageView, RulesAPIView, SingleRuleView
 from auslib.admin.views.index import IndexPageView
+from auslib.admin.views.history import DiffView, FieldView
 
 @app.errorhandler(500)
 def isa(error):
@@ -41,4 +42,6 @@ app.add_url_rule('/releases.html', view_func=ReleasesPageView.as_view('releases.
 app.add_url_rule('/rules.html', view_func=RulesPageView.as_view('rules.html'))
 app.add_url_rule('/rules', view_func=RulesAPIView.as_view('rules'))
 app.add_url_rule('/rules/<rule_id>', view_func=SingleRuleView.as_view('setrule'))
+app.add_url_rule('/diff/<type_>/<change_id>/<field>', view_func=DiffView.as_view('diff.html'))
+app.add_url_rule('/view/<type_>/<change_id>/<field>', view_func=FieldView.as_view('field.html'))
 app.add_url_rule('/', view_func=IndexPageView.as_view('index.html'))
