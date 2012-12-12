@@ -14,8 +14,23 @@ class IndexPageView(AdminView):
             'count_releases': db.releases.countReleases(),
             'count_users': db.permissions.countAllUsers(),
         }
-        limit = 10
 
+        return render_template('index.html', **data)
+
+
+class RecentChangesTableView(AdminView):
+    """/recent_changes_table.html
+
+    The reason for making this a view that returns just the <table> part
+    without wrapping in <html> or anything is so we can extend it to fetch
+    something like 10 more rows (where timestamp < latest last timestamp)
+    without having to refresh the page or having to use a paginator.
+
+    Also, by making the this table load async on the home page makes the
+    home page snappy and load quicker.
+    """
+    def get(self):
+        limit = 10
         tables = {
             'rule': db.rules,
             'permission': db.permissions,
@@ -158,12 +173,15 @@ class IndexPageView(AdminView):
                     if k not in _history_keys
                 ))
 
-        data['inserts'] = inserts
-        data['diffs'] = diffs
-        data['deletes'] = deletes
-        data['recent_changes'] = recent_changes
+        data = {
+            'inserts': inserts,
+            'diffs': diffs,
+            'deletes': deletes,
+            'recent_changes': recent_changes,
+        }
 
-        return render_template('index.html', **data)
+        return render_template('fragments/recent_changes_table.html', **data)
+
 
 
 class PrinterFriendlyDict(dict):
