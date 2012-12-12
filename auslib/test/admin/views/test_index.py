@@ -1,7 +1,8 @@
+import time
 from xml.etree import ElementTree as ET
 import unittest
 from auslib.test.admin.views.base import ViewTest
-from auslib.admin.views.index import PrinterFriendlyDict
+from auslib.admin.views.index import getTimeAgo
 
 
 class TestIndexPage(ViewTest):
@@ -25,6 +26,7 @@ class TestIndexPage(ViewTest):
         ret = self._put('/users/bob/permissions/admin')
         self.assertStatusCode(ret, 201)
         ret = self.client.get(url)
+        self.assertStatusCode(ret, 200)
         rows = self._parseRows(ret.data)
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0][0], 'permission')  # what
@@ -69,21 +71,22 @@ class TestIndexPage(ViewTest):
         return rows
 
 
-class TestPrinterFriendlyDict(unittest.TestCase):
+class TestTimeAgo(unittest.TestCase):
+    """tests the getTimeAgo function"""
 
-    def test_keys(self):
-        pdf = PrinterFriendlyDict({
-            'b': 'B',
-            'a': 'A'
-        })
-        self.assertEqual(pdf.keys(), ['a', 'b'])
+    def test_getTimeAgo(self):
+        # getTimeAgo expects the timestamp in milliseconds
+        ts = 1000 * (time.time() - 60)
+        self.assertEqual(getTimeAgo(ts), '1 minute ago')
 
-    def test_items(self):
-        pdf = PrinterFriendlyDict({
-            'b': 'B',
-            'a': 'A'
-        })
-        self.assertEqual(
-            pdf.items(),
-            [('a', u'A'), ('b', u'B')]
-        )
+        ts = 1000 * (time.time() - 3)
+        self.assertEqual(getTimeAgo(ts), 'seconds ago')
+
+        ts = 1000 * (time.time() - 3600)
+        self.assertEqual(getTimeAgo(ts), '1 hour ago')
+
+        ts = 1000 * (time.time() - 3600 * 24)
+        self.assertEqual(getTimeAgo(ts), '1 day ago')
+
+        ts = 1000 * (time.time() - 3600 * 24 * 7)
+        self.assertEqual(getTimeAgo(ts), '1 week ago')

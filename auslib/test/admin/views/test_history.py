@@ -5,17 +5,19 @@ from auslib.test.admin.views.base import ViewTest
 
 class TestHistoryView(ViewTest):
 
-    def testFieldViewBadValues(self):
+    def testFieldViewBadValuesBadTable(self):
         url = '/history/view/notatable/1/whatever'
         ret = self.client.get(url)
         self.assertStatusCode(ret, 400)
         self.assertTrue('Bad table' in ret.data)
 
+    def testFieldViewBadValuesBadChangeId(self):
         url = '/history/view/permission/9999/whatever'
         ret = self.client.get(url)
         self.assertStatusCode(ret, 404)
         self.assertTrue('Bad change_id' in ret.data)
 
+    def testFieldViewBadValuesBadField(self):
         ret = self._put('/users/bob/permissions/admin')
         self.assertStatusCode(ret, 201)
 

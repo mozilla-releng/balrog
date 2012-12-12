@@ -1,8 +1,9 @@
 import collections
 import time
-from flask import render_template
+from flask import render_template, request
 from auslib.admin.views.base import AdminView
 from auslib.admin.base import db
+from auslib.util import PrinterFriendlyDict
 from auslib.util.timesince import timesince
 
 
@@ -29,24 +30,32 @@ class RecentChangesTableView(AdminView):
     Also, by making the this table load async on the home page makes the
     home page snappy and load quicker.
     """
-    def get(self):
-        limit = 10
-        tables = {
+
+    history_keys = (
+        'change_id', 'changed_by', 'timestamp', 'data_version'
+    )
+
+    @property
+    def tables(self):
+        return {
             'rule': db.rules,
             'permission': db.permissions,
             'release': db.releases,
         }
 
-        # we select `limit` for each history table, now they need to battle
-        # it out
-        all = []
-        for label, table in tables.items():
+    def getAllRecentChanges(self, limit):
+        for label, table in self.tables.items():
             rows = table.getRecentChanges(limit=limit)
             for row in rows:
-                all.append((
-                    label,
-                    row
-                ))
+                yield (label, row)
+
+    def get(self):
+        limit = int(request.args.get('limit', 10))
+
+        # we select `limit` for each history table, now they need to battle
+        # it out
+        all = list(self.getAllRecentChanges(limit))
+
         # youngest first
         all.sort(lambda x, y: cmp(y[1]['timestamp'], x[1]['timestamp']))
         # the list is cut short (to the length of `limit`) by a break in
@@ -54,14 +63,8 @@ class RecentChangesTableView(AdminView):
         changes = collections.defaultdict(dict)
         other_values = collections.defaultdict(dict)
         recent_changes = []
-        needs_diff = collections.defaultdict(list)
-        needs_previous = collections.defaultdict(list)
-        inserts = collections.defaultdict(dict)
-        _history_keys = (
-            'change_id', 'changed_by', 'timestamp', 'data_version'
-        )
         for label, each in all:
-            primary_keys = tables[label].history.base_primary_key
+            primary_keys = self.tables[label].history.base_primary_key
             values = [each[x] for x in primary_keys]
             other_values[label][each['change_id']] = dict(
                 (x, each[x])
@@ -75,21 +78,13 @@ class RecentChangesTableView(AdminView):
                 # the "next" change
                 break
 
-            change = None
             if each['data_version'] > 1:
                 # easy, it's an update
                 change = 'update'
-                needs_diff[label].append(each['change_id'])
             elif each['data_version'] == 1:
                 # easy, it's an insert
                 change = 'insert'
-                inserts[label][each['change_id']] = PrinterFriendlyDict(
-                    (k, each[k])
-                    for k in each
-                    if k not in _history_keys
-                )
             else:
-                assert change is None
                 # if the previous change_id had the same values for primary
                 # keys then this was a deletion
                 try:
@@ -99,30 +94,39 @@ class RecentChangesTableView(AdminView):
                         continue
                     else:
                         change = 'delete'
-                        needs_previous[label].append(each['change_id'])
 
                 except KeyError:
                     # happens if this is the very latest change
                     change = 'delete'
-                    needs_previous[label].append(each['change_id'])
 
             each['change'] = change
-
             # set a fancy `time_ago' field for human consumption
-            now, then = int(time.time()), int(each['timestamp'] / 1000.0)
-            each['time_ago'] = timesince(
-                then,
-                now,
-                afterword='ago',
-                minute_granularity=True
-            )
-            if not each['time_ago']:
-                each['time_ago'] = 'seconds ago'
-
+            each['time_ago'] = getTimeAgo(each['timestamp'])
             recent_changes.append((label, each))
+
+        data = {
+            'recent_changes': recent_changes,
+        }
+        data.update(
+            self.decorateChanges(recent_changes, changes, other_values)
+        )
+        return render_template('fragments/recent_changes_table.html', **data)
+
+    def decorateChanges(self, recent_changes, changes, other_values):
+        """return a dict of dicts more verbose structures describing
+        the deletes, updates and inserts.
+        """
         diffs = collections.defaultdict(dict)
-        for label, change_ids in needs_diff.items():
-            for change_id in change_ids:
+        deletes = collections.defaultdict(dict)
+        inserts = collections.defaultdict(dict)
+
+        for label, each in recent_changes:
+            change_id = each['change_id']
+            table = self.tables[label]
+            primary_keys = table.history.base_primary_key
+
+            if each['change'] in ('update', 'delete'):
+                # we need the previous other values
                 try:
                     # being able to look at the "next" change from the loop
                     # above is an early optimization.
@@ -131,7 +135,6 @@ class RecentChangesTableView(AdminView):
                     prev_other_values = other_values[label][change_id - 1]
                 except KeyError:
                     # ...we need to do another lookup just to fetch this data.
-                    table = tables[label]
                     prev_change = table.history.getPrevChange(
                         change_id,
                         changes[label][change_id]
@@ -141,30 +144,15 @@ class RecentChangesTableView(AdminView):
                         for x in prev_change
                         if x not in primary_keys
                     )
+
+            if each['change'] == 'update':
                 diffs[label][change_id] = PrinterFriendlyDict(
                     (k, (prev_other_values[k], value))
                     for k, value in other_values[label][change_id].items()
-                    if k not in _history_keys
+                    if k not in self.history_keys
                 )
 
-        deletes = collections.defaultdict(dict)
-        for label, change_ids in needs_previous.items():
-            for change_id in change_ids:
-                table = tables[label]
-                primary_keys = table.history.base_primary_key
-                try:
-                    prev_other_values = other_values[label][change_id - 1]
-                except KeyError:
-                    # See comment above on the needs_diff.items() loop
-                    prev_change = table.history.getPrevChange(
-                        change_id,
-                        changes[label][change_id]
-                    )
-                    prev_other_values = dict(
-                        (x, prev_change[x])
-                        for x in prev_change
-                        if x not in primary_keys
-                    )
+            elif each['change'] == 'delete':
                 deletes[label][change_id] = PrinterFriendlyDict(
                     (k, changes[label][change_id][i])
                     for i, k in enumerate(primary_keys)
@@ -172,32 +160,33 @@ class RecentChangesTableView(AdminView):
                 deletes[label][change_id].update(PrinterFriendlyDict(
                     (k, prev_other_values[k])
                     for k in prev_other_values
-                    if k not in _history_keys
+                    if k not in self.history_keys
                 ))
 
-        data = {
+            elif each['change'] == 'insert':
+                inserts[label][change_id] = PrinterFriendlyDict(
+                    (k, each[k])
+                    for k in each
+                    if k not in self.history_keys
+                )
+
+        return {
             'inserts': inserts,
-            'diffs': diffs,
             'deletes': deletes,
-            'recent_changes': recent_changes,
+            'diffs': diffs,
         }
 
-        return render_template('fragments/recent_changes_table.html', **data)
 
-
-class PrinterFriendlyDict(dict):
-
-    def keys(self):
-        keys = super(PrinterFriendlyDict, self).keys()
-        return sorted(keys)
-
-    def items(self):
-        tuples = []
-        for key in self.keys():
-            value = self[key]
-            if isinstance(value, (list, tuple)):
-                value = [unicode(v) for v in value]
-            else:
-                value = unicode(value)
-            tuples.append((key, value))
-        return tuples
+def getTimeAgo(timestamp):
+    # keeping this here amongst the view code because the use of the
+    # timesince() function is specific to the view
+    now, then = int(time.time()), int(timestamp / 1000.0)
+    time_ago = timesince(
+        then,
+        now,
+        afterword='ago',
+        minute_granularity=True
+    )
+    if not time_ago:
+        time_ago = 'seconds ago'
+    return time_ago
