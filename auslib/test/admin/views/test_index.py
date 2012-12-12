@@ -1,9 +1,7 @@
 from xml.etree import ElementTree as ET
-import re
 import unittest
 from auslib.test.admin.views.base import ViewTest
 from auslib.admin.views.index import PrinterFriendlyDict
-from auslib.admin.base import db
 
 
 class TestIndexPage(ViewTest):

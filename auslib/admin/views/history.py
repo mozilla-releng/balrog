@@ -1,8 +1,6 @@
 import difflib
 import json
-import collections
-import time
-from flask import render_template, Response, jsonify
+from flask import Response
 from auslib.admin.views.base import AdminView
 from auslib.admin.base import db
 

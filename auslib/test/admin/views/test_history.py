@@ -1,6 +1,4 @@
 import json
-import unittest
-#from auslib.test.admin.views.base import ViewTest
 from auslib.admin.base import db
 from auslib.test.admin.views.base import ViewTest
 
@@ -32,7 +30,10 @@ class TestHistoryView(ViewTest):
     def testFieldViewRelease(self):
         # add a release
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True))
-        ret = self._post('/releases/d', data=dict(data=data, product='d', version='d', data_version=1))
+        ret = self._post(
+            '/releases/d',
+            data=dict(data=data, product='d', version='d', data_version=1)
+        )
         self.assertStatusCode(ret, 200)
 
         query = db.releases.history.t.count()
@@ -65,11 +66,15 @@ class TestHistoryView(ViewTest):
 """))
 
         data = json.dumps(dict(detailsUrl='blah', fakePartials=False))
-        ret = self._post('/releases/d', data=dict(data=data, product='d', version='d', data_version=2))
+        ret = self._post(
+            '/releases/d',
+            data=dict(data=data, product='d', version='d', data_version=2)
+        )
         self.assertStatusCode(ret, 200)
 
-
-        query = db.releases.history.t.select(order_by=[db.releases.history.change_id.desc()])
+        query = db.releases.history.t.select(
+            order_by=[db.releases.history.change_id.desc()]
+        )
         row = query.execute().first()
         change_id = row[0]
 

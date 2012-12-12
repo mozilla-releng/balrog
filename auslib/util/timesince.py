@@ -26,7 +26,10 @@ def timesince(firstdate, seconddate,
         else:
             return result
 
-    if isinstance(firstdate, (int, long)) and isinstance(seconddate, (int, long)):
+    if (
+        isinstance(firstdate, (int, long)) and
+        isinstance(seconddate, (int, long))
+    ):
         # two timestamps
         seconds = seconddate - firstdate
         minutes = seconds / 60
@@ -44,7 +47,6 @@ def timesince(firstdate, seconddate,
         months = (day_difference % 365) / 30
         days = (day_difference % 365) % 30
         minutes = ((day_difference % 365) % 30) % 24
-
 
     if days == 0 and months == 0 and years == 0:
         # use hours
@@ -68,41 +70,41 @@ def timesince(firstdate, seconddate,
     else:
         s = []
         if years == 1:
-            s.append('1 %s'%(YEAR))
+            s.append('1 %s' % (YEAR))
         elif years > 1:
-            s.append('%s %s'%(years,YEARS))
+            s.append('%s %s' % (years, YEARS))
 
         if months == 1:
-            s.append('1 %s'%MONTH)
+            s.append('1 %s' % MONTH)
         elif months > 1:
-            s.append('%s %s'%(months,MONTHS))
+            s.append('%s %s' % (months, MONTHS))
 
         if days == 1:
-            s.append('1 %s'%DAY)
+            s.append('1 %s' % DAY)
         elif days == 7:
-            s.append('1 %s'%WEEK)
+            s.append('1 %s' % WEEK)
         elif days == 14:
-            s.append('2 %s'%WEEKS)
+            s.append('2 %s' % WEEKS)
         elif days == 21:
-            s.append('3 %s'%WEEKS)
+            s.append('3 %s' % WEEKS)
         elif days > 14:
             weeks = days / 7
             days = days % 7
             if weeks == 1:
-                s.append('1 %s'%WEEK)
+                s.append('1 %s' % WEEK)
             else:
-                s.append('%s %s'%(weeks, WEEKS))
+                s.append('%s %s' % (weeks, WEEKS))
             if days % 7 == 1:
-                s.append('1 %s'%DAY)
+                s.append('1 %s' % DAY)
             elif days > 0:
 
-                s.append('%s %s'%(days % 7,DAYS))
+                s.append('%s %s' % (days % 7, DAYS))
         elif days > 1:
-            s.append('%s %s'%(days,DAYS))
+            s.append('%s %s' % (days, DAYS))
 
         s = s[:max_no_sections]
 
-        if len(s)>1:
-            return wrap_afterword("%s" % (string.join(s,' %s '%AND)))
+        if len(s) > 1:
+            return wrap_afterword("%s" % (' %s ' % AND).join(s))
         else:
             return wrap_afterword("%s" % s[0])

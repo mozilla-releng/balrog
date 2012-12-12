@@ -37,7 +37,8 @@ class RecentChangesTableView(AdminView):
             'release': db.releases,
         }
 
-        # we select `limit` for each history table, now they need to battle it out
+        # we select `limit` for each history table, now they need to battle
+        # it out
         all = []
         for label, table in tables.items():
             rows = table.getRecentChanges(limit=limit)
@@ -48,14 +49,17 @@ class RecentChangesTableView(AdminView):
                 ))
         # youngest first
         all.sort(lambda x, y: cmp(y[1]['timestamp'], x[1]['timestamp']))
-        # the list is cut short (to the length of `limit`) by a break in the loop
+        # the list is cut short (to the length of `limit`) by a break in
+        # the loop
         changes = collections.defaultdict(dict)
         other_values = collections.defaultdict(dict)
         recent_changes = []
         needs_diff = collections.defaultdict(list)
         needs_previous = collections.defaultdict(list)
         inserts = collections.defaultdict(dict)
-        _history_keys = ('change_id', 'changed_by', 'timestamp', 'data_version')
+        _history_keys = (
+            'change_id', 'changed_by', 'timestamp', 'data_version'
+        )
         for label, each in all:
             primary_keys = tables[label].history.base_primary_key
             values = [each[x] for x in primary_keys]
@@ -86,8 +90,8 @@ class RecentChangesTableView(AdminView):
                 )
             else:
                 assert change is None
-                # if the previous change_id had the same values for primary keys
-                # then this was a deletion
+                # if the previous change_id had the same values for primary
+                # keys then this was a deletion
                 try:
                     previous_values = changes[label][each['change_id'] + 1]
                     if previous_values == values:
@@ -128,7 +132,6 @@ class RecentChangesTableView(AdminView):
                 except KeyError:
                     # ...we need to do another lookup just to fetch this data.
                     table = tables[label]
-                    primary_key_values = changes[label][change_id]
                     prev_change = table.history.getPrevChange(
                         change_id,
                         changes[label][change_id]
@@ -153,7 +156,6 @@ class RecentChangesTableView(AdminView):
                     prev_other_values = other_values[label][change_id - 1]
                 except KeyError:
                     # See comment above on the needs_diff.items() loop
-                    primary_key_values = changes[label][change_id]
                     prev_change = table.history.getPrevChange(
                         change_id,
                         changes[label][change_id]
@@ -181,7 +183,6 @@ class RecentChangesTableView(AdminView):
         }
 
         return render_template('fragments/recent_changes_table.html', **data)
-
 
 
 class PrinterFriendlyDict(dict):
