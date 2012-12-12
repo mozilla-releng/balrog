@@ -28,7 +28,7 @@
            <tbody>
            {% for type, change in recent_changes %}
              <tr>
-               <td>{{ type }} ({{ change['change_id']}})</td>
+               <td>{{ type }} <!--({{ change['change_id']}})--></td>
                <td>{{ change['changed_by'] }}</td>
                <td>{{ change['time_ago'] }}</td>
                <td>
@@ -45,8 +45,10 @@
                  {% include 'fragments/update.html' %}
                  {% endif %}
 
-                 {% if change['change'] == 'delete' %}
-                 delete
+                 {% if deletes.get(type, {}).get(change['change_id']) %}
+                 <a data-toggle="modal" href="#modal_{{ change['change_id'] }}"
+                    title="Shows the deleted data in a modal window">{{ change['change'] }}</a>
+                 {% include 'fragments/delete.html' %}
                  {% endif %}
 
                </td>
