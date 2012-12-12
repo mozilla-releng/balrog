@@ -5,10 +5,6 @@ from auslib.admin.views.base import AdminView
 from auslib.admin.base import db
 
 
-class BadKeyError(KeyError):
-    pass
-
-
 class FieldView(AdminView):
     """/view/:type/:id/:field"""
 
@@ -18,17 +14,15 @@ class FieldView(AdminView):
             'permission': db.permissions,
             'release': db.releases,
         }
-        try:
-            table = tables[type_]
-        except KeyError:
-            raise BadKeyError('Bad table')
+        if type_ not in tables:
+            raise KeyError('Bad table')
+        table = tables[type_]
         revision = table.history.getChange(change_id)
         if not revision:
             raise ValueError('Bad change_id')
-        try:
-            return revision[field]
-        except KeyError:
-            raise BadKeyError('Bad field')
+        if field not in revision:
+            raise KeyError('Bad field')
+        return revision[field]
 
     def format_value(self, value):
         if isinstance(value, basestring):
@@ -46,7 +40,7 @@ class FieldView(AdminView):
     def get(self, type_, change_id, field):
         try:
             value = self.get_value(type_, change_id, field)
-        except BadKeyError, msg:
+        except KeyError, msg:
             return Response(status=400, response=str(msg))
         except ValueError, msg:
             return Response(status=404, response=str(msg))
