@@ -19,7 +19,7 @@
                      {% if diff[0]|length > 50 or diff[1]|length > 50 %}
                      <td colspan="2">
                        Too big to show.
-                       <a href="/diff/{{ type }}/{{ change['change_id'] }}/{{ key }}" title="Compare these massive fields">Show diff</a>
+                       <a href="/history/diff/{{ type }}/{{ change['change_id'] }}/{{ key }}" title="Compare these massive fields">Show diff</a>
                      </td>
                      {% else %}
                      <td>

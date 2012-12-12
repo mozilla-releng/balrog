@@ -15,7 +15,7 @@
                      <td>{{ key }}</td>
                      <td>
                        {% if value|length > 50 %}
-                         Too big to show. <a href="/view/{{ type }}/{{ change['change_id'] }}/{{ key }}" title="Show this big value">Show full</a>
+                         Too big to show. <a href="/history/view/{{ type }}/{{ change['change_id'] }}/{{ key }}" title="Show this big value">Show full</a>
                        {% else %}
                          {{ value }}
                        {% endif %}

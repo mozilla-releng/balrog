@@ -6,12 +6,12 @@ from auslib.test.admin.views.base import ViewTest
 class TestHistoryView(ViewTest):
 
     def testFieldViewBadValues(self):
-        url = '/view/notatable/1/whatever'
+        url = '/history/view/notatable/1/whatever'
         ret = self.client.get(url)
         self.assertStatusCode(ret, 400)
         self.assertTrue('Bad table' in ret.data)
 
-        url = '/view/permission/9999/whatever'
+        url = '/history/view/permission/9999/whatever'
         ret = self.client.get(url)
         self.assertStatusCode(ret, 404)
         self.assertTrue('Bad change_id' in ret.data)
@@ -22,7 +22,7 @@ class TestHistoryView(ViewTest):
         query = db.permissions.history.t.select()
         row = query.execute().first()
         change_id = row[0]
-        url = '/view/permission/%d/notafield' % change_id
+        url = '/history/view/permission/%d/notafield' % change_id
         ret = self.client.get(url)
         self.assertStatusCode(ret, 400)
         self.assertTrue('Bad field' in ret.data)
@@ -43,7 +43,7 @@ class TestHistoryView(ViewTest):
         query = db.releases.history.t.select()
         row = query.execute().first()
         change_id = row[0]
-        url = '/view/release/%d/data' % change_id
+        url = '/history/view/release/%d/data' % change_id
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
         self.assertEqual(json.loads(ret.data), json.loads("""
@@ -78,7 +78,7 @@ class TestHistoryView(ViewTest):
         row = query.execute().first()
         change_id = row[0]
 
-        url = '/diff/release/%d/data' % change_id
+        url = '/history/diff/release/%d/data' % change_id
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
         self.assertTrue('"fakePartials": true' in ret.data)
@@ -91,7 +91,7 @@ class TestHistoryView(ViewTest):
         query = db.permissions.history.t.select()
         row = query.execute().first()
         change_id = row[0]
-        url = '/view/permission/%d/options' % change_id
+        url = '/history/view/permission/%d/options' % change_id
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
         self.assertEqual(ret.data, 'NULL')
