@@ -63,46 +63,46 @@ class RecentChangesTableView(AdminView):
         changes = collections.defaultdict(dict)
         other_values = collections.defaultdict(dict)
         recent_changes = []
-        for label, each in all:
+        for label, change in all:
             primary_keys = self.tables[label].history.base_primary_key
-            values = [each[x] for x in primary_keys]
-            other_values[label][each['change_id']] = dict(
-                (x, each[x])
-                for x in each
+            values = [change[x] for x in primary_keys]
+            other_values[label][change['change_id']] = dict(
+                (x, change[x])
+                for x in change
                 if x not in primary_keys
             )
-            changes[label][each['change_id']] = values
+            changes[label][change['change_id']] = values
 
             if len(recent_changes) >= limit:
                 # make sure this happens *after* `changes` is populated with
                 # the "next" change
                 break
 
-            if each['data_version'] > 1:
+            if change['data_version'] > 1:
                 # easy, it's an update
-                change = 'update'
-            elif each['data_version'] == 1:
+                what = 'update'
+            elif change['data_version'] == 1:
                 # easy, it's an insert
-                change = 'insert'
+                what = 'insert'
             else:
                 # if the previous change_id had the same values for primary
                 # keys then this was a deletion
                 try:
-                    previous_values = changes[label][each['change_id'] + 1]
+                    previous_values = changes[label][change['change_id'] + 1]
                     if previous_values == values:
                         # it was one of those initial creation rows
                         continue
                     else:
-                        change = 'delete'
+                        what = 'delete'
 
                 except KeyError:
                     # happens if this is the very latest change
-                    change = 'delete'
+                    what = 'delete'
 
-            each['change'] = change
+            change['change'] = what
             # set a fancy `time_ago' field for human consumption
-            each['time_ago'] = getTimeAgo(each['timestamp'])
-            recent_changes.append((label, each))
+            change['time_ago'] = getTimeAgo(change['timestamp'])
+            recent_changes.append((label, change))
 
         data = {
             'recent_changes': recent_changes,
@@ -120,12 +120,12 @@ class RecentChangesTableView(AdminView):
         deletes = collections.defaultdict(dict)
         inserts = collections.defaultdict(dict)
 
-        for label, each in recent_changes:
-            change_id = each['change_id']
+        for label, change in recent_changes:
+            change_id = change['change_id']
             table = self.tables[label]
             primary_keys = table.history.base_primary_key
 
-            if each['change'] in ('update', 'delete'):
+            if change['change'] in ('update', 'delete'):
                 # we need the previous other values
                 try:
                     # being able to look at the "next" change from the loop
@@ -145,14 +145,14 @@ class RecentChangesTableView(AdminView):
                         if x not in primary_keys
                     )
 
-            if each['change'] == 'update':
+            if change['change'] == 'update':
                 diffs[label][change_id] = PrinterFriendlyDict(
                     (k, (prev_other_values[k], value))
                     for k, value in other_values[label][change_id].items()
                     if k not in self.history_keys
                 )
 
-            elif each['change'] == 'delete':
+            elif change['change'] == 'delete':
                 deletes[label][change_id] = PrinterFriendlyDict(
                     (k, changes[label][change_id][i])
                     for i, k in enumerate(primary_keys)
@@ -163,10 +163,10 @@ class RecentChangesTableView(AdminView):
                     if k not in self.history_keys
                 ))
 
-            elif each['change'] == 'insert':
+            elif change['change'] == 'insert':
                 inserts[label][change_id] = PrinterFriendlyDict(
-                    (k, each[k])
-                    for k in each
+                    (k, change[k])
+                    for k in change
                     if k not in self.history_keys
                 )
 
