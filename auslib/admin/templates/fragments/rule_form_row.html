@@ -1,5 +1,6 @@
 <td id='mapping{{ suffix }}' name='mapping{{ suffix }}'>
     {{ form.hidden_tag() }}
+    {{ form.data_version()|safe }}
     {{ form.mapping()|safe }}
 </td>
 <td id='throttle{{ suffix }}' name='throttle{{ suffix }}'>
