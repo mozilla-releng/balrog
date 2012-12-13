@@ -1,6 +1,6 @@
 <td id='mapping{{ suffix }}' name='mapping{{ suffix }}'>
     {{ form.hidden_tag() }}
-    {{ form.data_version()|safe }}
+    {% if 'data_version' in form %} {{ form.data_version()|safe }} {% endif %}
     {{ form.mapping()|safe }}
 </td>
 <td id='throttle{{ suffix }}' name='throttle{{ suffix }}'>

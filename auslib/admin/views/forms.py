@@ -90,7 +90,7 @@ class ReleaseForm(Form):
     data = JSONTextField('Data', validators=[Required()])
     copyTo = JSONTextField('Copy To', default=list)
 
-class RuleForm(DbEditableForm):
+class RuleForm(Form):
     throttle = IntegerField('Throttle', validators=[Required(), validators.NumberRange(0, 100) ])
     priority = IntegerField('Priority', validators=[Required()])
     mapping = SelectField('Mapping', validators=[])
