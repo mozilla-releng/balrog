@@ -189,14 +189,17 @@ function getData(prefix, ruleForm){
 }
 
 function submitRuleForm(ruleForm){
-    rule_id = ruleForm.data('rule_id');
+    var rule_id = ruleForm.data('rule_id');
 
-    url = getRuleUrl(rule_id);
-    data = getData(rule_id, ruleForm);
+    var url = getRuleUrl(rule_id);
+    var data = getData(rule_id, ruleForm);
 
-    console.log(data);
-    return $.ajax(url,{'type': 'post', 'data': data})
-        .error(handleError);
+    return $.ajax(url, {'type': 'post', 'data': data})
+        .error(handleError)
+        .success(function(data) {
+            alertify.success('Rule updated!');
+        });
+
 }
 
 function submitNewRuleForm(ruleForm, table) {

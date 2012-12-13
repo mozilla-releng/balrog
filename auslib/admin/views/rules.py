@@ -15,7 +15,7 @@ class RulesPageView(AdminView):
         releaseNames = retry(db.releases.getReleaseNames, sleeptime=5, retry_exceptions=(SQLAlchemyError,))
 
         new_rule_form = RuleForm(prefix="new_rule");
-        new_rule_form.mapping.choices = [(item['name'],item['name']) for item in 
+        new_rule_form.mapping.choices = [(item['name'],item['name']) for item in
                 releaseNames]
         new_rule_form.mapping.choices.insert(0, ('', 'NULL' ))
         forms = {}
@@ -23,10 +23,10 @@ class RulesPageView(AdminView):
         for rule in rules:
             _id = rule['rule_id']
             self.log.debug(rule)
-            forms[_id] = EditRuleForm(prefix=str(_id), 
-                                    throttle = rule['throttle'],  
-                                    mapping = rule['mapping'], 
-                                    priority = rule['priority'], 
+            forms[_id] = EditRuleForm(prefix=str(_id),
+                                    throttle = rule['throttle'],
+                                    mapping = rule['mapping'],
+                                    priority = rule['priority'],
                                     product = rule['product'],
                                     version = rule['version'],
                                     build_id = rule['buildID'],
@@ -40,9 +40,10 @@ class RulesPageView(AdminView):
                                     update_type = rule['update_type'],
                                     header_arch = rule['headerArchitecture'],
                                     data_version=rule['data_version'])
-            forms[_id].mapping.choices = [(item['name'],item['name']) for item in 
+            forms[_id].mapping.choices = [(item['name'],item['name']) for item in
                                                 releaseNames]
             forms[_id].mapping.choices.insert(0, ('', 'NULL' ) )
+
         return render_template('rules.html', rules=rules, forms=forms, new_rule_form=new_rule_form)
 
 
@@ -61,7 +62,7 @@ class RulesAPIView(AdminView):
             self.log.debug(form.errors)
             return Response(status=400, response=form.errors)
 
-        what = dict(throttle=form.throttle.data,   
+        what = dict(throttle=form.throttle.data,
                 mapping=form.mapping.data,
                 priority=form.priority.data,
                 product = form.product.data,
@@ -92,10 +93,10 @@ class SingleRuleView(AdminView):
 
         releaseNames = retry(db.releases.getReleaseNames, sleeptime=5, retry_exceptions=(SQLAlchemyError,))
 
-        form = EditRuleForm(prefix=str(rule_id), 
-                throttle = rule['throttle'],  
-                mapping = rule['mapping'], 
-                priority = rule['priority'], 
+        form = EditRuleForm(prefix=str(rule_id),
+                throttle = rule['throttle'],
+                mapping = rule['mapping'],
+                priority = rule['priority'],
                 product = rule['product'],
                 version = rule['version'],
                 build_id = rule['buildID'],
@@ -109,7 +110,7 @@ class SingleRuleView(AdminView):
                 update_type = rule['update_type'],
                 header_arch = rule['headerArchitecture'],
                 data_version=rule['data_version'])
-        form.mapping.choices = [(item['name'],item['name']) for item in 
+        form.mapping.choices = [(item['name'],item['name']) for item in
                 releaseNames]
         form.mapping.choices.insert(0, ('', 'NULL' ) )
 
@@ -131,7 +132,7 @@ class SingleRuleView(AdminView):
 
         if not form.validate():
             return Response(status=400, response=form.errors)
-        what = dict(throttle=form.throttle.data,   
+        what = dict(throttle=form.throttle.data,
                     mapping=form.mapping.data,
                     priority=form.priority.data,
                     product = form.product.data,

@@ -54,7 +54,7 @@ class JSONTextField(JSONFieldMixin, TextField):
 
     def _set_default(self):
         self.data = {}
-   
+
 class NullableTextField(TextField):
     """TextField that parses incoming data converting empty strings to None's."""
     def process_formdata(self, valuelist):
@@ -94,17 +94,17 @@ class RuleForm(Form):
     throttle = IntegerField('Throttle', validators=[Required(), validators.NumberRange(0, 100) ])
     priority = IntegerField('Priority', validators=[Required()])
     mapping = SelectField('Mapping', validators=[])
-    product = NullableTextField('Product', validators=[validators.Length(0, 15)] ) 
+    product = NullableTextField('Product', validators=[validators.Length(0, 15)] )
     version = NullableTextField('Version', validators=[validators.Length(0,10) ])
     build_id = NullableTextField('BuildID', validators=[validators.Length(0,20) ])
-    channel = NullableTextField('Channel', validators=[validators.Length(0,75) ]) 
+    channel = NullableTextField('Channel', validators=[validators.Length(0,75) ])
     locale = NullableTextField('Locale', validators=[validators.Length(0,10) ])
     distribution = NullableTextField('Distrubution', validators=[validators.Length(0,100) ])
-    build_target = NullableTextField('Build Target', validators=[validators.Length(0,75) ]) 
+    build_target = NullableTextField('Build Target', validators=[validators.Length(0,75) ])
     os_version = NullableTextField('OS Version', validators=[validators.Length(0,100) ])
     dist_version = NullableTextField('Dist Version', validators=[validators.Length(0,100) ])
     comment = NullableTextField('Comment', validators=[validators.Length(0,500) ])
-    update_type = SelectField('Update Type', choices=[('minor','minor'), ('major', 'major')], validators=[]) 
+    update_type = SelectField('Update Type', choices=[('minor','minor'), ('major', 'major')], validators=[])
     header_arch = NullableTextField('Header Architecture', validators=[validators.Length(0,10) ])
 
 class EditRuleForm(RuleForm, DbEditableForm):
