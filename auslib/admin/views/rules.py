@@ -1,11 +1,14 @@
 import json
-from flask import render_template, Response, make_response
+from flask import render_template, Response, make_response, request
 
 from mozilla_buildtools.retry import retry
 from sqlalchemy.exc import SQLAlchemyError
 
+from auslib.util import getPagination
 from auslib.admin.base import db
-from auslib.admin.views.base import requirelogin, requirepermission, AdminView
+from auslib.admin.views.base import (
+    requirelogin, requirepermission, AdminView, HistoryAdminView
+)
 from auslib.admin.views.forms import EditRuleForm, RuleForm
 
 class RulesPageView(AdminView):
@@ -138,16 +141,16 @@ class SingleRuleView(AdminView):
                     priority=form.priority.data,
                     product = form.product.data,
                     version = form.version.data,
-                    build_id = form.build_id.data,
+                    buildID = form.build_id.data,
                     channel = form.channel.data,
                     locale = form.locale.data,
                     distribution = form.distribution.data,
-                    build_target = form.build_target.data,
-                    os_version = form.os_version.data,
-                    dist_version = form.dist_version.data,
+                    buildTarget = form.build_target.data,
+                    osVersion = form.os_version.data,
+                    distVersion = form.dist_version.data,
                     comment = form.comment.data,
                     update_type = form.update_type.data,
-                    header_arch = form.header_arch.data)
+                    headerArchitecture = form.header_arch.data)
         self.log.debug("old_data_version: %s", form.data_version.data)
         retry(db.rules.updateRule, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
                   kwargs=dict(changed_by=changed_by, rule_id=rule_id, what=what, old_data_version=form.data_version.data, transaction=transaction))
@@ -157,3 +160,121 @@ class SingleRuleView(AdminView):
         response = make_response(json.dumps(dict(new_data_version=new_data_version)))
         response.headers['Content-Type'] = 'application/json'
         return response
+
+
+class RuleHistoryView(HistoryAdminView):
+    """ /rules/<rule_id>/revisions """
+
+    def get(self, rule_id):
+        rule = retry(
+            db.rules.getRuleById,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(rule_id=rule_id)
+        )
+        if not rule:
+            return Response(status=404,
+                            response='Requested rule does not exist')
+
+        table = db.rules.history
+
+        try:
+            page = int(request.args.get('page', 1))
+            limit = int(request.args.get('limit', 10))
+            assert page >= 1
+        except (ValueError, AssertionError), msg:
+            return Response(status=400, response=str(msg))
+        offset = limit * (page - 1)
+        total_count, = (table.t.count()
+            .where(table.rule_id == rule_id)
+            .where(table.data_version != None)
+            .execute()
+            .fetchone()
+        )
+        if total_count > limit:
+            pagination = getPagination(page, total_count, limit)
+        else:
+            pagination = None
+
+        revisions = table.select(
+            where=[table.rule_id == rule_id,
+                   table.data_version != None],  # sqlalchemy
+            limit=limit,
+            offset=offset,
+            order_by=[table.timestamp.asc()],
+        )
+        primary_keys = table.base_primary_key
+        all_keys = self.getAllRevisionKeys(revisions, primary_keys)
+        self.annotateRevisionDifferences(revisions)
+
+        return render_template(
+            'revisions.html',
+            revisions=revisions,
+            label='rule',
+            primary_keys=primary_keys,
+            all_keys=all_keys,
+            total_count=total_count,
+            pagination=pagination,
+        )
+
+    @requirelogin
+    @requirepermission('/rules', options=[])
+    def _post(self, rule_id, transaction, changed_by):
+        rule_id = int(rule_id)
+
+        change_id = request.form.get('change_id')
+        if not change_id:
+            return Response(status=400, response='no change_id')
+        change = retry(
+            db.rules.history.getChange,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(change_id=change_id)
+        )
+        if change is None:
+            return Response(status=404, response='bad change_id')
+        if change['rule_id'] != rule_id:
+            return Response(status=404, response='bad rule_id')
+        rule = retry(
+            db.rules.getRuleById,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(rule_id=rule_id)
+        )
+        if rule is None:
+            return Response(status=404, response='bad rule_id')
+        old_data_version = rule['data_version']
+
+        # now we're going to make a new insert based on this
+        what = dict(
+            throttle=change['throttle'],
+            mapping=change['mapping'],
+            priority=change['priority'],
+            product=change['product'],
+            version=change['version'],
+            buildID=change['buildID'],
+            channel=change['channel'],
+            locale=change['locale'],
+            distribution=change['distribution'],
+            buildTarget=change['buildTarget'],
+            osVersion=change['osVersion'],
+            distVersion=change['distVersion'],
+            comment=change['comment'],
+            update_type=change['update_type'],
+            headerArchitecture=change['headerArchitecture'],
+        )
+
+        retry(
+            db.rules.updateRule,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(
+                changed_by=changed_by,
+                rule_id=rule_id,
+                what=what,
+                old_data_version=old_data_version,
+                transaction=transaction
+            )
+        )
+
+        return Response("Excellent!")

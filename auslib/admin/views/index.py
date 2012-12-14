@@ -1,10 +1,9 @@
 import collections
 import time
 from flask import render_template, request
-from auslib.admin.views.base import AdminView
+from auslib.admin.views.base import AdminView, getTimeAgo
 from auslib.admin.base import db
 from auslib.util import PrinterFriendlyDict
-from auslib.util.timesince import timesince
 
 
 class IndexPageView(AdminView):
@@ -175,18 +174,3 @@ class RecentChangesTableView(AdminView):
             'deletes': deletes,
             'diffs': diffs,
         }
-
-
-def getTimeAgo(timestamp):
-    # keeping this here amongst the view code because the use of the
-    # timesince() function is specific to the view
-    now, then = int(time.time()), int(timestamp / 1000.0)
-    time_ago = timesince(
-        then,
-        now,
-        afterword='ago',
-        minute_granularity=True
-    )
-    if not time_ago:
-        time_ago = 'seconds ago'
-    return time_ago

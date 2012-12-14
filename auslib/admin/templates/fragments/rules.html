@@ -54,6 +54,7 @@ Below is a complete list of all of the rules
         <th>Header Architecture</th>
         <th>Update</th>
         <th>Clone</th>
+        <th>Revisions</th>
     </tr></thead>
         {% for row in rules %}
         <tr>
@@ -66,6 +67,10 @@ Below is a complete list of all of the rules
             </td>
             <td id='Clone{{ suffix }}' name='Clone{{ suffix }}'>
                 <input type='button' name='clone' value='Clone' onclick='cloneRule($("#rules_form"), $("#new_rule_form"), "{{ rule_id }}")' />
+            </td>
+            <td id='Revisions{{ suffix }}'>
+                <input type='button' name='revisions' value='Revisions'
+                 onclick="location.href='/rules/{{ rule_id }}/revisions/'" />
             </td>
         </tr>
         {% endfor %}

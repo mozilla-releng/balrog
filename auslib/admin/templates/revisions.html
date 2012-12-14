@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ super() }} - Revisions{% endblock %}
+
+{% block head %}
+<style>
+td.different { font-weight: bold; }
+</style>
+{% endblock %}
+
+{% block bottom %}
+{{ super() }}
+<script type='text/javascript' src='{{ url_for('static', filename='js/revisions.js') }}'></script>
+{% endblock %}
+
+{% block container_class %}container-fluid{% endblock %}
+
+{% block content %}
+<form action='.' id='revisions'>
+    {% include 'fragments/revisions.html' %}
+    {% if pagination %}
+    {% include 'fragments/pagination.html' %}
+    {% endif %}
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Roll back to selected revision</button>
+        <button type="reset" class="btn">Cancel</button>
+    </div>
+</form>
+{% endblock %}
