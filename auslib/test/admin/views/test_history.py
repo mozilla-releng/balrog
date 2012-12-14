@@ -21,9 +21,10 @@ class TestHistoryView(ViewTest):
         ret = self._put('/users/bob/permissions/admin')
         self.assertStatusCode(ret, 201)
 
-        query = db.permissions.history.t.select()
-        row = query.execute().first()
-        change_id = row[0]
+        table = db.permissions.history
+        row, = table.select(order_by=[table.change_id.desc()], limit=1)
+        change_id = row['change_id']
+
         url = '/history/view/permission/%d/notafield' % change_id
         ret = self.client.get(url)
         self.assertStatusCode(ret, 400)
@@ -38,13 +39,14 @@ class TestHistoryView(ViewTest):
         )
         self.assertStatusCode(ret, 200)
 
-        query = db.releases.history.t.count()
+        table = db.releases.history
+        query = table.t.count()
         count, = query.execute().first()
         self.assertEqual(count, 1)
 
-        query = db.releases.history.t.select()
-        row = query.execute().first()
-        change_id = row[0]
+        row, = table.select()
+        change_id = row['change_id']
+
         url = '/history/view/release/%d/data' % change_id
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
@@ -74,11 +76,9 @@ class TestHistoryView(ViewTest):
         )
         self.assertStatusCode(ret, 200)
 
-        query = db.releases.history.t.select(
-            order_by=[db.releases.history.change_id.desc()]
-        )
-        row = query.execute().first()
-        change_id = row[0]
+        table = db.releases.history
+        row, = table.select(order_by=[table.change_id.desc()], limit=1)
+        change_id = row['change_id']
 
         url = '/history/diff/release/%d/data' % change_id
         ret = self.client.get(url)
@@ -90,9 +90,10 @@ class TestHistoryView(ViewTest):
         # Add a permission
         ret = self._put('/users/bob/permissions/admin')
         self.assertStatusCode(ret, 201)
-        query = db.permissions.history.t.select()
-        row = query.execute().first()
-        change_id = row[0]
+        table = db.permissions.history
+        row, = table.select(order_by=[table.timestamp.desc()], limit=1)
+        change_id = row['change_id']
+
         url = '/history/view/permission/%d/options' % change_id
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
