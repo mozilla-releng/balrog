@@ -151,3 +151,23 @@ class SingleRuleView(AdminView):
         retry(db.rules.updateRule, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
                   kwargs=dict(changed_by=changed_by, rule_id=rule_id, what=what, old_data_version=form.data_version.data, transaction=transaction))
         return Response(status=200)
+
+
+class RuleHistoryView(AdminView):
+    """ /rules/<rule_id>/history.html """
+
+    def get(self, rule_id):
+        rule = retry(
+            db.rules.getRuleById,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(rule_id=rule_id)
+        )
+        if not rule:
+            return Response(status=404, response="Requested rule does not exist")
+
+        rows = table.select(order_by=[table.timestamp.desc()], where=[table.rule_id == rule_id])
+        print rows
+        print "#", len(rows)
+
+        return render_template('history.html', changes=changes)

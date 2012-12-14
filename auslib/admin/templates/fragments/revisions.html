@@ -1,0 +1,21 @@
+{% if revisions %}
+<h3>Below is a complete list of all revisions of this {{ label }}.</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Product</th>
+            <th>Version</th>
+            <th>Data</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for revision in revisions %}
+        {% include 'fragments/release_row.html' %}
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+
+There were no previous revisions.
+{% endif %}

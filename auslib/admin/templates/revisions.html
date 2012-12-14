@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ super() }} - History{% endblock %}
+{% block head %}
+{% endblock %}
+
+{% block bottom %}
+{{ super() }}
+{% endblock %}
+
+
+{% block content %}
+<div id='revisions'>
+    {% include 'fragments/revisions.html' %}
+</div>
+{% endblock %}
