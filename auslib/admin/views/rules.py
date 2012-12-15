@@ -166,8 +166,50 @@ class RuleHistoryView(AdminView):
         if not rule:
             return Response(status=404, response="Requested rule does not exist")
 
-        rows = table.select(order_by=[table.timestamp.desc()], where=[table.rule_id == rule_id])
-        print rows
-        print "#", len(rows)
+        table = db.rules.history
+        revisions = table.select(
+            where=[table.rule_id == rule_id,
+                   table.data_version != None],
+            order_by=[table.timestamp.asc()],
+        )
+        primary_keys = table.base_primary_key
+        _history_keys = ('timestamp', 'change_id', 'data_version', 'changed_by')
+#        _priority_keys = ('changed_by',)
+        try:
+            all_keys = [x for x in revisions[0].keys()
+                        if x not in _history_keys]
+            all_keys.sort()
+#            for i, key in enumerate(_priority_keys):
+#                all_keys.remove(key)
+#                all_keys.insert(i, key)
+        except IndexError:
+            all_keys = None
 
-        return render_template('history.html', changes=changes)
+        # a dict of more human readable labels for keys
+        key_aliases = {
+#            'data_version': '#',
+        }
+
+        _prev = {}
+        for i, rev in enumerate(revisions):
+            different = []
+            for key, value in rev.items():
+                if key in _history_keys:# or key in _priority_keys:
+                    continue
+                if key not in _prev:
+                    _prev[key] = value
+                else:
+                    prev = _prev[key]
+                    if prev != value:
+                        different.append(key)
+            rev['_different'] = different
+            # XXX when the other branch lands, use smartertimesince here
+            rev['_time_ago'] = rev['timestamp']
+
+        return render_template('revisions.html',
+            revisions=revisions,
+            label='rule',
+            primary_keys=primary_keys,
+            all_keys=all_keys,
+            key_aliases=key_aliases,
+        )

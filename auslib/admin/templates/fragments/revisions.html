@@ -3,15 +3,35 @@
 <table class="table">
     <thead>
         <tr>
-            <th>Name</th>
-            <th>Product</th>
-            <th>Version</th>
-            <th>Data</th>
+            <th>Change</th>
+        {% for key in all_keys %}
+            <th {% if key in primary_keys %}class="primary-key"{% endif %}>
+                {{ key_aliases.get(key, key) }}
+            </th>
+        {% endfor %}
         </tr>
     </thead>
     <tbody>
     {% for revision in revisions %}
-        {% include 'fragments/release_row.html' %}
+        <tr>
+            <td>
+              {{ revision['data_version'] }}.
+              {% if not loop.last %}
+              <input type="radio" name="change_id" value="{{ revision['change_id'] }}"><br>
+              {% endif %}
+              {{ revision['changed_by'] }}
+              {{ revision['_time_ago'] }}
+            </td>
+        {% for key in all_keys %}
+            <td {% if key in revision['_different'] %}class="different"{% endif %}>
+              {% if revision[key] == None %}
+              null
+              {% else %}
+              {{ revision[key] }}
+              {% endif %}
+            </td>
+        {% endfor %}
+        </tr>
     {% endfor %}
     </tbody>
 </table>
