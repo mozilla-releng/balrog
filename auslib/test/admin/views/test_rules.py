@@ -3,7 +3,7 @@ from auslib.test.admin.views.base import ViewTest, HTMLTestMixin
 
 class TestRulesAPI_HTML(ViewTest, HTMLTestMixin):
     def testNewRulePost(self):
-        ret = self._post('/rules', data=dict(throttle=31, mapping='c', priority=33, 
+        ret = self._post('/rules', data=dict(throttle=31, mapping='c', priority=33,
                                                 product='Firefox', update_type='minor', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         r = db.rules.t.select().where(db.rules.rule_id==ret.data).execute().fetchall()
@@ -54,3 +54,63 @@ class TestRulesView_HTML(ViewTest, HTMLTestMixin):
         self.assertTrue('<input id="1-throttle" name="1-throttle" type="text" value="100">' in ret.data, msg=ret.data)
         self.assertTrue('<input id="1-priority" name="1-priority" type="text" value="100">' in ret.data, msg=ret.data)
 
+
+class TestRuleHistoryView(ViewTest, HTMLTestMixin):
+    def testGetNoRevisions(self):
+        url = '/rules/1/revisions/'
+        ret = self._get(url)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertTrue('There were no previous revisions' in ret.data)
+
+    def testGetRevisions(self):
+        # Make some changes to a rule
+        ret = self._post('/rules/1', data=dict(throttle=71, mapping='d', priority=73, data_version=1,
+                                                product='Firefox', update_type='minor', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        # and again
+        ret = self._post('/rules/1', data=dict(throttle=72, mapping='d', priority=73, data_version=2,
+                                                product='Firefux', update_type='minor', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
+        url = '/rules/1/revisions/'
+        ret = self._get(url)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertTrue('There were no previous revisions' not in ret.data)
+        self.assertTrue('Firefox' in ret.data and 'Firefux' in ret.data)
+        self.assertTrue('71' in ret.data and '72' in ret.data)
+
+    def testPostRevisionRollback(self):
+        # Make some changes to a rule
+        ret = self._post('/rules/1', data=dict(throttle=71, mapping='d', priority=73, data_version=1,
+                                                product='Firefox', update_type='minor', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        # and again
+        ret = self._post('/rules/1', data=dict(throttle=72, mapping='d', priority=73, data_version=2,
+                                                product='Firefux', update_type='minor', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
+        # Oh no! We prefer the product=Firefox, throttle=71 one better
+        table = db.rules.history
+        row, = table.select(
+            where=[table.product == 'Firefox', table.throttle == 71],
+            limit=1
+        )
+        change_id = row['change_id']
+        assert row['rule_id'] == 1  # one of the fixtures
+
+        # when posting you need both the rule_id and the change_id
+        wrong_url = '/rules/999/revisions/'
+        ret = self._post(wrong_url + '?change_id=%d' % change_id)
+        self.assertEquals(ret.status_code, 404)
+
+        url = '/rules/1/revisions/'
+        ret = self._post(wrong_url + '?change_id=999')
+        self.assertEquals(ret.status_code, 404)
+
+        url = '/rules/1/revisions/'
+        ret = self._post(wrong_url + '?change_id=%d' % change_id)
+        self.assertEquals(ret.status_code, 200)
+
+        #change_id =
+
+#        print ret.data

@@ -1,4 +1,4 @@
-from flask import render_template, Response
+from flask import render_template, Response, request
 
 from mozilla_buildtools.retry import retry
 from sqlalchemy.exc import SQLAlchemyError
@@ -213,3 +213,30 @@ class RuleHistoryView(AdminView):
             all_keys=all_keys,
             key_aliases=key_aliases,
         )
+
+    @requirelogin
+    @requirepermission('/rules', options=[])
+    def _post(self, rule_id, transaction, changed_by):
+        rule_id = int(rule_id)
+        #print "rule_id", repr(rule_id)
+        #print "transaction", repr(transaction)
+        #print "changed_by", repr(changed_by)
+
+        change_id = request.args.get('change_id')
+        #print "change_id", repr(change_id)
+        change = retry(
+            db.rules.history.getChange,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(change_id=change_id)
+        )
+        if change is None:
+            return Response(status=404, response='bad change_id')
+        if change['rule_id'] != rule_id:
+            return Response(status=404, response='bad rule_id')
+
+        #print 'change', repr(change)
+        #print (change['rule_id'], rule_id)
+
+        return Response("Excellent!")
+        #return Response(status=400, response="Work harder")
