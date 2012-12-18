@@ -2,12 +2,14 @@ import simplejson as json
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from flask import render_template, Response, jsonify, make_response
+from flask import render_template, Response, jsonify, make_response, request
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
 from auslib.util.retry import retry
 from auslib.admin.base import db
-from auslib.admin.views.base import requirelogin, requirepermission, AdminView
+from auslib.admin.views.base import (
+    requirelogin, requirepermission, AdminView, HistoryAdminView
+)
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import ReleaseForm, NewReleaseForm
 
@@ -178,7 +180,7 @@ class SingleReleaseView(AdminView):
         if not form.validate():
             return Response(status=400, response=form.errors)
 
-        retry(db.releases.addRelease, sleeptime=5, retry_exceptions=(SQLAlchemyError,), 
+        retry(db.releases.addRelease, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
                 kwargs=dict(name=release, product=form.product.data, version=form.version.data, blob=form.blob.data, changed_by=changed_by,  transaction=transaction))
         return Response(status=201)
 
@@ -195,3 +197,84 @@ class SingleReleaseView(AdminView):
             return retry(db.releases.updateRelease, kwargs=dict(name=rel, blob=releaseData, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction))
 
         return changeRelease(release, changed_by, transaction, exists, commit, self.log)
+
+
+class ReleaseHistoryView(HistoryAdminView):
+    """ /releases/<release>/revisions/ """
+
+    def get(self, release):
+        release = retry(
+            db.releases.getReleaseByName,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(name=release)
+        )
+        if not release:
+            return Response(status=404,
+                            response='Requested release does not exist')
+        table = db.releases.history
+        revisions = table.select(
+            where=[
+                table.name == release['name'],
+                table.data_version != None
+            ],
+            order_by=[table.timestamp.asc()],
+        )
+        primary_keys = table.base_primary_key
+        all_keys = self.getAllRevisionKeys(revisions, primary_keys)
+
+        self.annotateRevisionDifferences(revisions)
+
+        return render_template(
+            'revisions.html',
+            revisions=revisions,
+            label='release',
+            primary_keys=primary_keys,
+            all_keys=all_keys,
+        )
+
+    @requirelogin
+    @requirepermission('/releases', options=[])
+    def _post(self, release, transaction, changed_by):
+        change_id = request.form.get('change_id')
+        if not change_id:
+            return Response(status=400, response='no change_id')
+        change = retry(
+            db.releases.history.getChange,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(change_id=change_id)
+        )
+        if change is None:
+            return Response(status=404, response='bad change_id')
+        if change['name'] != release:
+            return Response(status=404, response='bad release name')
+        release = retry(
+            db.releases.getReleaseByName,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(name=release)
+        )
+        if release is None:
+            return Response(status=404, response='bad release name')
+        old_data_version = release['data_version']
+
+        # now we're going to make a new update based on this change
+        releaseData = json.loads(change['data'])
+        blob = ReleaseBlobV1(**releaseData)
+
+        retry(
+            db.releases.updateRelease,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(
+                changed_by=changed_by,
+                name=change['name'],
+                version=change['version'],
+                blob=blob,
+                old_data_version=old_data_version,
+                transaction=transaction
+            )
+        )
+
+        return Response("Excellent!")

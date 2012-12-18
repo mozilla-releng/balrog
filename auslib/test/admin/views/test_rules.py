@@ -64,13 +64,41 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
 
     def testGetRevisions(self):
         # Make some changes to a rule
-        ret = self._post('/rules/1', data=dict(throttle=71, mapping='d', priority=73, data_version=1,
-                                                product='Firefox', update_type='minor', channel='nightly'))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                throttle=71,
+                mapping='d',
+                priority=73,
+                data_version=1,
+                product='Firefox',
+                update_type='minor',
+                channel='nightly'
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
         # and again
-        ret = self._post('/rules/1', data=dict(throttle=72, mapping='d', priority=73, data_version=2,
-                                                product='Firefux', update_type='minor', channel='nightly'))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                throttle=72,
+                mapping='d',
+                priority=73,
+                data_version=2,
+                product='Firefux',
+                update_type='minor',
+                channel='nightly'
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
 
         url = '/rules/1/revisions/'
         ret = self._get(url)
@@ -81,18 +109,55 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
 
     def testPostRevisionRollback(self):
         # Make some changes to a rule
-        ret = self._post('/rules/1', data=dict(throttle=71, mapping='d', priority=73, data_version=1,
-                                                product='Firefox', update_type='minor', channel='nightly'))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                throttle=71,
+                mapping='d',
+                priority=73,
+                data_version=1,
+                product='Firefox',
+                update_type='minor',
+                channel='nightly'
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
         # and again
-        ret = self._post('/rules/1', data=dict(throttle=72, mapping='d', priority=73, data_version=2,
-                                                product='Firefux', update_type='minor', channel='nightly'))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                throttle=72,
+                mapping='d',
+                priority=73,
+                data_version=2,
+                product='Firefux',
+                update_type='minor',
+                channel='nightly'
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
+
+        table = db.rules
+        row, = table.select(where=[table.rule_id == 1])
+        self.assertEqual(row['throttle'], 72)
+        self.assertEqual(row['data_version'], 3)
+
+        query = table.history.t.count()
+        count, = query.execute().first()
+        self.assertEqual(count, 2)
 
         # Oh no! We prefer the product=Firefox, throttle=71 one better
-        table = db.rules.history
-        row, = table.select(
-            where=[table.product == 'Firefox', table.throttle == 71],
+        row, = table.history.select(
+            where=[table.history.product == 'Firefox',
+                   table.history.throttle == 71],
             limit=1
         )
         change_id = row['change_id']
@@ -100,17 +165,25 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
 
         # when posting you need both the rule_id and the change_id
         wrong_url = '/rules/999/revisions/'
-        ret = self._post(wrong_url + '?change_id=%d' % change_id)
+        ret = self._post(wrong_url, {'change_id': change_id})
         self.assertEquals(ret.status_code, 404)
 
         url = '/rules/1/revisions/'
-        ret = self._post(wrong_url + '?change_id=999')
+        ret = self._post(url, {'change_id': 999})
         self.assertEquals(ret.status_code, 404)
 
         url = '/rules/1/revisions/'
-        ret = self._post(wrong_url + '?change_id=%d' % change_id)
-        self.assertEquals(ret.status_code, 200)
+        ret = self._post(url)
+        self.assertEquals(ret.status_code, 400)
 
-        #change_id =
+        url = '/rules/1/revisions/'
+        ret = self._post(url, {'change_id': change_id})
+        self.assertEquals(ret.status_code, 200, ret.data)
 
-#        print ret.data
+        query = table.history.t.count()
+        count, = query.execute().first()
+        self.assertEqual(count, 3)
+
+        row, = table.select(where=[table.rule_id == 1])
+        self.assertEqual(row['throttle'], 71)
+        self.assertEqual(row['data_version'], 4)

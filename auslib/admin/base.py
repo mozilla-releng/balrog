@@ -13,7 +13,7 @@ from auslib.admin.views.csrf import CSRFView
 from auslib.admin.views.permissions import UsersView, PermissionsView, \
   SpecificPermissionView, PermissionsPageView, UserPermissionsPageView
 from auslib.admin.views.releases import SingleLocaleView, SingleBlobView, \
-  SingleReleaseView, ReleasesPageView
+  SingleReleaseView, ReleasesPageView, ReleaseHistoryView
 from auslib.admin.views.rules import RulesPageView, RulesAPIView, \
   SingleRuleView, RuleHistoryView
 from auslib.admin.views.index import IndexPageView, RecentChangesTableView
@@ -39,6 +39,7 @@ app.add_url_rule('/permissions.html', view_func=PermissionsPageView.as_view('per
 app.add_url_rule('/user_permissions.html', view_func=UserPermissionsPageView.as_view('user_permissions.html'))
 app.add_url_rule('/releases/<release>/builds/<platform>/<locale>', view_func=SingleLocaleView.as_view('single_locale'))
 app.add_url_rule('/releases/<release>/data', view_func=SingleBlobView.as_view('release_data'))
+app.add_url_rule('/releases/<release>/revisions/', view_func=ReleaseHistoryView.as_view('release_revisions'))
 app.add_url_rule('/releases/<release>', view_func=SingleReleaseView.as_view('release'))
 app.add_url_rule('/releases.html', view_func=ReleasesPageView.as_view('releases.html'))
 app.add_url_rule('/rules.html', view_func=RulesPageView.as_view('rules.html'))

@@ -4,7 +4,9 @@ from mozilla_buildtools.retry import retry
 from sqlalchemy.exc import SQLAlchemyError
 
 from auslib.admin.base import db
-from auslib.admin.views.base import requirelogin, requirepermission, AdminView
+from auslib.admin.views.base import (
+    requirelogin, requirepermission, AdminView, HistoryAdminView
+)
 from auslib.admin.views.forms import EditRuleForm, RuleForm
 
 class RulesPageView(AdminView):
@@ -153,8 +155,8 @@ class SingleRuleView(AdminView):
         return Response(status=200)
 
 
-class RuleHistoryView(AdminView):
-    """ /rules/<rule_id>/history.html """
+class RuleHistoryView(HistoryAdminView):
+    """ /rules/<rule_id>/revisions """
 
     def get(self, rule_id):
         rule = retry(
@@ -164,66 +166,35 @@ class RuleHistoryView(AdminView):
             kwargs=dict(rule_id=rule_id)
         )
         if not rule:
-            return Response(status=404, response="Requested rule does not exist")
+            return Response(status=404,
+                            response='Requested rule does not exist')
 
         table = db.rules.history
         revisions = table.select(
             where=[table.rule_id == rule_id,
-                   table.data_version != None],
+                   table.data_version != None],  # sqlalchemy
             order_by=[table.timestamp.asc()],
         )
         primary_keys = table.base_primary_key
-        _history_keys = ('timestamp', 'change_id', 'data_version', 'changed_by')
-#        _priority_keys = ('changed_by',)
-        try:
-            all_keys = [x for x in revisions[0].keys()
-                        if x not in _history_keys]
-            all_keys.sort()
-#            for i, key in enumerate(_priority_keys):
-#                all_keys.remove(key)
-#                all_keys.insert(i, key)
-        except IndexError:
-            all_keys = None
+        all_keys = self.getAllRevisionKeys(revisions, primary_keys)
+        self.annotateRevisionDifferences(revisions)
 
-        # a dict of more human readable labels for keys
-        key_aliases = {
-#            'data_version': '#',
-        }
-
-        _prev = {}
-        for i, rev in enumerate(revisions):
-            different = []
-            for key, value in rev.items():
-                if key in _history_keys:# or key in _priority_keys:
-                    continue
-                if key not in _prev:
-                    _prev[key] = value
-                else:
-                    prev = _prev[key]
-                    if prev != value:
-                        different.append(key)
-            rev['_different'] = different
-            # XXX when the other branch lands, use smartertimesince here
-            rev['_time_ago'] = rev['timestamp']
-
-        return render_template('revisions.html',
+        return render_template(
+            'revisions.html',
             revisions=revisions,
             label='rule',
             primary_keys=primary_keys,
             all_keys=all_keys,
-            key_aliases=key_aliases,
         )
 
     @requirelogin
     @requirepermission('/rules', options=[])
     def _post(self, rule_id, transaction, changed_by):
         rule_id = int(rule_id)
-        #print "rule_id", repr(rule_id)
-        #print "transaction", repr(transaction)
-        #print "changed_by", repr(changed_by)
 
-        change_id = request.args.get('change_id')
-        #print "change_id", repr(change_id)
+        change_id = request.form.get('change_id')
+        if not change_id:
+            return Response(status=400, response='no change_id')
         change = retry(
             db.rules.history.getChange,
             sleeptime=5,
@@ -234,9 +205,46 @@ class RuleHistoryView(AdminView):
             return Response(status=404, response='bad change_id')
         if change['rule_id'] != rule_id:
             return Response(status=404, response='bad rule_id')
+        rule = retry(
+            db.rules.getRuleById,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(rule_id=rule_id)
+        )
+        if rule is None:
+            return Response(status=404, response='bad rule_id')
+        old_data_version = rule['data_version']
 
-        #print 'change', repr(change)
-        #print (change['rule_id'], rule_id)
+        # now we're going to make a new insert based on this
+        what = dict(
+            throttle=change['throttle'],
+            mapping=change['mapping'],
+            priority=change['priority'],
+            product=change['product'],
+            version=change['version'],
+            build_id=change['buildID'],
+            channel=change['channel'],
+            locale=change['locale'],
+            distribution=change['distribution'],
+            build_target=change['buildTarget'],
+            os_version=change['osVersion'],
+            dist_version=change['distVersion'],
+            comment=change['comment'],
+            update_type=change['update_type'],
+            header_arch=change['headerArchitecture'],
+        )
+
+        retry(
+            db.rules.updateRule,
+            sleeptime=5,
+            retry_exceptions=(SQLAlchemyError,),
+            kwargs=dict(
+                changed_by=changed_by,
+                rule_id=rule_id,
+                what=what,
+                old_data_version=old_data_version,
+                transaction=transaction
+            )
+        )
 
         return Response("Excellent!")
-        #return Response(status=400, response="Work harder")

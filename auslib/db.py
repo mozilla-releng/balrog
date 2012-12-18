@@ -771,6 +771,12 @@ class Releases(AUSTable):
         blob.loadJSON(row['data'])
         return blob
 
+    def getReleaseByName(self, name, transaction=None):
+        try:
+            return self.select(where=[self.name==name], limit=1, transaction=transaction)[0]
+        except IndexError:
+            raise KeyError("Couldn't find release with name '%s'" % name)
+
     def addRelease(self, name, product, version, blob, changed_by, transaction=None):
         if not blob.isValid():
             raise ValueError("Release blob is invalid.")

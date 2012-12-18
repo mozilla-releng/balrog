@@ -16,21 +16,21 @@ $(function() {
 
     $('form#revisions').submit(function() {
         var form = $(this);
-        var change_id = $('input[name="change_id"]', form).val();
+        var change_id = $('input[name="change_id"]:checked', form).val();
         if (!change_id) {
             alertify.alert('Pick one');
             return false;
         }
-        console.log(change_id);
         preAJAXLoad(form);
-        $.ajax(location.href + '?change_id=' + change_id, {
+        $.ajax(location.href, {
             type: 'post',
             data: {change_id: change_id}
         }).error(handleError)
           .success(function() {
               postAJAXLoad(form);
-              alertify.success('Rolled back!');
-              location.reload(true);
+              alertify.alert('Rolled back!', function() {
+                location.href = getRedirectURL();
+              });
           });
         return false;
     });

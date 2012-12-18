@@ -1,7 +1,10 @@
+import time
+
 from flask import request, Response
 from flask.views import MethodView
 
 from auslib.admin.base import db
+from auslib.util.timesince import timesince
 
 import logging
 
@@ -49,3 +52,57 @@ class AdminView(MethodView):
         self.log.debug("processing DELETE request to %s" % request.path)
         with db.begin() as trans:
             return self._delete(*args, transaction=trans, **kwargs)
+
+
+class HistoryAdminView(AdminView):
+
+    history_keys = ('timestamp', 'change_id', 'data_version', 'changed_by')
+
+    def getAllRevisionKeys(self, revisions, primary_keys):
+        try:
+            all_keys = [
+                x for x in revisions[0].keys()
+                if x not in self.history_keys and x not in primary_keys
+            ]
+            all_keys.sort()
+        except IndexError:
+            all_keys = None
+        return all_keys
+
+    def annotateRevisionDifferences(self, revisions):
+        _prev = {}
+        for i, rev in enumerate(revisions):
+            different = []
+            for key, value in rev.items():
+                if key in self.history_keys:
+                    continue
+                if key not in _prev:
+                    _prev[key] = value
+                else:
+                    prev = _prev[key]
+                    if prev != value:
+                        different.append(key)
+                # prep the value for being shown in revision_row.html
+                if value is None:
+                    value = 'NULL'
+                elif not isinstance(value, basestring):
+                    value = unicode(value)
+                rev[key] = value
+
+            rev['_different'] = different
+            rev['_time_ago'] = getTimeAgo(rev['timestamp'])
+
+
+def getTimeAgo(timestamp):
+    # keeping this here amongst the view code because the use of the
+    # timesince() function is specific to the view
+    now, then = int(time.time()), int(timestamp / 1000.0)
+    time_ago = timesince(
+        then,
+        now,
+        afterword='ago',
+        minute_granularity=True
+    )
+    if not time_ago:
+        time_ago = 'seconds ago'
+    return time_ago

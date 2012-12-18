@@ -6,7 +6,7 @@
             <th>Change</th>
         {% for key in all_keys %}
             <th {% if key in primary_keys %}class="primary-key"{% endif %}>
-                {{ key_aliases.get(key, key) }}
+                {{ key }}
             </th>
         {% endfor %}
         </tr>
@@ -15,19 +15,29 @@
     {% for revision in revisions %}
         <tr>
             <td>
-              {{ revision['data_version'] }}.
-              {% if not loop.last %}
-              <input type="radio" name="change_id" value="{{ revision['change_id'] }}"><br>
+              {# {{ revision['data_version'] }}. #}
+              {% if loop.last %}
+              <em>current version</em>
+              {% else %}
+              <input type="radio" name="change_id" value="{{ revision['change_id'] }}">
+              {{ revision['change_id'] }}
+              {{ revision['_time_ago'] }}<br>
+              by {{ revision['changed_by'] }}
               {% endif %}
-              {{ revision['changed_by'] }}
-              {{ revision['_time_ago'] }}
             </td>
         {% for key in all_keys %}
             <td {% if key in revision['_different'] %}class="different"{% endif %}>
               {% if revision[key] == None %}
               null
               {% else %}
-              {{ revision[key] }}
+                {% set value = revision[key] %}
+                   {% if value|length > 50 %}
+                     Too big to show.
+                     <a href="/history/view/{{ label }}/{{ revision['change_id'] }}/{{ key }}" title="Show this big value">Show full</a>
+                     <a href="/history/diff/{{ label }}/{{ revision['change_id'] }}/{{ key }}" title="Compare these massive fields">Show diff</a>
+                   {% else %}
+                     {{ value }}
+                   {% endif %}
               {% endif %}
             </td>
         {% endfor %}
