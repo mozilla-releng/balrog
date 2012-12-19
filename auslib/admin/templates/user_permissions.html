@@ -9,13 +9,13 @@
 {% endblock %}
 
 {% block content %}
-<h2>Give {{ username }} a new permission:</h2>
+<h3>Give {{ username }} a new permission:</h3>
 <div>
     {% set form = newPermission %}
     {% include 'fragments/new_permission.html' %}
 </div>
 {% if permissions %}
-<h2>Edit existing permissions for {{ username }}:</h2>
-{% endif %}
+<h3>Edit existing permissions for {{ username }}:</h3>
 {% include 'fragments/user_permissions.html' %}
+{% endif %}
 {% endblock %}
