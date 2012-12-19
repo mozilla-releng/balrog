@@ -1,5 +1,5 @@
 function getPermissionUrl(username, permission) {
-    return SCRIPT_ROOT + '/users/' + username + '/permissions/' + permission;
+    return SCRIPT_ROOT + '/users/' + username + '/permissions/' + encodeURIComponent(permission);
 }
 
 function addNewPermission(form, username, permission, options, element) {
@@ -45,27 +45,31 @@ function deletePermission(username, permission, data_version) {
     );
 }
 
-function submitPermissionForm(form, username, permissionForm, element) {
-    clicked = permissionForm.data('clicked');
-    permission = $('[name*=permission]', permissionForm);
-    options = $('[name*=options]', permissionForm);
-    data_version = $('[name*=data_version]', permissionForm);
+
+function submitPermissionForm(rowid, clicked) {
+    var container = $('#' + rowid);
+    var username = container.data('username');
+    var form = container.parents('form');
+    var permission = $('[name*=permission]', container);
+    var options = $('[name*=options]', container);
+    var data_version = $('[name*=data_version]', container);
     preAJAXLoad(form);
     if (clicked === 'update') {
         updatePermission(username, permission.val(), options.val(), data_version.val())
         .success(function(data) {
-            data = JSON.parse(data);
+            var data = JSON.parse(data);
             data_version.val(data.new_data_version);
-            postAJAXLoad(form);
+            postAJAXLoad();
             alertify.success('Permission updated');
         });
-    }
-    else if (clicked === 'delete') {
+    } else if (clicked === 'delete') {
         deletePermission(username, permission.val(), data_version.val())
         .success(function() {
-            element.remove();
-            postAJAXLoad(form);
+            container.remove();
+            postAJAXLoad();
             alertify.success('Permission deleted');
         });
+    } else {
+        throw 'invalid click action';
     }
 }
