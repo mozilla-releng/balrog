@@ -382,18 +382,7 @@ class TestReleaseHistoryView(ViewTest, HTMLTestMixin):
         change_id = row['change_id']
         assert row['name'] == 'd'  # one of the fixtures
 
-        # when posting you need both the rule_id and the change_id
-        wrong_url = '/releases/CRAZYNAME/revisions/'
-        ret = self._post(wrong_url, {'change_id': change_id})
-        self.assertEquals(ret.status_code, 404)
-
         url = '/releases/d/revisions/'
-        ret = self._post(url, {'change_id': 999})
-        self.assertEquals(ret.status_code, 404)
-
-        ret = self._post(url)
-        self.assertEquals(ret.status_code, 400)
-
         ret = self._post(url, {'change_id': change_id})
         self.assertEquals(ret.status_code, 200, ret.data)
 
@@ -404,3 +393,15 @@ class TestReleaseHistoryView(ViewTest, HTMLTestMixin):
         row, = table.select(where=[table.name == 'd'])
         self.assertEqual(row['version'], '222.0')
         self.assertEqual(row['data_version'], 6)
+
+    def testPostRevisionRollbackBadRequests(self):
+        # when posting you need both the rule_id and the change_id
+        ret = self._post('/releases/CRAZYNAME/revisions/', {'change_id': 1})
+        self.assertEquals(ret.status_code, 404)
+
+        url = '/releases/d/revisions/'
+        ret = self._post(url, {'change_id': 999})
+        self.assertEquals(ret.status_code, 404)
+
+        ret = self._post(url)
+        self.assertEquals(ret.status_code, 400)

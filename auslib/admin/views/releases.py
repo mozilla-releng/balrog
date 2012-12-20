@@ -203,15 +203,16 @@ class ReleaseHistoryView(HistoryAdminView):
     """ /releases/<release>/revisions/ """
 
     def get(self, release):
-        release = retry(
-            db.releases.getReleaseByName,
+        releases = retry(
+            db.releases.getReleases,
             sleeptime=5,
             retry_exceptions=(SQLAlchemyError,),
-            kwargs=dict(name=release)
+            kwargs=dict(name=release, limit=1)
         )
-        if not release:
+        if not releases:
             return Response(status=404,
                             response='Requested release does not exist')
+        release = releases[0]
         table = db.releases.history
         revisions = table.select(
             where=[
@@ -248,15 +249,16 @@ class ReleaseHistoryView(HistoryAdminView):
         if change is None:
             return Response(status=404, response='bad change_id')
         if change['name'] != release:
-            return Response(status=404, response='bad release name')
-        release = retry(
-            db.releases.getReleaseByName,
+            return Response(status=404, response='bad release')
+        releases = retry(
+            db.releases.getReleases,
             sleeptime=5,
             retry_exceptions=(SQLAlchemyError,),
             kwargs=dict(name=release)
         )
-        if release is None:
-            return Response(status=404, response='bad release name')
+        if releases is None:
+            return Response(status=404, response='bad release')
+        release = releases[0]
         old_data_version = release['data_version']
 
         # now we're going to make a new update based on this change

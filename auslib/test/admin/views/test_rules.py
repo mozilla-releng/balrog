@@ -163,19 +163,6 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
         change_id = row['change_id']
         assert row['rule_id'] == 1  # one of the fixtures
 
-        # when posting you need both the rule_id and the change_id
-        wrong_url = '/rules/999/revisions/'
-        ret = self._post(wrong_url, {'change_id': change_id})
-        self.assertEquals(ret.status_code, 404)
-
-        url = '/rules/1/revisions/'
-        ret = self._post(url, {'change_id': 999})
-        self.assertEquals(ret.status_code, 404)
-
-        url = '/rules/1/revisions/'
-        ret = self._post(url)
-        self.assertEquals(ret.status_code, 400)
-
         url = '/rules/1/revisions/'
         ret = self._post(url, {'change_id': change_id})
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -187,3 +174,19 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
         row, = table.select(where=[table.rule_id == 1])
         self.assertEqual(row['throttle'], 71)
         self.assertEqual(row['data_version'], 4)
+
+    def testPostRevisionRollbackBadRequests(self):
+        # when posting you need both the rule_id and the change_id
+        wrong_url = '/rules/999/revisions/'
+        # not found rule_id
+        ret = self._post(wrong_url, {'change_id': 10})
+        self.assertEquals(ret.status_code, 404)
+
+        url = '/rules/1/revisions/'
+        ret = self._post(url, {'change_id': 999})
+        # not found change_id
+        self.assertEquals(ret.status_code, 404)
+
+        url = '/rules/1/revisions/'
+        ret = self._post(url)  # no change_id posted
+        self.assertEquals(ret.status_code, 400)
