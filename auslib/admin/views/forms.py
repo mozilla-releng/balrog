@@ -33,6 +33,7 @@ class JSONFieldMixin(object):
             log.debug('No value list, setting self.data to default')
             self._set_default()
 
+
 # We need to be sure that we list JSONFieldMixin BEFORE the FileField in the derived classes list
 # We want to use JSONFieldMixin's version of process_formdata instead of FileField's version.
 class JSONBlobFileField(JSONFieldMixin, TextField):
@@ -54,6 +55,10 @@ class JSONTextField(JSONFieldMixin, TextField):
 
     def _set_default(self):
         self.data = {}
+
+    def _value(self):
+        return json.dumps(self.data) if self.data is not None else u''
+
 
 class NullableTextField(TextField):
     """TextField that parses incoming data converting empty strings to None's."""
