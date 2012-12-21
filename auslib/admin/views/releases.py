@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from flask import render_template, Response, jsonify, make_response, request
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
+from auslib.util import getPagination
 from auslib.util.retry import retry
 from auslib.admin.base import db
 from auslib.admin.views.base import (
@@ -214,11 +215,31 @@ class ReleaseHistoryView(HistoryAdminView):
                             response='Requested release does not exist')
         release = releases[0]
         table = db.releases.history
+
+        try:
+            page = int(request.args.get('page', 1))
+            limit = int(request.args.get('limit', 3))
+            assert page >= 1
+        except (ValueError, AssertionError), msg:
+            return Response(status=400, response=str(msg))
+        offset = limit * (page - 1)
+        total_count, = (table.t.count()
+            .where(table.name == release['name'])
+            .where(table.data_version != None)
+            .execute()
+            .fetchone()
+        )
+        if total_count > limit:
+            pagination = getPagination(page, total_count, limit)
+        else:
+            pagination = None
         revisions = table.select(
             where=[
                 table.name == release['name'],
                 table.data_version != None
             ],
+            limit=limit,
+            offset=offset,
             order_by=[table.timestamp.asc()],
         )
         primary_keys = table.base_primary_key
@@ -232,6 +253,8 @@ class ReleaseHistoryView(HistoryAdminView):
             label='release',
             primary_keys=primary_keys,
             all_keys=all_keys,
+            pagination=pagination,
+            total_count=total_count,
         )
 
     @requirelogin

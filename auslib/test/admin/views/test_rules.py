@@ -190,3 +190,34 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
         url = '/rules/1/revisions/'
         ret = self._post(url)  # no change_id posted
         self.assertEquals(ret.status_code, 400)
+
+    def testGetRevisionsWithPagination(self):
+        # Make some changes to a rule
+        for i in range(33):  # some largish number
+            ret = self._post(
+                '/rules/1',
+                data=dict(
+                    throttle=1 + i,
+                    mapping='d',
+                    priority=73,
+                    data_version=1 + i,
+                    product='Firefox',
+                    update_type='minor',
+                    channel='nightly'
+                )
+            )
+            self.assertEquals(
+                ret.status_code,
+                200,
+                "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+            )
+
+        url = '/rules/1/revisions/'
+        ret = self._get(url)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertTrue('There were no previous revisions' not in ret.data)
+        self.assertTrue('?page=2' in ret.data)
+
+        ret2 = self._get(url + '?page=2')
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertTrue(ret.data != ret2.data)

@@ -405,3 +405,28 @@ class TestReleaseHistoryView(ViewTest, HTMLTestMixin):
 
         ret = self._post(url)
         self.assertEquals(ret.status_code, 400)
+
+    def testGetRevisionsWithPagination(self):
+        # Make some changes to a release
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True))
+        for i in range(0, 33, 2):  # any largish number
+            ret = self._post(
+                '/releases/d',
+                data=dict(
+                    data=data,
+                    product='d',
+                    version='%d.0' % i,
+                    data_version=1 + i
+                )
+            )
+            self.assertStatusCode(ret, 200)
+
+        url = '/releases/d/revisions/'
+        ret = self._get(url)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertTrue('There were no previous revisions' not in ret.data)
+        self.assertTrue('?page=2' in ret.data)
+
+        ret2 = self._get(url + '?page=2')
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertTrue(ret.data != ret2.data)

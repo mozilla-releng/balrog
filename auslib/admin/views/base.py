@@ -101,7 +101,8 @@ def getTimeAgo(timestamp):
         then,
         now,
         afterword='ago',
-        minute_granularity=True
+        minute_granularity=True,
+        max_no_sections=2
     )
     if not time_ago:
         time_ago = 'seconds ago'

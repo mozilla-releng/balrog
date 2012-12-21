@@ -3,6 +3,7 @@ from flask import render_template, Response, request
 from mozilla_buildtools.retry import retry
 from sqlalchemy.exc import SQLAlchemyError
 
+from auslib.util import getPagination
 from auslib.admin.base import db
 from auslib.admin.views.base import (
     requirelogin, requirepermission, AdminView, HistoryAdminView
@@ -170,6 +171,25 @@ class RuleHistoryView(HistoryAdminView):
                             response='Requested rule does not exist')
 
         table = db.rules.history
+
+        try:
+            page = int(request.args.get('page', 1))
+            limit = int(request.args.get('limit', 10))
+            assert page >= 1
+        except (ValueError, AssertionError), msg:
+            return Response(status=400, response=str(msg))
+        offset = limit * (page - 1)
+        total_count, = (table.t.count()
+            .where(table.rule_id == rule_id)
+            .where(table.data_version != None)
+            .execute()
+            .fetchone()
+        )
+        if total_count > limit:
+            pagination = getPagination(page, total_count, limit)
+        else:
+            pagination = None
+
         revisions = table.select(
             where=[table.rule_id == rule_id,
                    table.data_version != None],  # sqlalchemy
@@ -185,6 +205,8 @@ class RuleHistoryView(HistoryAdminView):
             label='rule',
             primary_keys=primary_keys,
             all_keys=all_keys,
+            total_count=total_count,
+            pagination=pagination,
         )
 
     @requirelogin

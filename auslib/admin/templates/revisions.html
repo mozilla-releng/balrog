@@ -17,6 +17,9 @@ td.different { font-weight: bold; }
 {% block content %}
 <form action='.' id='revisions'>
     {% include 'fragments/revisions.html' %}
+    {% if pagination %}
+    {% include 'fragments/pagination.html' %}
+    {% endif %}
     <div class="form-actions">
         <button type="submit" class="btn btn-primary">Roll back to selected revision</button>
         <button type="reset" class="btn">Cancel</button>
