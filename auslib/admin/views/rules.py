@@ -140,16 +140,16 @@ class SingleRuleView(AdminView):
                     priority=form.priority.data,
                     product = form.product.data,
                     version = form.version.data,
-                    build_id = form.build_id.data,
+                    buildID = form.build_id.data,
                     channel = form.channel.data,
                     locale = form.locale.data,
                     distribution = form.distribution.data,
-                    build_target = form.build_target.data,
-                    os_version = form.os_version.data,
-                    dist_version = form.dist_version.data,
+                    buildTarget = form.build_target.data,
+                    osVersion = form.os_version.data,
+                    distVersion = form.dist_version.data,
                     comment = form.comment.data,
                     update_type = form.update_type.data,
-                    header_arch = form.header_arch.data)
+                    headerArchitecture = form.header_arch.data)
         self.log.debug("old_data_version: %s", form.data_version.data)
         retry(db.rules.updateRule, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
                   kwargs=dict(changed_by=changed_by, rule_id=rule_id, what=what, old_data_version=form.data_version.data, transaction=transaction))
@@ -244,16 +244,16 @@ class RuleHistoryView(HistoryAdminView):
             priority=change['priority'],
             product=change['product'],
             version=change['version'],
-            build_id=change['buildID'],
+            buildID=change['buildID'],
             channel=change['channel'],
             locale=change['locale'],
             distribution=change['distribution'],
-            build_target=change['buildTarget'],
-            os_version=change['osVersion'],
-            dist_version=change['distVersion'],
+            buildTarget=change['buildTarget'],
+            osVersion=change['osVersion'],
+            distVersion=change['distVersion'],
             comment=change['comment'],
             update_type=change['update_type'],
-            header_arch=change['headerArchitecture'],
+            headerArchitecture=change['headerArchitecture'],
         )
 
         retry(

@@ -73,7 +73,7 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
                 data_version=1,
                 product='Firefox',
                 update_type='minor',
-                channel='nightly'
+                channel='nightly',
             )
         )
         self.assertEquals(
@@ -91,7 +91,7 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
                 data_version=2,
                 product='Firefux',
                 update_type='minor',
-                channel='nightly'
+                channel='nightly',
             )
         )
         self.assertEquals(
@@ -118,7 +118,12 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
                 data_version=1,
                 product='Firefox',
                 update_type='minor',
-                channel='nightly'
+                channel='nightly',
+                build_id='1234',
+                os_version='10.5',
+                header_arch='INTEL',
+                dist_version='19',
+                build_target='MAC',
             )
         )
         self.assertEquals(
@@ -136,7 +141,7 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
                 data_version=2,
                 product='Firefux',
                 update_type='minor',
-                channel='nightly'
+                channel='nightly',
             )
         )
         self.assertEquals(
@@ -173,7 +178,13 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
 
         row, = table.select(where=[table.rule_id == 1])
         self.assertEqual(row['throttle'], 71)
+        self.assertEqual(row['product'], 'Firefox')
         self.assertEqual(row['data_version'], 4)
+        self.assertEqual(row['buildID'], '1234')
+        self.assertEqual(row['osVersion'], '10.5')
+        self.assertEqual(row['headerArchitecture'], 'INTEL')
+        self.assertEqual(row['distVersion'], '19')
+        self.assertEqual(row['buildTarget'], 'MAC')
 
     def testPostRevisionRollbackBadRequests(self):
         # when posting you need both the rule_id and the change_id
