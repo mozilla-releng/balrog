@@ -169,7 +169,7 @@ class AUSTable(object):
             raise WrongNumberOfRowsError("where clause matches multiple rows (primary keys: %s)" % rows)
         return rows[0]
 
-    def _selectStatement(self, columns=None, where=None, order_by=None, limit=None, distinct=False):
+    def _selectStatement(self, columns=None, where=None, order_by=None, limit=None, offset=None, distinct=False):
         """Create a SELECT statement on this table.
 
            @param columns: Column objects to select. Defaults to None, meaning select all columns
@@ -186,9 +186,9 @@ class AUSTable(object):
            @rtype: sqlalchemy.sql.expression.Select
         """
         if columns:
-            query = select(columns, order_by=order_by, limit=limit, distinct=distinct)
+            query = select(columns, order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         else:
-            query = self.t.select(order_by=order_by, limit=limit, distinct=distinct)
+            query = self.t.select(order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         if where:
             for cond in where:
                 query = query.where(cond)
