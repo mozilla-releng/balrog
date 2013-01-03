@@ -193,6 +193,8 @@ class RuleHistoryView(HistoryAdminView):
         revisions = table.select(
             where=[table.rule_id == rule_id,
                    table.data_version != None],  # sqlalchemy
+            limit=limit,
+            offset=offset,
             order_by=[table.timestamp.asc()],
         )
         primary_keys = table.base_primary_key
