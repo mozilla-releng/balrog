@@ -1,9 +1,11 @@
+import json
+
 from auslib.admin.base import db
 from auslib.test.admin.views.base import ViewTest, HTMLTestMixin
 
 class TestRulesAPI_HTML(ViewTest, HTMLTestMixin):
     def testNewRulePost(self):
-        ret = self._post('/rules', data=dict(throttle=31, mapping='c', priority=33, 
+        ret = self._post('/rules', data=dict(throttle=31, mapping='c', priority=33,
                                                 product='Firefox', update_type='minor', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         r = db.rules.t.select().where(db.rules.rule_id==ret.data).execute().fetchall()
@@ -26,6 +28,8 @@ class TestSingleRuleView_HTML(ViewTest, HTMLTestMixin):
         ret = self._post('/rules/1', data=dict(throttle=71, mapping='d', priority=73, data_version=1,
                                                 product='Firefox', update_type='minor', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
         r = db.rules.t.select().where(db.rules.rule_id==1).execute().fetchall()
@@ -53,4 +57,3 @@ class TestRulesView_HTML(ViewTest, HTMLTestMixin):
         self.assertTrue("<form id='rules_form'" in ret.data, msg=ret.data)
         self.assertTrue('<input id="1-throttle" name="1-throttle" type="text" value="100">' in ret.data, msg=ret.data)
         self.assertTrue('<input id="1-priority" name="1-priority" type="text" value="100">' in ret.data, msg=ret.data)
-

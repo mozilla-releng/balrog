@@ -1,4 +1,5 @@
-from flask import render_template, Response
+import json
+from flask import render_template, Response, make_response
 
 from mozilla_buildtools.retry import retry
 from sqlalchemy.exc import SQLAlchemyError
@@ -150,4 +151,9 @@ class SingleRuleView(AdminView):
         self.log.debug("old_data_version: %s", form.data_version.data)
         retry(db.rules.updateRule, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
                   kwargs=dict(changed_by=changed_by, rule_id=rule_id, what=what, old_data_version=form.data_version.data, transaction=transaction))
-        return Response(status=200)
+        # find out what the next data version is
+        rule = db.rules.getRuleById(rule_id, transaction=transaction)
+        new_data_version = rule['data_version']
+        response = make_response(json.dumps(dict(new_data_version=new_data_version)))
+        response.headers['Content-Type'] = 'application/json'
+        return response
