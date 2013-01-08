@@ -194,9 +194,10 @@ function submitRuleForm(ruleForm){
     var url = getRuleUrl(rule_id);
     var data = getData(rule_id, ruleForm);
 
-    return $.ajax(url, {'type': 'post', 'data': data})
+    return $.ajax(url, {'type': 'post', 'data': data, 'dataType': 'json'})
         .error(handleError)
         .success(function(data) {
+            $('[name='+rule_id+'-data_version]', ruleForm).val(data.new_data_version);
             alertify.success('Rule updated!');
         });
 
