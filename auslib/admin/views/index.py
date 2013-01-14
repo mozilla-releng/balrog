@@ -1,6 +1,9 @@
 import collections
 import time
+
 from flask import render_template, request
+
+from auslib import version
 from auslib.admin.views.base import AdminView, getTimeAgo
 from auslib.admin.base import db
 from auslib.util import PrinterFriendlyDict
@@ -9,6 +12,7 @@ from auslib.util import PrinterFriendlyDict
 class IndexPageView(AdminView):
     """/index.html"""
     def get(self):
+        self.log.info("Balrog version is: %s" % version)
         data = {
             'count_rules': db.rules.countRules(),
             'count_releases': db.releases.countReleases(),
