@@ -218,7 +218,7 @@ class ReleaseHistoryView(HistoryAdminView):
 
         try:
             page = int(request.args.get('page', 1))
-            limit = int(request.args.get('limit', 3))
+            limit = int(request.args.get('limit', 10))
             assert page >= 1
         except (ValueError, AssertionError), msg:
             return Response(status=400, response=str(msg))
