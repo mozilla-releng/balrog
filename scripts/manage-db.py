@@ -18,7 +18,8 @@ if __name__ == "__main__":
     usage = """%s --db dburi action\n""" % sys.argv[0]
     usage += "Possible actions:\n"
     usage += "  create: Create all the tables required for a new Balrog database\n"
-    usage += "  upgrade: Upgrade an existing balrog table to a newer version."
+    usage += "  upgrade: Upgrade an existing balrog table to a newer version.\n"
+    usage += "  downgrade: Downgrade an existing balrog table to an older version."
     parser = OptionParser(usage=usage)
     parser.add_option("-d", "--db", dest="db", default=None, help="database to manage, in URI format")
     parser.add_option("--version", dest="version", default=None, type="int", help="Create/upgrade to this specific schema version rather than the latest.")
@@ -36,3 +37,5 @@ if __name__ == "__main__":
         db.create(options.version)
     elif action == 'upgrade':
         db.upgrade(options.version)
+    elif action == 'downgrade':
+        db.downgrade(options.version)

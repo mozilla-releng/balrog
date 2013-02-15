@@ -1010,6 +1010,13 @@ class AUSDatabase(object):
             self.log.debug('migrating schema version %s -> %d' % (step, step + 1))
             schema.runchange(step, change, 1)
 
+    def downgrade(self, version):
+        schema = migrate.versioning.schema.ControlledSchema(self.engine, self.migrate_repo)
+        changeset = schema.changeset(version)
+        for step, change in changeset:
+            self.log.debug('migrating schema version %s -> %d' % (step, step - 1))
+            schema.runchange(step, change, -1)
+
     def reset(self):
         self.engine = None
         self.metadata.bind = None
