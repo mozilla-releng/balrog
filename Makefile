@@ -27,7 +27,7 @@ test.done: $(ALL_PY_FILES) $(if $(ALWAYS_RUN_TESTS), FORCE)
 	@echo Running unit tests
 ifdef COVERAGE
 	$(RM) -r .coverage htmlcov
-	$(COVERAGE_BIN) run $(NOSE) $(NOSE_ARGS)
+	$(PYTHON_ENV) $(COVERAGE_BIN) run $(NOSE) $(NOSE_ARGS)
 else
 	$(PYTHON_ENV) $(NOSE) $(NOSE_ARGS)
 endif
