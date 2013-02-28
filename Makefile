@@ -1,4 +1,5 @@
 VIRTUALENV ?= /usr/bin/virtualenv
+COVERAGE_BIN ?= coverage
 # The Python binary to use when running the virtualenv script.
 PYTHON ?= python
 NOSE ?= $(shell which nosetests)
@@ -26,14 +27,14 @@ test.done: $(ALL_PY_FILES) $(if $(ALWAYS_RUN_TESTS), FORCE)
 	@echo Running unit tests
 ifdef COVERAGE
 	$(RM) -r .coverage htmlcov
-	$(PYTHON_ENV) $(PYTHON) -mcoverage run $(NOSE) $(NOSE_ARGS)
+	$(COVERAGE_BIN) run $(NOSE) $(NOSE_ARGS)
 else
 	$(PYTHON_ENV) $(NOSE) $(NOSE_ARGS)
 endif
 	@echo Running rules tests
 ifdef COVERAGE
-	$(PYTHON) -mcoverage run -a test-rules.py $(TEST_ARGS)
-	$(PYTHON) -mcoverage html --include='*auslib*'
+	$(COVERAGE_BIN) run -a test-rules.py $(TEST_ARGS)
+	$(COVERAGE_BIN) html --include='*auslib*'
 else
 	$(PYTHON) test-rules.py $(TEST_ARGS)
 endif
@@ -48,10 +49,10 @@ virtualenv:
 
 test-in-virtualenv: PYTHON=$(VIRTUALENV_DIR)/bin/python
 test-in-virtualenv: NOSE=$(VIRTUALENV_DIR)/bin/nosetests
+test-in-virtualenv: COVERAGE_BIN=$(VIRTUALENV_DIR)/bin/coverage
 test-in-virtualenv: test
 
 # Run the tests, installing any necessary libraries into a virtualenv.
-ci-tests: NOSE=$(VIRTUALENV_DIR)/bin/nosetests
 ci-tests: virtualenv test-in-virtualenv
 
 .PHONY: FORCE
