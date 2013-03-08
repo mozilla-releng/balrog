@@ -7,6 +7,8 @@ mydir = path.dirname(path.abspath(__file__))
 site.addsitedir(mydir)
 site.addsitedir(path.join(mydir, 'vendor/lib/python'))
 
+from raven.contrib.flask import Sentry
+
 from auslib import log_format
 from auslib.web.base import app as application
 from auslib.web.base import AUS
@@ -23,3 +25,8 @@ if errors:
 logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel(), format=log_format)
 AUS.setDb(cfg.getDburi())
 AUS.setSpecialHosts(cfg.getSpecialForceHosts())
+application.config['SENTRY_DSN'] = cfg.getSentryDsn()
+application.config['SENTRY_PROCESSORS'] = ['auslib.util.sentry.SanitizeHeadersProcessor']
+
+if application.config['SENTRY_DSN']:
+    sentry = Sentry(application)

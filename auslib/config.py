@@ -45,6 +45,12 @@ class AUSConfig(object):
     def getDburi(self):
         return self.cfg.get('database', 'dburi')
 
+    def getSentryDsn(self):
+        if self.cfg.has_option('logging', 'sentry_dsn'):
+            return self.cfg.get('logging', 'sentry_dsn')
+        else:
+            return None
+
 class AdminConfig(AUSConfig):
     required_options = {
         'logging': ['logfile'],
