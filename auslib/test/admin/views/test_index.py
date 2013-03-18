@@ -59,9 +59,9 @@ class TestIndexPage(ViewTest):
         tree = ET.fromstring(table_html)
         tbody = tree.find('tbody')
         rows = []
-        for tr in tbody.getchildren():
+        for tr in list(tbody):
             row = []
-            for td in tr.getchildren():
+            for td in list(tr):
                 a = td.find('a')
                 if a is not None:
                     row.append(a.text.strip())
