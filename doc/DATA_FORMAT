@@ -66,7 +66,7 @@
 
     // hashFunction - required
     //  the hash function used for all hashValues in this set, used in xml
-    //  eg "SHA512"
+    //  eg "sha512"
     "hashFunction": <string>,
 
     // fakePartials - optional, defaults false if missing

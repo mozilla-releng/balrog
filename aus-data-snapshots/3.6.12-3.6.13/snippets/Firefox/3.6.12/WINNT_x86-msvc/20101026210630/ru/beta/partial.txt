@@ -1,7 +1,7 @@
 version=1
 type=partial
 url=http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/win32/ru/firefox-3.6.12-3.6.13.partial.mar
-hashFunction=SHA512
+hashFunction=sha512
 hashValue=c7cf9575f61ad80b022a97c6d143dd3a9b79eadfa9e4b6d70a54241846a8788c1b119d07fd831d860fd821b0a9d3094951465c2c601a32a2804ff75c9d38edee
 size=2730040
 build=20101203075014

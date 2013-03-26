@@ -18,7 +18,7 @@
         "partial": "firefox-10.0.2-complete",
         "complete": "firefox-10.0.2-complete"
     },
-    "hashFunction": "SHA512",
+    "hashFunction": "sha512",
     "fakePartials": 1,
     "platforms": {
         "Darwin_x86-gcc3-u-ppc-i386": {

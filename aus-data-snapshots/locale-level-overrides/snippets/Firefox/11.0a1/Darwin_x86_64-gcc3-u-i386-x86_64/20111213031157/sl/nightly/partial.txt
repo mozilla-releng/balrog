@@ -1,7 +1,7 @@
 version=1
 type=partial
 url=http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2011/12/2011-12-14-03-11-34-mozilla-central-l10n/firefox-11.0a1.sl.mac.partial.20111213031157-20111214031134.mar
-hashFunction=SHA512
+hashFunction=sha512
 hashValue=ad017b578cb0d3ec50d773f02e834c7b425e6bd1d5c2ad53be32bc86489a3bfc1bd3476c6c6c98cb3f8674971ec849878ff5544ba025a423afb3ac69b3a4e6e6
 size=3640853
 build=20111214031134

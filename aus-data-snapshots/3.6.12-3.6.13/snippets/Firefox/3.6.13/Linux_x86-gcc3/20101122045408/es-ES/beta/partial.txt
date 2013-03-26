@@ -1,7 +1,7 @@
 version=1
 type=partial
 url=http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/linux-i686/es-ES/firefox-3.6.13.complete.mar
-hashFunction=SHA512
+hashFunction=sha512
 hashValue=7e970a732a91f85460094d068d0fa83175cfab7a2508ba1c54b30fb90eba78cb482a20b65f8616f93f8449fab4e1a3b94bfe510544b6dce95dd0ab89681a1317
 size=10567155
 build=20101203074139

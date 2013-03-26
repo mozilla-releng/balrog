@@ -1,7 +1,7 @@
 version=1
 type=partial
 url=http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/win32/fr/firefox-3.6.12-3.6.13.partial.mar
-hashFunction=SHA512
+hashFunction=sha512
 hashValue=db1dab1a1cff02c73eebc45a581bc794399373679eedf7edaf1b2bf39ffcfa424b2a3dff576074a9d18f918ae981eac58d9835bd672b3de6b5f57d70dfecd242
 size=2725080
 build=20101203075014

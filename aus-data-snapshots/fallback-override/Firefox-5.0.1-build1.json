@@ -18,7 +18,7 @@
         "partial":  "firefox-5.0.1-partial-5.0",
         "complete": "firefox-5.0.1-complete"
     },
-    "hashFunction": "SHA512",
+    "hashFunction": "sha512",
     "fakePartials": 0,
     "platforms": {
         "WINNT_x86-msvc": {

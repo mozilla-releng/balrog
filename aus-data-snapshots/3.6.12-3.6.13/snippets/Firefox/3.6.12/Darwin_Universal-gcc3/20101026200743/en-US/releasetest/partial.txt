@@ -1,7 +1,7 @@
 version=1
 type=partial
 url=http://download.mozilla.org/?product=firefox-3.6.13-partial-3.6.12&os=osx&lang=en-US
-hashFunction=SHA512
+hashFunction=sha512
 hashValue=d9aa65b9c339541e97c60de02b70230d06ea3c0b216a0a93a81868514e58a465e586e16d1f577d888bbadc4a5a899877d7ec8216527a55b59edeee9af49ec2c8
 size=1453732
 build=20101203074432
