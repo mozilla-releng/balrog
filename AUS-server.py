@@ -11,12 +11,13 @@ if __name__ == "__main__":
     )
     parser.add_option("-d", "--db", dest="db", help="database to use, relative to inputdir")
     parser.add_option("-p", "--port", dest="port", type="int", help="port for server")
+    parser.add_option("--host", dest="host", default='127.0.0.1', help="host to listen on. for example, 0.0.0.0 binds on all interfaces.")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
         help="Verbose output")
     options, args = parser.parse_args()
 
     from auslib import log_format
-    from auslib.client.base import app, AUS
+    from auslib.web.base import app, AUS
 
     log_level = logging.INFO
     if options.verbose:
@@ -24,8 +25,11 @@ if __name__ == "__main__":
     logging.basicConfig(level=log_level, format=log_format)
 
     AUS.setDb(options.db)
-    AUS.db.create()
+    try:
+        db.create()
+    except DatabaseAlreadyControlledError:
+        pass
 
     app.config['SECRET_KEY'] = 'abc123'
     app.config['DEBUG'] = True
-    app.run(port=options.port)
+    app.run(port=options.port, host=options.host)
