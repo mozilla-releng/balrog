@@ -18,6 +18,10 @@ NOSE_ARGS += -v
 TEST_ARGS += -v
 endif
 
+# Append the test directory to the nose args, to avoid picking up files like
+# auslib/util/testing.py.
+NOSE_ARGS += auslib/test
+
 ALL_PY_FILES := $(shell find . -iname "*.py")
 
 PYTHON_ENV = PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$(PYTHONPATH)
