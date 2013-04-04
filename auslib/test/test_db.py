@@ -729,6 +729,30 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testGetReleaseBlobNonExistentRelease(self):
         self.assertRaises(KeyError, self.releases.getReleaseBlob, name='z')
 
+    def testGetReleaseInfoAll(self):
+        releases = self.releases.getReleaseInfo()
+        expected = [ dict(name='a', product='a', version='a'),
+                dict(name='ab', product='a', version='a'),
+                dict(name='b', product='b', version='b'),
+                dict(name='c', product='c', version='c')]
+        self.assertEquals(releases, expected)
+
+    def testGetReleaseInfoProduct(self):
+        releases = self.releases.getReleaseInfo(product='a')
+        expected = [ dict(name='a', product='a', version='a'),
+                dict(name='ab', product='a', version='a')]
+        self.assertEquals(releases, expected)
+
+    def testGetReleaseInfoVersion(self):
+        releases = self.releases.getReleaseInfo(version='b')
+        expected = [ dict(name='b', product='b', version='b'), ]
+        self.assertEquals(releases, expected)
+
+    def testGetReleaseInfoNoMatch(self):
+        releases = self.releases.getReleaseInfo(product='a', version='b')
+        expected = [ ]
+        self.assertEquals(releases, expected)
+
     def testGetReleaseNames(self):
         releases = self.releases.getReleaseNames()
         expected = [ dict(name='a'),
@@ -737,15 +761,18 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                 dict(name='c')]
         self.assertEquals(releases, expected)
 
+    def testGetReleaseNamesProduct(self):
         releases = self.releases.getReleaseNames(product='a')
         expected = [ dict(name='a'),
                 dict(name='ab')]
         self.assertEquals(releases, expected)
 
+    def testGetReleaseNamesVersion(self):
         releases = self.releases.getReleaseNames(version='b')
         expected = [ dict(name='b'), ]
         self.assertEquals(releases, expected)
 
+    def testGetReleaseNamesNoMatch(self):
         releases = self.releases.getReleaseNames(product='a', version='b')
         expected = [ ]
         self.assertEquals(releases, expected)

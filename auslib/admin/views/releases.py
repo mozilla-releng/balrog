@@ -152,7 +152,7 @@ class SingleLocaleView(AdminView):
 class ReleasesPageView(AdminView):
     """ /releases.html """
     def get(self):
-        releases = db.releases.getReleases()
+        releases = db.releases.getReleaseInfo()
         form = NewReleaseForm(prefix="new_release")
         return render_template('releases.html', releases=releases, addForm=form)
 

@@ -752,15 +752,21 @@ class Releases(AUSTable):
         count, = self.t.count().execute().fetchone()
         return count
 
-    def getReleaseNames(self, product=None, version=None, limit=None, transaction=None):
+    def getReleaseInfo(self, product=None, version=None, limit=None, transaction=None, nameOnly=False):
         where = []
         if product:
             where.append(self.product==product)
         if version:
             where.append(self.version==version)
-        column = [self.name]
+        if nameOnly:
+            column = [self.name]
+        else:
+            column = [self.name, self.product, self.version]
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
         return rows
+
+    def getReleaseNames(self, **kwargs):
+        return self.getReleaseInfo(nameOnly=True, **kwargs)
 
     def getReleaseBlob(self, name, transaction=None):
         try:
