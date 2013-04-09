@@ -23,14 +23,18 @@ if __name__ == '__main__':
         help="Verbose output")
     options, args = parser.parse_args()
 
-    from auslib import log_format
-    from auslib.admin.base import app, db
-    from migrate.exceptions import DatabaseAlreadyControlledError
+    # Logging needs to get set-up before importing the application
+    # to make sure that logging done from other modules uses our Logger.
+    from auslib.log import log_format, BalrogLogger
 
+    logging.setLoggerClass(BalrogLogger)
     log_level = logging.INFO
     if options.verbose:
         log_level = logging.DEBUG
     logging.basicConfig(level=log_level, format=log_format)
+
+    from auslib.admin.base import app, db
+    from migrate.exceptions import DatabaseAlreadyControlledError
 
     db.setDburi(options.db)
     try:
