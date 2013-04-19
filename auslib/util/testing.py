@@ -2,17 +2,28 @@ import difflib
 
 import requests
 
+from mozilla_buildtools.retry import retry
 
-def compare_snippets(server1, server2, paths, diff=True, retries=3, timeout=10,
-                     raise_exceptions=True):
-    cfg = {'max_retries': retries, 'danger_mode': raise_exceptions}
-    for path in paths:
-        url1 = '%s/%s' % (server1, path)
-        url2 = '%s/%s' % (server2, path)
-        xml1 = requests.get(url1, timeout=timeout, config=cfg).content.splitlines()
-        xml2 = requests.get(url2, timeout=timeout, config=cfg).content.splitlines()
-        if xml1 != xml2:
-            if diff:
-                yield (url1, xml1, url2, xml2, difflib.unified_diff(xml1, xml2, lineterm=""))
-            else:
-                yield (url1, xml1, url2, xml2)
+
+def compare_snippets(url1, url2, retries=3, timeout=10, diff=True):
+    cfg = {'danger_mode': True}
+    xml1 = retry(requests.get, sleeptime=5, attempts=retries, args=(url1,),
+                 retry_exceptions=(requests.HTTPError, requests.ConnectionError),
+                 kwargs={'timeout': timeout, 'config': cfg})
+    xml1 = xml1.content.splitlines()
+    xml2 = retry(requests.get, sleeptime=5, attempts=retries, args=(url2,),
+                 retry_exceptions=(requests.HTTPError, requests.ConnectionError),
+                 kwargs={'timeout': timeout, 'config': cfg})
+    xml2 = xml2.content.splitlines()
+    ret = [url1, xml1, url2, xml2]
+    if xml1 != xml2:
+        if diff:
+            difflines = []
+            for line in difflib.unified_diff(xml1, xml2, url1, url2, lineterm=""):
+                difflines.append(line)
+            ret.append(difflines)
+        else:
+            ret.append(True)
+    else:
+        ret.append(False)
+    return ret
