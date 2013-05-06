@@ -6,7 +6,6 @@ from flask import render_template, Response, jsonify, make_response, request
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
 from auslib.util import getPagination
-from auslib.util.retry import retry
 from auslib.admin.base import db
 from auslib.admin.views.base import (
     requirelogin, requirepermission, AdminView, HistoryAdminView
@@ -18,8 +17,9 @@ __all__ = ["SingleReleaseView", "SingleLocaleView", "ReleasesPageView"]
 
 def createRelease(release, product, version, changed_by, transaction, releaseData):
     blob = ReleaseBlobV1(schema_version=CURRENT_SCHEMA_VERSION, **releaseData)
-    retry(db.releases.addRelease, kwargs=dict(name=release, product=product, version=version, blob=blob, changed_by=changed_by, transaction=transaction))
-    return retry(db.releases.getReleases, kwargs=dict(name=release, transaction=transaction))[0]
+    db.releases.addRelease(name=release, product=product, version=version,
+        blob=blob, changed_by=changed_by, transaction=transaction)
+    return db.releases.getReleases(name=release, transaction=transaction)[0]
 
 def changeRelease(release, changed_by, transaction, existsCallback, commitCallback, log):
     """Generic function to change an aspect of a release. It relies on a
@@ -78,7 +78,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         allReleases += copyTo
     for rel in allReleases:
         try:
-            releaseInfo = retry(db.releases.getReleases, kwargs=dict(name=rel, transaction=transaction))[0]
+            releaseInfo = db.releases.getReleases(name=rel, transaction=transaction)[0]
             if existsCallback(rel, product, version):
                 new = False
             # "release" is the one named in the URL (as opposed to the
@@ -104,7 +104,9 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         # every time there's a version bump.
         if version != releaseInfo['version']:
             log.debug("database version for %s is %s, updating it to %s", rel, releaseInfo['version'], version)
-            retry(db.releases.updateRelease, kwargs=dict(name=rel, version=version, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction))
+            db.releases.updateRelease(name=rel, version=version,
+                changed_by=changed_by, old_data_version=old_data_version,
+                transaction=transaction)
             old_data_version += 1
 
         commitCallback(rel, product, version, incomingData, releaseInfo['data'], old_data_version)
@@ -141,11 +143,14 @@ class SingleLocaleView(AdminView):
            releases named in copyTo as well."""
         def exists(rel, product, version):
             if rel == release:
-                return retry(db.releases.localeExists, kwargs=dict(name=rel, platform=platform, locale=locale, transaction=transaction))
+                return db.releases.localeExists(name=rel, platform=platform,
+                    locale=locale, transaction=transaction)
             return False
 
         def commit(rel, product, version, localeData, releaseData, old_data_version):
-            return retry(db.releases.addLocaleToRelease, kwargs=dict(name=rel, platform=platform, locale=locale, data=localeData, old_data_version=old_data_version, changed_by=changed_by, transaction=transaction))
+            return db.releases.addLocaleToRelease(name=rel, platform=platform,
+                locale=locale, data=localeData, old_data_version=old_data_version,
+                changed_by=changed_by, transaction=transaction)
 
         return changeRelease(release, changed_by, transaction, exists, commit, self.log)
 
@@ -159,15 +164,13 @@ class ReleasesPageView(AdminView):
 class SingleBlobView(AdminView):
     """ /releases/[release]/data"""
     def get(self, release):
-        release_blob = retry(db.releases.getReleaseBlob, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
-                kwargs=dict(name=release))
+        release_blob = db.releases.getReleaseBlob(name=release)
         return jsonify(release_blob)
 
 class SingleReleaseView(AdminView):
     """ /releases/[release]"""
     def get(self, release):
-        release = retry(db.releases.getReleases, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
-                kwargs=dict(name=release, limit=1))
+        release = db.releases.getReleases(name=release, limit=1)
         if not release:
             return Response(status=404)
         headers = {'X-Data-Version': release[0]['data_version']}
@@ -181,8 +184,9 @@ class SingleReleaseView(AdminView):
         if not form.validate():
             return Response(status=400, response=form.errors)
 
-        retry(db.releases.addRelease, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
-                kwargs=dict(name=release, product=form.product.data, version=form.version.data, blob=form.blob.data, changed_by=changed_by,  transaction=transaction))
+        db.releases.addRelease(name=release, product=form.product.data,
+            version=form.version.data, blob=form.blob.data,
+            changed_by=changed_by, transaction=transaction)
         return Response(status=201)
 
     @requirelogin
@@ -195,7 +199,9 @@ class SingleReleaseView(AdminView):
 
         def commit(rel, product, version, newReleaseData, releaseData, old_data_version):
             releaseData.update(newReleaseData)
-            return retry(db.releases.updateRelease, kwargs=dict(name=rel, blob=releaseData, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction))
+            return db.releases.updateRelease(name=rel, blob=releaseData,
+                changed_by=changed_by, old_data_version=old_data_version,
+                transaction=transaction)
 
         return changeRelease(release, changed_by, transaction, exists, commit, self.log)
 
@@ -204,12 +210,7 @@ class ReleaseHistoryView(HistoryAdminView):
     """ /releases/<release>/revisions/ """
 
     def get(self, release):
-        releases = retry(
-            db.releases.getReleases,
-            sleeptime=5,
-            retry_exceptions=(SQLAlchemyError,),
-            kwargs=dict(name=release, limit=1)
-        )
+        releases = db.releases.getReleases(name=release, limit=1)
         if not releases:
             return Response(status=404,
                             response='Requested release does not exist')
@@ -263,22 +264,12 @@ class ReleaseHistoryView(HistoryAdminView):
         change_id = request.form.get('change_id')
         if not change_id:
             return Response(status=400, response='no change_id')
-        change = retry(
-            db.releases.history.getChange,
-            sleeptime=5,
-            retry_exceptions=(SQLAlchemyError,),
-            kwargs=dict(change_id=change_id)
-        )
+        change = db.releases.history.getChange(change_id=change_id)
         if change is None:
             return Response(status=404, response='bad change_id')
         if change['name'] != release:
             return Response(status=404, response='bad release')
-        releases = retry(
-            db.releases.getReleases,
-            sleeptime=5,
-            retry_exceptions=(SQLAlchemyError,),
-            kwargs=dict(name=release)
-        )
+        releases = db.releases.getReleases(name=release)
         if releases is None:
             return Response(status=404, response='bad release')
         release = releases[0]
@@ -288,18 +279,8 @@ class ReleaseHistoryView(HistoryAdminView):
         releaseData = json.loads(change['data'])
         blob = ReleaseBlobV1(**releaseData)
 
-        retry(
-            db.releases.updateRelease,
-            sleeptime=5,
-            retry_exceptions=(SQLAlchemyError,),
-            kwargs=dict(
-                changed_by=changed_by,
-                name=change['name'],
-                version=change['version'],
-                blob=blob,
-                old_data_version=old_data_version,
-                transaction=transaction
-            )
-        )
+        db.releases.updateRelease(changed_by=changed_by, name=change['name'],
+            version=change['version'], blob=blob,
+            old_data_version=old_data_version, transaction=transaction)
 
         return Response("Excellent!")

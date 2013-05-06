@@ -1,7 +1,6 @@
 import json
 from flask import render_template, Response, make_response, request
 
-from mozilla_buildtools.retry import retry
 from sqlalchemy.exc import SQLAlchemyError
 
 from auslib.util import getPagination
@@ -16,7 +15,7 @@ class RulesPageView(AdminView):
     def get(self):
         rules = db.rules.getOrderedRules()
 
-        releaseNames = retry(db.releases.getReleaseNames, sleeptime=5, retry_exceptions=(SQLAlchemyError,))
+        releaseNames = db.releases.getReleaseNames()
 
         new_rule_form = RuleForm(prefix="new_rule");
         new_rule_form.mapping.choices = [(item['name'],item['name']) for item in
@@ -59,7 +58,7 @@ class RulesAPIView(AdminView):
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
         form = RuleForm()
-        releaseNames = retry(db.releases.getReleaseNames, sleeptime=5, retry_exceptions=(SQLAlchemyError,))
+        releaseNames = db.releases.getReleaseNames()
         form.mapping.choices = [(item['name'],item['name']) for item in releaseNames]
         form.mapping.choices.insert(0, ('', 'NULL' ) )
         if not form.validate():
@@ -81,8 +80,8 @@ class RulesAPIView(AdminView):
                 comment = form.comment.data,
                 update_type = form.update_type.data,
                 header_arch = form.header_arch.data)
-        rule_id = retry(db.rules.addRule, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
-                kwargs=dict(changed_by=changed_by, what=what, transaction=transaction))
+        rule_id = db.rules.addRule(changed_by=changed_by, what=what,
+            transaction=transaction)
         return Response(status=200, response=rule_id)
 
 
@@ -90,12 +89,11 @@ class SingleRuleView(AdminView):
     """ /rules/<rule_id> """
 
     def get(self, rule_id):
-        rule = retry(db.rules.getRuleById, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
-                kwargs=dict(rule_id=rule_id))
+        rule = db.rules.getRuleById(rule_id=rule_id)
         if not rule:
             return Response(status=404, response="Requested rule does not exist")
 
-        releaseNames = retry(db.releases.getReleaseNames, sleeptime=5, retry_exceptions=(SQLAlchemyError,))
+        releaseNames = db.releases.getReleaseNames()
 
         form = EditRuleForm(prefix=str(rule_id),
                 throttle = rule['throttle'],
@@ -129,7 +127,7 @@ class SingleRuleView(AdminView):
             return Response(status=404)
         form = EditRuleForm()
 
-        releaseNames = retry(db.releases.getReleaseNames, sleeptime=5, retry_exceptions=(SQLAlchemyError,))
+        releaseNames = db.releases.getReleaseNames()
 
         form.mapping.choices = [(item['name'],item['name']) for item in releaseNames]
         form.mapping.choices.insert(0, ('', 'NULL' ))
@@ -152,8 +150,8 @@ class SingleRuleView(AdminView):
                     update_type = form.update_type.data,
                     headerArchitecture = form.header_arch.data)
         self.log.debug("old_data_version: %s", form.data_version.data)
-        retry(db.rules.updateRule, sleeptime=5, retry_exceptions=(SQLAlchemyError,),
-                  kwargs=dict(changed_by=changed_by, rule_id=rule_id, what=what, old_data_version=form.data_version.data, transaction=transaction))
+        db.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
+            old_data_version=form.data_version.data, transaction=transaction)
         # find out what the next data version is
         rule = db.rules.getRuleById(rule_id, transaction=transaction)
         new_data_version = rule['data_version']
@@ -166,12 +164,7 @@ class RuleHistoryView(HistoryAdminView):
     """ /rules/<rule_id>/revisions """
 
     def get(self, rule_id):
-        rule = retry(
-            db.rules.getRuleById,
-            sleeptime=5,
-            retry_exceptions=(SQLAlchemyError,),
-            kwargs=dict(rule_id=rule_id)
-        )
+        rule = db.rules.getRuleById(rule_id=rule_id)
         if not rule:
             return Response(status=404,
                             response='Requested rule does not exist')
@@ -225,22 +218,12 @@ class RuleHistoryView(HistoryAdminView):
         change_id = request.form.get('change_id')
         if not change_id:
             return Response(status=400, response='no change_id')
-        change = retry(
-            db.rules.history.getChange,
-            sleeptime=5,
-            retry_exceptions=(SQLAlchemyError,),
-            kwargs=dict(change_id=change_id)
-        )
+        change = db.rules.history.getChange(change_id=change_id)
         if change is None:
             return Response(status=404, response='bad change_id')
         if change['rule_id'] != rule_id:
             return Response(status=404, response='bad rule_id')
-        rule = retry(
-            db.rules.getRuleById,
-            sleeptime=5,
-            retry_exceptions=(SQLAlchemyError,),
-            kwargs=dict(rule_id=rule_id)
-        )
+        rule = db.rules.getRuleById(rule_id=rule_id)
         if rule is None:
             return Response(status=404, response='bad rule_id')
         old_data_version = rule['data_version']
@@ -264,17 +247,7 @@ class RuleHistoryView(HistoryAdminView):
             headerArchitecture=change['headerArchitecture'],
         )
 
-        retry(
-            db.rules.updateRule,
-            sleeptime=5,
-            retry_exceptions=(SQLAlchemyError,),
-            kwargs=dict(
-                changed_by=changed_by,
-                rule_id=rule_id,
-                what=what,
-                old_data_version=old_data_version,
-                transaction=transaction
-            )
-        )
+        db.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
+            old_data_version=old_data_version, transaction=transaction)
 
         return Response("Excellent!")
