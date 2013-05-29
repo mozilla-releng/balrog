@@ -10,7 +10,6 @@ mydir = os.path.dirname(os.path.abspath(__file__))
 site.addsitedir(mydir)
 site.addsitedir(os.path.join(mydir, 'vendor/lib/python'))
 
-from auslib import log_format
 from auslib.AUS import *
 
 import logging
@@ -154,12 +153,11 @@ if __name__ == "__main__":
 
     options, args = parser.parse_args()
 
+    log_format = "%(message)s"
     log_level = logging.INFO
     if options.verbose:
         log_level = logging.DEBUG
-        logging.basicConfig(level=log_level, format=log_format)
-    else:
-        logging.basicConfig(level=log_level, format="%(message)s")
+    logging.basicConfig(level=log_level, format=log_format)
 
     if not options.testDirs:
         for dirname in os.listdir('aus-data-snapshots'):
@@ -168,7 +166,7 @@ if __name__ == "__main__":
                 options.testDirs.append(d)
 
     for td in options.testDirs:
-        log.info("Testing %s", td)
+        log.info("Starting %s", td)
         if options.keepDB:
             dbPath = os.path.join(td, 'update.db')
             if os.path.exists(dbPath):
