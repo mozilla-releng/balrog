@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='css/bootstrap-modal.css') }}' />
+{% endblock %}
+
+{% block bottom %}
+{{ super() }}
+<!-- thank you http://jschr.github.com/bootstrap-modal/ -->
+<script type='text/javascript' src='{{ url_for('static', filename='js/bootstrap-modal.js') }}'></script>
+<script type='text/javascript' src='{{ url_for('static', filename='js/bootstrap-modalmanager.js') }}'></script>
+<script>
+$(function() {
+    $('#recent-changes-outer').load('/recent_changes_table.html');
+});
+</script>
+{% endblock %}
+
+{% block content %}
+
+     <div class="row">
+       <div class="span12">
+         <h2>Recent changes</h2>
+
+         <div id="recent-changes-outer">Loading recent changes ...</div>
+
+       </div>
+     </div>
+
+     <div class="row">
+        <div class="span4">
+          <h2>Rules</h2>
+          <p>There are currently <strong>{{ count_rules }} rules</strong> in the database.</p>
+          <p><a class="btn" href="/rules.html">Go there &raquo;</a></p>
+        </div>
+        <div class="span4">
+          <h2>Releases</h2>
+          <p>There are currently <strong>{{ count_releases }} releases</strong> in the database.</p>
+          <p><a class="btn" href="/releases.html">Go there &raquo;</a></p>
+       </div>
+        <div class="span4">
+          <h2>Permissions</h2>
+          <p>There are currently
+            <strong>{{ count_users }} users</strong>
+            in the database.</p>
+          <p><a class="btn" href="/permissions.html">Go there &raquo;</a></p>
+        </div>
+     </div>
+
+
+{% endblock %}

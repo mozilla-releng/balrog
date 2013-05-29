@@ -1,7 +1,7 @@
 version=1
 type=complete
 url=http://download.mozilla.org/?product=firefox-5.0.1-complete&os=osx&lang=en-US
-hashFunction=SHA512
+hashFunction=sha512
 hashValue=960de0a85fdcb0cd9307253b98b4ae810c7da5ad317f8f7b7275fb8f6a60ffe9596a909ce332174e0d312707b298fb33551596fed6c2a9804ac4b07499efbb0f
 size=28330937
 build=20110707182747

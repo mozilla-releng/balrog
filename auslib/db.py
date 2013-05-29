@@ -1,4 +1,5 @@
 from copy import copy
+from os import path
 import re
 import simplejson as json
 import sys
@@ -7,6 +8,9 @@ import time
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
   CheckConstraint, create_engine, select, BigInteger
 from sqlalchemy.exc import SQLAlchemyError
+
+import migrate.versioning.schema
+import migrate.versioning.api
 
 from auslib.blob import ReleaseBlobV1
 
@@ -44,7 +48,7 @@ class WrongNumberOfRowsError(SQLAlchemyError):
 
 class AUSTransaction(object):
     """Manages a single transaction. Requires a connection object.
-    
+
        @param conn: connection object to perform the transaction on
        @type conn: sqlalchemy.engine.base.Connection
     """
@@ -111,7 +115,7 @@ class AUSTable(object):
     """Base class for all AUS Tables. By default, all tables have a history
        table created for them, too, which mirrors their own structure and adds
        a record of who made a change, and when the change happened.
-       
+
        @param history: Whether or not to create a history table for this table.
                        When True, a History object will be created for this
                        table, and all changes will be logged to it. Defaults
@@ -124,7 +128,7 @@ class AUSTable(object):
                          updates.
        @type versioned: bool
     """
-    def __init__(self, history=True, versioned=True):
+    def __init__(self, dialect, history=True, versioned=True):
         self.t = self.table
         # Enable versioning, if required
         if versioned:
@@ -138,7 +142,7 @@ class AUSTable(object):
                 self.primary_key.append(col)
         # Set-up a history table to do logging in, if required
         if history:
-            self.history = History(self.t.metadata, self)
+            self.history = History(dialect, self.t.metadata, self)
         else:
             self.history = None
         self.log = logging.getLogger(self.__class__.__name__)
@@ -165,9 +169,9 @@ class AUSTable(object):
             raise WrongNumberOfRowsError("where clause matches multiple rows (primary keys: %s)" % rows)
         return rows[0]
 
-    def _selectStatement(self, columns=None, where=None, order_by=None, limit=None, distinct=False):
+    def _selectStatement(self, columns=None, where=None, order_by=None, limit=None, offset=None, distinct=False):
         """Create a SELECT statement on this table.
-           
+
            @param columns: Column objects to select. Defaults to None, meaning select all columns
            @type columns: A sequence of sqlalchemy.schema.Column objects or column names as strings
            @param where: Conditions to apply on this select. Defaults to None, meaning no conditions
@@ -182,9 +186,9 @@ class AUSTable(object):
            @rtype: sqlalchemy.sql.expression.Select
         """
         if columns:
-            query = select(columns, order_by=order_by, limit=limit, distinct=distinct)
+            query = select(columns, order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         else:
-            query = self.t.select(order_by=order_by, limit=limit, distinct=distinct)
+            query = self.t.select(order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         if where:
             for cond in where:
                 query = query.where(cond)
@@ -194,7 +198,7 @@ class AUSTable(object):
     def select(self, transaction=None, **kwargs):
         """Perform a SELECT statement on this table.
            See AUSTable._selectStatement for possible arguments.
-           
+
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         query = self._selectStatement(**kwargs)
@@ -205,7 +209,7 @@ class AUSTable(object):
 
     def _insertStatement(self, **columns):
         """Create an INSERT statement for this table
-           
+
            @param columns: Data to insert
            @type colmuns: dict
 
@@ -218,7 +222,7 @@ class AUSTable(object):
            data_version will be set to 1. If this table has history enabled, two rows
            will be created in that table: one representing the current state (NULL),
            and one representing the new state.
-           
+
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         data = columns.copy()
@@ -259,7 +263,7 @@ class AUSTable(object):
 
            @param where: Conditions to apply on this select.
            @type where: A sequence of sqlalchemy.sql.expression.ClauseElement objects
-           
+
            @rtype: sqlalchemy.sql.expression.Delete
         """
         query = self.t.delete()
@@ -388,6 +392,12 @@ class AUSTable(object):
             with AUSTransaction(self.getEngine()) as trans:
                 return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
 
+    def getRecentChanges(self, limit=10, transaction=None):
+        return self.history.select(transaction=transaction,
+                                   limit=limit,
+                                   order_by=self.history.timestamp.desc())
+
+
 class History(AUSTable):
     """Represents a history table that may be attached to another AUSTable.
        History tables mirror the structure of their `baseTable', with the exception
@@ -398,18 +408,24 @@ class History(AUSTable):
        will generate appropriate INSERTs to the History table given appropriate
        inputs, and are documented below. History tables are never versioned,
        and cannot have history of their own."""
-    def __init__(self, metadata, baseTable):
+    def __init__(self, dialect, metadata, baseTable):
         self.baseTable = baseTable
         self.table = Table('%s_history' % baseTable.t.name, metadata,
             Column('change_id', Integer, primary_key=True, autoincrement=True),
             Column('changed_by', String(100), nullable=False),
-            # Timestamps are stored as an integer, but actually contain
-            # precision down to the millisecond, achieved through
-            # multiplication.
-            # BigInteger is used here because SQLAlchemy's Integer translates
-            # to Integer(11) in MySQL, which is too small for our needs.
-            Column('timestamp', BigInteger, nullable=False)
         )
+        # Timestamps are stored as an integer, but actually contain
+        # precision down to the millisecond, achieved through
+        # multiplication.
+        # SQLAlchemy's SQLite dialect doesn't support fully support BigInteger.
+        # The Column will work, but it ends up being a NullType Column which
+        # breaks our upgrade unit tests. Because of this, we make sure to use
+        # a plain Integer column for SQLite. In MySQL, an Integer is
+        # Integer(11), which is too small for our needs.
+        if dialect == 'sqlite':
+            self.table.append_column(Column('timestamp', Integer, nullable=False))
+        else:
+            self.table.append_column(Column('timestamp', BigInteger, nullable=False))
         self.base_primary_key = [pk.name for pk in baseTable.primary_key]
         for col in baseTable.t.get_children():
             newcol = col.copy()
@@ -418,7 +434,7 @@ class History(AUSTable):
             else:
                 newcol.nullable = True
             self.table.append_column(newcol)
-        AUSTable.__init__(self, history=False, versioned=False)
+        AUSTable.__init__(self, dialect, history=False, versioned=False)
 
     def getTimestamp(self):
         t = int(time.time() * 1000)
@@ -483,7 +499,7 @@ class History(AUSTable):
 
         changes = self.select( where=where, transaction=transaction, limit=1, order_by=self.change_id.desc())
         length = len(changes)
-        if(length == 0):   
+        if(length == 0):
             self.log.debug("No previous changes found")
             return None
         return changes[0]
@@ -551,7 +567,7 @@ class History(AUSTable):
 
         # If the previous change is NULL, then the operation is an INSERT
         # We will need to do a delete.
-        elif self._isInsert(prev_base_state, row_primary_keys): 
+        elif self._isInsert(prev_base_state, row_primary_keys):
                 self.log.debug("reverting an INSERT")
                 where = []
                 for i in range(0, len(self.base_primary_key)):
@@ -560,7 +576,7 @@ class History(AUSTable):
 
                 self.baseTable.delete(changed_by = changed_by, transaction=transaction, where=where, old_data_version = change['data_version'])
 
-        elif self._isUpdate(cur_base_state, prev_base_state, row_primary_keys): 
+        elif self._isUpdate(cur_base_state, prev_base_state, row_primary_keys):
         # If this operation is an UPDATE
         # We will need to do an update to the previous change's state
             self.log.debug("reverting an UPDATE")
@@ -596,7 +612,7 @@ class Rules(AUSTable):
             Column('headerArchitecture', String(10)),
             Column('comment', String(500))
         )
-        AUSTable.__init__(self)
+        AUSTable.__init__(self, dialect)
 
     def _matchesRegex(self, foo, bar):
         # Expand wildcards and use ^/$ to make sure we don't succeed on partial
@@ -636,6 +652,11 @@ class Rules(AUSTable):
     def getOrderedRules(self, transaction=None):
         """Returns all of the rules, sorted in ascending order"""
         return self.select(order_by=(self.priority, self.version, self.mapping), transaction=transaction)
+
+    def countRules(self, transaction=None):
+        """Returns a number of the count of rules"""
+        count, = self.t.count().execute().fetchone()
+        return count
 
     def getRulesMatchingQuery(self, updateQuery, fallbackChannel, transaction=None):
         """Returns all of the rules that match the given update query.
@@ -705,7 +726,7 @@ class Releases(AUSTable):
         else:
             dataType = Text
         self.table.append_column(Column('data', dataType, nullable=False))
-        AUSTable.__init__(self)
+        AUSTable.__init__(self, dialect)
 
     def getReleases(self, name=None, product=None, version=None, limit=None, transaction=None):
         self.log.debug("Looking for releases with:")
@@ -726,15 +747,26 @@ class Releases(AUSTable):
             row['data'] = blob
         return rows
 
-    def getReleaseNames(self, product=None, version=None, limit=None, transaction=None):
+    def countReleases(self, transaction=None):
+        """Returns a number of the count of releases"""
+        count, = self.t.count().execute().fetchone()
+        return count
+
+    def getReleaseInfo(self, product=None, version=None, limit=None, transaction=None, nameOnly=False):
         where = []
         if product:
             where.append(self.product==product)
         if version:
             where.append(self.version==version)
-        column = [self.name]
+        if nameOnly:
+            column = [self.name]
+        else:
+            column = [self.name, self.product, self.version]
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
         return rows
+
+    def getReleaseNames(self, **kwargs):
+        return self.getReleaseInfo(nameOnly=True, **kwargs)
 
     def getReleaseBlob(self, name, transaction=None):
         try:
@@ -778,7 +810,13 @@ class Releases(AUSTable):
                     }
                 }
             }
-        if platform not in releaseBlob['platforms']:
+
+        if platform in releaseBlob['platforms']:
+            # If the platform we're given is aliased to another one, we need
+            # to resolve that before doing any updating. If we don't, the data
+            # will go into an aliased platform and be ignored!
+            platform = releaseBlob.getResolvedPlatform(platform)
+        else:
             releaseBlob['platforms'][platform] = dict(locales=dict())
         releaseBlob['platforms'][platform]['locales'][locale] = data
         if not releaseBlob.isValid():
@@ -828,7 +866,7 @@ class Permissions(AUSTable):
             Column('username', String(100), primary_key=True),
             Column('options', Text)
         )
-        AUSTable.__init__(self)
+        AUSTable.__init__(self, dialect)
 
     def assertPermissionExists(self, permission):
         if permission not in self.allPermissions.keys():
@@ -842,6 +880,10 @@ class Permissions(AUSTable):
     def getAllUsers(self, transaction=None):
         res = self.select(columns=[self.username], distinct=True, transaction=transaction)
         return [r['username'] for r in res]
+
+    def countAllUsers(self, transaction=None):
+        res = self.select(columns=[self.username], distinct=True, transaction=transaction)
+        return len(res)
 
     def grantPermission(self, changed_by, username, permission, options=None, transaction=None):
         self.assertPermissionExists(permission)
@@ -930,12 +972,14 @@ class Permissions(AUSTable):
 
 class AUSDatabase(object):
     engine = None
+    migrate_repo = path.join(path.dirname(__file__), "migrate")
 
     def __init__(self, dburi=None):
         """Create a new AUSDatabase. Before this object is useful, dburi must be
            set, either through the constructor or setDburi()"""
         if dburi:
             self.setDburi(dburi)
+        self.log = logging.getLogger(self.__class__.__name__)
 
     def setDburi(self, dburi):
         """Setup the database connection. Note that SQLAlchemy only opens a connection
@@ -951,8 +995,33 @@ class AUSDatabase(object):
         self.permissionsTable = Permissions(self.metadata, dialect)
         self.metadata.bind = self.engine
 
-    def createTables(self):
-        self.metadata.create_all()
+    def create(self, version=None):
+        # Migrate's "create" merely declares a database to be under its control,
+        # it doesn't actually create tables or upgrade it. So we need to call it
+        # and then do the upgrade to get to the state we want. We also have to
+        # tell create that we're creating at version 0 of the database, otherwise
+        # uprgade will do nothing!
+        migrate.versioning.schema.ControlledSchema.create(self.engine, self.migrate_repo, 0)
+        self.upgrade(version)
+
+    def upgrade(self, version=None):
+        # This method was taken from Buildbot: https://github.com/buildbot/buildbot/blob/87108ec4088dc7fd5394ac3c1d0bd3b465300d92/master/buildbot/db/model.py#L455
+        # http://code.google.com/p/sqlalchemy-migrate/issues/detail?id=100
+        # means  we cannot use the migrate.versioning.api module.  So these
+        # methods perform similar wrapping functions to what is done by the API
+        # functions, but without disposing of the engine.
+        schema = migrate.versioning.schema.ControlledSchema(self.engine, self.migrate_repo)
+        changeset = schema.changeset(version)
+        for step, change in changeset:
+            self.log.debug('migrating schema version %s -> %d' % (step, step + 1))
+            schema.runchange(step, change, 1)
+
+    def downgrade(self, version):
+        schema = migrate.versioning.schema.ControlledSchema(self.engine, self.migrate_repo)
+        changeset = schema.changeset(version)
+        for step, change in changeset:
+            self.log.debug('migrating schema version %s -> %d' % (step, step - 1))
+            schema.runchange(step, change, -1)
 
     def reset(self):
         self.engine = None

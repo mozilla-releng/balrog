@@ -1,10 +1,13 @@
 import mock
+import os
 import simplejson as json
-from tempfile import NamedTemporaryFile
+from tempfile import mkstemp
 import unittest
 
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select
 from sqlalchemy.engine.reflection import Inspector
+
+import migrate.versioning.api
 
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
   AUSTransaction, TransactionError, OutdatedDataError
@@ -26,7 +29,18 @@ class NamedFileDatabaseMixin(object):
         http://www.sqlalchemy.org/trac/wiki/FAQ#IamusingmultipleconnectionswithaSQLitedatabasetypicallytotesttransactionoperationandmytestprogramisnotworking
        """
     def setUp(self):
-        self.dburi = 'sqlite:///%s' % NamedTemporaryFile().name
+        self.tmpfiles = []
+        self.dburi = 'sqlite:///%s' % self.getTempfile()
+
+    def tearDown(self):
+        for fd, t in tmpfiles:
+            os.close(fd)
+            os.remove(t)
+
+    def getTempfile(self):
+        fd, t = mkstemp()
+        self.tmpfiles.append((fd, t))
+        return t
 
 class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
@@ -97,13 +111,13 @@ class TestTableMixin(object):
             def __init__(self, metadata):
                 self.table = Table('test', metadata, Column('id', Integer, primary_key=True, autoincrement=True),
                                                      Column('foo', Integer))
-                AUSTable.__init__(self)
+                AUSTable.__init__(self, 'sqlite')
         class TestAutoincrementTable(AUSTable):
             def __init__(self, metadata):
-                self.table = Table('test-autoincrement', metadata, 
+                self.table = Table('test-autoincrement', metadata,
                                                     Column('id', Integer, primary_key=True, autoincrement=True),
                                                     Column('foo', Integer))
-                AUSTable.__init__(self)
+                AUSTable.__init__(self, 'sqlite')
         self.test = TestTable(self.metadata)
         self.testAutoincrement = TestAutoincrementTable(self.metadata)
         self.metadata.create_all()
@@ -117,10 +131,10 @@ class TestMultiplePrimaryTableMixin(object):
         self.metadata = MetaData(self.engine)
         class TestTable(AUSTable):
             def __init__(self, metadata):
-                self.table = Table('test', metadata, Column('id1', Integer, primary_key=True), 
+                self.table = Table('test', metadata, Column('id1', Integer, primary_key=True),
                                                      Column('id2', Integer, primary_key=True),
                                                      Column('foo', Integer))
-                AUSTable.__init__(self)
+                AUSTable.__init__(self, 'sqlite')
         self.test = TestTable(self.metadata)
         self.metadata.create_all()
         self.test.t.insert().execute(id1=1, id2=1, foo=33, data_version=1)
@@ -349,7 +363,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             t.return_value = 1.0
 
             ret = self.test.t.select().execute().fetchall()
-    
+
             # Insert the item
             self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
             self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
@@ -369,7 +383,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             t.return_value = 1.0
 
             ret = self.test.t.select().execute().fetchall()
-            
+
             # Insert the thing we are going to delete
             self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
             self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
@@ -387,7 +401,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
             ret = self.test.t.select().execute().fetchall()
             self.assertEquals(len(ret), 4, msg=ret)
-            
+
 class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTableMixin, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
@@ -473,7 +487,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
             self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=3)).execute()
             self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id1=4, id2=3, data_version=None, foo=None)).execute()
             self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id1=4, id2=3, data_version=1, foo=271)).execute()
-            
+
 
             self.test.t.delete().where(self.test.id1==4).where(self.test.id2==3).execute()
             self.test.history.t.insert(values=dict(changed_by='bobby', change_id=3, timestamp=1000, id1=4, id2=3, data_version=None, foo=None)).execute()
@@ -485,7 +499,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
 
             ret = self.test.t.select().execute().fetchall()
             self.assertEquals(len(ret), 5, msg=ret)
-            
+
 
 class RulesTestMixin(object):
     def _stripNullColumns(self, rules):
@@ -502,7 +516,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
+        self.db.create()
         self.paths = self.db.rules
         self.paths.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', throttle=100, mapping='c', update_type='z', data_version=1)
         self.paths.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', throttle=100, mapping='b', update_type='z', data_version=1)
@@ -589,11 +603,11 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEquals(rule, expected)
 
     def testAddRule(self):
-        what = dict(throttle=11,   
+        what = dict(throttle=11,
                     mapping='c',
                     update_type='z',
                     priority=60)
-        rule_id = self.paths.addRule(changed_by='bill', what=what) 
+        rule_id = self.paths.addRule(changed_by='bill', what=what)
         rule_id = rule_id[0]
         rules = self.paths.t.select().where(self.paths.rule_id==rule_id).execute().fetchall()
         copy_rule = dict(rules[0].items())
@@ -617,12 +631,16 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         expected = [dict(rule_id=1, priority=100, throttle=100, version='3.5', buildTarget='d', mapping='d', update_type='z', data_version=1)]
         self.assertEquals(rule, expected)
 
+    def testGetNumberOfRules(self):
+        # because 5 rules were set up in the setUp()
+        self.assertEquals(self.paths.countRules(), 5)
+
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
+        self.db.create()
         self.rules = self.db.rules
         self.rules.t.insert().execute(id=1, priority=100, version='4.0*', throttle=100, update_type='z', data_version=1)
         self.rules.t.insert().execute(id=2, priority=100, channel='release*', throttle=100, update_type='z', data_version=1)
@@ -687,7 +705,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
+        self.db.create()
         self.releases = self.db.releases
         self.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name=1)), data_version=1)
         self.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name=1)), data_version=1)
@@ -711,30 +729,90 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testGetReleaseBlobNonExistentRelease(self):
         self.assertRaises(KeyError, self.releases.getReleaseBlob, name='z')
 
+    def testGetReleaseInfoAll(self):
+        releases = self.releases.getReleaseInfo()
+        expected = [ dict(name='a', product='a', version='a'),
+                dict(name='ab', product='a', version='a'),
+                dict(name='b', product='b', version='b'),
+                dict(name='c', product='c', version='c')]
+        self.assertEquals(releases, expected)
+
+    def testGetReleaseInfoProduct(self):
+        releases = self.releases.getReleaseInfo(product='a')
+        expected = [ dict(name='a', product='a', version='a'),
+                dict(name='ab', product='a', version='a')]
+        self.assertEquals(releases, expected)
+
+    def testGetReleaseInfoVersion(self):
+        releases = self.releases.getReleaseInfo(version='b')
+        expected = [ dict(name='b', product='b', version='b'), ]
+        self.assertEquals(releases, expected)
+
+    def testGetReleaseInfoNoMatch(self):
+        releases = self.releases.getReleaseInfo(product='a', version='b')
+        expected = [ ]
+        self.assertEquals(releases, expected)
+
+    def testGetReleaseNames(self):
+        releases = self.releases.getReleaseNames()
+        expected = [ dict(name='a'),
+                dict(name='ab'),
+                dict(name='b'),
+                dict(name='c')]
+        self.assertEquals(releases, expected)
+
+    def testGetReleaseNamesProduct(self):
+        releases = self.releases.getReleaseNames(product='a')
+        expected = [ dict(name='a'),
+                dict(name='ab')]
+        self.assertEquals(releases, expected)
+
+    def testGetReleaseNamesVersion(self):
+        releases = self.releases.getReleaseNames(version='b')
+        expected = [ dict(name='b'), ]
+        self.assertEquals(releases, expected)
+
+    def testGetReleaseNamesNoMatch(self):
+        releases = self.releases.getReleaseNames(product='a', version='b')
+        expected = [ ]
+        self.assertEquals(releases, expected)
+
+    def testGetNumberOfReleases(self):
+        # because 4 releases were set up in the setUp()
+        self.assertEquals(self.releases.countReleases(), 4)
+
+
 class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     """Tests for the Releases class that depend on version 1 of the blob schema."""
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
+        self.db.create()
         self.releases = self.db.releases
-        blob = json.dumps(dict(
-            name='a',
-            platforms=dict(
-                p=dict(
-                    locales=dict(
-                        l=dict(
-                            complete=dict(
-                                filesize=1234)
-                            )
-                        )
-                    )
-                )
-            )
-        )
-        self.releases.t.insert().execute(name='a', product='a', version='a', data_version=1, data=blob)
-        blob = json.dumps(dict(name='b'))
-        self.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data=blob)
+        self.releases.t.insert().execute(name='a', product='a', version='a', data_version=1, data="""
+{
+    "name": "a",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 1234
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
+        }
+    }
+}
+""")
+        self.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data="""
+{
+    "name": "b"
+}
+""")
 
     def testAddRelease(self):
         blob = ReleaseBlobV1(name=4)
@@ -763,56 +841,6 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         blob['foo'] = 'bar'
         self.assertRaises(ValueError, self.releases.updateRelease, changed_by='bill', name='b', blob=blob, old_data_version=1)
 
-    def testGetReleaseNames(self):
-        releases = self.releases.getReleaseNames()
-        expected = [ dict(name='a'), 
-                dict(name='ab'), 
-                dict(name='b'), 
-                dict(name='c')] 
-        self.assertEquals(releases, expected)
-
-        releases = self.releases.getReleaseNames(product='a')
-        expected = [ dict(name='a'), 
-                dict(name='ab')] 
-        self.assertEquals(releases, expected)
-
-        releases = self.releases.getReleaseNames(version='b')
-        expected = [ dict(name='b'), ] 
-        self.assertEquals(releases, expected)
-
-        releases = self.releases.getReleaseNames(product='a', version='b')
-        expected = [ ] 
-        self.assertEquals(releases, expected)
-
-class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
-    """Tests for the Releases class that depend on version 1 of the blob schema."""
-    def setUp(self):
-        MemoryDatabaseMixin.setUp(self)
-        self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
-        self.releases = self.db.releases
-        self.releases.t.insert().execute(name='a', product='a', version='a', data_version=1, data="""
-{
-    "name": "a",
-    "platforms": {
-        "p": {
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 1234
-                    }
-                }
-            }
-        }
-    }
-}
-""")
-        self.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data="""
-{
-    "name": "b"
-}
-""")
-
     def testAddLocaleToRelease(self):
         data = dict(complete=dict(hashValue='abc'))
         self.releases.addLocaleToRelease(name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
@@ -834,6 +862,9 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     }
                 }
             }
+        },
+        "p2": {
+            "alias": "p"
         }
     }
 }
@@ -856,6 +887,9 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     }
                 }
             }
+        },
+        "p2": {
+            "alias": "p"
         }
     }
 }
@@ -901,6 +935,9 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 }
             }
         },
+        "p2": {
+            "alias": "p"
+        },
         "q": {
             "locales": {
                 "l": {
@@ -915,11 +952,41 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
 """)
         self.assertEqual(ret, expected)
 
+    def testAddLocaleToReleaseResolveAlias(self):
+        data = dict(complete=dict(filesize=444))
+        self.releases.addLocaleToRelease(name='a', platform='p2', locale='j', data=data, old_data_version=1, changed_by='bill')
+        ret = json.loads(select([self.releases.data]).where(self.releases.name=='a').execute().fetchone()[0])
+        expected = json.loads("""
+{
+    "name": "a",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 1234
+                    }
+                },
+                "j": {
+                    "complete": {
+                        "filesize": 444
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
+        }
+    }
+}
+""")
+        self.assertEqual(ret, expected)
+
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.createTables()
+        self.db.create()
         self.permissions = self.db.permissions
         self.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         self.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
@@ -957,6 +1024,10 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetAllUsers(self):
         self.assertEquals(self.permissions.getAllUsers(), ['bill', 'bob', 'cathy'])
+
+    def testCountAllUsers(self):
+        # bill, bob and cathy
+        self.assertEquals(self.permissions.countAllUsers(),  3)
 
     def testGetPermission(self):
         expected = {
@@ -1002,13 +1073,6 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertTrue(self.permissions.hasUrlPermission('bob', '/releases/:name', 'DELETE', dict(product='fake')))
 
 class TestDB(unittest.TestCase):
-    def testCreateTables(self):
-        db = AUSDatabase()
-        db.setDburi('sqlite:///:memory:')
-        db.createTables()
-        insp = Inspector.from_engine(db.engine)
-        self.assertNotEqual(insp.get_table_names(), [])
-
     def testSetDburiAlreadySetup(self):
         db = AUSDatabase('sqlite:///:memory:')
         self.assertRaises(AlreadySetupError, db.setDburi, 'sqlite:///:memory:')
@@ -1018,6 +1082,19 @@ class TestDB(unittest.TestCase):
         db.reset()
         # If we can set the dburi again, reset worked!
         db.setDburi('sqlite:///:memory:')
-        db.createTables()
+        db.create()
         insp = Inspector.from_engine(db.engine)
         self.assertNotEqual(insp.get_table_names(), [])
+
+class TestDBUpgrade(unittest.TestCase, NamedFileDatabaseMixin):
+    def setUp(self):
+        NamedFileDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.metadata.create_all()
+
+    def testModelIsSameAsRepository(self):
+        db2 = AUSDatabase('sqlite:///' + self.getTempfile())
+        db2.create()
+        diff = migrate.versioning.api.compare_model_to_db(db2.engine, self.db.migrate_repo, self.db.metadata)
+        if diff:
+            self.fail(str(diff))

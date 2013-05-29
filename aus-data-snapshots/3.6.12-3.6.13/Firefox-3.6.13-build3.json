@@ -18,7 +18,7 @@
         "partial":  "firefox-3.6.13-partial-3.6.12",
         "complete": "firefox-3.6.13-complete"
     },
-    "hashFunction": "SHA512",
+    "hashFunction": "sha512",
     "fakePartials": 1,
     "platforms": {
         "Darwin_Universal-gcc3": {

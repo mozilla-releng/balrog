@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser = OptionParser(doc)
     parser.add_option("-d", "--db", dest="db", default=None, help="database to manage, in URI format")
     parser.add_option("-r", "--release", dest="release", default=None, help="Release to retrieve blob for")
-    parser.add_option("-u", "--ugly", dest="ugly", default=False, help="Don't format output")
+    parser.add_option("-u", "--ugly", dest="ugly", default=False, action="store_true", help="Don't format output")
     options, args = parser.parse_args()
 
     if not options.db or not options.release:

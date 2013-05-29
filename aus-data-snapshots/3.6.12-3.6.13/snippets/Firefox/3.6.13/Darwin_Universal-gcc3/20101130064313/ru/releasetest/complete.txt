@@ -1,7 +1,7 @@
 version=1
 type=complete
 url=http://download.mozilla.org/?product=firefox-3.6.13-complete&os=osx&lang=ru
-hashFunction=SHA512
+hashFunction=sha512
 hashValue=705e4420cd426e0c92b492d0ddde15153b11d9a5a51eb8f5f4435bae8e66977d638b39dbd830f71715c526e9c234f6ed74099f29b879dabccf28553cb1775241
 size=19354660
 build=20101203074432

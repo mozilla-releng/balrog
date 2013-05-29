@@ -1,5 +1,17 @@
-<ul id='permissions'>
-    {% for form in permissions %}
-        {% include 'fragments/permission.html' %}
-    {% endfor %}
-</ul>
+
+<form id='permissions'>
+    <table>
+        <thead>
+            <tr>
+                <th>Permission</th>
+                <th>Options</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for form in permissions %}
+            {% include 'fragments/permission_row.html' %}
+        {% endfor %}
+        </tbody>
+    </table>
+</form>

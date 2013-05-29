@@ -250,7 +250,7 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
     def testGetReleases(self):
         ret = self._get("/releases.html")
         self.assertStatusCode(ret, 200)
-        self.assertTrue('<table id="Releases_table">' in ret.data, msg=ret.data)
+        self.assertTrue('<table id="Releases_table"' in ret.data, msg=ret.data)
 
     # Test get of a release's full data column, queried by name
     def testGetSingleRelease(self):
@@ -274,7 +274,7 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
     }
 }
 """))
-                                                            
+
                                                         #json.dumps(newReleaseFile.getvalue())))
         self.assertEquals(ret.status_code, 201, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         r = db.releases.t.select().where(db.releases.name=='new_release').execute().fetchall()
@@ -296,3 +296,137 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
 }
 """))
 
+
+class TestReleaseHistoryView(ViewTest, HTMLTestMixin):
+    def testGetNoRevisions(self):
+        url = '/releases/a/revisions/'
+        ret = self._get(url)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertTrue('There were no previous revisions' in ret.data)
+
+    def testGetRevisions(self):
+        # Make some changes to a release
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True))
+        ret = self._post(
+            '/releases/d',
+            data=dict(
+                data=data,
+                product='d',
+                version='222.0',
+                data_version=1
+            )
+        )
+        self.assertStatusCode(ret, 200)
+
+        ret = self._post(
+            '/releases/d',
+            data=dict(
+                data=data,
+                product='d',
+                version='333.0',
+                data_version=3
+            )
+        )
+        self.assertStatusCode(ret, 200)
+
+        url = '/releases/d/revisions/'
+        ret = self._get(url)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertTrue('There were no previous revisions' not in ret.data)
+        self.assertTrue('222.0' in ret.data)
+        self.assertTrue('333.0' in ret.data)
+
+    def testPostRevisionRollback(self):
+        # Make some changes to a release
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True))
+        ret = self._post(
+            '/releases/d',
+            data=dict(
+                data=data,
+                product='d',
+                version='222.0',
+                data_version=1
+            )
+        )
+        self.assertStatusCode(ret, 200)
+
+        # XXX why does the data_version increment twice?
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=False))
+        ret = self._post(
+            '/releases/d',
+            data=dict(
+                data=data,
+                product='d',
+                version='333.0',
+                data_version=3
+            )
+        )
+        self.assertStatusCode(ret, 200)
+
+        table = db.releases
+        row, = table.select(where=[table.name == 'd'])
+        self.assertEqual(row['version'], '333.0')
+        self.assertEqual(row['data_version'], 5)
+        data = json.loads(row['data'])
+        self.assertEqual(data['fakePartials'], False)
+
+        query = table.history.t.count()
+        count, = query.execute().first()
+        self.assertEqual(count, 2 * 2)
+
+        # Oh no! We prefer the version 222.0
+        row, = table.history.select(
+            where=[table.history.version == '222.0'],
+            limit=1
+        )
+        change_id = row['change_id']
+        assert row['name'] == 'd'  # one of the fixtures
+
+        url = '/releases/d/revisions/'
+        ret = self._post(url, {'change_id': change_id})
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        query = table.history.t.count()
+        count, = query.execute().first()
+        self.assertEqual(count, 2 * 2 + 1)
+
+        row, = table.select(where=[table.name == 'd'])
+        self.assertEqual(row['version'], '222.0')
+        self.assertEqual(row['data_version'], 6)
+
+    def testPostRevisionRollbackBadRequests(self):
+        # when posting you need both the rule_id and the change_id
+        ret = self._post('/releases/CRAZYNAME/revisions/', {'change_id': 1})
+        self.assertEquals(ret.status_code, 404)
+
+        url = '/releases/d/revisions/'
+        ret = self._post(url, {'change_id': 999})
+        self.assertEquals(ret.status_code, 404)
+
+        ret = self._post(url)
+        self.assertEquals(ret.status_code, 400)
+
+    def testGetRevisionsWithPagination(self):
+        # Make some changes to a release
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True))
+        for i in range(0, 33, 2):  # any largish number
+            ret = self._post(
+                '/releases/d',
+                data=dict(
+                    data=data,
+                    product='d',
+                    version='%d.0' % i,
+                    data_version=1 + i
+                )
+            )
+            self.assertStatusCode(ret, 200)
+
+        url = '/releases/d/revisions/'
+        ret = self._get(url)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertTrue('There were no previous revisions' not in ret.data)
+        self.assertTrue('?page=2' in ret.data)
+
+        ret2 = self._get(url + '?page=2')
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertTrue(ret.data != ret2.data)

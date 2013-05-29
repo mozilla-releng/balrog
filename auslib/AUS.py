@@ -47,9 +47,6 @@ class AUS3:
                 return True
         return False
 
-    def createTables(self):
-        self.db.createTables()
-
     def identifyRequest(self, updateQuery):
         self.log.debug("Got updateQuery: %s", updateQuery)
         buildTarget = updateQuery['buildTarget']

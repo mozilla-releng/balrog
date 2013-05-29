@@ -1,3 +1,7 @@
 *.pyc
 test.done
 *.db
+.vagrant
+admin.ini
+.coverage
+htmlcov

@@ -1,7 +1,7 @@
 version=1
 type=complete
 url=http://download.mozilla.org/?product=firefox-5.0.1-complete&os=win&lang=ja
-hashFunction=SHA512
+hashFunction=sha512
 hashValue=e2ad175c73379979570267e20d681f61d5ce815cba97f261f21637d6d7a7ef27e090346fc80fd091f4e3f064ac2ae017d5bdf61d8e6f6aaad4242a03c9002fba
 size=17393472
 build=20110707182747

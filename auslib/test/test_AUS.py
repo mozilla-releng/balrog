@@ -61,7 +61,7 @@ class TestAUS(unittest.TestCase):
         self.AUS = AUS3()
         self.AUS.setSpecialHosts(('http://special.org/',))
         self.AUS.setDb('sqlite:///%s' % NamedTemporaryFile().name)
-        self.AUS.createTables()
+        self.AUS.db.create()
         self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data="""
 {
     "name": "b",

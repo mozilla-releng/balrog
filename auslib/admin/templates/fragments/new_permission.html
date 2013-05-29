@@ -1,8 +1,11 @@
 <form id='new_permission'
-      onsubmit='addNewPermission("{{ username }}", $("#{{ form.permission.id }}").val(), $("#{{ form.options.id }}").val(), $("#permissions")); return false'>
-    {{ form.permission.label()|safe }}:
+      onsubmit='addNewPermission($(this), "{{ username }}", $("#{{ form.permission.id }}").val(), $("#{{ form.options.id }}").val(), $("#permissions")); return false'>
+    {{ form.permission.label()|safe }}
     {{ form.permission()|safe }}
-    {{ form.options.label()|safe }}:
+    {{ form.options.label()|safe }}
     {{ form.options()|safe }}
-    <input type='submit' value='Add' />
+
+    <div>
+        <button type="submit" class="btn">Add</button>
+    </div>
 </form>

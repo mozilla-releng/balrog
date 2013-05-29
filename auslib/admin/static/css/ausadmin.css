@@ -1,0 +1,7 @@
+.loading {
+    display: none
+}
+
+form.disabled {
+    opacity: 0.7;
+}

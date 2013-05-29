@@ -1,7 +1,7 @@
 version=1
 type=complete
 url=http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/win32/fr/firefox-3.6.13.complete.mar
-hashFunction=SHA512
+hashFunction=sha512
 hashValue=fc3c4f435fccba14fbe5c4b6bdb8cd4b4a9d8b8943684406580b58abe7b166e6207e1fe5adf51b8371bfbcd78a6775e1f2cc8203aa1c8f17b6969e759d31b526
 size=11591117
 build=20101203075014

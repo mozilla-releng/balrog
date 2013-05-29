@@ -18,7 +18,7 @@ def setpermission(f):
 def permission2selector(permission):
     """Converts a permission to a valid CSS selector."""
     return permission.replace('/', '').replace(':', '')
-        
+
 class UsersView(AdminView):
     """/users"""
     def get(self):
@@ -60,7 +60,7 @@ class SpecificPermissionView(AdminView):
         else:
             prefix = permission2selector(permission)
             form = ExistingPermissionForm(prefix=prefix, permission=permission, options=perm['options'], data_version=perm['data_version'])
-            return render_template('fragments/permission.html', username=username, form=form)
+            return render_template('fragments/permission_row.html', username=username, form=form)
 
     @setpermission
     @requirelogin

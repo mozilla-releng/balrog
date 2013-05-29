@@ -18,7 +18,7 @@
         "partial":  "firefox-4.0rc2-partial-4.0rc1",
         "complete": "firefox-4.0rc2-complete"
     },
-    "hashFunction": "SHA512",
+    "hashFunction": "sha512",
     "fakePartials": 1,
     "platforms": {
         "Linux_x86_64-gcc3": {

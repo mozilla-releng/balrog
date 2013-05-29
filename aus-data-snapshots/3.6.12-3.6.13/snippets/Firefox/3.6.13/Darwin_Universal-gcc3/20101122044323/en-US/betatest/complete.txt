@@ -1,7 +1,7 @@
 version=1
 type=complete
 url=http://stage-old.mozilla.org/pub/mozilla.org/firefox/nightly/3.6.13-candidates/build3/update/mac/en-US/firefox-3.6.13.complete.mar
-hashFunction=SHA512
+hashFunction=sha512
 hashValue=dc58fd5bb7c20900d87e8ea8b17d9c85c4edb627d9a3da1f26f9662718c691e7cb2cf2e47480b7c3e04290d826ae50e9ffa589a195b1b61a107f7e0cef457d0c
 size=19066687
 build=20101203074432
