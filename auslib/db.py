@@ -669,10 +669,20 @@ class Rules(AUSTable):
             ((self.buildID==updateQuery['buildID']) | (self.buildID==None)) &
             ((self.locale==updateQuery['locale']) | (self.locale==None)) &
             ((self.osVersion==updateQuery['osVersion']) | (self.osVersion==None)) &
-            ((self.distribution==updateQuery['distribution']) | (self.distribution==None)) &
-            ((self.distVersion==updateQuery['distVersion']) | (self.distVersion==None)) &
             ((self.headerArchitecture==updateQuery['headerArchitecture']) | (self.headerArchitecture==None))
         ]
+        # Query version 2 doesn't have distribution information, and to keep
+        # us maximally flexible, we won't match any rules that have
+        # distribution update set.
+        if updateQuery['queryVersion'] == 2:
+            where.extend([(self.distribution==None) & (self.distVersion==None)])
+        # Only query versions 3 and 4 have distribution information, so we
+        # need to consider it.
+        if updateQuery['queryVersion'] in (3, 4):
+            where.extend([
+                ((self.distribution==updateQuery['distribution']) | (self.distribution==None)) &
+                ((self.distVersion==updateQuery['distVersion']) | (self.distVersion==None))
+            ])
         if updateQuery['force'] == False:
             where.append(self.throttle > 0)
         rules = self.select(where=where, transaction=transaction)

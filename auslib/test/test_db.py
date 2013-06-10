@@ -540,7 +540,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(name='', product='', version='3.5', channel='',
                  buildTarget='a', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
-                 force=False
+                 force=False, queryVersion=3,
             ),
             fallbackChannel=''
         )
@@ -553,7 +553,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(name='', product='', version='3.5', channel='',
                  buildTarget='d', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
-                 force=False
+                 force=False, queryVersion=3,
             ),
             fallbackChannel=''
         )
@@ -569,7 +569,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(name='', product='', version='3.3', channel='',
                  buildTarget='d', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
-                 force=False
+                 force=False, queryVersion=3,
             ),
             fallbackChannel=''
         )
@@ -585,7 +585,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(name='', product='', version='3.3', channel='',
                  buildTarget='d', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
-                 force=True
+                 force=True, queryVersion=3,
             ),
             fallbackChannel=''
         )
@@ -651,7 +651,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(name='', product='', version='4.0', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
-                 force=False
+                 force=False, queryVersion=3,
             ),
             fallbackChannel=''
         )
@@ -661,7 +661,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(name='', product='', version='4.0b2', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
-                 force=False
+                 force=False, queryVersion=3,
             ),
             fallbackChannel=''
         )
@@ -671,7 +671,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(name='', product='', version='4.0.1', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
-                 force=False
+                 force=False, queryVersion=3,
             ),
             fallbackChannel=''
         )
@@ -684,7 +684,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(name='', product='', version='', channel='releasetest',
                  buildTarget='', buildID='', locale='', osVersion='', distribution='',
                  distVersion='', headerArchitecture='',
-                 force=False
+                 force=False, queryVersion=3,
             ),
             fallbackChannel='releasetest'
         )
@@ -694,7 +694,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(name='', product='', version='', channel='releasetest-cck-blah',
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
-                 force=False
+                 force=False, queryVersion=3,
             ),
             fallbackChannel='releasetest'
         )
@@ -1023,7 +1023,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(len(query.execute().fetchall()), 0)
 
     def testGetAllUsers(self):
-        self.assertEquals(self.permissions.getAllUsers(), ['bill', 'bob', 'cathy'])
+        self.assertEquals(set(self.permissions.getAllUsers()), set(['bill', 'bob', 'cathy']))
 
     def testCountAllUsers(self):
         # bill, bob and cathy

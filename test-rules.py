@@ -94,6 +94,7 @@ def walkSnippets(AUS, testPath):
         log.debug('test-rules.walkSnippets: %s' % f)
         testQuery = getQueryFromPath(f.lstrip(testPath))
         testQuery['name'] = AUS.identifyRequest(testQuery)
+        testQuery['queryVersion'] = 3
         rule = AUS.evaluateRules(testQuery)
         AUS3snippets = AUS.createSnippet(testQuery, rule)
 
