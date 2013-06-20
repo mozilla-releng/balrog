@@ -92,8 +92,10 @@ class ReleaseForm(Form):
     data_version = IntegerField('data_version', widget=HiddenInput())
     product = TextField('Product', validators=[Required()])
     version = TextField('Version', validators=[Required()])
+    hashFunction = TextField('Hash Function')
     data = JSONTextField('Data', validators=[Required()])
     copyTo = JSONTextField('Copy To', default=list)
+    alias = JSONTextField('Alias', default=list)
 
 class RuleForm(Form):
     throttle = IntegerField('Throttle', validators=[Required(), validators.NumberRange(0, 100) ])

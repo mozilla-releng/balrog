@@ -871,6 +871,39 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
 """)
         self.assertEqual(ret, expected)
 
+    def testAddLocaleToReleaseWithAlias(self):
+        data = dict(complete=dict(hashValue='abc'))
+        self.releases.addLocaleToRelease(name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill', alias=['p3'])
+        ret = json.loads(select([self.releases.data]).where(self.releases.name=='a').execute().fetchone()[0])
+        expected = json.loads("""
+{
+    "name": "a",
+    "platforms": {
+        "p": {
+            "locales": {
+                "c": {
+                    "complete": {
+                        "hashValue": "abc"
+                    }
+                },
+                "l": {
+                    "complete": {
+                        "filesize": "1234"
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
+        },
+        "p3": {
+            "alias": "p"
+        }
+    }
+}
+""")
+        self.assertEqual(ret, expected)
+
     def testAddLocaleToReleaseOverride(self):
         data = dict(complete=dict(hashValue="789"))
         self.releases.addLocaleToRelease(name='a', platform='p', locale='l', data=data, old_data_version=1, changed_by='bill')
