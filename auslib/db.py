@@ -6,7 +6,7 @@ import sys
 import time
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-  CheckConstraint, create_engine, select, BigInteger
+  create_engine, select, BigInteger
 from sqlalchemy.exc import SQLAlchemyError
 
 import migrate.versioning.schema
@@ -598,7 +598,7 @@ class Rules(AUSTable):
             Column('rule_id', Integer, primary_key=True, autoincrement=True),
             Column('priority', Integer),
             Column('mapping', String(100)),
-            Column('throttle', Integer, CheckConstraint('0 <= throttle <= 100')),
+            Column('backgroundRate', Integer),
             Column('update_type', String(15), nullable=False),
             Column('product', String(15)),
             Column('version', String(10)),
@@ -684,7 +684,7 @@ class Rules(AUSTable):
                 ((self.distVersion==updateQuery['distVersion']) | (self.distVersion==None))
             ])
         if updateQuery['force'] == False:
-            where.append(self.throttle > 0)
+            where.append(self.backgroundRate > 0)
         rules = self.select(where=where, transaction=transaction)
         self.log.debug("where: %s" % where)
         self.log.debug("Raw matches:")

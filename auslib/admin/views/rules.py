@@ -25,7 +25,7 @@ class RulesPageView(AdminView):
             _id = rule['rule_id']
             self.log.debug(rule)
             forms[_id] = EditRuleForm(prefix=str(_id),
-                                    throttle = rule['throttle'],
+                                    backgroundRate = rule['backgroundRate'],
                                     mapping = rule['mapping'],
                                     priority = rule['priority'],
                                     product = rule['product'],
@@ -63,7 +63,7 @@ class RulesAPIView(AdminView):
             self.log.debug(form.errors)
             return Response(status=400, response=form.errors)
 
-        what = dict(throttle=form.throttle.data,
+        what = dict(backgroundRate=form.backgroundRate.data,
                 mapping=form.mapping.data,
                 priority=form.priority.data,
                 product = form.product.data,
@@ -94,7 +94,7 @@ class SingleRuleView(AdminView):
         releaseNames = db.releases.getReleaseNames()
 
         form = EditRuleForm(prefix=str(rule_id),
-                throttle = rule['throttle'],
+                backgroundRate = rule['backgroundRate'],
                 mapping = rule['mapping'],
                 priority = rule['priority'],
                 product = rule['product'],
@@ -132,7 +132,7 @@ class SingleRuleView(AdminView):
 
         if not form.validate():
             return Response(status=400, response=form.errors)
-        what = dict(throttle=form.throttle.data,
+        what = dict(backgroundRate=form.backgroundRate.data,
                     mapping=form.mapping.data,
                     priority=form.priority.data,
                     product = form.product.data,
@@ -228,7 +228,7 @@ class RuleHistoryView(HistoryAdminView):
 
         # now we're going to make a new insert based on this
         what = dict(
-            throttle=change['throttle'],
+            backgroundRate=change['backgroundRate'],
             mapping=change['mapping'],
             priority=change['priority'],
             product=change['product'],

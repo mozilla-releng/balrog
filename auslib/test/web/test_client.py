@@ -11,7 +11,7 @@ class ClientTest(unittest.TestCase):
         AUS.db.create()
         self.client = app.test_client()
         self.view = ClientRequestView()
-        AUS.rules.t.insert().execute(throttle=100, mapping='b', update_type='minor', product='b', data_version=1)
+        AUS.rules.t.insert().execute(backgroundRate=100, mapping='b', update_type='minor', product='b', data_version=1)
         AUS.releases.t.insert().execute(name='b', product='b', version='1', data_version=1, data="""
 {
     "name": "b",
@@ -36,7 +36,7 @@ class ClientTest(unittest.TestCase):
     }
 }
 """)
-        AUS.rules.t.insert().execute(throttle=100, mapping='c', update_type='minor', product='c',
+        AUS.rules.t.insert().execute(backgroundRate=100, mapping='c', update_type='minor', product='c',
                                      distribution='default', data_version=1)
         AUS.releases.t.insert().execute(name='c', product='c', version='10', data_version=1, data="""
 {

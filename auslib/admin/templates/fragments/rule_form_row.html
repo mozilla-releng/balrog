@@ -3,8 +3,8 @@
     {% if 'data_version' in form %} {{ form.data_version()|safe }} {% endif %}
     {{ form.mapping()|safe }}
 </td>
-<td id='throttle{{ suffix }}' name='throttle{{ suffix }}'>
-    {{ form.throttle()|safe }}
+<td id='backgroundRate{{ suffix }}' name='backgroundRate{{ suffix }}'>
+    {{ form.backgroundRate()|safe }}
 </td>
 <td id='priority{{ suffix }}' name='priority{{ suffix }}'>
     {{ form.priority()|safe }}

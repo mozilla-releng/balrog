@@ -518,20 +518,20 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
         self.paths = self.db.rules
-        self.paths.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', throttle=100, mapping='c', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', throttle=100, mapping='b', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=3, priority=100, version='3.5', buildTarget='a', throttle=100, mapping='a', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=4, priority=80, buildTarget='d', throttle=100, mapping='a', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=5, priority=80, buildTarget='d', version='3.3', throttle=0, mapping='c', update_type='z', data_version=1)
+        self.paths.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='z', data_version=1)
+        self.paths.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='z', data_version=1)
+        self.paths.t.insert().execute(id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='z', data_version=1)
+        self.paths.t.insert().execute(id=4, priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='z', data_version=1)
+        self.paths.t.insert().execute(id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='z', data_version=1)
 
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
         expected = [
-            dict(rule_id=4, priority=80, throttle=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
-            dict(rule_id=5, priority=80, throttle=0, version='3.3', buildTarget='d', mapping='c', update_type='z', data_version=1),
-            dict(rule_id=2, priority=100, throttle=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
-            dict(rule_id=3, priority=100, throttle=100, version='3.5', buildTarget='a', mapping='a', update_type='z', data_version=1),
-            dict(rule_id=1, priority=100, throttle=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1),
+            dict(rule_id=4, priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z', data_version=1),
+            dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
+            dict(rule_id=3, priority=100, backgroundRate=100, version='3.5', buildTarget='a', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1),
         ]
         self.assertEquals(rules, expected)
 
@@ -545,7 +545,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
-        expected = [dict(rule_id=3, priority=100, throttle=100, version='3.5', buildTarget='a', mapping='a', update_type='z', data_version=1)]
+        expected = [dict(rule_id=3, priority=100, backgroundRate=100, version='3.5', buildTarget='a', mapping='a', update_type='z', data_version=1)]
         self.assertEquals(rules, expected)
 
     def testGetRulesMatchingQueryWithNullColumn(self):
@@ -559,12 +559,12 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         expected = [
-            dict(rule_id=1, priority=100, throttle=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1),
-            dict(rule_id=4, priority=80, throttle=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1),
+            dict(rule_id=4, priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
         ]
         self.assertEquals(rules, expected)
 
-    def testGetRulesMatchingQueryDontReturnThrottled(self):
+    def testGetRulesMatchingQueryDontReturnBackgroundThrottled(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(name='', product='', version='3.3', channel='',
                  buildTarget='d', buildID='', locale='', osVersion='',
@@ -575,12 +575,12 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         expected = [
-            dict(rule_id=2, priority=100, throttle=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
-            dict(rule_id=4, priority=80, throttle=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
+            dict(rule_id=4, priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
         ]
         self.assertEquals(rules, expected)
 
-    def testGetRulesMatchingQueryReturnThrottled(self):
+    def testGetRulesMatchingQueryReturnBackgroundThrottled(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(name='', product='', version='3.3', channel='',
                  buildTarget='d', buildID='', locale='', osVersion='',
@@ -591,19 +591,19 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         expected = [
-            dict(rule_id=2, priority=100, throttle=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
-            dict(rule_id=4, priority=80, throttle=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
-            dict(rule_id=5, priority=80, throttle=0, version='3.3', buildTarget='d', mapping='c', update_type='z', data_version=1)
+            dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
+            dict(rule_id=4, priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z', data_version=1)
         ]
         self.assertEquals(rules, expected)
 
     def testGetRuleById(self):
         rule = self._stripNullColumns([self.paths.getRuleById(1)])
-        expected = [dict(rule_id=1, priority=100, throttle=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1)]
+        expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1)]
         self.assertEquals(rule, expected)
 
     def testAddRule(self):
-        what = dict(throttle=11,
+        what = dict(backgroundRate=11,
                     mapping='c',
                     update_type='z',
                     priority=60)
@@ -628,7 +628,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         copy_rule = dict(rules[0].items())
         rule = self._stripNullColumns( [copy_rule] )
 
-        expected = [dict(rule_id=1, priority=100, throttle=100, version='3.5', buildTarget='d', mapping='d', update_type='z', data_version=1)]
+        expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='d', update_type='z', data_version=1)]
         self.assertEquals(rule, expected)
 
     def testGetNumberOfRules(self):
@@ -642,11 +642,11 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
         self.rules = self.db.rules
-        self.rules.t.insert().execute(id=1, priority=100, version='4.0*', throttle=100, update_type='z', data_version=1)
-        self.rules.t.insert().execute(id=2, priority=100, channel='release*', throttle=100, update_type='z', data_version=1)
+        self.rules.t.insert().execute(id=1, priority=100, version='4.0*', backgroundRate=100, update_type='z', data_version=1)
+        self.rules.t.insert().execute(id=2, priority=100, channel='release*', backgroundRate=100, update_type='z', data_version=1)
 
     def testGetRulesMatchingQueryVersionGlobbing(self):
-        expected = [dict(rule_id=1, priority=100, throttle=100, version='4.0*', update_type='z', data_version=1)]
+        expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='4.0*', update_type='z', data_version=1)]
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='4.0', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
@@ -679,7 +679,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEquals(rules, expected)
 
     def testGetRulesMatchingQueryChannelGlobbing(self):
-        expected = [dict(rule_id=2, priority=100, throttle=100, channel='release*', update_type='z', data_version=1)]
+        expected = [dict(rule_id=2, priority=100, backgroundRate=100, channel='release*', update_type='z', data_version=1)]
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='', channel='releasetest',
                  buildTarget='', buildID='', locale='', osVersion='', distribution='',

@@ -5,13 +5,13 @@ from auslib.test.admin.views.base import ViewTest, HTMLTestMixin
 
 class TestRulesAPI_HTML(ViewTest, HTMLTestMixin):
     def testNewRulePost(self):
-        ret = self._post('/rules', data=dict(throttle=31, mapping='c', priority=33,
+        ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c', priority=33,
                                                 product='Firefox', update_type='minor', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         r = db.rules.t.select().where(db.rules.rule_id==ret.data).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'c')
-        self.assertEquals(r[0]['throttle'], 31)
+        self.assertEquals(r[0]['backgroundRate'], 31)
         self.assertEquals(r[0]['priority'], 33)
         self.assertEquals(r[0]['data_version'], 1)
 
@@ -19,13 +19,13 @@ class TestRulesAPI_HTML(ViewTest, HTMLTestMixin):
     def testMissingFields(self):
         ret = self._post('/rules', data=dict( ))
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        self.assertTrue('throttle' in  ret.data, msg=ret.data)
+        self.assertTrue('backgroundRate' in  ret.data, msg=ret.data)
         self.assertTrue('priority' in  ret.data, msg=ret.data)
 
 class TestSingleRuleView_HTML(ViewTest, HTMLTestMixin):
     def testPost(self):
         # Make some changes to a rule
-        ret = self._post('/rules/1', data=dict(throttle=71, mapping='d', priority=73, data_version=1,
+        ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
                                                 product='Firefox', update_type='minor', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
@@ -35,12 +35,12 @@ class TestSingleRuleView_HTML(ViewTest, HTMLTestMixin):
         r = db.rules.t.select().where(db.rules.rule_id==1).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'd')
-        self.assertEquals(r[0]['throttle'], 71)
+        self.assertEquals(r[0]['backgroundRate'], 71)
         self.assertEquals(r[0]['priority'], 73)
         self.assertEquals(r[0]['data_version'], 2)
 
     def testBadAuthPost(self):
-        ret = self._badAuthPost('/rules/1', data=dict(throttle=100, mapping='c', priority=100, data_version=1))
+        ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
         self.assertEquals(ret.status_code, 401, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         self.assertTrue("not allowed to access" in ret.data, msg=ret.data)
 
@@ -55,7 +55,7 @@ class TestRulesView_HTML(ViewTest, HTMLTestMixin):
         ret = self._get('/rules.html')
         self.assertEquals(ret.status_code, 200, msg=ret.data)
         self.assertTrue("<form id='rules_form'" in ret.data, msg=ret.data)
-        self.assertTrue('<input id="1-throttle" name="1-throttle" type="text" value="100">' in ret.data, msg=ret.data)
+        self.assertTrue('<input id="1-backgroundRate" name="1-backgroundRate" type="text" value="100">' in ret.data, msg=ret.data)
         self.assertTrue('<input id="1-priority" name="1-priority" type="text" value="100">' in ret.data, msg=ret.data)
 
 
@@ -71,7 +71,7 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
         ret = self._post(
             '/rules/1',
             data=dict(
-                throttle=71,
+                backgroundRate=71,
                 mapping='d',
                 priority=73,
                 data_version=1,
@@ -89,7 +89,7 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
         ret = self._post(
             '/rules/1',
             data=dict(
-                throttle=72,
+                backgroundRate=72,
                 mapping='d',
                 priority=73,
                 data_version=2,
@@ -116,7 +116,7 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
         ret = self._post(
             '/rules/1',
             data=dict(
-                throttle=71,
+                backgroundRate=71,
                 mapping='d',
                 priority=73,
                 data_version=1,
@@ -139,7 +139,7 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
         ret = self._post(
             '/rules/1',
             data=dict(
-                throttle=72,
+                backgroundRate=72,
                 mapping='d',
                 priority=73,
                 data_version=2,
@@ -156,17 +156,17 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
 
         table = db.rules
         row, = table.select(where=[table.rule_id == 1])
-        self.assertEqual(row['throttle'], 72)
+        self.assertEqual(row['backgroundRate'], 72)
         self.assertEqual(row['data_version'], 3)
 
         query = table.history.t.count()
         count, = query.execute().first()
         self.assertEqual(count, 2)
 
-        # Oh no! We prefer the product=Firefox, throttle=71 one better
+        # Oh no! We prefer the product=Firefox, backgroundRate=71 one better
         row, = table.history.select(
             where=[table.history.product == 'Firefox',
-                   table.history.throttle == 71],
+                   table.history.backgroundRate == 71],
             limit=1
         )
         change_id = row['change_id']
@@ -181,7 +181,7 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
         self.assertEqual(count, 3)
 
         row, = table.select(where=[table.rule_id == 1])
-        self.assertEqual(row['throttle'], 71)
+        self.assertEqual(row['backgroundRate'], 71)
         self.assertEqual(row['product'], 'Firefox')
         self.assertEqual(row['data_version'], 4)
         self.assertEqual(row['buildID'], '1234')
@@ -212,7 +212,7 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
             ret = self._post(
                 '/rules/1',
                 data=dict(
-                    throttle=1 + i,
+                    backgroundRate=1 + i,
                     mapping='d',
                     priority=73,
                     data_version=1 + i,

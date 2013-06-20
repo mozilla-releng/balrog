@@ -86,11 +86,11 @@ class AUS3:
 
         # 2) For background checks (force=1 missing from query), we might not
         # serve every request an update
-        # throttle=100 means all requests are served
-        # throttle=25 means only one quarter of requests are served
-        if not updateQuery['force'] and rule['throttle'] < 100:
-            self.log.debug("throttle < 100, rolling the dice")
-            if self.rand.getInt() >= rule['throttle']:
+        # backgroundRate=100 means all requests are served
+        # backgroundRate=25 means only one quarter of requests are served
+        if not updateQuery['force'] and rule['backgroundRate'] < 100:
+            self.log.debug("backgroundRate < 100, rolling the dice")
+            if self.rand.getInt() >= rule['backgroundRate']:
                 self.log.debug("request was dropped")
                 return None, None
 

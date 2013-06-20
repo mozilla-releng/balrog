@@ -170,7 +170,7 @@ if __name__ == "__main__":
         AUS.db.create()
         populateDB(AUS, td)
         if options.dumprules:
-            log.info("Rules are \n(id, priority, mapping, throttle, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")
+            log.info("Rules are \n(id, priority, mapping, backgroundRate, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")
             for rule in AUS.rules.getRules():
                 log.info(", ".join([str(rule[k]) for k in rule.keys()]))
             log.info("-"*50)

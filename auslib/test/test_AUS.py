@@ -6,9 +6,9 @@ import unittest
 from auslib.AUS import AUS3
 from auslib.blob import ReleaseBlobV1
 
-def RandomAUSTest(AUS, throttle, force, mapping):
+def RandomAUSTest(AUS, backgroundRate, force, mapping):
     with mock.patch('auslib.db.Rules.getRulesMatchingQuery') as m:
-        m.return_value=[dict(throttle=throttle, priority=1, mapping=mapping, update_type='minor')]
+        m.return_value=[dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor')]
 
         results = AUS.rand.getRange()
         resultsLength = len(results)
@@ -36,27 +36,27 @@ class TestAUSThrottling(unittest.TestCase):
         self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "platforms": {}}')
 
     def testThrottling100(self):
-        (served, tested) = RandomAUSTest(self.AUS, throttle=100, force=False, mapping='b')
+        (served, tested) = RandomAUSTest(self.AUS, backgroundRate=100, force=False, mapping='b')
         self.assertEqual(served, 1)
         self.assertEqual(tested, 1)
 
     def testThrottling50(self):
-        (served, tested) = RandomAUSTest(self.AUS, throttle=50, force=False, mapping='b')
+        (served, tested) = RandomAUSTest(self.AUS, backgroundRate=50, force=False, mapping='b')
         self.assertEqual(served,  50)
         self.assertEqual(tested, 100)
 
     def testThrottling25(self):
-        (served, tested) = RandomAUSTest(self.AUS, throttle=25, force=False, mapping='b')
+        (served, tested) = RandomAUSTest(self.AUS, backgroundRate=25, force=False, mapping='b')
         self.assertEqual(served,  25)
         self.assertEqual(tested, 100)
 
     def testThrottlingZero(self):
-        (served, tested) = RandomAUSTest(self.AUS, throttle=0, force=False, mapping='b')
+        (served, tested) = RandomAUSTest(self.AUS, backgroundRate=0, force=False, mapping='b')
         self.assertEqual(served,   0)
         self.assertEqual(tested, 100)
 
     def testThrottling25WithForcing(self):
-        (served, tested) = RandomAUSTest(self.AUS, throttle=25, force=True, mapping='b')
+        (served, tested) = RandomAUSTest(self.AUS, backgroundRate=25, force=True, mapping='b')
         self.assertEqual(served, 1)
         self.assertEqual(tested, 1)
 
