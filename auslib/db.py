@@ -669,10 +669,20 @@ class Rules(AUSTable):
             ((self.buildID==updateQuery['buildID']) | (self.buildID==None)) &
             ((self.locale==updateQuery['locale']) | (self.locale==None)) &
             ((self.osVersion==updateQuery['osVersion']) | (self.osVersion==None)) &
-            ((self.distribution==updateQuery['distribution']) | (self.distribution==None)) &
-            ((self.distVersion==updateQuery['distVersion']) | (self.distVersion==None)) &
             ((self.headerArchitecture==updateQuery['headerArchitecture']) | (self.headerArchitecture==None))
         ]
+        # Query version 2 doesn't have distribution information, and to keep
+        # us maximally flexible, we won't match any rules that have
+        # distribution update set.
+        if updateQuery['queryVersion'] == 2:
+            where.extend([(self.distribution==None) & (self.distVersion==None)])
+        # Only query versions 3 and 4 have distribution information, so we
+        # need to consider it.
+        if updateQuery['queryVersion'] in (3, 4):
+            where.extend([
+                ((self.distribution==updateQuery['distribution']) | (self.distribution==None)) &
+                ((self.distVersion==updateQuery['distVersion']) | (self.distVersion==None))
+            ])
         if updateQuery['force'] == False:
             where.append(self.throttle > 0)
         rules = self.select(where=where, transaction=transaction)
@@ -687,9 +697,6 @@ class Rules(AUSTable):
                 continue
             if not self._channelMatchesRule(rule['channel'], updateQuery['channel'], fallbackChannel):
                 self.log.debug("%s doesn't match %s", rule['channel'], updateQuery['channel'])
-                continue
-            # Drop any rules which would update ourselves to the same version
-            if rule['mapping'] == updateQuery['name']:
                 continue
             matchingRules.append(rule)
         self.log.debug("Reduced matches:")
@@ -796,7 +803,7 @@ class Releases(AUSTable):
             what['data'] = blob.getJSON()
         self.update(where=[self.name==name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
-    def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None):
+    def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
         """Adds or update's the existing data for a specific platform + locale
            combination, in the release identified by 'name'. The data is
            validated before commiting it, and a ValueError is raised if it is
@@ -819,6 +826,13 @@ class Releases(AUSTable):
         else:
             releaseBlob['platforms'][platform] = dict(locales=dict())
         releaseBlob['platforms'][platform]['locales'][locale] = data
+
+        # we don't allow modification of existing platforms (aliased or not)
+        if alias:
+            for a in alias:
+                if a not in releaseBlob['platforms']:
+                    releaseBlob['platforms'][a] = {'alias': platform}
+
         if not releaseBlob.isValid():
             raise ValueError("New release blob is invalid.")
         where = [self.name==name]

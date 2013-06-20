@@ -1,8 +1,6 @@
 import json
 from flask import render_template, Response, make_response, request
 
-from sqlalchemy.exc import SQLAlchemyError
-
 from auslib.util import getPagination
 from auslib.admin.base import db
 from auslib.admin.views.base import (

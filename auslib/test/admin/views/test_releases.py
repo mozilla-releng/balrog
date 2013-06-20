@@ -22,7 +22,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "d": {
                     "complete": {
-                        "filesize": 1234
+                        "filesize": "1234"
                     }
                 }
             }
@@ -55,7 +55,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 400)
 
     def testLocalePut(self):
-        data = json.dumps(dict(complete=dict(filesize=435)))
+        data = json.dumps(dict(complete=dict(filesize='435')))
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='a', data_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
@@ -68,7 +68,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "l": {
                     "complete": {
-                        "filesize": 435
+                        "filesize": "435"
                     }
                 }
             }
@@ -78,7 +78,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testLocalePutForNewRelease(self):
-        data = json.dumps(dict(complete=dict(filesize=678)))
+        data = json.dumps(dict(complete=dict(filesize='678')))
         ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e'))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
@@ -92,7 +92,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "a": {
                     "complete": {
-                        "filesize": 678
+                        "filesize": "678"
                     }
                 }
             }
@@ -115,7 +115,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "d": {
                     "complete": {
-                        "filesize": 1234
+                        "filesize": "1234"
                     }
                 },
                 "g": {
@@ -129,8 +129,70 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
+    def testLocalePutForNewReleaseWithAlias(self):
+        data = json.dumps(dict(complete=dict(filesize='678')))
+        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', alias='["p2"]'))
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        ret = select([db.releases.data]).where(db.releases.name=='e').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret), json.loads("""
+{
+    "name": "e",
+    "schema_version": 1,
+    "platforms": {
+        "p": {
+            "locales": {
+                "a": {
+                    "complete": {
+                        "filesize": "678"
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
+        }
+    }
+}
+"""))
+
+    def testLocalePutAppendWithAlias(self):
+        data = json.dumps(dict(partial=dict(fileUrl='abc')))
+        ret = self._put('/releases/d/builds/q/g', data=dict(data=data, product='d', version='d', data_version=1, alias='["q2"]'))
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        ret = select([db.releases.data]).where(db.releases.name=='d').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret), json.loads("""
+{
+    "name": "d",
+    "platforms": {
+        "p": {
+            "locales": {
+                "d": {
+                    "complete": {
+                        "filesize": "1234"
+                    }
+                }
+            }
+        },
+        "q": {
+            "locales": {
+                "g": {
+                    "partial": {
+                        "fileUrl": "abc"
+                    }
+                }
+            }
+        },
+        "q2": {
+            "alias": "q"
+        }
+    }
+}
+"""))
+
     def testLocalePutWithCopy(self):
-        data = json.dumps(dict(partial=dict(filesize=123)))
+        data = json.dumps(dict(partial=dict(filesize='123')))
         data = dict(data=data, product='a', version='a', copyTo=json.dumps(['ab']), data_version=1)
         ret = self._put('/releases/a/builds/p/l', data=data)
         self.assertStatusCode(ret, 201)
@@ -144,7 +206,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "l": {
                     "partial": {
-                        "filesize": 123
+                        "filesize": "123"
                     }
                 }
             }
@@ -161,7 +223,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "l": {
                     "partial": {
-                        "filesize": 123
+                        "filesize": "123"
                     }
                 }
             }
@@ -200,7 +262,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     def testLocaleGet(self):
         ret = self._get('/releases/d/builds/p/d')
         self.assertStatusCode(ret, 200)
-        self.assertEqual(json.loads(ret.data), dict(complete=dict(filesize=1234)))
+        self.assertEqual(json.loads(ret.data), dict(complete=dict(filesize='1234')))
         self.assertEqual(ret.headers['X-Data-Version'], '1')
 
     def testLocalePutNotAllowed(self):
@@ -235,7 +297,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "d": {
                     "complete": {
-                        "filesize": 1234
+                        "filesize": "1234"
                     }
                 }
             }

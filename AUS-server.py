@@ -1,3 +1,5 @@
+from migrate import DatabaseAlreadyControlledError
+
 import logging
 
 log = logging.getLogger(__name__)
@@ -30,7 +32,7 @@ if __name__ == "__main__":
 
     AUS.setDb(options.db)
     try:
-        db.create()
+        AUS.db.create()
     except DatabaseAlreadyControlledError:
         pass
 

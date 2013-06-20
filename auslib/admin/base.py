@@ -16,9 +16,8 @@ from auslib.admin.views.releases import SingleLocaleView, SingleBlobView, \
   SingleReleaseView, ReleasesPageView, ReleaseHistoryView
 from auslib.admin.views.rules import RulesPageView, RulesAPIView, \
   SingleRuleView, RuleHistoryView
-from auslib.admin.views.index import IndexPageView, RecentChangesTableView
 from auslib.admin.views.history import DiffView, FieldView
-from auslib.admin.views.index import IndexPageView
+from auslib.admin.views.index import IndexPageView, RecentChangesTableView
 
 @app.errorhandler(500)
 def isa(error):

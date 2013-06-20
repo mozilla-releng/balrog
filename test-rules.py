@@ -93,9 +93,9 @@ def walkSnippets(AUS, testPath):
         # generate the AUS3 snippets
         log.debug('test-rules.walkSnippets: %s' % f)
         testQuery = getQueryFromPath(f.lstrip(testPath))
-        testQuery['name'] = AUS.identifyRequest(testQuery)
-        rule = AUS.evaluateRules(testQuery)
-        AUS3snippets = AUS.createSnippet(testQuery, rule)
+        testQuery['queryVersion'] = 3
+        release, update_type = AUS.evaluateRules(testQuery)
+        AUS3snippets = AUS.createSnippet(testQuery, release, update_type)
 
         if snipType in AUS3snippets:
             AUS3snippet = AUS3snippets[snipType]

@@ -7,7 +7,9 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
     def testUsers(self):
         ret = self._get('/users')
         self.assertEqual(ret.status_code, 200)
-        self.assertEqual(json.loads(ret.data), dict(users=['bill', 'bob']))
+        data = json.loads(ret.data)
+        data['users'] = set(data['users'])
+        self.assertEqual(data, dict(users=set(['bill', 'bob'])))
 
     def testPermissionsCollection(self):
         ret = self._get('/users/bill/permissions')
