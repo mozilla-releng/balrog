@@ -31,16 +31,16 @@ test.done: $(ALL_PY_FILES) $(if $(ALWAYS_RUN_TESTS), FORCE)
 	@echo Running unit tests
 ifdef COVERAGE
 	$(RM) -r .coverage htmlcov
-	$(PYTHON_ENV) $(COVERAGE_BIN) run $(NOSE) $(NOSE_ARGS)
+	-$(PYTHON_ENV) $(COVERAGE_BIN) run $(NOSE) $(NOSE_ARGS)
 else
-	$(PYTHON_ENV) $(NOSE) $(NOSE_ARGS)
+	-$(PYTHON_ENV) $(NOSE) $(NOSE_ARGS)
 endif
 	@echo Running rules tests
 ifdef COVERAGE
-	$(COVERAGE_BIN) run -a test-rules.py $(TEST_ARGS)
+	-$(COVERAGE_BIN) run -a test-rules.py $(TEST_ARGS)
 	$(COVERAGE_BIN) html --include='*auslib*'
 else
-	$(PYTHON) test-rules.py $(TEST_ARGS)
+	-$(PYTHON) test-rules.py $(TEST_ARGS)
 endif
 	touch $@
 

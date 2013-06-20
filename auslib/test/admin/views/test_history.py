@@ -60,7 +60,7 @@ class TestHistoryView(ViewTest):
             "locales": {
                 "d": {
                     "complete": {
-                        "filesize": 1234
+                        "filesize": "1234"
                     }
                 }
             }

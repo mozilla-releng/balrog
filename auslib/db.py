@@ -698,9 +698,6 @@ class Rules(AUSTable):
             if not self._channelMatchesRule(rule['channel'], updateQuery['channel'], fallbackChannel):
                 self.log.debug("%s doesn't match %s", rule['channel'], updateQuery['channel'])
                 continue
-            # Drop any rules which would update ourselves to the same version
-            if rule['mapping'] == updateQuery['name']:
-                continue
             matchingRules.append(rule)
         self.log.debug("Reduced matches:")
         if self.log.isEnabledFor(logging.DEBUG):

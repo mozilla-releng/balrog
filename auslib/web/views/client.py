@@ -21,26 +21,17 @@ class ClientRequestView(MethodView):
 
     def getQueryFromURL(self, url):
         query = url.copy()
-        # Query versions 2, 3 and 4 are all roughly the same in contents,
-        # and all treated the same by Balrog.
-        if url['queryVersion'] in (2, 3, 4):
-            query['name'] = AUS.identifyRequest(query)
-            ua = request.headers.get('User-Agent')
-            query['headerArchitecture'] = self.getHeaderArchitecture(query['buildTarget'], ua)
-            query['force'] = (int(request.args.get('force', 0)) == 1)
-            return query
-        return {}
+        ua = request.headers.get('User-Agent')
+        query['headerArchitecture'] = self.getHeaderArchitecture(query['buildTarget'], ua)
+        query['force'] = (int(request.args.get('force', 0)) == 1)
+        return query
 
     def get(self, **url):
         query = self.getQueryFromURL(url)
         self.log.debug("Got query: %s", query)
-        if query:
-            rule = AUS.evaluateRules(query)
-        else:
-            rule = {}
-        # passing {},{} returns empty xml
-        self.log.debug("Got rule: %s", rule)
-        xml = AUS.createXML(query, rule)
+        release, update_type = AUS.evaluateRules(query)
+        # passing {},None returns empty xml
+        xml = AUS.createXML(query, release, update_type)
         self.log.debug("Sending XML: %s", xml)
         response = make_response(xml)
         response.mimetype = 'text/xml'

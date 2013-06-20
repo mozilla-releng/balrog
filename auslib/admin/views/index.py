@@ -1,5 +1,4 @@
 import collections
-import time
 
 from flask import render_template, request
 

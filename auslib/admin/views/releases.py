@@ -1,7 +1,5 @@
 import simplejson as json
 
-from sqlalchemy.exc import SQLAlchemyError
-
 from flask import render_template, Response, jsonify, make_response, request
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION

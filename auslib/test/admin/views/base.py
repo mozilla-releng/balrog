@@ -36,7 +36,7 @@ class ViewTest(unittest.TestCase):
             "locales": {
                 "d": {
                     "complete": {
-                        "filesize": 1234
+                        "filesize": "1234"
                     }
                 }
             }
