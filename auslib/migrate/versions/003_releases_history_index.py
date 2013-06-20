@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, MetaData, Table, Index
+from sqlalchemy import MetaData, Table, Index
 
 # Because releases get modified so often, and are so big -
 # their history table ends huge and slow. An index helps negate

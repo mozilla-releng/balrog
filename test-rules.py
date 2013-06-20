@@ -153,11 +153,11 @@ if __name__ == "__main__":
 
     options, args = parser.parse_args()
 
-    log_format = "%(message)s"
     log_level = logging.INFO
     if options.verbose:
         log_level = logging.DEBUG
-    logging.basicConfig(level=log_level, format=log_format)
+
+    logging.basicConfig(level=log_level, format="%(message)s")
 
     if not options.testDirs:
         for dirname in os.listdir('aus-data-snapshots'):
