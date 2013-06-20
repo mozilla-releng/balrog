@@ -145,8 +145,11 @@ class AUS3:
                 patch = relDataPlatLoc[patchKey]
                 # This is factored out to avoid querying the db when from is '*'
                 def hasAPartial():
-                    release = self.releases.getReleases(name=patch['from'], limit=1)[0]
-                    return self.queryMatchesRelease(updateQuery, release)
+                    try:
+                        release = self.releases.getReleases(name=patch['from'], limit=1)[0]
+                        return self.queryMatchesRelease(updateQuery, release)
+                    except IndexError:
+                        return False
 
                 if patch['from'] == '*' or hasAPartial():
                     if 'fileUrl' in patch:
