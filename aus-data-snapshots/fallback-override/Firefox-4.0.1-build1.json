@@ -1,5 +1,6 @@
 {
     "name": "Firefox-4.0.1-build1",
+    "schema_version": 1,
     "extv": "4.0.1",
     "platforms": {
         "WINNT_x86-msvc": {

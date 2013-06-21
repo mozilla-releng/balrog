@@ -2,7 +2,7 @@ import simplejson as json
 
 from flask import render_template, Response, jsonify, make_response, request
 
-from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
+from auslib.blob import createBlob, CURRENT_SCHEMA_VERSION
 from auslib.util import getPagination
 from auslib.admin.base import db
 from auslib.admin.views.base import (
@@ -14,7 +14,10 @@ from auslib.admin.views.forms import ReleaseForm, NewReleaseForm
 __all__ = ["SingleReleaseView", "SingleLocaleView", "ReleasesPageView"]
 
 def createRelease(release, product, version, changed_by, transaction, releaseData):
-    blob = ReleaseBlobV1(schema_version=CURRENT_SCHEMA_VERSION, **releaseData)
+    if 'schema_version' not in releaseData:
+        releaseData['schema_version'] = CURRENT_SCHEMA_VERSION
+    blob = createBlob(json.dumps(releaseData))
+
     db.releases.addRelease(name=release, product=product, version=version,
         blob=blob, changed_by=changed_by, transaction=transaction)
     return db.releases.getReleases(name=release, transaction=transaction)[0]
@@ -284,8 +287,8 @@ class ReleaseHistoryView(HistoryAdminView):
         old_data_version = release['data_version']
 
         # now we're going to make a new update based on this change
-        releaseData = json.loads(change['data'])
-        blob = ReleaseBlobV1(**releaseData)
+        blob = createBlob(change['data'])
+        self.log.debug('blob: %s', blob)
 
         db.releases.updateRelease(changed_by=changed_by, name=change['name'],
             version=change['version'], blob=blob,

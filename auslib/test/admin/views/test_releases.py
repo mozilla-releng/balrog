@@ -15,6 +15,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "d",
+    "schema_version": 1,
     "detailsUrl": "blah",
     "fakePartials": true,
     "platforms": {
@@ -63,6 +64,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -80,6 +82,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     def testLocalePutForNewRelease(self):
         data = json.dumps(dict(complete=dict(filesize='678')))
         ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e'))
+        print ret.data
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='e').execute().fetchone()[0]
@@ -110,6 +113,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "d",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -165,6 +169,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "d",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -201,6 +206,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -218,6 +224,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "ab",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -241,6 +248,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -283,7 +291,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             ret = db.releases.t.select().where(db.releases.name=='a').execute().fetchone()
             self.assertEqual(ret['product'], 'a')
             self.assertEqual(ret['version'], 'a')
-            self.assertEqual(json.loads(ret['data']), dict(name='a'))
+            self.assertEqual(json.loads(ret['data']), dict(name='a', schema_version=1))
 
     # Test get of a release's full data column, queried by name
     def testGetSingleReleaseBlob(self):
@@ -292,6 +300,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret.data), json.loads("""
 {
     "name": "d",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -326,6 +335,7 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
                                                             blob="""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -347,6 +357,7 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
         self.assertEquals(json.loads(r[0]['data']), json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {

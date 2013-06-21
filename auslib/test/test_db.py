@@ -707,10 +707,10 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
         self.releases = self.db.releases
-        self.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name=1)), data_version=1)
-        self.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name=1)), data_version=1)
-        self.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name=2)), data_version=1)
-        self.releases.t.insert().execute(name='c', product='c', version='c', data=json.dumps(dict(name=3)), data_version=1)
+        self.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name=1, schema_version=1)), data_version=1)
+        self.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name=1, schema_version=1)), data_version=1)
+        self.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name=2, schema_version=1)), data_version=1)
+        self.releases.t.insert().execute(name='c', product='c', version='c', data=json.dumps(dict(name=3, schema_version=1)), data_version=1)
 
     def testGetReleases(self):
         self.assertEquals(len(self.releases.getReleases()), 4)
@@ -719,11 +719,11 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(len(self.releases.getReleases(limit=1)), 1)
 
     def testGetReleasesWithWhere(self):
-        expected = [dict(product='b', version='b', name='b', data=dict(name=2), data_version=1)]
+        expected = [dict(product='b', version='b', name='b', data=dict(name=2, schema_version=1), data_version=1)]
         self.assertEquals(self.releases.getReleases(name='b'), expected)
 
     def testGetReleaseBlob(self):
-        expected = dict(name=3)
+        expected = dict(name=3, schema_version=1)
         self.assertEquals(self.releases.getReleaseBlob(name='c'), expected)
 
     def testGetReleaseBlobNonExistentRelease(self):
@@ -792,6 +792,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.t.insert().execute(name='a', product='a', version='a', data_version=1, data="""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -810,7 +811,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
 """)
         self.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data="""
 {
-    "name": "b"
+    "name": "b",
+    "schema_version": 1
 }
 """)
 
@@ -848,6 +850,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         expected = json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -878,6 +881,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         expected = json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -911,6 +915,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         expected = json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -936,6 +941,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         expected = json.loads("""
 {
     "name": "b",
+    "schema_version": 1,
     "platforms": {
         "q": {
             "locales": {
@@ -958,6 +964,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         expected = json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -992,6 +999,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         expected = json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {

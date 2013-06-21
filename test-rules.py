@@ -157,7 +157,7 @@ if __name__ == "__main__":
     if options.verbose:
         log_level = logging.DEBUG
 
-    logging.basicConfig(level=log_level, format="%(message)s")
+    logging.basicConfig(level=log_level, format='%(message)s')
 
     if not options.testDirs:
         for dirname in os.listdir('aus-data-snapshots'):

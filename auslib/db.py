@@ -12,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import migrate.versioning.schema
 import migrate.versioning.api
 
-from auslib.blob import ReleaseBlobV1
+from auslib.blob import createBlob
 
 import logging
 
@@ -749,9 +749,7 @@ class Releases(AUSTable):
             where.append(self.version==version)
         rows = self.select(where=where, limit=limit, transaction=transaction)
         for row in rows:
-            blob = ReleaseBlobV1()
-            blob.loadJSON(row['data'])
-            row['data'] = blob
+            row['data'] = createBlob(row['data'])
         return rows
 
     def countReleases(self, transaction=None):
@@ -780,8 +778,7 @@ class Releases(AUSTable):
             row = self.select(where=[self.name==name], columns=[self.data], limit=1, transaction=transaction)[0]
         except IndexError:
             raise KeyError("Couldn't find release with name '%s'" % name)
-        blob = ReleaseBlobV1()
-        blob.loadJSON(row['data'])
+        blob = createBlob(row['data'])
         return blob
 
     def addRelease(self, name, product, version, blob, changed_by, transaction=None):

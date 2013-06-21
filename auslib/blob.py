@@ -35,6 +35,18 @@ def isValidBlob(format_, blob):
             return False
     return True
 
+def createBlob(data):
+    """Takes a string form of a blob (eg from DB or API) and converts into an
+    actual blob, taking care to notice the schema"""
+    data = json.loads(data)
+    try:
+        if data['schema_version'] == 1:
+            return ReleaseBlobV1(data)
+        elif data['schema_version'] == 2:
+            return ReleaseBlobV2(data)
+    except KeyError, e:
+        raise ValueError("schema_version is not set")
+
 class Blob(dict):
     """See isValidBlob for details on how format is used to validate blobs."""
     format_ = {}
@@ -53,11 +65,36 @@ class Blob(dict):
         """Returns a JSON formatted version of this blob."""
         return json.dumps(self)
 
+    def getResolvedPlatform(self, platform):
+        return self['platforms'][platform].get('alias', platform)
+
+    def getPlatformData(self, platform):
+        platform = self.getResolvedPlatform(platform)
+        return self['platforms'][platform]
+
+    def getLocaleOrTopLevelParam(self, platform, locale, param):
+        try:
+            platform = self.getResolvedPlatform(platform)
+            return self['platforms'][platform]['locales'][locale][param]
+        except:
+            return self[param]
+
+    def getBuildID(self, platform, locale):
+        platform = self.getResolvedPlatform(platform)
+        if locale not in self['platforms'][platform]['locales']:
+            raise KeyError("No such locale '%s' in platform '%s'" % (locale, platform))
+        try:
+            return self['platforms'][platform]['locales'][locale]['buildID']
+        except KeyError:
+            return self['platforms'][platform]['buildID']
+
+
 class ReleaseBlobV1(Blob):
     format_ = {
         'name': None,
         'schema_version': None,
-        'detailsUrl': None,
+        'extv': None,
+        'appv': None,
         'fileUrls': {
             '*': None
         },
@@ -68,9 +105,9 @@ class ReleaseBlobV1(Blob):
             '*': None
         },
         'hashFunction': None,
+        'detailsUrl': None,
+        'licenseUrl': None,
         'fakePartials': None,
-        'extv': None,
-        'appv': None,
         'platforms': {
             '*': {
                 'alias': None,
@@ -99,28 +136,6 @@ class ReleaseBlobV1(Blob):
             }
         }
     }
-    def getResolvedPlatform(self, platform):
-        return self['platforms'][platform].get('alias', platform)
-
-    def getPlatformData(self, platform):
-        platform = self.getResolvedPlatform(platform)
-        return self['platforms'][platform]
-
-    def getLocaleOrTopLevelParam(self, platform, locale, param):
-        try:
-            platform = self.getResolvedPlatform(platform)
-            return self['platforms'][platform]['locales'][locale][param]
-        except:
-            return self[param]
-
-    def getBuildID(self, platform, locale):
-        platform = self.getResolvedPlatform(platform)
-        if locale not in self['platforms'][platform]['locales']:
-            raise KeyError("No such locale '%s' in platform '%s'" % (locale, platform))
-        try:
-            return self['platforms'][platform]['locales'][locale]['buildID']
-        except KeyError:
-            return self['platforms'][platform]['buildID']
 
     def getAppv(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'appv')
@@ -128,7 +143,65 @@ class ReleaseBlobV1(Blob):
     def getExtv(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'extv')
 
-    # v2 stuff that probably needs to move
+
+class ReleaseBlobV2(Blob):
+    # fakePartials can probably go
+    format_ = {
+        'name': None,
+        'schema_version': None,
+        'appVersion': None,
+        'displayVersion': None,
+        'platformVersion': None,
+        'fileUrls': {
+            '*': None
+        },
+        'ftpFilenames': {
+            '*': None
+        },
+        'bouncerProducts': {
+            '*': None
+        },
+        'hashFunction': None,
+        'detailsUrl': None,
+        'licenseUrl': None,
+        'actions': None,
+        'billboardURL': None,
+        'openURL': None,
+        'notificationURL': None,
+        'alertURL': None,
+        'showPrompt': None,
+        'showNeverForVersion': None,
+        'showSurvey': None,
+        'fakePartials': None,
+        'platforms': {
+            '*': {
+                'alias': None,
+                'buildID': None,
+                'OS_BOUNCER': None,
+                'OS_FTP': None,
+                'locales': {
+                    '*': {
+                        'buildID': None,
+                        'extv': None,
+                        'appv': None,
+                        'partial': {
+                            'filesize': None,
+                            'from': None,
+                            'hashValue': None,
+                            'fileUrl': None
+                        },
+                        'complete': {
+                            'filesize': None,
+                            'from': None,
+                            'hashValue': None,
+                            'fileUrl': None
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     def getAppVersion(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'appVersion')
 

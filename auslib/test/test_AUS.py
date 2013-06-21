@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 import unittest
 
 from auslib.AUS import AUS3
-from auslib.blob import ReleaseBlobV1
+from auslib.blob import ReleaseBlobV1, ReleaseBlobV2
 
 def RandomAUSTest(AUS, throttle, force, mapping):
     with mock.patch('auslib.db.Rules.getRulesMatchingQuery') as m:
@@ -33,7 +33,7 @@ class TestAUSThrottling(unittest.TestCase):
         self.AUS = AUS3()
         self.AUS.setDb('sqlite:///%s' % NamedTemporaryFile().name)
         self.AUS.db.create()
-        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "platforms": {}}')
+        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "schema_version": 1, "platforms": {}}')
 
     def testThrottling100(self):
         (served, tested) = RandomAUSTest(self.AUS, throttle=100, force=False, mapping='b')
@@ -101,7 +101,7 @@ class TestAUS(unittest.TestCase):
         )
         self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1,
             data=json.dumps(self.relData['b']))
-        self.relData['c'] = ReleaseBlobV1(
+        self.relData['c'] = ReleaseBlobV2(
             name='c',
             schema_version=2,
             appVersion='c',
