@@ -182,8 +182,9 @@ class ReleaseBlobV2(Blob):
                 'locales': {
                     '*': {
                         'buildID': None,
-                        'extv': None,
-                        'appv': None,
+                        'appVersion': None,
+                        'displayVersion': None,
+                        'platformVersion': None,
                         'partial': {
                             'filesize': None,
                             'from': None,
