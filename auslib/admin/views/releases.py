@@ -4,7 +4,7 @@ from flask import render_template, Response, jsonify, make_response, request
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
 from auslib.util import getPagination
-from auslib.admin.base import db
+from auslib.admin.base import app, db
 from auslib.admin.views.base import (
     requirelogin, requirepermission, AdminView, HistoryAdminView
 )
@@ -102,22 +102,31 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
             newReleaseData = dict(name=rel)
             if hashFunction:
                 newReleaseData['hashFunction'] = hashFunction
-            releaseInfo = createRelease(rel, product, version, changed_by, transaction, newReleaseData)
+            try:
+                releaseInfo = createRelease(rel, product, version, changed_by, transaction, newReleaseData)
+            except ValueError, e:
+                return Response(status=400, response="Couldn't create release: %s" % e)
             old_data_version = 1
 
         # If the version doesn't match, just update it. This will be the case for nightlies
         # every time there's a version bump.
         if version != releaseInfo['version']:
             log.debug("database version for %s is %s, updating it to %s", rel, releaseInfo['version'], version)
-            db.releases.updateRelease(name=rel, version=version,
-                changed_by=changed_by, old_data_version=old_data_version,
-                transaction=transaction)
+            try:
+                db.releases.updateRelease(name=rel, version=version,
+                    changed_by=changed_by, old_data_version=old_data_version,
+                    transaction=transaction)
+            except ValueError, e:
+                return Response(status=400, response="Couldn't update release: %s" % e)
             old_data_version += 1
 
         extraArgs = {}
         if alias:
             extraArgs['alias'] = alias
-        commitCallback(rel, product, version, incomingData, releaseInfo['data'], old_data_version, extraArgs)
+        try:
+            commitCallback(rel, product, version, incomingData, releaseInfo['data'], old_data_version, extraArgs)
+        except ValueError, e:
+            return Response(status=400, response="Couldn't update release: %s" % e)
 
     new_data_version = db.releases.getReleases(name=release, transaction=transaction)[0]['data_version']
     if new:
@@ -192,9 +201,12 @@ class SingleReleaseView(AdminView):
         if not form.validate():
             return Response(status=400, response=form.errors)
 
-        db.releases.addRelease(name=release, product=form.product.data,
-            version=form.version.data, blob=form.blob.data,
-            changed_by=changed_by, transaction=transaction)
+        try:
+            db.releases.addRelease(name=release, product=form.product.data,
+                version=form.version.data, blob=form.blob.data,
+                changed_by=changed_by, transaction=transaction)
+        except ValueError, e:
+            return Response(status=400, response="Couldn't update release: %s" % e)
         return Response(status=201)
 
     @requirelogin
@@ -287,8 +299,11 @@ class ReleaseHistoryView(HistoryAdminView):
         releaseData = json.loads(change['data'])
         blob = ReleaseBlobV1(**releaseData)
 
-        db.releases.updateRelease(changed_by=changed_by, name=change['name'],
-            version=change['version'], blob=blob,
-            old_data_version=old_data_version, transaction=transaction)
+        try:
+            db.releases.updateRelease(changed_by=changed_by, name=change['name'],
+                version=change['version'], blob=blob,
+                old_data_version=old_data_version, transaction=transaction)
+        except ValueError, e:
+            return Response(status=400, response="Couldn't update release: %s" % e)
 
         return Response("Excellent!")

@@ -12,3 +12,7 @@ logfile=/var/log/aus.log
 [app]
 ; encryption key for session cookies. should be a few hundred bits
 secret_key=
+
+[site-specific]
+; domains that are allowed in update data, comma separated
+domain_whitelist=download.mozilla.org,stage.mozilla.org

@@ -12,3 +12,5 @@ logfile=/var/log/aus.log
 [site-specific]
 ;Sites that get the force=1 appended to download urls, comma separated supported
 ;specialforcehosts=http://example.org
+; domains that are allowed in update data, comma separated
+domain_whitelist=download.mozilla.org,stage.mozilla.org

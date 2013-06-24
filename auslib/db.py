@@ -4,6 +4,7 @@ import re
 import simplejson as json
 import sys
 import time
+from urlparse import urlparse
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
   create_engine, select, BigInteger
@@ -722,6 +723,8 @@ class Rules(AUSTable):
 
 class Releases(AUSTable):
     def __init__(self, metadata, dialect):
+        self.domainWhitelist = []
+
         self.table = Table('releases', metadata,
             Column('name', String(100), primary_key=True),
             Column('product', String(15), nullable=False),
@@ -734,6 +737,29 @@ class Releases(AUSTable):
             dataType = Text
         self.table.append_column(Column('data', dataType, nullable=False))
         AUSTable.__init__(self, dialect)
+
+    def setDomainWhitelist(self, domainWhitelist):
+        self.domainWhitelist = domainWhitelist
+
+    def containsForbiddenDomain(self, data):
+        """Returns True if "data" contains any file URLs that contain a
+           domain that we're not allowed to serve updates to."""
+        # Check the top level URLs, if the exist.
+        for url in data.get('fileUrls', {}).values():
+            domain = urlparse(url)[1]
+            if domain not in self.domainWhitelist:
+                return True
+
+        # And also the locale-level URLs.
+        for platform in data.get('platforms', {}).values():
+            for locale in platform.get('locales', {}).values():
+                for type_ in ('partial', 'complete'):
+                    if type_ in locale and 'fileUrl' in locale[type_]:
+                        domain = urlparse(locale[type_]['fileUrl'])[1]
+                        if domain not in self.domainWhitelist:
+                            return True
+
+        return False
 
     def getReleases(self, name=None, product=None, version=None, limit=None, transaction=None):
         self.log.debug("Looking for releases with:")
@@ -787,6 +813,9 @@ class Releases(AUSTable):
     def addRelease(self, name, product, version, blob, changed_by, transaction=None):
         if not blob.isValid():
             raise ValueError("Release blob is invalid.")
+        if self.containsForbiddenDomain(blob):
+            raise ValueError("Release blob contains forbidden domain.")
+
         columns = dict(name=name, product=product, version=version, data=blob.getJSON())
         # Raises DuplicateDataError if the release already exists.
         self.insert(changed_by=changed_by, transaction=transaction, **columns)
@@ -800,6 +829,8 @@ class Releases(AUSTable):
         if blob:
             if not blob.isValid():
                 raise ValueError("Release blob is invalid.")
+            if self.containsForbiddenDomain(blob):
+                raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
         self.update(where=[self.name==name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
@@ -835,6 +866,8 @@ class Releases(AUSTable):
 
         if not releaseBlob.isValid():
             raise ValueError("New release blob is invalid.")
+        if self.containsForbiddenDomain(releaseBlob):
+            raise ValueError("Release blob contains forbidden domain.")
         where = [self.name==name]
         what = dict(data=releaseBlob.getJSON())
         self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
@@ -994,6 +1027,7 @@ class AUSDatabase(object):
         if dburi:
             self.setDburi(dburi)
         self.log = logging.getLogger(self.__class__.__name__)
+        self.domainWhitelist = []
 
     def setDburi(self, dburi):
         """Setup the database connection. Note that SQLAlchemy only opens a connection
@@ -1008,6 +1042,10 @@ class AUSDatabase(object):
         self.releasesTable = Releases(self.metadata, dialect)
         self.permissionsTable = Permissions(self.metadata, dialect)
         self.metadata.bind = self.engine
+
+    def setDomainWhitelist(self, domainWhitelist):
+        self.domainWhitelist = domainWhitelist
+        self.releasesTable.setDomainWhitelist(domainWhitelist)
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,

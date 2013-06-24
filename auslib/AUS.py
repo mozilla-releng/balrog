@@ -1,6 +1,7 @@
 import copy, re
 from collections import defaultdict
 from random import randint
+from urlparse import urlparse
 
 import logging
 
@@ -40,6 +41,13 @@ class AUS3:
             return False
         for s in self.specialForceHosts:
             if url.startswith(s):
+                return True
+        return False
+
+    def containsForbiddenDomain(self, updateData):
+        for patch in updateData['patches']:
+            domain = urlparse(patch['URL'])[1]
+            if domain not in self.db.domainWhitelist:
                 return True
         return False
 
@@ -204,6 +212,11 @@ class AUS3:
             return {"partial": "", "complete": ""}
 
         rel = self.expandRelease(updateQuery, release, update_type)
+
+        if self.containsForbiddenDomain(rel):
+            self.log.debug("Forbidden domain found, refusing to create snippets.")
+            return {"partial": "", "complete": ""}
+
         snippets = {}
         for patch in rel['patches']:
             snippet  = ["version=1",
@@ -227,23 +240,23 @@ class AUS3:
         return snippets
 
     def createXML(self, updateQuery, release, update_type):
-
         # this will fall down all sorts of interesting ways by hardcoding fields
         xml = ['<?xml version="1.0"?>']
         xml.append('<updates>')
         if release:
             rel = self.expandRelease(updateQuery, release, update_type)
-            if rel['schema_version'] == 1:
-                updateLine='    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
-                           (rel['type'], rel['appv'], rel['extv'], rel['build'])
-                if rel['detailsUrl']:
-                    updateLine += ' detailsURL="%s"' % rel['detailsUrl']
-                updateLine += '>'
-                xml.append(updateLine)
-                for patch in sorted(rel['patches']):
-                    xml.append('        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
-                               (patch['type'], patch['URL'], patch['hashFunction'], patch['hashValue'], patch['size']))
-                xml.append('    </update>')
+            if not self.containsForbiddenDomain(rel):
+                if rel['schema_version'] == 1:
+                    updateLine='    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
+                            (rel['type'], rel['appv'], rel['extv'], rel['build'])
+                    if rel['detailsUrl']:
+                        updateLine += ' detailsURL="%s"' % rel['detailsUrl']
+                    updateLine += '>'
+                    xml.append(updateLine)
+                    for patch in sorted(rel['patches']):
+                        xml.append('        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
+                                (patch['type'], patch['URL'], patch['hashFunction'], patch['hashValue'], patch['size']))
+                    xml.append('    </update>')
         xml.append('</updates>')
         # ensure valid xml by using the right entity for ampersand
         payload = re.sub('&(?!amp;)','&amp;', '\n'.join(xml))

@@ -2,6 +2,7 @@ import simplejson as json
 import mock
 from tempfile import NamedTemporaryFile
 import unittest
+from xml.dom import minidom
 
 from auslib.AUS import AUS3
 from auslib.blob import ReleaseBlobV1
@@ -31,7 +32,7 @@ def RandomAUSTest(AUS, backgroundRate, force, mapping):
 class TestAUSThrottling(unittest.TestCase):
     def setUp(self):
         self.AUS = AUS3()
-        self.AUS.setDb('sqlite:///%s' % NamedTemporaryFile().name)
+        self.AUS.setDb('sqlite:///:memory:')
         self.AUS.db.create()
         self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "platforms": {}}')
 
@@ -64,7 +65,8 @@ class TestAUS(unittest.TestCase):
     def setUp(self):
         self.AUS = AUS3()
         self.AUS.setSpecialHosts(('http://special.org/',))
-        self.AUS.setDb('sqlite:///%s' % NamedTemporaryFile().name)
+        self.AUS.setDb('sqlite:///:memory:')
+        self.AUS.db.setDomainWhitelist(('special.org',))
         self.AUS.db.create()
         self.relData = {}
         self.relData['b'] = ReleaseBlobV1(
@@ -154,3 +156,29 @@ class TestAUS(unittest.TestCase):
         )
         self.assertEqual(updateData['patches'][0]['URL'],
                          'http://boring.org/a')
+
+    def testCreateXMLAllowedDomain(self):
+        xml = self.AUS.createXML(
+            dict(name=None, buildTarget='p', locale='l', channel='foo', force=False),
+            self.relData['b'],
+            'minor',
+        )
+        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
+        returned = minidom.parseString(xml)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="b" extensionVersion="b" buildID="1">
+        <patch type="complete" URL="http://special.org/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testCreateXMLForbiddenDomain(self):
+        xml = self.AUS.createXML(
+            dict(name=None, buildTarget='p', locale='m', channel='foo', force=False),
+            self.relData['b'],
+            'minor',
+        )
+        # An empty update contains an <updates> tag with a newline, which is what we're expecting here
+        self.assertEqual(minidom.parseString(xml).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')

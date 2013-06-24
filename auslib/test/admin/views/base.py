@@ -20,6 +20,7 @@ class ViewTest(unittest.TestCase):
         app.config['DEBUG'] = True
         app.config['CSRF_ENABLED'] = False
         db.setDburi('sqlite:///:memory:')
+        db.setDomainWhitelist(['good.com'])
         db.create()
         db.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         db.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
