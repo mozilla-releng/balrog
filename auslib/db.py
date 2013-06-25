@@ -607,7 +607,7 @@ class Rules(AUSTable):
             Column('buildTarget', String(75)),
             Column('buildID', String(20)),
             Column('locale', String(10)),
-            Column('osVersion', String(100)),
+            Column('osVersion', String(1000)),
             Column('distribution', String(100)),
             Column('distVersion', String(100)),
             Column('headerArchitecture', String(10)),

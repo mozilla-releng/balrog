@@ -108,7 +108,7 @@ class RuleForm(Form):
     locale = NullableTextField('Locale', validators=[validators.Length(0,10) ])
     distribution = NullableTextField('Distrubution', validators=[validators.Length(0,100) ])
     build_target = NullableTextField('Build Target', validators=[validators.Length(0,75) ])
-    os_version = NullableTextField('OS Version', validators=[validators.Length(0,100) ])
+    os_version = NullableTextField('OS Version', validators=[validators.Length(0,1000) ])
     dist_version = NullableTextField('Dist Version', validators=[validators.Length(0,100) ])
     comment = NullableTextField('Comment', validators=[validators.Length(0,500) ])
     update_type = SelectField('Update Type', choices=[('minor','minor'), ('major', 'major')], validators=[])
