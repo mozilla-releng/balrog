@@ -5,7 +5,7 @@ log = logging.getLogger(__name__)
 
 CURRENT_SCHEMA_VERSION=1
 
-def isValidBlob(format_, blob):
+def isValidBlob(format_, blob, topLevel=True):
     """Decides whether or not 'blob' is valid based on the format provided.
        Validation follows these rules:
        1) If there's no format at all, the blob is valid.
@@ -21,16 +21,22 @@ def isValidBlob(format_, blob):
     # If the blob isn't a dictionary-like object, it's not valid!
     if not hasattr(blob, 'keys') or not callable(blob.keys):
         return False
+    # If the blob format has a schema_version then that's a mandatory int
+    if topLevel and 'schema_version' in format_:
+        if 'schema_version' not in blob or not isinstance(blob['schema_version'], int):
+            log.debug("blob is not valid because schema_version is not defined, or non-integer")
+            return False
+    # check the blob against the format
     for key in blob.keys():
         # A '*' key in the format means that all key names in the blob are accepted.
         if '*' in format_:
             # But we still need to validate the sub-blob, if it exists.
-            if format_['*'] and not isValidBlob(format_['*'], blob[key]):
+            if format_['*'] and not isValidBlob(format_['*'], blob[key], topLevel=False):
                 log.debug("blob is not valid because of key '%s'" % key)
                 return False
         # If there's no '*' key, we need to make sure the key name is valid
         # and the sub-blob is valid, if it exists.
-        elif key not in format_ or not isValidBlob(format_[key], blob[key]):
+        elif key not in format_ or not isValidBlob(format_[key], blob[key], topLevel=False):
             log.debug("blob is not valid because of key '%s'" % key)
             return False
     return True
@@ -41,9 +47,11 @@ def createBlob(data):
     data = json.loads(data)
     try:
         if data['schema_version'] == 1:
-            return ReleaseBlobV1(data)
+            return ReleaseBlobV1(**data)
         elif data['schema_version'] == 2:
-            return ReleaseBlobV2(data)
+            return ReleaseBlobV2(**data)
+        else:
+            raise ValueError("schema_version is unknown")
     except KeyError, e:
         raise ValueError("schema_version is not set")
 
@@ -137,6 +145,12 @@ class ReleaseBlobV1(Blob):
         }
     }
 
+    def __init__(self, **kwargs):
+        # ensure schema_version is set if we init ReleaseBlobV1 directly
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 1
+
     def getAppv(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'appv')
 
@@ -202,6 +216,12 @@ class ReleaseBlobV2(Blob):
             }
         }
     }
+
+    def __init__(self, **kwargs):
+        # ensure schema_version is set if we init ReleaseBlobV2 directly
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 2
 
     def getAppVersion(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'appVersion')

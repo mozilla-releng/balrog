@@ -819,7 +819,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testAddRelease(self):
         blob = ReleaseBlobV1(name=4)
         self.releases.addRelease(name='d', product='d', version='d', blob=blob, changed_by='bill')
-        expected = [('d', 'd', 'd', json.dumps(dict(name=4)), 1)]
+        expected = [('d', 'd', 'd', json.dumps(dict(name=4, schema_version=1)), 1)]
         self.assertEquals(self.releases.t.select().where(self.releases.name=='d').execute().fetchall(), expected)
 
     def testAddReleaseAlreadyExists(self):
@@ -829,7 +829,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testUpdateRelease(self):
         blob = ReleaseBlobV1(name='a')
         self.releases.updateRelease(name='b', product='z', version='y', blob=blob, changed_by='bill', old_data_version=1)
-        expected = [('b', 'z', 'y', json.dumps(dict(name='a')), 2)]
+        expected = [('b', 'z', 'y', json.dumps(dict(name='a', schema_version=1)), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name=='b').execute().fetchall(), expected)
 
     def testUpdateReleaseWithBlob(self):
