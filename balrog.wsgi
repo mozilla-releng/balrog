@@ -30,6 +30,7 @@ from auslib.web.base import AUS
 
 AUS.setDb(cfg.getDburi())
 AUS.setSpecialHosts(cfg.getSpecialForceHosts())
+AUS.db.setDomainWhitelist(cfg.getDomainWhitelist())
 application.config['SENTRY_DSN'] = cfg.getSentryDsn()
 application.config['SENTRY_PROCESSORS'] = ['auslib.util.sentry.SanitizeHeadersProcessor']
 

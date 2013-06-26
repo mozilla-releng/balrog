@@ -51,6 +51,12 @@ class AUSConfig(object):
         else:
             return None
 
+    def getDomainWhitelist(self):
+        try:
+            return tuple(a.strip() for a in self.cfg.get('site-specific','domain_whitelist').split(','))
+        except (NoSectionError, NoOptionError):
+            return tuple()
+
 class AdminConfig(AUSConfig):
     required_options = {
         'logging': ['logfile'],

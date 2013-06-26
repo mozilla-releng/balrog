@@ -97,7 +97,7 @@ class ReleaseForm(Form):
     alias = JSONTextField('Alias', default=list)
 
 class RuleForm(Form):
-    throttle = IntegerField('Throttle', validators=[Required(), validators.NumberRange(0, 100) ])
+    backgroundRate = IntegerField('Background Rate', validators=[Required(), validators.NumberRange(0, 100) ])
     priority = IntegerField('Priority', validators=[Required()])
     mapping = SelectField('Mapping', validators=[])
     product = NullableTextField('Product', validators=[validators.Length(0, 15)] )

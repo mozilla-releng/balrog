@@ -167,7 +167,7 @@ function getRuleAPIUrl() {
 
 function getData(prefix, ruleForm){
     data = {
-        'throttle': $('[name='+prefix+'-throttle]', ruleForm).val(),
+        'backgroundRate': $('[name='+prefix+'-backgroundRate]', ruleForm).val(),
         'mapping': $('[name='+prefix+'-mapping]', ruleForm).val(),
         'priority': $('[name='+prefix+'-priority]', ruleForm).val(),
         'product': $('[name='+prefix+'-product]', ruleForm).val(),
@@ -225,7 +225,7 @@ function submitNewRuleForm(ruleForm, table) {
 }
 
 function cloneRule(ruleForm, newRuleForm, ruleId){
-    $('[name*=new_rule-throttle]', newRuleForm).val($('[name='+ruleId+'-throttle]', ruleForm).val());
+    $('[name*=new_rule-backgroundRate]', newRuleForm).val($('[name='+ruleId+'-backgroundRate]', ruleForm).val());
     $('[name*=new_rule-mapping]', newRuleForm).combobox('newVal', $('[name='+ruleId+'-mapping]', ruleForm).val());
     $('[name*=new_rule-priority]', newRuleForm).val($('[name='+ruleId+'-priority]', ruleForm).val());
     $('[name*=new_rule-product]', newRuleForm).val($('[name='+ruleId+'-product]', ruleForm).val());

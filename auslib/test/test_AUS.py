@@ -2,13 +2,14 @@ import simplejson as json
 import mock
 from tempfile import NamedTemporaryFile
 import unittest
+from xml.dom import minidom
 
 from auslib.AUS import AUS3
 from auslib.blob import ReleaseBlobV1, ReleaseBlobV2
 
-def RandomAUSTest(AUS, throttle, force, mapping):
+def RandomAUSTest(AUS, backgroundRate, force, mapping):
     with mock.patch('auslib.db.Rules.getRulesMatchingQuery') as m:
-        m.return_value=[dict(throttle=throttle, priority=1, mapping=mapping, update_type='minor')]
+        m.return_value=[dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor')]
 
         results = AUS.rand.getRange()
         resultsLength = len(results)
@@ -31,32 +32,32 @@ def RandomAUSTest(AUS, throttle, force, mapping):
 class TestAUSThrottling(unittest.TestCase):
     def setUp(self):
         self.AUS = AUS3()
-        self.AUS.setDb('sqlite:///%s' % NamedTemporaryFile().name)
+        self.AUS.setDb('sqlite:///:memory:')
         self.AUS.db.create()
         self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "schema_version": 1, "platforms": {}}')
 
     def testThrottling100(self):
-        (served, tested) = RandomAUSTest(self.AUS, throttle=100, force=False, mapping='b')
+        (served, tested) = RandomAUSTest(self.AUS, backgroundRate=100, force=False, mapping='b')
         self.assertEqual(served, 1)
         self.assertEqual(tested, 1)
 
     def testThrottling50(self):
-        (served, tested) = RandomAUSTest(self.AUS, throttle=50, force=False, mapping='b')
+        (served, tested) = RandomAUSTest(self.AUS, backgroundRate=50, force=False, mapping='b')
         self.assertEqual(served,  50)
         self.assertEqual(tested, 100)
 
     def testThrottling25(self):
-        (served, tested) = RandomAUSTest(self.AUS, throttle=25, force=False, mapping='b')
+        (served, tested) = RandomAUSTest(self.AUS, backgroundRate=25, force=False, mapping='b')
         self.assertEqual(served,  25)
         self.assertEqual(tested, 100)
 
     def testThrottlingZero(self):
-        (served, tested) = RandomAUSTest(self.AUS, throttle=0, force=False, mapping='b')
+        (served, tested) = RandomAUSTest(self.AUS, backgroundRate=0, force=False, mapping='b')
         self.assertEqual(served,   0)
         self.assertEqual(tested, 100)
 
     def testThrottling25WithForcing(self):
-        (served, tested) = RandomAUSTest(self.AUS, throttle=25, force=True, mapping='b')
+        (served, tested) = RandomAUSTest(self.AUS, backgroundRate=25, force=True, mapping='b')
         self.assertEqual(served, 1)
         self.assertEqual(tested, 1)
 
@@ -64,7 +65,8 @@ class TestAUS(unittest.TestCase):
     def setUp(self):
         self.AUS = AUS3()
         self.AUS.setSpecialHosts(('http://special.org/',))
-        self.AUS.setDb('sqlite:///%s' % NamedTemporaryFile().name)
+        self.AUS.setDb('sqlite:///:memory:')
+        self.AUS.db.setDomainWhitelist(('special.org',))
         self.AUS.db.create()
         self.relData = {}
         self.relData['b'] = ReleaseBlobV1(
@@ -127,7 +129,7 @@ class TestAUS(unittest.TestCase):
                                 'filesize': '2',
                                 'from': '*',
                                 'hashValue': '2',
-                                'fileUrl': 'http://example.com/mar'
+                                'fileUrl': 'http://special.org/mar'
                             }
                         )
                     )
@@ -194,30 +196,58 @@ class TestAUS(unittest.TestCase):
         self.assertEqual(updateData['patches'][0]['URL'],
                          'http://boring.org/a')
 
+    def testCreateXMLAllowedDomain(self):
+        xml = self.AUS.createXML(
+            dict(name=None, buildTarget='p', locale='l', channel='foo', force=False),
+            self.relData['b'],
+            'minor',
+        )
+        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
+        returned = minidom.parseString(xml)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="b" extensionVersion="b" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
+        <patch type="complete" URL="http://special.org/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testCreateXMLForbiddenDomain(self):
+        xml = self.AUS.createXML(
+            dict(name=None, buildTarget='p', locale='m', channel='foo', force=False),
+            self.relData['b'],
+            'minor',
+        )
+        # An empty update contains an <updates> tag with a newline, which is what we're expecting here
+        self.assertEqual(minidom.parseString(xml).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+
     def testSchemaV1XML(self):
         xml = self.AUS.createXML(
-            dict(name=None, buildTarget='p', locale='l', channel='foo', force=True),
+            dict(name=None, buildTarget='p', locale='l', channel='foo', force=False),
             self.relData['b'], update_type='minor',
         )
         expected = """\
 <?xml version="1.0"?>
 <updates>
     <update type="minor" version="b" extensionVersion="b" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
-        <patch type="complete" URL="http://special.org/?foo=a&amp;force=1" hashFunction="sha512" hashValue="1" size="1"/>
+        <patch type="complete" URL="http://special.org/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
     </update>\n</updates>\
 """
         self.assertEqual(xml, expected)
 
     def testSchemaV2XML(self):
         xml = self.AUS.createXML(
-            dict(name=None, buildTarget='p', locale='o', channel='foo', force=True),
+            dict(name=None, buildTarget='p', locale='o', channel='foo', force=False),
             self.relData['c'], update_type='minor',
         )
         expected = """\
 <?xml version="1.0"?>
 <updates>
     <update type="minor" displayVersion="c" appVersion="c" platformVersion="c" buildID="2" detailsURL="http://example.org/details" licenseURL="http://example.org/license" billboardURL="http://example.com/billboard" showPrompt="false" showNeverForVersion="true" showSurvey="false" actions="silent" openURL="http://example.com/url" notificationURL="http://example.com/notification" alertURL="http://example.com/alert">
-        <patch type="complete" URL="http://example.com/mar" hashFunction="sha512" hashValue="2" size="2"/>
+        <patch type="complete" URL="http://special.org/mar" hashFunction="sha512" hashValue="2" size="2"/>
     </update>\n</updates>\
 """
+        print "expected: %s" % expected
+        print "actual:   %s" % xml
         self.assertEqual(xml, expected)

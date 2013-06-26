@@ -28,6 +28,7 @@ logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel(), format=l
 from auslib.admin.base import db, app as application
 
 db.setDburi(cfg.getDburi())
+db.setDomainWhitelist(cfg.getDomainWhitelist())
 application.config['SECRET_KEY'] = cfg.getSecretKey()
 application.config['SENTRY_DSN'] = cfg.getSentryDsn()
 application.config['SENTRY_PROCESSORS'] = ['auslib.util.sentry.SanitizeHeadersProcessor']

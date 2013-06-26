@@ -9,9 +9,10 @@ class ClientTest(unittest.TestCase):
         app.config['DEBUG'] = True
         AUS.setDb('sqlite:///:memory:')
         AUS.db.create()
+        AUS.db.setDomainWhitelist('a.com')
         self.client = app.test_client()
         self.view = ClientRequestView()
-        AUS.rules.t.insert().execute(throttle=100, mapping='b', update_type='minor', product='b', data_version=1)
+        AUS.rules.t.insert().execute(backgroundRate=100, mapping='b', update_type='minor', product='b', data_version=1)
         AUS.releases.t.insert().execute(name='b', product='b', version='1', data_version=1, data="""
 {
     "name": "b",
@@ -28,7 +29,7 @@ class ClientTest(unittest.TestCase):
                         "filesize": "3",
                         "from": "*",
                         "hashValue": "4",
-                        "fileUrl": "z"
+                        "fileUrl": "http://a.com/z"
                     }
                 }
             }
@@ -36,7 +37,7 @@ class ClientTest(unittest.TestCase):
     }
 }
 """)
-        AUS.rules.t.insert().execute(throttle=100, mapping='c', update_type='minor', product='c',
+        AUS.rules.t.insert().execute(backgroundRate=100, mapping='c', update_type='minor', product='c',
                                      distribution='default', data_version=1)
         AUS.releases.t.insert().execute(name='c', product='c', version='10', data_version=1, data="""
 {
@@ -54,7 +55,32 @@ class ClientTest(unittest.TestCase):
                         "filesize": "12",
                         "from": "*",
                         "hashValue": "13",
-                        "fileUrl": "y"
+                        "fileUrl": "http://a.com/y"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+        AUS.rules.t.insert().execute(throttle=100, mapping='d', update_type='minor', product='d', data_version=1)
+        AUS.releases.t.insert().execute(name='d', product='d', version='20', data_version=1, data="""
+{
+    "name": "d",
+    "schema_version": 1,
+    "appv": "20",
+    "extv": "20",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": 21,
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 22,
+                        "from": "*",
+                        "hashValue": "23",
+                        "fileUrl": "http://evil.com/y"
                     }
                 }
             }
@@ -94,7 +120,7 @@ class ClientTest(unittest.TestCase):
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1" extensionVersion="1" buildID="2">
-        <patch type="complete" URL="z" hashFunction="sha512" hashValue="4" size="3"/>
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
 """)
@@ -109,7 +135,7 @@ class ClientTest(unittest.TestCase):
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1" extensionVersion="1" buildID="2">
-        <patch type="complete" URL="z" hashFunction="sha512" hashValue="4" size="3"/>
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
 """)
@@ -131,8 +157,14 @@ class ClientTest(unittest.TestCase):
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1" extensionVersion="1" buildID="2">
-        <patch type="complete" URL="z" hashFunction="sha512" hashValue="4" size="3"/>
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testGetURLNotInWhitelist(self):
+        ret = self.client.get('/update/3/d/20/1/p/l/a/a/a/a/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')

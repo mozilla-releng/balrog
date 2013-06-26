@@ -1,6 +1,7 @@
 import copy, re
 from collections import defaultdict
 from random import randint
+from urlparse import urlparse
 
 import logging
 
@@ -47,6 +48,13 @@ class AUS3:
                 return True
         return False
 
+    def containsForbiddenDomain(self, updateData):
+        for patch in updateData['patches']:
+            domain = urlparse(patch['URL'])[1]
+            if domain not in self.db.domainWhitelist:
+                return True
+        return False
+
     def queryMatchesRelease(self, updateQuery, release):
         """Check if the updateQuery given is the same as the release."""
         self.log.debug("Trying to match update query to %s" % release['name'])
@@ -90,11 +98,11 @@ class AUS3:
 
         # 2) For background checks (force=1 missing from query), we might not
         # serve every request an update
-        # throttle=100 means all requests are served
-        # throttle=25 means only one quarter of requests are served
-        if not updateQuery['force'] and rule['throttle'] < 100:
-            self.log.debug("throttle < 100, rolling the dice")
-            if self.rand.getInt() >= rule['throttle']:
+        # backgroundRate=100 means all requests are served
+        # backgroundRate=25 means only one quarter of requests are served
+        if not updateQuery['force'] and rule['backgroundRate'] < 100:
+            self.log.debug("backgroundRate < 100, rolling the dice")
+            if self.rand.getInt() >= rule['backgroundRate']:
                 self.log.debug("request was dropped")
                 return None, None
 
@@ -218,6 +226,11 @@ class AUS3:
             return {"partial": "", "complete": ""}
 
         rel = self.expandRelease(updateQuery, release, update_type)
+
+        if self.containsForbiddenDomain(rel):
+            self.log.debug("Forbidden domain found, refusing to create snippets.")
+            return {"partial": "", "complete": ""}
+
         if rel['schema_version'] == 1:
             return self.createSnippetV1(updateQuery, rel, update_type)
         elif rel['schema_version'] == 2:
@@ -286,33 +299,34 @@ class AUS3:
         xml.append('<updates>')
         if release:
             rel = self.expandRelease(updateQuery, release, update_type)
-            if rel['schema_version'] == 1:
-                updateLine='    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
-                           (rel['type'], rel['appv'], rel['extv'], rel['build'])
-                if rel['detailsUrl']:
-                    updateLine += ' detailsURL="%s"' % rel['detailsUrl']
-                if rel['licenseUrl']:
-                    updateLine += ' licenseURL="%s"' % rel['licenseUrl']
-                updateLine += '>'
-                xml.append(updateLine)
+            if not self.containsForbiddenDomain(rel):
+                if rel['schema_version'] == 1:
+                    updateLine='    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
+                               (rel['type'], rel['appv'], rel['extv'], rel['build'])
+                    if rel['detailsUrl']:
+                        updateLine += ' detailsURL="%s"' % rel['detailsUrl']
+                    if rel['licenseUrl']:
+                        updateLine += ' licenseURL="%s"' % rel['licenseUrl']
+                    updateLine += '>'
+                    xml.append(updateLine)
 
-            if rel['schema_version'] == 2:
-                updateLine='    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"' % \
-                           (rel['type'], rel['displayVersion'], rel['appVersion'], rel['platformVersion'], rel['build'])
-                if rel['detailsUrl']:
-                    updateLine += ' detailsURL="%s"' % rel['detailsUrl']
-                if rel['licenseUrl']:
-                    updateLine += ' licenseURL="%s"' % rel['licenseUrl']
-                for attr in self.SCHEMA_2_OPTIONAL_ATTRIBUTES:
-                    if attr in rel:
-                        updateLine += ' %s="%s"' % (attr, rel[attr])
-                updateLine += '>'
-                xml.append(updateLine)
+                if rel['schema_version'] == 2:
+                    updateLine='    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"' % \
+                                (rel['type'], rel['displayVersion'], rel['appVersion'], rel['platformVersion'], rel['build'])
+                    if rel['detailsUrl']:
+                        updateLine += ' detailsURL="%s"' % rel['detailsUrl']
+                    if rel['licenseUrl']:
+                        updateLine += ' licenseURL="%s"' % rel['licenseUrl']
+                    for attr in self.SCHEMA_2_OPTIONAL_ATTRIBUTES:
+                        if attr in rel:
+                            updateLine += ' %s="%s"' % (attr, rel[attr])
+                    updateLine += '>'
+                    xml.append(updateLine)
 
-            for patch in sorted(rel['patches']):
-                xml.append('        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
-                           (patch['type'], patch['URL'], patch['hashFunction'], patch['hashValue'], patch['size']))
-            xml.append('    </update>')
+                for patch in sorted(rel['patches']):
+                    xml.append('        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
+                               (patch['type'], patch['URL'], patch['hashFunction'], patch['hashValue'], patch['size']))
+                xml.append('    </update>')
         xml.append('</updates>')
         # ensure valid xml by using the right entity for ampersand
         payload = re.sub('&(?!amp;)','&amp;', '\n'.join(xml))

@@ -55,6 +55,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._post('/releases/a', data=dict(data=data))
         self.assertStatusCode(ret, 400)
 
+    def testReleasePostRejectedURL(self):
+        data = json.dumps(dict(platforms=dict(p=dict(locales=dict(f=dict(complete=dict(fileUrl='http://evil.com')))))))
+        ret = self._post('/releases/d', data=dict(data=data, product='d', version='d', data_version=1))
+        self.assertStatusCode(ret, 400)
+
     def testLocalePut(self):
         data = json.dumps(dict(complete=dict(filesize='435')))
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='a', data_version=1))
@@ -105,7 +110,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testLocalePutAppend(self):
-        data = json.dumps(dict(partial=dict(fileUrl='abc')))
+        data = json.dumps(dict(partial=dict(fileUrl='http://good.com/blah')))
         ret = self._put('/releases/d/builds/p/g', data=dict(data=data, product='d', version='d', data_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
@@ -124,7 +129,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
                 },
                 "g": {
                     "partial": {
-                        "fileUrl": "abc"
+                        "fileUrl": "http://good.com/blah"
                     }
                 }
             }
@@ -161,7 +166,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testLocalePutAppendWithAlias(self):
-        data = json.dumps(dict(partial=dict(fileUrl='abc')))
+        data = json.dumps(dict(partial=dict(fileUrl='http://good.com/blah')))
         ret = self._put('/releases/d/builds/q/g', data=dict(data=data, product='d', version='d', data_version=1, alias='["q2"]'))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
@@ -184,7 +189,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "g": {
                     "partial": {
-                        "fileUrl": "abc"
+                        "fileUrl": "http://good.com/blah"
                     }
                 }
             }
@@ -265,6 +270,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocalePutBadJSON(self):
         ret = self._put('/releases/a/builds/p/l', data=dict(data='a', product='a', version='a'))
+        self.assertStatusCode(ret, 400)
+
+    def testLocaleRejectedURL(self):
+        data = json.dumps(dict(complete=dict(fileUrl='http://evil.com')))
+        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='a', data_version=1))
         self.assertStatusCode(ret, 400)
 
     def testLocaleGet(self):
