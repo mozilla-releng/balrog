@@ -1,7 +1,7 @@
 version=2
 type=complete
 url=http://download.mozilla.org/?product=firefox-13.0.1-complete&os=win&lang=de
-hashFunction=SHA512
+hashFunction=sha512
 hashValue=5b2d89905a2c7b6779789d6b495dd152c4fecc8674391c4e9d004057ca378da602121819b76fa7d20cc57ffbd4105290cef3eca23c35b27f76b2ff4469aa3202
 size=20476449
 build=20120614114901
