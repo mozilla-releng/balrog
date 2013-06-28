@@ -68,16 +68,16 @@ class RulesAPIView(AdminView):
                 priority=form.priority.data,
                 product = form.product.data,
                 version = form.version.data,
-                build_id = form.build_id.data,
+                buildID = form.build_id.data,
                 channel = form.channel.data,
                 locale = form.locale.data,
                 distribution = form.distribution.data,
-                build_target = form.build_target.data,
-                os_version = form.os_version.data,
-                dist_version = form.dist_version.data,
+                buildTarget = form.build_target.data,
+                osVersion = form.os_version.data,
+                distVersion = form.dist_version.data,
                 comment = form.comment.data,
                 update_type = form.update_type.data,
-                header_arch = form.header_arch.data)
+                headerArchitecturerch = form.header_arch.data)
         rule_id = db.rules.addRule(changed_by=changed_by, what=what,
             transaction=transaction)
         return Response(status=200, response=rule_id)
