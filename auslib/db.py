@@ -9,6 +9,7 @@ from urlparse import urlparse
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
   create_engine, select, BigInteger
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql.expression import literal
 
 import migrate.versioning.schema
 import migrate.versioning.api
@@ -607,7 +608,7 @@ class Rules(AUSTable):
             Column('buildTarget', String(75)),
             Column('buildID', String(20)),
             Column('locale', String(10)),
-            Column('osVersion', String(100)),
+            Column('osVersion', String(1000)),
             Column('distribution', String(100)),
             Column('distVersion', String(100)),
             Column('headerArchitecture', String(10)),
@@ -634,7 +635,7 @@ class Rules(AUSTable):
             return True
 
     def _channelMatchesRule(self, ruleChannel, queryChannel, fallbackChannel):
-        """Decides whether a channel from the rules matchs an incoming one.
+        """Decides whether a channel from the rules matches an incoming one.
            If the ruleChannel is null, we match any queryChannel. We also match
            if the channels match exactly, or match after wildcards in ruleChannel
            are resolved. Channels may have a fallback specified, too, so we must
@@ -645,6 +646,19 @@ class Rules(AUSTable):
             return True
         if self._matchesRegex(ruleChannel, fallbackChannel):
             return True
+
+    def _osVersionMatchesRule(self, ruleOsVersion, queryOsVersion):
+        """Decides whether an osVersion from a rule matches an incoming one.
+           osVersion columns in a rule may specify multiple OS versions,
+           delimited by a comma. Once split we do simple substring matching
+           against the query's OS version. Unlike versions and channels, we
+           assume each OS version is a substring of what will be in the query,
+           thus we don't need to support globbing."""
+        if ruleOsVersion is None:
+            return True
+        for os in ruleOsVersion.split(','):
+            if os in queryOsVersion:
+                return True
 
     def addRule(self, changed_by, what, transaction=None):
         ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
@@ -669,7 +683,6 @@ class Rules(AUSTable):
             ((self.buildTarget==updateQuery['buildTarget']) | (self.buildTarget==None)) &
             ((self.buildID==updateQuery['buildID']) | (self.buildID==None)) &
             ((self.locale==updateQuery['locale']) | (self.locale==None)) &
-            ((self.osVersion==updateQuery['osVersion']) | (self.osVersion==None)) &
             ((self.headerArchitecture==updateQuery['headerArchitecture']) | (self.headerArchitecture==None))
         ]
         # Query version 2 doesn't have distribution information, and to keep
@@ -698,6 +711,12 @@ class Rules(AUSTable):
                 continue
             if not self._channelMatchesRule(rule['channel'], updateQuery['channel'], fallbackChannel):
                 self.log.debug("%s doesn't match %s", rule['channel'], updateQuery['channel'])
+                continue
+            # To help keep the rules table compact, multiple OS versions may be
+            # specified in a single rule. They are comma delimited, so we need to
+            # break them out and create clauses for each one.
+            if not self._osVersionMatchesRule(rule['osVersion'], updateQuery['osVersion']):
+                self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
             matchingRules.append(rule)
         self.log.debug("Reduced matches:")

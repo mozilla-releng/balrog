@@ -1,3 +1,5 @@
+import urllib
+
 from flask import make_response, request
 from flask.views import MethodView
 
@@ -21,6 +23,7 @@ class ClientRequestView(MethodView):
 
     def getQueryFromURL(self, url):
         query = url.copy()
+        query['osVersion'] = urllib.unquote(query['osVersion'])
         ua = request.headers.get('User-Agent')
         query['headerArchitecture'] = self.getHeaderArchitecture(query['buildTarget'], ua)
         query['force'] = (int(request.args.get('force', 0)) == 1)
