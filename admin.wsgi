@@ -12,7 +12,7 @@ from raven.contrib.flask import Sentry
 from auslib.config import AdminConfig
 from auslib.log import log_format, BalrogLogger
 
-cfg = AdminConfig('/etc/aus/admin.ini')
+cfg = AdminConfig(path.join(mydir, 'admin.ini'))
 errors = cfg.validate()
 if errors:
     print >>sys.stderr, "Invalid configuration file:"
