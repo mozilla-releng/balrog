@@ -205,7 +205,7 @@ class AUS3:
                     'size': patch['filesize']
                 })
             else:
-                self.log.debug("Didn't add patch for patchKey '%s'; from is '%s', updateQuery name is '%s'", patchKey, patch['from'], updateQuery['name'])
+                self.log.debug("Didn't add patch for patchKey '%s'; from is '%s'", patchKey, patch['from'])
 
         # older branches required a <partial> in the update.xml, which we
         # used to fake by repeating the complete data.
@@ -299,7 +299,7 @@ class AUS3:
         xml.append('<updates>')
         if release:
             rel = self.expandRelease(updateQuery, release, update_type)
-            if not self.containsForbiddenDomain(rel):
+            if rel and not self.containsForbiddenDomain(rel):
                 if rel['schema_version'] == 1:
                     updateLine='    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
                                (rel['type'], rel['appv'], rel['extv'], rel['build'])
