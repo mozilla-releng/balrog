@@ -9,7 +9,7 @@ Vagrant::Config.run do |config|
     config.ssh.max_tries = 50
     config.ssh.timeout   = 300
 
-    config.vm.share_folder("v-root", MOUNT_POINT, ".")
+    config.vm.share_folder("vagrant-root", MOUNT_POINT, ".")
 
     config.vm.forward_port 80, 9000
 
