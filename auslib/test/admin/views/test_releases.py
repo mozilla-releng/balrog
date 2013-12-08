@@ -87,7 +87,6 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     def testLocalePutForNewRelease(self):
         data = json.dumps(dict(complete=dict(filesize='678')))
         ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e'))
-        print ret.data
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='e').execute().fetchone()[0]

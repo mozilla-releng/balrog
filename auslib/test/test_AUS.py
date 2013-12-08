@@ -248,6 +248,4 @@ class TestAUS(unittest.TestCase):
         <patch type="complete" URL="http://special.org/mar" hashFunction="sha512" hashValue="2" size="2"/>
     </update>\n</updates>\
 """
-        print "expected: %s" % expected
-        print "actual:   %s" % xml
         self.assertEqual(xml, expected)
