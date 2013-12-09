@@ -160,7 +160,6 @@ class ReleaseBlobV1(Blob):
 
 
 class ReleaseBlobV2(Blob):
-    # fakePartials can probably go
     format_ = {
         'name': None,
         'schema_version': None,
@@ -187,7 +186,6 @@ class ReleaseBlobV2(Blob):
         'showPrompt': None,
         'showNeverForVersion': None,
         'showSurvey': None,
-        'fakePartials': None,
         'platforms': {
             '*': {
                 'alias': None,
