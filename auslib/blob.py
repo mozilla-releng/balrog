@@ -3,7 +3,7 @@ import simplejson as json
 import logging
 log = logging.getLogger(__name__)
 
-CURRENT_SCHEMA_VERSION=1
+CURRENT_SCHEMA_VERSION=2
 
 def isValidBlob(format_, blob, topLevel=True):
     """Decides whether or not 'blob' is valid based on the format provided.
@@ -61,6 +61,7 @@ class Blob(dict):
 
     def isValid(self):
         """Decides whether or not this blob is valid based."""
+        log.debug('Validing blob %s' % self)
         return isValidBlob(self.format_, self)
 
     def loadJSON(self, data):

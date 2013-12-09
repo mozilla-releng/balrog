@@ -93,6 +93,7 @@ class ReleaseForm(Form):
     version = TextField('Version', validators=[Required()])
     hashFunction = TextField('Hash Function')
     data = JSONTextField('Data', validators=[Required()])
+    schema_version = IntegerField('Schema Version')
     copyTo = JSONTextField('Copy To', default=list)
     alias = JSONTextField('Alias', default=list)
 

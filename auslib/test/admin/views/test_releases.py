@@ -34,7 +34,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testReleasePostCreatesNewRelease(self):
         data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
-        ret = self._post('/releases/e', data=dict(data=data, product='e', version='e'))
+        ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=1))
         self.assertStatusCode(ret, 201)
         ret = db.releases.t.select().where(db.releases.name=='e').execute().fetchone()
         self.assertEqual(ret['product'], 'e')
@@ -86,7 +86,9 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocalePutForNewRelease(self):
         data = json.dumps(dict(complete=dict(filesize='678')))
-        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e'))
+        # setting schema_version in the incoming blob is a hack for testing
+        # SingleLocaleView._put() doesn't give us access to the form
+        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='e').execute().fetchone()[0]
@@ -139,7 +141,9 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocalePutForNewReleaseWithAlias(self):
         data = json.dumps(dict(complete=dict(filesize='678')))
-        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', alias='["p2"]'))
+        # setting schema_version in the incoming blob is a hack for testing
+        # SingleLocaleView._put() doesn't give us access to the form
+        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', alias='["p2"]', schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='e').execute().fetchone()[0]

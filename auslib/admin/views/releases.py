@@ -15,8 +15,6 @@ from auslib.admin.views.forms import ReleaseForm, NewReleaseForm
 __all__ = ["SingleReleaseView", "SingleLocaleView", "ReleasesPageView"]
 
 def createRelease(release, product, version, changed_by, transaction, releaseData):
-    if 'schema_version' not in releaseData:
-        releaseData['schema_version'] = CURRENT_SCHEMA_VERSION
     blob = createBlob(json.dumps(releaseData))
 
     db.releases.addRelease(name=release, product=product, version=version,
@@ -77,6 +75,17 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
     alias = form.alias.data
     old_data_version = form.data_version.data
 
+    try:
+        # should be set here doing PUT at SingleLocaleView
+        # but some SingleLocaleView tests use the except
+        schema_version = form.schema_version.data
+    except AttributeError:
+        # should be set when doing POST on SingleReleaseView
+        schema_version = incomingData.get('schema_version')
+    # otherwise try the default, the blob validator will save us
+    if schema_version is None:
+        schema_version = CURRENT_SCHEMA_VERSION
+
     allReleases = [release]
     if copyTo:
         allReleases += copyTo
@@ -103,7 +112,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                 old_data_version = releaseInfo['data_version']
         except IndexError:
             # If the release doesn't already exist, create it, and set old_data_version appropriately.
-            newReleaseData = dict(name=rel)
+            newReleaseData = dict(name=rel, schema_version=schema_version)
             if hashFunction:
                 newReleaseData['hashFunction'] = hashFunction
             try:
