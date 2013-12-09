@@ -160,6 +160,12 @@ class ReleaseBlobV1(Blob):
 
 
 class ReleaseBlobV2(Blob):
+    """ Changes from ReleaseBlobV1:
+         * appv, extv become appVersion, platformVersion, displayVersion
+        Added:
+         * actions, billboardURL, openURL, notificationURL,
+           alertURL, showPrompt, showSurvey, showNeverForVersion
+    """
     format_ = {
         'name': None,
         'schema_version': None,

@@ -16,7 +16,6 @@ __all__ = ["SingleReleaseView", "SingleLocaleView", "ReleasesPageView"]
 
 def createRelease(release, product, version, changed_by, transaction, releaseData):
     blob = createBlob(json.dumps(releaseData))
-
     db.releases.addRelease(name=release, product=product, version=version,
         blob=blob, changed_by=changed_by, transaction=transaction)
     return db.releases.getReleases(name=release, transaction=transaction)[0]
@@ -310,7 +309,6 @@ class ReleaseHistoryView(HistoryAdminView):
 
         # now we're going to make a new update based on this change
         blob = createBlob(change['data'])
-        self.log.debug('blob: %s', blob)
 
         try:
             db.releases.updateRelease(changed_by=changed_by, name=change['name'],

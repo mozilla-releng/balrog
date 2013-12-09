@@ -139,7 +139,6 @@ class TestAUS(unittest.TestCase):
         self.AUS.db.releases.t.insert().execute(name='c', product='c', version='c', data_version=1,
             data=json.dumps(self.relData['c']))
 
-
     def testSpecialQueryParam(self):
         updateData = self.AUS.expandRelease(
             dict(name=None, buildTarget='p', locale='l', channel='foo', force=False),
