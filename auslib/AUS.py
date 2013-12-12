@@ -21,10 +21,6 @@ class AUSRandom:
         return range(self.min, self.max+1)
 
 class AUS3:
-    SCHEMA_2_OPTIONAL_ATTRIBUTES = (
-        'billboardURL', 'showPrompt', 'showNeverForVersion', 'showSurvey',
-        'actions', 'openURL', 'notificationURL', 'alertURL')
-
     def __init__(self, dbname=None):
         self.setDb(dbname)
         self.rand = AUSRandom()
@@ -146,9 +142,10 @@ class AUS3:
             updateData['displayVersion'] = relData.getDisplayVersion(buildTarget, locale)
             updateData['appVersion'] = relData.getAppVersion(buildTarget, locale)
             updateData['platformVersion'] = relData.getPlatformVersion(buildTarget, locale)
-            for attr in self.SCHEMA_2_OPTIONAL_ATTRIBUTES:
+            for attr in relData.optional_:
                 if attr in relData:
                     updateData[attr] = relData[attr]
+            updateData['optional'] = relData.optional_
 
         # general properties
         updateData['type'] = update_type
@@ -283,7 +280,7 @@ class AUS3:
                 snippet.append("licenseUrl=%s" % rel['licenseUrl'])
             if rel['type'] == 'major':
                 snippet.append('updateType=major')
-            for attr in self.SCHEMA_2_OPTIONAL_ATTRIBUTES:
+            for attr in rel['optional']:
                 if attr in rel:
                     snippet.append('%s=%s' % (attr, rel[attr]))
             # AUS2 snippets have a trailing newline, add one here for easy diffing
@@ -317,7 +314,7 @@ class AUS3:
                         updateLine += ' detailsURL="%s"' % rel['detailsUrl']
                     if rel['licenseUrl']:
                         updateLine += ' licenseURL="%s"' % rel['licenseUrl']
-                    for attr in self.SCHEMA_2_OPTIONAL_ATTRIBUTES:
+                    for attr in rel['optional']:
                         if attr in rel:
                             updateLine += ' %s="%s"' % (attr, rel[attr])
                     updateLine += '>'

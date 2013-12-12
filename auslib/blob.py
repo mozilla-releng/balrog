@@ -221,6 +221,10 @@ class ReleaseBlobV2(Blob):
             }
         }
     }
+    # for the benefit of createXML and createSnippetv2
+    optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
+                 'showSurvey', 'actions', 'openURL', 'notificationURL',
+                 'alertURL')
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV2 directly
