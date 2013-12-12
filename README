@@ -1,3 +1,4 @@
 Balrog is a rewrite of the Application Update Server used by Mozilla to
 provide updates to Firefox. It uses a database to store a series of rules
-which map update requests to releases.
+which map update requests to releases. Documentation is available at
+https://wiki.mozilla.org/Balrog.
