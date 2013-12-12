@@ -61,7 +61,7 @@ class Blob(dict):
 
     def isValid(self):
         """Decides whether or not this blob is valid based."""
-        log.debug('Validing blob %s' % self)
+        log.debug('Validating blob %s' % self)
         return isValidBlob(self.format_, self)
 
     def loadJSON(self, data):

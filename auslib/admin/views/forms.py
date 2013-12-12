@@ -42,8 +42,6 @@ class JSONBlobFileField(JSONFieldMixin, TextField):
         self.data = createBlob(valuelist[0])
         self.data.isValid()
 
-    def _set_default(self):
-        self.data = createBlob(data=dict(schema_version=CURRENT_SCHEMA_VERSION))
 
 # We need to be sure that we list JSONFieldMixin BEFORE the TextField in the derived classes list
 # We want to use JSONFieldMixin's version of process_formdata instead of TextField's version.
