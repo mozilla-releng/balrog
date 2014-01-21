@@ -861,20 +861,20 @@ class Releases(AUSTable):
         """
         releaseBlob = self.getReleaseBlob(name, transaction=transaction)
         if 'platforms' not in releaseBlob:
-            releaseBlob['platforms'] = {
-                platform: {
-                    'locales': {
-                    }
-                }
-            }
+            releaseBlob['platforms'] = {}
 
         if platform in releaseBlob['platforms']:
             # If the platform we're given is aliased to another one, we need
             # to resolve that before doing any updating. If we don't, the data
             # will go into an aliased platform and be ignored!
             platform = releaseBlob.getResolvedPlatform(platform)
-        else:
-            releaseBlob['platforms'][platform] = dict(locales=dict())
+
+        if platform not in releaseBlob['platforms']:
+            releaseBlob['platforms'][platform] = {}
+
+        if 'locales' not in releaseBlob['platforms'][platform]:
+            releaseBlob['platforms'][platform]['locales'] = {}
+
         releaseBlob['platforms'][platform]['locales'][locale] = data
 
         # we don't allow modification of existing platforms (aliased or not)
