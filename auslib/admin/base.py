@@ -1,6 +1,6 @@
 from flask import Flask, request
 
-from auslib import version
+import auslib
 from auslib.db import AUSDatabase
 
 import logging
@@ -22,7 +22,7 @@ from auslib.admin.views.index import IndexPageView, RecentChangesTableView
 @app.errorhandler(500)
 def isa(error):
     log.error("Caught ISE 500 error.")
-    log.debug("Balrog version is: %s", version)
+    log.debug("Balrog version is: %s", auslib.version)
     log.debug("Request path is: %s", request.path)
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)

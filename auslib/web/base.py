@@ -3,7 +3,7 @@ log = logging.getLogger(__name__)
 
 from flask import Flask, make_response, request
 
-from auslib import version
+import auslib
 from auslib.AUS import AUS3
 
 app = Flask(__name__)
@@ -21,7 +21,7 @@ def fourohfour(error):
 @app.errorhandler(500)
 def isa(error):
     log.error("Caught ISE 500 error.")
-    log.debug("Balrog version is: %s", version)
+    log.debug("Balrog version is: %s", auslib.version)
     log.debug("Request path is: %s", request.path)
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)

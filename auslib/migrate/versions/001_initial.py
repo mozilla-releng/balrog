@@ -1,5 +1,5 @@
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-  CheckConstraint, BigInteger
+  BigInteger
 
 metadata = MetaData()
 

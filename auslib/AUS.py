@@ -6,6 +6,7 @@ from urlparse import urlparse
 import logging
 
 from auslib.db import AUSDatabase
+from auslib.log import cef_event, CEF_ALERT
 
 class AUSRandom:
     """Abstract getting a randint to make it easier to test the range of
@@ -48,6 +49,7 @@ class AUS3:
         for patch in updateData['patches']:
             domain = urlparse(patch['URL'])[1]
             if domain not in self.db.domainWhitelist:
+                cef_event('Forbidden domain', CEF_ALERT, domain=domain, updateData=updateData)
                 return True
         return False
 

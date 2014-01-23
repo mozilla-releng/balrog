@@ -6,6 +6,8 @@
 [logging]
 ;Where to put the application log. No rotation is done on this file.
 logfile=/var/log/aus.log
+;Where to log CEF messages. Normally set to syslog.
+cef_logfile=syslog
 ;level=ERROR
 ;sentry_dsn='threaded+https://abc:def@errormill.mozilla.org/12'
 
@@ -13,4 +15,4 @@ logfile=/var/log/aus.log
 ;Sites that get the force=1 appended to download urls, comma separated supported
 ;specialforcehosts=http://example.org
 ; domains that are allowed in update data, comma separated
-domain_whitelist=download.mozilla.org,stage.mozilla.org
+domain_whitelist=download.mozilla.org,stage.mozilla.org,ftp.mozilla.org

@@ -10,7 +10,7 @@ mydir = os.path.dirname(os.path.abspath(__file__))
 site.addsitedir(mydir)
 site.addsitedir(os.path.join(mydir, 'vendor/lib/python'))
 
-from auslib.AUS import *
+from auslib.AUS import AUS3
 
 import logging
 log = logging.getLogger(__name__)

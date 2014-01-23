@@ -45,6 +45,12 @@ class AUSConfig(object):
     def getDburi(self):
         return self.cfg.get('database', 'dburi')
 
+    def getCefLogfile(self):
+        if self.cfg.has_option('logging', 'cef_logfile'):
+            return self.cfg.get('logging', 'cef_logfile')
+        else:
+            return "cef.log"
+
     def getSentryDsn(self):
         if self.cfg.has_option('logging', 'sentry_dsn'):
             return self.cfg.get('logging', 'sentry_dsn')
@@ -66,6 +72,12 @@ class AdminConfig(AUSConfig):
 
     def getSecretKey(self):
         return self.cfg.get("app", "secret_key")
+
+    def getSystemAccounts(self):
+        try:
+            return tuple(a.strip() for a in self.cfg.get('site-specific','system_accounts').split(','))
+        except (NoSectionError, NoOptionError):
+            return ()
 
 class ClientConfig(AUSConfig):
     def getSpecialForceHosts(self):

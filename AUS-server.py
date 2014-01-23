@@ -16,22 +16,24 @@ if __name__ == "__main__":
     parser.add_option("-p", "--port", dest="port", type="int", help="port for server")
     parser.add_option("--host", dest="host", default='127.0.0.1', help="host to listen on. for example, 0.0.0.0 binds on all interfaces.")
     parser.add_option("--whitelist-domain", dest="whitelistedDomains", action="append")
+    parser.add_option("--cef-log", dest="cefLog", default="cef.log")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
         help="Verbose output")
     options, args = parser.parse_args()
 
     # Logging needs to get set-up before importing the application
     # to make sure that logging done from other modules uses our Logger.
-    from auslib.log import log_format, BalrogLogger
+    import auslib.log
 
-    logging.setLoggerClass(BalrogLogger)
+    logging.setLoggerClass(auslib.log.BalrogLogger)
     log_level = logging.INFO
     if options.verbose:
         log_level = logging.DEBUG
-    logging.basicConfig(level=log_level, format=log_format)
+    logging.basicConfig(level=log_level, format=auslib.log.log_format)
 
     from auslib.web.base import app, AUS
 
+    auslib.log.cef_config = auslib.log.get_cef_config(options.cefLog)
     AUS.setDb(options.db)
     AUS.db.setDomainWhitelist(options.whitelistedDomains)
     try:

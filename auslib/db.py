@@ -9,12 +9,12 @@ from urlparse import urlparse
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
   create_engine, select, BigInteger
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.sql.expression import literal
 
 import migrate.versioning.schema
 import migrate.versioning.api
 
 from auslib.blob import ReleaseBlobV1
+from auslib.log import cef_event, CEF_ALERT
 
 import logging
 
@@ -129,13 +129,33 @@ class AUSTable(object):
                          update. This is useful for detecting colliding
                          updates.
        @type versioned: bool
+       @param onInsert: A callback that will be called whenever an insert is
+                        made to the table. It must accept the following 2
+                        parameters:
+                         * The name of the user making the change
+                         * The row data that will be inserted
+                        If the callback raises an exception the change will
+                        be aborted.
+       @type onInsert: callable
+       @param onDelete: Like onInsert, but the second argument that the callable
+                        receives will be the conditions used in deciding which
+                        rows to delete, rather than row data.
+       @type onDelete: callable
+       @param onUpdate: Like onInsert, but the callable must support an
+                        addition parameter:
+                         * The conditions used in deciding which rows to update
+       @type onUpdate: callable
     """
-    def __init__(self, dialect, history=True, versioned=True):
+    def __init__(self, dialect, history=True, versioned=True, onInsert=None,
+                 onUpdate=None, onDelete=None):
         self.t = self.table
         # Enable versioning, if required
         if versioned:
             self.t.append_column(Column('data_version', Integer, nullable=False))
         self.versioned = versioned
+        self.onInsert = onInsert
+        self.onUpdate = onUpdate
+        self.onDelete = onDelete
         # Mirror the columns as attributes for easy access
         self.primary_key = []
         for col in self.table.get_children():
@@ -153,13 +173,6 @@ class AUSTable(object):
     # unset when we're instantiated
     def getEngine(self):
         return self.t.metadata.bind
-
-    def wherePkMatches(self, primary_key_values):
-        """Generates a list of where clauses that match all of the key parts of this table."""
-        cond = []
-        for col in self.primary_key:
-            cond.append(col==primary_key_values[col.name])
-        return cond
 
     def _returnRowOrRaise(self, where, columns=None, transaction=None):
         """Return the row matching the where clause supplied. If no rows match or multiple rows match,
@@ -254,6 +267,9 @@ class AUSTable(object):
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
 
+        if self.onInsert:
+            self.onInsert(self, changed_by, columns)
+
         if transaction:
             return self._prepareInsert(transaction, changed_by, **columns)
         else:
@@ -318,6 +334,9 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("old_data_version must be passed for Tables that are versioned")
+
+        if self.onDelete:
+            self.onDelete(self, changed_by, where)
 
         if transaction:
             return self._prepareDelete(transaction, where, changed_by, old_data_version)
@@ -387,6 +406,9 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("update: old_data_version must be passed for Tables that are versioned")
+
+        if self.onUpdate:
+            self.onUpdate(self, changed_by, what, where)
 
         if transaction:
             return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
@@ -767,6 +789,7 @@ class Releases(AUSTable):
         for url in data.get('fileUrls', {}).values():
             domain = urlparse(url)[1]
             if domain not in self.domainWhitelist:
+                cef_event('Forbidden domain', CEF_ALERT, domain=domain, updateData=data)
                 return True
 
         # And also the locale-level URLs.
@@ -776,6 +799,7 @@ class Releases(AUSTable):
                     if type_ in locale and 'fileUrl' in locale[type_]:
                         domain = urlparse(locale[type_]['fileUrl'])[1]
                         if domain not in self.domainWhitelist:
+                            cef_event('Forbidden domain', CEF_ALERT, domain=domain, updateData=data)
                             return True
 
         return False
@@ -1036,6 +1060,21 @@ class Permissions(AUSTable):
                 ret = False
         return ret
 
+
+def getHumanModificationMonitors(systemAccounts):
+    # Long lines from "what" get truncated to avoid printing out massive
+    # release blobs ty the logs.
+    def onInsert(table, who, what):
+        if who not in systemAccounts:
+            cef_event('Human modification', CEF_ALERT, user=who, what=what, table=table.name, type='insert')
+    def onDelete(table, who, where):
+        if who not in systemAccounts:
+            cef_event('Human modification', CEF_ALERT, user=who, where=where, table=table.name, type='delete')
+    def onUpdate(table, who, where, what):
+        if who not in systemAccounts:
+            cef_event('Human modification', CEF_ALERT, user=who, what=what, where=where, table=table.name, type='update')
+    return onInsert, onDelete, onUpdate
+
 class AUSDatabase(object):
     engine = None
     migrate_repo = path.join(path.dirname(__file__), "migrate")
@@ -1061,6 +1100,9 @@ class AUSDatabase(object):
         self.releasesTable = Releases(self.metadata, dialect)
         self.permissionsTable = Permissions(self.metadata, dialect)
         self.metadata.bind = self.engine
+
+    def setupChangeMonitors(self, systemAccounts):
+        self.releases.onInsert, self.releases.onDelete, self.releases.onUpdate = getHumanModificationMonitors(systemAccounts)
 
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist

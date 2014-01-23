@@ -1,8 +1,11 @@
 import difflib
 import json
+
 from flask import Response
+
 from auslib.admin.views.base import AdminView
 from auslib.admin.base import db
+from auslib.log import cef_event, CEF_WARN
 
 
 class FieldView(AdminView):
@@ -41,6 +44,7 @@ class FieldView(AdminView):
         try:
             value = self.get_value(type_, change_id, field)
         except KeyError, msg:
+            cef_event("Bad input", CEF_WARN, errors=str(msg), field=field)
             return Response(status=400, response=str(msg))
         except ValueError, msg:
             return Response(status=404, response=str(msg))
