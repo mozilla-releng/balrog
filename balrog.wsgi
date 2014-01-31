@@ -7,10 +7,9 @@ mydir = path.dirname(path.abspath(__file__))
 site.addsitedir(mydir)
 site.addsitedir(path.join(mydir, 'vendor/lib/python'))
 
-from raven.contrib.flask import Sentry
-
 from auslib.config import ClientConfig
 import auslib.log
+from auslib.web.base import sentry
 
 cfg = ClientConfig(path.join(mydir, 'balrog.ini'))
 errors = cfg.validate()
@@ -36,4 +35,4 @@ application.config['SENTRY_DSN'] = cfg.getSentryDsn()
 application.config['SENTRY_PROCESSORS'] = ['auslib.util.sentry.SanitizeHeadersProcessor']
 
 if application.config['SENTRY_DSN']:
-    sentry = Sentry(application)
+    sentry.init_app(application)

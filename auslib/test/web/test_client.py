@@ -1,3 +1,4 @@
+import mock
 import unittest
 from xml.dom import minidom
 
@@ -168,3 +169,17 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
         self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+
+    def testEmptySnippetOn404(self):
+        ret = self.client.get('/whizzybang')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+
+    def testEmptySnippetOn500(self):
+        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+            m.side_effect = Exception('I break!')
+            ret = self.client.get('/update/4/b/1/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.status_code, 200)
+            self.assertEqual(ret.mimetype, 'text/xml')
+            self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')

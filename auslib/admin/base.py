@@ -1,5 +1,7 @@
 from flask import Flask, request
 
+from raven.contrib.flask import Sentry
+
 import auslib
 from auslib.db import AUSDatabase
 
@@ -8,6 +10,7 @@ log = logging.getLogger(__name__)
 
 app = Flask(__name__)
 db = AUSDatabase()
+sentry = Sentry()
 
 from auslib.admin.views.csrf import CSRFView
 from auslib.admin.views.permissions import UsersView, PermissionsView, \
