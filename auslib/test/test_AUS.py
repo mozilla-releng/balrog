@@ -19,7 +19,11 @@ def RandomAUSTest(AUS, backgroundRate, force, mapping):
             served = 0
             tested = 0
             while len(results) > 0:
-                r, _ = AUS.evaluateRules(dict(channel='foo', force=force, buildTarget='a', buildID='a', locale='a'))
+                updateQuery = dict(
+                    channel='foo', force=force, buildTarget='a', buildID='0',
+                    locale='a', version='1.0'
+                )
+                r, _ = AUS.evaluateRules(updateQuery)
                 tested +=1
                 if r:
                     served += 1
@@ -33,7 +37,7 @@ class TestAUSThrottling(unittest.TestCase):
         self.AUS = AUS3()
         self.AUS.setDb('sqlite:///:memory:')
         self.AUS.db.create()
-        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "platforms": {}}')
+        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "extv": "1.0", "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
 
     def testThrottling100(self):
         (served, tested) = RandomAUSTest(self.AUS, backgroundRate=100, force=False, mapping='b')
@@ -71,8 +75,8 @@ class TestAUS(unittest.TestCase):
         self.relData['b'] = ReleaseBlobV1(
             name='b',
             schema_version=1,
-            appv='b',
-            extv='b',
+            appv='1.0',
+            extv='1.0',
             hashFunction='sha512',
             platforms=dict(
                 p=dict(
@@ -98,7 +102,7 @@ class TestAUS(unittest.TestCase):
                 )
             )
         )
-        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data=json.dumps(self.relData['b']))
+        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='1.0', data_version=1, data=json.dumps(self.relData['b']))
 
     def testSpecialQueryParam(self):
         updateData = self.AUS.expandRelease(
@@ -166,7 +170,7 @@ class TestAUS(unittest.TestCase):
         returned = minidom.parseString(xml)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
-    <update type="minor" version="b" extensionVersion="b" buildID="1">
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="1">
         <patch type="complete" URL="http://special.org/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
     </update>
 </updates>

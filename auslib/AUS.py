@@ -1,5 +1,6 @@
 import copy, re
 from collections import defaultdict
+from distutils.version import StrictVersion
 from random import randint
 from urlparse import urlparse
 
@@ -104,11 +105,21 @@ class AUS3:
                 self.log.debug("request was dropped")
                 return None, None
 
-        # 3) Mapping points at the incoming release.
+        # 3) Incoming release is older than the one in the mapping, defined as one of:
+        #    * version decreases
+        #    * version is the same and buildID doesn't increase
         release = self.releases.getReleases(name=rule['mapping'], limit=1)[0]
-        if self.queryMatchesRelease(updateQuery, release):
-            self.log.debug("Incoming query is the same as matching rule's mapping.")
+        buildTarget = updateQuery['buildTarget']
+        locale = updateQuery['locale']
+        releaseVersion = StrictVersion(release['data'].getExtv(buildTarget, locale))
+        queryVersion = StrictVersion(updateQuery['version'])
+        if queryVersion > releaseVersion:
+            self.log.debug("Matching rule has older version than request, ignoring rule.")
             return None, None
+        elif releaseVersion == queryVersion:
+            if updateQuery['buildID'] >= release['data'].getBuildID(updateQuery['buildTarget'], updateQuery['locale']):
+                self.log.debug("Matching rule has older buildid than request, ignoring rule.")
+                return None, None
 
         self.log.debug("Returning release %s", release['name'])
         return release['data'], rule['update_type']
