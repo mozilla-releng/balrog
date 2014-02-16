@@ -4,8 +4,6 @@ import logging
 from os import path
 import sys
 
-import simplejson as json
-
 # Our parent directory should contain the auslib module, so we add it to the
 # PYTHONPATH to make things easier on consumers.
 sys.path.append(path.join(path.dirname(__file__), ".."))

@@ -97,6 +97,9 @@ class Blob(dict):
         except KeyError:
             return self['platforms'][platform]['buildID']
 
+    def getApplicationVersion(self, platform, locale):
+        pass
+    
 
 class ReleaseBlobV1(Blob):
     format_ = {
@@ -157,6 +160,9 @@ class ReleaseBlobV1(Blob):
 
     def getExtv(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'extv')
+
+    def getApplicationVersion(self, platform, locale):
+        return self.getExtv(platform, locale)
 
 
 class ReleaseBlobV2(Blob):
@@ -240,3 +246,6 @@ class ReleaseBlobV2(Blob):
 
     def getPlatformVersion(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'platformVersion')
+
+    def getApplicationVersion(self, platform, locale):
+        return self.getAppVersion(platform, locale)

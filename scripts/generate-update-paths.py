@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
 import itertools
-import os.path
-import site
-import sys
 
 
 DEFAULT_UPDATE_DATA = {

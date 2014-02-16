@@ -38,11 +38,6 @@ $(document).ready(function() {
     $( "#toggle" ).click(function() {
         $( "select","[id*=mapping]").toggle();
     });
-
-    $('#rules_form').submit(function() {
-        submitRuleForm($(this));
-        return false;
-    });
 } );
 
 
@@ -188,9 +183,8 @@ function getData(prefix, ruleForm){
     return data;
 }
 
-function submitRuleForm(ruleForm){
-    var rule_id = ruleForm.data('rule_id');
-
+function submitRuleForm(rule_id){
+    var ruleForm = $('#rules_form');
     var url = getRuleUrl(rule_id);
     var data = getData(rule_id, ruleForm);
 

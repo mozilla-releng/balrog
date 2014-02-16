@@ -97,6 +97,11 @@ class TestReleaseBlobV1(unittest.TestCase):
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(extv=4)))))
         self.assertEquals(4, blob.getExtv('f', 'g'))
 
+    def testApplicationVersion(self):
+        blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(extv=4)))))
+        self.assertEquals(blob.getExtv('f', 'g'), blob.getApplicationVersion('f', 'g'))
+
+
 class TestReleaseBlobV2(unittest.TestCase):
     def testGetAppVersion(self):
         blob = ReleaseBlobV2(appVersion=1)
@@ -115,3 +120,7 @@ class TestReleaseBlobV2(unittest.TestCase):
         self.assertEquals(5, blob.getPlatformVersion('p', 'l'))
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(platformVersion=6)))))
         self.assertEquals(6, blob.getPlatformVersion('f', 'g'))
+
+    def testApplicationVersion(self):
+        blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(appVersion=6)))))
+        self.assertEquals(blob.getAppVersion('f', 'g'), blob.getApplicationVersion('f', 'g'))

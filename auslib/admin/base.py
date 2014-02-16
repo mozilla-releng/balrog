@@ -1,6 +1,8 @@
 from flask import Flask, request
 
-from auslib import version
+from raven.contrib.flask import Sentry
+
+import auslib
 from auslib.db import AUSDatabase
 
 import logging
@@ -8,6 +10,7 @@ log = logging.getLogger(__name__)
 
 app = Flask(__name__)
 db = AUSDatabase()
+sentry = Sentry()
 
 from auslib.admin.views.csrf import CSRFView
 from auslib.admin.views.permissions import UsersView, PermissionsView, \
@@ -22,7 +25,7 @@ from auslib.admin.views.index import IndexPageView, RecentChangesTableView
 @app.errorhandler(500)
 def isa(error):
     log.error("Caught ISE 500 error.")
-    log.debug("Balrog version is: %s", version)
+    log.debug("Balrog version is: %s", auslib.version)
     log.debug("Request path is: %s", request.path)
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)

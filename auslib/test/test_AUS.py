@@ -1,6 +1,5 @@
 import simplejson as json
 import mock
-from tempfile import NamedTemporaryFile
 import unittest
 from xml.dom import minidom
 
@@ -20,7 +19,11 @@ def RandomAUSTest(AUS, backgroundRate, force, mapping):
             served = 0
             tested = 0
             while len(results) > 0:
-                r, _ = AUS.evaluateRules(dict(channel='foo', force=force, buildTarget='a', buildID='a', locale='a'))
+                updateQuery = dict(
+                    channel='foo', force=force, buildTarget='a', buildID='0',
+                    locale='a', version='1.0'
+                )
+                r, _ = AUS.evaluateRules(updateQuery)
                 tested +=1
                 if r:
                     served += 1
@@ -34,7 +37,7 @@ class TestAUSThrottling(unittest.TestCase):
         self.AUS = AUS3()
         self.AUS.setDb('sqlite:///:memory:')
         self.AUS.db.create()
-        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "schema_version": 1, "platforms": {}}')
+        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
 
     def testThrottling100(self):
         (served, tested) = RandomAUSTest(self.AUS, backgroundRate=100, force=False, mapping='b')
@@ -72,8 +75,8 @@ class TestAUS(unittest.TestCase):
         self.relData['b'] = ReleaseBlobV1(
             name='b',
             schema_version=1,
-            appv='b',
-            extv='b',
+            appv='1.0',
+            extv='1.0',
             hashFunction='sha512',
             detailsUrl='http://example.org/details',
             licenseUrl='http://example.org/license',
@@ -101,14 +104,14 @@ class TestAUS(unittest.TestCase):
                 )
             )
         )
-        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1,
-            data=json.dumps(self.relData['b']))
+        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='1.0', 
+			data_version=1, data=json.dumps(self.relData['b']))
         self.relData['c'] = ReleaseBlobV2(
             name='c',
             schema_version=2,
-            appVersion='c',
-            displayVersion='c',
-            platformVersion='c',
+            appVersion='2.0',
+            displayVersion='2.0',
+            platformVersion='2.0',
             hashFunction='sha512',
             detailsUrl='http://example.org/details',
             licenseUrl='http://example.org/license',
@@ -136,7 +139,7 @@ class TestAUS(unittest.TestCase):
                 )
             )
         )
-        self.AUS.db.releases.t.insert().execute(name='c', product='c', version='c', data_version=1,
+        self.AUS.db.releases.t.insert().execute(name='c', product='c', version='2.0', data_version=1,
             data=json.dumps(self.relData['c']))
 
     def testSpecialQueryParam(self):
@@ -205,7 +208,7 @@ class TestAUS(unittest.TestCase):
         returned = minidom.parseString(xml)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
-    <update type="minor" version="b" extensionVersion="b" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
         <patch type="complete" URL="http://special.org/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
     </update>
 </updates>
@@ -213,13 +216,20 @@ class TestAUS(unittest.TestCase):
         self.assertEqual(returned.toxml(), expected.toxml())
 
     def testCreateXMLForbiddenDomain(self):
-        xml = self.AUS.createXML(
-            dict(name=None, buildTarget='p', locale='m', channel='foo', force=False),
-            self.relData['b'],
-            'minor',
-        )
-        # An empty update contains an <updates> tag with a newline, which is what we're expecting here
-        self.assertEqual(minidom.parseString(xml).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        # A CEF event gets logged when a forbidden domain is detected,
+        # which depends on a Request being set.
+        # We don't care about cef events here though, so we'll mock them away
+        # See http://docs.python.org/dev/library/unittest.mock#id4 for why
+        # AUS.cef_event is patched instead of log.cef_event
+        with mock.patch('auslib.AUS.cef_event') as c:
+            c.return_value = None
+            xml = self.AUS.createXML(
+                dict(name=None, buildTarget='p', locale='m', channel='foo', force=False),
+                self.relData['b'],
+                'minor',
+            )
+            # An empty update contains an <updates> tag with a newline, which is what we're expecting here
+            self.assertEqual(minidom.parseString(xml).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
 
     def testSchemaV1XML(self):
         xml = self.AUS.createXML(
@@ -229,7 +239,7 @@ class TestAUS(unittest.TestCase):
         expected = """\
 <?xml version="1.0"?>
 <updates>
-    <update type="minor" version="b" extensionVersion="b" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
         <patch type="complete" URL="http://special.org/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
     </update>\n</updates>\
 """
@@ -243,7 +253,7 @@ class TestAUS(unittest.TestCase):
         expected = """\
 <?xml version="1.0"?>
 <updates>
-    <update type="minor" displayVersion="c" appVersion="c" platformVersion="c" buildID="2" detailsURL="http://example.org/details" licenseURL="http://example.org/license" billboardURL="http://example.com/billboard" showPrompt="false" showNeverForVersion="true" showSurvey="false" actions="silent" openURL="http://example.com/url" notificationURL="http://example.com/notification" alertURL="http://example.com/alert">
+    <update type="minor" displayVersion="2.0" appVersion="2.0" platformVersion="2.0" buildID="2" detailsURL="http://example.org/details" licenseURL="http://example.org/license" billboardURL="http://example.com/billboard" showPrompt="false" showNeverForVersion="true" showSurvey="false" actions="silent" openURL="http://example.com/url" notificationURL="http://example.com/notification" alertURL="http://example.com/alert">
         <patch type="complete" URL="http://special.org/mar" hashFunction="sha512" hashValue="2" size="2"/>
     </update>\n</updates>\
 """
