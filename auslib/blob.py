@@ -52,7 +52,7 @@ def createBlob(data):
             return ReleaseBlobV2(**data)
         else:
             raise ValueError("schema_version is unknown")
-    except KeyError, e:
+    except KeyError:
         raise ValueError("schema_version is not set")
 
 class Blob(dict):
@@ -99,7 +99,7 @@ class Blob(dict):
 
     def getApplicationVersion(self, platform, locale):
         pass
-    
+
 
 class ReleaseBlobV1(Blob):
     format_ = {

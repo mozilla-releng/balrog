@@ -104,8 +104,8 @@ class TestAUS(unittest.TestCase):
                 )
             )
         )
-        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='1.0', 
-			data_version=1, data=json.dumps(self.relData['b']))
+        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='1.0', data_version=1,
+                                                data=json.dumps(self.relData['b']))
         self.relData['c'] = ReleaseBlobV2(
             name='c',
             schema_version=2,
@@ -140,7 +140,7 @@ class TestAUS(unittest.TestCase):
             )
         )
         self.AUS.db.releases.t.insert().execute(name='c', product='c', version='2.0', data_version=1,
-            data=json.dumps(self.relData['c']))
+                                                data=json.dumps(self.relData['c']))
 
     def testSpecialQueryParam(self):
         updateData = self.AUS.expandRelease(
