@@ -1,6 +1,6 @@
 import simplejson as json
 
-from flaskext.wtf import Form, TextField, Required, TextInput, FileInput, IntegerField, SelectField, validators, HiddenInput
+from flaskext.wtf import Form, TextField, Required, TextInput, FileInput, IntegerField, SelectField, validators, HiddenInput, Optional
 
 from auslib.blob import ReleaseBlobV1
 
@@ -73,6 +73,17 @@ class NullableTextField(TextField):
             log.debug('No value list, setting self.data to None')
             self.data = None
 
+def NoneOrType(type_):
+    """A helper method for SelectField's that returns the value coerced to
+       the specified type when it is not None. By default, a SelectField coerces
+       None to unicode, which ends up as u'None'."""
+    def coercer(value):
+        if value is None:
+            return value
+        else:
+            return type_(value)
+    return coercer
+
 class DbEditableForm(Form):
     data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 
@@ -106,7 +117,7 @@ class RuleForm(Form):
     build_id = NullableTextField('BuildID', validators=[validators.Length(0,20) ])
     channel = NullableTextField('Channel', validators=[validators.Length(0,75) ])
     locale = NullableTextField('Locale', validators=[validators.Length(0,10) ])
-    distribution = NullableTextField('Distrubution', validators=[validators.Length(0,100) ])
+    distribution = NullableTextField('Distribution', validators=[validators.Length(0,100) ])
     build_target = NullableTextField('Build Target', validators=[validators.Length(0,75) ])
     os_version = NullableTextField('OS Version', validators=[validators.Length(0,1000) ])
     dist_version = NullableTextField('Dist Version', validators=[validators.Length(0,100) ])
@@ -114,8 +125,22 @@ class RuleForm(Form):
     update_type = SelectField('Update Type', choices=[('minor','minor'), ('major', 'major')], validators=[])
     header_arch = NullableTextField('Header Architecture', validators=[validators.Length(0,10) ])
 
-class EditRuleForm(RuleForm, DbEditableForm):
-    pass
+class EditRuleForm(DbEditableForm):
+    backgroundRate = IntegerField('Background Rate', validators=[Optional(), validators.NumberRange(0, 100) ])
+    priority = IntegerField('Priority', validators=[Optional()])
+    mapping = SelectField('Mapping', validators=[Optional()], coerce=NoneOrType(unicode))
+    product = NullableTextField('Product', validators=[Optional(), validators.Length(0, 15)] )
+    version = NullableTextField('Version', validators=[Optional(), validators.Length(0,10) ])
+    build_id = NullableTextField('BuildID', validators=[Optional(), validators.Length(0,20) ])
+    channel = NullableTextField('Channel', validators=[Optional(), validators.Length(0,75) ])
+    locale = NullableTextField('Locale', validators=[Optional(), validators.Length(0,10) ])
+    distribution = NullableTextField('Distribution', validators=[Optional(), validators.Length(0,100) ])
+    build_target = NullableTextField('Build Target', validators=[Optional(), validators.Length(0,75) ])
+    os_version = NullableTextField('OS Version', validators=[Optional(), validators.Length(0,1000) ])
+    dist_version = NullableTextField('Dist Version', validators=[Optional(), validators.Length(0,100) ])
+    comment = NullableTextField('Comment', validators=[Optional(), validators.Length(0,500) ])
+    update_type = SelectField('Update Type', choices=[('minor','minor'), ('major', 'major')], validators=[Optional()], coerce=NoneOrType(unicode))
+    header_arch = NullableTextField('Header Architecture', validators=[Optional(), validators.Length(0,10) ])
 
 class NewReleaseForm(Form):
     name = TextField('Name', validators=[Required()])

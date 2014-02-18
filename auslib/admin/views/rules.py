@@ -135,21 +135,39 @@ class SingleRuleView(AdminView):
         if not form.validate():
             cef_event("Bad input", CEF_WARN, errors=form.errors)
             return Response(status=400, response=form.errors)
-        what = dict(backgroundRate=form.backgroundRate.data,
-                    mapping=form.mapping.data,
-                    priority=form.priority.data,
-                    product = form.product.data,
-                    version = form.version.data,
-                    buildID = form.build_id.data,
-                    channel = form.channel.data,
-                    locale = form.locale.data,
-                    distribution = form.distribution.data,
-                    buildTarget = form.build_target.data,
-                    osVersion = form.os_version.data,
-                    distVersion = form.dist_version.data,
-                    comment = form.comment.data,
-                    update_type = form.update_type.data,
-                    headerArchitecture = form.header_arch.data)
+
+        what = dict()
+        if form.backgroundRate.data:
+            what['backgroundRate'] = form.backgroundRate.data
+        if form.mapping.data:
+            what['mapping'] = form.mapping.data
+        if form.priority.data:
+            what['priority'] = form.priority.data
+        if form.product.data:
+            what['product'] = form.product.data
+        if form.version.data:
+            what['version'] = form.version.data
+        if form.build_id.data:
+            what['buildID'] = form.build_id.data
+        if form.channel.data:
+            what['channel'] = form.channel.data
+        if form.locale.data:
+            what['locale'] = form.locale.data
+        if form.distribution.data:
+            what['distribution'] = form.distribution.data
+        if form.build_target.data:
+            what['buildTarget'] = form.build_target.data
+        if form.os_version.data:
+            what['osVersion'] = form.os_version.data
+        if form.dist_version.data:
+            what['distVersion'] = form.dist_version.data
+        if form.comment.data:
+            what['comment'] = form.comment.data
+        if form.update_type.data:
+            what['update_type'] = form.update_type.data
+        if form.header_arch.data:
+            what['headerArchitecture'] = form.header_arch.data
+
         self.log.debug("old_data_version: %s", form.data_version.data)
         db.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
             old_data_version=form.data_version.data, transaction=transaction)
