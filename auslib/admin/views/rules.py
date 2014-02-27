@@ -6,6 +6,7 @@ from auslib.admin.base import db
 from auslib.admin.views.base import (
     requirelogin, requirepermission, AdminView, HistoryAdminView
 )
+from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import EditRuleForm, RuleForm
 from auslib.log import cef_event, CEF_WARN
 from auslib.util import getPagination
@@ -116,7 +117,9 @@ class SingleRuleView(AdminView):
                 releaseNames]
         form.mapping.choices.insert(0, ('', 'NULL' ) )
 
-        return render_template('fragments/single_rule.html', rule=rule, form=form)
+        headers = {'X-Data-Version': rule['data_version']}
+        headers.update(get_csrf_headers())
+        return Response(response=render_template('fragments/single_rule.html', rule=rule, form=form), mimetype='text/html', headers=headers)
 
     # changed_by is available via the requirelogin decorator
     @requirelogin

@@ -52,6 +52,8 @@ class TestSingleRuleView_HTML(ViewTest, HTMLTestMixin):
         ret = self._get('/rules/1')
         self.assertEquals(ret.status_code, 200)
         self.assertTrue("c" in ret.data, msg=ret.data)
+        for h in ("X-CSRF-Token", "X-Data-Version"):
+            self.assertTrue(h in ret.headers, msg=ret.headers)
 
 
 class TestRulesView_HTML(ViewTest, HTMLTestMixin):
