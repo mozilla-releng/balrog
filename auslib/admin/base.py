@@ -31,6 +31,13 @@ def isa(error):
     log.debug("Request headers are: %s", request.headers)
     return error
 
+# bug 887790: add necessary security headers
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response
+
 app.add_url_rule('/csrf_token', view_func=CSRFView.as_view('csrf'))
 app.add_url_rule('/users', view_func=UsersView.as_view('users'))
 app.add_url_rule('/users/<username>/permissions', view_func=PermissionsView.as_view('permissions'))

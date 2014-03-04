@@ -6,6 +6,10 @@ from auslib.admin.views.index import getTimeAgo
 
 
 class TestIndexPage(ViewTest):
+    def testSecurityHeaders(self):
+        ret = self.client.get('/')
+        self.assertEquals(ret.headers['X-Frame-Options'], 'DENY')
+        self.assertEquals(ret.headers['X-Content-Type-Options'], 'nosniff')
 
     def testLandingPage(self):
         ret = self.client.get('/')
