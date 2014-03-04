@@ -4,7 +4,7 @@ from flask import render_template, Response, jsonify, make_response, request
 
 from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
 from auslib.db import OutdatedDataError
-from auslib.log import cef_event, CEF_WARN
+from auslib.log import cef_event, CEF_WARN, CEF_ALERT
 from auslib.util import getPagination
 from auslib.admin.base import db
 from auslib.admin.views.base import (
@@ -164,7 +164,7 @@ class SingleLocaleView(AdminView):
         return Response(response=json.dumps(locale), mimetype='application/json', headers=headers)
 
     @requirelogin
-    @requirepermission('/releases/:name/builds/:platform/:locale', options=[])
+    @requirepermission('/releases/:name/builds/:platform/:locale')
     def _put(self, release, platform, locale, changed_by, transaction):
         """Something important to note about this method is that using the
            "copyTo" field of the form, updates can be made to more than just
@@ -210,7 +210,7 @@ class SingleReleaseView(AdminView):
         return Response(response=render_template('fragments/release_row.html', row=release[0]), headers=headers)
 
     @requirelogin
-    @requirepermission('/releases/:name', options=[])
+    @requirepermission('/releases/:name')
     def _put(self, release, changed_by, transaction):
         form = NewReleaseForm()
         if not form.validate():
@@ -298,7 +298,6 @@ class ReleaseHistoryView(HistoryAdminView):
         )
 
     @requirelogin
-    @requirepermission('/releases', options=[])
     def _post(self, release, transaction, changed_by):
         change_id = request.form.get('change_id')
         if not change_id:
@@ -313,6 +312,10 @@ class ReleaseHistoryView(HistoryAdminView):
         if releases is None:
             return Response(status=404, response='bad release')
         release = releases[0]
+        if not db.permissions.hasUrlPermission(changed_by, '/releases/:name', 'POST', urlOptions={'product': release['product']}):
+            msg = "%s is not allowed to alter %s releases" % (changed_by, release['product'])
+            cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
+            return Response(status=401, response=msg)
         old_data_version = release['data_version']
 
         # now we're going to make a new update based on this change

@@ -1050,15 +1050,32 @@ class Permissions(AUSTable):
         # so we can put them in the same loop
         allOptions = urlOptions.copy()
         allOptions['method'] = method
-        ret = True
+
         for opt in allOptions:
-            allowedOpts = options.get(opt, None)
-            # When a permission doesn't have the option specified, we treat that
-            # it as allowed. When it does have it specified, the incoming option
-            # must match the one in the permission.
-            if allowedOpts and allOptions[opt] not in allowedOpts:
-                ret = False
-        return ret
+            allowedOpt = options.get(opt, None)
+            incomingOpt = allOptions[opt]
+
+            # If no option is specified in the request and the user has
+            # restrictions on what they can modify, they are denied.
+            # An example of this could be trying to modify a rule that doesn't
+            # have a product specified. Changing it could affect more products
+            # than the user is allowed to modify.
+            if not incomingOpt and allowedOpt:
+                return False
+
+            # If the request has this option specified, the user has
+            # restrictions for this option, and they don't match - they are denied.
+            # An example of this could be a user who only has permissions for
+            # the "Firefox" product trying to modify a "Thunderbird" release.
+            if incomingOpt and allowedOpt and incomingOpt != allowedOpt:
+                return False
+
+        # Any other combinations of incoming options/user restrictions are acceptable.
+        # Could be any of the following:
+        # * No incoming option nor user restriction.
+        # * Incoming option specified, user has no restrictions.
+        # * Incoming option specified, user has a restriction, and they match.
+        return True
 
 
 def getHumanModificationMonitors(systemAccounts):
