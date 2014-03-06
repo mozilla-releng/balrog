@@ -5,3 +5,4 @@ test.done
 admin.ini
 .coverage
 htmlcov
+cef.log

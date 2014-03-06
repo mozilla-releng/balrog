@@ -80,7 +80,7 @@ class RulesAPIView(AdminView):
                 distVersion = form.dist_version.data,
                 comment = form.comment.data,
                 update_type = form.update_type.data,
-                headerArchitecturerch = form.header_arch.data)
+                headerArchitecture = form.header_arch.data)
         rule_id = db.rules.addRule(changed_by=changed_by, what=what,
             transaction=transaction)
         return Response(status=200, response=rule_id)
@@ -131,7 +131,12 @@ class SingleRuleView(AdminView):
         form = EditRuleForm()
 
         # Verify that the user has permission for the existing rule _and_ what the rule would become.
-        for product in (rule['product'], form['product']):
+        toCheck = [rule['product']]
+        # Rules can be partially updated - if product is null/None, we won't update that field, so
+        # we shouldn't check its permission.
+        if form.product.data:
+            toCheck.append(form.product.data)
+        for product in toCheck:
             if not db.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
                 msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
                 cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
@@ -177,7 +182,6 @@ class SingleRuleView(AdminView):
         if form.header_arch.data:
             what['headerArchitecture'] = form.header_arch.data
 
-        self.log.debug("old_data_version: %s", form.data_version.data)
         db.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
             old_data_version=form.data_version.data, transaction=transaction)
         # find out what the next data version is
@@ -186,6 +190,38 @@ class SingleRuleView(AdminView):
         response = make_response(json.dumps(dict(new_data_version=new_data_version)))
         response.headers['Content-Type'] = 'application/json'
         return response
+
+    @requirelogin
+    def _delete(self, rule_id, transaction, changed_by):
+        # Verify that the rule_id exists.
+        rule = db.rules.getRuleById(rule_id, transaction=transaction)
+        if not rule:
+            return Response(status=404)
+        # Bodies are ignored for DELETE requests, so we need to force WTForms
+        # to look at the arguments instead.
+        # Even though we aren't going to use most of the form fields (just
+        # rule_id and data_version), we still want to create and validate the
+        # form to make sure that the CSRF token is checked.
+        form = EditRuleForm(request.args)
+
+        releaseNames = db.releases.getReleaseNames()
+
+        form.mapping.choices = [(item['name'],item['name']) for item in releaseNames]
+        form.mapping.choices.insert(0, ('', 'NULL' ))
+
+        if not form.validate():
+            cef_event("Bad input", CEF_WARN, errors=form.errors)
+            return Response(status=400, response=form.errors)
+
+        if not db.permissions.hasUrlPermission(changed_by, '/rules/:id', 'DELETE', urlOptions={'product': rule['product']}):
+            msg = "%s is not allowed to alter rules that affect %s" % (changed_by, rule['product'])
+            cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
+            return Response(status=401, response=msg)
+
+        db.rules.deleteRule(changed_by=changed_by, rule_id=rule_id,
+            old_data_version=form.data_version.data, transaction=transaction)
+
+        return Response(status=200)
 
 
 class RuleHistoryView(HistoryAdminView):

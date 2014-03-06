@@ -3,7 +3,7 @@ import mock
 import unittest
 from xml.dom import minidom
 
-from auslib.AUS import AUS3
+from auslib.AUS import AUS
 from auslib.blob import ReleaseBlobV1, ReleaseBlobV2
 
 def RandomAUSTest(AUS, backgroundRate, force, mapping):
@@ -34,7 +34,7 @@ def RandomAUSTest(AUS, backgroundRate, force, mapping):
 
 class TestAUSThrottling(unittest.TestCase):
     def setUp(self):
-        self.AUS = AUS3()
+        self.AUS = AUS()
         self.AUS.setDb('sqlite:///:memory:')
         self.AUS.db.create()
         self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
@@ -66,7 +66,7 @@ class TestAUSThrottling(unittest.TestCase):
 
 class TestAUS(unittest.TestCase):
     def setUp(self):
-        self.AUS = AUS3()
+        self.AUS = AUS()
         self.AUS.setSpecialHosts(('http://special.org/',))
         self.AUS.setDb('sqlite:///:memory:')
         self.AUS.db.setDomainWhitelist(('special.org',))

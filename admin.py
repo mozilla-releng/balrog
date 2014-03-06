@@ -22,6 +22,7 @@ if __name__ == '__main__':
     parser.add_option("--host", dest="host", default='127.0.0.1', help="host to listen on. for example, 0.0.0.0 binds on all interfaces.")
     parser.add_option("--whitelist-domain", dest="whitelistedDomains", action="append")
     parser.add_option("--cef-log", dest="cefLog", default="cef.log")
+    parser.add_option("--page-title", dest="pageTitle", default="AUS Management")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
         help="Verbose output")
     options, args = parser.parse_args()
@@ -49,6 +50,7 @@ if __name__ == '__main__':
 
     app.config['SECRET_KEY'] = 'abc123'
     app.config['DEBUG'] = True
+    app.config['PAGE_TITLE'] = options.pageTitle
     def auth(environ, username, password):
         return username == password
     app.wsgi_app = AuthBasicHandler(app.wsgi_app, "Balrog standalone auth", auth)

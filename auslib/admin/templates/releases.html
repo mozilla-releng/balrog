@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AUS3 Admin - Releases{% endblock %}
+{% block title %}{{ super() }} - Releases{% endblock %}
 
 {% block head %}
 <link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='css/jquery.dataTables.css') }}' />

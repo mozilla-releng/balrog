@@ -67,6 +67,10 @@ class TestBlob(unittest.TestCase):
         blob = SimpleBlob(platforms=dict(f=dict(locales=dict(g=dict(foo=6)))))
         self.assertEquals(6, blob.getLocaleOrTopLevelParam('f', 'g', 'foo'))
 
+    def testGetLocaleOrTopLevelParamMissing(self):
+        blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(foo=6)))))
+        self.assertEquals(None, blob.getLocaleOrTopLevelParam('a', 'b', 'c'))
+
     def testGetBuildIDPlatformOnly(self):
         blob = SimpleBlob(platforms=dict(a=dict(buildID=1, locales=dict(b=dict()))))
         self.assertEquals(1, blob.getBuildID('a', 'b'))

@@ -68,6 +68,7 @@ class AdminConfig(AUSConfig):
         'logging': ['logfile'],
         'database': ['dburi'],
         'app': ['secret_key'],
+        'site-specific': ['page_title'],
     }
 
     def getSecretKey(self):
@@ -78,6 +79,9 @@ class AdminConfig(AUSConfig):
             return tuple(a.strip() for a in self.cfg.get('site-specific','system_accounts').split(','))
         except (NoSectionError, NoOptionError):
             return ()
+
+    def getPageTitle(self):
+        return self.cfg.get('site-specific', 'page_title')
 
 class ClientConfig(AUSConfig):
     def getSpecialForceHosts(self):

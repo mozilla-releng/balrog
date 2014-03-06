@@ -85,8 +85,11 @@ class Blob(dict):
         try:
             platform = self.getResolvedPlatform(platform)
             return self['platforms'][platform]['locales'][locale][param]
-        except:
-            return self[param]
+        except KeyError:
+            try:
+                return self[param]
+            except KeyError:
+                return None
 
     def getBuildID(self, platform, locale):
         platform = self.getResolvedPlatform(platform)

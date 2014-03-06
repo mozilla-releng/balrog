@@ -761,6 +761,9 @@ class Rules(AUSTable):
         where = [self.rule_id==rule_id]
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
+    def deleteRule(self, changed_by, rule_id, old_data_version, transaction=None):
+        where = [self.rule_id==rule_id]
+        self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
 class Releases(AUSTable):
     def __init__(self, metadata, dialect):

@@ -1,8 +1,8 @@
-AUS3-server.py
+balrog-server.py
 --------------
 
 In one terminal
-$ python AUS-server.py -d aus-data-snapshots/20101208/update.db
+$ python balrog-server.py -d aus-data-snapshots/20101208/update.db
 
 Then in another
 $ curl -i http://localhost:8000/update/3/Firefox/3.6.12/20101026200743/Darwin_Universal-gcc3/en-US/beta/Darwin%2010.6.0/default/default/update.xml
