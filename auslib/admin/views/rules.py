@@ -131,7 +131,7 @@ class SingleRuleView(AdminView):
         form = EditRuleForm()
 
         # Verify that the user has permission for the existing rule _and_ what the rule would become.
-        for product in (rule['product'], form['product']):
+        for product in (rule['product'], form.product.data):
             if not db.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
                 msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
                 cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
