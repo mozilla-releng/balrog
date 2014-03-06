@@ -699,6 +699,11 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='d', update_type='z', data_version=1)]
         self.assertEquals(rule, expected)
 
+    def testDeleteRule(self):
+        self.paths.deleteRule(changed_by='bill', rule_id=2, old_data_version=1)
+        rule = self.paths.t.select().where(self.paths.rule_id==2).execute().fetchall()
+        self.assertEquals(rule, [])
+
     def testGetNumberOfRules(self):
         self.assertEquals(self.paths.countRules(), 7)
 

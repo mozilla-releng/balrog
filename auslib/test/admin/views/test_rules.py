@@ -85,6 +85,10 @@ class TestSingleRuleView_HTML(ViewTest, HTMLTestMixin):
         for h in ("X-CSRF-Token", "X-Data-Version"):
             self.assertTrue(h in ret.headers, msg=ret.headers)
 
+    def testDeleteRule(self):
+        ret = self._delete('/rules/1', qs=dict(data_version=1))
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+
 
 class TestRulesView_HTML(ViewTest, HTMLTestMixin):
     def testGetRules(self):

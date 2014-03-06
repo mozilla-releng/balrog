@@ -197,11 +197,29 @@ function submitRuleForm(rule_id){
 
 }
 
+function deleteRule(rule_id){
+    var ruleForm = $('#rules_form');
+    var data = $.param({
+        'data_version': $('[name='+rule_id+'-data_version]', ruleForm).val(),
+        'csrf_token': $('[name='+rule_id+'-csrf_token]', ruleForm).val()
+    });
+    var url = getRuleUrl(rule_id) + '?' + data;
+
+    return $.ajax(url, {'type': 'delete', 'data': data, 'dataType': 'json'})
+        .error(handleError)
+        .success(function(data) {
+            table = $('#rules_table').dataTable();
+            row = $('#rule_' + rule_id).get(0);
+            table.fnDeleteRow(row);
+            alertify.success('Rule deleted!');
+        });
+
+}
+
 function submitNewRuleForm(ruleForm, table) {
     url = getRuleAPIUrl();
     data = getData('new_rule', ruleForm);
 
-    //console.log(data);
     preAJAXLoad(ruleForm);
 
     $.ajax(url, {'type': 'post', 'data': data})
@@ -212,8 +230,7 @@ function submitNewRuleForm(ruleForm, table) {
         .success(function(data) {
             postAJAXLoad(ruleForm);
             alertify.success('Rule added!');
-            table.append(data);
-            table.dataTable().fnDraw();
+            table.dataTable().fnAddTr($(data)[0]);
         });
     });
 }
