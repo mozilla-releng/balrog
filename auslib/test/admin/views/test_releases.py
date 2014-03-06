@@ -84,6 +84,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
+    def testLocalePutWithoutPermissionForProduct(self):
+        data = json.dumps(dict(complete=dict(filesize='435')))
+        ret = self._put('/releases/a/builds/p/l', username='bob', data=dict(data=data, product='a', version='a', data_version=1))
+        self.assertStatusCode(ret, 401)
+
     def testLocalePutForNewRelease(self):
         data = json.dumps(dict(complete=dict(filesize='678')))
         # setting schema_version in the incoming blob is a hack for testing

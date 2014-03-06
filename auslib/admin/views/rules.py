@@ -6,8 +6,9 @@ from auslib.admin.base import db
 from auslib.admin.views.base import (
     requirelogin, requirepermission, AdminView, HistoryAdminView
 )
+from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import EditRuleForm, RuleForm
-from auslib.log import cef_event, CEF_WARN
+from auslib.log import cef_event, CEF_WARN, CEF_ALERT
 from auslib.util import getPagination
 
 class RulesPageView(AdminView):
@@ -54,7 +55,7 @@ class RulesAPIView(AdminView):
     """/rules"""
     # changed_by is available via the requirelogin decorator
     @requirelogin
-    @requirepermission('/rules', options=[])
+    @requirepermission('/rules')
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
         form = RuleForm()
@@ -116,17 +117,25 @@ class SingleRuleView(AdminView):
                 releaseNames]
         form.mapping.choices.insert(0, ('', 'NULL' ) )
 
-        return render_template('fragments/single_rule.html', rule=rule, form=form)
+        headers = {'X-Data-Version': rule['data_version']}
+        headers.update(get_csrf_headers())
+        return Response(response=render_template('fragments/single_rule.html', rule=rule, form=form), mimetype='text/html', headers=headers)
 
     # changed_by is available via the requirelogin decorator
     @requirelogin
-    @requirepermission('/rules/:id', options=[])
     def _post(self, rule_id, transaction, changed_by):
         # Verify that the rule_id exists.
-        if not db.rules.getRuleById(rule_id, transaction=transaction):
+        rule = db.rules.getRuleById(rule_id, transaction=transaction)
+        if not rule:
             return Response(status=404)
         form = EditRuleForm()
 
+        # Verify that the user has permission for the existing rule _and_ what the rule would become.
+        for product in (rule['product'], form['product']):
+            if not db.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
+                msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
+                cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
+                return Response(status=401, response=msg)
         releaseNames = db.releases.getReleaseNames()
 
         form.mapping.choices = [(item['name'],item['name']) for item in releaseNames]
@@ -231,7 +240,6 @@ class RuleHistoryView(HistoryAdminView):
         )
 
     @requirelogin
-    @requirepermission('/rules', options=[])
     def _post(self, rule_id, transaction, changed_by):
         rule_id = int(rule_id)
 
@@ -247,6 +255,12 @@ class RuleHistoryView(HistoryAdminView):
         rule = db.rules.getRuleById(rule_id=rule_id)
         if rule is None:
             return Response(status=404, response='bad rule_id')
+        # Verify that the user has permission for the existing rule _and_ what the rule would become.
+        for product in (rule['product'], change['product']):
+            if not db.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
+                msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
+                cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
+                return Response(status=401, response=msg)
         old_data_version = rule['data_version']
 
         # now we're going to make a new insert based on this

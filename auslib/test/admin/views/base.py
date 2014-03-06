@@ -30,6 +30,7 @@ class ViewTest(unittest.TestCase):
         db.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         db.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
         db.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product='fake')), data_version=1)
+        db.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(product='fake')), data_version=1)
         db.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name='a', schema_version=1)), data_version=1)
         db.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name='ab', schema_version=1)), data_version=1)
         db.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name='b', schema_version=1)), data_version=1)
@@ -54,7 +55,7 @@ class ViewTest(unittest.TestCase):
         db.rules.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='minor', data_version=1)
         db.rules.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='minor', data_version=1)
         db.rules.t.insert().execute(id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
-        db.rules.t.insert().execute(id=4, priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
+        db.rules.t.insert().execute(id=4, product='fake', priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
         db.rules.t.insert().execute(id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='minor', data_version=1)
         self.client = app.test_client()
 
