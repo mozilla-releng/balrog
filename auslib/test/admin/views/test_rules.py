@@ -45,6 +45,26 @@ class TestSingleRuleView_HTML(ViewTest, HTMLTestMixin):
         self.assertEquals(r[0]['version'], '3.5')
         self.assertEquals(r[0]['buildTarget'], 'd')
 
+    def testPostWithoutProduct(self):
+        ret = self._post('/rules/4', username='bob',
+                         data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
+                                   channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+        # Assure the changes made it into the database
+        r = db.rules.t.select().where(db.rules.rule_id==4).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], 'd')
+        self.assertEquals(r[0]['backgroundRate'], 71)
+        self.assertEquals(r[0]['priority'], 73)
+        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEquals(r[0]['channel'], 'nightly')
+        # And that we didn't modify other fields
+        self.assertEquals(r[0]['update_type'], 'minor')
+        self.assertEquals(r[0]['buildTarget'], 'd')
+        self.assertEquals(r[0]['product'], 'fake')
+
     def testBadAuthPost(self):
         ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
         self.assertEquals(ret.status_code, 401, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
