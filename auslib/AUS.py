@@ -111,7 +111,11 @@ class AUS:
         release = self.releases.getReleases(name=rule['mapping'], limit=1)[0]
         buildTarget = updateQuery['buildTarget']
         locale = updateQuery['locale']
-        releaseVersion = StrictVersion(release['data'].getExtv(buildTarget, locale))
+        releaseVersion = release['data'].getExtv(buildTarget, locale)
+        if not releaseVersion:
+            self.log.debug("Matching rule has no extv, ignoring rule.")
+            return None, None
+        releaseVersion = StrictVersion(releaseVersion)
         queryVersion = StrictVersion(updateQuery['version'])
         if queryVersion > releaseVersion:
             self.log.debug("Matching rule has older version than request, ignoring rule.")

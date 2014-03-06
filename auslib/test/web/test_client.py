@@ -64,7 +64,7 @@ class ClientTest(unittest.TestCase):
     }
 }
 """)
-        AUS.rules.t.insert().execute(throttle=100, mapping='d', update_type='minor', product='d', data_version=1)
+        AUS.rules.t.insert().execute(backgroundRate=100, mapping='d', update_type='minor', product='d', data_version=1)
         AUS.releases.t.insert().execute(name='d', product='d', version='20.0', data_version=1, data="""
 {
     "name": "d",
@@ -82,6 +82,30 @@ class ClientTest(unittest.TestCase):
                         "from": "*",
                         "hashValue": "23",
                         "fileUrl": "http://evil.com/y"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+
+        AUS.rules.t.insert().execute(backgroundRate=100, mapping='e', update_type='minor', product='e', data_version=1)
+        AUS.releases.t.insert().execute(name='e', product='e', version='22.0', data_version=1, data="""
+{
+    "name": "e",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": 25,
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 22,
+                        "from": "*",
+                        "hashValue": "23",
+                        "fileUrl": "http://a.com/y"
                     }
                 }
             }
@@ -195,3 +219,9 @@ class ClientTest(unittest.TestCase):
             self.assertEqual(ret.status_code, 200)
             self.assertEqual(ret.mimetype, 'text/xml')
             self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+
+    def testEmptySnippetMissingExtv(self):
+        ret = self.client.get('/update/3/e/20.0/1/p/l/a/a/a/a/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
