@@ -10,7 +10,7 @@ mydir = os.path.dirname(os.path.abspath(__file__))
 site.addsitedir(mydir)
 site.addsitedir(os.path.join(mydir, 'vendor/lib/python'))
 
-from auslib.AUS import AUS3
+from auslib.AUS import AUS as AUS_Class
 
 import logging
 log = logging.getLogger(__name__)
@@ -90,20 +90,20 @@ def walkSnippets(AUS, testPath):
         f = os.path.relpath(f)
         snipType = os.path.splitext(os.path.basename(f))[0]
 
-        # generate the AUS3 snippets
+        # generate the AUS snippets
         log.debug('test-rules.walkSnippets: %s' % f)
         testQuery = getQueryFromPath(f.lstrip(testPath))
         testQuery['queryVersion'] = 3
         release, update_type = AUS.evaluateRules(testQuery)
-        AUS3snippets = AUS.createSnippet(testQuery, release, update_type)
+        balrog_snippets = AUS.createSnippet(testQuery, release, update_type)
 
-        if snipType in AUS3snippets:
-            AUS3snippet = AUS3snippets[snipType]
+        if snipType in balrog_snippets:
+            balrog_snippet = balrog_snippets[snipType]
             AUS2snippet = open(f,'r').read()
-            if AUS2snippet != AUS3snippet:
+            if AUS2snippet != balrog_snippet:
                 diff = difflib.unified_diff(
                            AUS2snippet.splitlines(),
-                           AUS3snippet.splitlines(),
+                           balrog_snippet.splitlines(),
                            lineterm='',
                            n=20)
                 log.info("FAIL: %s", f)
@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
     for td in options.testDirs:
         log.info("Testing %s", td)
-        AUS = AUS3(dbname='sqlite:///:memory:')
+        AUS = AUS_Class(dbname='sqlite:///:memory:')
         AUS.db.create()
         AUS.db.setDomainWhitelist(('download.mozilla.org', 'stage-old.mozilla.org', 'ftp.mozilla.org', 'stage.mozilla.org'))
         populateDB(AUS, td)

@@ -5,10 +5,10 @@ from flask import Flask, make_response
 
 from raven.contrib.flask import Sentry
 
-from auslib.AUS import AUS3
+from auslib.AUS import AUS
 
 app = Flask(__name__)
-AUS = AUS3()
+AUS = AUS()
 sentry = Sentry()
 
 from auslib.web.views.client import ClientRequestView

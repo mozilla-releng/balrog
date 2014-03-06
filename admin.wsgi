@@ -30,6 +30,7 @@ auslib.log.cef_config = auslib.log.get_cef_config(cfg.getCefLogfile())
 db.setDburi(cfg.getDburi())
 db.setupChangeMonitors(cfg.getSystemAccounts())
 db.setDomainWhitelist(cfg.getDomainWhitelist())
+application.config['PAGE_TITLE'] = cfg.getPageTitle()
 application.config['SECRET_KEY'] = cfg.getSecretKey()
 application.config['SENTRY_DSN'] = cfg.getSentryDsn()
 application.config['SENTRY_PROCESSORS'] = ['auslib.util.sentry.SanitizeHeadersProcessor']

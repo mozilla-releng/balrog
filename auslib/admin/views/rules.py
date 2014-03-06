@@ -80,7 +80,7 @@ class RulesAPIView(AdminView):
                 distVersion = form.dist_version.data,
                 comment = form.comment.data,
                 update_type = form.update_type.data,
-                headerArchitecturerch = form.header_arch.data)
+                headerArchitecture = form.header_arch.data)
         rule_id = db.rules.addRule(changed_by=changed_by, what=what,
             transaction=transaction)
         return Response(status=200, response=rule_id)

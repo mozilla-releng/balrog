@@ -22,7 +22,7 @@ class AUSRandom:
     def getRange(self):
         return range(self.min, self.max+1)
 
-class AUS3:
+class AUS:
     def __init__(self, dbname=None):
         self.setDb(dbname)
         self.rand = AUSRandom()
