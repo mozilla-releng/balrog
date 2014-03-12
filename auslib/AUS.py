@@ -24,6 +24,7 @@ class AUSRandom:
 
 class AUS:
     def __init__(self, dbname=None):
+        self.specialForceHosts = None
         self.setDb(dbname)
         self.rand = AUSRandom()
         self.log = logging.getLogger(self.__class__.__name__)

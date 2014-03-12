@@ -207,7 +207,10 @@ class SingleReleaseView(AdminView):
             return Response(status=404)
         headers = {'X-Data-Version': release[0]['data_version']}
         headers.update(get_csrf_headers())
-        return Response(response=render_template('fragments/release_row.html', row=release[0]), headers=headers)
+        if 'application/json' in request.headers.get('Accept-Encoding', ''):
+            return Response(response=json.dumps(release[0]['data']), mimetype='application/json', headers=headers)
+        else:
+            return Response(response=render_template('fragments/release_row.html', row=release[0]), headers=headers)
 
     @requirelogin
     @requirepermission('/releases/:name')
