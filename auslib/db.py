@@ -1070,8 +1070,13 @@ class Permissions(AUSTable):
             # restrictions for this option, and they don't match - they are denied.
             # An example of this could be a user who only has permissions for
             # the "Firefox" product trying to modify a "Thunderbird" release.
-            if incomingOpt and allowedOpt and incomingOpt != allowedOpt:
-                return False
+            # Product can be multi-valued so it's treated specially
+            if incomingOpt and allowedOpt:
+                if opt == 'product':
+                    if incomingOpt not in allowedOpt:
+                        return False
+                elif incomingOpt != allowedOpt:
+                    return False
 
         # Any other combinations of incoming options/user restrictions are acceptable.
         # Could be any of the following:
