@@ -25,6 +25,11 @@ class balrog {
             owner => apache,
             group => apache,
             mode => 644;
+        "/var/log/auscef.log":
+            ensure => present,
+            owner => apache,
+            group => apache,
+            mode => 644;
     }
     # import mysqldump
     exec { "create_mysql_database":
