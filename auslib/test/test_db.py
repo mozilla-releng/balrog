@@ -1152,9 +1152,10 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions = self.db.permissions
         self.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         self.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
-        self.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product='fake')), data_version=1)
+        self.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
         self.permissions.t.insert().execute(permission='/rules', username='cathy', data_version=1)
         self.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(method='POST')), data_version=1)
+        self.permissions.t.insert().execute(permission='/rules/:id', username='fred', options=json.dumps(dict(product=['foo', 'bar'], method='POST')), data_version=1)
 
     def testGrantPermissions(self):
         query = self.permissions.t.select().where(self.permissions.username=='jess')
@@ -1163,10 +1164,10 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(query.execute().fetchall(), [('/rules/:id', 'jess', None, 1)])
 
     def testGrantPermissionsWithOptions(self):
-        self.permissions.grantPermission('bob', 'cathy', '/releases/:name', options=dict(product='SeaMonkey'))
+        self.permissions.grantPermission('bob', 'cathy', '/releases/:name', options=dict(product=['SeaMonkey']))
         query = self.permissions.t.select().where(self.permissions.username=='cathy')
         query = query.where(self.permissions.permission=='/releases/:name')
-        self.assertEquals(query.execute().fetchall(), [('/releases/:name', 'cathy', json.dumps(dict(product='SeaMonkey')), 1)])
+        self.assertEquals(query.execute().fetchall(), [('/releases/:name', 'cathy', json.dumps(dict(product=['SeaMonkey'])), 1)])
 
     def testGrantPermissionsUnknownPermission(self):
         self.assertRaises(ValueError, self.permissions.grantPermission,
@@ -1185,17 +1186,17 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(len(query.execute().fetchall()), 0)
 
     def testGetAllUsers(self):
-        self.assertEquals(set(self.permissions.getAllUsers()), set(['bill', 'bob', 'cathy']))
+        self.assertEquals(set(self.permissions.getAllUsers()), set(['bill', 'bob', 'cathy', 'fred']))
 
     def testCountAllUsers(self):
         # bill, bob and cathy
-        self.assertEquals(self.permissions.countAllUsers(),  3)
+        self.assertEquals(self.permissions.countAllUsers(),  4)
 
     def testGetPermission(self):
         expected = {
             'permission': '/releases/:name',
             'username': 'bob',
-            'options': dict(product='fake'),
+            'options': dict(product=['fake']),
             'data_version': 1
         }
         self.assertEquals(self.permissions.getPermission('bob', '/releases/:name'), expected)
@@ -1205,12 +1206,12 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetUserPermissions(self):
         expected = {'/users/:id/permissions/:permission': dict(options=None, data_version=1),
-                    '/releases/:name': dict(options=dict(product='fake'), data_version=1),
+                    '/releases/:name': dict(options=dict(product=['fake']), data_version=1),
                     '/rules/:id': dict(options=dict(method='POST'), data_version=1)}
         self.assertEquals(self.permissions.getUserPermissions('bob'), expected)
 
     def testGetOptions(self):
-        expected = dict(product='fake')
+        expected = dict(product=['fake'])
         self.assertEquals(self.permissions.getOptions('bob', '/releases/:name'), expected)
 
     def testGetOptionsPermissionDoesntExist(self):
@@ -1230,6 +1231,10 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testHasUrlPermissionWithUrlOption(self):
         self.assertTrue(self.permissions.hasUrlPermission('bob', '/releases/:name', 'FOO', dict(product='fake')))
+
+    def testHasUrlPermissionWithUrlOptionMulti(self):
+        self.assertTrue(self.permissions.hasUrlPermission('fred', '/rules/:id', 'POST', dict(product='foo')))
+        self.assertTrue(self.permissions.hasUrlPermission('fred', '/rules/:id', 'POST', dict(product='bar')))
 
     def testHasUrlPermissionNotAllowed(self):
         self.assertFalse(self.permissions.hasUrlPermission('cathy', '/rules/:id', 'FOO'))

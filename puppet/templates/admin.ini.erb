@@ -4,6 +4,12 @@ dburi=mysql://<%=db_user%>:<%=db_pass%>@localhost/<%=db_name%>
 [logging]
 logfile=/var/log/ausadmin.log
 level=DEBUG
+cef_logfile=/var/log/auscef.log
 
 [app]
 secret_key=abc123
+
+[site-specific]
+; domains that are allowed in update data, comma separated
+domain_whitelist=download.mozilla.org,stage.mozilla.org,ftp.mozilla.org
+page_title=AUS Management

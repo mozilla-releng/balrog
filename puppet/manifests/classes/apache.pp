@@ -2,7 +2,9 @@
 # ever, so we have to use a different package on CentOS than Ubuntu.
 class apache {
     file {
-        "/var/log/httpd/aus4.mozilla.org":
+        "/var/log/httpd/balrog.mozilla.dev":
+            ensure => directory;
+        "/var/log/httpd/balrog-admin.mozilla.dev":
             ensure => directory;
     }
     case $operatingsystem {
