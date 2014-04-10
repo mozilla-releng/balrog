@@ -7,7 +7,7 @@ from auslib.admin.base import db
 from auslib.test.admin.views.base import ViewTest, JSONTestMixin, HTMLTestMixin
 
 class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
-    def testReleasePost(self):
+    def testReleasePostUpdateExisting(self):
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True))
         ret = self._post('/releases/d', data=dict(data=data, product='d', version='d', data_version=1))
         self.assertStatusCode(ret, 200)
@@ -32,7 +32,25 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
-    def testReleasePostCreatesNewRelease(self):
+    def testReleasePostCreatesNewReleaseDefault(self):
+        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
+        ret = self._post('/releases/e', data=dict(data=data, product='e', version='e'))
+        self.assertStatusCode(ret, 201)
+        ret = db.releases.t.select().where(db.releases.name=='e').execute().fetchone()
+        self.assertEqual(ret['product'], 'e')
+        self.assertEqual(ret['version'], 'e')
+        self.assertEqual(ret['name'], 'e')
+        self.assertEqual(json.loads(ret['data']), json.loads("""
+{
+    "name": "e",
+    "schema_version": 1,
+    "bouncerProducts": {
+        "linux": "foo"
+    }
+}
+"""))
+
+    def testReleasePostCreatesNewReleasev1(self):
         data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
         ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=1))
         self.assertStatusCode(ret, 201)
@@ -44,6 +62,24 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 {
     "name": "e",
     "schema_version": 1,
+    "bouncerProducts": {
+        "linux": "foo"
+    }
+}
+"""))
+
+    def testReleasePostCreatesNewReleasev2(self):
+        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
+        ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=2))
+        self.assertStatusCode(ret, 201)
+        ret = db.releases.t.select().where(db.releases.name=='e').execute().fetchone()
+        self.assertEqual(ret['product'], 'e')
+        self.assertEqual(ret['version'], 'e')
+        self.assertEqual(ret['name'], 'e')
+        self.assertEqual(json.loads(ret['data']), json.loads("""
+{
+    "name": "e",
+    "schema_version": 2,
     "bouncerProducts": {
         "linux": "foo"
     }
