@@ -101,6 +101,7 @@ class Blob(dict):
             return self['platforms'][platform]['buildID']
 
     def getApplicationVersion(self, platform, locale):
+        """ Implemented by versioned blobs, which subclass the Blob class"""
         pass
 
 
@@ -165,6 +166,8 @@ class ReleaseBlobV1(Blob):
         return self.getLocaleOrTopLevelParam(platform, locale, 'extv')
 
     def getApplicationVersion(self, platform, locale):
+        """ We used extv as the application version for v1 schema, while appv
+        may have been a pretty version for users to see"""
         return self.getExtv(platform, locale)
 
 
@@ -251,4 +254,5 @@ class ReleaseBlobV2(Blob):
         return self.getLocaleOrTopLevelParam(platform, locale, 'platformVersion')
 
     def getApplicationVersion(self, platform, locale):
+        """ For v2 schema, appVersion really is the app version """
         return self.getAppVersion(platform, locale)
