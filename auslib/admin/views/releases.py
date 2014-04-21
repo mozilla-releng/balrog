@@ -196,8 +196,11 @@ class ReleasesPageView(AdminView):
 class SingleBlobView(AdminView):
     """ /releases/[release]/data"""
     def get(self, release):
-        release_blob = db.releases.getReleaseBlob(name=release)
-        return jsonify(release_blob)
+        try:
+            release_blob = db.releases.getReleaseBlob(name=release)
+            return jsonify(release_blob)
+        except KeyError:
+            return Response(status=404)
 
 class SingleReleaseView(AdminView):
     """ /releases/[release]"""
