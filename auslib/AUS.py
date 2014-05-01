@@ -1,6 +1,5 @@
 import copy, re
 from collections import defaultdict
-from distutils.version import StrictVersion
 from random import randint
 from urlparse import urlparse
 
@@ -8,6 +7,7 @@ import logging
 
 from auslib.db import AUSDatabase
 from auslib.log import cef_event, CEF_ALERT
+from auslib.util.versions import MozillaVersion
 
 class AUSRandom:
     """Abstract getting a randint to make it easier to test the range of
@@ -116,8 +116,8 @@ class AUS:
         if not releaseVersion:
             self.log.debug("Matching rule has no extv, ignoring rule.")
             return None, None
-        releaseVersion = StrictVersion(releaseVersion)
-        queryVersion = StrictVersion(updateQuery['version'])
+        releaseVersion = MozillaVersion(releaseVersion)
+        queryVersion = MozillaVersion(updateQuery['version'])
         if queryVersion > releaseVersion:
             self.log.debug("Matching rule has older version than request, ignoring rule.")
             return None, None
