@@ -1,0 +1,3 @@
+# Per bug 997919, we don't want anything indexable
+User-agent: *
+Disallow: /

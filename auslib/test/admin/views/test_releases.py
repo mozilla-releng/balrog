@@ -369,6 +369,9 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """), msg=ret.data)
 
+    def testGetNonExistentReleaseBlob(self):
+        ret = self.client.get("/releases/huetno/data")
+        self.assertStatusCode(ret, 404)
 
 class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
 

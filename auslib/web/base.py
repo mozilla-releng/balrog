@@ -1,7 +1,7 @@
 import logging
 log = logging.getLogger(__name__)
 
-from flask import Flask, make_response
+from flask import Flask, make_response, send_from_directory
 
 from raven.contrib.flask import Sentry
 
@@ -28,6 +28,10 @@ def generic(error):
     response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
     response.mimetype = 'text/xml'
     return response
+
+@app.route('/robots.txt')
+def robots():
+    return send_from_directory(app.static_folder, "robots.txt")
 
 app.add_url_rule(
     '/update/2/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/update.xml',

@@ -225,3 +225,9 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
         self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+
+    def testRobotsExists(self):
+        ret = self.client.get('/robots.txt')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/plain')
+        self.assertTrue('User-agent' in ret.data)
