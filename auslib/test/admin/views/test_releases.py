@@ -7,7 +7,7 @@ from auslib.admin.base import db
 from auslib.test.admin.views.base import ViewTest, JSONTestMixin, HTMLTestMixin
 
 class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
-    def testReleasePost(self):
+    def testReleasePostUpdateExisting(self):
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True))
         ret = self._post('/releases/d', data=dict(data=data, product='d', version='d', data_version=1))
         self.assertStatusCode(ret, 200)
@@ -15,6 +15,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "d",
+    "schema_version": 1,
     "detailsUrl": "blah",
     "fakePartials": true,
     "platforms": {
@@ -31,7 +32,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
-    def testReleasePostCreatesNewRelease(self):
+    def testReleasePostCreatesNewReleaseDefault(self):
         data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
         ret = self._post('/releases/e', data=dict(data=data, product='e', version='e'))
         self.assertStatusCode(ret, 201)
@@ -43,6 +44,42 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 {
     "name": "e",
     "schema_version": 1,
+    "bouncerProducts": {
+        "linux": "foo"
+    }
+}
+"""))
+
+    def testReleasePostCreatesNewReleasev1(self):
+        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
+        ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=1))
+        self.assertStatusCode(ret, 201)
+        ret = db.releases.t.select().where(db.releases.name=='e').execute().fetchone()
+        self.assertEqual(ret['product'], 'e')
+        self.assertEqual(ret['version'], 'e')
+        self.assertEqual(ret['name'], 'e')
+        self.assertEqual(json.loads(ret['data']), json.loads("""
+{
+    "name": "e",
+    "schema_version": 1,
+    "bouncerProducts": {
+        "linux": "foo"
+    }
+}
+"""))
+
+    def testReleasePostCreatesNewReleasev2(self):
+        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
+        ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=2))
+        self.assertStatusCode(ret, 201)
+        ret = db.releases.t.select().where(db.releases.name=='e').execute().fetchone()
+        self.assertEqual(ret['product'], 'e')
+        self.assertEqual(ret['version'], 'e')
+        self.assertEqual(ret['name'], 'e')
+        self.assertEqual(json.loads(ret['data']), json.loads("""
+{
+    "name": "e",
+    "schema_version": 2,
     "bouncerProducts": {
         "linux": "foo"
     }
@@ -68,6 +105,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -89,7 +127,9 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocalePutForNewRelease(self):
         data = json.dumps(dict(complete=dict(filesize='678')))
-        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e'))
+        # setting schema_version in the incoming blob is a hack for testing
+        # SingleLocaleView._put() doesn't give us access to the form
+        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='e').execute().fetchone()[0]
@@ -120,6 +160,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "d",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -141,7 +182,9 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocalePutForNewReleaseWithAlias(self):
         data = json.dumps(dict(complete=dict(filesize='678')))
-        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', alias='["p2"]'))
+        # setting schema_version in the incoming blob is a hack for testing
+        # SingleLocaleView._put() doesn't give us access to the form
+        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', alias='["p2"]', schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='e').execute().fetchone()[0]
@@ -175,6 +218,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "d",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -211,6 +255,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -228,6 +273,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "ab",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -251,6 +297,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -298,7 +345,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             ret = db.releases.t.select().where(db.releases.name=='a').execute().fetchone()
             self.assertEqual(ret['product'], 'a')
             self.assertEqual(ret['version'], 'a')
-            self.assertEqual(json.loads(ret['data']), dict(name='a'))
+            self.assertEqual(json.loads(ret['data']), dict(name='a', schema_version=1))
 
     # Test get of a release's full data column, queried by name
     def testGetSingleReleaseBlob(self):
@@ -307,6 +354,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret.data), json.loads("""
 {
     "name": "d",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -344,6 +392,7 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
                                                             blob="""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
@@ -365,6 +414,7 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
         self.assertEquals(json.loads(r[0]['data']), json.loads("""
 {
     "name": "a",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {

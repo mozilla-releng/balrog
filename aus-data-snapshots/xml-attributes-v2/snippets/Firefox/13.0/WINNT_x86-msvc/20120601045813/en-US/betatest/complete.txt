@@ -1,0 +1,12 @@
+version=2
+type=complete
+url=http://stage.mozilla.org/pub/mozilla.org/firefox/nightly/13.0.1-candidates/build1/update/win32/en-US/firefox-13.0.1.complete.mar
+hashFunction=sha512
+hashValue=9dac4d27108d15bbeaa27dc7996e9639a000ceb6091f1f008357fc19a64254a31300f6574bda72129ae49a0ff5c780eadbf2706401591781bf941b6f446ecb01
+size=20645936
+build=20120614114901
+displayVersion=13.0.1
+appVersion=13.0.1
+platformVersion=13.0.1
+detailsUrl=https://www.mozilla.com/en-US/firefox/13.0.1/releasenotes/
+actions=silent

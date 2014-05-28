@@ -1,0 +1,12 @@
+version=2
+type=partial
+url=http://download.mozilla.org/?product=firefox-13.0.1-partial-13.0&os=win&lang=de
+hashFunction=sha512
+hashValue=b000cf7e527950551dfc4644ae2d91eea32d2ade4a541e6e59a6dd52944137c718c18e7a12e669ecc49148e07dcad90c8ab3d75da812e2de877c4c429b9c8c42
+size=2101507
+build=20120614114901
+displayVersion=13.0.1
+appVersion=13.0.1
+platformVersion=13.0.1
+detailsUrl=https://www.mozilla.com/de/firefox/13.0.1/releasenotes/
+actions=silent

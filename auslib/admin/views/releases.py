@@ -2,7 +2,7 @@ import simplejson as json
 
 from flask import render_template, Response, jsonify, make_response, request
 
-from auslib.blob import ReleaseBlobV1, CURRENT_SCHEMA_VERSION
+from auslib.blob import createBlob, CURRENT_SCHEMA_VERSION
 from auslib.db import OutdatedDataError
 from auslib.log import cef_event, CEF_WARN, CEF_ALERT
 from auslib.util import getPagination
@@ -16,7 +16,7 @@ from auslib.admin.views.forms import ReleaseForm, NewReleaseForm
 __all__ = ["SingleReleaseView", "SingleLocaleView", "ReleasesPageView"]
 
 def createRelease(release, product, version, changed_by, transaction, releaseData):
-    blob = ReleaseBlobV1(schema_version=CURRENT_SCHEMA_VERSION, **releaseData)
+    blob = createBlob(json.dumps(releaseData))
     db.releases.addRelease(name=release, product=product, version=version,
         blob=blob, changed_by=changed_by, transaction=transaction)
     return db.releases.getReleases(name=release, transaction=transaction)[0]
@@ -76,6 +76,17 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
     alias = form.alias.data
     old_data_version = form.data_version.data
 
+    try:
+        # should be set here doing PUT at SingleLocaleView
+        # but some SingleLocaleView tests use the except
+        schema_version = form.schema_version.data
+    except AttributeError:
+        # should be set when doing POST on SingleReleaseView
+        schema_version = incomingData.get('schema_version')
+    # otherwise try the default, the blob validator will save us
+    if schema_version is None:
+        schema_version = CURRENT_SCHEMA_VERSION
+
     allReleases = [release]
     if copyTo:
         allReleases += copyTo
@@ -108,7 +119,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                 old_data_version = releaseInfo['data_version']
         except IndexError:
             # If the release doesn't already exist, create it, and set old_data_version appropriately.
-            newReleaseData = dict(name=rel)
+            newReleaseData = dict(name=rel, schema_version=schema_version)
             if hashFunction:
                 newReleaseData['hashFunction'] = hashFunction
             try:
@@ -325,8 +336,7 @@ class ReleaseHistoryView(HistoryAdminView):
         old_data_version = release['data_version']
 
         # now we're going to make a new update based on this change
-        releaseData = json.loads(change['data'])
-        blob = ReleaseBlobV1(**releaseData)
+        blob = createBlob(change['data'])
 
         try:
             db.releases.updateRelease(changed_by=changed_by, name=change['name'],

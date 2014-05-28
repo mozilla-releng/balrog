@@ -4,7 +4,7 @@ import unittest
 from xml.dom import minidom
 
 from auslib.AUS import AUS
-from auslib.blob import ReleaseBlobV1
+from auslib.blob import ReleaseBlobV1, ReleaseBlobV2
 
 def RandomAUSTest(AUS, backgroundRate, force, mapping):
     with mock.patch('auslib.db.Rules.getRulesMatchingQuery') as m:
@@ -37,7 +37,7 @@ class TestAUSThrottling(unittest.TestCase):
         self.AUS = AUS()
         self.AUS.setDb('sqlite:///:memory:')
         self.AUS.db.create()
-        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "extv": "1.0", "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
+        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
 
     def testThrottling100(self):
         (served, tested) = RandomAUSTest(self.AUS, backgroundRate=100, force=False, mapping='b')
@@ -78,6 +78,8 @@ class TestAUS(unittest.TestCase):
             appv='1.0',
             extv='1.0',
             hashFunction='sha512',
+            detailsUrl='http://example.org/details',
+            licenseUrl='http://example.org/license',
             platforms=dict(
                 p=dict(
                     buildID=1,
@@ -102,7 +104,43 @@ class TestAUS(unittest.TestCase):
                 )
             )
         )
-        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='1.0', data_version=1, data=json.dumps(self.relData['b']))
+        self.AUS.db.releases.t.insert().execute(name='b', product='b', version='1.0', data_version=1,
+                                                data=json.dumps(self.relData['b']))
+        self.relData['c'] = ReleaseBlobV2(
+            name='c',
+            schema_version=2,
+            appVersion='2.0',
+            displayVersion='2.0',
+            platformVersion='2.0',
+            hashFunction='sha512',
+            detailsUrl='http://example.org/details',
+            licenseUrl='http://example.org/license',
+            actions='silent',
+            billboardURL='http://example.com/billboard',
+            openURL='http://example.com/url',
+            notificationURL='http://example.com/notification',
+            alertURL='http://example.com/alert',
+            showPrompt='false',
+            showNeverForVersion='true',
+            showSurvey='false',
+            platforms=dict(
+                p=dict(
+                    buildID=2,
+                    locales=dict(
+                        o=dict(
+                            complete={
+                                'filesize': '2',
+                                'from': '*',
+                                'hashValue': '2',
+                                'fileUrl': 'http://special.org/mar'
+                            }
+                        )
+                    )
+                )
+            )
+        )
+        self.AUS.db.releases.t.insert().execute(name='c', product='c', version='2.0', data_version=1,
+                                                data=json.dumps(self.relData['c']))
 
     def testSpecialQueryParam(self):
         updateData = self.AUS.expandRelease(
@@ -170,7 +208,7 @@ class TestAUS(unittest.TestCase):
         returned = minidom.parseString(xml)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
-    <update type="minor" version="1.0" extensionVersion="1.0" buildID="1">
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
         <patch type="complete" URL="http://special.org/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
     </update>
 </updates>
@@ -192,3 +230,31 @@ class TestAUS(unittest.TestCase):
             )
             # An empty update contains an <updates> tag with a newline, which is what we're expecting here
             self.assertEqual(minidom.parseString(xml).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+
+    def testSchemaV1XML(self):
+        xml = self.AUS.createXML(
+            dict(name=None, buildTarget='p', locale='l', channel='foo', force=False),
+            self.relData['b'], update_type='minor',
+        )
+        expected = """\
+<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
+        <patch type="complete" URL="http://special.org/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>\n</updates>\
+"""
+        self.assertEqual(xml, expected)
+
+    def testSchemaV2XML(self):
+        xml = self.AUS.createXML(
+            dict(name=None, buildTarget='p', locale='o', channel='foo', force=False),
+            self.relData['c'], update_type='minor',
+        )
+        expected = """\
+<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="2.0" appVersion="2.0" platformVersion="2.0" buildID="2" detailsURL="http://example.org/details" licenseURL="http://example.org/license" billboardURL="http://example.com/billboard" showPrompt="false" showNeverForVersion="true" showSurvey="false" actions="silent" openURL="http://example.com/url" notificationURL="http://example.com/notification" alertURL="http://example.com/alert">
+        <patch type="complete" URL="http://special.org/mar" hashFunction="sha512" hashValue="2" size="2"/>
+    </update>\n</updates>\
+"""
+        self.assertEqual(xml, expected)

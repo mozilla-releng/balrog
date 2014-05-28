@@ -2,7 +2,7 @@ import simplejson as json
 
 from flaskext.wtf import Form, TextField, Required, TextInput, FileInput, IntegerField, SelectField, validators, HiddenInput, Optional
 
-from auslib.blob import ReleaseBlobV1
+from auslib.blob import createBlob
 
 import logging
 log = logging.getLogger(__name__)
@@ -39,12 +39,9 @@ class JSONFieldMixin(object):
 class JSONBlobFileField(JSONFieldMixin, TextField):
     """FileField that parses incoming data as JSON and converts it into a blob"""
     def _process_JSON_data(self, valuelist):
-        self.data = ReleaseBlobV1()
-        self.data.loadJSON(valuelist[0])
+        self.data = createBlob(valuelist[0])
         self.data.isValid()
 
-    def _set_default(self):
-        self.data = ReleaseBlobV1()
 
 # We need to be sure that we list JSONFieldMixin BEFORE the TextField in the derived classes list
 # We want to use JSONFieldMixin's version of process_formdata instead of TextField's version.
@@ -105,6 +102,7 @@ class ReleaseForm(Form):
     version = TextField('Version', validators=[Required()])
     hashFunction = TextField('Hash Function')
     data = JSONTextField('Data', validators=[Required()])
+    schema_version = IntegerField('Schema Version')
     copyTo = JSONTextField('Copy To', default=list)
     alias = JSONTextField('Alias', default=list)
 

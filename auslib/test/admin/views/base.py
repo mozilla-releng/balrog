@@ -31,13 +31,14 @@ class ViewTest(unittest.TestCase):
         db.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
         db.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product='fake')), data_version=1)
         db.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(product='fake')), data_version=1)
-        db.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name='a')), data_version=1)
-        db.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name='ab')), data_version=1)
-        db.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name='b')), data_version=1)
-        db.releases.t.insert().execute(name='c', product='c', version='c', data=json.dumps(dict(name='c')), data_version=1)
+        db.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name='a', schema_version=1)), data_version=1)
+        db.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name='ab', schema_version=1)), data_version=1)
+        db.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name='b', schema_version=1)), data_version=1)
+        db.releases.t.insert().execute(name='c', product='c', version='c', data=json.dumps(dict(name='c', schema_version=1)), data_version=1)
         db.releases.t.insert().execute(name='d', product='d', version='d', data_version=1, data="""
 {
     "name": "d",
+    "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {

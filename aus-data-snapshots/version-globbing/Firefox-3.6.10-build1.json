@@ -1,5 +1,6 @@
 {
     "name": "Firefox-3.6.10-build1",
+    "schema_version": 1,
     "extv": "3.6.10",
     "platforms": {
         "Darwin_Universal-gcc3": {

@@ -28,17 +28,17 @@ def populateDB(AUS, testdir):
     # and add any json blobs we created painstakingly, converting to compact json
     for f in glob.glob('%s/*.json' % testdir):
         data = json.load(open(f,'r'))
-        product,version = data['name'].split('-')[0:2]
+        product = data['name'].split('-')[0]
         # JSON files can have the extv version at the top level, or in the locales
         # If we can't find it at the top level, look for it in a locale. This is
         # less accurate, but the best we can do.
-        extv = data.get('extv')
-        if not extv:
-            extv = data.get('platforms').values()[0].get('locales').values()[0]['extv']
-            if not extv:
-                raise Exception("Couldn't find extv for %s" % data['name'])
+        version = data.get('appVersion', data.get('extv'))
+        if not version:
+            version = data.get('platforms').values()[0].get('locales').values()[0].get('extv')
+            if not version:
+                raise Exception("Couldn't find version for %s" % data['name'])
         AUS.db.engine.execute("INSERT INTO releases (name, product, version, data, data_version) VALUES ('%s', '%s', '%s','%s', 1)" %
-                   (data['name'], product, extv, json.dumps(data)))
+                   (data['name'], product, version, json.dumps(data)))
     # TODO - create a proper importer that walks the snippet store to find hashes ?
 
 def getQueryFromPath(snippetPath):
@@ -149,6 +149,7 @@ if __name__ == "__main__":
     parser.add_option("", "--dump-rules", dest="dumprules", action="store_true", help="dump rules to stdout")
     parser.add_option("", "--dump-releases", dest="dumpreleases", action="store_true", help="dump release data to stdout")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="verbose output for snippet checking")
+    parser.add_option("-k", "--keep-db", dest="keepDB", action="store_true", help="save a copy of the test db in thetest dir")
 
     options, args = parser.parse_args()
 
@@ -165,21 +166,31 @@ if __name__ == "__main__":
                 options.testDirs.append(d)
 
     for td in options.testDirs:
-        log.info("Testing %s", td)
-        AUS = AUS_Class(dbname='sqlite:///:memory:')
+        log.info("Starting %s", td)
+        if options.keepDB:
+            dbPath = os.path.join(td, 'update.db')
+            if os.path.exists(dbPath):
+                os.remove(dbPath)
+            log.info('saving db at %s' % dbPath)
+            dbPath = 'sqlite:///%s' % dbPath
+        else:
+            dbPath = 'sqlite:///:memory:'
+        AUS = AUS_Class(dbname=dbPath)
         AUS.db.create()
         AUS.db.setDomainWhitelist(('download.mozilla.org', 'stage-old.mozilla.org', 'ftp.mozilla.org', 'stage.mozilla.org'))
         populateDB(AUS, td)
         if options.dumprules:
             log.info("Rules are \n(id, priority, mapping, backgroundRate, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")
-            for rule in AUS.rules.getRules():
+            for rule in AUS.rules.getOrderedRules():
                 log.info(", ".join([str(rule[k]) for k in rule.keys()]))
             log.info("-"*50)
 
         if options.dumpreleases:
-            log.info("Releases are \n(name, data):")
+            log.info("Releases are \n(name, product, version, data):")
             for release in AUS.releases.getReleases():
-                log.info("(%s, %s " % (release['name'],json.dumps(release['data'],indent=2)))
+                log.info("(%s, %s, %s, %s " % (release['name'], release['product'],
+                                       release['version'],
+                                       json.dumps(release['data'],indent=2)))
             log.info("-"*50)
 
         result = walkSnippets(AUS, os.path.join(td, 'snippets'))
