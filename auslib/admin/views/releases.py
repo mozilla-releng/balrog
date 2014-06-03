@@ -11,7 +11,7 @@ from auslib.admin.views.base import (
     requirelogin, requirepermission, AdminView, HistoryAdminView
 )
 from auslib.admin.views.csrf import get_csrf_headers
-from auslib.admin.views.forms import ReleaseForm, NewReleaseForm
+from auslib.admin.views.forms import ReleaseForm, NewReleaseForm, DbEditableForm
 
 __all__ = ["SingleReleaseView", "SingleLocaleView", "ReleasesPageView"]
 
@@ -201,8 +201,15 @@ class ReleasesPageView(AdminView):
     """ /releases.html """
     def get(self):
         releases = db.releases.getReleaseInfo()
-        form = NewReleaseForm(prefix="new_release")
-        return render_template('releases.html', releases=releases, addForm=form)
+        addForm = NewReleaseForm(prefix="new_release")
+        forms = {}
+        for r in releases:
+            release = r["name"]
+            forms[release] = DbEditableForm(
+                prefix=release,
+                data_version=r["data_version"],
+            )
+        return render_template('releases.html', releases=releases, addForm=addForm, forms=forms)
 
 class SingleBlobView(AdminView):
     """ /releases/[release]/data"""
@@ -224,7 +231,8 @@ class SingleReleaseView(AdminView):
         if 'application/json' in request.headers.get('Accept-Encoding', ''):
             return Response(response=json.dumps(release[0]['data']), mimetype='application/json', headers=headers)
         else:
-            return Response(response=render_template('fragments/release_row.html', row=release[0]), headers=headers)
+            form = DbEditableForm(prefix=release[0]['name'], data_version=release[0]['data_version'])
+            return Response(response=render_template('fragments/release_row.html', row=release[0], form=form), headers=headers)
 
     @requirelogin
     @requirepermission('/releases/:name')
@@ -260,6 +268,32 @@ class SingleReleaseView(AdminView):
 
         return changeRelease(release, changed_by, transaction, exists, commit, self.log)
 
+    @requirelogin
+    def _delete(self, release, changed_by, transaction):
+        releases = db.releases.getReleases(name=release)
+        if not releases:
+            return Response(status=404, response='bad release')
+        release = releases[0]
+        if not db.permissions.hasUrlPermission(changed_by, '/releases/:name', 'DELETE', urlOptions={'product': release['product']}):
+            msg = "%s is not allowed to delete %s releases" % (changed_by, release['product'])
+            cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
+            return Response(status=401, response=msg)
+
+        # Bodies are ignored for DELETE requests, so we need to force WTForms
+        # to look at the arguments instead.
+        # We only need the release name (which comes through the URL) and the
+        # data version to process this request. Because of that, we can just
+        # use this form to validate, because we're only validating CSRF
+        # and data version.
+        form = DbEditableForm(request.args)
+        if not form.validate():
+            cef_event("Bad input", CEF_WARN, errors=form.errors)
+            return Response(status=400, response=form.errors)
+
+        db.releases.deleteRelease(changed_by=changed_by, name=release['name'],
+            old_data_version=form.data_version.data, transaction=transaction)
+
+        return Response(status=200)
 
 class ReleaseHistoryView(HistoryAdminView):
     """ /releases/<release>/revisions/ """
@@ -326,7 +360,7 @@ class ReleaseHistoryView(HistoryAdminView):
         if change['name'] != release:
             return Response(status=404, response='bad release')
         releases = db.releases.getReleases(name=release)
-        if releases is None:
+        if not releases:
             return Response(status=404, response='bad release')
         release = releases[0]
         if not db.permissions.hasUrlPermission(changed_by, '/releases/:name', 'POST', urlOptions={'product': release['product']}):

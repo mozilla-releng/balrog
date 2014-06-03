@@ -1,5 +1,5 @@
-{% if releases %}
 <h3>Below is a complete list of all of the releases.</h3>
+<form id="releases_form">
 <table id="Releases_table" class="table">
     <thead>
         <tr>
@@ -8,15 +8,14 @@
             <th>Version</th>
             <th>Data</th>
             <th>Revisions</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
     {% for row in releases %}
+        {% set form = forms[row['name']] %}
         {% include 'fragments/release_row.html' %}
     {% endfor %}
     </tbody>
 </table>
-{% else %}
-
-There were no releases provided.
-{% endif %}
+</form>

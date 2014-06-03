@@ -47,11 +47,30 @@ function submitNewReleaseForm(releaseForm, table){
                   .error(handleError).
                   success(function(data) {
                           postAJAXLoad(releaseForm);
-                          table.append(data);
+                          table.dataTable().fnAddTr($(data)[0]);
                           alertify.success('Release added!');
                       });
               });
     }
+}
+
+
+function deleteRelease(name) {
+    var releaseForm = $('#releases_form');
+    var data = $.param({
+        'data_version': $('[name='+name+'-data_version]', releaseForm).val(),
+        'csrf_token': $('[name='+name+'-csrf_token]', releaseForm).val()
+    });
+    var url = getReleaseUrl(name) + '?' + data;
+
+    return $.ajax(url, {'type': 'delete', 'data': data, 'dataType': 'json'})
+        .error(handleError)
+        .success(function(data) {
+            alertify.success('Release deleted!');
+            table = $('#Releases_table').dataTable();
+            row = $('#release_' + name).get(0);
+            table.fnDeleteRow(row);
+        });
 }
 
 

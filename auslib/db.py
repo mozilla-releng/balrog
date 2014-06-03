@@ -838,7 +838,7 @@ class Releases(AUSTable):
         if nameOnly:
             column = [self.name]
         else:
-            column = [self.name, self.product, self.version]
+            column = [self.name, self.product, self.version, self.data_version]
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
         return rows
 
@@ -929,6 +929,10 @@ class Releases(AUSTable):
             return True
         except KeyError:
             return False
+
+    def deleteRelease(self, changed_by, name, old_data_version, transaction=None):
+        where = [self.name==name]
+        self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
 class Permissions(AUSTable):
     """allPermissions defines the structure and possible options for all

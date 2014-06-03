@@ -96,6 +96,20 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._post('/releases/d', data=dict(data=data, product='d', version='d', data_version=1))
         self.assertStatusCode(ret, 400)
 
+    def testDeleteRelease(self):
+        ret = self._delete("/releases/d", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 200)
+        ret = db.releases.t.count().where(db.releases.name=='d').execute().first()[0]
+        self.assertEqual(ret, 0)
+
+    def testDeleteNonExistentRelease(self):
+        ret = self._delete("/releases/ueo")
+        self.assertStatusCode(ret, 404)
+
+    def testDeleteWithoutPermission(self):
+        ret = self._delete("/releases/a", username="bob")
+        self.assertStatusCode(ret, 401)
+
     def testLocalePut(self):
         data = json.dumps(dict(complete=dict(filesize='435')))
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='a', data_version=1))

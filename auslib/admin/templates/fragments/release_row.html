@@ -1,8 +1,15 @@
-<tr>
-    <td>{{ row['name'] }}</td>
-    <td>{{ row['product'] }}</td>
-    <td>{{ row['version'] }}</td>
+{% set suffix = '_r'~row.name %}
+<tr id='release_{{ row.name }}'>
+    <td>
+        {{ form.hidden_tag() }}
+        {{ form.data_version()|safe }}
+        {{ row.name }}
+    </td>
+    <td>{{ row.product }}</td>
+    <td>{{ row.version }}</td>
     <td> <a href='releases/{{ row.name }}/data'>link</a></td>
     <td><a href='/releases/{{ row.name }}/revisions/'>Revisions</a></td>
-
+    <td id='Delete{{ suffix }}' name='Delete{{ suffix }}'>
+        <input type='submit' name='submit' value='Delete' onclick='deleteRelease("{{ row.name }}"); return false;' />
+    </td>
 </tr>

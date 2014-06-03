@@ -803,21 +803,21 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseInfoAll(self):
         releases = self.releases.getReleaseInfo()
-        expected = [ dict(name='a', product='a', version='a'),
-                dict(name='ab', product='a', version='a'),
-                dict(name='b', product='b', version='b'),
-                dict(name='c', product='c', version='c')]
+        expected = [ dict(name='a', product='a', version='a', data_version=1),
+                dict(name='ab', product='a', version='a', data_version=1),
+                dict(name='b', product='b', version='b', data_version=1),
+                dict(name='c', product='c', version='c', data_version=1)]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoProduct(self):
         releases = self.releases.getReleaseInfo(product='a')
-        expected = [ dict(name='a', product='a', version='a'),
-                dict(name='ab', product='a', version='a')]
+        expected = [ dict(name='a', product='a', version='a', data_version=1),
+                dict(name='ab', product='a', version='a', data_version=1)]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoVersion(self):
         releases = self.releases.getReleaseInfo(version='b')
-        expected = [ dict(name='b', product='b', version='b'), ]
+        expected = [ dict(name='b', product='b', version='b', data_version=1), ]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNoMatch(self):
@@ -852,6 +852,11 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testGetNumberOfReleases(self):
         # because 4 releases were set up in the setUp()
         self.assertEquals(self.releases.countReleases(), 4)
+
+    def testDeleteRelease(self):
+        self.releases.deleteRelease(changed_by='bill', name='a', old_data_version=1)
+        release = self.releases.t.select().where(self.releases.name=='a').execute().fetchall()
+        self.assertEquals(release, [])
 
 
 class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
