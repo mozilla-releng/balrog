@@ -141,6 +141,35 @@ class TestAUS(unittest.TestCase):
         )
         self.AUS.db.releases.t.insert().execute(name='c', product='c', version='2.0', data_version=1,
                                                 data=json.dumps(self.relData['c']))
+        self.relData['d'] = ReleaseBlobV2(
+            name='d',
+            schema_version=2,
+            appVersion='4.0',
+            displayVersion='4.0',
+            platformVersion='4.0',
+            hashFunction='sha512',
+            detailsUrl='http://example.org/details',
+            licenseUrl='http://example.org/license',
+            actions='silent',
+            platforms=dict(
+                p=dict(
+                    buildID=4,
+                    locales=dict(
+                        o=dict(
+                            isOSUpdate=True,
+                            complete={
+                                'filesize': '4',
+                                'from': '*',
+                                'hashValue': '4',
+                                'fileUrl': 'http://special.org/mar'
+                            }
+                        )
+                    )
+                )
+            )
+        )
+        self.AUS.db.releases.t.insert().execute(name='d', product='d', version='4.0', data_version=1,
+                                                data=json.dumps(self.relData['d']))
 
     def testSpecialQueryParam(self):
         updateData = self.AUS.expandRelease(
@@ -255,6 +284,20 @@ class TestAUS(unittest.TestCase):
 <updates>
     <update type="minor" displayVersion="2.0" appVersion="2.0" platformVersion="2.0" buildID="2" detailsURL="http://example.org/details" licenseURL="http://example.org/license" billboardURL="http://example.com/billboard" showPrompt="false" showNeverForVersion="true" showSurvey="false" actions="silent" openURL="http://example.com/url" notificationURL="http://example.com/notification" alertURL="http://example.com/alert">
         <patch type="complete" URL="http://special.org/mar" hashFunction="sha512" hashValue="2" size="2"/>
+    </update>\n</updates>\
+"""
+        self.assertEqual(xml, expected)
+
+    def testSchemaV2XMLWithIsOSUpdate(self):
+        xml = self.AUS.createXML(
+            dict(name=None, buildTarget='p', locale='o', channel='foo', force=False),
+            self.relData['d'], update_type='minor',
+        )
+        expected = """\
+<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="4.0" appVersion="4.0" platformVersion="4.0" buildID="4" detailsURL="http://example.org/details" licenseURL="http://example.org/license" isOSUpdate="true" actions="silent">
+        <patch type="complete" URL="http://special.org/mar" hashFunction="sha512" hashValue="4" size="4"/>
     </update>\n</updates>\
 """
         self.assertEqual(xml, expected)

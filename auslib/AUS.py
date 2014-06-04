@@ -160,6 +160,7 @@ class AUS:
             updateData['displayVersion'] = relData.getDisplayVersion(buildTarget, locale)
             updateData['appVersion'] = relData.getAppVersion(buildTarget, locale)
             updateData['platformVersion'] = relData.getPlatformVersion(buildTarget, locale)
+            updateData['isOSUpdate'] = relDataPlatLoc.get('isOSUpdate', None)
             for attr in relData.optional_:
                 if attr in relData:
                     updateData[attr] = relData[attr]
@@ -332,6 +333,8 @@ class AUS:
                         updateLine += ' detailsURL="%s"' % rel['detailsUrl']
                     if rel['licenseUrl']:
                         updateLine += ' licenseURL="%s"' % rel['licenseUrl']
+                    if rel['isOSUpdate']:
+                        updateLine += ' isOSUpdate="true"'
                     for attr in rel['optional']:
                         if attr in rel:
                             updateLine += ' %s="%s"' % (attr, rel[attr])
