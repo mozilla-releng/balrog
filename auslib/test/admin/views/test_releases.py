@@ -8,7 +8,7 @@ from auslib.test.admin.views.base import ViewTest, JSONTestMixin, HTMLTestMixin
 
 class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     def testReleasePostUpdateExisting(self):
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True))
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
         ret = self._post('/releases/d', data=dict(data=data, product='d', version='d', data_version=1))
         self.assertStatusCode(ret, 200)
         ret = select([db.releases.data]).where(db.releases.name=='d').execute().fetchone()[0]
@@ -34,7 +34,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testReleasePostCreatesNewReleaseDefault(self):
         data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
-        ret = self._post('/releases/e', data=dict(data=data, product='e', version='e'))
+        ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=1))
         self.assertStatusCode(ret, 201)
         ret = db.releases.t.select().where(db.releases.name=='e').execute().fetchone()
         self.assertEqual(ret['product'], 'e')
@@ -112,7 +112,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocalePut(self):
         data = json.dumps(dict(complete=dict(filesize='435')))
-        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='a', data_version=1))
+        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='a').execute().fetchone()[0]
@@ -167,7 +167,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocalePutAppend(self):
         data = json.dumps(dict(partial=dict(fileUrl='http://good.com/blah')))
-        ret = self._put('/releases/d/builds/p/g', data=dict(data=data, product='d', version='d', data_version=1))
+        ret = self._put('/releases/d/builds/p/g', data=dict(data=data, product='d', version='d', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='d').execute().fetchone()[0]
@@ -225,7 +225,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocalePutAppendWithAlias(self):
         data = json.dumps(dict(partial=dict(fileUrl='http://good.com/blah')))
-        ret = self._put('/releases/d/builds/q/g', data=dict(data=data, product='d', version='d', data_version=1, alias='["q2"]'))
+        ret = self._put('/releases/d/builds/q/g', data=dict(data=data, product='d', version='d', data_version=1, alias='["q2"]', schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='d').execute().fetchone()[0]
@@ -261,7 +261,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocalePutWithCopy(self):
         data = json.dumps(dict(partial=dict(filesize='123')))
-        data = dict(data=data, product='a', version='a', copyTo=json.dumps(['ab']), data_version=1)
+        data = dict(data=data, product='a', version='a', copyTo=json.dumps(['ab']), data_version=1, schema_version=1)
         ret = self._put('/releases/a/builds/p/l', data=data)
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
@@ -304,7 +304,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocalePutChangeVersion(self):
         data = json.dumps(dict(extv='b'))
-        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='b', data_version=1))
+        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='b', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=3)), "Data: %s" % ret.data)
         ret = select([db.releases.data]).where(db.releases.name=='a').execute().fetchone()[0]
@@ -347,14 +347,14 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocalePutCantChangeProduct(self):
         data = json.dumps(dict(complete=dict(filesize=435)))
-        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='b', version='a'))
+        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='b', version='a', schema_version=1))
         self.assertStatusCode(ret, 400)
 
     def testLocaleRevertsPartialUpdate(self):
         data = json.dumps(dict(complete=dict(filesize=1)))
         with mock.patch('auslib.admin.base.db.releases.addLocaleToRelease') as r:
             r.side_effect = Exception("Fail")
-            ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='c', data_version=1))
+            ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='c', data_version=1, schema_version=1))
             self.assertStatusCode(ret, 500)
             ret = db.releases.t.select().where(db.releases.name=='a').execute().fetchone()
             self.assertEqual(ret['product'], 'a')
@@ -450,14 +450,14 @@ class TestReleaseHistoryView(ViewTest, HTMLTestMixin):
 
     def testGetRevisions(self):
         # Make some changes to a release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True))
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
         ret = self._post(
             '/releases/d',
             data=dict(
                 data=data,
                 product='d',
                 version='222.0',
-                data_version=1
+                data_version=1,
             )
         )
         self.assertStatusCode(ret, 200)
@@ -468,7 +468,7 @@ class TestReleaseHistoryView(ViewTest, HTMLTestMixin):
                 data=data,
                 product='d',
                 version='333.0',
-                data_version=3
+                data_version=3,
             )
         )
         self.assertStatusCode(ret, 200)
@@ -482,27 +482,27 @@ class TestReleaseHistoryView(ViewTest, HTMLTestMixin):
 
     def testPostRevisionRollback(self):
         # Make some changes to a release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True))
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
         ret = self._post(
             '/releases/d',
             data=dict(
                 data=data,
                 product='d',
                 version='222.0',
-                data_version=1
+                data_version=1,
             )
         )
         self.assertStatusCode(ret, 200)
 
         # XXX why does the data_version increment twice?
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=False))
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=False, schema_version=1))
         ret = self._post(
             '/releases/d',
             data=dict(
                 data=data,
                 product='d',
                 version='333.0',
-                data_version=3
+                data_version=3,
             )
         )
         self.assertStatusCode(ret, 200)
@@ -552,7 +552,7 @@ class TestReleaseHistoryView(ViewTest, HTMLTestMixin):
 
     def testGetRevisionsWithPagination(self):
         # Make some changes to a release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True))
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
         for i in range(0, 33, 2):  # any largish number
             ret = self._post(
                 '/releases/d',
@@ -560,7 +560,7 @@ class TestReleaseHistoryView(ViewTest, HTMLTestMixin):
                     data=data,
                     product='d',
                     version='%d.0' % i,
-                    data_version=1 + i
+                    data_version=1 + i,
                 )
             )
             self.assertStatusCode(ret, 200)

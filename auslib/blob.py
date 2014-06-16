@@ -3,8 +3,6 @@ import simplejson as json
 import logging
 log = logging.getLogger(__name__)
 
-CURRENT_SCHEMA_VERSION=1
-
 def isValidBlob(format_, blob, topLevel=True):
     """Decides whether or not 'blob' is valid based on the format provided.
        Validation follows these rules:
@@ -18,8 +16,8 @@ def isValidBlob(format_, blob, topLevel=True):
     # If there's no format at all, we assume the blob is valid.
     if not format_:
         return True
-    # If the blob isn't a dictionary-like object, it's not valid!
-    if not hasattr(blob, 'keys') or not callable(blob.keys):
+    # If the blob isn't a dictionary-like or list-like object, it's not valid!
+    if not isinstance(blob, (dict,list)):
         return False
     # If the blob format has a schema_version then that's a mandatory int
     if topLevel and 'schema_version' in format_:
@@ -27,18 +25,28 @@ def isValidBlob(format_, blob, topLevel=True):
             log.debug("blob is not valid because schema_version is not defined, or non-integer")
             return False
     # check the blob against the format
-    for key in blob.keys():
-        # A '*' key in the format means that all key names in the blob are accepted.
-        if '*' in format_:
-            # But we still need to validate the sub-blob, if it exists.
-            if format_['*'] and not isValidBlob(format_['*'], blob[key], topLevel=False):
+    if isinstance(blob, dict):
+        for key in blob.keys():
+            # A '*' key in the format means that all key names in the blob are accepted.
+            if '*' in format_:
+                # But we still need to validate the sub-blob, if it exists.
+                if format_['*'] and not isValidBlob(format_['*'], blob[key], topLevel=False):
+                    log.debug("blob is not valid because of key '%s'" % key)
+                    return False
+            # If there's no '*' key, we need to make sure the key name is valid
+            # and the sub-blob is valid, if it exists.
+            elif key not in format_ or not isValidBlob(format_[key], blob[key], topLevel=False):
                 log.debug("blob is not valid because of key '%s'" % key)
                 return False
-        # If there's no '*' key, we need to make sure the key name is valid
-        # and the sub-blob is valid, if it exists.
-        elif key not in format_ or not isValidBlob(format_[key], blob[key], topLevel=False):
-            log.debug("blob is not valid because of key '%s'" % key)
+    else:
+        # Empty lists are not allowed. These can be represented by leaving out the key entirely.
+        if len(blob) == 0:
             return False
+        for subBlob in blob:
+            # Other than the empty list check above, we can hand off the rest
+            # of the validation to another isValidBlob call!
+            if not isValidBlob(format_[0], subBlob, topLevel=False):
+                return False
     return True
 
 def createBlob(data):
@@ -50,6 +58,8 @@ def createBlob(data):
             return ReleaseBlobV1(**data)
         elif data['schema_version'] == 2:
             return ReleaseBlobV2(**data)
+        elif data['schema_version'] == 3:
+            return ReleaseBlobV3(**data)
         else:
             raise ValueError("schema_version is unknown")
     except KeyError:
@@ -99,10 +109,6 @@ class Blob(dict):
             return self['platforms'][platform]['locales'][locale]['buildID']
         except KeyError:
             return self['platforms'][platform]['buildID']
-
-    def getApplicationVersion(self, platform, locale):
-        """ Implemented by versioned blobs, which subclass the Blob class"""
-        pass
 
 
 class ReleaseBlobV1(Blob):
@@ -171,7 +177,22 @@ class ReleaseBlobV1(Blob):
         return self.getExtv(platform, locale)
 
 
-class ReleaseBlobV2(Blob):
+class NewStyleVersionsMixin(object):
+    def getAppVersion(self, platform, locale):
+        return self.getLocaleOrTopLevelParam(platform, locale, 'appVersion')
+
+    def getDisplayVersion(self, platform, locale):
+        return self.getLocaleOrTopLevelParam(platform, locale, 'displayVersion')
+
+    def getPlatformVersion(self, platform, locale):
+        return self.getLocaleOrTopLevelParam(platform, locale, 'platformVersion')
+
+    def getApplicationVersion(self, platform, locale):
+        """ For v2 schema, appVersion really is the app version """
+        return self.getAppVersion(platform, locale)
+
+
+class ReleaseBlobV2(Blob, NewStyleVersionsMixin):
     """ Changes from ReleaseBlobV1:
          * appv, extv become appVersion, platformVersion, displayVersion
         Added:
@@ -245,15 +266,99 @@ class ReleaseBlobV2(Blob):
         if 'schema_version' not in self.keys():
             self['schema_version'] = 2
 
-    def getAppVersion(self, platform, locale):
-        return self.getLocaleOrTopLevelParam(platform, locale, 'appVersion')
 
-    def getDisplayVersion(self, platform, locale):
-        return self.getLocaleOrTopLevelParam(platform, locale, 'displayVersion')
+class ReleaseBlobV3(Blob, NewStyleVersionsMixin):
+    """ Changes from ReleaseBlobV2:
+         * support multiple partials
+           * remove "partial" and "complete" from locale level
+           * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
+    """
+    format_ = {
+        'name': None,
+        'schema_version': None,
+        'appVersion': None,
+        'displayVersion': None,
+        'platformVersion': None,
+        'fileUrls': {
+            '*': None
+        },
+        'ftpFilenames': {
+            'partials': {
+                '*': None
+            },
+            'completes': {
+                '*': None
+            }
+        },
+        'bouncerProducts': {
+            'partials': {
+                '*': None
+            },
+            'completes': {
+                '*': None
+            }
+        },
+        'hashFunction': None,
+        'detailsUrl': None,
+        'licenseUrl': None,
+        'actions': None,
+        'billboardURL': None,
+        'openURL': None,
+        'notificationURL': None,
+        'alertURL': None,
+        'showPrompt': None,
+        'showNeverForVersion': None,
+        'showSurvey': None,
+        'platforms': {
+            '*': {
+                'alias': None,
+                'buildID': None,
+                'OS_BOUNCER': None,
+                'OS_FTP': None,
+                'locales': {
+                    '*': {
+                        'isOSUpdate': None,
+                        'buildID': None,
+                        'appVersion': None,
+                        'displayVersion': None,
+                        'platformVersion': None,
+                        # Using lists instead of dicts for multiple updates
+                        # gives us a way to reduce load a bit. As this is
+                        # iterated over, each "from" release is looked up
+                        # in the database. If the "from" releases that we
+                        # we expect to be the most common are earlier in the
+                        # list, we can avoid looking up every single entry.
+                        # The server doesn't know anything about which order is
+                        # best, so we assume the client will make the right
+                        # decision about this.
+                        'partials': [
+                            {
+                                'filesize': None,
+                                'from': None,
+                                'hashValue': None,
+                                'fileUrl': None
+                            }
+                        ],
+                        'completes': [
+                            {
+                                'filesize': None,
+                                'from': None,
+                                'hashValue': None,
+                                'fileUrl': None
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+    # for the benefit of createXML and createSnippetv2
+    optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
+                 'showSurvey', 'actions', 'openURL', 'notificationURL',
+                 'alertURL')
 
-    def getPlatformVersion(self, platform, locale):
-        return self.getLocaleOrTopLevelParam(platform, locale, 'platformVersion')
-
-    def getApplicationVersion(self, platform, locale):
-        """ For v2 schema, appVersion really is the app version """
-        return self.getAppVersion(platform, locale)
+    def __init__(self, **kwargs):
+        # ensure schema_version is set if we init ReleaseBlobV3 directly
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 3

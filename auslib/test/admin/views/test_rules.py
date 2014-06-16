@@ -1,7 +1,7 @@
 import json
 
 from auslib.admin.base import db
-from auslib.test.admin.views.base import ViewTest, HTMLTestMixin, JSONTestMixin
+from auslib.test.admin.views.base import ViewTest, HTMLTestMixin
 
 class TestRulesAPI_HTML(ViewTest, HTMLTestMixin):
     def testNewRulePost(self):

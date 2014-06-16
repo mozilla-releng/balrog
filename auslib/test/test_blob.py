@@ -21,6 +21,15 @@ class BlobWithWildcard(Blob):
         }
     }
 
+class BlobWithList(Blob):
+    format_ = {
+        'foo': [
+            {
+                'bar': None
+            }
+        ]
+    }
+
 class TestBlob(unittest.TestCase):
     def testSimpleValid(self):
         blob = SimpleBlob(foo='bar')
@@ -88,6 +97,22 @@ class TestBlob(unittest.TestCase):
         self.assertRaises(KeyError, blob.getBuildID, 'c', 'a')
     # XXX: should we support the locale overriding the platform? this should probably be invalid
 
+    def testBlobWithList(self):
+        blob = BlobWithList(foo=[dict(bar=1)])
+        self.assertTrue(blob.isValid())
+
+    def testBlobWithEmptyList(self):
+        blob = BlobWithList(foo=[])
+        self.assertFalse(blob.isValid())
+
+    def testBlobWithMissingList(self):
+        blob = BlobWithList()
+        self.assertTrue(blob.isValid())
+
+    def testBlobWithInvalidSublist(self):
+        blob = BlobWithList(foo=[dict(blah=2)])
+        self.assertFalse(blob.isValid())
+
 class TestReleaseBlobV1(unittest.TestCase):
     def testGetAppv(self):
         blob = ReleaseBlobV1(appv=1)
@@ -106,7 +131,7 @@ class TestReleaseBlobV1(unittest.TestCase):
         self.assertEquals(blob.getExtv('f', 'g'), blob.getApplicationVersion('f', 'g'))
 
 
-class TestReleaseBlobV2(unittest.TestCase):
+class TestNewStyleVersionBlob(unittest.TestCase):
     def testGetAppVersion(self):
         blob = ReleaseBlobV2(appVersion=1)
         self.assertEquals(1, blob.getAppVersion('p', 'l'))

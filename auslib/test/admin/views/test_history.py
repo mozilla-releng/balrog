@@ -70,7 +70,7 @@ class TestHistoryView(ViewTest):
 }
 """))
 
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=False))
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=False, schema_version=1))
         ret = self._post(
             '/releases/d',
             data=dict(data=data, product='d', version='d', data_version=2)

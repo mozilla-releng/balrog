@@ -2,7 +2,7 @@ import simplejson as json
 
 from flask import render_template, Response, jsonify, make_response, request
 
-from auslib.blob import createBlob, CURRENT_SCHEMA_VERSION
+from auslib.blob import createBlob
 from auslib.db import OutdatedDataError
 from auslib.log import cef_event, CEF_WARN, CEF_ALERT
 from auslib.util import getPagination
@@ -76,16 +76,15 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
     alias = form.alias.data
     old_data_version = form.data_version.data
 
-    try:
-        # should be set here doing PUT at SingleLocaleView
-        # but some SingleLocaleView tests use the except
+    # schema_version is an attribute at the root level of a blob.
+    # Endpoints that receive an entire blob can find it there.
+    # Those that don't have to pass it as a form element instead.
+    if getattr(form.schema_version, "data", None):
         schema_version = form.schema_version.data
-    except AttributeError:
-        # should be set when doing POST on SingleReleaseView
-        schema_version = incomingData.get('schema_version')
-    # otherwise try the default, the blob validator will save us
-    if schema_version is None:
-        schema_version = CURRENT_SCHEMA_VERSION
+    elif incomingData.get("schema_version"):
+        schema_version = incomingData.get("schema_version")
+    else:
+        return Response(status=400, response="schema_version is required")
 
     allReleases = [release]
     if copyTo:
