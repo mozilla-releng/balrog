@@ -8,3 +8,4 @@ decorator==3.3.3
 raven==3.1.13
 blinker==1.2
 cef==0.5
+flask-compress==1.0.2

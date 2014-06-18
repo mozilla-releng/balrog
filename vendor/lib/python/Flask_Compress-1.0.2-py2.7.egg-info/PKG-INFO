@@ -1,0 +1,22 @@
+Metadata-Version: 1.1
+Name: Flask-Compress
+Version: 1.0.2
+Summary: Compress responses in your Flask app with gzip.
+Home-page: https://github.com/wichitacode/flask-compress
+Author: William Fagan
+Author-email: will@wichitacode.com
+License: MIT
+Description: 
+        Flask-Compress
+        ------------
+        
+        Compress responses in your Flask app with gzip..
+        
+Platform: any
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Internet :: WWW/HTTP :: Dynamic Content
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
