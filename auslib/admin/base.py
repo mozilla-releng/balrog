@@ -1,5 +1,5 @@
 from flask import Flask, request
-from flask.ext.compress import Compress
+from flask_compress import Compress
 
 from raven.contrib.flask import Sentry
 
