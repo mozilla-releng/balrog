@@ -12,7 +12,7 @@
         </tr>
     </thead>
     <tbody>
-    {% for revision in revisions|sort(attribute='change_id', reverse=True) %}
+    {% for revision in revisions|sort(reverse=True) %}
         <tr>
             <td>
               {# {{ revision['data_version'] }}. #}
