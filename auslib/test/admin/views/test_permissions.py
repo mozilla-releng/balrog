@@ -1,6 +1,6 @@
 import simplejson as json
 
-from auslib.admin.base import db
+from auslib import dbo
 from auslib.test.admin.views.base import ViewTest, JSONTestMixin, HTMLTestMixin
 
 class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
@@ -25,16 +25,16 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/users/bob/permissions/admin')
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
-        query = db.permissions.t.select()
-        query = query.where(db.permissions.username=='bob')
-        query = query.where(db.permissions.permission=='admin')
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username=='bob')
+        query = query.where(dbo.permissions.permission=='admin')
         self.assertEqual(query.execute().fetchone(), ('admin', 'bob', None, 1))
 
     def testPermissionsPost(self):
         ret = self._post('/users/bill/permissions/admin', data=dict(options="", data_version=1))
         self.assertEqual(ret.status_code, 200, "Status Code: %d" % ret.status_code)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        r = db.permissions.t.select().where(db.permissions.username=='bill').execute().fetchall()
+        r = dbo.permissions.t.select().where(dbo.permissions.username=='bill').execute().fetchall()
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0], ('admin', 'bill', None, 2))
 
@@ -42,18 +42,18 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/users/cathy/permissions/releases/:name')
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
-        query = db.permissions.t.select()
-        query = query.where(db.permissions.username=='cathy')
-        query = query.where(db.permissions.permission=='/releases/:name')
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username=='cathy')
+        query = query.where(dbo.permissions.permission=='/releases/:name')
         self.assertEqual(query.execute().fetchone(), ('/releases/:name', 'cathy', None, 1))
 
     def testPermissionPutWithOption(self):
         ret = self._put('/users/bob/permissions/rules', data=dict(options=json.dumps(dict(product='fake'))))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
-        query = db.permissions.t.select()
-        query = query.where(db.permissions.username=='bob')
-        query = query.where(db.permissions.permission=='/rules')
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username=='bob')
+        query = query.where(dbo.permissions.permission=='/rules')
         self.assertEqual(query.execute().fetchone(), ('/rules', 'bob', json.dumps(dict(product='fake')), 1))
 
     def testPermissionModify(self):
@@ -61,9 +61,9 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
             data=dict(options=json.dumps(dict(product='different')), data_version=1))
         self.assertStatusCode(ret, 200)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        query = db.permissions.t.select()
-        query = query.where(db.permissions.username=='bob')
-        query = query.where(db.permissions.permission=='/releases/:name')
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username=='bob')
+        query = query.where(dbo.permissions.permission=='/releases/:name')
         self.assertEqual(query.execute().fetchone(), ('/releases/:name', 'bob', json.dumps(dict(product='different')), 2))
 
     def testPermissionPutBadPermission(self):
@@ -77,9 +77,9 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
     def testPermissionDelete(self):
         ret = self._delete('/users/bob/permissions/users/:id/permissions/:permission', qs=dict(data_version=1))
         self.assertStatusCode(ret, 200)
-        query = db.permissions.t.select()
-        query = query.where(db.permissions.username=='bob')
-        query = query.where(db.permissions.permission=='/users/:id/permissions/:permission')
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username=='bob')
+        query = query.where(dbo.permissions.permission=='/users/:id/permissions/:permission')
         self.assertEqual(query.execute().fetchone(), None)
 
 

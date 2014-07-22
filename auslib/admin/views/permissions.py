@@ -2,7 +2,7 @@ import simplejson as json
 
 from flask import render_template, request, Response, jsonify, make_response
 
-from auslib.admin.base import db
+from auslib import dbo
 from auslib.admin.views.base import requirelogin, requirepermission, AdminView
 from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm
 from auslib.log import cef_event, CEF_WARN
@@ -23,7 +23,7 @@ def permission2selector(permission):
 class UsersView(AdminView):
     """/users"""
     def get(self):
-        users = db.permissions.getAllUsers()
+        users = dbo.permissions.getAllUsers()
         self.log.debug("Found users: %s", users)
         fmt = request.args.get('format', 'html')
         if fmt == 'json':
@@ -36,7 +36,7 @@ class UsersView(AdminView):
 class PermissionsView(AdminView):
     """/users/[user]/permissions"""
     def get(self, username):
-        permissions = db.permissions.getUserPermissions(username)
+        permissions = dbo.permissions.getUserPermissions(username)
         fmt = request.args.get('format', 'html')
         if fmt == 'json':
             return jsonify(permissions)
@@ -52,7 +52,7 @@ class SpecificPermissionView(AdminView):
     @setpermission
     def get(self, username, permission):
         try:
-            perm = db.permissions.getUserPermissions(username)[permission]
+            perm = dbo.permissions.getUserPermissions(username)[permission]
         except KeyError:
             return Response(status=404)
         fmt = request.args.get('format', 'html')
@@ -68,16 +68,16 @@ class SpecificPermissionView(AdminView):
     @requirepermission('/users/:id/permissions/:permission', options=[])
     def _put(self, username, permission, changed_by, transaction):
         try:
-            if db.permissions.getUserPermissions(username, transaction).get(permission):
+            if dbo.permissions.getUserPermissions(username, transaction).get(permission):
                 form = ExistingPermissionForm()
                 if not form.data_version.data:
                     raise ValueError("Must provide the data version when updating an existing permission.")
-                db.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
-                new_data_version = db.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
+                dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
+                new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
                 return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
             else:
                 form = NewPermissionForm()
-                db.permissions.grantPermission(changed_by, username, permission, form.options.data, transaction=transaction)
+                dbo.permissions.grantPermission(changed_by, username, permission, form.options.data, transaction=transaction)
                 return make_response(json.dumps(dict(new_data_version=1)), 201)
         except ValueError, e:
             cef_event("Bad input", CEF_WARN, errors=e.args)
@@ -87,12 +87,12 @@ class SpecificPermissionView(AdminView):
     @requirelogin
     @requirepermission('/users/:id/permissions/:permission', options=[])
     def _post(self, username, permission, changed_by, transaction):
-        if not db.permissions.getUserPermissions(username, transaction=transaction).get(permission):
+        if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
             return Response(status=404)
         try:
             form = ExistingPermissionForm()
-            db.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
-            new_data_version = db.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
+            dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
+            new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
             return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
         except ValueError, e:
             cef_event("Bad input", CEF_WARN, errors=e.args)
@@ -102,14 +102,14 @@ class SpecificPermissionView(AdminView):
     @requirelogin
     @requirepermission('/users/:id/permissions/:permission', options=[])
     def _delete(self, username, permission, changed_by, transaction):
-        if not db.permissions.getUserPermissions(username, transaction=transaction).get(permission):
+        if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
             return Response(status=404)
         try:
             # For practical purposes, DELETE can't have a request body, which means the Form
             # won't find data where it's expecting it. Instead, we have to tell it to look at
             # the query string, which Flask puts in request.args.
             form = ExistingPermissionForm(request.args)
-            db.permissions.revokePermission(changed_by, username, permission, form.data_version.data, transaction=transaction)
+            dbo.permissions.revokePermission(changed_by, username, permission, form.data_version.data, transaction=transaction)
             return Response(status=200)
         except ValueError, e:
             cef_event("Bad input", CEF_WARN, e.args)
@@ -118,7 +118,7 @@ class SpecificPermissionView(AdminView):
 class PermissionsPageView(AdminView):
     """/permissions.html"""
     def get(self):
-        users = db.permissions.getAllUsers()
+        users = dbo.permissions.getAllUsers()
         return render_template('permissions.html', users=users)
 
 class UserPermissionsPageView(AdminView):
@@ -127,7 +127,7 @@ class UserPermissionsPageView(AdminView):
         username = request.args.get('username')
         if not username:
             return Response(status=404)
-        permissions = db.permissions.getUserPermissions(username)
+        permissions = dbo.permissions.getUserPermissions(username)
         forms = []
         for perm, values in permissions.items():
             prefix = permission2selector(perm)

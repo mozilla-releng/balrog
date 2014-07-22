@@ -4,13 +4,11 @@ from flask_compress import Compress
 from raven.contrib.flask import Sentry
 
 import auslib
-from auslib.db import AUSDatabase
 
 import logging
 log = logging.getLogger(__name__)
 
 app = Flask(__name__)
-db = AUSDatabase()
 sentry = Sentry()
 
 from auslib.admin.views.csrf import CSRFView

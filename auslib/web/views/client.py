@@ -3,7 +3,7 @@ import urllib
 from flask import make_response, request
 from flask.views import MethodView
 
-from auslib.web.base import AUS
+from auslib.web.base import AUS, app
 
 import logging
 
@@ -34,7 +34,13 @@ class ClientRequestView(MethodView):
         self.log.debug("Got query: %s", query)
         release, update_type = AUS.evaluateRules(query)
         # passing {},None returns empty xml
-        xml = AUS.createXML(query, release, update_type)
+        if release:
+            xml = release.createXML(query, update_type, app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"])
+        else:
+            xml = ['<?xml version="1.0"?>']
+            xml.append('<updates>')
+            xml.append('</updates>')
+            xml = "\n".join(xml)
         self.log.debug("Sending XML: %s", xml)
         response = make_response(xml)
         response.mimetype = 'text/xml'

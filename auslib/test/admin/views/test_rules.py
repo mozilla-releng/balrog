@@ -1,6 +1,6 @@
 import json
 
-from auslib.admin.base import db
+from auslib import dbo
 from auslib.test.admin.views.base import ViewTest, HTMLTestMixin
 
 class TestRulesAPI_HTML(ViewTest, HTMLTestMixin):
@@ -8,7 +8,7 @@ class TestRulesAPI_HTML(ViewTest, HTMLTestMixin):
         ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c', priority=33,
                                                 product='Firefox', update_type='minor', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        r = db.rules.t.select().where(db.rules.rule_id==ret.data).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id==ret.data).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'c')
         self.assertEquals(r[0]['backgroundRate'], 31)
@@ -34,7 +34,7 @@ class TestSingleRuleView_HTML(ViewTest, HTMLTestMixin):
         self.assertEquals(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
-        r = db.rules.t.select().where(db.rules.rule_id==1).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id==1).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'd')
         self.assertEquals(r[0]['backgroundRate'], 71)
@@ -53,7 +53,7 @@ class TestSingleRuleView_HTML(ViewTest, HTMLTestMixin):
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
         # Assure the changes made it into the database
-        r = db.rules.t.select().where(db.rules.rule_id==4).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id==4).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'd')
         self.assertEquals(r[0]['backgroundRate'], 71)
@@ -194,7 +194,7 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
             "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
         )
 
-        table = db.rules
+        table = dbo.rules
         row, = table.select(where=[table.rule_id == 1])
         self.assertEqual(row['backgroundRate'], 72)
         self.assertEqual(row['data_version'], 3)
@@ -260,8 +260,8 @@ class TestRuleHistoryView(ViewTest, HTMLTestMixin):
                 channel='nightly',
             )
         )
-        row, = db.rules.history.select(
-            where=[db.rules.history.backgroundRate == 72],
+        row, = dbo.rules.history.select(
+            where=[dbo.rules.history.backgroundRate == 72],
             limit=1
         )
         change_id = row['change_id']
