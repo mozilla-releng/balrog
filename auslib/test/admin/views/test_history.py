@@ -1,6 +1,5 @@
 import json
-
-from auslib import dbo
+from auslib.admin.base import db
 from auslib.test.admin.views.base import ViewTest
 
 
@@ -22,7 +21,7 @@ class TestHistoryView(ViewTest):
         ret = self._put('/users/bob/permissions/admin')
         self.assertStatusCode(ret, 201)
 
-        table = dbo.permissions.history
+        table = db.permissions.history
         row, = table.select(order_by=[table.change_id.desc()], limit=1)
         change_id = row['change_id']
 
@@ -40,7 +39,7 @@ class TestHistoryView(ViewTest):
         )
         self.assertStatusCode(ret, 200)
 
-        table = dbo.releases.history
+        table = db.releases.history
         query = table.t.count()
         count, = query.execute().first()
         self.assertEqual(count, 1)
@@ -78,7 +77,7 @@ class TestHistoryView(ViewTest):
         )
         self.assertStatusCode(ret, 200)
 
-        table = dbo.releases.history
+        table = db.releases.history
         row, = table.select(order_by=[table.change_id.desc()], limit=1)
         change_id = row['change_id']
 
@@ -92,7 +91,7 @@ class TestHistoryView(ViewTest):
         # Add a permission
         ret = self._put('/users/bob/permissions/admin')
         self.assertStatusCode(ret, 201)
-        table = dbo.permissions.history
+        table = db.permissions.history
         row, = table.select(order_by=[table.timestamp.desc()], limit=1)
         change_id = row['change_id']
 

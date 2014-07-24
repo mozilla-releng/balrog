@@ -2,7 +2,7 @@ import json
 
 from flask import render_template, Response, make_response, request
 
-from auslib import dbo
+from auslib.admin.base import db
 from auslib.admin.views.base import (
     requirelogin, requirepermission, AdminView, HistoryAdminView
 )
@@ -14,9 +14,9 @@ from auslib.util import getPagination
 class RulesPageView(AdminView):
     """/rules.html"""
     def get(self):
-        rules = dbo.rules.getOrderedRules()
+        rules = db.rules.getOrderedRules()
 
-        releaseNames = dbo.releases.getReleaseNames()
+        releaseNames = db.releases.getReleaseNames()
 
         new_rule_form = RuleForm(prefix="new_rule");
         new_rule_form.mapping.choices = [(item['name'],item['name']) for item in
@@ -59,7 +59,7 @@ class RulesAPIView(AdminView):
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
         form = RuleForm()
-        releaseNames = dbo.releases.getReleaseNames()
+        releaseNames = db.releases.getReleaseNames()
         form.mapping.choices = [(item['name'],item['name']) for item in releaseNames]
         form.mapping.choices.insert(0, ('', 'NULL' ) )
         if not form.validate():
@@ -81,7 +81,7 @@ class RulesAPIView(AdminView):
                 comment = form.comment.data,
                 update_type = form.update_type.data,
                 headerArchitecture = form.header_arch.data)
-        rule_id = dbo.rules.addRule(changed_by=changed_by, what=what,
+        rule_id = db.rules.addRule(changed_by=changed_by, what=what,
             transaction=transaction)
         return Response(status=200, response=rule_id)
 
@@ -90,11 +90,11 @@ class SingleRuleView(AdminView):
     """ /rules/<rule_id> """
 
     def get(self, rule_id):
-        rule = dbo.rules.getRuleById(rule_id=rule_id)
+        rule = db.rules.getRuleById(rule_id=rule_id)
         if not rule:
             return Response(status=404, response="Requested rule does not exist")
 
-        releaseNames = dbo.releases.getReleaseNames()
+        releaseNames = db.releases.getReleaseNames()
 
         form = EditRuleForm(prefix=str(rule_id),
                 backgroundRate = rule['backgroundRate'],
@@ -125,7 +125,7 @@ class SingleRuleView(AdminView):
     @requirelogin
     def _post(self, rule_id, transaction, changed_by):
         # Verify that the rule_id exists.
-        rule = dbo.rules.getRuleById(rule_id, transaction=transaction)
+        rule = db.rules.getRuleById(rule_id, transaction=transaction)
         if not rule:
             return Response(status=404)
         form = EditRuleForm()
@@ -137,11 +137,11 @@ class SingleRuleView(AdminView):
         if form.product.data:
             toCheck.append(form.product.data)
         for product in toCheck:
-            if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
+            if not db.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
                 msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
                 cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
                 return Response(status=401, response=msg)
-        releaseNames = dbo.releases.getReleaseNames()
+        releaseNames = db.releases.getReleaseNames()
 
         form.mapping.choices = [(item['name'],item['name']) for item in releaseNames]
         form.mapping.choices.insert(0, ('', 'NULL' ))
@@ -182,10 +182,10 @@ class SingleRuleView(AdminView):
         if form.header_arch.data:
             what['headerArchitecture'] = form.header_arch.data
 
-        dbo.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
+        db.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
             old_data_version=form.data_version.data, transaction=transaction)
         # find out what the next data version is
-        rule = dbo.rules.getRuleById(rule_id, transaction=transaction)
+        rule = db.rules.getRuleById(rule_id, transaction=transaction)
         new_data_version = rule['data_version']
         response = make_response(json.dumps(dict(new_data_version=new_data_version)))
         response.headers['Content-Type'] = 'application/json'
@@ -194,7 +194,7 @@ class SingleRuleView(AdminView):
     @requirelogin
     def _delete(self, rule_id, transaction, changed_by):
         # Verify that the rule_id exists.
-        rule = dbo.rules.getRuleById(rule_id, transaction=transaction)
+        rule = db.rules.getRuleById(rule_id, transaction=transaction)
         if not rule:
             return Response(status=404)
         # Bodies are ignored for DELETE requests, so we need to force WTForms
@@ -204,7 +204,7 @@ class SingleRuleView(AdminView):
         # form to make sure that the CSRF token is checked.
         form = EditRuleForm(request.args)
 
-        releaseNames = dbo.releases.getReleaseNames()
+        releaseNames = db.releases.getReleaseNames()
 
         form.mapping.choices = [(item['name'],item['name']) for item in releaseNames]
         form.mapping.choices.insert(0, ('', 'NULL' ))
@@ -213,12 +213,12 @@ class SingleRuleView(AdminView):
             cef_event("Bad input", CEF_WARN, errors=form.errors)
             return Response(status=400, response=form.errors)
 
-        if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'DELETE', urlOptions={'product': rule['product']}):
+        if not db.permissions.hasUrlPermission(changed_by, '/rules/:id', 'DELETE', urlOptions={'product': rule['product']}):
             msg = "%s is not allowed to alter rules that affect %s" % (changed_by, rule['product'])
             cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
             return Response(status=401, response=msg)
 
-        dbo.rules.deleteRule(changed_by=changed_by, rule_id=rule_id,
+        db.rules.deleteRule(changed_by=changed_by, rule_id=rule_id,
             old_data_version=form.data_version.data, transaction=transaction)
 
         return Response(status=200)
@@ -228,12 +228,12 @@ class RuleHistoryView(HistoryAdminView):
     """ /rules/<rule_id>/revisions """
 
     def get(self, rule_id):
-        rule = dbo.rules.getRuleById(rule_id=rule_id)
+        rule = db.rules.getRuleById(rule_id=rule_id)
         if not rule:
             return Response(status=404,
                             response='Requested rule does not exist')
 
-        table = dbo.rules.history
+        table = db.rules.history
 
         try:
             page = int(request.args.get('page', 1))
@@ -283,17 +283,17 @@ class RuleHistoryView(HistoryAdminView):
         if not change_id:
             cef_event("Bad input", CEF_WARN, errors="no change_id")
             return Response(status=400, response='no change_id')
-        change = dbo.rules.history.getChange(change_id=change_id)
+        change = db.rules.history.getChange(change_id=change_id)
         if change is None:
             return Response(status=404, response='bad change_id')
         if change['rule_id'] != rule_id:
             return Response(status=404, response='bad rule_id')
-        rule = dbo.rules.getRuleById(rule_id=rule_id)
+        rule = db.rules.getRuleById(rule_id=rule_id)
         if rule is None:
             return Response(status=404, response='bad rule_id')
         # Verify that the user has permission for the existing rule _and_ what the rule would become.
         for product in (rule['product'], change['product']):
-            if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
+            if not db.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
                 msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
                 cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
                 return Response(status=401, response=msg)
@@ -318,7 +318,7 @@ class RuleHistoryView(HistoryAdminView):
             headerArchitecture=change['headerArchitecture'],
         )
 
-        dbo.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
+        db.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
             old_data_version=old_data_version, transaction=transaction)
 
         return Response("Excellent!")

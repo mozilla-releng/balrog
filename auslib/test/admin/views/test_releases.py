@@ -3,7 +3,7 @@ import simplejson as json
 
 from sqlalchemy import select
 
-from auslib import dbo
+from auslib.admin.base import db
 from auslib.test.admin.views.base import ViewTest, JSONTestMixin, HTMLTestMixin
 
 class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
@@ -11,7 +11,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
         ret = self._post('/releases/d', data=dict(data=data, product='d', version='d', data_version=1))
         self.assertStatusCode(ret, 200)
-        ret = select([dbo.releases.data]).where(dbo.releases.name=='d').execute().fetchone()[0]
+        ret = select([db.releases.data]).where(db.releases.name=='d').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "d",
@@ -36,7 +36,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
         ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=1))
         self.assertStatusCode(ret, 201)
-        ret = dbo.releases.t.select().where(dbo.releases.name=='e').execute().fetchone()
+        ret = db.releases.t.select().where(db.releases.name=='e').execute().fetchone()
         self.assertEqual(ret['product'], 'e')
         self.assertEqual(ret['version'], 'e')
         self.assertEqual(ret['name'], 'e')
@@ -54,7 +54,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
         ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=1))
         self.assertStatusCode(ret, 201)
-        ret = dbo.releases.t.select().where(dbo.releases.name=='e').execute().fetchone()
+        ret = db.releases.t.select().where(db.releases.name=='e').execute().fetchone()
         self.assertEqual(ret['product'], 'e')
         self.assertEqual(ret['version'], 'e')
         self.assertEqual(ret['name'], 'e')
@@ -72,7 +72,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
         ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=2))
         self.assertStatusCode(ret, 201)
-        ret = dbo.releases.t.select().where(dbo.releases.name=='e').execute().fetchone()
+        ret = db.releases.t.select().where(db.releases.name=='e').execute().fetchone()
         self.assertEqual(ret['product'], 'e')
         self.assertEqual(ret['version'], 'e')
         self.assertEqual(ret['name'], 'e')
@@ -99,7 +99,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     def testDeleteRelease(self):
         ret = self._delete("/releases/d", qs=dict(data_version=1))
         self.assertStatusCode(ret, 200)
-        ret = dbo.releases.t.count().where(dbo.releases.name=='d').execute().first()[0]
+        ret = db.releases.t.count().where(db.releases.name=='d').execute().first()[0]
         self.assertEqual(ret, 0)
 
     def testDeleteNonExistentRelease(self):
@@ -115,7 +115,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        ret = select([dbo.releases.data]).where(dbo.releases.name=='a').execute().fetchone()[0]
+        ret = select([db.releases.data]).where(db.releases.name=='a').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "a",
@@ -146,7 +146,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        ret = select([dbo.releases.data]).where(dbo.releases.name=='e').execute().fetchone()[0]
+        ret = select([db.releases.data]).where(db.releases.name=='e').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "e",
@@ -170,7 +170,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/d/builds/p/g', data=dict(data=data, product='d', version='d', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        ret = select([dbo.releases.data]).where(dbo.releases.name=='d').execute().fetchone()[0]
+        ret = select([db.releases.data]).where(db.releases.name=='d').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "d",
@@ -201,7 +201,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', alias='["p2"]', schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        ret = select([dbo.releases.data]).where(dbo.releases.name=='e').execute().fetchone()[0]
+        ret = select([db.releases.data]).where(db.releases.name=='e').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "e",
@@ -228,7 +228,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/d/builds/q/g', data=dict(data=data, product='d', version='d', data_version=1, alias='["q2"]', schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        ret = select([dbo.releases.data]).where(dbo.releases.name=='d').execute().fetchone()[0]
+        ret = select([db.releases.data]).where(db.releases.name=='d').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "d",
@@ -265,7 +265,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/a/builds/p/l', data=data)
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        ret = select([dbo.releases.data]).where(dbo.releases.name=='a').execute().fetchone()[0]
+        ret = select([db.releases.data]).where(db.releases.name=='a').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "a",
@@ -283,7 +283,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     }
 }
 """))
-        ret = select([dbo.releases.data]).where(dbo.releases.name=='ab').execute().fetchone()[0]
+        ret = select([db.releases.data]).where(db.releases.name=='ab').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "ab",
@@ -307,7 +307,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='b', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=3)), "Data: %s" % ret.data)
-        ret = select([dbo.releases.data]).where(dbo.releases.name=='a').execute().fetchone()[0]
+        ret = select([db.releases.data]).where(db.releases.name=='a').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "a",
@@ -323,7 +323,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     }
 }
 """))
-        newVersion = select([dbo.releases.version]).where(dbo.releases.name=='a').execute().fetchone()[0]
+        newVersion = select([db.releases.version]).where(db.releases.name=='a').execute().fetchone()[0]
         self.assertEqual(newVersion, 'b')
 
     def testLocalePutBadJSON(self):
@@ -352,11 +352,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocaleRevertsPartialUpdate(self):
         data = json.dumps(dict(complete=dict(filesize=1)))
-        with mock.patch('auslib.dbo.releases.addLocaleToRelease') as r:
+        with mock.patch('auslib.admin.base.db.releases.addLocaleToRelease') as r:
             r.side_effect = Exception("Fail")
             ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='c', data_version=1, schema_version=1))
             self.assertStatusCode(ret, 500)
-            ret = dbo.releases.t.select().where(dbo.releases.name=='a').execute().fetchone()
+            ret = db.releases.t.select().where(db.releases.name=='a').execute().fetchone()
             self.assertEqual(ret['product'], 'a')
             self.assertEqual(ret['version'], 'a')
             self.assertEqual(json.loads(ret['data']), dict(name='a', schema_version=1))
@@ -420,7 +420,7 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
 
                                                         #json.dumps(newReleaseFile.getvalue())))
         self.assertEquals(ret.status_code, 201, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        r = dbo.releases.t.select().where(dbo.releases.name=='new_release').execute().fetchall()
+        r = db.releases.t.select().where(db.releases.name=='new_release').execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['name'], 'new_release')
         self.assertEquals(r[0]['version'], '11')
@@ -507,7 +507,7 @@ class TestReleaseHistoryView(ViewTest, HTMLTestMixin):
         )
         self.assertStatusCode(ret, 200)
 
-        table = dbo.releases
+        table = db.releases
         row, = table.select(where=[table.name == 'd'])
         self.assertEqual(row['version'], '333.0')
         self.assertEqual(row['data_version'], 5)

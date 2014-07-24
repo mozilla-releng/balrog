@@ -3,8 +3,8 @@ import json
 
 from flask import Response
 
-from auslib import dbo
 from auslib.admin.views.base import AdminView
+from auslib.admin.base import db
 from auslib.log import cef_event, CEF_WARN
 
 
@@ -13,9 +13,9 @@ class FieldView(AdminView):
 
     def get_value(self, type_, change_id, field):
         tables = {
-            'rule': dbo.rules,
-            'permission': dbo.permissions,
-            'release': dbo.releases,
+            'rule': db.rules,
+            'permission': db.permissions,
+            'release': db.releases,
         }
         if type_ not in tables:
             raise KeyError('Bad table')

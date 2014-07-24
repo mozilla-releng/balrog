@@ -1111,6 +1111,7 @@ class AUSDatabase(object):
         if dburi:
             self.setDburi(dburi)
         self.log = logging.getLogger(self.__class__.__name__)
+        self.domainWhitelist = []
 
     def setDburi(self, dburi):
         """Setup the database connection. Note that SQLAlchemy only opens a connection
@@ -1130,6 +1131,7 @@ class AUSDatabase(object):
         self.releases.onInsert, self.releases.onDelete, self.releases.onUpdate = getHumanModificationMonitors(systemAccounts)
 
     def setDomainWhitelist(self, domainWhitelist):
+        self.domainWhitelist = domainWhitelist
         self.releasesTable.setDomainWhitelist(domainWhitelist)
 
     def create(self, version=None):

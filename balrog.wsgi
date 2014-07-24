@@ -24,14 +24,13 @@ if errors:
 logging.setLoggerClass(auslib.log.BalrogLogger)
 logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel(), format=auslib.log.log_format)
 
-from auslib import dbo
 from auslib.web.base import app as application
+from auslib.web.base import AUS
 
 auslib.log.cef_config = auslib.log.get_cef_config(cfg.getCefLogfile())
-dbo.setDb(cfg.getDburi())
-dbo.setDomainWhitelist(cfg.getDomainWhitelist())
-application.config['WHITELISTED_DOMAINS'] = cfg.getDomainWhitelist()
-application.config['SPECIAL_FORCE_HOSTS'] = cfg.getSpecialForceHosts()
+AUS.setDb(cfg.getDburi())
+AUS.setSpecialHosts(cfg.getSpecialForceHosts())
+AUS.db.setDomainWhitelist(cfg.getDomainWhitelist())
 application.config['SENTRY_DSN'] = cfg.getSentryDsn()
 application.config['SENTRY_PROCESSORS'] = ['auslib.util.sentry.SanitizeHeadersProcessor']
 

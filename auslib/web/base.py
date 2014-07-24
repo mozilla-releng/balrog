@@ -50,12 +50,11 @@ app.add_url_rule(
 )
 
 # TODO: kill this with fire, brimstone, and extreme prejudice when bug 1013354 is fixed.
-from auslib import dbo
 from flask import Response
 @app.route("/update/3/GMP/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml")
 def hackyH264URLs(version, buildID, buildTarget, **crap):
     try:
-        blob = dbo.db.releases.getReleaseBlob("HackyH264Blob")
+        blob = AUS.db.releases.getReleaseBlob("HackyH264Blob")
     except KeyError:
         response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
         response.mimetype = 'text/xml'

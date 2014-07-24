@@ -2,8 +2,9 @@ import collections
 
 from flask import render_template, request
 
-from auslib import dbo, version
+from auslib import version
 from auslib.admin.views.base import AdminView, getTimeAgo
+from auslib.admin.base import db
 from auslib.util import PrinterFriendlyDict
 
 
@@ -12,9 +13,9 @@ class IndexPageView(AdminView):
     def get(self):
         self.log.info("Balrog version is: %s" % version)
         data = {
-            'count_rules': dbo.rules.countRules(),
-            'count_releases': dbo.releases.countReleases(),
-            'count_users': dbo.permissions.countAllUsers(),
+            'count_rules': db.rules.countRules(),
+            'count_releases': db.releases.countReleases(),
+            'count_users': db.permissions.countAllUsers(),
         }
 
         return render_template('index.html', **data)
@@ -39,9 +40,9 @@ class RecentChangesTableView(AdminView):
     @property
     def tables(self):
         return {
-            'rule': dbo.rules,
-            'permission': dbo.permissions,
-            'release': dbo.releases,
+            'rule': db.rules,
+            'permission': db.permissions,
+            'release': db.releases,
         }
 
     def getAllRecentChanges(self, limit):

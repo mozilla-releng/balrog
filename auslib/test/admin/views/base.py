@@ -5,8 +5,7 @@ import unittest
 
 from flask import Response
 
-from auslib import dbo
-from auslib.admin.base import app
+from auslib.admin.base import app, db
 import auslib.log
 
 # When running tests, there's no web server to convert uncaught exceptions to
@@ -24,20 +23,19 @@ class ViewTest(unittest.TestCase):
         app.config['SECRET_KEY'] = 'abc123'
         app.config['DEBUG'] = True
         app.config['CSRF_ENABLED'] = False
-        app.config['WHITELISTED_DOMAINS'] = ['good.com']
         auslib.log.cef_config = auslib.log.get_cef_config(self.cef_file)
-        dbo.setDb('sqlite:///:memory:')
-        dbo.setDomainWhitelist(['good.com'])
-        dbo.create()
-        dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
-        dbo.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
-        dbo.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
-        dbo.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
-        dbo.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name='a', schema_version=1)), data_version=1)
-        dbo.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name='ab', schema_version=1)), data_version=1)
-        dbo.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name='b', schema_version=1)), data_version=1)
-        dbo.releases.t.insert().execute(name='c', product='c', version='c', data=json.dumps(dict(name='c', schema_version=1)), data_version=1)
-        dbo.releases.t.insert().execute(name='d', product='d', version='d', data_version=1, data="""
+        db.setDburi('sqlite:///:memory:')
+        db.setDomainWhitelist(['good.com'])
+        db.create()
+        db.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
+        db.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
+        db.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
+        db.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
+        db.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name='a', schema_version=1)), data_version=1)
+        db.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name='ab', schema_version=1)), data_version=1)
+        db.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name='b', schema_version=1)), data_version=1)
+        db.releases.t.insert().execute(name='c', product='c', version='c', data=json.dumps(dict(name='c', schema_version=1)), data_version=1)
+        db.releases.t.insert().execute(name='d', product='d', version='d', data_version=1, data="""
 {
     "name": "d",
     "schema_version": 1,
@@ -54,15 +52,15 @@ class ViewTest(unittest.TestCase):
     }
 }
 """)
-        dbo.rules.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='minor', data_version=1)
-        dbo.rules.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='minor', data_version=1)
-        dbo.rules.t.insert().execute(id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
-        dbo.rules.t.insert().execute(id=4, product='fake', priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
-        dbo.rules.t.insert().execute(id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='minor', data_version=1)
+        db.rules.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='minor', data_version=1)
+        db.rules.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='minor', data_version=1)
+        db.rules.t.insert().execute(id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
+        db.rules.t.insert().execute(id=4, product='fake', priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
+        db.rules.t.insert().execute(id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='minor', data_version=1)
         self.client = app.test_client()
 
     def tearDown(self):
-        dbo.reset()
+        db.reset()
         os.close(self.cef_fd)
         os.remove(self.cef_file)
     
