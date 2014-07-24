@@ -298,7 +298,7 @@ class HackyH264Tests(unittest.TestCase):
     "hashFunction": "sha512",
     "ftpFilenames": {
         "completes": {
-            "crap": "<updates><addons><addon id=\\"openh264-plugin@cisco.com\\" URL=\\"http://download.cdn.cisco.com/openh264/win32/openh264-1.1.zip\\" hashFunction=\\"SHA512\\" hashValue=\\"ABCDEF123456\\" size=\\"123\\" version=\\"1.1\\" /></addons></updates>"
+            "20.0-crap": "<updates><addons><addon id=\\"openh264-plugin@cisco.com\\" URL=\\"http://download.cdn.cisco.com/openh264/win32/openh264-1.1.zip\\" hashFunction=\\"SHA512\\" hashValue=\\"ABCDEF123456\\" size=\\"123\\" version=\\"1.1\\" /></addons></updates>"
         }
     }
 }

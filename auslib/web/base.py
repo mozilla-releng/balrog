@@ -61,7 +61,7 @@ def hackyH264URLs(version, buildID, buildTarget, **crap):
         response.mimetype = 'text/xml'
         return response
 
-    xml = blob.get("ftpFilenames", {}).get("completes", {}).get(buildTarget)
+    xml = blob.get("ftpFilenames", {}).get("completes", {}).get("%s-%s" % (version, buildTarget))
     if xml:
         resp = make_response('<?xml version="1.0"?>\n' + xml)
         resp.mimetype = "text/xml"
