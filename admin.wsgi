@@ -24,12 +24,14 @@ if errors:
 logging.setLoggerClass(auslib.log.BalrogLogger)
 logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel(), format=auslib.log.log_format)
 
-from auslib.admin.base import db, app as application
+from auslib import dbo
+from auslib.admin.base import app as application
 
 auslib.log.cef_config = auslib.log.get_cef_config(cfg.getCefLogfile())
-db.setDburi(cfg.getDburi())
-db.setupChangeMonitors(cfg.getSystemAccounts())
-db.setDomainWhitelist(cfg.getDomainWhitelist())
+dbo.setDb(cfg.getDburi())
+dbo.setupChangeMonitors(cfg.getSystemAccounts())
+dbo.setDomainWhitelist(cfg.getDomainWhitelist())
+application.config['WHITELISTED_DOMAINS'] = cfg.getDomainWhitelist()
 application.config['PAGE_TITLE'] = cfg.getPageTitle()
 application.config['SECRET_KEY'] = cfg.getSecretKey()
 application.config['SENTRY_DSN'] = cfg.getSentryDsn()

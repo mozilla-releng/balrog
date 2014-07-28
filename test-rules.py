@@ -10,12 +10,16 @@ mydir = os.path.dirname(os.path.abspath(__file__))
 site.addsitedir(mydir)
 site.addsitedir(os.path.join(mydir, 'vendor/lib/python'))
 
+from auslib import dbo
 from auslib.AUS import AUS as AUS_Class
 
 import logging
 log = logging.getLogger(__name__)
 
-def populateDB(AUS, testdir):
+WHITELISTED_DOMAINS = ('download.mozilla.org', 'stage-old.mozilla.org', 'ftp.mozilla.org', 'stage.mozilla.org')
+SPECIAL_FORCE_HOSTS = ('download.mozilla.org',)
+
+def populateDB(testdir):
     # assuming we're already in the right directory with a db connection
     # read any rules we already have
     rules = os.path.join(testdir, 'rules.sql')
@@ -24,7 +28,7 @@ def populateDB(AUS, testdir):
         for line in f:
             if line.startswith('#'):
                 continue
-            AUS.db.engine.execute(line.strip())
+            dbo.engine.execute(line.strip())
     # and add any json blobs we created painstakingly, converting to compact json
     for f in glob.glob('%s/*.json' % testdir):
         data = json.load(open(f,'r'))
@@ -37,7 +41,7 @@ def populateDB(AUS, testdir):
             version = data.get('platforms').values()[0].get('locales').values()[0].get('extv')
             if not version:
                 raise Exception("Couldn't find version for %s" % data['name'])
-        AUS.db.engine.execute("INSERT INTO releases (name, product, version, data, data_version) VALUES ('%s', '%s', '%s','%s', 1)" %
+        dbo.engine.execute("INSERT INTO releases (name, product, version, data, data_version) VALUES ('%s', '%s', '%s','%s', 1)" %
                    (data['name'], product, version, json.dumps(data)))
     # TODO - create a proper importer that walks the snippet store to find hashes ?
 
@@ -95,7 +99,10 @@ def walkSnippets(AUS, testPath):
         testQuery = getQueryFromPath(f.lstrip(testPath))
         testQuery['queryVersion'] = 3
         release, update_type = AUS.evaluateRules(testQuery)
-        balrog_snippets = AUS.createSnippet(testQuery, release, update_type)
+        if release:
+            balrog_snippets = release.createSnippets(testQuery, update_type, WHITELISTED_DOMAINS, SPECIAL_FORCE_HOSTS)
+        else:
+            balrog_snippets = {"partial": "", "complete": ""}
 
         if snipType in balrog_snippets:
             balrog_snippet = balrog_snippets[snipType]
@@ -175,10 +182,11 @@ if __name__ == "__main__":
             dbPath = 'sqlite:///%s' % dbPath
         else:
             dbPath = 'sqlite:///:memory:'
-        AUS = AUS_Class(dbname=dbPath)
-        AUS.db.create()
-        AUS.db.setDomainWhitelist(('download.mozilla.org', 'stage-old.mozilla.org', 'ftp.mozilla.org', 'stage.mozilla.org'))
-        populateDB(AUS, td)
+        AUS = AUS_Class()
+        dbo.setDb(dbPath)
+        dbo.create()
+        dbo.setDomainWhitelist(WHITELISTED_DOMAINS)
+        populateDB(td)
         if options.dumprules:
             log.info("Rules are \n(id, priority, mapping, backgroundRate, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")
             for rule in AUS.rules.getOrderedRules():

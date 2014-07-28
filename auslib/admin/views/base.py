@@ -3,7 +3,7 @@ import time
 from flask import request, Response
 from flask.views import MethodView
 
-from auslib.admin.base import db
+from auslib import dbo
 from auslib.log import cef_event, CEF_ALERT, CEF_WARN
 from auslib.util.timesince import timesince
 
@@ -30,7 +30,7 @@ def requirepermission(url, options=['product']):
                     cef_event("Bad input", CEF_WARN, msg=msg)
                     return Response(status=400, response=msg)
                 extra[opt] = request.form[opt]
-            if not db.permissions.hasUrlPermission(username, url, method, urlOptions=extra):
+            if not dbo.permissions.hasUrlPermission(username, url, method, urlOptions=extra):
                 msg = "%s is not allowed to access %s by %s" % (username, url, method)
                 cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
                 return Response(status=401, response=msg)
@@ -45,17 +45,17 @@ class AdminView(MethodView):
 
     def post(self, *args, **kwargs):
         self.log.debug("processing POST request to %s" % request.path)
-        with db.begin() as trans:
+        with dbo.begin() as trans:
             return self._post(*args, transaction=trans, **kwargs)
 
     def put(self, *args, **kwargs):
         self.log.debug("processing PUT request to %s" % request.path)
-        with db.begin() as trans:
+        with dbo.begin() as trans:
             return self._put(*args, transaction=trans, **kwargs)
 
     def delete(self, *args, **kwargs):
         self.log.debug("processing DELETE request to %s" % request.path)
-        with db.begin() as trans:
+        with dbo.begin() as trans:
             return self._delete(*args, transaction=trans, **kwargs)
 
 
