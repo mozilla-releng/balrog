@@ -426,8 +426,8 @@ class TestSchema2Blob(unittest.TestCase):
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
     <update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
-        <patch type="partial" URL="http://a.com/j1-partial.mar" hashFunction="sha512" hashValue="5" size="6"/>
         <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="34" size="38"/>
+        <patch type="partial" URL="http://a.com/j1-partial.mar" hashFunction="sha512" hashValue="5" size="6"/>
     </update>
 </updates>
 """)
@@ -556,8 +556,8 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
     <update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
-        <patch type="partial" URL="http://a.com/p" hashFunction="sha512" hashValue="4" size="3"/>
         <patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="6" size="5"/>
+        <patch type="partial" URL="http://a.com/p" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
 """)
@@ -738,8 +738,8 @@ class TestSchema3Blob(unittest.TestCase):
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
     <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
-        <patch type="partial" URL="http://a.com/p1" hashFunction="sha512" hashValue="3" size="2"/>
         <patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="31" size="30"/>
+        <patch type="partial" URL="http://a.com/p1" hashFunction="sha512" hashValue="3" size="2"/>
     </update>
 </updates>
 """)
@@ -756,8 +756,8 @@ class TestSchema3Blob(unittest.TestCase):
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
     <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
-        <patch type="partial" URL="http://a.com/p2" hashFunction="sha512" hashValue="5" size="4"/>
         <patch type="complete" URL="http://a.com/c1" hashFunction="sha512" hashValue="6" size="29"/>
+        <patch type="partial" URL="http://a.com/p2" hashFunction="sha512" hashValue="5" size="4"/>
     </update>
 </updates>
 """)
@@ -811,8 +811,8 @@ class TestSchema3Blob(unittest.TestCase):
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
     <update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
-        <patch type="partial" URL="http://a.com/g1-partial.mar" hashFunction="sha512" hashValue="5" size="4"/>
         <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="35" size="34"/>
+        <patch type="partial" URL="http://a.com/g1-partial.mar" hashFunction="sha512" hashValue="5" size="4"/>
     </update>
 </updates>
 """)
@@ -830,8 +830,8 @@ class TestSchema3Blob(unittest.TestCase):
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
     <update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
-        <patch type="partial" URL="http://a.com/g1-partial" hashFunction="sha512" hashValue="5" size="4"/>
         <patch type="complete" URL="http://a.com/complete" hashFunction="sha512" hashValue="35" size="34"/>
+        <patch type="partial" URL="http://a.com/g1-partial" hashFunction="sha512" hashValue="5" size="4"/>
     </update>
 </updates>
 """)
