@@ -15,6 +15,7 @@ import migrate.versioning.api
 
 from auslib.blob import createBlob
 from auslib.log import cef_event, CEF_ALERT
+from auslib.util.comparison import string_compare, version_compare
 
 import logging
 
@@ -647,15 +648,6 @@ class Rules(AUSTable):
             return True
         return False
 
-    def _versionMatchesRule(self, ruleVersion, queryVersion):
-        """Decides whether a version from the rules matches an incoming version.
-           If the ruleVersion is null, we match any queryVersion. If it's not
-           null, we must either match exactly, or match a potential wildcard."""
-        if ruleVersion is None:
-            return True
-        if self._matchesRegex(ruleVersion, queryVersion):
-            return True
-
     def _channelMatchesRule(self, ruleChannel, queryChannel, fallbackChannel):
         """Decides whether a channel from the rules matches an incoming one.
            If the ruleChannel is null, we match any queryChannel. We also match
@@ -668,6 +660,24 @@ class Rules(AUSTable):
             return True
         if self._matchesRegex(ruleChannel, fallbackChannel):
             return True
+
+    def _versionMatchesRule(self, ruleVersion, queryVersion):
+        """Decides whether a version from the rules matches an incoming version.
+           If the ruleVersion is null, we match any queryVersion. If it's not
+           null, we must either match exactly, or match a comparison operator."""
+        self.log.debug('ruleVersion: %s, queryVersion: %s', ruleVersion, queryVersion)
+        if ruleVersion is None:
+            return True
+        return version_compare(queryVersion, ruleVersion)
+
+    def _buildIDMatchesRule(self, ruleBuildID, queryBuildID):
+        """Decides whether a buildID from the rules matches an incoming one.
+           If the ruleBuildID is null, we match any queryBuildID. If it's not
+           null, we must either match exactly, or match with a camparison
+           operator."""
+        if ruleBuildID is None:
+            return True
+        return string_compare(queryBuildID, ruleBuildID)
 
     def _osVersionMatchesRule(self, ruleOsVersion, queryOsVersion):
         """Decides whether an osVersion from a rule matches an incoming one.
@@ -699,11 +709,9 @@ class Rules(AUSTable):
         """Returns all of the rules that match the given update query.
            For cases where a particular updateQuery channel has no
            fallback, fallbackChannel should match the channel from the query."""
-        matchingRules = []
         where=[
             ((self.product==updateQuery['product']) | (self.product==None)) &
             ((self.buildTarget==updateQuery['buildTarget']) | (self.buildTarget==None)) &
-            ((self.buildID==updateQuery['buildID']) | (self.buildID==None)) &
             ((self.locale==updateQuery['locale']) | (self.locale==None)) &
             ((self.headerArchitecture==updateQuery['headerArchitecture']) | (self.headerArchitecture==None))
         ]
@@ -724,15 +732,20 @@ class Rules(AUSTable):
         rules = self.select(where=where, transaction=transaction)
         self.log.debug("where: %s" % where)
         self.log.debug("Raw matches:")
+
+        matchingRules = []
         for rule in rules:
             self.log.debug(rule)
-            # Resolve special means for version and channel, dropping
+            # Resolve special means for channel, version, and buildID - dropping
             # rules that don't match after resolution.
+            if not self._channelMatchesRule(rule['channel'], updateQuery['channel'], fallbackChannel):
+                self.log.debug("%s doesn't match %s", rule['channel'], updateQuery['channel'])
+                continue
             if not self._versionMatchesRule(rule['version'], updateQuery['version']):
                 self.log.debug("%s doesn't match %s", rule['version'], updateQuery['version'])
                 continue
-            if not self._channelMatchesRule(rule['channel'], updateQuery['channel'], fallbackChannel):
-                self.log.debug("%s doesn't match %s", rule['channel'], updateQuery['channel'])
+            if not self._buildIDMatchesRule(rule['buildID'], updateQuery['buildID']):
+                self.log.debug("%s doesn't match %s", rule['buildID'], updateQuery['buildID'])
                 continue
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to

@@ -619,7 +619,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def testGetRulesMatchingQueryOsVersionSubstring(self):
         rules = self.paths.getRulesMatchingQuery(
-            dict(product='', version='5', channel='', buildTarget='d',
+            dict(product='', version='5.0', channel='', buildTarget='d',
                  buildID='', locale='', osVersion='foo 1.2.3', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
@@ -635,7 +635,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def testGetRulesMatchingQueryOsVersionSubstringNotAtStart(self):
         rules = self.paths.getRulesMatchingQuery(
-            dict(product='', version='5', channel='', buildTarget='d',
+            dict(product='', version='5.0', channel='', buildTarget='d',
                  buildID='', locale='', osVersion='bbb foo 1.2.3', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
@@ -651,7 +651,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def testGetRulesMatchingQueryOsVersionMultipleSubstring(self):
         rules = self.paths.getRulesMatchingQuery(
-            dict(product='', version='5', channel='', buildTarget='d',
+            dict(product='', version='5.0', channel='', buildTarget='d',
                  buildID='', locale='', osVersion='blah 6.3.2', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
@@ -714,11 +714,12 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
         self.rules = self.db.rules
-        self.rules.t.insert().execute(id=1, priority=100, version='4.0*', backgroundRate=100, update_type='z', data_version=1)
+        self.rules.t.insert().execute(id=1, priority=100, version='>=4.0b1', backgroundRate=100, update_type='z', data_version=1)
         self.rules.t.insert().execute(id=2, priority=100, channel='release*', backgroundRate=100, update_type='z', data_version=1)
+        self.rules.t.insert().execute(id=3, priority=100, buildID='>=20010101222222', backgroundRate=100, update_type='z', data_version=1)
 
-    def testGetRulesMatchingQueryVersionGlobbing(self):
-        expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='4.0*', update_type='z', data_version=1)]
+    def testGetRulesMatchingQueryVersionComparison(self):
+        expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='>=4.0b1', update_type='z', data_version=1)]
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='4.0', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
@@ -729,6 +730,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, expected)
+
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='4.0b2', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
@@ -739,6 +741,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, expected)
+
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='4.0.1', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
@@ -750,10 +753,21 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, expected)
 
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='',
+                 buildTarget='', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+            ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, [])
+
     def testGetRulesMatchingQueryChannelGlobbing(self):
         expected = [dict(rule_id=2, priority=100, backgroundRate=100, channel='release*', update_type='z', data_version=1)]
         rules = self.rules.getRulesMatchingQuery(
-            dict(name='', product='', version='', channel='releasetest',
+            dict(name='', product='', version='3.0', channel='releasetest',
                  buildTarget='', buildID='', locale='', osVersion='', distribution='',
                  distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
@@ -762,8 +776,9 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, expected)
+
         rules = self.rules.getRulesMatchingQuery(
-            dict(name='', product='', version='', channel='releasetest-cck-blah',
+            dict(name='', product='', version='3.0', channel='releasetest-cck-blah',
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
@@ -772,6 +787,42 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, expected)
+
+    def testGetRulesMatchingBuildIDComparison(self):
+        expected = [dict(rule_id=3, priority=100, backgroundRate=100, buildID='>=20010101222222', update_type='z', data_version=1)]
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='',
+                 buildTarget='', buildID='20010101222222', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+            ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, expected)
+
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='',
+                 buildTarget='', buildID='20010101232323', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+            ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, expected)
+
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='',
+                 buildTarget='', buildID='20010101212121', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+            ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, [])
+
 
 class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):

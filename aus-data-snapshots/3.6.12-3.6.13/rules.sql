@@ -1,8 +1,8 @@
 # 3.6.13 build3 available on beta channel, release still on 3.6.12 release version
-INSERT INTO rules (data_version, priority, mapping, backgroundRate, update_type, product, version, channel) VALUES (1, 50, 'Firefox-3.6.13-build3', 100, 'minor', 'Firefox', '3.6*', 'betatest');
-INSERT INTO rules (data_version, priority, mapping, backgroundRate, update_type, product, version, channel) VALUES (1, 50, 'Firefox-3.6.13-build3', 100, 'minor', 'Firefox', '3.6*', 'beta');
-INSERT INTO rules (data_version, priority, mapping, backgroundRate, update_type, product, version, channel) VALUES (1, 50, 'Firefox-3.6.13-build3', 100, 'minor', 'Firefox', '3.6*', 'releasetest');
-INSERT INTO rules (data_version, priority, mapping, backgroundRate, update_type, product, version, channel) VALUES (1, 50, 'Firefox-3.6.12-build1', 100, 'minor', 'Firefox', '3.6*', 'release');
+INSERT INTO rules (data_version, priority, mapping, backgroundRate, update_type, product, channel) VALUES (1, 50, 'Firefox-3.6.13-build3', 100, 'minor', 'Firefox', 'betatest');
+INSERT INTO rules (data_version, priority, mapping, backgroundRate, update_type, product, channel) VALUES (1, 50, 'Firefox-3.6.13-build3', 100, 'minor', 'Firefox', 'beta');
+INSERT INTO rules (data_version, priority, mapping, backgroundRate, update_type, product, channel) VALUES (1, 50, 'Firefox-3.6.13-build3', 100, 'minor', 'Firefox', 'releasetest');
+INSERT INTO rules (data_version, priority, mapping, backgroundRate, update_type, product, channel) VALUES (1, 50, 'Firefox-3.6.12-build1', 100, 'minor', 'Firefox', 'release');
 
 # how do I write 3.6.11 build1 & 2 -> build3 compactly ?
 # that problem goes away with Balrog due to the many -> latest mapping
