@@ -18,11 +18,14 @@ if __name__ == "__main__":
         db='sqlite:///update.db',
         port=8000,
         whitelistedDomains=[],
+        specialForceHosts=[],
     )
     parser.add_option("-d", "--db", dest="db", help="database to use, relative to inputdir")
     parser.add_option("-p", "--port", dest="port", type="int", help="port for server")
     parser.add_option("--host", dest="host", default='127.0.0.1', help="host to listen on. for example, 0.0.0.0 binds on all interfaces.")
     parser.add_option("--whitelist-domain", dest="whitelistedDomains", action="append")
+    parser.add_option("--special-force-host", dest="specialForceHosts", action="append",
+                      help="Hosts to forward force=1 on to, use a protocol prefix like http://")
     parser.add_option("--cef-log", dest="cefLog", default="cef.log")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
         help="Verbose output")
@@ -50,6 +53,7 @@ if __name__ == "__main__":
         pass
 
     app.config['WHITELISTED_DOMAINS'] = options.whitelistedDomains
+    app.config['SPECIAL_FORCE_HOSTS'] = options.specialForceHosts
     app.config['SECRET_KEY'] = 'abc123'
     app.config['DEBUG'] = True
     app.run(port=options.port, host=options.host)
