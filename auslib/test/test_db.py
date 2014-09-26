@@ -11,7 +11,7 @@ import migrate.versioning.api
 
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
   AUSTransaction, TransactionError, OutdatedDataError
-from auslib.blob import ReleaseBlobV1
+from auslib.blobs.apprelease import ReleaseBlobV1
 
 class MemoryDatabaseMixin(object):
     """Use this when writing tests that don't require multiple connections to

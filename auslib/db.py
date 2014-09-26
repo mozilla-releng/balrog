@@ -13,7 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import migrate.versioning.schema
 import migrate.versioning.api
 
-from auslib.blob import createBlob
+from auslib.blobs.base import createBlob
 from auslib.log import cef_event, CEF_ALERT
 from auslib.util.comparison import string_compare, version_compare
 

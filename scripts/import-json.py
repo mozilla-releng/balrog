@@ -8,7 +8,7 @@ import sys
 # PYTHONPATH to make things easier on consumers.
 sys.path.append(path.join(path.dirname(__file__), ".."))
 
-from auslib.blob import ReleaseBlobV1
+from auslib.blobs.apprelease import ReleaseBlobV1
 from auslib.db import AUSDatabase
 
 if __name__ == "__main__":

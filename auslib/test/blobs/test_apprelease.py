@@ -2,65 +2,14 @@ import unittest
 from xml.dom import minidom
 
 from auslib import dbo
-from auslib.blob import Blob, ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3
+from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
+    ReleaseBlobV3
 
-class SimpleBlob(Blob):
+class SimpleBlob(ReleaseBlobBase):
     format_ = {'foo': None}
 
-class MultiLevelBlob(Blob):
-    format_ = {
-        'foo': {
-            'bar': {
-                'baz': None
-            }
-        }
-    }
 
-class BlobWithWildcard(Blob):
-    format_ = {
-        'foo': {
-            '*': None
-        }
-    }
-
-class BlobWithList(Blob):
-    format_ = {
-        'foo': [
-            {
-                'bar': None
-            }
-        ]
-    }
-
-class TestBlob(unittest.TestCase):
-    def testSimpleValid(self):
-        blob = SimpleBlob(foo='bar')
-        self.assertTrue(blob.isValid())
-
-    def testSimpleInvalid(self):
-        blob = SimpleBlob(bar='foo')
-        self.assertFalse(blob.isValid())
-
-    def testMultiLevelValid(self):
-        blob = MultiLevelBlob(foo=dict(bar=dict(baz='abc')))
-        self.assertTrue(blob.isValid())
-
-    def testMultiLevelInvalid(self):
-        blob = MultiLevelBlob(foo=dict(baz=dict(bar='abc')))
-        self.assertFalse(blob.isValid())
-
-    def testWildcardValid(self):
-        blob = BlobWithWildcard(foo=dict(bar='abc', baz=123))
-        self.assertTrue(blob.isValid())
-
-    def testWildcardInvalid(self):
-        blob = BlobWithWildcard(bar=dict(foo='abc'))
-        self.assertFalse(blob.isValid())
-
-    def testWildcardWrongType(self):
-        blob = BlobWithWildcard(foo='abc')
-        self.assertFalse(blob.isValid())
-
+class TestReleaseBlobBase(unittest.TestCase):
     def testGetResolvedPlatform(self):
         blob = SimpleBlob(platforms=dict(a=dict(), b=dict(alias='a')))
         self.assertEquals('a', blob.getResolvedPlatform('a'))
@@ -99,21 +48,6 @@ class TestBlob(unittest.TestCase):
         self.assertRaises(KeyError, blob.getBuildID, 'c', 'a')
     # XXX: should we support the locale overriding the platform? this should probably be invalid
 
-    def testBlobWithList(self):
-        blob = BlobWithList(foo=[dict(bar=1)])
-        self.assertTrue(blob.isValid())
-
-    def testBlobWithEmptyList(self):
-        blob = BlobWithList(foo=[])
-        self.assertFalse(blob.isValid())
-
-    def testBlobWithMissingList(self):
-        blob = BlobWithList()
-        self.assertTrue(blob.isValid())
-
-    def testBlobWithInvalidSublist(self):
-        blob = BlobWithList(foo=[dict(blah=2)])
-        self.assertFalse(blob.isValid())
 
 class TestReleaseBlobV1(unittest.TestCase):
     def testGetAppv(self):

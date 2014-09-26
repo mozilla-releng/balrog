@@ -2,7 +2,7 @@ import simplejson as json
 
 from flaskext.wtf import Form, TextField, Required, TextInput, FileInput, IntegerField, SelectField, validators, HiddenInput, Optional
 
-from auslib.blob import createBlob
+from auslib.blobs.base import createBlob
 
 import logging
 log = logging.getLogger(__name__)

@@ -3,7 +3,7 @@ import simplejson as json
 from flask import render_template, Response, jsonify, make_response, request
 
 from auslib import dbo
-from auslib.blob import createBlob
+from auslib.blobs.base import createBlob
 from auslib.db import OutdatedDataError
 from auslib.log import cef_event, CEF_WARN, CEF_ALERT
 from auslib.util import getPagination
