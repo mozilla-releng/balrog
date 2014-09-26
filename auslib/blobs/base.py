@@ -52,24 +52,30 @@ def isValidBlob(format_, blob, topLevel=True):
     return True
 
 def createBlob(data):
+    """Takes a string form of a blob (eg from DB or API) and converts into an
+    actual blob, taking care to notice the schema"""
     # These imports need to be done here to avoid errors due to circular
     # between this module and specific blob modules like apprelease.
     from auslib.blobs.apprelease import ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3
+    from auslib.blobs.gmp import GMPBlobV1
 
-    """Takes a string form of a blob (eg from DB or API) and converts into an
-    actual blob, taking care to notice the schema"""
+    blob_map = {
+        1:    ReleaseBlobV1,
+        2:    ReleaseBlobV2,
+        3:    ReleaseBlobV3,
+        1000: GMPBlobV1,
+    }
+
     data = json.loads(data)
-    try:
-        if data['schema_version'] == 1:
-            return ReleaseBlobV1(**data)
-        elif data['schema_version'] == 2:
-            return ReleaseBlobV2(**data)
-        elif data['schema_version'] == 3:
-            return ReleaseBlobV3(**data)
-        else:
-            raise ValueError("schema_version is unknown")
-    except KeyError:
+    schema_version = data.get("schema_version")
+
+    if not schema_version:
         raise ValueError("schema_version is not set")
+    if schema_version not in blob_map:
+        raise ValueError("schema_version is unknown")
+
+    return blob_map[schema_version](**data)
+
 
 class Blob(dict):
     """See isValidBlob for details on how format is used to validate blobs."""

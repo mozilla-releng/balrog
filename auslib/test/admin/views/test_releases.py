@@ -387,6 +387,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self.client.get("/releases/huetno/data")
         self.assertStatusCode(ret, 404)
 
+
 class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
 
     def testGetReleases(self):
@@ -418,7 +419,6 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
 }
 """))
 
-                                                        #json.dumps(newReleaseFile.getvalue())))
         self.assertEquals(ret.status_code, 201, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         r = dbo.releases.t.select().where(dbo.releases.name=='new_release').execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -433,6 +433,61 @@ class TestReleasesAPI_HTML(ViewTest, HTMLTestMixin):
         "p": {
             "locales": {
                 "l": {
+                }
+            }
+        }
+    }
+}
+"""))
+
+    def testGMPReleasePut(self):
+
+        ret = self._put('/releases/gmprel', data=dict(name='gmprel', version='5', product='GMP',
+                                                            blob="""
+{
+    "name": "gmprel",
+    "schema_version": 1000,
+    "hashFunction": "sha512",
+    "vendors": {
+        "foo": {
+            "version": "1",
+            "platforms": {
+                "a": {
+                    "filesize": "2",
+                    "hashValue": "3",
+                    "fileUrl": "http://good.com/4"
+                },
+                "a2": {
+                    "alias": "a"
+                }
+            }
+        }
+    }
+}
+"""))
+
+        self.assertEquals(ret.status_code, 201, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.releases.t.select().where(dbo.releases.name=='gmprel').execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['name'], 'gmprel')
+        self.assertEquals(r[0]['version'], '5')
+        self.assertEquals(r[0]['product'], 'GMP')
+        self.assertEquals(json.loads(r[0]['data']), json.loads("""
+{
+    "name": "gmprel",
+    "schema_version": 1000,
+    "hashFunction": "sha512",
+    "vendors": {
+        "foo": {
+            "version": "1",
+            "platforms": {
+                "a": {
+                    "filesize": "2",
+                    "hashValue": "3",
+                    "fileUrl": "http://good.com/4"
+                },
+                "a2": {
+                    "alias": "a"
                 }
             }
         }
