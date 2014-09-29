@@ -1,5 +1,4 @@
 import re
-import simplejson as json
 
 import logging
 log = logging.getLogger(__name__)
@@ -54,48 +53,16 @@ class ReleaseBlobBase(Blob):
         except KeyError:
             return self['platforms'][platform]['buildID']
 
-    def _getUrl(self, updateQuery, patch, specialForceHosts, ftpFilename, bouncerProduct):
-        platformData = self.getPlatformData(updateQuery["buildTarget"])
-        if 'fileUrl' in patch:
-            url = patch['fileUrl']
-        else:
-            # When we're using a fallback channel it's unlikely
-            # we'll have a fileUrl specifically for it, but we
-            # should try nonetheless. Non-fallback cases shouldn't
-            # be hitting any exceptions here.
-            try:
-                url = self['fileUrls'][updateQuery['channel']]
-            except KeyError:
-                try:
-                    url = self['fileUrls'][getFallbackChannel(updateQuery['channel'])]
-                except KeyError:
-                    self.log.debug("Couldn't find fileUrl for")
-                    raise
-
-            url = url.replace('%LOCALE%', updateQuery['locale'])
-            url = url.replace('%OS_FTP%', platformData['OS_FTP'])
-            url = url.replace('%FILENAME%', ftpFilename)
-            url = url.replace('%PRODUCT%', bouncerProduct)
-            url = url.replace('%OS_BOUNCER%', platformData['OS_BOUNCER'])
-        # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
-        if updateQuery['force']:
-            url = self.processSpecialForceHosts(url, specialForceHosts)
-
-        return url
-
     def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
         try:
             fromRelease = dbo.releases.getReleaseBlob(name=patch["from"])
         except KeyError:
             fromRelease = None
 
-        ftpFilename = self._getFtpFilename(patchKey, patch["from"])
-        bouncerProduct = self._getBouncerProduct(patchKey, patch["from"])
-
         if patch["from"] != "*" and fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
             return None
 
-        url = self._getUrl(updateQuery, patch, specialForceHosts, ftpFilename, bouncerProduct)
+        url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
         # TODO: should be raising a bigger alarm here, or aborting
         # the update entirely? Right now, another patch type could still
         # return an update. Eg, the partial could contain a forbidden domain
@@ -123,12 +90,18 @@ class ReleaseBlobBase(Blob):
            ** _getPatchesXML() called to get the information that describes
               specific MARs. Where in the blob this information comes from
               changed significantly starting with V3 blobs.
-           *** _getPatchSpecificXML() called to translate MAR information into
+           *** _getSpecificPatchXML() called to translate MAR information into
                XML. This transformation in blob version independent, so it
                lives on the base class to avoid duplication.
-           **** _getFtpFilename/_getBouncerProduct called to substitute some
-                paths with real information. This is another part of the blob
-                format that changed starting with V3 blobs.
+           **** _getUrl() called to figure out what the MAR URL is for a
+                specific patch. This changed starting with V4 blobs. V3 and
+                earlier use SeparatedFileUrlsMixin, V4 and later use
+                UnifiedFileUrlsMixin.
+           ***** _getFtpFilename/_getBouncerProduct called to substitute some
+                 paths with real information. This is another part of the blob
+                 format that changed starting with V3 blobs. It was later
+                 deprecated in V4 and thus not used for UnifiedFileUrlsMixin
+                 blobs.
         """
 
         buildTarget = updateQuery["buildTarget"]
@@ -168,13 +141,47 @@ class ReleaseBlobBase(Blob):
         return True
 
 
-class SingleUpdateXMLMixin(object):
+class SeparatedFileUrlsMixin(object):
     def _getFtpFilename(self, patchKey, from_):
         return self.get("ftpFilenames", {}).get(patchKey, "")
 
     def _getBouncerProduct(self, patchKey, from_):
         return self.get("bouncerProducts", {}).get(patchKey, "")
 
+    def _getUrl(self, updateQuery, patchKey, patch, specialForceHosts):
+        platformData = self.getPlatformData(updateQuery["buildTarget"])
+        if 'fileUrl' in patch:
+            url = patch['fileUrl']
+        else:
+            ftpFilename = self._getFtpFilename(patchKey, patch["from"])
+            bouncerProduct = self._getBouncerProduct(patchKey, patch["from"])
+
+            # When we're using a fallback channel it's unlikely
+            # we'll have a fileUrl specifically for it, but we
+            # should try nonetheless. Non-fallback cases shouldn't
+            # be hitting any exceptions here.
+            try:
+                url = self['fileUrls'][updateQuery['channel']]
+            except KeyError:
+                try:
+                    url = self['fileUrls'][getFallbackChannel(updateQuery['channel'])]
+                except KeyError:
+                    self.log.debug("Couldn't find fileUrl for")
+                    raise
+
+            url = url.replace('%LOCALE%', updateQuery['locale'])
+            url = url.replace('%OS_FTP%', platformData['OS_FTP'])
+            url = url.replace('%FILENAME%', ftpFilename)
+            url = url.replace('%PRODUCT%', bouncerProduct)
+            url = url.replace('%OS_BOUNCER%', platformData['OS_BOUNCER'])
+        # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
+        if updateQuery['force']:
+            url = self.processSpecialForceHosts(url, specialForceHosts)
+
+        return url
+
+
+class SingleUpdateXMLMixin(object):
     def _getPatchesXML(self, localeData, updateQuery, whitelistedDomains, specialForceHosts):
         patches = []
         for patchKey in ("complete", "partial"):
@@ -189,7 +196,7 @@ class SingleUpdateXMLMixin(object):
         return patches
 
 
-class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin):
+class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
     format_ = {
         'name': None,
         'schema_version': None,
@@ -271,13 +278,11 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin):
                 fromRelease = dbo.releases.getReleaseBlob(name=patch["from"])
             except KeyError:
                 fromRelease = None
-            ftpFilename = self.get("ftpFilenames", {}).get(patchKey)
-            bouncerProduct = self.get("bouncerProducts", {}).get(patchKey)
 
             if patch["from"] != "*" and fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
                 continue
 
-            url = self._getUrl(updateQuery, patch, specialForceHosts, ftpFilename, bouncerProduct)
+            url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
             if containsForbiddenDomain(url, whitelistedDomains):
                 break
 
@@ -371,7 +376,7 @@ class NewStyleVersionsMixin(object):
         return updateLine
 
 
-class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin):
+class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
     """ Changes from ReleaseBlobV1:
          * appv, extv become appVersion, platformVersion, displayVersion
         Added:
@@ -434,7 +439,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
             }
         }
     }
-    # for the benefit of createXML and createSnippetv2
+    # for the benefit of createXML and createSnippets
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'showSurvey', 'actions', 'openURL', 'notificationURL',
                  'alertURL')
@@ -464,13 +469,11 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
                 fromRelease = dbo.releases.getReleaseBlob(name=patch["from"])
             except KeyError:
                 fromRelease = None
-            ftpFilename = self.get("ftpFilenames", {}).get(patchKey)
-            bouncerProduct = self.get("bouncerProducts", {}).get(patchKey)
 
             if patch["from"] != "*" and fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
                 continue
 
-            url = self._getUrl(updateQuery, patch, specialForceHosts, ftpFilename, bouncerProduct)
+            url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
             if containsForbiddenDomain(url, whitelistedDomains):
                 break
 
@@ -508,12 +511,6 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
 
 
 class MultipleUpdatesXMLMixin(object):
-    def _getFtpFilename(self, patchKey, from_):
-        return self.get("ftpFilenames", {}).get(patchKey, {}).get(from_, "")
-
-    def _getBouncerProduct(self, patchKey, from_):
-        return self.get("bouncerProducts", {}).get(patchKey, {}).get(from_, "")
-
     def _getPatchesXML(self, localeData, updateQuery, whitelistedDomains, specialForceHosts):
         patches = []
         for patchKey, patchType in (("completes", "complete"), ("partials", "partial")):
@@ -526,7 +523,7 @@ class MultipleUpdatesXMLMixin(object):
         return patches
 
 
-class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin):
+class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, SeparatedFileUrlsMixin):
     """ Changes from ReleaseBlobV2:
          * support multiple partials
            * remove "partial" and "complete" from locale level
@@ -611,7 +608,7 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
             }
         }
     }
-    # for the benefit of createXML and createSnippetv2
+    # for the benefit of createXML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'showSurvey', 'actions', 'openURL', 'notificationURL',
                  'alertURL')
@@ -624,6 +621,192 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         if 'schema_version' not in self.keys():
             self['schema_version'] = 3
 
+    def _getFtpFilename(self, patchKey, from_):
+        return self.get("ftpFilenames", {}).get(patchKey, {}).get(from_, "")
+
+    def _getBouncerProduct(self, patchKey, from_):
+        return self.get("bouncerProducts", {}).get(patchKey, {}).get(from_, "")
+
     def createSnippets(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         # We have no tests that require this, probably not worthwhile to implement.
         return {}
+
+
+class UnifiedFileUrlsMixin(object):
+    def _getUrl(self, updateQuery, patchKey, patch, specialForceHosts):
+        platformData = self.getPlatformData(updateQuery["buildTarget"])
+        from_ = patch["from"]
+        # A fileUrl in the deep-down patch section takes priority over anything
+        # else.
+        if 'fileUrl' in patch:
+            url = patch['fileUrl']
+        else:
+            # There's three "channels" that any given request could get
+            # a fileUrl from, in order of preference:
+            # 1) Its exact specified channel.
+            # 2) Its fallback channel.
+            # 3) In the catch-all "channel" ("*").
+            channels = [
+                updateQuery['channel'],
+                getFallbackChannel(updateQuery['channel']),
+                "*",
+            ]
+            url = None
+            for c in channels:
+                url = self.get("fileUrls", {}).get(c, {}).get(patchKey, {}).get(from_)
+                if url:
+                    break
+
+            # If we still can't find a fileUrl, we cannot fulfill this request.
+            if not url:
+                self.log.debug("Couldn't find fileUrl")
+                raise ValueError("Couldn't find fileUrl")
+
+            url = url.replace('%LOCALE%', updateQuery['locale'])
+            url = url.replace('%OS_FTP%', platformData['OS_FTP'])
+            url = url.replace('%OS_BOUNCER%', platformData['OS_BOUNCER'])
+
+        # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
+        if updateQuery['force']:
+            url = self.processSpecialForceHosts(url, specialForceHosts)
+
+        return url
+
+
+class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+    """ Changes from ReleaseBlobV4:
+        * Support pushing release builds to the beta channel with bouncer support (bug 1021026)
+        ** Combine fileUrls, bouncerProducts, and ftpFilenames into a larger data structure,
+           still called "fileUrls". (See below for a more detailed description.)
+    """
+    format_ = {
+        'name': None,
+        'schema_version': None,
+        'appVersion': None,
+        'displayVersion': None,
+        'platformVersion': None,
+        # Top level fileUrls are useful primarily for release style builds,
+        # where the URLs are predictable and only vary by locale and platform.
+        # It's worth noting that while we normally serve different channels
+        # through different fileUrls (eg, ftp.mozilla.org vs. download.mozilla.org),
+        # each platform+locale combination is expected to receive the same
+        # MAR contents regardless of channel. As of yet there is no way to
+        # specify different metadata for different channels so doing anything
+        # other than above will result in MAR verification failures on the client.
+        'fileUrls': {
+            '*': { # This first level contains a channel name, or "*" as a catch all.
+                '*': { # This is "partials" or "completes" (TODO: enforce this).
+                    '*': None, # And this key is a specific release (matched up
+                               # against incoming requests), "or "*" as a catch all.
+                               # The value is the URL for this specific
+                               # channel/update type/incoming release.
+                }
+            }
+        },
+        'hashFunction': None,
+        'detailsUrl': None,
+        'licenseUrl': None,
+        'actions': None,
+        'billboardURL': None,
+        'openURL': None,
+        'notificationURL': None,
+        'alertURL': None,
+        'showPrompt': None,
+        'showNeverForVersion': None,
+        'showSurvey': None,
+        'platforms': {
+            '*': {
+                'alias': None,
+                'buildID': None,
+                'OS_BOUNCER': None,
+                'OS_FTP': None,
+                'locales': {
+                    '*': {
+                        'isOSUpdate': None,
+                        'buildID': None,
+                        'appVersion': None,
+                        'displayVersion': None,
+                        'platformVersion': None,
+                        # Using lists instead of dicts for multiple updates
+                        # gives us a way to reduce load a bit. As this is
+                        # iterated over, each "from" release is looked up
+                        # in the database. If the "from" releases that we
+                        # we expect to be the most common are earlier in the
+                        # list, we can avoid looking up every single entry.
+                        # The server doesn't know anything about which order is
+                        # best, so we assume the client will make the right
+                        # decision about this.
+                        'partials': [
+                            {
+                                'filesize': None,
+                                'from': None,
+                                'hashValue': None,
+                                'fileUrl': None
+                            }
+                        ],
+                        'completes': [
+                            {
+                                'filesize': None,
+                                'from': None,
+                                'hashValue': None,
+                                'fileUrl': None
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+    # for the benefit of createXML
+    optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
+                 'showSurvey', 'actions', 'openURL', 'notificationURL',
+                 'alertURL')
+    # params that can have %LOCALE% interpolated
+    interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
+
+    def __init__(self, **kwargs):
+        # ensure schema_version is set if we init ReleaseBlobV3 directly
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 4
+
+    @classmethod
+    def fromV3(cls, v3Blob):
+        """Creates a v4 blob based on the v3 blob given."""
+        v4Blob = cls()
+        v4Blob.update(v3Blob)
+        # These 3 sections changed between v3 and v4, we'll fill out the data
+        # in the new format, but we need to clear them out first.
+        for k in ('fileUrls', 'ftpFilenames', 'bouncerProducts'):
+            if k in v4Blob:
+                del v4Blob[k]
+
+        v4Blob["schema_version"] = 4
+        # If "fileUrls" doesn't exist in the v3 blob, we have nothing else to do.
+        # Technically, bouncerProducts and/or ftpFilenames could exist in it,
+        # but they have no effect when fileUrls isn't present.
+        if "fileUrls" not in v3Blob:
+            return v4Blob
+
+        v4Blob["fileUrls"] = {}
+        for channel, baseUrl in v3Blob.get('fileUrls').iteritems():
+            if channel not in v4Blob["fileUrls"]:
+                v4Blob["fileUrls"][channel] = {}
+
+            # Each fileUrl should have one (no more no less) of the matchstrs below.
+            # Technically, they could have neither, but if we had blob validation,
+            # that probably be considered an invalid state. Probably not worth
+            # supporting here.
+            for matchstr, lookup in (("%PRODUCT%", "bouncerProducts"), ("%FILENAME%", "ftpFilenames")):
+                if matchstr in baseUrl:
+                    # If we've found a match, we need to replicate the inner structure
+                    # of the lookup dict, substitute the match in the url,
+                    # and add it to the new fileUrls.
+                    for patchKey, products in v3Blob.get(lookup, {}).iteritems():
+                        if patchKey not in v4Blob["fileUrls"][channel]:
+                            v4Blob["fileUrls"][channel][patchKey] = {}
+                        for from_, product in products.iteritems():
+                            url = baseUrl.replace(matchstr, product)
+                            v4Blob["fileUrls"][channel][patchKey][from_] = url
+
+        return v4Blob

@@ -37,10 +37,10 @@ else
 endif
 	@echo Running rules tests
 ifdef COVERAGE
-	-$(COVERAGE_BIN) run -a test-rules.py $(TEST_ARGS)
+	-$(COVERAGE_BIN) run -a scripts/test-rules.py $(TEST_ARGS)
 	$(COVERAGE_BIN) html --include='*auslib*'
 else
-	-$(PYTHON) test-rules.py $(TEST_ARGS)
+	-$(PYTHON) scripts/test-rules.py $(TEST_ARGS)
 endif
 	touch $@
 

@@ -56,13 +56,14 @@ def createBlob(data):
     actual blob, taking care to notice the schema"""
     # These imports need to be done here to avoid errors due to circular
     # between this module and specific blob modules like apprelease.
-    from auslib.blobs.apprelease import ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3
+    from auslib.blobs.apprelease import ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, ReleaseBlobV4
     from auslib.blobs.gmp import GMPBlobV1
 
     blob_map = {
         1:    ReleaseBlobV1,
         2:    ReleaseBlobV2,
         3:    ReleaseBlobV3,
+        4:    ReleaseBlobV4,
         1000: GMPBlobV1,
     }
 

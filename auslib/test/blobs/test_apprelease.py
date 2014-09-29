@@ -3,7 +3,7 @@ from xml.dom import minidom
 
 from auslib import dbo
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
-    ReleaseBlobV3
+    ReleaseBlobV3, ReleaseBlobV4
 
 class SimpleBlob(ReleaseBlobBase):
     format_ = {'foo': None}
@@ -770,3 +770,298 @@ class TestSchema3Blob(unittest.TestCase):
 </updates>
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
+
+
+class TestSchema4Blob(unittest.TestCase):
+    def setUp(self):
+        self.specialForceHosts = ["http://a.com"]
+        self.whitelistedDomains = ["a.com", "boring.com"]
+        dbo.setDb('sqlite:///:memory:')
+        dbo.create()
+        dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data="""
+{
+    "name": "h1",
+    "schema_version": 4,
+    "platforms": {
+        "p": {
+            "buildID": "10",
+            "locales": {
+                "l": {}
+            }
+        }
+    }
+}
+""")
+        self.blobH2 = ReleaseBlobV4()
+        self.blobH2.loadJSON("""
+{
+    "name": "h2",
+    "schema_version": 4,
+    "hashFunction": "sha512",
+    "appVersion": "31.0",
+    "displayVersion": "31.0",
+    "platformVersion": "31.0",
+    "fileUrls": {
+        "c1": {
+            "partials": {
+                "h1": "http://a.com/h1-partial.mar"
+            },
+            "completes": {
+                "*": "http://a.com/complete.mar"
+            }
+        },
+        "c2": {
+            "partials": {
+                "h1": "http://a.com/h1-%LOCALE%-partial"
+            },
+            "completes": {
+                "*": "http://a.com/%LOCALE%-complete"
+            }
+        },
+        "*": {
+            "partials": {
+                "h1": "http://a.com/h1-partial-catchall"
+            },
+            "completes": {
+                "*": "http://a.com/complete-catchall"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": "50",
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": 9
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+
+    def testSchema4WithPartials(self):
+        updateQuery = {
+            "product": "h", "version": "30.0", "buildID": "10",
+            "buildTarget": "p", "locale": "l", "channel": "c1",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+        <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
+        <patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+        updateQuery = {
+            "product": "h", "version": "30.0", "buildID": "10",
+            "buildTarget": "p", "locale": "l", "channel": "c2",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+        <patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="41" size="40"/>
+        <patch type="partial" URL="http://a.com/h1-l-partial" hashFunction="sha512" hashValue="9" size="8"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+        updateQuery = {
+            "product": "h", "version": "30.0", "buildID": "10",
+            "buildTarget": "p", "locale": "l", "channel": "c3",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+        <patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>
+        <patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testSchema4NoPartials(self):
+        updateQuery = {
+            "product": "h", "version": "25.0", "buildID": "2",
+            "buildTarget": "p", "locale": "l", "channel": "c1",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+        <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+        updateQuery = {
+            "product": "h", "version": "25.0", "buildID": "2",
+            "buildTarget": "p", "locale": "l", "channel": "c2",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+        <patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="41" size="40"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+        updateQuery = {
+            "product": "h", "version": "25.0", "buildID": "2",
+            "buildTarget": "p", "locale": "l", "channel": "c3",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+        <patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testConvertFromV3(self):
+        v3Blob = ReleaseBlobV3()
+        v3Blob.loadJSON("""
+{
+    "name": "g2",
+    "schema_version": 3,
+    "hashFunction": "sha512",
+    "fileUrls": {
+        "c1": "http://a.com/%FILENAME%",
+        "c2": "http://a.com/%PRODUCT%"
+    },
+    "ftpFilenames": {
+        "partials": {
+            "g1": "g1-partial.mar"
+        },
+        "completes": {
+            "*": "complete.mar"
+        }
+    },
+    "bouncerProducts": {
+        "partials": {
+            "g1": "g1-partial"
+        },
+        "completes": {
+            "*": "complete"
+        }
+    }
+}
+""")
+
+        v4Blob = ReleaseBlobV4.fromV3(v3Blob)
+        self.assertTrue(v4Blob.isValid())
+
+        expected = {
+            "name": "g2",
+            "schema_version": 4,
+            "hashFunction": "sha512",
+            "fileUrls": {
+                "c1": {
+                    "partials": {
+                        "g1": "http://a.com/g1-partial.mar"
+                    },
+                    "completes": {
+                        "*": "http://a.com/complete.mar"
+                    }
+                },
+                "c2": {
+                    "partials": {
+                        "g1": "http://a.com/g1-partial",
+                    },
+                    "completes": {
+                        "*": "http://a.com/complete"
+                    }
+                }
+            }
+        }
+
+        self.assertEquals(v4Blob, expected)
+
+    def testConvertFromV3Noop(self):
+        v3Blob = ReleaseBlobV3()
+        v3Blob.loadJSON("""
+{
+    "name": "g2",
+    "schema_version": 3,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "40",
+            "OS_FTP": "o",
+            "OS_BOUNCER": "o",
+            "locales": {
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 4,
+                            "from": "g1",
+                            "hashValue": 5,
+                            "fileUrl": "http://a.com/g1-partial"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 34,
+                            "from": "*",
+                            "hashValue": "35",
+                            "fileUrl": "http://a.com/complete"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+
+        v4Blob = ReleaseBlobV4.fromV3(v3Blob)
+        self.assertTrue(v4Blob.isValid())
+
+        expected = v3Blob.copy()
+        expected["schema_version"] = 4
+
+        self.assertEquals(v4Blob, expected)
