@@ -49,25 +49,3 @@ app.add_url_rule(
     view_func=ClientRequestView.as_view('clientrequest'),
     defaults={'queryVersion': 4},
 )
-
-# TODO: kill this with fire, brimstone, and extreme prejudice when bug 1013354 is fixed.
-from auslib import dbo
-from flask import Response
-@app.route("/update/3/GMP/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml")
-def hackyH264URLs(version, buildID, buildTarget, **crap):
-    try:
-        blob = dbo.db.releases.getReleaseBlob("HackyH264Blob")
-    except KeyError:
-        response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
-        response.mimetype = 'text/xml'
-        return response
-
-    xml = blob.get("ftpFilenames", {}).get("completes", {}).get("%s-%s" % (version, buildTarget))
-    if xml:
-        resp = make_response('<?xml version="1.0"?>\n' + xml)
-        resp.mimetype = "text/xml"
-        return resp
-    else:
-        response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
-        response.mimetype = 'text/xml'
-        return response
