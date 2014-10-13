@@ -14,20 +14,45 @@
 
 module.exports = {
   drawRoutes: function(app) {
-    app.post('/login', function(req, res) {
-      res.json({ message: 'logging in!' });
-    });
 
-    app.post('/logout', function(req, res) {
-      res.json({ message: 'logging out!'});
+    app.get('/api/rules', function(req, res) {
+      res.json({
+        rules: [
+          {
+            product: "Firefox",
+            channel: "nightly",
+            mapping: "Firefox-mozilla-central-nightly-latest",
+            rate: 100,
+            priority: 1,
+            id: 1
+          },
+          {
+            product: "Firefox",
+            channel: "aurora",
+            mapping: "Firefox-mozilla-aurora-latest",
+            rate: 90,
+            priority: 2,
+            id: 2
+          },
+        ],
+        count: 2
+      });
     });
+    // app.post('/login', function(req, res) {
+    //   res.json({ message: 'logging in!' });
+    // });
+    //
+    // app.post('/logout', function(req, res) {
+    //   res.json({ message: 'logging out!'});
+    // });
+    //
+    // app.get('/books', function (req, res) {
+    //   res.json([
+    //     {title: 'Great Adventures', author: 'Dickens'},
+    //     {title: 'Foundation Series', author: 'Asimov'},
+    //     {title: 'Treasure Island', author: 'Stephenson'}
+    //   ]);
+    // });
 
-    app.get('/books', function (req, res) {
-      res.json([
-        {title: 'Great Expectations', author: 'Dickens'},
-        {title: 'Foundation Series', author: 'Asimov'},
-        {title: 'Treasure Island', author: 'Stephenson'}
-      ]);
-    });
   }
 };

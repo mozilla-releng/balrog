@@ -1,11 +1,11 @@
 {
-  "name": "lineman-angular-template",
-  "title": "An HTML/JS/CSS app using Angular.JS",
+  "name": "balrog-ui-ng",
+  "title": "The new Balrog 2.0 Admin interface",
   "version": "0.0.1",
   "private": true,
   "author": {
-    "name": "John Doe",
-    "company": "ACME, Inc."
+    "name": "Peter Bengtsson",
+    "company": "Mozilla"
   },
   "devDependencies": {
     "coffee-script": "^1.6.3",
@@ -13,7 +13,9 @@
     "lineman": "^0.34.0",
     "lineman-angular": "^0.3.0",
     "lineman-less": "0.0.1",
-    "protractor": "^1.2.0-beta1"
+    "protractor": "^1.2.0-beta1",
+    "grunt": "^0.4.5",
+    "grunt-webfont": "^0.4.8"
   },
   "scripts": {
     "start": "lineman run",

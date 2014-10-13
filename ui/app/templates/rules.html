@@ -1,0 +1,36 @@
+
+
+<form role="form">
+  <div class="form-group">
+    <input type="search" class="form-control" placeholder="Search for anything"
+           ng-model="filter.search">
+  </div>
+</form>
+
+<h2>Rules</h2>
+
+<div class="panel panel-default"
+     ng-repeat="rule in filtered_items = (rules | filter:filterBySearch)">
+  <div class="panel-heading">
+    <h3 class="panel-title">
+      <span title="Product">{{ rule.product }}</span> :
+      <span title="Channel">{{ rule.channel }}</span>
+    </h3>
+  </div>
+  <div class="panel-body">
+    <h5 title="Mapping" style="float:left">{{ rule.mapping }}</h5>
+
+    <dl class="dl-horizontal" style="float:right">
+      <dt>Rate:</dt>
+      <dd>{{ rule.rate }}</dd>
+      <dt>Priority:</dt>
+      <dd>{{ rule.priority }}</dd>
+    </dl>
+
+  </div>
+  <div class="panel-footer">
+    <button class="btn btn-default btn-xs">Update</button>
+    <button class="btn btn-default btn-xs">Delete</button>
+    <button class="btn btn-default btn-xs">History</button>
+  </div>
+</div>

@@ -6,7 +6,7 @@ exports.config = {
     '../spec-e2e/**/*spec.{js,coffee}'
   ],
   capabilities: {
-    'browserName': 'chrome'
+    'browserName': 'firefox'
   },
   baseUrl: 'http://localhost:8000',
   jasmineNodeOpts: {
