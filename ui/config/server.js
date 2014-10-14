@@ -15,29 +15,44 @@
 module.exports = {
   drawRoutes: function(app) {
 
-    app.get('/api/rules', function(req, res) {
-      res.json({
-        rules: [
-          {
-            product: "Firefox",
-            channel: "nightly",
-            mapping: "Firefox-mozilla-central-nightly-latest",
-            rate: 100,
-            priority: 1,
-            id: 1
-          },
-          {
-            product: "Firefox",
-            channel: "aurora",
-            mapping: "Firefox-mozilla-aurora-latest",
-            rate: 90,
-            priority: 2,
-            id: 2
-          },
-        ],
-        count: 2
-      });
-    });
+    // app.get('/api/rules', function(req, res) {
+    //   res.json({
+    //     rules: [
+    //       {
+    //         product: "Firefox",
+    //         channel: "nightly",
+    //         mapping: "Firefox-mozilla-central-nightly-latest",
+    //         rate: 100,
+    //         priority: 1,
+    //         id: 1
+    //       },
+    //       {
+    //         product: "Firefox",
+    //         channel: "aurora",
+    //         mapping: "Firefox-mozilla-aurora-latest",
+    //         rate: 90,
+    //         priority: 2,
+    //         id: 2
+    //       },
+    //       {
+    //         product: "Fennec",
+    //         channel: "nighly",
+    //         mapping: "fennec-mozilla-central-nightly",
+    //         rate: 90,
+    //         priority: 2,
+    //         id: 3
+    //       },
+    //     ],
+    //     count: 2
+    //   });
+    // });
+
+    // app.put('/api/rules/19', function(req, res) {
+    //   // console.log('ID', req.id);
+    //   res.json({ message: 'yay!' });
+    // });
+
+    //
     // app.post('/login', function(req, res) {
     //   res.json({ message: 'logging in!' });
     // });

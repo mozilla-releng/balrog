@@ -13,7 +13,10 @@ module.exports = function(lineman) {
         "vendor/js/angular.js",
         "vendor/js/angular-route.js",
         "vendor/js/jquery-2.1.1.min.js",
-        "vendor/bootstrap/js/bootstrap.min.js",
+        // "vendor/js/ui-bootstrap-custom-tpls-0.10.0.min.js",
+        // "vendor/js/ui-bootstrap-custom-tpls-0.10.0.js",
+        "vendor/js/ui-bootstrap-tpls-0.11.2.min.js",
+        // "vendor/bootstrap/js/bootstrap.min.js",
         "vendor/js/lodash.min.js",
         // "vendor/js/**/*.js"
         // "vendor/js/**/*.js"

@@ -1,4 +1,4 @@
-angular.module("app", ["ngRoute"]);
+angular.module("app", ["ngRoute", "ui.bootstrap"]);
 
 // .run(function($rootScope) {
 //   // adds some basic utilities to the $rootScope for debugging purposes

@@ -1,0 +1,72 @@
+<div class="modal-header">
+    <h3 class="modal-title">Rule Edit</h3>
+</div>
+<div class="modal-body">
+  <form role="form">
+    <div class="form-group">
+      <label for="id_product">Product</label>
+      <input type="text" class="form-control" id="id_product" ng-model="rule.product">
+    </div>
+    <div class="form-group">
+      <label for="id_channel">Channel</label>
+      <input type="text" class="form-control" id="id_product" ng-model="rule.channel">
+    </div>
+    <div class="form-group">
+      <label for="id_mapping">Mapping</label>
+      <input type="text" class="form-control" id="id_mapping" ng-model="rule.mapping">
+    </div>
+    <div class="form-group">
+      <label for="id_rate">Rate</label>
+      <input type="number" class="form-control" id="id_rate" ng-model="rule.rate">
+    </div>
+    <div class="form-group">
+      <label for="id_priority">Priority</label>
+      <input type="number" class="form-control" id="id_priority" ng-model="rule.priority">
+    </div>
+    <div class="form-group">
+      <label for="id_version">Version</label>
+      <input type="text" class="form-control" id="id_version" ng-model="rule.version">
+    </div>
+    <div class="form-group">
+      <label for="id_build_id">Build ID</label>
+      <input type="text" class="form-control" id="id_build_id" ng-model="rule.build_id">
+    </div>
+    <div class="form-group">
+      <label for="id_locale">Locale</label>
+      <input type="text" class="form-control" id="id_locale" ng-model="rule.locale">
+    </div>
+    <div class="form-group">
+      <label for="id_distribution">Distribution</label>
+      <input type="text" class="form-control" id="id_distribution" ng-model="rule.dist_version">
+    </div>
+    <div class="form-group">
+      <label for="id_build_target">Build Target</label>
+      <input type="text" class="form-control" id="id_build_target" ng-model="rule.build_target">
+    </div>
+    <div class="form-group">
+      <label for="id_os_version">OS Version</label>
+      <input type="text" class="form-control" id="id_os_version" ng-model="rule.os_version">
+    </div>
+    <div class="form-group">
+      <label for="id_dist_version">Dist Version</label>
+      <input type="text" class="form-control" id="id_dist_version" ng-model="rule.dist_version">
+    </div>
+    <div class="form-group">
+      <label for="id_update_type">Update Type</label>
+      <input type="text" class="form-control" id="id_update_type" ng-model="rule.update_type">
+    </div>
+    <div class="form-group">
+      <label for="id_header_arch">Header Architecture</label>
+      <input type="text" class="form-control" id="id_header_arch" ng-model="rule.header_arch">
+    </div>
+
+    <input type="hidden" name="data_version" ng-model="rule.data_version">
+  </form>
+</div>
+<div class="modal-footer">
+    <span ng-show="saving">
+      Saving...
+    </span>
+    <button class="btn btn-primary" ng-click="saveChanges()">Save Changes</button>
+    <button class="btn btn-default" ng-click="cancel()">Cancel</button>
+</div>

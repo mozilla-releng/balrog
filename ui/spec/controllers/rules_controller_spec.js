@@ -30,6 +30,57 @@ describe("controller: RulesController", function() {
       expect(this.scope.total_count).toEqual(0);
       expect(this.scope.rules).toEqual([]);
     });
+  });
+
+  describe("filter by search", function() {
+    it("should return true always if no filters active", function() {
+      this.$httpBackend.expectGET('/api/rules')
+      .respond(200, '{"rules": [], "count": 0}');
+      this.$httpBackend.flush();
+
+      var rule_item = {
+        product: "Firefox",
+        channel: "nightly",
+      };
+      expect(this.scope.filterBySearch(rule_item)).toEqual(true);
+    });
+
+    it("should filter when only one search word name", function() {
+      this.$httpBackend.expectGET('/api/rules')
+      .respond(200, '{"rules": [], "count": 0}');
+      this.$httpBackend.flush();
+
+      var $scope = this.scope;
+      $scope.filters.search = "fire";
+      $scope.$apply();
+      var rule_item = {
+        product: "Firefox",
+        channel: "nightly",
+      };
+      expect($scope.filterBySearch(rule_item)).toEqual(true);
+      rule_item.product = "Seabird";
+      expect($scope.filterBySearch(rule_item)).toEqual(false);
+    });
+
+    it("should match ALL search terms", function() {
+      this.$httpBackend.expectGET('/api/rules')
+      .respond(200, '{"rules": [], "count": 0}');
+      this.$httpBackend.flush();
+
+      var $scope = this.scope;
+      $scope.filters.search = "fire night";
+      $scope.$apply();
+      var rule_item = {
+        product: "Firefox",
+        channel: "nightly",
+      };
+      expect($scope.filterBySearch(rule_item)).toEqual(true);
+      rule_item.product = "Seabird";
+      expect($scope.filterBySearch(rule_item)).toEqual(false);
+      rule_item.product = "Firefox";
+      rule_item.channel = "aurora"
+      expect($scope.filterBySearch(rule_item)).toEqual(false);
+    });
 
   });
   // describe("successfully logging in", function() {
