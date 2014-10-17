@@ -32,6 +32,7 @@ if __name__ == "__main__":
     if args.ini:
         cfg = AdminConfig(args.ini)
         db = AUSDatabase(cfg.getDburi())
+        db.setDomainWhitelist(cfg.getDomainWhitelist())
     else:
         db = AUSDatabase(args.db)
 
