@@ -11,8 +11,6 @@ class TestSchema1Blob(unittest.TestCase):
     maxDiff = 2000
 
     def setUp(self):
-        self.cef_patcher = mock.patch("auslib.log.cef_event")
-        self.cef_patcher.start()
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = ["a.com", "boring.com"]
         self.blob = GMPBlobV1()
@@ -58,9 +56,6 @@ class TestSchema1Blob(unittest.TestCase):
     }
 }
 """)
-
-    def tearDown(self):
-        self.cef_patcher.stop()
 
     def testGetVendorsForPlatform(self):
         vendors = set([v for v in self.blob.getVendorsForPlatform("q")])

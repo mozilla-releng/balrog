@@ -15,7 +15,7 @@ def isSpecialURL(url, specialForceHosts):
             return True
     return False
 
-def containsForbiddenDomain(url, whitelistedDomains):
+def isForbiddenUrl(url, whitelistedDomains):
     domain = urlparse(url)[1]
     if domain not in whitelistedDomains:
         cef_event("Forbidden domain", CEF_ALERT, domain=domain)

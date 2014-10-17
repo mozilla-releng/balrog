@@ -13,6 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import migrate.versioning.schema
 import migrate.versioning.api
 
+from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import createBlob
 from auslib.log import cef_event, CEF_ALERT
 from auslib.util.comparison import string_compare, version_compare
@@ -798,25 +799,36 @@ class Releases(AUSTable):
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
 
+    # TODO: This should really be part of the blob class(es) because it depends
+    # on a lot of blob schema specific stuff.
     def containsForbiddenDomain(self, data):
         """Returns True if "data" contains any file URLs that contain a
            domain that we're not allowed to serve updates to."""
         # Check the top level URLs, if the exist.
-        for url in data.get('fileUrls', {}).values():
-            domain = urlparse(url)[1]
-            if domain not in self.domainWhitelist:
-                cef_event('Forbidden domain', CEF_ALERT, domain=domain, updateData=data)
-                return True
+        for c in data.get('fileUrls', {}).values():
+            # New-style
+            if isinstance(c, dict):
+                for from_ in c.values():
+                    for url in from_.values():
+                        if isForbiddenUrl(url, self.domainWhitelist):
+                            return True
+            # Old-style
+            else:
+                if isForbiddenUrl(c, self.domainWhitelist):
+                    return True
 
         # And also the locale-level URLs.
         for platform in data.get('platforms', {}).values():
             for locale in platform.get('locales', {}).values():
                 for type_ in ('partial', 'complete'):
                     if type_ in locale and 'fileUrl' in locale[type_]:
-                        domain = urlparse(locale[type_]['fileUrl'])[1]
-                        if domain not in self.domainWhitelist:
-                            cef_event('Forbidden domain', CEF_ALERT, domain=domain, updateData=data)
+                        if isForbiddenUrl(locale[type_]['fileUrl'], self.domainWhitelist):
                             return True
+                for type_ in ('partials', 'completes'):
+                    for update in locale.get(type_, {}):
+                        if 'fileUrl' in update:
+                            if isForbiddenUrl(update["fileUrl"], self.domainWhitelist):
+                                return True
 
         return False
 

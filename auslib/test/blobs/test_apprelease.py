@@ -1,3 +1,5 @@
+from collections import OrderedDict
+import mock
 import unittest
 from xml.dom import minidom
 
@@ -50,6 +52,11 @@ class TestReleaseBlobBase(unittest.TestCase):
 
 
 class TestReleaseBlobV1(unittest.TestCase):
+    def setUp(self):
+        dbo.setDb('sqlite:///:memory:')
+        dbo.create()
+        dbo.setDomainWhitelist(["a.com", "boring.com"])
+
     def testGetAppv(self):
         blob = ReleaseBlobV1(appv=1)
         self.assertEquals(1, blob.getAppv('p', 'l'))
@@ -65,6 +72,29 @@ class TestReleaseBlobV1(unittest.TestCase):
     def testApplicationVersion(self):
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(extv=4)))))
         self.assertEquals(blob.getExtv('f', 'g'), blob.getApplicationVersion('f', 'g'))
+
+    def testAllowedDomain(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV1(fileUrls=dict(c="http://a.com/a"))
+            self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+
+    def testForbiddenDomainFileUrls(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV1(fileUrls=dict(c="http://evil.com/a"))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
+    def testForbiddenDomainInLocale(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
+    def testForbiddenDomainAndAllowedDomain(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            updates = OrderedDict()
+            updates["partial"] = dict(fileUrl="http://a.com/a")
+            updates["complete"] = dict(fileUrl="http://evil.com/a")
+            blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(j=updates))))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
 
 class TestNewStyleVersionBlob(unittest.TestCase):
@@ -226,6 +256,7 @@ class TestSchema2Blob(unittest.TestCase):
         self.whitelistedDomains = ["a.com", "boring.com"]
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
+        dbo.setDomainWhitelist(["a.com", "boring.com"])
         dbo.releases.t.insert().execute(name='j1', product='j', version='39.0', data_version=1, data="""
 {
     "name": "j1",
@@ -403,6 +434,16 @@ class TestSchema2Blob(unittest.TestCase):
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
 
+    def testAllowedDomain(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV2(fileUrls=dict(c="http://a.com/a"))
+            self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+
+    def testForbiddenDomainFileUrls(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV2(fileUrls=dict(c="http://evil.com/a"))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
 
 class TestSchema2BlobNightlyStyle(unittest.TestCase):
     maxDiff = 2000
@@ -412,6 +453,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         self.whitelistedDomains = ["a.com", "boring.com"]
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
+        dbo.setDomainWhitelist(["a.com", "boring.com"])
         dbo.releases.t.insert().execute(name='j1', product='j', version='0.5', data_version=1, data="""
 {
     "name": "j1",
@@ -497,6 +539,19 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
 
+    def testForbiddenDomainInLocale(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
+    def testForbiddenDomainAndAllowedDomain(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            updates = OrderedDict()
+            updates["partial"] = dict(fileUrl="http://a.com/a")
+            updates["complete"] = dict(fileUrl="http://evil.com/a")
+            blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(j=updates))))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
 
 class TestSchema3Blob(unittest.TestCase):
     def setUp(self):
@@ -504,6 +559,7 @@ class TestSchema3Blob(unittest.TestCase):
         self.whitelistedDomains = ["a.com", "boring.com"]
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
+        dbo.setDomainWhitelist(["a.com", "boring.com"])
         dbo.releases.t.insert().execute(name='f1', product='f', version='22.0', data_version=1, data="""
 {
     "name": "f1",
@@ -771,6 +827,27 @@ class TestSchema3Blob(unittest.TestCase):
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
 
+    def testAllowedDomain(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV3(fileUrls=dict(c="http://a.com/a"))
+            self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+
+    def testForbiddenDomainFileUrls(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV3(fileUrls=dict(c="http://evil.com/a"))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
+    def testForbiddenDomainInLocale(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
+    def testForbiddenDomainAndAllowedDomain(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
+            blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
 
 class TestSchema4Blob(unittest.TestCase):
     def setUp(self):
@@ -778,6 +855,7 @@ class TestSchema4Blob(unittest.TestCase):
         self.whitelistedDomains = ["a.com", "boring.com"]
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
+        dbo.setDomainWhitelist(["a.com", "boring.com"])
         dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data="""
 {
     "name": "h1",
@@ -1065,3 +1143,24 @@ class TestSchema4Blob(unittest.TestCase):
         expected["schema_version"] = 4
 
         self.assertEquals(v4Blob, expected)
+
+    def testAllowedDomain(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
+            self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+
+    def testForbiddenDomainFileUrls(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://evil.com/c"))))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
+    def testForbiddenDomainInLocale(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            blob = ReleaseBlobV4(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
+    def testForbiddenDomainAndAllowedDomain(self):
+        with mock.patch("auslib.AUS.cef_event") as c:
+            updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
+            blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
+            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))

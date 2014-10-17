@@ -4,7 +4,7 @@ import logging
 log = logging.getLogger(__name__)
 
 from auslib import dbo
-from auslib.AUS import containsForbiddenDomain, getFallbackChannel
+from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob
 from auslib.util.versions import MozillaVersion
 
@@ -67,7 +67,7 @@ class ReleaseBlobBase(Blob):
         # the update entirely? Right now, another patch type could still
         # return an update. Eg, the partial could contain a forbidden domain
         # but the complete could still return an update from an accepted one.
-        if containsForbiddenDomain(url, whitelistedDomains):
+        if isForbiddenUrl(url, whitelistedDomains):
             return None
 
         return '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
@@ -283,7 +283,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
-            if containsForbiddenDomain(url, whitelistedDomains):
+            if isForbiddenUrl(url, whitelistedDomains):
                 break
 
             snippet = [
@@ -474,7 +474,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
-            if containsForbiddenDomain(url, whitelistedDomains):
+            if isForbiddenUrl(url, whitelistedDomains):
                 break
 
             snippet = [

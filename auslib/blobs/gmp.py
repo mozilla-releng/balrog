@@ -1,6 +1,6 @@
 import re
 
-from auslib.AUS import containsForbiddenDomain
+from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import Blob
 
 
@@ -58,7 +58,7 @@ class GMPBlobV1(Blob):
             platformData = self.getPlatformData(vendor, buildTarget)
 
             url = platformData["fileUrl"]
-            if containsForbiddenDomain(url, whitelistedDomains):
+            if isForbiddenUrl(url, whitelistedDomains):
                 continue
             vendorXML.append('        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>' % \
                 (vendor, url, self["hashFunction"], platformData["hashValue"],
