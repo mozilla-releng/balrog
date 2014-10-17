@@ -1,7 +1,31 @@
 angular.module("app").controller('RulesController',
-function($scope, $location, $timeout, RulesService, $modal) {
+function($scope, $routeParams, $location, $timeout, RulesService, $modal) {
 
-  $scope.ordering = ['priority', 'version', 'mapping'];
+  $scope.rule_id = parseInt($routeParams.id, 10);
+  if ($scope.rule_id) {
+    // history of a specific rule
+    RulesService.getHistory($scope.rule_id)
+    .success(function(response) {
+      // it's the same rule, but this works
+      $scope.rules = response.rules;
+    }).error(function() {
+      console.error(arguments);
+    });
+  } else {
+    RulesService.getRules()
+    .success(function(response) {
+      $scope.rules = response.rules;
+    }).error(function() {
+      console.error(arguments);
+    });
+  }
+
+  if ($scope.rule_id) {
+    $scope.ordering = ['-data_version'];
+  } else {
+    $scope.ordering = ['priority', 'version', 'mapping'];
+  }
+
 
   $scope.currentPage = 1;
   $scope.pageSize = 10;  // default
@@ -10,18 +34,11 @@ function($scope, $location, $timeout, RulesService, $modal) {
     search: '',
   };
 
-  RulesService.getRules()
-  .success(function(data) {
-    $scope.rules = data.rules;
-    $scope.total_count = data.count;
-  }).error(function() {
-    console.error(arguments);
-  });
+  $scope.date_thing = new Date();
 
   function escapeRegExp(string){
     return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
   }
-
 
   // We don't want to immediately start searching on every typed
   // little character. Instead, bunch them up and search after a
@@ -36,41 +53,65 @@ function($scope, $location, $timeout, RulesService, $modal) {
     filters_search_temp = value;
     filters_search_timeout = $timeout(function() {
       $scope.filters.search_actual = filters_search_temp;
-    }, 200);
+    }, 300);
   });
 
-  var word_regexes = [];
+
+  $scope.word_regexes = [];
+  var keyword_regex = /\b(product|channel|mapping):\s*(\w+)/gi;
   $scope.$watchCollection('filters.search_actual', function(value) {
-    word_regexes = [];
+    $scope.word_regexes = [];
     if (value) {
-      _.each(value.split(' '), function(term) {
-        word_regexes.push(
-          new RegExp('\\b' + escapeRegExp(term), 'i')
+      var matches;
+      // var value="product: firefox b2g and channel: otherthing something";
+      // console.log('Value:', value, word_regexes.length);
+      while ((matches = keyword_regex.exec(value)) !== null) {
+        // console.log(matches[0], matches[1], matches[2]);
+        $scope.word_regexes.push(
+          [new RegExp('\\b' + escapeRegExp(matches[2]), 'i'), matches[1], matches[0]]
         );
+        // console.log('  matches:', matches);
+      }
+      value = value.replace(keyword_regex, '').trim();
+      // console.log('leftover', value);
+      // console.log('word_regexes1', word_regexes, word_regexes.length);
+      // _.each(/\b(product|channel|mapping):\s*(\w+)/i.exec(value), function(match) {
+      //   console.log("MATCH", match);
+      // });
+      _.each(value.trim().split(' '), function(term) {
+        if (term.length) {
+          $scope.word_regexes.push(
+            [new RegExp('\\b' + escapeRegExp(term), 'i'), '*', term]
+          );
+        }
       });
+      // console.log('word_regexes2', word_regexes, word_regexes.length);
     }
   });
 
   $scope.filterBySearch = function(rule) {
     // basically, look for a reason to NOT include this
-    if (word_regexes.length) {
+    if ($scope.word_regexes.length) {
       // every word in the word_regexes array needs to have some match
       var matches = 0;
-      _.each(word_regexes, function(regex) {
-        if (rule.product && rule.product.match(regex)) {
+      _.each($scope.word_regexes, function(each) {
+        var regex = each[0];
+        var on = each[1];
+        // console.log(regex, on);
+        if ((on === '*' || on === 'product') && rule.product && rule.product.match(regex)) {
           matches++;
           return;
         }
-        if (rule.channel && rule.channel.match(regex)) {
+        if ((on === '*' || on === 'channel') && rule.channel && rule.channel.match(regex)) {
           matches++;
           return;
         }
-        if (rule.mapping && rule.mapping.match(regex)) {
+        if ((on === '*' || on === 'mapping') && rule.mapping && rule.mapping.match(regex)) {
           matches++;
           return;
         }
       });
-      return matches === word_regexes.length;
+      return matches === $scope.word_regexes.length;
     }
 
     return true;  // include it
@@ -91,6 +132,29 @@ function($scope, $location, $timeout, RulesService, $modal) {
   };
   /* End filtering */
 
+  /* Highlighting */
+  $scope.highlightSearch = function(text, what) {
+    if (text === null) {
+      return text;
+    }
+    text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if (!$scope.word_regexes.length) {
+      return text;
+    }
+    // `word_regexes` is a list of lists [regex, on what]
+    _.each($scope.word_regexes, function(each) {
+      var regex = each[0];
+      var on = each[1];
+      if (on === '*' || on === what) {
+        _.each(regex.exec(text), function(match) {
+          text = text.replace(match, '<span class="match">' + match + '</span>');
+        });
+      }
+    });
+    return text;
+  };
+  /* End highlighting */
+
   $scope.openUpdateModal = function(rule) {
 
     var modalInstance = $modal.open({
@@ -106,13 +170,13 @@ function($scope, $location, $timeout, RulesService, $modal) {
         }
       }
     });
-
     modalInstance.result.then(function () {
       // $scope.selected = selectedItem;
     }, function () {
       console.log('modal closed');
     });
   };
+  /* End openUpdateModal */
 
   $scope.openDeleteModal = function(rule) {
 
@@ -136,84 +200,49 @@ function($scope, $location, $timeout, RulesService, $modal) {
       console.log('modal closed');
     });
   };
+  /* End openDeleteModal */
 
+  $scope.openNewRuleModal = function() {
 
-  // $scope.credentials = { username: "", password: "" };
-  //
-  // var onLoginSuccess = function() {
-  //   $location.path('/home');
-  // };
-  //
-  // $scope.login = function() {
-  //   AuthenticationService.login($scope.credentials).success(onLoginSuccess);
-  // };
-});
+    var modalInstance = $modal.open({
+      templateUrl: 'rule_modal.html',
+      controller: 'NewRuleCtrl',
+      // size: 'sm',
+      resolve: {
+        rules: function() {
+          return $scope.rules;
+        },
+      }
+    });
 
-
-angular.module('app').controller('RuleEditCtrl',
-function ($scope, $modalInstance, GeneralService, RulesService, rule) {
-
-  $scope.original_rule = rule;
-  $scope.rule = angular.copy(rule);
-
-  $scope.saving = false;
-
-  $scope.saveChanges = function () {
-    $scope.saving = true;
-
-    GeneralService.getCSRFToken()
-    .success(function(r, s, headers) {
-      var csrf_token = headers('X-CSRF-Token');
-      RulesService.updateRule($scope.rule.id, $scope.rule, csrf_token)
-      .success(function(response) {
-        // console.log('RESPONSE', response);
-        $scope.rule.data_version = response.new_data_version;
-        angular.copy($scope.rule, $scope.original_rule);
-        $scope.saving = false;
-        $modalInstance.close();
-      }).error(function() {
-        console.error(arguments);
-      });
+    modalInstance.result.then(function () {
+      // $scope.selected = selectedItem;
+    }, function () {
+      console.log('modal closed');
     });
   };
+  /* End openNewRuleModal */
 
-  $scope.cancel = function () {
-    $modalInstance.dismiss('cancel');
-  };
-});
+  $scope.openRevertModal = function(rule) {
 
-angular.module('app').controller('RuleDeleteCtrl',
-function ($scope, $modalInstance, GeneralService, RulesService, rule, rules) {
+    var modalInstance = $modal.open({
+      templateUrl: 'rule_revert_modal.html',
+      controller: 'RuleRevertCtrl',
+      // size: 'sm',
+      resolve: {
+        rule: function () {
+          return rule;
+        }
+      }
+    });
 
-  //$scope.original_rule = rule;
-  $scope.rule = rule;
-  $scope.rules = rules;
-  $scope.saving = false;
-  // $scope.items = items;
-  // $scope.selected = {
-  //   item: $scope.items[0]
-  // };
-
-  $scope.saveChanges = function () {
-    $scope.saving = true;
-    GeneralService.getCSRFToken()
-    .success(function(r, s, headers) {
-      var csrf_token = headers('X-CSRF-Token');
-      RulesService.deleteRule($scope.rule.id, $scope.rule, csrf_token)
-      .success(function(response) {
-        // console.log('RESPONSE', response);
-        // $scope.rule.data_version = response.new_data_version;
-        // angular.copy($scope.rule, $scope.original_rule);
-        $scope.rules.splice($scope.rules.indexOf($scope.rule), 1);
-        $scope.saving = false;
-        $modalInstance.close();
-      }).error(function() {
-        console.error(arguments);
-      });
+    modalInstance.result.then(function () {
+      // $scope.selected = selectedItem;
+      $location.path('/rules');
+    }, function () {
+      // console.log('modal closed');
     });
   };
+  /* End openDeleteModal */
 
-  $scope.cancel = function () {
-    $modalInstance.dismiss('cancel');
-  };
 });

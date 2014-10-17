@@ -1,0 +1,16 @@
+<div class="modal-header">
+    <h3 class="modal-title">Wanna revert back to this version?</h3>
+</div>
+<div class="modal-body">
+
+  Product: {{ rule.product }}<br>
+  Channel: {{ rule.channel }}<br>
+  Mapping: {{ rule.mapping }}
+</div>
+<div class="modal-footer">
+    <span ng-show="saving">
+      Saving...
+    </span>
+    <button class="btn btn-primary" ng-click="saveChanges()">Yes</button>
+    <button class="btn btn-default" ng-click="cancel()">Cancel</button>
+</div>

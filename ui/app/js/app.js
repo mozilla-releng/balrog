@@ -1,4 +1,4 @@
-angular.module("app", ["ngRoute", "ui.bootstrap"]);
+angular.module("app", ["ngRoute", "ui.bootstrap", "ngSanitize"]);
 
 // .run(function($rootScope) {
 //   // adds some basic utilities to the $rootScope for debugging purposes

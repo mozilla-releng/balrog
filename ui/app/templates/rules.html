@@ -5,7 +5,10 @@
   </div>
 </form>
 
-<h2>Rules
+<h2>
+  <span ng-show="!rule_id">Rules</span>
+  <span ng-show="rule_id">Revisions of a Rule</span>
+
   <span class="count">
     ({{ filtered_items.length }})
   </span>
@@ -25,35 +28,43 @@
     Filtered too much?<br>
     Remove
     <ul>
-      <li ng-repeat="word in splitFilterSearch(filters.search)">
-        <a href="#" ng-click="filters.search = removeFilterSearchWord(word, filters.search)">{{ word }}</a>
+      <li ng-repeat="word_regex in word_regexes">
+        <a href="#" ng-click="filters.search = removeFilterSearchWord(word_regex[2], filters.search)">{{ word_regex[2] }}</a>
       </li>
     </ul>
   </p>
 </div>
 
+<div ng-show="!rule_id">
+  <button class="btn btn-primary" ng-click="openNewRuleModal()">
+    Add a new Rule
+    <i class="glyphicon glyphicon-plus"></i>
+  </button>
+</div>
+
 <div class="panel panel-default"
      ng-repeat="rule in filtered_items = (rules | filter:filterBySearch) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
   <div class="panel-heading">
+    <p ng-show="rule_id" style="float: right">
+      Changed by <code>{{ rule.changed_by }}</code>
+      <span moment="rule.timestamp"></span>
+    </p>
     <h3 class="panel-title">
-      <span title="Product">{{ rule.product }}</span> :
-      <span title="Channel">{{ rule.channel }}</span>
+      <span title="Product" ng-bind-html="highlightSearch(rule.product, 'product')"></span> :
+      <span title="Channel" ng-bind-html="highlightSearch(rule.channel, 'channel')"></span>
     </h3>
   </div>
   <div class="panel-body">
     <div class="left" style="float: left">
 
-      <h5 title="Mapping">{{ rule.mapping }}</h5>
+      <h5 title="Mapping" ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></h5>
       <p ng-if="rule.comment">
         <b>Comment:</b>
         {{ rule.comment }}
       </p>
 
-      <p>
-        priority:<code>{{ rule.priority }}</code>,
-        version:<code>{{ rule.version }}</code>,
-        mapping:<code>{{ rule.mapping }}</code>
-      </p>
+      {{ rule.change_id }}
+
     </div>
 
     <dl class="dl-horizontal" style="float:right">
@@ -84,9 +95,11 @@
 
   </div>
   <div class="panel-footer">
-    <button class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">Update</button>
-    <button class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button>
-    <button class="btn btn-default btn-xs">History</button>
+    <i ng-show="rule_id && $first">Current</i>
+    <button ng-show="rule_id && !$first" class="btn btn-default btn-xs" ng-click="openRevertModal(rule)">Revert to this</button>
+    <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">Update</button>
+    <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button>
+    <a ng-show="!rule_id" class="btn btn-default btn-xs" href="/rules/{{ rule.id }}">History</a>
 
     <small>{data_version: {{ rule.data_version }}}</small>
   </div>
