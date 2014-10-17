@@ -4,6 +4,7 @@ import unittest
 from xml.dom import minidom
 
 from auslib.blobs.gmp import GMPBlobV1
+from auslib.errors import BadDataError
 import auslib.log
 
 
@@ -68,6 +69,9 @@ class TestSchema1Blob(unittest.TestCase):
     def testGetResolvedPlatform(self):
         self.assertEquals("q", self.blob.getResolvedPlatform("c", "q2"))
 
+    def testGetResolvedPlatformRaisesBadDataError(self):
+        self.assertRaises(BadDataError, self.blob.getResolvedPlatform, "c", "bbb")
+
     def testGetPlatformData(self):
         expected = {
             "filesize": 4,
@@ -75,6 +79,9 @@ class TestSchema1Blob(unittest.TestCase):
             "fileUrl": "http://boring.com/blah",
         }
         self.assertEquals(self.blob.getPlatformData("c", "q2"), expected)
+
+    def testGetPlatformDataRaisesBadDataError(self):
+        self.assertRaises(BadDataError, self.blob.getPlatformData, "c", "f")
 
     def testGMPUpdate(self):
         updateQuery = {

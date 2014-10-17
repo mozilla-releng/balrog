@@ -2,6 +2,7 @@ import re
 
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import Blob
+from auslib.errors import BadDataError
 
 
 class GMPBlobV1(Blob):
@@ -35,11 +36,17 @@ class GMPBlobV1(Blob):
                 yield v
 
     def getResolvedPlatform(self, vendor, platform):
-        return self['vendors'][vendor]['platforms'][platform].get('alias', platform)
+        try:
+            return self['vendors'][vendor]['platforms'][platform].get('alias', platform)
+        except KeyError:
+            raise BadDataError("No platform '%s' in vendor '%s'", platform, vendor)
 
     def getPlatformData(self, vendor, platform):
         platform = self.getResolvedPlatform(vendor, platform)
-        return self['vendors'][vendor]['platforms'][platform]
+        try:
+            return self['vendors'][vendor]['platforms'][platform]
+        except KeyError:
+            raise BadDataError("No platform '%s' in vendor '%s'", platform, vendor)
 
     def shouldServeUpdate(self, updateQuery):
         # GMP updates should always be returned. It is the responsibility

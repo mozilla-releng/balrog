@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 from auslib import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob
+from auslib.errors import BadDataError
 from auslib.util.versions import MozillaVersion
 
 
@@ -20,7 +21,7 @@ class ReleaseBlobBase(Blob):
             try:
                 releaseBuildID = self.getBuildID(buildTarget, locale)
             # Platform doesn't exist in release, clearly it's not a match!
-            except KeyError:
+            except BadDataError:
                 return False
             self.log.debug("releasePlat buildID is: %s", releaseBuildID)
             if buildID == releaseBuildID:
@@ -28,26 +29,39 @@ class ReleaseBlobBase(Blob):
                 return True
 
     def getResolvedPlatform(self, platform):
-        return self['platforms'][platform].get('alias', platform)
+        try:
+            return self['platforms'][platform].get('alias', platform)
+        except KeyError:
+            raise BadDataError("Can't find platform '%s'", platform)
 
     def getPlatformData(self, platform):
         platform = self.getResolvedPlatform(platform)
-        return self['platforms'][platform]
+        try:
+            return self['platforms'][platform]
+        except KeyError:
+            raise BadDataError("Can't find platform '%s'", platform)
+
+    def getLocaleData(self, platform, locale):
+        platformData = self.getPlatformData(platform)
+        try:
+            return platformData["locales"][locale]
+        except KeyError:
+            raise BadDataError("Can't find locale '%s' in '%s'", locale, platform)
 
     def getLocaleOrTopLevelParam(self, platform, locale, param):
         try:
             platform = self.getResolvedPlatform(platform)
             return self['platforms'][platform]['locales'][locale][param]
-        except KeyError:
+        except (BadDataError, KeyError):
             try:
                 return self[param]
-            except KeyError:
+            except (BadDataError, KeyError):
                 return None
 
     def getBuildID(self, platform, locale):
         platform = self.getResolvedPlatform(platform)
         if locale not in self['platforms'][platform]['locales']:
-            raise KeyError("No such locale '%s' in platform '%s'" % (locale, platform))
+            raise BadDataError("No such locale '%s' in platform '%s'" % (locale, platform))
         try:
             return self['platforms'][platform]['locales'][locale]['buildID']
         except KeyError:
@@ -106,7 +120,7 @@ class ReleaseBlobBase(Blob):
 
         buildTarget = updateQuery["buildTarget"]
         locale = updateQuery["locale"]
-        localeData = self.getPlatformData(buildTarget)["locales"][locale]
+        localeData = self.getLocaleData(buildTarget, locale)
 
         updateLine = self._getUpdateLineXML(buildTarget, locale, update_type)
         patches = self._getPatchesXML(localeData, updateQuery, whitelistedDomains, specialForceHosts)
@@ -267,8 +281,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         snippets = {}
         buildTarget = updateQuery["buildTarget"]
         locale = updateQuery["locale"]
-        platformData = self.getPlatformData(buildTarget)
-        localeData = platformData["locales"][locale]
+        localeData = self.getLocaleData(buildTarget, locale)
         for patchKey in ("partial", "complete"):
             patch = localeData.get(patchKey)
             if not patch:
@@ -353,7 +366,8 @@ class NewStyleVersionsMixin(object):
         appVersion = self.getAppVersion(buildTarget, locale)
         platformVersion = self.getPlatformVersion(buildTarget, locale)
         buildid = self.getBuildID(buildTarget, locale)
-        localeData = self.getPlatformData(buildTarget)["locales"][locale]
+
+        localeData = self.getLocaleData(buildTarget, locale)
 
         updateLine = '    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"' % \
             (update_type, displayVersion, appVersion, platformVersion, buildid)
@@ -458,8 +472,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         snippets = {}
         buildTarget = updateQuery["buildTarget"]
         locale = updateQuery["locale"]
-        platformData = self.getPlatformData(buildTarget)
-        localeData = platformData["locales"][locale]
+        localeData = self.getLocaleData(buildTarget, locale)
         for patchKey in ("partial", "complete"):
             patch = localeData.get(patchKey)
             if not patch:

@@ -4,6 +4,7 @@ import unittest
 from xml.dom import minidom
 
 from auslib import dbo
+from auslib.errors import BadDataError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4
 
@@ -17,9 +18,29 @@ class TestReleaseBlobBase(unittest.TestCase):
         self.assertEquals('a', blob.getResolvedPlatform('a'))
         self.assertEquals('a', blob.getResolvedPlatform('b'))
 
+    def testGetResolvedPlatformRaisesBadDataError(self):
+        blob = SimpleBlob(platforms=dict(a=dict(), b=dict(alias='a')))
+        self.assertRaises(BadDataError, blob.getResolvedPlatform, "d")
+
     def testGetPlatformData(self):
         blob = SimpleBlob(platforms=dict(a=dict(foo=1)))
         self.assertEquals(blob.getPlatformData('a'), dict(foo=1))
+
+    def testGetPlatformDataRaisesBadDataError(self):
+        blob = SimpleBlob(platforms=dict(a=dict(foo=1)))
+        self.assertRaises(BadDataError, blob.getPlatformData, "c")
+
+    def testGetPlatformDataBadAliasRaisesBadDataError(self):
+        blob = SimpleBlob(platforms=dict(b=dict(alias="c")))
+        self.assertRaises(BadDataError, blob.getPlatformData, "b")
+
+    def testGetLocaleData(self):
+        blob = SimpleBlob(platforms=dict(b=dict(locales=dict(a=dict(foo=4)))))
+        self.assertEquals(blob.getLocaleData("b", "a"), dict(foo=4))
+
+    def testGetLocaleDataRaisesBadDataError(self):
+        blob = SimpleBlob(platforms=dict(b=dict(locales=dict(a=dict(foo=4)))))
+        self.assertRaises(BadDataError, blob.getLocaleData, "b", "c")
 
     def testGetLocaleOrTopLevelParamTopLevelOnly(self):
         blob = SimpleBlob(foo=5)
@@ -43,11 +64,11 @@ class TestReleaseBlobBase(unittest.TestCase):
 
     def testGetBuildIDMissingLocale(self):
         blob = SimpleBlob(platforms=dict(c=dict(locales=dict(d=dict(buildID=9)))))
-        self.assertRaises(KeyError, blob.getBuildID, 'c', 'a')
+        self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
 
     def testGetBuildIDMissingLocaleBuildIDAtPlatform(self):
         blob = SimpleBlob(platforms=dict(c=dict(buildID=9, locales=dict(d=dict()))))
-        self.assertRaises(KeyError, blob.getBuildID, 'c', 'a')
+        self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
     # XXX: should we support the locale overriding the platform? this should probably be invalid
 
 
