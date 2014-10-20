@@ -1,14 +1,22 @@
-angular.module("app").factory('errorSniffer', [function() {
+/*global: sweetAlert */
+
+angular.module("app").factory('errorSniffer', ['$q', function($q) {
   return {
-    responseError: function(response) {
-      if (response.status === 401) {
+    responseError: function(rejection) {
+      if (rejection.status === 401) {
         // Unauthorized
-        sweetAlert("Unauthorized", response.data, "error");
-      } else {
-        console.warn(response.status, response.data);
+        sweetAlert("Unauthorized", rejection.data, "error");
+      } else if (rejection.status === 500) {
+        sweetAlert(
+          "Internal Server Error",
+          "An unexpected server error happened. See the console log for more details.",
+          "error"
+        );
+        console.warn(rejection.status, rejection.data);
+      // } else {
+      //   console.warn(rejection.status);
       }
-        // response.config.responseTimestamp = new Date().getTime();
-      return response;
+      return $q.reject(rejection);
     }
   };
 }]);
