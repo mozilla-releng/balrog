@@ -31,7 +31,7 @@ class FieldView(AdminView):
         if isinstance(value, basestring):
             try:
                 value = json.loads(value)
-                value = json.dumps(value, indent=2)
+                value = json.dumps(value, indent=2, sort_keys=True)
             except ValueError:
                 pass
         elif value is None:
