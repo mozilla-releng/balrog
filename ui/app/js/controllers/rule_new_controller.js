@@ -32,7 +32,7 @@ function($scope, $http, $modalInstance, CSRFService, ReleasesService, RulesServi
         $scope.rule.id = parseInt(response, 10);
         $scope.rules.push($scope.rule);
         $modalInstance.close();
-      }).error(function(response) {
+      }).error(function(response, status) {
         if (typeof response === 'object') {
           $scope.errors = response;
         }

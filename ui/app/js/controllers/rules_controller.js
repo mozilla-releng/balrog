@@ -1,3 +1,23 @@
+angular.module("app").factory('errorSniffer', [function() {
+  return {
+    responseError: function(response) {
+      if (response.status === 401) {
+        // Unauthorized
+        sweetAlert("Unauthorized", response.data, "error");
+      } else {
+        console.warn(response.status, response.data);
+      }
+        // response.config.responseTimestamp = new Date().getTime();
+      return response;
+    }
+  };
+}]);
+
+angular.module("app").config(['$httpProvider', function($httpProvider) {
+    $httpProvider.interceptors.push('errorSniffer');
+}]);
+
+
 angular.module("app").controller('RulesController',
 function($scope, $routeParams, $location, $timeout, RulesService, $modal) {
 
@@ -134,6 +154,9 @@ function($scope, $routeParams, $location, $timeout, RulesService, $modal) {
 
   /* Highlighting */
   $scope.highlightSearch = function(text, what) {
+    if (!text) {
+      return '';
+    }
     if (text === null) {
       return text;
     }

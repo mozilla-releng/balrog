@@ -20,6 +20,8 @@ module.exports = function(lineman) {
         // "vendor/bootstrap/js/bootstrap.min.js",
         "vendor/js/lodash.min.js",
         "vendor/js/moment.min.js",
+        "vendor/js/sweet-alert.min.js",
+
 
         // "vendor/js/**/*.js"
         // "vendor/js/**/*.js"
