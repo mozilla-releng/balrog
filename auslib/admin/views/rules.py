@@ -96,30 +96,33 @@ class SingleRuleView(AdminView):
 
         releaseNames = dbo.releases.getReleaseNames()
 
-        form = EditRuleForm(prefix=str(rule_id),
-                backgroundRate = rule['backgroundRate'],
-                mapping = rule['mapping'],
-                priority = rule['priority'],
-                product = rule['product'],
-                version = rule['version'],
-                build_id = rule['buildID'],
-                channel = rule['channel'],
-                locale = rule['locale'],
-                distribution = rule['distribution'],
-                build_target = rule['buildTarget'],
-                os_version = rule['osVersion'],
-                dist_version = rule['distVersion'],
-                comment = rule['comment'],
-                update_type = rule['update_type'],
-                header_arch = rule['headerArchitecture'],
-                data_version=rule['data_version'])
-        form.mapping.choices = [(item['name'],item['name']) for item in
-                releaseNames]
-        form.mapping.choices.insert(0, ('', 'NULL' ) )
-
         headers = {'X-Data-Version': rule['data_version']}
         headers.update(get_csrf_headers())
-        return Response(response=render_template('fragments/single_rule.html', rule=rule, form=form), mimetype='text/html', headers=headers)
+
+        if "application/json" in request.headers.get("Accept-Encoding", ""):
+            return Response(response=json.dumps(rule), mimetype="application/json", headers=headers)
+        else:
+            form = EditRuleForm(prefix=str(rule_id),
+                    backgroundRate = rule['backgroundRate'],
+                    mapping = rule['mapping'],
+                    priority = rule['priority'],
+                    product = rule['product'],
+                    version = rule['version'],
+                    build_id = rule['buildID'],
+                    channel = rule['channel'],
+                    locale = rule['locale'],
+                    distribution = rule['distribution'],
+                    build_target = rule['buildTarget'],
+                    os_version = rule['osVersion'],
+                    dist_version = rule['distVersion'],
+                    comment = rule['comment'],
+                    update_type = rule['update_type'],
+                    header_arch = rule['headerArchitecture'],
+                    data_version=rule['data_version'])
+            form.mapping.choices = [(item['name'],item['name']) for item in
+                    releaseNames]
+            form.mapping.choices.insert(0, ('', 'NULL' ) )
+            return Response(response=render_template('fragments/single_rule.html', rule=rule, form=form), mimetype='text/html', headers=headers)
 
     # changed_by is available via the requirelogin decorator
     @requirelogin

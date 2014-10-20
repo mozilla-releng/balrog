@@ -1,7 +1,36 @@
 import json
 
 from auslib import dbo
-from auslib.test.admin.views.base import ViewTest, HTMLTestMixin
+from auslib.test.admin.views.base import ViewTest, HTMLTestMixin, JSONTestMixin
+
+
+class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
+    maxDiff=1000
+
+    def testGetRule(self):
+        ret = self._get("/rules/1")
+        got = json.loads(ret.data)
+        expected = dict(
+            backgroundRate=100,
+            mapping="c",
+            priority=100,
+            product=None,
+            version="3.5",
+            buildID=None,
+            channel=None,
+            locale=None,
+            distribution=None,
+            buildTarget="d",
+            osVersion=None,
+            distVersion=None,
+            comment=None,
+            update_type="minor",
+            headerArchitecture=None,
+            data_version=1,
+            rule_id=1,
+        )
+        self.assertEquals(json.loads(ret.data), expected)
+
 
 class TestRulesAPI_HTML(ViewTest, HTMLTestMixin):
     def testNewRulePost(self):
