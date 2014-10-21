@@ -28,7 +28,7 @@
     Filtered too much?<br>
     Remove
     <ul>
-      <li ng-repeat="word_regex in word_regexes">
+      <li ng-repeat="word_regex in getWordRegexes()">
         <a href="#" ng-click="filters.search = removeFilterSearchWord(word_regex[2], filters.search)">{{ word_regex[2] }}</a>
       </li>
     </ul>

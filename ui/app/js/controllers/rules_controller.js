@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, RulesService, $modal) {
+function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal) {
 
   $scope.rule_id = parseInt($routeParams.id, 10);
   if ($scope.rule_id) {
@@ -53,44 +53,22 @@ function($scope, $routeParams, $location, $timeout, RulesService, $modal) {
     }, 300);
   });
 
-  $scope.word_regexes = [];
-  var keyword_regex = /\b(product|channel|mapping):\s*(\w+)/gi;
   $scope.$watchCollection('filters.search_actual', function(value) {
-    $scope.word_regexes = [];
-    if (value) {
-      var matches;
-      // var value="product: firefox b2g and channel: otherthing something";
-      // console.log('Value:', value, word_regexes.length);
-      while ((matches = keyword_regex.exec(value)) !== null) {
-        // console.log(matches[0], matches[1], matches[2]);
-        $scope.word_regexes.push(
-          [new RegExp('\\b' + escapeRegExp(matches[2]), 'i'), matches[1], matches[0]]
-        );
-        // console.log('  matches:', matches);
-      }
-      value = value.replace(keyword_regex, '').trim();
-      // console.log('leftover', value);
-      // console.log('word_regexes1', word_regexes, word_regexes.length);
-      // _.each(/\b(product|channel|mapping):\s*(\w+)/i.exec(value), function(match) {
-      //   console.log("MATCH", match);
-      // });
-      _.each(value.trim().split(' '), function(term) {
-        if (term.length) {
-          $scope.word_regexes.push(
-            [new RegExp('\\b' + escapeRegExp(term), 'i'), '*', term]
-          );
-        }
-      });
-      // console.log('word_regexes2', word_regexes, word_regexes.length);
-    }
+    Search.noticeSearchChange(
+      value,
+      ['product', 'channel', 'mapping']
+    );
   });
+
+  // I don't know how else to expose this to the templates
+  $scope.getWordRegexes = Search.getWordRegexes;
 
   $scope.filterBySearch = function(rule) {
     // basically, look for a reason to NOT include this
-    if ($scope.word_regexes.length) {
+    if (Search.word_regexes.length) {
       // every word in the word_regexes array needs to have some match
       var matches = 0;
-      _.each($scope.word_regexes, function(each) {
+      _.each(Search.word_regexes, function(each) {
         var regex = each[0];
         var on = each[1];
         // console.log(regex, on);
@@ -107,7 +85,7 @@ function($scope, $routeParams, $location, $timeout, RulesService, $modal) {
           return;
         }
       });
-      return matches === $scope.word_regexes.length;
+      return matches === Search.word_regexes.length;
     }
 
     return true;  // include it
@@ -124,7 +102,6 @@ function($scope, $routeParams, $location, $timeout, RulesService, $modal) {
   $scope.removeFilterSearchWord = function(word, search) {
     var regex = new RegExp('\\b' + escapeRegExp(word) + '\\b', 'i');
     return search.replace(regex, '').trim();
-    // console.log('Remove', word, 'from', $scope.filters.search);
   };
   /* End filtering */
 
@@ -137,11 +114,11 @@ function($scope, $routeParams, $location, $timeout, RulesService, $modal) {
       return text;
     }
     text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    if (!$scope.word_regexes.length) {
+    if (!Search.word_regexes.length) {
       return text;
     }
     // `word_regexes` is a list of lists [regex, on what]
-    _.each($scope.word_regexes, function(each) {
+    _.each(Search.word_regexes, function(each) {
       var regex = each[0];
       var on = each[1];
       if (on === '*' || on === what) {
