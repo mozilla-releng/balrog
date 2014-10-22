@@ -21,7 +21,7 @@ module.exports = function(lineman) {
         "vendor/js/lodash.min.js",
         "vendor/js/moment.min.js",
         "vendor/js/sweet-alert.min.js",
-
+        "vendor/js/angular-css-injector.min.js",
 
         // "vendor/js/**/*.js"
         // "vendor/js/**/*.js"
