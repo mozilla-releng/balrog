@@ -35,12 +35,12 @@ function($scope, $http, $modalInstance, CSRFService, ReleasesService, RulesServi
       }).error(function(response, status) {
         if (typeof response === 'object') {
           $scope.errors = response;
+          sweetAlert(
+            "Form submission error",
+            "See fields highlighted in red.",
+            "error"
+          );
         }
-        sweetAlert(
-          "Form submission error",
-          "See fields highlighted in red.",
-          "error"
-        );
       }).finally(function() {
         $scope.saving = false;
       });

@@ -1,31 +1,3 @@
-/*global: sweetAlert */
-
-angular.module("app").factory('errorSniffer', ['$q', function($q) {
-  return {
-    responseError: function(rejection) {
-      if (rejection.status === 401) {
-        // Unauthorized
-        sweetAlert("Unauthorized", rejection.data, "error");
-      } else if (rejection.status === 500) {
-        sweetAlert(
-          "Internal Server Error",
-          "An unexpected server error happened. See the console log for more details.",
-          "error"
-        );
-        console.warn(rejection.status, rejection.data);
-      // } else {
-      //   console.warn(rejection.status);
-      }
-      return $q.reject(rejection);
-    }
-  };
-}]);
-
-angular.module("app").config(['$httpProvider', function($httpProvider) {
-    $httpProvider.interceptors.push('errorSniffer');
-}]);
-
-
 angular.module("app").controller('RulesController',
 function($scope, $routeParams, $location, $timeout, RulesService, $modal) {
 
@@ -54,15 +26,12 @@ function($scope, $routeParams, $location, $timeout, RulesService, $modal) {
     $scope.ordering = ['priority', 'version', 'mapping'];
   }
 
-
   $scope.currentPage = 1;
   $scope.pageSize = 10;  // default
 
   $scope.filters = {
     search: '',
   };
-
-  $scope.date_thing = new Date();
 
   function escapeRegExp(string){
     return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
@@ -83,7 +52,6 @@ function($scope, $routeParams, $location, $timeout, RulesService, $modal) {
       $scope.filters.search_actual = filters_search_temp;
     }, 300);
   });
-
 
   $scope.word_regexes = [];
   var keyword_regex = /\b(product|channel|mapping):\s*(\w+)/gi;
