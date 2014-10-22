@@ -19,7 +19,6 @@ function($scope, $http, $modalInstance, CSRFService, ReleasesService, RulesServi
   $scope.saveChanges = function () {
     $scope.saving = true;
     $scope.errors = {};
-    // console.log('NEW RULE', $scope.rule);
     CSRFService.getToken()
     .then(function(csrf_token) {
       // need to change to names the server expects

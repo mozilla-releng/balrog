@@ -33,6 +33,10 @@ function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal
     search: '',
   };
 
+  $scope.hasFilter = function() {
+    return false || $scope.filters.search.length;
+  };
+
   function escapeRegExp(string){
     return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
   }
@@ -62,6 +66,8 @@ function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal
 
   // I don't know how else to expose this to the templates
   $scope.getWordRegexes = Search.getWordRegexes;
+  $scope.highlightSearch = Search.highlightSearch;
+  $scope.removeFilterSearchWord = Search.removeFilterSearchWord;
 
   $scope.filterBySearch = function(rule) {
     // basically, look for a reason to NOT include this
@@ -90,46 +96,7 @@ function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal
 
     return true;  // include it
   };
-
-  // XXX this doesn't need to be in this controller
-  $scope.splitFilterSearch = function(search) {
-    var words = [];
-    _.each(search.split(' '), function(term) {
-      words.push(term.trim());
-    });
-    return words;
-  };
-  $scope.removeFilterSearchWord = function(word, search) {
-    var regex = new RegExp('\\b' + escapeRegExp(word) + '\\b', 'i');
-    return search.replace(regex, '').trim();
-  };
   /* End filtering */
-
-  /* Highlighting */
-  $scope.highlightSearch = function(text, what) {
-    if (!text) {
-      return '';
-    }
-    if (text === null) {
-      return text;
-    }
-    text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    if (!Search.word_regexes.length) {
-      return text;
-    }
-    // `word_regexes` is a list of lists [regex, on what]
-    _.each(Search.word_regexes, function(each) {
-      var regex = each[0];
-      var on = each[1];
-      if (on === '*' || on === what) {
-        _.each(regex.exec(text), function(match) {
-          text = text.replace(match, '<span class="match">' + match + '</span>');
-        });
-      }
-    });
-    return text;
-  };
-  /* End highlighting */
 
   $scope.openUpdateModal = function(rule) {
 
