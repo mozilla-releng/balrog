@@ -1,0 +1,101 @@
+<form role="form" class="search-form">
+  <div class="form-group form-group-search">
+    <input type="search" class="form-control" placeholder="Search for anything"
+           ng-model="filters.search">
+    <span ng-show="filters.search.length" ng-click="filters.search=''"
+           class="glyphicon glyphicon-remove-circle clear-search"></span>
+  </div>
+  <div class="form-group form-group-ordering" ng-show="ordering_options.length > 1">
+    <label>Order by:</label>
+    <select ng-model="ordering_str" name="ordering_str"
+      ng-options="o.text for o in ordering_options track by o.value">
+    </select>
+  </div>
+</form>
+
+
+<h2>
+  <span ng-show="!release_name">Releases</span>
+  <span ng-show="release_name">Revisions of a Release</span>
+
+  <span class="count">
+    ({{ filtered_items.length }}
+    <span ng-bind="hasFilter() ? 'found' : 'in total'"></span>)
+  </span>
+
+  <button class="btn btn-primary btn-xs"
+          ng-show="!release_name" ng-click="openNewReleaseModal()">
+    Add a new Release
+    <i class="glyphicon glyphicon-plus"></i>
+  </button>
+</h2>
+
+
+<div class="pagination-container" ng-show="filtered_items.length > pageSize">
+  <pagination
+    class="pagination-sm"
+    total-items="filtered_items.length"
+    ng-model="currentPage"
+    items-per-page="pageSize"
+    max-size="20"
+  ></pagination>
+</div>
+
+
+<div class="undofilters" ng-show="!filtered_items.length" ng-cloak>
+  <p ng-if="filters.search">
+    Filtered too much?<br>
+    Remove
+    <ul>
+      <li ng-repeat="word_regex in getWordRegexes()">
+        <a href="#" ng-click="filters.search = removeFilterSearchWord(word_regex[2], filters.search)">{{ word_regex[2] }}</a>
+      </li>
+    </ul>
+  </p>
+</div>
+
+
+<div class="panel panel-default"
+     ng-repeat="release in filtered_items = (releases | filter:filterBySearch) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
+  <div class="panel-heading">
+    <h3 class="panel-title">
+      <div style="float:right">
+        <i ng-show="release_name && $first">Current</i>
+        <button ng-show="release_name && !$first" class="btn btn-default btn-xs" ng-click="openRevertModal(release)">Revert to this</button>
+        <button ng-show="!release_name" class="btn btn-default btn-xs" ng-click="openUpdateModal(release)">Update</button>
+        <button ng-show="!release_name" class="btn btn-default btn-xs" ng-click="openDeleteModal(release)">Delete</button>
+        <a ng-show="!release_name" class="btn btn-default btn-xs" href="/releases/{{ release.name }}">History</a>
+
+      </div>
+      <span title="Product" ng-bind-html="highlightSearch(release.product, 'product')"></span>
+      <span title="Version" ng-bind-html="highlightSearch(release.version, 'version')"></span>
+    </h3>
+  </div>
+  <div class="panel-body">
+    <div class="left" style="float: left">
+
+      <h5 title="Mapping" ng-bind-html="highlightSearch(release.name, 'name')"></h5>
+
+      <button ng-show="!release_name" class="btn btn-default btn-xs" ng-click="openDataModal(release)">View Data</button>
+
+    </div>
+
+  </div>
+  <div class="panel-footer" ng-show="release_name">
+    <p>
+      Changed by <code>{{ release.changed_by }}</code>
+      <span moment="release.timestamp"></span>
+    </p>
+  </div>
+</div>
+
+
+<div class="pagination-container" ng-show="filtered_items.length > pageSize">
+  <pagination
+    class="pagination-sm"
+    total-items="filtered_items.length"
+    ng-model="currentPage"
+    items-per-page="pageSize"
+    max-size="20"
+  ></pagination>
+</div>

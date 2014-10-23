@@ -1,9 +1,18 @@
-<form role="form">
-  <div class="form-group">
+<form role="form" class="search-form">
+  <div class="form-group form-group-search">
     <input type="search" class="form-control" placeholder="Search for anything"
            ng-model="filters.search">
+    <span ng-show="filters.search.length" ng-click="filters.search=''"
+           class="glyphicon glyphicon-remove-circle clear-search"></span>
+  </div>
+  <div class="form-group form-group-ordering" ng-show="ordering_options.length > 1">
+    <label>Order by:</label>
+    <select ng-model="ordering_str" name="ordering_str"
+      ng-options="o.text for o in ordering_options track by o.value">
+    </select>
   </div>
 </form>
+
 
 <h2>
   <span ng-show="!rule_id">Rules</span>
@@ -13,7 +22,15 @@
     ({{ filtered_items.length }}
     <span ng-bind="hasFilter() ? 'found' : 'in total'"></span>)
   </span>
+
+  <button class="btn btn-primary btn-xs"
+          ng-show="!rule_id" ng-click="openNewRuleModal()">
+    Add a new Rule
+    <i class="glyphicon glyphicon-plus"></i>
+  </button>
+
 </h2>
+
 
 <div class="pagination-container" ng-show="filtered_items.length > pageSize">
   <pagination
@@ -23,6 +40,7 @@
     items-per-page="pageSize"
   ></pagination>
 </div>
+
 
 <div class="undofilters" ng-show="!filtered_items.length" ng-cloak>
   <p ng-if="filters.search">
@@ -36,21 +54,20 @@
   </p>
 </div>
 
-<div ng-show="!rule_id">
-  <button class="btn btn-primary" ng-click="openNewRuleModal()">
-    Add a new Rule
-    <i class="glyphicon glyphicon-plus"></i>
-  </button>
-</div>
 
-<div class="panel panel-default"
+<div class="panel panel-default" style="clear:right"
      ng-repeat="rule in filtered_items = (rules | filter:filterBySearch) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
   <div class="panel-heading">
-    <p ng-show="rule_id" style="float: right">
-      Changed by <code>{{ rule.changed_by }}</code>
-      <span moment="rule.timestamp"></span>
-    </p>
+
     <h3 class="panel-title">
+      <div style="float: right">
+        <i ng-show="rule_id && $first">Current</i>
+        <button ng-show="rule_id && !$first" class="btn btn-default btn-xs" ng-click="openRevertModal(rule)">Revert to this</button>
+        <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">Update</button>
+        <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button>
+        <a ng-show="!rule_id" class="btn btn-default btn-xs" href="/rules/{{ rule.id }}">History</a>
+      </div>
+
       <span title="Product" ng-bind-html="highlightSearch(rule.product, 'product')"></span> :
       <span title="Channel" ng-bind-html="highlightSearch(rule.channel, 'channel')"></span>
     </h3>
@@ -59,6 +76,9 @@
     <div class="left" style="float: left">
 
       <h5 title="Mapping" ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></h5>
+      <!-- <p>
+        Version#: {{ rule.data_version }}
+      </p> -->
       <p ng-if="rule.comment">
         <b>Comment:</b>
         {{ rule.comment }}
@@ -91,17 +111,12 @@
       <dd>{{ rule.header_arch }}</dd>
     </dl>
 
-
   </div>
-  <div class="panel-footer">
-    <i ng-show="rule_id && $first">Current</i>
-    <button ng-show="rule_id && !$first" class="btn btn-default btn-xs" ng-click="openRevertModal(rule)">Revert to this</button>
-    <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">Update</button>
-    <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button>
-    <a ng-show="!rule_id" class="btn btn-default btn-xs" href="/rules/{{ rule.id }}">History</a>
-
-    <small>{data_version: {{ rule.data_version }}}</small>
+  <div class="panel-footer" ng-show="rule_id">
+    Changed by <code>{{ rule.changed_by }}</code>
+    <span moment="rule.timestamp"></span>
   </div>
+
 </div>
 
 

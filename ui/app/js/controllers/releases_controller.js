@@ -1,25 +1,37 @@
-angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal) {
+angular.module("app").controller('ReleasesController',
+function($scope, $routeParams, $location, $timeout, ReleasesService, Search, $modal) {
 
-  $scope.rule_id = parseInt($routeParams.id, 10);
-  if ($scope.rule_id) {
-    // history of a specific rule
-    RulesService.getHistory($scope.rule_id)
+  $scope.release_name = $routeParams.name;
+  if ($scope.release_name) {
+    // history of a specific release
+    // ReleasesService.getRelease($scope.release_name)
+    // .success(function(response) {
+    //   console.log("RESPONSE", response);
+    // }).error(function() {
+    //   console.error(arguments);
+    // });
+
+    ReleasesService.getHistory($scope.release_name)
     .success(function(response) {
-      // it's the same rule, but this works
-      $scope.rules = response.rules;
+      // it's the same release, but this works
+      $scope.releases = response.releases;
     }).error(function() {
       console.error(arguments);
     });
   } else {
-    RulesService.getRules()
+    ReleasesService.getReleases()
     .success(function(response) {
-      $scope.rules = response.rules;
+      $scope.releases = response.releases;
     }).error(function() {
       console.error(arguments);
     });
   }
 
+  if ($scope.release_id) {
+    $scope.ordering = ['-data_version'];
+  } else {
+    $scope.ordering = ['name'];
+  }
   // if ($scope.rule_id) {
   //   $scope.ordering = ['-data_version'];
   // } else {
@@ -38,21 +50,20 @@ function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal
   } else {
     $scope.ordering_options = [
       {
-        text: "Priority, Version, Mapping",
-        value: "priority,version,mapping"
+        text: "Name",
+        value: "name"
       },
       {
-        text: "Product, Channel",
-        value: "product,channel"
+        text: "Product",
+        value: "product"
       },
       {
-        text: "Mapping",
-        value: "mapping"
+        text: "Version",
+        value: "version"
       },
     ];
   }
   $scope.ordering_str = $scope.ordering_options[0];
-
 
   $scope.currentPage = 1;
   $scope.pageSize = 10;  // default
@@ -97,7 +108,7 @@ function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal
   $scope.highlightSearch = Search.highlightSearch;
   $scope.removeFilterSearchWord = Search.removeFilterSearchWord;
 
-  $scope.filterBySearch = function(rule) {
+  $scope.filterBySearch = function(release) {
     // basically, look for a reason to NOT include this
     if (Search.word_regexes.length) {
       // every word in the word_regexes array needs to have some match
@@ -106,15 +117,15 @@ function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal
         var regex = each[0];
         var on = each[1];
         // console.log(regex, on);
-        if ((on === '*' || on === 'product') && rule.product && rule.product.match(regex)) {
+        if ((on === '*' || on === 'product') && release.product && release.product.match(regex)) {
           matches++;
           return;
         }
-        if ((on === '*' || on === 'channel') && rule.channel && rule.channel.match(regex)) {
+        if ((on === '*' || on === 'version') && release.version && release.version.match(regex)) {
           matches++;
           return;
         }
-        if ((on === '*' || on === 'mapping') && rule.mapping && rule.mapping.match(regex)) {
+        if ((on === '*' || on === 'mapping') && release.name && release.name.match(regex)) {
           matches++;
           return;
         }
@@ -126,18 +137,38 @@ function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal
   };
   /* End filtering */
 
-  $scope.openUpdateModal = function(rule) {
+  $scope.openDataModal = function(release) {
 
     var modalInstance = $modal.open({
-      templateUrl: 'rule_modal.html',
-      controller: 'RuleEditCtrl',
+      templateUrl: 'release_data_modal.html',
+      controller: 'ReleaseDataCtrl',
+      size: 'lg',
+      resolve: {
+        release: function () {
+          return release;
+        }
+      }
+    });
+    modalInstance.result.then(function () {
+      // $scope.selected = selectedItem;
+    }, function () {
+      console.log('modal closed');
+    });
+  };
+  /* End openDataModal */
+
+  $scope.openUpdateModal = function(release) {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'release_modal.html',
+      controller: 'ReleaseEditCtrl',
       // size: size,  // can be lg or sm
       resolve: {
         // items: function () {
         //   return $scope.items;
         // },
-        rule: function () {
-          return rule;
+        release: function () {
+          return release;
         }
       }
     });
@@ -149,18 +180,18 @@ function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal
   };
   /* End openUpdateModal */
 
-  $scope.openDeleteModal = function(rule) {
+  $scope.openDeleteModal = function(release) {
 
     var modalInstance = $modal.open({
-      templateUrl: 'rule_delete_modal.html',
-      controller: 'RuleDeleteCtrl',
+      templateUrl: 'release_delete_modal.html',
+      controller: 'ReleaseDeleteCtrl',
       // size: 'sm',
       resolve: {
-        rule: function () {
-          return rule;
+        release: function () {
+          return release;
         },
-        rules: function() {
-          return $scope.rules;
+        releases: function() {
+          return $scope.releases;
         },
       }
     });
@@ -173,15 +204,15 @@ function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal
   };
   /* End openDeleteModal */
 
-  $scope.openNewRuleModal = function() {
+  $scope.openNewReleaseModal = function() {
 
     var modalInstance = $modal.open({
-      templateUrl: 'rule_modal.html',
-      controller: 'NewRuleCtrl',
+      templateUrl: 'release_modal.html',
+      controller: 'NewReleaseCtrl',
       // size: 'sm',
       resolve: {
-        rules: function() {
-          return $scope.rules;
+        releases: function() {
+          return $scope.releases;
         },
       }
     });
@@ -192,24 +223,24 @@ function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal
       console.log('modal closed');
     });
   };
-  /* End openNewRuleModal */
+  /* End openNewReleaseModal */
 
-  $scope.openRevertModal = function(rule) {
+  $scope.openRevertModal = function(release) {
 
     var modalInstance = $modal.open({
-      templateUrl: 'rule_revert_modal.html',
-      controller: 'RuleRevertCtrl',
+      templateUrl: 'release_revert_modal.html',
+      controller: 'ReleaseRevertCtrl',
       // size: 'sm',
       resolve: {
-        rule: function () {
-          return rule;
+        release: function () {
+          return release;
         }
       }
     });
 
     modalInstance.result.then(function () {
       // $scope.selected = selectedItem;
-      $location.path('/rules');
+      $location.path('/releases');
     }, function () {
       // console.log('modal closed');
     });

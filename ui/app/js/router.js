@@ -9,6 +9,16 @@ angular.module("app").config(function($routeProvider, $locationProvider) {
     controller: 'DashboardController'
   })
 
+  .when('/releases', {
+    templateUrl: 'releases.html',
+    controller: 'ReleasesController'
+  })
+
+  .when('/releases/:name', {
+    templateUrl: 'releases.html',
+    controller: 'ReleasesController'
+  })
+
   .when('/rules', {
     templateUrl: 'rules.html',
     controller: 'RulesController'

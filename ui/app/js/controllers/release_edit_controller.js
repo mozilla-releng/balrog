@@ -1,13 +1,8 @@
-angular.module('app').controller('RuleEditCtrl',
-function ($scope, $modalInstance, CSRFService, RulesService, ReleasesService, rule) {
+angular.module('app').controller('ReleaseEditCtrl',
+function ($scope, $modalInstance, CSRFService, ReleasesService, release) {
 
-  $scope.names = [];
-  ReleasesService.getNames().then(function(names) {
-    $scope.names = names;
-  });
-
-  $scope.original_rule = rule;
-  $scope.rule = angular.copy(rule);
+  $scope.original_release = release;
+  $scope.release = angular.copy(release);
 
   $scope.saving = false;
 
@@ -16,10 +11,10 @@ function ($scope, $modalInstance, CSRFService, RulesService, ReleasesService, ru
 
     CSRFService.getToken()
     .then(function(csrf_token) {
-      RulesService.updateRule($scope.rule.id, $scope.rule, csrf_token)
+      ReleasesService.updateRelease($scope.release.name, $scope.release, csrf_token)
       .success(function(response) {
-        $scope.rule.data_version = response.new_data_version;
-        angular.copy($scope.rule, $scope.original_rule);
+        $scope.release.data_version = response.new_data_version;
+        angular.copy($scope.release, $scope.original_release);
         $scope.saving = false;
         $modalInstance.close();
       }).error(function(response) {

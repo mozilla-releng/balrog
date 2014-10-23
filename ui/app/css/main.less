@@ -13,6 +13,11 @@ h2 .count {
 
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 
+// Because I like a little bit more contrast on the sweetalert pop-up
+div.sweet-alert {
+    border: 1px solid #ccc;
+}
+
 span.match {
     background-color: #FFFF00;
 }
@@ -22,5 +27,34 @@ span.match {
     h1 {
         font-family: 'Bangers', cursive;
         font-size: 500%;
+    }
+}
+
+form.search-form {
+    float: right;
+}
+
+form {
+    input[type="search"] {
+        min-width: 300px;
+    }
+    .form-group-search {
+        position: relative;
+    }
+    .form-group-ordering {
+        text-align: right;
+    }
+    .clear-search {
+        cursor: pointer;
+        z-index: 2;
+        position: absolute;
+        right: 0;
+        line-height: 34px;
+        text-align: center;
+        right: 0px;
+        display: block;
+        width: 34px;
+        height: 34px;
+
     }
 }
