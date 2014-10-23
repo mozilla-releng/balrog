@@ -17,8 +17,13 @@ if __name__ == "__main__":
     parser.set_defaults(
         db='sqlite:///update.db',
         port=8000,
-        whitelistedDomains=[],
-        specialForceHosts=[],
+        whitelistedDomains=[
+            "download.mozilla.org",
+            "stage.mozilla.org",
+            "ftp.mozilla.org",
+            "ciscobinary.openh264.org",
+        ],
+        specialForceHosts=["http://download.mozilla.org"],
     )
     parser.add_option("-d", "--db", dest="db", help="database to use, relative to inputdir")
     parser.add_option("-p", "--port", dest="port", type="int", help="port for server")
