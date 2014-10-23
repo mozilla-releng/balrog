@@ -75,7 +75,7 @@
     <div class="left" style="float: left">
 
       <h5 title="Mapping" ng-bind-html="highlightSearch(release.name, 'name')"></h5>
-
+      {data_version: {{ release.data_version }} }
       <button ng-show="!release_name" class="btn btn-default btn-xs" ng-click="openDataModal(release)">View Data</button>
 
     </div>

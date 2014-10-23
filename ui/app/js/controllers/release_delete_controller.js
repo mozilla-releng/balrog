@@ -1,23 +1,22 @@
-angular.module('app').controller('RuleDeleteCtrl',
-function ($scope, $modalInstance, CSRFService, RulesService, rule, rules) {
+angular.module('app').controller('ReleaseDeleteCtrl',
+function ($scope, $modalInstance, CSRFService, ReleasesService, release, releases) {
 
-  $scope.rule = rule;
-  $scope.rules = rules;
+  $scope.release = release;
+  $scope.releases = releases;
   $scope.saving = false;
 
   $scope.saveChanges = function () {
     $scope.saving = true;
     CSRFService.getToken()
     .then(function(csrf_token) {
-      RulesService.deleteRule($scope.rule.id, $scope.rule, csrf_token)
+      ReleasesService.deleteRelease($scope.release.name, $scope.release, csrf_token)
       .success(function(response) {
-        $scope.rules.splice($scope.rules.indexOf($scope.rule), 1);
+        $scope.releases.splice($scope.releases.indexOf($scope.release), 1);
         $modalInstance.close();
       })
       .error(function() {
         console.error(arguments);
-      })
-      .finally(function() {
+      }).finally(function() {
         $scope.saving = false;
       });
     });
