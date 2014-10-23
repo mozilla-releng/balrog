@@ -69,12 +69,19 @@ class TestGetPagination(unittest.TestCase):
 
 
 class TestMozillaVersions(unittest.TestCase):
-    # This tests the new behaviour we've added.
+    # This tests the new behaviour we've added for suffixes
     def test_special_version(self):
         version = MozillaVersion('3.6.3plugin1')
         self.assertEqual(version.version, (3, 6, 3))
         self.assertEqual(version.prerelease, ('p', 1))
         self.assertEqual(str(version), '3.6.3p1')
+
+    # This tests the new behaviour for number of sub-versions
+    def test_long_version(self):
+        version = MozillaVersion('1.5.0.12')
+        self.assertEqual(version.version, (1, 5, 12))
+        self.assertEqual(version.prerelease, None)
+        self.assertEqual(str(version), '1.5.12')
 
     # The remaining tests are lifted from upstream:
     # http://hg.python.org/cpython/file/v2.7.3/Lib/distutils/tests/test_version.py
