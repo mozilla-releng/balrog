@@ -6,6 +6,7 @@ function($scope, $http, $modalInstance, CSRFService, ReleasesService, RulesServi
     $scope.names = names;
   });
 
+  $scope.is_edit = false;
   $scope.rules = rules;
   $scope.rule = {
     product: '',

@@ -1,12 +1,12 @@
 <div class="modal-header">
-    <h3 class="modal-title">Release</h3>
-    {{ release.name }}
+    <h3 class="modal-title" ng-show="is_edit">Edit Release</h3>
+    <h3 class="modal-title" ng-show="!is_edit">Add Release</h3>
 </div>
 <div class="modal-body">
   <form role="form">
     <div class="form-group" ng-class="{'has-error': errors.name}">
       <label for="id_name">Name</label>
-      <input type="text" class="form-control" id="id_name" ng-model="release.name">
+      <input type="text" class="form-control" id="id_name" ng-model="release.name" ng-disabled="is_edit">
       <p class="help-block" ng-show="errors.name">{{ errors.name.join(', ') }}</p>
     </div>
     <div class="form-group" ng-class="{'has-error': errors.version}">

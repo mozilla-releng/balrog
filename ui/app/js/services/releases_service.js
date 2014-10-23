@@ -25,7 +25,6 @@ angular.module("app").factory('ReleasesService', function($http, $q) {
       return $http.put('/api/releases/' + name, data);
     },
     deleteRelease: function(name, data, csrf_token) {
-      // data.csrf_token = csrf_token;
       var url = '/api/releases/' + name;
       url += '?data_version=' + data.data_version;
       url += '&csrf_token=' + encodeURIComponent(csrf_token);

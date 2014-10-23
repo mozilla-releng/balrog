@@ -6,6 +6,7 @@ function ($scope, $modalInstance, CSRFService, RulesService, ReleasesService, ru
     $scope.names = names;
   });
 
+  $scope.is_edit = true;
   $scope.original_rule = rule;
   $scope.rule = angular.copy(rule);
 

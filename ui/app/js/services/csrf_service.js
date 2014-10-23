@@ -1,5 +1,5 @@
 angular.module("app").factory('CSRFService', function($http, $q) {
-  // these routes map to stubbed API endpoints in config/server.js
+
   var csrf_token = null;
   var timestamp = null;
 
