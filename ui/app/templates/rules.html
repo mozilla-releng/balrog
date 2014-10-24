@@ -19,7 +19,7 @@
   <span ng-show="rule_id">Revisions of a Rule</span>
 
   <span class="count">
-    ({{ filtered_items.length }}
+    ({{ filtered_items.length | number:0 }}
     <span ng-bind="hasFilter() ? 'found' : 'in total'"></span>)
   </span>
 

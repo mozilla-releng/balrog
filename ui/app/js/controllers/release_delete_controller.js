@@ -12,11 +12,11 @@ function ($scope, $modalInstance, CSRFService, ReleasesService, release, release
       ReleasesService.deleteRelease($scope.release.name, $scope.release, csrf_token)
       .success(function(response) {
         $scope.releases.splice($scope.releases.indexOf($scope.release), 1);
+        $scope.saving = false;
         $modalInstance.close();
       })
       .error(function() {
         console.error(arguments);
-      }).finally(function() {
         $scope.saving = false;
       });
     });

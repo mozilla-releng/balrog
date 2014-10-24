@@ -12,7 +12,9 @@ function ($scope, $modalInstance, CSRFService, RulesService, rule) {
       .success(function(response) {
         $scope.saving = false;
         $modalInstance.close();
-      }).error(function() {
+      })
+      .error(function() {
+        $scope.saving = false;
         console.error(arguments);
       });
     });

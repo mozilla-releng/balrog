@@ -1,3 +1,4 @@
+/*global sweetAlert */
 angular.module('app').controller('RuleEditCtrl',
 function ($scope, $modalInstance, CSRFService, RulesService, ReleasesService, rule) {
 

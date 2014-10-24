@@ -19,7 +19,7 @@
   <span ng-show="release_name">Revisions of a Release</span>
 
   <span class="count" ng-show="!loading && !failed">
-    ({{ filtered_items.length }}
+    ({{ filtered_items.length | number:0 }}
     <span ng-bind="hasFilter() ? 'found' : 'in total'"></span>)
   </span>
 
