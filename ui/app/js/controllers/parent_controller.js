@@ -14,6 +14,13 @@ angular.module("app").factory('errorSniffer', ['$q', function($q) {
           "error"
         );
         console.warn(rejection.status, rejection.data);
+      } else if (rejection.status === 502) {
+        sweetAlert(
+          "Gateway Error (502)",
+          "Seems we currently can't connect to the server.",
+          "error"
+        );
+        console.warn(rejection.status, rejection.data);
       } else if (rejection.status === 404) {
         sweetAlert(
           "Page Not Found",
