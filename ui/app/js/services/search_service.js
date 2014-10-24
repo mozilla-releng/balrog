@@ -17,8 +17,10 @@ angular.module("app").factory('Search', function() {
     if (!value) {
       return;
     }
-    // XXX this should be created from the @keywords argument
-    var keyword_regex = /\b(product|channel|mapping):\s*(\w+)/gi;
+    var keyword_regex = new RegExp(
+      '\\b(' + _.map(keywords, escapeRegExp).join('|') + '):\\s*(\\w+)',
+      'gi'
+    );
 
     var matches;
     while ((matches = keyword_regex.exec(value)) !== null) {

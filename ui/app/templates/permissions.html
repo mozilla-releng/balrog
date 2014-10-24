@@ -1,0 +1,71 @@
+<div loader ng-show="loading"></div>
+
+
+<form role="form" class="search-form">
+
+  <div class="form-group form-group-search">
+    <input type="search" class="form-control" placeholder="Search for anything"
+           ng-model="filters.search">
+    <span ng-show="filters.search.length" ng-click="filters.search=''"
+           class="glyphicon glyphicon-remove-circle clear-search"></span>
+  </div>
+
+</form>
+
+
+<h2>
+  <span ng-show="!username">Users</span>
+  <span ng-show="username">{{ username }}</span>
+
+  <span class="count">
+    ({{ filtered_items.length | number:0 }}
+    <span ng-bind="hasFilter() ? 'found' : 'in total'"></span>)
+  </span>
+
+  <button class="btn btn-primary btn-xs"
+          ng-show="!username" ng-click="openNewModal()">
+    Add a new User
+    <i class="glyphicon glyphicon-plus"></i>
+  </button>
+
+</h2>
+
+
+<div class="pagination-container" ng-show="filtered_items.length > pageSize">
+  <pagination
+    class="pagination-sm"
+    total-items="filtered_items.length"
+    ng-model="currentPage"
+    items-per-page="pageSize"
+  ></pagination>
+</div>
+
+
+<div class="panel panel-default" style="clear:right"
+     ng-repeat="user in filtered_items = (users | filter:filterBySearch) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
+  <div class="panel-heading">
+
+    <h3 class="panel-title">
+      <div style="float: right">
+        <i ng-show="username && $first">Current</i>
+        <button ng-show="!username" class="btn btn-default btn-xs" ng-click="openUpdateModal(user)">Update</button>
+        <!-- <button ng-show="!username" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button> -->
+        <!-- <a ng-show="!username" class="btn btn-default btn-xs" href="/rules/{{ rule.id }}">History</a> -->
+      </div>
+      <span title="Username" ng-bind-html="highlightSearch(user.username, 'username')"></span>
+      <!-- <span title="Product" ng-bind-html="highlightSearch(rule.product, 'product')"></span> :
+      <span title="Channel" ng-bind-html="highlightSearch(rule.channel, 'channel')"></span> -->
+    </h3>
+  </div>
+
+</div>
+
+
+<div class="pagination-container" ng-show="filtered_items.length > pageSize">
+  <pagination
+    class="pagination-sm"
+    total-items="filtered_items.length"
+    ng-model="currentPage"
+    items-per-page="pageSize"
+  ></pagination>
+</div>

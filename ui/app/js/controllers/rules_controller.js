@@ -1,6 +1,9 @@
 angular.module("app").controller('RulesController',
 function($scope, $routeParams, $location, $timeout, Rules, Search, $modal) {
 
+  $scope.loading = true;
+  $scope.failed = false;
+
   $scope.rule_id = parseInt($routeParams.id, 10);
   if ($scope.rule_id) {
     // history of a specific rule
@@ -11,6 +14,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal) {
     })
     .error(function() {
       console.error(arguments);
+      $scope.failed = true;
+    })
+    .finally(function() {
+      $scope.loading = false;
     });
   } else {
     Rules.getRules()
@@ -19,14 +26,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal) {
     })
     .error(function() {
       console.error(arguments);
+      $scope.failed = true;
+    })
+    .finally(function() {
+      $scope.loading = false;
     });
   }
 
-  // if ($scope.rule_id) {
-  //   $scope.ordering = ['-data_version'];
-  // } else {
-  //   $scope.ordering = ['priority', 'version', 'mapping'];
-  // }
   $scope.$watch('ordering_str', function(value) {
     $scope.ordering = value.value.split(',');
   });
@@ -210,7 +216,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal) {
     });
 
     modalInstance.result.then(function () {
-      // $scope.selected = selectedItem;
       $location.path('/rules');
     }, function () {
       // console.log('modal closed');
