@@ -1,6 +1,9 @@
 angular.module("app").controller('ReleasesController',
 function($scope, $routeParams, $location, $timeout, ReleasesService, Search, $modal) {
 
+  $scope.loading = true;
+  $scope.failed = false;
+
   $scope.release_name = $routeParams.name;
   if ($scope.release_name) {
     // history of a specific release
@@ -13,34 +16,36 @@ function($scope, $routeParams, $location, $timeout, ReleasesService, Search, $mo
 
     ReleasesService.getHistory($scope.release_name)
     .success(function(response) {
+      console.log(response);
       // it's the same release, but this works
-      $scope.releases = response.releases;
-    }).error(function() {
+      $scope.releases = response.revisions;
+      $scope.count = response.count;
+    })
+    .error(function() {
       console.error(arguments);
+      $scope.failed = true;
+    })
+    .finally(function() {
+      $scope.loading = false;
     });
   } else {
     ReleasesService.getReleases()
     .success(function(response) {
       $scope.releases = response.releases;
-    }).error(function() {
+    })
+    .error(function() {
       console.error(arguments);
+      $scope.failed = true;
+    })
+    .finally(function() {
+      $scope.loading = false;
     });
   }
 
-  if ($scope.release_id) {
-    $scope.ordering = ['-data_version'];
-  } else {
-    $scope.ordering = ['name'];
-  }
-  // if ($scope.rule_id) {
-  //   $scope.ordering = ['-data_version'];
-  // } else {
-  //   $scope.ordering = ['priority', 'version', 'mapping'];
-  // }
   $scope.$watch('ordering_str', function(value) {
     $scope.ordering = value.value.split(',');
   });
-  if ($scope.rule_id) {
+  if ($scope.release_name) {
     $scope.ordering_options = [
       {
         text: "Data Version",
@@ -58,8 +63,16 @@ function($scope, $routeParams, $location, $timeout, ReleasesService, Search, $mo
         value: "product"
       },
       {
+        text: "Product (reverse)",
+        value: "-product"
+      },
+      {
         text: "Version",
         value: "version"
+      },
+      {
+        text: "Version (reverse)",
+        value: "-version"
       },
     ];
   }
@@ -146,6 +159,32 @@ function($scope, $routeParams, $location, $timeout, ReleasesService, Search, $mo
       resolve: {
         release: function () {
           return release;
+        },
+        diff: function() {
+          return false;
+        }
+      }
+    });
+    modalInstance.result.then(function () {
+      // $scope.selected = selectedItem;
+    }, function () {
+      console.log('modal closed');
+    });
+  };
+  /* End openDataModal */
+
+  $scope.openDiffModal = function(release) {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'release_data_modal.html',
+      controller: 'ReleaseDataCtrl',
+      size: 'lg',
+      resolve: {
+        release: function () {
+          return release;
+        },
+        diff: function() {
+          return true;
         }
       }
     });

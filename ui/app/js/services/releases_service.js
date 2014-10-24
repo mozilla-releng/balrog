@@ -15,10 +15,29 @@ angular.module("app").factory('ReleasesService', function($http, $q) {
       return $http.get('/api/releases');
     },
     getHistory: function(name) {
-      return $http.get('/api/releases/' + name + '/revisions');
+      url = '/api/releases/' + name + '/revisions';
+      url += '?limit=100';
+      return $http.get(url);
     },
     getRelease: function(name) {
       return $http.get('/api/releases/' + name);
+    },
+    getData: function(change_id) {
+      var url = '/api/history/view/release/' + change_id + '/data';
+      return $http.get(url);
+    },
+    getDiff: function(change_id) {
+      var url = '/api/history/diff/release/' + change_id + '/data';
+      return $http({
+        url: url,
+        method: 'GET',
+        transformResponse: function(value) {
+          // If we don't do this, angular is going to try
+          // to parse the data as JSON just because it's
+          // a string.
+          return value;
+        }
+      });
     },
     updateRelease: function(name, data, csrf_token) {
       data.csrf_token = csrf_token;

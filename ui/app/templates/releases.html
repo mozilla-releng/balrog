@@ -1,4 +1,4 @@
-<form role="form" class="search-form">
+<form role="form" class="search-form" ng-show="!loading && !failed">
   <div class="form-group form-group-search">
     <input type="search" class="form-control" placeholder="Search for anything"
            ng-model="filters.search">
@@ -18,7 +18,7 @@
   <span ng-show="!release_name">Releases</span>
   <span ng-show="release_name">Revisions of a Release</span>
 
-  <span class="count">
+  <span class="count" ng-show="!loading && !failed">
     ({{ filtered_items.length }}
     <span ng-bind="hasFilter() ? 'found' : 'in total'"></span>)
   </span>
@@ -28,6 +28,11 @@
     Add a new Release
     <i class="glyphicon glyphicon-plus"></i>
   </button>
+  <a href="/releases" class="btn btn-primary btn-xs"
+          ng-show="release_name">
+    All releases
+    <i class="glyphicon glyphicon-arrow-left"></i>
+  </a>
 </h2>
 
 
@@ -55,6 +60,9 @@
 </div>
 
 
+<div loader ng-show="loading"></div>
+
+
 <div class="panel panel-default"
      ng-repeat="release in filtered_items = (releases | filter:filterBySearch) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
   <div class="panel-heading">
@@ -76,8 +84,9 @@
 
       <h5 title="Mapping" ng-bind-html="highlightSearch(release.name, 'name')"></h5>
       {data_version: {{ release.data_version }} }
-      <button ng-show="!release_name" class="btn btn-default btn-xs" ng-click="openDataModal(release)">View Data</button>
 
+      <button class="btn btn-default btn-xs" ng-click="openDataModal(release)">View Data</button>
+      <button ng-show="release_name" class="btn btn-default btn-xs" ng-click="openDiffModal(release)">View Diff</button>
     </div>
 
   </div>
