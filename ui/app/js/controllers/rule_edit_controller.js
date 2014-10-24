@@ -24,7 +24,8 @@ function ($scope, $modalInstance, CSRFService, Rules, Releases, rule) {
         angular.copy($scope.rule, $scope.original_rule);
         $scope.saving = false;
         $modalInstance.close();
-      }).error(function(response) {
+      })
+      .error(function(response) {
         if (typeof response === 'object') {
           $scope.errors = response;
           sweetAlert(
@@ -33,7 +34,8 @@ function ($scope, $modalInstance, CSRFService, Rules, Releases, rule) {
             "error"
           );
         }
-      }).finally(function() {
+      })
+      .finally(function() {
         $scope.saving = false;
       });
     });

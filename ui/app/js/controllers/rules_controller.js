@@ -8,14 +8,16 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal) {
     .success(function(response) {
       // it's the same rule, but this works
       $scope.rules = response.rules;
-    }).error(function() {
+    })
+    .error(function() {
       console.error(arguments);
     });
   } else {
     Rules.getRules()
     .success(function(response) {
       $scope.rules = response.rules;
-    }).error(function() {
+    })
+    .error(function() {
       console.error(arguments);
     });
   }

@@ -5,7 +5,8 @@ angular.module("app").factory('Releases', function($http, $q) {
       $http.get('/api/releases?names_only=1')
       .success(function(response) {
         deferred.resolve(response.names);
-      }).error(function(){
+      })
+      .error(function(){
         console.error(arguments);
         deferred.reject(arguments);
       });

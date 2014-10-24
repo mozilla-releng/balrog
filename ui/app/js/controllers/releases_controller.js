@@ -6,13 +6,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
 
   $scope.release_name = $routeParams.name;
   if ($scope.release_name) {
-    // history of a specific release
-    // Releases.getRelease($scope.release_name)
-    // .success(function(response) {
-    //   console.log("RESPONSE", response);
-    // }).error(function() {
-    //   console.error(arguments);
-    // });
 
     Releases.getHistory($scope.release_name)
     .success(function(response) {

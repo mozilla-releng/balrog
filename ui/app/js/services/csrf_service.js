@@ -22,7 +22,8 @@ angular.module("app").factory('CSRFService', function($http, $q) {
           // console.log('Fetched csrf_token', csrf_token);
           timestamp = (new Date()).getTime();
           deferred.resolve(csrf_token);
-        }).error(function() {
+        })
+        .error(function() {
           deferred.reject('unable to get a CSRF token');
         });
       }
