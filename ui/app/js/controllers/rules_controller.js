@@ -1,10 +1,10 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal) {
 
   $scope.rule_id = parseInt($routeParams.id, 10);
   if ($scope.rule_id) {
     // history of a specific rule
-    RulesService.getHistory($scope.rule_id)
+    Rules.getHistory($scope.rule_id)
     .success(function(response) {
       // it's the same rule, but this works
       $scope.rules = response.rules;
@@ -12,7 +12,7 @@ function($scope, $routeParams, $location, $timeout, RulesService, Search, $modal
       console.error(arguments);
     });
   } else {
-    RulesService.getRules()
+    Rules.getRules()
     .success(function(response) {
       $scope.rules = response.rules;
     }).error(function() {

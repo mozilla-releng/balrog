@@ -1,9 +1,9 @@
 /*global sweetAlert */
 angular.module('app').controller('RuleEditCtrl',
-function ($scope, $modalInstance, CSRFService, RulesService, ReleasesService, rule) {
+function ($scope, $modalInstance, CSRFService, Rules, Releases, rule) {
 
   $scope.names = [];
-  ReleasesService.getNames().then(function(names) {
+  Releases.getNames().then(function(names) {
     $scope.names = names;
   });
 
@@ -18,7 +18,7 @@ function ($scope, $modalInstance, CSRFService, RulesService, ReleasesService, ru
 
     CSRFService.getToken()
     .then(function(csrf_token) {
-      RulesService.updateRule($scope.rule.id, $scope.rule, csrf_token)
+      Rules.updateRule($scope.rule.id, $scope.rule, csrf_token)
       .success(function(response) {
         $scope.rule.data_version = response.new_data_version;
         angular.copy($scope.rule, $scope.original_rule);

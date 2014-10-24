@@ -1,7 +1,7 @@
 /*global: sweetAlert */
 
 angular.module('app').controller('ReleaseEditCtrl',
-function ($scope, $modalInstance, CSRFService, ReleasesService, release) {
+function ($scope, $modalInstance, CSRFService, Releases, release) {
 
   $scope.is_edit = true;
   $scope.original_release = release;
@@ -22,7 +22,7 @@ function ($scope, $modalInstance, CSRFService, ReleasesService, release) {
       .then(function(csrf_token) {
         var data = $scope.release;
         data.data = blob;  // it's an edit
-        ReleasesService.updateRelease($scope.release.name, data, csrf_token)
+        Releases.updateRelease($scope.release.name, data, csrf_token)
         .success(function(response) {
           $scope.release.data_version = response.new_data_version;
           angular.copy($scope.release, $scope.original_release);

@@ -1,7 +1,7 @@
 /*global: sweetAlert */
 
 angular.module('app').controller('NewReleaseCtrl',
-function($scope, $http, $modalInstance, CSRFService, ReleasesService, releases) {
+function($scope, $http, $modalInstance, CSRFService, Releases, releases) {
 
   $scope.is_edit = false;
   $scope.releases = releases;
@@ -34,7 +34,7 @@ function($scope, $http, $modalInstance, CSRFService, ReleasesService, releases) 
       .then(function(csrf_token) {
         var data = $scope.release;
         data.blob = blob;
-        ReleasesService.addRelease(data, csrf_token)
+        Releases.addRelease(data, csrf_token)
         .success(function(response){
           $scope.release.data_version = response.new_data_version;
           $scope.releases.push($scope.release);

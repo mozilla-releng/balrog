@@ -4,7 +4,7 @@ describe("controller: RulesController", function() {
     module("app");
   });
 
-  beforeEach(inject(function($controller, $rootScope, $location, RulesService, $httpBackend) {
+  beforeEach(inject(function($controller, $rootScope, $location, Rules, $httpBackend) {
     this.$location = $location;
     this.$httpBackend = $httpBackend;
     this.scope = $rootScope.$new();
@@ -12,7 +12,7 @@ describe("controller: RulesController", function() {
     $controller('RulesController', {
       $scope: this.scope,
       $location: $location,
-      RulesService: RulesService
+      Rules: Rules
     });
   }));
 

@@ -1,5 +1,5 @@
 angular.module('app').controller('RuleRevertCtrl',
-function ($scope, $modalInstance, CSRFService, RulesService, rule) {
+function ($scope, $modalInstance, CSRFService, Rules, rule) {
 
   $scope.rule = rule;
   $scope.saving = false;
@@ -8,7 +8,7 @@ function ($scope, $modalInstance, CSRFService, RulesService, rule) {
     $scope.saving = true;
     CSRFService.getToken()
     .then(function(csrf_token) {
-      RulesService.revertRule($scope.rule.id, $scope.rule.change_id, csrf_token)
+      Rules.revertRule($scope.rule.id, $scope.rule.change_id, csrf_token)
       .success(function(response) {
         $scope.saving = false;
         $modalInstance.close();

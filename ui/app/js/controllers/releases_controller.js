@@ -1,5 +1,5 @@
 angular.module("app").controller('ReleasesController',
-function($scope, $routeParams, $location, $timeout, ReleasesService, Search, $modal) {
+function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
 
   $scope.loading = true;
   $scope.failed = false;
@@ -7,14 +7,14 @@ function($scope, $routeParams, $location, $timeout, ReleasesService, Search, $mo
   $scope.release_name = $routeParams.name;
   if ($scope.release_name) {
     // history of a specific release
-    // ReleasesService.getRelease($scope.release_name)
+    // Releases.getRelease($scope.release_name)
     // .success(function(response) {
     //   console.log("RESPONSE", response);
     // }).error(function() {
     //   console.error(arguments);
     // });
 
-    ReleasesService.getHistory($scope.release_name)
+    Releases.getHistory($scope.release_name)
     .success(function(response) {
       console.log(response);
       // it's the same release, but this works
@@ -29,7 +29,7 @@ function($scope, $routeParams, $location, $timeout, ReleasesService, Search, $mo
       $scope.loading = false;
     });
   } else {
-    ReleasesService.getReleases()
+    Releases.getReleases()
     .success(function(response) {
       $scope.releases = response.releases;
     })

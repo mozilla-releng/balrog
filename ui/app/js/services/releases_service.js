@@ -1,4 +1,4 @@
-angular.module("app").factory('ReleasesService', function($http, $q) {
+angular.module("app").factory('Releases', function($http, $q) {
   var service = {
     getNames: function() {
       var deferred = $q.defer();

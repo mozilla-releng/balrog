@@ -1,8 +1,8 @@
 angular.module('app').controller('NewRuleCtrl',
-function($scope, $http, $modalInstance, CSRFService, ReleasesService, RulesService, rules) {
+function($scope, $http, $modalInstance, CSRFService, Releases, Rules, rules) {
 
   $scope.names = [];
-  ReleasesService.getNames().then(function(names) {
+  Releases.getNames().then(function(names) {
     $scope.names = names;
   });
 
@@ -26,7 +26,7 @@ function($scope, $http, $modalInstance, CSRFService, ReleasesService, RulesServi
       rule = angular.copy($scope.rule);
       rule.backgroundRate = rule.rate;
       rule.priority = '' + rule.priority;
-      RulesService.addRule(rule, csrf_token)
+      Rules.addRule(rule, csrf_token)
       .success(function(response) {
         $scope.rule.data_version = 1;
         $scope.rule.id = parseInt(response, 10);

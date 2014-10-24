@@ -1,4 +1,4 @@
-angular.module("app").factory('RulesService', function($http) {
+angular.module("app").factory('Rules', function($http) {
   // these routes map to stubbed API endpoints in config/server.js
   var service = {
     getRules: function() {

@@ -1,25 +1,25 @@
 angular.module('app').controller('ReleaseDataCtrl',
-function($scope, $http, $modalInstance, ReleasesService, RulesService, release, diff) {
+function($scope, $http, $modalInstance, Releases, Rules, release, diff) {
 
   $scope.release = release;
   $scope.diff = diff;
 
   if (release.change_id) {
     if (diff) {
-      ReleasesService.getDiff(release.change_id)
+      Releases.getDiff(release.change_id)
       .then(function(response) {
         $scope.release.diff = response.data;
       });
 
     } else {
-      ReleasesService.getData(release.change_id)
+      Releases.getData(release.change_id)
       .then(function(response) {
         $scope.release.data = response.data;
       });
     }
 
   } else {
-    ReleasesService.getRelease(release.name)
+    Releases.getRelease(release.name)
     .then(function(response) {
       $scope.release.data = response.data;
     });
