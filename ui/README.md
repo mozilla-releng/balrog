@@ -11,7 +11,7 @@ To run you first need to install all the npm dependencies:
 
 You need [linemanjs](http://linemanjs.com/) to run it:
 
-    npm install -g linemanjs
+    npm install -g lineman
 
 To run:
 
