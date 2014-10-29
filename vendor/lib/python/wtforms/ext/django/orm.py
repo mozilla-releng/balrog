@@ -4,6 +4,7 @@ Tools for generating forms based on Django models.
 from wtforms import fields as f
 from wtforms import Form
 from wtforms import validators
+from wtforms.compat import iteritems
 from wtforms.ext.django.fields import ModelSelectField
 
 
@@ -50,7 +51,7 @@ class ModelConverter(ModelConverterBase):
         f.DecimalField: ['DecimalField', 'FloatField'],
         f.FileField: ['FileField', 'FilePathField', 'ImageField'],
         f.DateTimeField: ['DateTimeField'],
-        f.DateField : ['DateField'],
+        f.DateField: ['DateField'],
         f.BooleanField: ['BooleanField'],
         f.TextField: ['CharField', 'PhoneNumberField', 'SlugField'],
         f.TextAreaField: ['TextField', 'XMLField'],
@@ -60,7 +61,7 @@ class ModelConverter(ModelConverterBase):
         converters = {}
         if simple_conversions is None:
             simple_conversions = self.DEFAULT_SIMPLE_CONVERSIONS
-        for field_type, django_fields in simple_conversions.iteritems():
+        for field_type, django_fields in iteritems(simple_conversions):
             converter = self.make_simple_converter(field_type)
             for name in django_fields:
                 converters[name] = converter
@@ -98,18 +99,14 @@ class ModelConverter(ModelConverterBase):
         kwargs['validators'].append(validators.url())
         return f.TextField(**kwargs)
 
-    def conv_USStateField(self, model, field, kwargs):
-        try:
-            from django.contrib.localflavor.us.us_states import STATE_CHOICES
-        except ImportError:
-            STATE_CHOICES = []
-
-        return f.SelectField(choices=STATE_CHOICES, **kwargs)
-
     def conv_NullBooleanField(self, model, field, kwargs):
+        from django.db.models.fields import NOT_PROVIDED
+
         def coerce_nullbool(value):
             d = {'None': None, None: None, 'True': True, 'False': False}
-            if value in d:
+            if isinstance(value, NOT_PROVIDED):
+                return None
+            elif value in d:
                 return d[value]
             else:
                 return bool(int(value))

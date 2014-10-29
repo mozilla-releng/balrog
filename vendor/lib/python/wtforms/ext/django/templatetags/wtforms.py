@@ -1,12 +1,15 @@
 """
 Template tags for easy WTForms access in Django templates.
 """
+from __future__ import unicode_literals
+
 import re
 
 from django import template
 from django.conf import settings
 from django.template import Variable
 
+from ....compat import iteritems
 
 register = template.Library()
 
@@ -27,7 +30,7 @@ class FormFieldNode(template.Node):
             return settings.TEMPLATE_STRING_IF_INVALID
 
         h_attrs = {}
-        for k, v in self.html_attrs.iteritems():
+        for k, v in iteritems(self.html_attrs):
             try:
                 h_attrs[k] = v.resolve(context)
             except template.VariableDoesNotExist:
@@ -42,13 +45,14 @@ def do_form_field(parser, token):
     Render a WTForms form field allowing optional HTML attributes.
     Invocation looks like this:
       {% form_field form.username class="big_text" onclick="alert('hello')" %}
-    where form.username is the path to the field value we want.  Any number 
+    where form.username is the path to the field value we want.  Any number
     of key="value" arguments are supported. Unquoted values are resolved as
     template variables.
     """
     parts = token.contents.split(' ', 2)
     if len(parts) < 2:
-        raise template.TemplateSyntaxError('%r tag must have the form field name as the first value, followed by optional key="value" attributes.' % parts[0])
+        error_text = '%r tag must have the form field name as the first value, followed by optional key="value" attributes.'
+        raise template.TemplateSyntaxError(error_text % parts[0])
 
     html_attrs = {}
     if len(parts) == 3:
@@ -56,15 +60,16 @@ def do_form_field(parser, token):
         if (len(raw_args) % 2) != 0:
             raise template.TemplateSyntaxError('%r tag received the incorrect number of key=value arguments.' % parts[0])
         for x in range(0, len(raw_args), 2):
-            html_attrs[str(raw_args[x])] = Variable(raw_args[x+1])
+            html_attrs[str(raw_args[x])] = Variable(raw_args[x + 1])
 
     return FormFieldNode(parts[1], html_attrs)
 
 
-args_split_re = re.compile(ur'''("(?:[^"\\]*(?:\\.[^"\\]*)*)"|'(?:[^'\\]*(?:\\.[^'\\]*)*)'|[^\s=]+)''')
+args_split_re = re.compile(r'''("(?:[^"\\]*(?:\\.[^"\\]*)*)"|'(?:[^'\\]*(?:\\.[^'\\]*)*)'|[^\s=]+)''')
+
 
 def args_split(text):
-    """ Split space-separated key=value arguments.  Keeps quoted strings intact. """ 
+    """ Split space-separated key=value arguments.  Keeps quoted strings intact. """
     for bit in args_split_re.finditer(text):
         bit = bit.group(0)
         if bit[0] == '"' and bit[-1] == '"':

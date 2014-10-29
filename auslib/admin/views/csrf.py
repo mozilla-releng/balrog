@@ -1,5 +1,5 @@
 from flask import Response
-from flaskext.wtf import Form
+from flask_wtf import Form
 
 from auslib.admin.views.base import AdminView
 

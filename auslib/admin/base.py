@@ -44,7 +44,7 @@ app.add_url_rule('/users', view_func=UsersView.as_view('users'))
 app.add_url_rule('/users/<username>/permissions', view_func=PermissionsView.as_view('permissions'))
 app.add_url_rule('/users/<username>/permissions/<path:permission>', view_func=SpecificPermissionView.as_view('specific_permission'))
 # Some permissions may start with a slash, and the <path> converter won't match them, so we need an extra rule to cope.
-app.add_url_rule('/users/<username>/permissions//<path:permission>', view_func=SpecificPermissionView.as_view('specific_permission'))
+app.add_url_rule('/users/<username>/permissions//<path:permission>', view_func=SpecificPermissionView.as_view('specific_permission2'))
 app.add_url_rule('/permissions.html', view_func=PermissionsPageView.as_view('permissions.html'))
 app.add_url_rule('/user_permissions.html', view_func=UserPermissionsPageView.as_view('user_permissions.html'))
 app.add_url_rule('/releases/<release>/builds/<platform>/<locale>', view_func=SingleLocaleView.as_view('single_locale'))

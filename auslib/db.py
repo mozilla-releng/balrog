@@ -4,7 +4,6 @@ import re
 import simplejson as json
 import sys
 import time
-from urlparse import urlparse
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
   create_engine, select, BigInteger
@@ -695,7 +694,7 @@ class Rules(AUSTable):
 
     def addRule(self, changed_by, what, transaction=None):
         ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
-        return ret.inserted_primary_key
+        return ret.inserted_primary_key[0]
 
     def getOrderedRules(self, transaction=None):
         """Returns all of the rules, sorted in ascending order"""

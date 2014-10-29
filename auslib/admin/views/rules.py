@@ -83,7 +83,7 @@ class RulesAPIView(AdminView):
                 headerArchitecture = form.header_arch.data)
         rule_id = dbo.rules.addRule(changed_by=changed_by, what=what,
             transaction=transaction)
-        return Response(status=200, response=rule_id)
+        return Response(status=200, response=str(rule_id))
 
 
 class SingleRuleView(AdminView):

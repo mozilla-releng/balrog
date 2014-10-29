@@ -676,7 +676,6 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                     update_type='z',
                     priority=60)
         rule_id = self.paths.addRule(changed_by='bill', what=what)
-        rule_id = rule_id[0]
         rules = self.paths.t.select().where(self.paths.rule_id==rule_id).execute().fetchall()
         copy_rule = dict(rules[0].items())
         rule = self._stripNullColumns( [copy_rule] )

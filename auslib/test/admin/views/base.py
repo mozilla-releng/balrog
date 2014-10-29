@@ -21,9 +21,9 @@ class ViewTest(unittest.TestCase):
        some helper methods."""
     def setUp(self):
         self.cef_fd, self.cef_file = mkstemp()
-        app.config['SECRET_KEY'] = 'abc123'
+        app.config["SECRET_KEY"] = 'abc123'
         app.config['DEBUG'] = True
-        app.config['CSRF_ENABLED'] = False
+        app.config["WTF_CSRF_ENABLED"] = False
         app.config['WHITELISTED_DOMAINS'] = ['good.com']
         auslib.log.cef_config = auslib.log.get_cef_config(self.cef_file)
         dbo.setDb('sqlite:///:memory:')

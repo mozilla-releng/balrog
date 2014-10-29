@@ -1,19 +1,28 @@
 """
 Useful form fields for use with the Django ORM.
 """
+from __future__ import unicode_literals
+
+import datetime
 import operator
 
-from wtforms import widgets
-from wtforms.fields import SelectFieldBase
+try:
+    from django.conf import settings
+    from django.utils import timezone
+    has_timezone = True
+except ImportError:
+    has_timezone = False
+
+from wtforms import fields, widgets
+from wtforms.compat import string_types
 from wtforms.validators import ValidationError
 
-
 __all__ = (
-    'ModelSelectField', 'QuerySetSelectField',
+    'ModelSelectField', 'QuerySetSelectField', 'DateTimeField'
 )
 
 
-class QuerySetSelectField(SelectFieldBase):
+class QuerySetSelectField(fields.SelectFieldBase):
     """
     Given a QuerySet either at initialization or inside a view, will display a
     select drop-down field of choices. The `data` property actually will
@@ -33,17 +42,17 @@ class QuerySetSelectField(SelectFieldBase):
     """
     widget = widgets.Select()
 
-    def __init__(self, label=None, validators=None, queryset=None, get_label=None, allow_blank=False, blank_text=u'', **kwargs):
+    def __init__(self, label=None, validators=None, queryset=None, get_label=None, allow_blank=False, blank_text='', **kwargs):
         super(QuerySetSelectField, self).__init__(label, validators, **kwargs)
         self.allow_blank = allow_blank
         self.blank_text = blank_text
         self._set_data(None)
         if queryset is not None:
-            self.queryset = queryset.all() # Make sure the queryset is fresh
+            self.queryset = queryset.all()  # Make sure the queryset is fresh
 
         if get_label is None:
             self.get_label = lambda x: x
-        elif isinstance(get_label, basestring):
+        elif isinstance(get_label, string_types):
             self.get_label = operator.attrgetter(get_label)
         else:
             self.get_label = get_label
@@ -64,7 +73,7 @@ class QuerySetSelectField(SelectFieldBase):
 
     def iter_choices(self):
         if self.allow_blank:
-            yield (u'__None', self.blank_text, self.data is None)
+            yield ('__None', self.blank_text, self.data is None)
 
         for obj in self.queryset:
             yield (obj.pk, self.get_label(obj), obj == self.data)
@@ -93,3 +102,32 @@ class ModelSelectField(QuerySetSelectField):
     """
     def __init__(self, label=None, validators=None, model=None, **kwargs):
         super(ModelSelectField, self).__init__(label, validators, queryset=model._default_manager.all(), **kwargs)
+
+
+class DateTimeField(fields.DateTimeField):
+    """
+    Adds support for Django's timezone utilities.
+    Requires Django >= 1.5
+    """
+    def __init__(self, *args, **kwargs):
+        if not has_timezone:
+            raise ImportError('DateTimeField requires Django >= 1.5')
+
+        super(DateTimeField, self).__init__(*args, **kwargs)
+
+    def process_formdata(self, valuelist):
+        super(DateTimeField, self).process_formdata(valuelist)
+
+        date = self.data
+
+        if settings.USE_TZ and date is not None and timezone.is_naive(date):
+            current_timezone = timezone.get_current_timezone()
+            self.data = timezone.make_aware(date, current_timezone)
+
+    def _value(self):
+        date = self.data
+
+        if settings.USE_TZ and isinstance(date, datetime.datetime) and timezone.is_aware(date):
+            self.data = timezone.localtime(date)
+
+        return super(DateTimeField, self)._value()

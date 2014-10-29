@@ -1,6 +1,9 @@
 import simplejson as json
 
-from flaskext.wtf import Form, TextField, Required, TextInput, FileInput, IntegerField, SelectField, validators, HiddenInput, Optional
+from flask_wtf import Form
+from wtforms import StringField, IntegerField, SelectField
+from wtforms.widgets import TextInput, FileInput, HiddenInput
+from wtforms.validators import Required, Optional, NumberRange, Length
 
 from auslib.blobs.base import createBlob
 
@@ -36,17 +39,17 @@ class JSONFieldMixin(object):
 
 # We need to be sure that we list JSONFieldMixin BEFORE the FileField in the derived classes list
 # We want to use JSONFieldMixin's version of process_formdata instead of FileField's version.
-class JSONBlobFileField(JSONFieldMixin, TextField):
+class JSONBlobFileField(JSONFieldMixin, StringField):
     """FileField that parses incoming data as JSON and converts it into a blob"""
     def _process_JSON_data(self, valuelist):
         self.data = createBlob(valuelist[0])
         self.data.isValid()
 
 
-# We need to be sure that we list JSONFieldMixin BEFORE the TextField in the derived classes list
-# We want to use JSONFieldMixin's version of process_formdata instead of TextField's version.
-class JSONTextField(JSONFieldMixin, TextField):
-    """TextField that parses incoming data as JSON."""
+# We need to be sure that we list JSONFieldMixin BEFORE the StringField in the derived classes list
+# We want to use JSONFieldMixin's version of process_formdata instead of StringField's version.
+class JSONStringField(JSONFieldMixin, StringField):
+    """StringField that parses incoming data as JSON."""
     def _process_JSON_data(self, valuelist):
         self.data = json.loads(valuelist[0])
 
@@ -57,8 +60,8 @@ class JSONTextField(JSONFieldMixin, TextField):
         return json.dumps(self.data) if self.data is not None else u''
 
 
-class NullableTextField(TextField):
-    """TextField that parses incoming data converting empty strings to None's."""
+class NullableStringField(StringField):
+    """StringField that parses incoming data converting empty strings to None's."""
     def process_formdata(self, valuelist):
         if valuelist and valuelist[0]:
             if valuelist[0] == '':
@@ -85,63 +88,63 @@ class DbEditableForm(Form):
     data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 
 class PermissionForm(DbEditableForm):
-    options = JSONTextField('Options')
+    options = JSONStringField('Options')
 
 class NewPermissionForm(PermissionForm):
-    permission = TextField('Permission', validators=[Required()])
+    permission = StringField('Permission', validators=[Required()])
 
 class ExistingPermissionForm(PermissionForm):
-    permission = TextField('Permission', validators=[Required()], widget=DisableableTextInput(disabled=True))
+    permission = StringField('Permission', validators=[Required()], widget=DisableableTextInput(disabled=True))
 
 class ReleaseForm(Form):
     # Because we do implicit release creation in the Releases views, we can't
     # have data_version be Required(). The views are responsible for checking
     # for its existence in this case.
     data_version = IntegerField('data_version', widget=HiddenInput())
-    product = TextField('Product', validators=[Required()])
-    version = TextField('Version', validators=[Required()])
-    hashFunction = TextField('Hash Function')
-    data = JSONTextField('Data', validators=[Required()])
+    product = StringField('Product', validators=[Required()])
+    version = StringField('Version', validators=[Required()])
+    hashFunction = StringField('Hash Function')
+    data = JSONStringField('Data', validators=[Required()])
     schema_version = IntegerField('Schema Version')
-    copyTo = JSONTextField('Copy To', default=list)
-    alias = JSONTextField('Alias', default=list)
+    copyTo = JSONStringField('Copy To', default=list)
+    alias = JSONStringField('Alias', default=list)
 
 class RuleForm(Form):
-    backgroundRate = IntegerField('Background Rate', validators=[Required(), validators.NumberRange(0, 100) ])
+    backgroundRate = IntegerField('Background Rate', validators=[Required(), NumberRange(0, 100) ])
     priority = IntegerField('Priority', validators=[Required()])
     mapping = SelectField('Mapping', validators=[])
-    product = NullableTextField('Product', validators=[validators.Length(0, 15)] )
-    version = NullableTextField('Version', validators=[validators.Length(0,10) ])
-    build_id = NullableTextField('BuildID', validators=[validators.Length(0,20) ])
-    channel = NullableTextField('Channel', validators=[validators.Length(0,75) ])
-    locale = NullableTextField('Locale', validators=[validators.Length(0,10) ])
-    distribution = NullableTextField('Distribution', validators=[validators.Length(0,100) ])
-    build_target = NullableTextField('Build Target', validators=[validators.Length(0,75) ])
-    os_version = NullableTextField('OS Version', validators=[validators.Length(0,1000) ])
-    dist_version = NullableTextField('Dist Version', validators=[validators.Length(0,100) ])
-    comment = NullableTextField('Comment', validators=[validators.Length(0,500) ])
+    product = NullableStringField('Product', validators=[Length(0, 15)] )
+    version = NullableStringField('Version', validators=[Length(0,10) ])
+    build_id = NullableStringField('BuildID', validators=[Length(0,20) ])
+    channel = NullableStringField('Channel', validators=[Length(0,75) ])
+    locale = NullableStringField('Locale', validators=[Length(0,10) ])
+    distribution = NullableStringField('Distribution', validators=[Length(0,100) ])
+    build_target = NullableStringField('Build Target', validators=[Length(0,75) ])
+    os_version = NullableStringField('OS Version', validators=[Length(0,1000) ])
+    dist_version = NullableStringField('Dist Version', validators=[Length(0,100) ])
+    comment = NullableStringField('Comment', validators=[Length(0,500) ])
     update_type = SelectField('Update Type', choices=[('minor','minor'), ('major', 'major')], validators=[])
-    header_arch = NullableTextField('Header Architecture', validators=[validators.Length(0,10) ])
+    header_arch = NullableStringField('Header Architecture', validators=[Length(0,10) ])
 
 class EditRuleForm(DbEditableForm):
-    backgroundRate = IntegerField('Background Rate', validators=[Optional(), validators.NumberRange(0, 100) ])
+    backgroundRate = IntegerField('Background Rate', validators=[Optional(), NumberRange(0, 100) ])
     priority = IntegerField('Priority', validators=[Optional()])
     mapping = SelectField('Mapping', validators=[Optional()], coerce=NoneOrType(unicode))
-    product = NullableTextField('Product', validators=[Optional(), validators.Length(0, 15)] )
-    version = NullableTextField('Version', validators=[Optional(), validators.Length(0,10) ])
-    build_id = NullableTextField('BuildID', validators=[Optional(), validators.Length(0,20) ])
-    channel = NullableTextField('Channel', validators=[Optional(), validators.Length(0,75) ])
-    locale = NullableTextField('Locale', validators=[Optional(), validators.Length(0,10) ])
-    distribution = NullableTextField('Distribution', validators=[Optional(), validators.Length(0,100) ])
-    build_target = NullableTextField('Build Target', validators=[Optional(), validators.Length(0,75) ])
-    os_version = NullableTextField('OS Version', validators=[Optional(), validators.Length(0,1000) ])
-    dist_version = NullableTextField('Dist Version', validators=[Optional(), validators.Length(0,100) ])
-    comment = NullableTextField('Comment', validators=[Optional(), validators.Length(0,500) ])
+    product = NullableStringField('Product', validators=[Optional(), Length(0, 15)] )
+    version = NullableStringField('Version', validators=[Optional(), Length(0,10) ])
+    build_id = NullableStringField('BuildID', validators=[Optional(), Length(0,20) ])
+    channel = NullableStringField('Channel', validators=[Optional(), Length(0,75) ])
+    locale = NullableStringField('Locale', validators=[Optional(), Length(0,10) ])
+    distribution = NullableStringField('Distribution', validators=[Optional(), Length(0,100) ])
+    build_target = NullableStringField('Build Target', validators=[Optional(), Length(0,75) ])
+    os_version = NullableStringField('OS Version', validators=[Optional(), Length(0,1000) ])
+    dist_version = NullableStringField('Dist Version', validators=[Optional(), Length(0,100) ])
+    comment = NullableStringField('Comment', validators=[Optional(), Length(0,500) ])
     update_type = SelectField('Update Type', choices=[('minor','minor'), ('major', 'major')], validators=[Optional()], coerce=NoneOrType(unicode))
-    header_arch = NullableTextField('Header Architecture', validators=[Optional(), validators.Length(0,10) ])
+    header_arch = NullableStringField('Header Architecture', validators=[Optional(), Length(0,10) ])
 
 class NewReleaseForm(Form):
-    name = TextField('Name', validators=[Required()])
-    version = TextField('Version', validators=[Required()])
-    product = TextField('Product', validators=[Required()])
+    name = StringField('Name', validators=[Required()])
+    version = StringField('Version', validators=[Required()])
+    product = StringField('Product', validators=[Required()])
     blob = JSONBlobFileField('Data', validators=[Required()], widget=FileInput())

@@ -43,16 +43,16 @@ def robots():
 
 app.add_url_rule(
     '/update/2/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest'),
+    view_func=ClientRequestView.as_view('clientrequest2'),
     defaults={'queryVersion': 2},
 )
 app.add_url_rule(
     '/update/3/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest'),
+    view_func=ClientRequestView.as_view('clientrequest3'),
     defaults={'queryVersion': 3},
 )
 app.add_url_rule(
     '/update/4/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/<platformVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest'),
+    view_func=ClientRequestView.as_view('clientrequest4'),
     defaults={'queryVersion': 4},
 )

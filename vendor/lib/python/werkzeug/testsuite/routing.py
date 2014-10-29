@@ -5,7 +5,7 @@
 
     Routing tests.
 
-    :copyright: (c) 2011 by Armin Ronacher.
+    :copyright: (c) 2014 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 import unittest
@@ -36,7 +36,7 @@ class RoutingTestCase(WerkzeugTestCase):
         adapter = map.bind('example.org', '/test')
         try:
             adapter.match('/bar')
-        except r.RequestRedirect, e:
+        except r.RequestRedirect as e:
             assert e.new_url == 'http://example.org/test/bar/'
         else:
             self.fail('Expected request redirect')
@@ -44,7 +44,7 @@ class RoutingTestCase(WerkzeugTestCase):
         adapter = map.bind('example.org', '/')
         try:
             adapter.match('/bar')
-        except r.RequestRedirect, e:
+        except r.RequestRedirect as e:
             assert e.new_url == 'http://example.org/bar/'
         else:
             self.fail('Expected request redirect')
@@ -52,7 +52,7 @@ class RoutingTestCase(WerkzeugTestCase):
         adapter = map.bind('example.org', '/')
         try:
             adapter.match('/bar', query_args={'aha': 'muhaha'})
-        except r.RequestRedirect, e:
+        except r.RequestRedirect as e:
             assert e.new_url == 'http://example.org/bar/?aha=muhaha'
         else:
             self.fail('Expected request redirect')
@@ -60,7 +60,7 @@ class RoutingTestCase(WerkzeugTestCase):
         adapter = map.bind('example.org', '/')
         try:
             adapter.match('/bar', query_args='aha=muhaha')
-        except r.RequestRedirect, e:
+        except r.RequestRedirect as e:
             assert e.new_url == 'http://example.org/bar/?aha=muhaha'
         else:
             self.fail('Expected request redirect')
@@ -69,20 +69,31 @@ class RoutingTestCase(WerkzeugTestCase):
                                                      'http://example.org/'))
         try:
             adapter.match()
-        except r.RequestRedirect, e:
+        except r.RequestRedirect as e:
             assert e.new_url == 'http://example.org/bar/?foo=bar'
         else:
             self.fail('Expected request redirect')
 
     def test_environ_defaults(self):
         environ = create_environ("/foo")
-        self.assert_equal(environ["PATH_INFO"], '/foo')
+        self.assert_strict_equal(environ["PATH_INFO"], '/foo')
         m = r.Map([r.Rule("/foo", endpoint="foo"), r.Rule("/bar", endpoint="bar")])
         a = m.bind_to_environ(environ)
-        self.assert_equal(a.match("/foo"), ('foo', {}))
-        self.assert_equal(a.match(), ('foo', {}))
-        self.assert_equal(a.match("/bar"), ('bar', {}))
+        self.assert_strict_equal(a.match("/foo"), ('foo', {}))
+        self.assert_strict_equal(a.match(), ('foo', {}))
+        self.assert_strict_equal(a.match("/bar"), ('bar', {}))
         self.assert_raises(r.NotFound, a.match, "/bars")
+
+    def test_environ_nonascii_pathinfo(self):
+        environ = create_environ(u'/лошадь')
+        m = r.Map([
+            r.Rule(u'/', endpoint='index'),
+            r.Rule(u'/лошадь', endpoint='horse')
+        ])
+        a = m.bind_to_environ(environ)
+        self.assert_strict_equal(a.match(u'/'), ('index', {}))
+        self.assert_strict_equal(a.match(u'/лошадь'), ('horse', {}))
+        self.assert_raises(r.NotFound, a.match, u'/барсук')
 
     def test_basic_building(self):
         map = r.Map([
@@ -191,7 +202,7 @@ class RoutingTestCase(WerkzeugTestCase):
         dispatch = lambda p, q=False: Response.force_type(adapter.dispatch(view_func, p,
                                                           catch_http_exceptions=q), env)
 
-        assert dispatch('/').data == "('root', {})"
+        assert dispatch('/').data == b"('root', {})"
         assert dispatch('/foo').status_code == 301
         raise_this = r.NotFound()
         self.assert_raises(r.NotFound, lambda: dispatch('/bar'))
@@ -229,7 +240,7 @@ class RoutingTestCase(WerkzeugTestCase):
         adapter = map.bind('localhost', '/')
         try:
             adapter.match(u'/öäü')
-        except r.RequestRedirect, e:
+        except r.RequestRedirect as e:
             assert e.new_url == 'http://localhost/%C3%B6%C3%A4%C3%BC/'
         else:
             self.fail('expected request redirect exception')
@@ -240,7 +251,7 @@ class RoutingTestCase(WerkzeugTestCase):
         adapter = map.bind('localhost', '/')
         try:
             adapter.match(u'/foo/42')
-        except r.RequestRedirect, e:
+        except r.RequestRedirect as e:
             assert e.new_url == 'http://localhost/foo'
         else:
             self.fail('expected request redirect exception')
@@ -251,7 +262,7 @@ class RoutingTestCase(WerkzeugTestCase):
         adapter = map.bind('localhost', '/', subdomain='other')
         try:
             adapter.match(u'/foo/42')
-        except r.RequestRedirect, e:
+        except r.RequestRedirect as e:
             assert e.new_url == 'http://test.localhost/foo'
         else:
             self.fail('expected request redirect exception')
@@ -347,6 +358,13 @@ class RoutingTestCase(WerkzeugTestCase):
             ('/test4-blah', '', 'test4bar'),
             ('/test4-meh', '', 'test4baz')
         ])
+
+    def test_non_string_parts(self):
+        m = r.Map([
+            r.Rule('/<foo>', endpoint='foo')
+        ])
+        a = m.bind('example.com')
+        self.assert_equal(a.build('foo', {'foo': 42}), '/42')
 
     def test_complex_routing_rules(self):
         m = r.Map([
@@ -516,7 +534,7 @@ class RoutingTestCase(WerkzeugTestCase):
         def ensure_redirect(path, new_url, args=None):
             try:
                 a.match(path, query_args=args)
-            except r.RequestRedirect, e:
+            except r.RequestRedirect as e:
                 assert e.new_url == 'http://example.com' + new_url
             else:
                 assert False, 'expected redirect'
@@ -566,7 +584,7 @@ class RoutingTestCase(WerkzeugTestCase):
         assert a.match('/foo/') == ('x', {'domain': 'example.com', 'page': 1})
         try:
             a.match('/foo')
-        except r.RequestRedirect, e:
+        except r.RequestRedirect as e:
             assert e.new_url == 'http://www.example.com/foo/'
         else:
             assert False, 'expected redirect'
@@ -576,7 +594,7 @@ class RoutingTestCase(WerkzeugTestCase):
         assert a.match('/2') == ('x', {'domain': 'example.com', 'page': 2})
         try:
             a.match('/1')
-        except r.RequestRedirect, e:
+        except r.RequestRedirect as e:
             assert e.new_url == 'http://www.example.com/foo/'
         else:
             assert False, 'expected redirect'
@@ -607,24 +625,62 @@ class RoutingTestCase(WerkzeugTestCase):
         exc = r.RequestRedirect('http://www.google.com/')
         exc.code = 307
         env = create_environ()
-        self.assert_equal(exc.get_response(env).status_code, exc.code)
+        self.assert_strict_equal(exc.get_response(env).status_code, exc.code)
+
+    def test_redirect_path_quoting(self):
+        url_map = r.Map([
+            r.Rule('/<category>', defaults={'page': 1}, endpoint='category'),
+            r.Rule('/<category>/page/<int:page>', endpoint='category')
+        ])
+
+        adapter = url_map.bind('example.com')
+        try:
+            adapter.match('/foo bar/page/1')
+        except r.RequestRedirect as e:
+            response = e.get_response({})
+            self.assert_strict_equal(response.headers['location'],
+                                     u'http://example.com/foo%20bar')
+        else:
+            self.fail('Expected redirect')
 
     def test_unicode_rules(self):
         m = r.Map([
-            r.Rule(u'/войти/', endpoint='enter')
+            r.Rule(u'/войти/', endpoint='enter'),
+            r.Rule(u'/foo+bar/', endpoint='foobar')
         ])
         a = m.bind(u'☃.example.com')
         try:
             a.match(u'/войти')
-        except r.RequestRedirect, e:
-            self.assert_equal(e.new_url, 'http://xn--n3h.example.com/'
+        except r.RequestRedirect as e:
+            self.assert_strict_equal(e.new_url, 'http://xn--n3h.example.com/'
                               '%D0%B2%D0%BE%D0%B9%D1%82%D0%B8/')
         endpoint, values = a.match(u'/войти/')
-        self.assert_equal(endpoint, 'enter')
-        self.assert_equal(values, {})
+        self.assert_strict_equal(endpoint, 'enter')
+        self.assert_strict_equal(values, {})
+
+        try:
+            a.match(u'/foo+bar')
+        except r.RequestRedirect as e:
+            self.assert_strict_equal(e.new_url, 'http://xn--n3h.example.com/'
+                              'foo+bar/')
+        endpoint, values = a.match(u'/foo+bar/')
+        self.assert_strict_equal(endpoint, 'foobar')
+        self.assert_strict_equal(values, {})
 
         url = a.build('enter', {}, force_external=True)
-        self.assert_equal(url, 'http://xn--n3h.example.com/%D0%B2%D0%BE%D0%B9%D1%82%D0%B8/')
+        self.assert_strict_equal(url, 'http://xn--n3h.example.com/%D0%B2%D0%BE%D0%B9%D1%82%D0%B8/')
+
+        url = a.build('foobar', {}, force_external=True)
+        self.assert_strict_equal(url, 'http://xn--n3h.example.com/foo+bar/')
+
+    def test_map_repr(self):
+        m = r.Map([
+            r.Rule(u'/wat', endpoint='enter'),
+            r.Rule(u'/woop', endpoint='foobar')
+        ])
+        rv = repr(m)
+        self.assert_strict_equal(rv,
+            "Map([<Rule '/woop' -> foobar>, <Rule '/wat' -> enter>])")
 
 
 def suite():
