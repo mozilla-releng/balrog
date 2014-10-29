@@ -29,6 +29,15 @@ angular.module("app").factory('Rules', function($http) {
       var data = {change_id: change_id};
       data.csrf_token = csrf_token;
       return $http.post('/api/rules/' + id + '/revisions', data);
+    },
+    setDataAliases: function(rule) {
+      // change the rule so that it has the necessary keys
+      // that it needs for being posted to the back end
+      rule.build_id = rule.buildID;
+      rule.build_target = rule.buildTarget;
+      rule.os_version = rule.osVersion;
+      rule.dist_version = rule.distVersion;
+      rule.header_arch = rule.headerArchitecture;
     }
   };
   return service;

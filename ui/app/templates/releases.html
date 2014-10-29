@@ -82,8 +82,12 @@
   <div class="panel-body">
     <div class="left" style="float: left">
 
-      <h5 title="Mapping" ng-bind-html="highlightSearch(release.name, 'name')"></h5>
-      {data_version: {{ release.data_version }} }
+      <h5 title="Mapping">
+        Mapping: <b ng-bind-html="highlightSearch(release.name, 'name')"></b>
+      </h5>
+      <h5 title="Data version">
+        Data version: <b>{{ release.data_version }}</b>
+      </h5>
 
       <button class="btn btn-default btn-xs" ng-click="openDataModal(release)">View Data</button>
       <button ng-show="release_name" class="btn btn-default btn-xs" ng-click="openDiffModal(release)">View Diff</button>

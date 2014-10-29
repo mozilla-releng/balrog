@@ -18,7 +18,10 @@ function ($scope, $modalInstance, CSRFService, Rules, Releases, rule) {
 
     CSRFService.getToken()
     .then(function(csrf_token) {
-      Rules.updateRule($scope.rule.id, $scope.rule, csrf_token)
+      // set up some aliases that the data endpoint expects
+      Rules.setDataAliases($scope.rule);
+
+      Rules.updateRule($scope.rule.rule_id, $scope.rule, csrf_token)
       .success(function(response) {
         $scope.rule.data_version = response.new_data_version;
         angular.copy($scope.rule, $scope.original_rule);

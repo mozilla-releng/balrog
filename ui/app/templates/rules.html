@@ -71,17 +71,22 @@
         <a ng-show="!rule_id" class="btn btn-default btn-xs" href="/rules/{{ rule.id }}">History</a>
       </div>
 
-      <span title="Product" ng-bind-html="highlightSearch(rule.product, 'product')"></span> :
-      <span title="Channel" ng-bind-html="highlightSearch(rule.channel, 'channel')"></span>
+      <i title="Product" ng-show="!rule.product">no product</i>
+      <b title="Product" ng-show="rule.product" ng-bind-html="highlightSearch(rule.product, 'product')"></b>
+      :
+      <i title="Channel" ng-show="!rule.channel">no channel</i>
+      <b title="Channel" ng-show="rule.channel" ng-bind-html="highlightSearch(rule.channel, 'channel')"></b>
     </h3>
   </div>
   <div class="panel-body">
     <div class="left" style="float: left">
 
-      <h5 title="Mapping" ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></h5>
-      <!-- <p>
-        Version#: {{ rule.data_version }}
-      </p> -->
+      <h5 title="Mapping">
+        Mapping: <b ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></b>
+      </h5>
+      <h5 title="Data version">
+        Data version: <b>{{ rule.data_version }}</b>
+      </h5>
       <p ng-if="rule.comment">
         <b>Comment:</b>
         {{ rule.comment }}
@@ -91,27 +96,27 @@
 
     <dl class="dl-horizontal" style="float:right">
       <dt>Rate:</dt>
-      <dd>{{ rule.background_rate }}</dd>
+      <dd>{{ rule.backgroundRate }}</dd>
       <dt>Priority:</dt>
       <dd>{{ rule.priority }}</dd>
       <dt>Version:</dt>
       <dd>{{ rule.version }}</dd>
       <dt>Build ID:</dt>
-      <dd>{{ rule.build_id }}</dd>
+      <dd>{{ rule.buildID }}</dd>
       <dt>Locale:</dt>
       <dd>{{ rule.locale }}</dd>
       <dt>Distribution:</dt>
-      <dd>{{ rule.dist_version }}</dd>
+      <dd>{{ rule.distribution }}</dd>
       <dt>Build Target:</dt>
-      <dd>{{ rule.build_target }}</dd>
+      <dd>{{ rule.buildTarget }}</dd>
       <dt>OS Version:</dt>
-      <dd>{{ rule.os_version }}</dd>
+      <dd>{{ rule.osVersion }}</dd>
       <dt>Dist Version:</dt>
-      <dd>{{ rule.dist_version }}</dd>
+      <dd>{{ rule.distVersion }}</dd>
       <dt>Update type:</dt>
       <dd>{{ rule.update_type }}</dd>
       <dt>Header Architecture:</dt>
-      <dd>{{ rule.header_arch }}</dd>
+      <dd>{{ rule.headerArchitecture }}</dd>
     </dl>
 
   </div>

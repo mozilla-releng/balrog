@@ -22,7 +22,9 @@ function($scope, $http, $modalInstance, CSRFService, Releases, Rules, rules) {
     $scope.errors = {};
     CSRFService.getToken()
     .then(function(csrf_token) {
-      // need to change to names the server expects
+      // set up some aliases that the data endpoint expects
+      Rules.setDataAliases($scope.rule);
+
       rule = angular.copy($scope.rule);
       rule.backgroundRate = rule.rate;
       rule.priority = '' + rule.priority;

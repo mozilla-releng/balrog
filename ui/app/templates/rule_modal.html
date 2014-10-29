@@ -22,7 +22,7 @@
     </div>
     <div class="form-group" ng-class="{'has-error': errors.backgroundRate}">
       <label for="id_rate">Rate</label>
-      <input type="number" class="form-control" id="id_rate" ng-model="rule.rate">
+      <input type="number" class="form-control" id="id_rate" ng-model="rule.backgroundRate">
       <p class="help-block" ng-show="errors.backgroundRate">{{ errors.backgroundRate.join(', ') }}</p>
     </div>
     <div class="form-group" ng-class="{'has-error': errors.priority}">
@@ -37,7 +37,7 @@
     </div>
     <div class="form-group" ng-class="{'has-error': errors.buildID}">
       <label for="id_build_id">Build ID</label>
-      <input type="text" class="form-control" id="id_build_id" ng-model="rule.build_id">
+      <input type="text" class="form-control" id="id_build_id" ng-model="rule.buildID">
       <p class="help-block" ng-show="errors.buildID">{{ errors.buildID.join(', ') }}</p>
     </div>
     <div class="form-group" ng-class="{'has-error': errors.locale}">
@@ -45,30 +45,35 @@
       <input type="text" class="form-control" id="id_locale" ng-model="rule.locale">
       <p class="help-block" ng-show="errors.locale">{{ errors.locale.join(', ') }}</p>
     </div>
-    <div class="form-group" ng-class="{'has-error': errors.dist_version}">
+    <div class="form-group" ng-class="{'has-error': errors.distribution}">
       <label for="id_distribution">Distribution</label>
-      <input type="text" class="form-control" id="id_distribution" ng-model="rule.dist_version">
-      <p class="help-block" ng-show="errors.dist_version">{{ errors.dist_version.join(', ') }}</p>
+      <input type="text" class="form-control" id="id_distribution" ng-model="rule.distribution">
+      <p class="help-block" ng-show="errors.distribution">{{ errors.distribution.join(', ') }}</p>
     </div>
-    <div class="form-group" ng-class="{'has-error': errors.build_target}">
+    <div class="form-group" ng-class="{'has-error': errors.buildTarget}">
       <label for="id_build_target">Build Target</label>
-      <input type="text" class="form-control" id="id_build_target" ng-model="rule.build_target">
-      <p class="help-block" ng-show="errors.build_target">{{ errors.build_target.join(', ') }}</p>
+      <input type="text" class="form-control" id="id_build_target" ng-model="rule.buildTarget">
+      <p class="help-block" ng-show="errors.buildTarget">{{ errors.buildTarget.join(', ') }}</p>
     </div>
-    <div class="form-group" ng-class="{'has-error': errors.os_version}">
+    <div class="form-group" ng-class="{'has-error': errors.osVersion}">
       <label for="id_os_version">OS Version</label>
-      <input type="text" class="form-control" id="id_os_version" ng-model="rule.os_version">
-      <p class="help-block" ng-show="errors.os_version">{{ errors.os_version.join(', ') }}</p>
+      <input type="text" class="form-control" id="id_os_version" ng-model="rule.osVersion">
+      <p class="help-block" ng-show="errors.osVersion">{{ errors.osVersion.join(', ') }}</p>
+    </div>
+    <div class="form-group" ng-class="{'has-error': errors.distVersion}">
+      <label for="id_distribution">Dist version</label>
+      <input type="text" class="form-control" id="id_distribution" ng-model="rule.distVersion">
+      <p class="help-block" ng-show="errors.distVersion">{{ errors.distVersion.join(', ') }}</p>
     </div>
     <div class="form-group" ng-class="{'has-error': errors.update_type}">
       <label for="id_update_type">Update Type</label>
       <input type="text" class="form-control" id="id_update_type" ng-model="rule.update_type">
       <p class="help-block" ng-show="errors.update_type">{{ errors.update_type.join(', ') }}</p>
     </div>
-    <div class="form-group" ng-class="{'has-error': errors.header_arch}">
+    <div class="form-group" ng-class="{'has-error': errors.headerArchitecture}">
       <label for="id_header_arch">Header Architecture</label>
-      <input type="text" class="form-control" id="id_header_arch" ng-model="rule.header_arch">
-      <p class="help-block" ng-show="errors.header_arch">{{ errors.header_arch.join(', ') }}</p>
+      <input type="text" class="form-control" id="id_header_arch" ng-model="rule.headerArchitecture">
+      <p class="help-block" ng-show="errors.headerArchitecture">{{ errors.headerArchitecture.join(', ') }}</p>
     </div>
 
     <input type="hidden" name="data_version" ng-model="rule.data_version">
