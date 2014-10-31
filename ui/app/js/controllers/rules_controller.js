@@ -201,6 +201,16 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         rules: function() {
           return $scope.rules;
         },
+        rule: function() {
+          // blank new default rule
+          return {
+            product: '',
+            backgroundRate: 0,
+            priority: 0,
+            update_type: 'minor',
+            _duplicate: false,
+          };
+        }
       }
     });
 
@@ -211,6 +221,34 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
   /* End openNewRuleModal */
+
+  $scope.openDuplicateModal = function(rule) {
+    console.log('Duplicate', rule);
+    var modalInstance = $modal.open({
+      templateUrl: 'rule_modal.html',
+      controller: 'NewRuleCtrl',
+      // size: 'sm',
+      resolve: {
+        rules: function() {
+          return $scope.rules;
+        },
+        rule: function() {
+          var copy = angular.copy(rule);
+          copy.data_version = '';
+          copy.rule_id = '';
+          copy._duplicate = true;
+          return copy;
+        },
+      }
+    });
+
+    modalInstance.result.then(function () {
+      // $scope.selected = selectedItem;
+    }, function () {
+      console.log('modal closed');
+    });
+  };
+  /* End openDuplicateRuleModal */
 
   $scope.openRevertModal = function(rule) {
 
