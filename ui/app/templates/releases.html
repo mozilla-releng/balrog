@@ -75,16 +75,15 @@
         <a ng-show="!release_name" class="btn btn-default btn-xs" ng-href="/releases/{{ release.name }}">History</a>
 
       </div>
-      <span title="Product" ng-bind-html="highlightSearch(release.product, 'product')"></span>
-      <span title="Version" ng-bind-html="highlightSearch(release.version, 'version')"></span>
+      <span ng-bind-html="highlightSearch(release.name, 'name')"></span>
+
     </h3>
   </div>
   <div class="panel-body">
     <div class="left" style="float: left">
+      <b title="Product" ng-bind-html="highlightSearch(release.product, 'product')"></b>
+      <b title="Version" ng-bind-html="highlightSearch(release.version, 'version')"></b>
 
-      <h5 title="Mapping">
-        Mapping: <b ng-bind-html="highlightSearch(release.name, 'name')"></b>
-      </h5>
       <h5 title="Data version">
         Data version: <b>{{ release.data_version }}</b>
       </h5>
