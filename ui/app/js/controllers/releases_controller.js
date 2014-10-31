@@ -75,7 +75,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
   $scope.pageSize = 10;  // default
 
   $scope.filters = {
-    search: '',
+    search: $location.hash(),
   };
 
   $scope.hasFilter = function() {
@@ -103,6 +103,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
   });
 
   $scope.$watchCollection('filters.search_actual', function(value) {
+    $location.hash(value);
     Search.noticeSearchChange(
       value,
       ['product', 'channel', 'mapping']

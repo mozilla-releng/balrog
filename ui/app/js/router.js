@@ -11,7 +11,8 @@ angular.module("app").config(function($routeProvider, $locationProvider) {
 
   .when('/permissions', {
     templateUrl: 'permissions.html',
-    controller: 'PermissionsController'
+    controller: 'PermissionsController',
+    reloadOnSearch: false
   })
 
   .when('/permissions/:username', {
@@ -21,22 +22,26 @@ angular.module("app").config(function($routeProvider, $locationProvider) {
 
   .when('/releases', {
     templateUrl: 'releases.html',
-    controller: 'ReleasesController'
+    controller: 'ReleasesController',
+    reloadOnSearch: false
   })
 
   .when('/releases/:name', {
     templateUrl: 'releases.html',
-    controller: 'ReleasesController'
+    controller: 'ReleasesController',
+    reloadOnSearch: false
   })
 
   .when('/rules', {
     templateUrl: 'rules.html',
-    controller: 'RulesController'
+    controller: 'RulesController',
+    reloadOnSearch: false
   })
 
   .when('/rules/:id', {
     templateUrl: 'rules.html',
-    controller: 'RulesController'
+    controller: 'RulesController',
+    reloadOnSearch: false
   })
   ;
 

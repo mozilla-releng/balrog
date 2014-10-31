@@ -1,5 +1,10 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route) {
+
+  // var lastRoute = $route.current;
+  // if ($route.current.$route.templateUrl.indexOf('mycurrentpath') > 0) {
+  //   $route.current = lastRoute;
+  // }
 
   $scope.loading = true;
   $scope.failed = false;
@@ -66,7 +71,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal) {
   $scope.pageSize = 10;  // default
 
   $scope.filters = {
-    search: '',
+    search: $location.hash(),
   };
 
   $scope.hasFilter = function() {
@@ -94,6 +99,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal) {
   });
 
   $scope.$watchCollection('filters.search_actual', function(value) {
+    $location.hash(value);
     Search.noticeSearchChange(
       value,
       ['product', 'channel', 'mapping']

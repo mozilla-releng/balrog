@@ -30,40 +30,13 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal)
     });
   }
 
-  // $scope.$watch('ordering_str', function(value) {
-  //   $scope.ordering = value.value.split(',');
-  // });
-  // if ($scope.rule_id) {
-  //   $scope.ordering_options = [
-  //     {
-  //       text: "Data Version",
-  //       value: "-data_version"
-  //     },
-  //   ];
-  // } else {
-  //   $scope.ordering_options = [
-  //     {
-  //       text: "Priority, Version, Mapping",
-  //       value: "priority,version,mapping"
-  //     },
-  //     {
-  //       text: "Product, Channel",
-  //       value: "product,channel"
-  //     },
-  //     {
-  //       text: "Mapping",
-  //       value: "mapping"
-  //     },
-  //   ];
-  // }
-  // $scope.ordering_str = $scope.ordering_options[0];
   $scope.ordering = ['username'];
 
   $scope.currentPage = 1;
   $scope.pageSize = 10;  // default
 
   $scope.filters = {
-    search: '',
+    search: $location.hash(),
   };
 
   $scope.hasFilter = function() {
@@ -71,6 +44,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal)
   };
 
   $scope.$watchCollection('filters.search', function(value) {
+    $location.hash(value);
     Search.noticeSearchChange(
       value,
       ['username']
