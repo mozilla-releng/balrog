@@ -72,7 +72,7 @@
         <button ng-show="release_name && !$first" class="btn btn-default btn-xs" ng-click="openRevertModal(release)">Revert to this</button>
         <button ng-show="!release_name" class="btn btn-default btn-xs" ng-click="openUpdateModal(release)">Update</button>
         <button ng-show="!release_name" class="btn btn-default btn-xs" ng-click="openDeleteModal(release)">Delete</button>
-        <a ng-show="!release_name" class="btn btn-default btn-xs" href="/releases/{{ release.name }}">History</a>
+        <a ng-show="!release_name" class="btn btn-default btn-xs" ng-href="/releases/{{ release.name }}">History</a>
 
       </div>
       <span title="Product" ng-bind-html="highlightSearch(release.product, 'product')"></span>

@@ -9,7 +9,7 @@ function ($scope, $modalInstance, CSRFService, Rules, rule, rules) {
     $scope.saving = true;
     CSRFService.getToken()
     .then(function(csrf_token) {
-      Rules.deleteRule($scope.rule.id, $scope.rule, csrf_token)
+      Rules.deleteRule($scope.rule.rule_id, $scope.rule, csrf_token)
       .success(function(response) {
         $scope.rules.splice($scope.rules.indexOf($scope.rule), 1);
         $modalInstance.close();

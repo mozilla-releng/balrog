@@ -49,12 +49,8 @@
       <div style="float: right">
         <i ng-show="username && $first">Current</i>
         <button ng-show="!username" class="btn btn-default btn-xs" ng-click="openUpdateModal(user)">Update</button>
-        <!-- <button ng-show="!username" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button> -->
-        <!-- <a ng-show="!username" class="btn btn-default btn-xs" href="/rules/{{ rule.id }}">History</a> -->
       </div>
       <span title="Username" ng-bind-html="highlightSearch(user.username, 'username')"></span>
-      <!-- <span title="Product" ng-bind-html="highlightSearch(rule.product, 'product')"></span> :
-      <span title="Channel" ng-bind-html="highlightSearch(rule.channel, 'channel')"></span> -->
     </h3>
   </div>
 

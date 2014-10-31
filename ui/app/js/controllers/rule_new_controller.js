@@ -31,7 +31,7 @@ function($scope, $http, $modalInstance, CSRFService, Releases, Rules, rules) {
       Rules.addRule(rule, csrf_token)
       .success(function(response) {
         $scope.rule.data_version = 1;
-        $scope.rule.id = parseInt(response, 10);
+        $scope.rule.rule_id = parseInt(response, 10);
         $scope.rules.push($scope.rule);
         $modalInstance.close();
       })
