@@ -102,7 +102,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     $location.hash(value);
     Search.noticeSearchChange(
       value,
-      ['product', 'channel', 'mapping']
+      ['product', 'channel', 'mapping', 'comment']
     );
   });
 
@@ -129,6 +129,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           return;
         }
         if ((on === '*' || on === 'mapping') && rule.mapping && rule.mapping.match(regex)) {
+          matches++;
+          return;
+        }
+        if ((on === '*' || on === 'comment') && rule.comment && rule.comment.match(regex)) {
           matches++;
           return;
         }

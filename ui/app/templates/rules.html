@@ -89,7 +89,7 @@
       </h5>
       <p ng-if="rule.comment">
         <b>Comment:</b>
-        {{ rule.comment }}
+        <span ng-bind-html="highlightSearch(rule.comment, 'comment')"></span>
       </p>
 
     </div>
