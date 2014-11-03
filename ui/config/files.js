@@ -32,12 +32,6 @@ module.exports = function(lineman) {
       ]
     },
 
-    // holding out for https://github.com/linemanjs/lineman/issues/328
-    webfonts: {
-      vendor: "vendor/bootstrap/fonts/*.*",
-      root: "fonts"
-    },
-
     css: {
       vendor: [
         "vendor/bootstrap/css/bootstrap.min.css",
