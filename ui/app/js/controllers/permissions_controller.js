@@ -111,7 +111,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal)
       $scope.users.push(user);
       $scope.openUpdateModal(user);
     }, function () {
-      // console.log('modal closed');
+      // modal closed
     });
 
   };

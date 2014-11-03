@@ -159,11 +159,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         }
       }
     });
-    modalInstance.result.then(function () {
-      // $scope.selected = selectedItem;
-    }, function () {
-      console.log('modal closed');
-    });
   };
   /* End openUpdateModal */
 
@@ -181,12 +176,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           return $scope.rules;
         },
       }
-    });
-
-    modalInstance.result.then(function () {
-      // $scope.selected = selectedItem;
-    }, function () {
-      console.log('modal closed');
     });
   };
   /* End openDeleteModal */
@@ -213,12 +202,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         }
       }
     });
-
-    modalInstance.result.then(function () {
-      // $scope.selected = selectedItem;
-    }, function () {
-      console.log('modal closed');
-    });
   };
   /* End openNewRuleModal */
 
@@ -241,12 +224,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
       }
     });
-
-    modalInstance.result.then(function () {
-      // $scope.selected = selectedItem;
-    }, function () {
-      console.log('modal closed');
-    });
   };
   /* End openDuplicateRuleModal */
 
@@ -266,7 +243,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     modalInstance.result.then(function () {
       $location.path('/rules');
     }, function () {
-      // console.log('modal closed');
+      // modal closed
     });
   };
   /* End openDeleteModal */

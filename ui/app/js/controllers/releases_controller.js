@@ -159,11 +159,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
         }
       }
     });
-    modalInstance.result.then(function () {
-      // $scope.selected = selectedItem;
-    }, function () {
-      console.log('modal closed');
-    });
   };
   /* End openDataModal */
 
@@ -181,11 +176,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
           return true;
         }
       }
-    });
-    modalInstance.result.then(function () {
-      // $scope.selected = selectedItem;
-    }, function () {
-      console.log('modal closed');
     });
   };
   /* End openDataModal */
@@ -205,11 +195,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
         }
       }
     });
-    modalInstance.result.then(function () {
-      // $scope.selected = selectedItem;
-    }, function () {
-      console.log('modal closed');
-    });
   };
   /* End openUpdateModal */
 
@@ -228,12 +213,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
         },
       }
     });
-
-    modalInstance.result.then(function () {
-      // $scope.selected = selectedItem;
-    }, function () {
-      console.log('modal closed');
-    });
   };
   /* End openDeleteModal */
 
@@ -248,12 +227,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
           return $scope.releases;
         },
       }
-    });
-
-    modalInstance.result.then(function () {
-      // $scope.selected = selectedItem;
-    }, function () {
-      console.log('modal closed');
     });
   };
   /* End openNewReleaseModal */
@@ -272,10 +245,9 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
     });
 
     modalInstance.result.then(function () {
-      // $scope.selected = selectedItem;
       $location.path('/releases');
     }, function () {
-      // console.log('modal closed');
+      // modal closed
     });
   };
   /* End openDeleteModal */
