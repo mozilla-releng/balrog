@@ -86,23 +86,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
     return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
   }
 
-  // We don't want to immediately start searching on every typed
-  // little character. Instead, bunch them up and search after a
-  // little 200ms pause.
-  var filters_search_timeout = null;
-  var filters_search_temp = '';
   $scope.$watchCollection('filters.search', function(value) {
-    // break up every entered word into a word delimited regex
-    if (filters_search_timeout) {
-      $timeout.cancel(filters_search_timeout);
-    }
-    filters_search_temp = value;
-    filters_search_timeout = $timeout(function() {
-      $scope.filters.search_actual = filters_search_temp;
-    }, 300);
-  });
-
-  $scope.$watchCollection('filters.search_actual', function(value) {
     $location.hash(value);
     Search.noticeSearchChange(
       value,
