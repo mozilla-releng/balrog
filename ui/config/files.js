@@ -14,14 +14,14 @@ module.exports = function(lineman) {
         "vendor/js/angular-route.min.js",
         "vendor/js/angular-sanitize.min.js",
         "vendor/js/jquery-2.1.1.min.js",
-        // "vendor/js/ui-bootstrap-custom-tpls-0.10.0.min.js",
-        // "vendor/js/ui-bootstrap-custom-tpls-0.10.0.js",
         "vendor/js/ui-bootstrap-tpls-0.11.2.min.js",
-        // "vendor/bootstrap/js/bootstrap.min.js",
         "vendor/js/lodash.min.js",
         "vendor/js/moment.min.js",
         "vendor/js/sweet-alert.min.js",
         "vendor/js/angular-css-injector.min.js",
+
+        "vendor/js/localforage.min.js",
+        "vendor/js/angular-localForage.min.js",
 
         // "vendor/js/**/*.js"
         // "vendor/js/**/*.js"

@@ -1,5 +1,6 @@
 <form role="form" class="search-form" ng-show="!loading && !failed">
   <div class="form-group form-group-search">
+    <save-search results="filtered_items.length" input="filters.search"></save-search>
     <input type="search" class="form-control" placeholder="Search for anything"
            ng-model="filters.search">
     <span ng-show="filters.search.length" ng-click="filters.search=''"

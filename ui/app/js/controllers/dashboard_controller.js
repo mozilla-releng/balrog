@@ -1,16 +1,18 @@
 angular.module("app").controller('DashboardController',
-function($scope, $location, cssInjector) {
+function($scope, $location, cssInjector, $localForage) {
   cssInjector.add('http://fonts.googleapis.com/css?family=Bangers');
-  //<link href='http://fonts.googleapis.com/css?family=Bangers' rel='stylesheet' type='text/css'>
-  // document.createElement('link');
 
-  // $scope.credentials = { username: "", password: "" };
-  //
-  // var onLoginSuccess = function() {
-  //   $location.path('/home');
-  // };
-  //
-  // $scope.login = function() {
-  //   AuthenticationService.login($scope.credentials).success(onLoginSuccess);
-  // };
+  $scope.saved_searches = [];
+  $localForage.getItem('savedSearches')
+  .then(function(data) {
+    if (data) {
+      $scope.saved_searches = data;
+    }
+  });
+
+  $scope.gotoSavedSearch = function(search) {
+    $location.path(search.path);
+    $location.hash(search.hash);
+  };
+
 });

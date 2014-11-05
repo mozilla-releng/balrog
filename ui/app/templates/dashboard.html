@@ -4,3 +4,16 @@
    <h1 style="color: darkred">None shall pass!</h1>
    <h4>Except you I guess because you managed to sign in.<h4>
 </div>
+
+<div ng-show="saved_searches.length">
+  <h4>Saved searches</h4>
+  <div class="list-group">
+    <a href="" class="list-group-item" ng-repeat="search in saved_searches"
+       ng-click="gotoSavedSearch(search)">
+      <b ng-show="search.path==='/rules'">Rules</b>
+      <b ng-show="search.path==='/releases'">Releases</b>
+      <span class="badge" title="Number of results">{{ search.results }}</span>
+      {{ search.input }}
+    </a>
+  </div>
+</div>
