@@ -1,14 +1,14 @@
 /*global sweetAlert */
 
 angular.module('app').controller('ReleaseRevertCtrl',
-function ($scope, $modalInstance, CSRFService, Releases, release) {
+function ($scope, $modalInstance, CSRF, Releases, release) {
 
   $scope.release = release;
   $scope.saving = false;
 
   $scope.saveChanges = function () {
     $scope.saving = true;
-    CSRFService.getToken()
+    CSRF.getToken()
     .then(function(csrf_token) {
       // console.log($scope.release.name, )
       Releases.revertRelease($scope.release.name, $scope.release.change_id, csrf_token)

@@ -1,5 +1,5 @@
 // angular.module('app').controller('UserDeleteCtrl',
-// function ($scope, $modalInstance, CSRFService, Permissions, user, users) {
+// function ($scope, $modalInstance, CSRF, Permissions, user, users) {
 //
 //   $scope.user = user;
 //   $scope.users = users;
@@ -7,7 +7,7 @@
 //
 //   $scope.saveChanges = function () {
 //     $scope.saving = true;
-//     CSRFService.getToken()
+//     CSRF.getToken()
 //     .then(function(csrf_token) {
 //       Permissions.deleteUser($scope.user.id, $scope.user, csrf_token)
 //       .success(function(response) {

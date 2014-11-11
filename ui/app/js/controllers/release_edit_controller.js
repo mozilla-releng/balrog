@@ -1,7 +1,7 @@
 /*global: sweetAlert */
 
 angular.module('app').controller('ReleaseEditCtrl',
-function ($scope, $modalInstance, CSRFService, Releases, release) {
+function ($scope, $modalInstance, CSRF, Releases, release) {
 
   $scope.is_edit = true;
   $scope.original_release = release;
@@ -18,7 +18,7 @@ function ($scope, $modalInstance, CSRFService, Releases, release) {
     reader.onload = function(evt) {
       var blob = evt.target.result;
 
-      CSRFService.getToken()
+      CSRF.getToken()
       .then(function(csrf_token) {
         var data = $scope.release;
         data.data = blob;  // it's an edit

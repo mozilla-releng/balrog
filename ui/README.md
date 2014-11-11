@@ -33,6 +33,17 @@ To run in CI:
 
     lineman spec-ci
 
+## Test Coverage
+
+Run with [istanbul](https://github.com/yahoo/istanbul) like this:
+
+    istanbul cover generated/js/app.js
+
+You might get an error about (`ReferenceError: window is not defined`)
+which is harmless. You can still open the report with:
+
+    open coverage/lcov-report/index.html
+
 ## End-to-End Tests
 
 This is not yet developed.

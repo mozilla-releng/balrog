@@ -1,5 +1,5 @@
 {
-  "name": "balrog-ui-ng",
+  "name": "balrog-ui",
   "title": "Balrog 2.0 Admin interface",
   "version": "0.0.1",
   "private": true,
@@ -16,7 +16,8 @@
     "protractor": "^1.2.0-beta1",
     "grunt": "^0.4.5",
     "grunt-webfont": "^0.4.8",
-    "grunt-contrib-copy": "^0.7.0"
+    "grunt-contrib-copy": "^0.7.0",
+    "grunt-contrib-jasmine": "^0.8.1"
   },
   "scripts": {
     "start": "lineman run",

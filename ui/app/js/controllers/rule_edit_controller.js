@@ -1,12 +1,13 @@
 /*global sweetAlert */
 angular.module('app').controller('RuleEditCtrl',
-function ($scope, $modalInstance, CSRFService, Rules, Releases, rule) {
+function ($scope, $modalInstance, CSRF, Rules, Releases, rule) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
     $scope.names = names;
   });
 
+  $scope.errors = {};
   $scope.is_edit = true;
   $scope.original_rule = rule;
   $scope.rule = angular.copy(rule);
@@ -16,7 +17,7 @@ function ($scope, $modalInstance, CSRFService, Rules, Releases, rule) {
   $scope.saveChanges = function () {
     $scope.saving = true;
 
-    CSRFService.getToken()
+    CSRF.getToken()
     .then(function(csrf_token) {
       // set up some aliases that the data endpoint expects
       Rules.setDataAliases($scope.rule);

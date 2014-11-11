@@ -16,12 +16,12 @@ angular.module("app").factory('Releases', function($http, $q) {
       return $http.get('/api/releases');
     },
     getHistory: function(name) {
-      url = '/api/releases/' + name + '/revisions';
+      url = '/api/releases/' + encodeURIComponent(name) + '/revisions';
       url += '?limit=100';
       return $http.get(url);
     },
     getRelease: function(name) {
-      return $http.get('/api/releases/' + name);
+      return $http.get('/api/releases/' + encodeURIComponent(name));
     },
     getData: function(change_id) {
       var url = '/api/history/view/release/' + change_id + '/data';
@@ -42,10 +42,10 @@ angular.module("app").factory('Releases', function($http, $q) {
     },
     updateRelease: function(name, data, csrf_token) {
       data.csrf_token = csrf_token;
-      return $http.put('/api/releases/' + name, data);
+      return $http.put('/api/releases/' + encodeURIComponent(name), data);
     },
     deleteRelease: function(name, data, csrf_token) {
-      var url = '/api/releases/' + name;
+      var url = '/api/releases/' + encodeURIComponent(name);
       url += '?data_version=' + data.data_version;
       url += '&csrf_token=' + encodeURIComponent(csrf_token);
       return $http.delete(url);
@@ -57,7 +57,8 @@ angular.module("app").factory('Releases', function($http, $q) {
     revertRelease: function(name, change_id, csrf_token) {
       var data = {change_id: change_id};
       data.csrf_token = csrf_token;
-      return $http.post('/api/releases/' + name + '/revisions', data);
+      var url = '/api/releases/' + encodeURIComponent(name) + '/revisions';
+      return $http.post(url, data);
     }
   };
   return service;

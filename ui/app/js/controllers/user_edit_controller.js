@@ -1,6 +1,6 @@
 /*global sweetAlert swal */
 angular.module('app').controller('UserPermissionsCtrl',
-function ($scope, $modalInstance, CSRFService, Permissions, user) {
+function ($scope, $modalInstance, CSRF, Permissions, user) {
 
   $scope.loading = true;
 
@@ -34,7 +34,7 @@ function ($scope, $modalInstance, CSRFService, Permissions, user) {
   $scope.addPermission = function() {
     // $scope.permission.options = $scope.permission.options_as_json;
     $scope.saving = true;
-    CSRFService.getToken()
+    CSRF.getToken()
     .then(function(csrf_token) {
       Permissions.addPermission($scope.user.username, $scope.permission, csrf_token)
 
@@ -75,7 +75,7 @@ function ($scope, $modalInstance, CSRFService, Permissions, user) {
       closeOnConfirm: false
     }, function(){
       $scope.saving = true;
-      CSRFService.getToken()
+      CSRF.getToken()
       .then(function(csrf_token) {
         Permissions.deletePermission($scope.user.username, permission, csrf_token)
         .success(function(response) {
@@ -96,7 +96,7 @@ function ($scope, $modalInstance, CSRFService, Permissions, user) {
 
   $scope.updatePermission = function(permission) {
     $scope.saving = true;
-    CSRFService.getToken()
+    CSRF.getToken()
     .then(function(csrf_token) {
       permission.options = permission.options_as_json;
       Permissions.updatePermission($scope.user.username, permission, csrf_token)

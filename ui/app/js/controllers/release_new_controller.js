@@ -1,7 +1,7 @@
 /*global: sweetAlert */
 
 angular.module('app').controller('NewReleaseCtrl',
-function($scope, $http, $modalInstance, CSRFService, Releases, releases) {
+function($scope, $http, $modalInstance, CSRF, Releases, releases) {
 
   $scope.is_edit = false;
   $scope.releases = releases;
@@ -30,7 +30,7 @@ function($scope, $http, $modalInstance, CSRFService, Releases, releases) {
     var reader = new FileReader();
     reader.onload = function(evt) {
       var blob = evt.target.result;
-      CSRFService.getToken()
+      CSRF.getToken()
       .then(function(csrf_token) {
         var data = $scope.release;
         data.blob = blob;

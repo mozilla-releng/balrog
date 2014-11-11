@@ -1,11 +1,6 @@
 angular.module("app").controller('RulesController',
 function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route) {
 
-  // var lastRoute = $route.current;
-  // if ($route.current.$route.templateUrl.indexOf('mycurrentpath') > 0) {
-  //   $route.current = lastRoute;
-  // }
-
   $scope.loading = true;
   $scope.failed = false;
 
@@ -75,7 +70,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   };
 
   $scope.hasFilter = function() {
-    return false || $scope.filters.search.length;
+    return !!(false || $scope.filters.search.length);
   };
 
   function escapeRegExp(string){

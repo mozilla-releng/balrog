@@ -1,5 +1,5 @@
 angular.module('app').controller('NewUserCtrl',
-function($scope, $http, $modalInstance, CSRFService, Permissions, users) {
+function($scope, $http, $modalInstance, CSRF, Permissions, users) {
 
   $scope.is_edit = false;
   $scope.users = users;

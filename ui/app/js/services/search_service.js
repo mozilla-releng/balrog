@@ -14,7 +14,8 @@ angular.module("app").factory('Search', function() {
 
   service.noticeSearchChange = function(value, keywords) {
     service.word_regexes = [];
-    if (!value) {
+
+    if (!value.trim()) {
       return;
     }
     var keyword_regex = new RegExp(
@@ -41,9 +42,6 @@ angular.module("app").factory('Search', function() {
   service.highlightSearch = function(text, what) {
     if (!text) {
       return '';
-    }
-    if (text === null) {
-      return text;
     }
     text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     if (!service.word_regexes.length) {

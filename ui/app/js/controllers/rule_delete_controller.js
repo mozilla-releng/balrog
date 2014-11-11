@@ -1,5 +1,5 @@
 angular.module('app').controller('RuleDeleteCtrl',
-function ($scope, $modalInstance, CSRFService, Rules, rule, rules) {
+function ($scope, $modalInstance, CSRF, Rules, rule, rules) {
 
   $scope.rule = rule;
   $scope.rules = rules;
@@ -7,7 +7,7 @@ function ($scope, $modalInstance, CSRFService, Rules, rule, rules) {
 
   $scope.saveChanges = function () {
     $scope.saving = true;
-    CSRFService.getToken()
+    CSRF.getToken()
     .then(function(csrf_token) {
       Rules.deleteRule($scope.rule.rule_id, $scope.rule, csrf_token)
       .success(function(response) {
