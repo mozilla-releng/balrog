@@ -30,17 +30,19 @@ class ViewTest(unittest.TestCase):
         dbo.setDomainWhitelist(['good.com'])
         dbo.create()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
+        # TODO: switch these to /api when old ui dies.
         dbo.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
         dbo.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
         dbo.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
-        dbo.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name='a', schema_version=1)), data_version=1)
-        dbo.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name='ab', schema_version=1)), data_version=1)
-        dbo.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name='b', schema_version=1)), data_version=1)
-        dbo.releases.t.insert().execute(name='c', product='c', version='c', data=json.dumps(dict(name='c', schema_version=1)), data_version=1)
+        dbo.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name='ab', hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name='b', hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.releases.t.insert().execute(name='c', product='c', version='c', data=json.dumps(dict(name='c', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(name='d', product='d', version='d', data_version=1, data="""
 {
     "name": "d",
     "schema_version": 1,
+    "hashFunction": "sha512",
     "platforms": {
         "p": {
             "locales": {
@@ -72,8 +74,8 @@ class ViewTest(unittest.TestCase):
     def _getAuth(self, username):
         return {'REMOTE_USER': username}
 
-    def _post(self, url, data={}, username='bill'):
-        return self.client.post(url, data=data, environ_base=self._getAuth(username))
+    def _post(self, url, data={}, username='bill', **kwargs):
+        return self.client.post(url, data=data, environ_base=self._getAuth(username), **kwargs)
 
     def _badAuthPost(self, url, data={}):
         return self.client.post(url, data=data, environ_base=self._getBadAuth())
@@ -90,9 +92,14 @@ class ViewTest(unittest.TestCase):
 class JSONTestMixin(object):
     """Provides a _get method that always asks for format='json', and checks
        the returned MIME type."""
-    def _get(self, url):
-        headers = {"Accept-Encoding": "application/json"}
-        ret = self.client.get(url, query_string=dict(format='json'), headers=headers)
+    def _get(self, url, qs={}):
+        headers = {
+            "Accept-Encoding": "application/json",
+            "Accept": "application/json"
+        }
+        if "format" not in qs:
+            qs["format"] = "json"
+        ret = self.client.get(url, query_string=qs, headers=headers)
         self.assertEquals(ret.mimetype, 'application/json')
         return ret
 

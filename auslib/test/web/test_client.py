@@ -275,12 +275,12 @@ class ClientTestWithErrorHandlers(unittest.TestCase):
         with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
             m.side_effect = BadDataError("exterminate!")
             with mock.patch("auslib.web.base.sentry") as sentry:
-                ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
+                self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
                 self.assertFalse(sentry.captureException.called)
 
     def testSentryRealError(self):
         with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
             m.side_effect = Exception("exterminate!")
             with mock.patch("auslib.web.base.sentry") as sentry:
-                ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
+                self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
                 self.assertTrue(sentry.captureException.called)

@@ -57,6 +57,7 @@ class TestHistoryView(ViewTest):
     "schema_version": 1,
     "detailsUrl": "blah",
     "fakePartials": true,
+    "hashFunction": "sha512",
     "platforms": {
         "p": {
             "locales": {

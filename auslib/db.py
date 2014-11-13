@@ -1,3 +1,4 @@
+from collections import defaultdict
 from copy import copy
 from os import path
 import re
@@ -885,7 +886,8 @@ class Releases(AUSTable):
 
         columns = dict(name=name, product=product, version=version, data=blob.getJSON())
         # Raises DuplicateDataError if the release already exists.
-        self.insert(changed_by=changed_by, transaction=transaction, **columns)
+        ret = self.insert(changed_by=changed_by, transaction=transaction, **columns)
+        return ret.inserted_primary_key[0]
 
     def updateRelease(self, name, changed_by, old_data_version, product=None, version=None, blob=None, transaction=None):
         what = {}
@@ -969,13 +971,21 @@ class Permissions(AUSTable):
        option is only valid for requests through that HTTP method."""
     allPermissions = {
         'admin': [],
+        '/api/releases/:name': ['method', 'product'],
+        '/api/releases/:name/rollback': ['product'],
+        '/api/releases/:name/builds/:platform/:locale': ['method', 'product'],
+        '/api/rules': ['product'],
+        '/api/rules/:id': ['method', 'product'],
+        '/api/rules/:id/rollback': ['product'],
+        '/api/users/:id/permissions/:permission': ['method'],
+        # TODO: Remove these old endpoints when old ui dies.
         '/releases/:name': ['method', 'product'],
         '/releases/:name/rollback': ['product'],
         '/releases/:name/builds/:platform/:locale': ['method', 'product'],
         '/rules': ['product'],
         '/rules/:id': ['method', 'product'],
         '/rules/:id/rollback': ['product'],
-        '/users/:id/permissions/:permission': ['method']
+        '/users/:id/permissions/:permission': ['method'],
     }
 
     def __init__(self, metadata, dialect):
@@ -998,6 +1008,12 @@ class Permissions(AUSTable):
     def getAllUsers(self, transaction=None):
         res = self.select(columns=[self.username], distinct=True, transaction=transaction)
         return [r['username'] for r in res]
+
+    def getAllPermissions(self, transaction=None):
+        ret = defaultdict(dict)
+        for r in self.select(transaction=transaction):
+            ret[r["username"]][r["permission"]] = r["options"]
+        return ret
 
     def countAllUsers(self, transaction=None):
         res = self.select(columns=[self.username], distinct=True, transaction=transaction)

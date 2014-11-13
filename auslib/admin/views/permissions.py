@@ -21,24 +21,26 @@ def permission2selector(permission):
     return permission.replace('/', '').replace(':', '')
 
 class UsersView(AdminView):
-    """/users"""
+    """/api/users"""
     def get(self):
         users = dbo.permissions.getAllUsers()
         self.log.debug("Found users: %s", users)
+        # TODO: Only return json after old ui is dead
         fmt = request.args.get('format', 'html')
-        if fmt == 'json':
+        if fmt == 'json' or 'application/json' in request.headers.get('Accept'):
             # We don't return a plain jsonify'ed list here because of:
             # http://flask.pocoo.org/docs/security/#json-security
             return jsonify(dict(users=users))
         else:
-            return render_template('fragments/users.html', users=users)
+            return render_template('fragments/users.html', users=users.keys())
 
 class PermissionsView(AdminView):
-    """/users/[user]/permissions"""
+    """/api/users/:username/permissions"""
     def get(self, username):
         permissions = dbo.permissions.getUserPermissions(username)
+        # TODO: Only return json after old ui is dead
         fmt = request.args.get('format', 'html')
-        if fmt == 'json':
+        if fmt == 'json' or 'application/json' in request.headers.get('Accept'):
             return jsonify(permissions)
         else:
             forms = []
@@ -48,13 +50,14 @@ class PermissionsView(AdminView):
             return render_template('fragments/user_permissions.html', username=username, permissions=forms)
 
 class SpecificPermissionView(AdminView):
-    """/users/[user]/permissions/[permission]"""
+    """/api/users/:username/permissions/:permission"""
     @setpermission
     def get(self, username, permission):
         try:
             perm = dbo.permissions.getUserPermissions(username)[permission]
         except KeyError:
             return Response(status=404)
+        # TODO: Only return json after old ui is dead
         fmt = request.args.get('format', 'html')
         if fmt == 'json':
             return jsonify(perm)
@@ -112,9 +115,12 @@ class SpecificPermissionView(AdminView):
             dbo.permissions.revokePermission(changed_by, username, permission, form.data_version.data, transaction=transaction)
             return Response(status=200)
         except ValueError, e:
-            cef_event("Bad input", CEF_WARN, e.args)
+            cef_event("Bad input", CEF_WARN, errors=e.args)
             return Response(status=400, response=e.args)
 
+
+
+# TODO: Kill me when old admin ui is shut off
 class PermissionsPageView(AdminView):
     """/permissions.html"""
     def get(self):

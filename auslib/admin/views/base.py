@@ -25,11 +25,14 @@ def requirepermission(url, options=['product']):
             method = request.method
             extra = dict()
             for opt in options:
-                if opt not in request.form:
+                if opt in request.form:
+                    extra[opt] = request.form[opt]
+                elif request.get_json() and opt in request.json:
+                    extra[opt] = request.json[opt]
+                else:
                     msg = "Couldn't find required option %s in form" % opt
                     cef_event("Bad input", CEF_WARN, msg=msg)
                     return Response(status=400, response=msg)
-                extra[opt] = request.form[opt]
             if not dbo.permissions.hasUrlPermission(username, url, method, urlOptions=extra):
                 msg = "%s is not allowed to access %s by %s" % (username, url, method)
                 cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)

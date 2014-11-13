@@ -1,3 +1,4 @@
+# TODO: Kill me when old admin ui is shut off
 import collections
 
 from flask import render_template, request

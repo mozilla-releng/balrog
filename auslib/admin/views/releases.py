@@ -67,10 +67,9 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
     form = ReleaseForm()
     if not form.validate():
         cef_event("Bad input", CEF_WARN, errors=form.errors)
-        return Response(status=400, response=form.errors)
+        return Response(status=400, response=json.dumps(form.errors))
     product = form.product.data
     version = form.version.data
-    hashFunction = form.hashFunction.data
     incomingData = form.data.data
     copyTo = form.copyTo.data
     alias = form.alias.data
@@ -85,6 +84,13 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         schema_version = incomingData.get("schema_version")
     else:
         return Response(status=400, response="schema_version is required")
+    
+    if getattr(form.hashFunction, "data", None):
+        hashFunction = form.hashFunction.data
+    elif incomingData.get("hashFunction"):
+        hashFunction = incomingData.get("hashFunction")
+    else:
+        hashFunction = None
 
     allReleases = [release]
     if copyTo:
@@ -108,7 +114,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                     msg = "Product name '%s' doesn't match the one on the release object ('%s') for release '%s'" % (product, releaseInfo['product'], rel)
                     cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                     return Response(status=400, response=msg)
-                if 'hashFunction' in releaseInfo['data'] and hashFunction != releaseInfo['data']['hashFunction']:
+                if 'hashFunction' in releaseInfo['data'] and hashFunction and hashFunction != releaseInfo['data']['hashFunction']:
                     msg = "hashFunction '%s' doesn't match the one on the release object ('%s') for release '%s'" % (hashFunction, releaseInfo['data']['hashFunction'], rel)
                     cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                     return Response(status=400, response=msg)
@@ -162,12 +168,12 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
 
 
 class SingleLocaleView(AdminView):
-    """/releases/[release]/builds/[platform]/[locale]"""
+    """/api/releases/[release]/builds/[platform]/[locale]"""
     def get(self, release, platform, locale):
         try:
             locale = dbo.releases.getLocale(release, platform, locale)
         except KeyError, e:
-            return Response(status=404, response=e.args)
+            return Response(status=404, response=json.dumps(e.args), mimetype="application/json")
         data_version = dbo.releases.getReleases(name=release)[0]['data_version']
         headers = {'X-Data-Version': data_version}
         headers.update(get_csrf_headers())
@@ -196,38 +202,16 @@ class SingleLocaleView(AdminView):
 
         return changeRelease(release, changed_by, transaction, exists, commit, self.log)
 
-class ReleasesPageView(AdminView):
-    """ /releases.html """
-    def get(self):
-        releases = dbo.releases.getReleaseInfo()
-        addForm = NewReleaseForm(prefix="new_release")
-        forms = {}
-        for r in releases:
-            release = r["name"]
-            forms[release] = DbEditableForm(
-                prefix=release,
-                data_version=r["data_version"],
-            )
-        return render_template('releases.html', releases=releases, addForm=addForm, forms=forms)
-
-class SingleBlobView(AdminView):
-    """ /releases/[release]/data"""
-    def get(self, release):
-        try:
-            release_blob = dbo.releases.getReleaseBlob(name=release)
-            return jsonify(release_blob)
-        except KeyError:
-            return Response(status=404)
-
 class SingleReleaseView(AdminView):
-    """ /releases/[release]"""
+    """ /api/releases/:release"""
     def get(self, release):
         release = dbo.releases.getReleases(name=release, limit=1)
         if not release:
-            return Response(status=404)
+            return Response(status=404, mimetype="application/json")
         headers = {'X-Data-Version': release[0]['data_version']}
         headers.update(get_csrf_headers())
-        if 'application/json' in request.headers.get('Accept-Encoding', ''):
+        # TODO: Only return json after old ui is dead
+        if 'application/json' in request.headers.get('Accept', ''):
             return Response(response=json.dumps(release[0]['data']), mimetype='application/json', headers=headers)
         else:
             form = DbEditableForm(prefix=release[0]['name'], data_version=release[0]['data_version'])
@@ -294,9 +278,9 @@ class SingleReleaseView(AdminView):
 
         return Response(status=200)
 
-class ReleaseHistoryView(HistoryAdminView):
-    """ /releases/<release>/revisions/ """
 
+class ReleaseHistoryView(HistoryAdminView):
+    """/api/releases/:release/revisions"""
     def get(self, release):
         releases = dbo.releases.getReleases(name=release, limit=1)
         if not releases:
@@ -336,6 +320,13 @@ class ReleaseHistoryView(HistoryAdminView):
         all_keys = self.getAllRevisionKeys(revisions, primary_keys)
 
         self.annotateRevisionDifferences(revisions)
+
+        # TODO: Only return json after old ui is dead
+        if 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({
+                'revisions': revisions,
+                'count': total_count,
+            })
 
         return render_template(
             'revisions.html',
@@ -380,3 +371,90 @@ class ReleaseHistoryView(HistoryAdminView):
             return Response(status=400, response=e.args)
 
         return Response("Excellent!")
+
+
+class ReleasesAPIView(AdminView):
+    """/api/releases"""
+    def get(self, **kwargs):
+        if request.args.get('names_only'):
+            releases = dbo.releases.getReleaseInfo(nameOnly=True)
+            names = []
+            for release in releases:
+                names.append(release['name'])
+            data = {'names': names}
+        else:
+            releases = dbo.releases.getReleaseInfo()
+            _releases = []
+            _mapping = {
+                # return : db name
+                'name': 'name',
+                'product': 'product',
+                'version': 'version',
+                'data_version': 'data_version',
+            }
+            for release in releases:
+                _releases.append(dict(
+                    (key, release[db_key])
+                    for key, db_key in _mapping.items()
+                ))
+            data = {
+                'releases': _releases,
+            }
+
+        return Response(response=json.dumps(data), mimetype="application/json")
+
+    @requirelogin
+    @requirepermission('/releases')
+    def _post(self, changed_by, transaction):
+        form = NewReleaseForm()
+        if not form.validate():
+            cef_event("Bad input", CEF_WARN, errors=form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
+
+        try:
+            name = dbo.releases.addRelease(
+                name=form.name.data, product=form.product.data,
+                version=form.version.data, blob=form.blob.data,
+                changed_by=changed_by, transaction=transaction
+            )
+        except ValueError, e:
+            msg = "Couldn't update release: %s" % e
+            cef_event("Bad input", CEF_WARN, errors=msg)
+            return Response(status=400, response=msg)
+
+        release = dbo.releases.getReleases(
+            name=name, transaction=transaction, limit=1
+        )[0]
+        new_data_version = release['data_version']
+        response = make_response(
+            json.dumps(dict(new_data_version=new_data_version)),
+            201
+        )
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+
+# TODO: Kill me when old admin ui is shut off
+class ReleasesPageView(AdminView):
+    """ /releases.html """
+    def get(self):
+        releases = dbo.releases.getReleaseInfo()
+        addForm = NewReleaseForm(prefix="new_release")
+        forms = {}
+        for r in releases:
+            release = r["name"]
+            forms[release] = DbEditableForm(
+                prefix=release,
+                data_version=r["data_version"],
+            )
+        return render_template('releases.html', releases=releases, addForm=addForm, forms=forms)
+
+class SingleBlobView(AdminView):
+    """ /releases/[release]/data"""
+    def get(self, release):
+        try:
+            release_blob = dbo.releases.getReleaseBlob(name=release)
+            return jsonify(release_blob)
+        except KeyError:
+            return Response(status=404)
+

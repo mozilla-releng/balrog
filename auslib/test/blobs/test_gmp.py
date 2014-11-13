@@ -1,11 +1,9 @@
 import mock
-from tempfile import mkstemp
 import unittest
 from xml.dom import minidom
 
 from auslib.blobs.gmp import GMPBlobV1
 from auslib.errors import BadDataError
-import auslib.log
 
 
 class TestSchema1Blob(unittest.TestCase):
@@ -146,6 +144,8 @@ class TestSchema1Blob(unittest.TestCase):
             "force": 0
         }
         with mock.patch("auslib.AUS.cef_event") as c:
+            # We don't need to use the mock, but this shuts up pyflakes
+            assert c
             returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
             returned = minidom.parseString(returned)
             self.assertEqual(returned.getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
