@@ -25,7 +25,59 @@ describe("controller: RuleRevertCtrl", function() {
     "distVersion": null
   };
 
-  beforeEach(inject(function($controller, $rootScope, $location, $modal, Rules, Releases, $httpBackend) {
+  var sample_revisions = {
+    count: 2,
+    rules: [
+      {
+        "build_id": null,
+        "comment": "Comment",
+        "product": null,
+        "change_id": 59,
+        "os_version": null,
+        "locale": null,
+        "timestamp": 1384364357223,
+        "changed_by": "bhearsum@mozilla.com",
+        "mapping": "No-Update",
+        "priority": 1,
+        "data_version": 1,
+        "version": null,
+        "background_rate": 100,
+        "dist_version": null,
+        "header_arch": null,
+        "distribution": null,
+        "build_target": null,
+        "id": 19,
+        "channel": null,
+        "update_type": "minor"
+      },
+      {
+        "build_id": null,
+        "comment": "Comment",
+        "product": null,
+        "change_id": 59,
+        "os_version": null,
+        "locale": null,
+        "timestamp": 1384364357223,
+        "changed_by": "bhearsum@mozilla.com",
+        "mapping": "No-Update",
+        "priority": 1,
+        "data_version": 1,
+        "version": null,
+        "background_rate": 100,
+        "dist_version": null,
+        "header_arch": null,
+        "distribution": null,
+        "build_target": null,
+        "id": 19,
+        "channel": null,
+        "update_type": "minor"
+      }
+    ]
+  };
+
+  var revision = sample_revisions.rules[0];
+
+  beforeEach(inject(function($controller, $rootScope, $location, $modal, Rules, $httpBackend) {
     this.$location = $location;
     this.$httpBackend = $httpBackend;
     this.scope = $rootScope.$new();
@@ -38,8 +90,7 @@ describe("controller: RuleRevertCtrl", function() {
       }),
       $location: $location,
       Rules: Rules,
-      Releases: Releases,
-      rule: rule,
+      revision: revision,
     });
   }));
 
@@ -48,12 +99,12 @@ describe("controller: RuleRevertCtrl", function() {
     this.$httpBackend.verifyNoOutstandingExpectation();
   });
 
-  describe("opening the edit rule modal", function() {
+  describe("opening the revert rule modal", function() {
 
     it("should should set all defaults", function() {
       expect(this.scope.saving).toEqual(false);
-      expect(this.scope.rule).toEqual(rule);
-      expect(this.scope.rule.product).toEqual('Firefox');
+      expect(this.scope.rule).toEqual(revision);
+      expect(this.scope.rule.comment).toEqual('Comment');
     });
 
     it("should should be able to save changes", function() {
@@ -67,30 +118,7 @@ describe("controller: RuleRevertCtrl", function() {
       expect(this.scope.saving).toEqual(true);
       this.$httpBackend.flush();
 
-      expect(this.scope.rule.product).toEqual('Something');
-      expect(this.scope.rule.data_version).toEqual(next_data_version);
-      expect(this.scope.rule.rule_id).toEqual(19);
-      expect(this.scope.saving).toEqual(false);
-      expect(this.scope.errors).toEqual({});
     });
-
-    it("should should notice errors", function() {
-      this.$httpBackend.expectGET('/api/releases?names_only=1')
-      .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
-      this.$httpBackend.expectGET('/api/csrf_token')
-      .respond(200, 'token');
-      var next_data_version = rule.data_version + 1;
-      this.$httpBackend.expectPUT('/api/rules/19')
-      .respond(400, JSON.stringify({error: 'one'}));
-
-      this.scope.saveChanges();
-      expect(this.scope.saving).toEqual(true);
-      this.$httpBackend.flush();
-
-      expect(this.scope.errors).toEqual({error: 'one'});
-      expect(this.scope.saving).toEqual(false);
-    });
-
   });
 
 });

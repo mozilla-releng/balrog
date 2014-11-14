@@ -185,7 +185,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   /* End openNewRuleModal */
 
   $scope.openDuplicateModal = function(rule) {
-    console.log('Duplicate', rule);
     var modalInstance = $modal.open({
       templateUrl: 'rule_modal.html',
       controller: 'NewRuleCtrl',
@@ -206,15 +205,15 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   };
   /* End openDuplicateRuleModal */
 
-  $scope.openRevertModal = function(rule) {
+  $scope.openRevertModal = function(revision) {
 
     var modalInstance = $modal.open({
       templateUrl: 'rule_revert_modal.html',
       controller: 'RuleRevertCtrl',
       // size: 'sm',
       resolve: {
-        rule: function () {
-          return rule;
+        revision: function () {
+          return revision;
         }
       }
     });

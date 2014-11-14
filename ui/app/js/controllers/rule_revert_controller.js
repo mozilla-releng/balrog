@@ -1,7 +1,7 @@
 angular.module('app').controller('RuleRevertCtrl',
-function ($scope, $modalInstance, CSRF, Rules, rule) {
+function ($scope, $modalInstance, CSRF, Rules, revision) {
 
-  $scope.rule = rule;
+  $scope.rule = revision;
   $scope.saving = false;
 
   $scope.saveChanges = function () {
