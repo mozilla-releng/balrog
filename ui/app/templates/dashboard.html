@@ -10,6 +10,8 @@
   <div class="list-group">
     <a href="" class="list-group-item" ng-repeat="search in saved_searches"
        ng-click="gotoSavedSearch(search)">
+      <b ng-show="search.path.substring(0, 10)=='/releases/'">Revision of a release</b>
+      <b ng-show="search.path.substring(0, 7)=='/rules/'">Revision of a rule</b>
       <b ng-show="search.path==='/rules'">Rules</b>
       <b ng-show="search.path==='/releases'">Releases</b>
       <span class="badge" title="Number of results">{{ search.results }}</span>
