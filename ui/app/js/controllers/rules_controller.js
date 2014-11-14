@@ -225,6 +225,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
 
     modalInstance.result.then(function () {
+      // this will cause another fetch of rules
+      // because it will start the RulesController
       $location.path('/rules');
     }, function () {
       // modal closed

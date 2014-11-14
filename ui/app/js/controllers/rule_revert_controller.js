@@ -8,7 +8,7 @@ function ($scope, $modalInstance, CSRFService, Rules, rule) {
     $scope.saving = true;
     CSRFService.getToken()
     .then(function(csrf_token) {
-      Rules.revertRule($scope.rule.rule_id, $scope.rule.change_id, csrf_token)
+      Rules.revertRule($scope.rule.id, $scope.rule.change_id, csrf_token)
       .success(function(response) {
         $scope.saving = false;
         $modalInstance.close();
