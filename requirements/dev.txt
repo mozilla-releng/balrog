@@ -6,3 +6,4 @@ Paste
 coverage
 certifi
 requests==0.10.8
+pyflakes
