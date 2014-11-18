@@ -1,4 +1,4 @@
-angular.module("app").factory('CSRFService', function($http, $q) {
+angular.module("app").factory('CSRF', function($http, $q) {
 
   var csrf_token = null;
   var timestamp = null;

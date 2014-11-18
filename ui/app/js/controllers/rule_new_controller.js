@@ -1,11 +1,11 @@
 angular.module('app').controller('NewRuleCtrl',
-function($scope, $http, $modalInstance, CSRFService, Releases, Rules, rules, rule) {
+function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
     $scope.names = names;
   });
-  $scope.is_duplicate = rule._duplicate;
+  $scope.is_duplicate = !!rule._duplicate;
   $scope.is_edit = false;
   $scope.rules = rules;
   $scope.rule = rule;
@@ -15,7 +15,7 @@ function($scope, $http, $modalInstance, CSRFService, Releases, Rules, rules, rul
   $scope.saveChanges = function () {
     $scope.saving = true;
     $scope.errors = {};
-    CSRFService.getToken()
+    CSRF.getToken()
     .then(function(csrf_token) {
       // set up some aliases that the data endpoint expects
       Rules.setDataAliases($scope.rule);

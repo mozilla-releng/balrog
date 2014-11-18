@@ -1,5 +1,5 @@
 angular.module('app').controller('ReleaseDeleteCtrl',
-function ($scope, $modalInstance, CSRFService, Releases, release, releases) {
+function ($scope, $modalInstance, CSRF, Releases, release, releases) {
 
   $scope.release = release;
   $scope.releases = releases;
@@ -7,7 +7,7 @@ function ($scope, $modalInstance, CSRFService, Releases, release, releases) {
 
   $scope.saveChanges = function () {
     $scope.saving = true;
-    CSRFService.getToken()
+    CSRF.getToken()
     .then(function(csrf_token) {
       Releases.deleteRelease($scope.release.name, $scope.release, csrf_token)
       .success(function(response) {
