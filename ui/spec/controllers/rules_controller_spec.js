@@ -192,6 +192,14 @@ describe("controller: RulesController", function() {
       .respond(200, JSON.stringify(sample_rules));
       this.scope.openRevertModal();
     });
+
+    it("should be possible to open the duplicate modal", function() {
+      this.$httpBackend.expectGET('/api/rules')
+      .respond(200, JSON.stringify(sample_rules));
+      this.$httpBackend.expectGET('/api/releases?names_only=1')
+      .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
+      this.scope.openDuplicateModal(sample_rules.rules[0]);
+    });
   });
 
 });

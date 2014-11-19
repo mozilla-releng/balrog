@@ -9,7 +9,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
 
     Releases.getHistory($scope.release_name)
     .success(function(response) {
-      console.log(response);
       // it's the same release, but this works
       $scope.releases = response.revisions;
       $scope.count = response.count;
@@ -79,7 +78,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
   };
 
   $scope.hasFilter = function() {
-    return false || $scope.filters.search.length;
+    return !!(false || $scope.filters.search.length);
   };
 
   function escapeRegExp(string){
@@ -171,9 +170,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
       controller: 'ReleaseEditCtrl',
       // size: size,  // can be lg or sm
       resolve: {
-        // items: function () {
-        //   return $scope.items;
-        // },
         release: function () {
           return release;
         }
