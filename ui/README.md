@@ -1,5 +1,7 @@
 # Balrog UI
 
+[![Build Status](https://travis-ci.org/mozilla/balrog-ui.svg?branch=master)](https://travis-ci.org/mozilla/balrog-ui)
+
 This is the new Admin UI for [Balrog](https://github.com/mozilla/balrog).
 This code might be checked into Balrog proper one day.
 
