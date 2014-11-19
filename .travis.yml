@@ -10,3 +10,10 @@ script:
   - nosetests -v auslib/test
   - scripts/test-rules.py -v
   - pyflakes $(find . \( -iname "*.py" -or -iname "*.wsgi" \) -not -path "*vendor*")
+
+# currently cannot customise per user fork, see:
+# https://github.com/travis-ci/travis-ci/issues/1094
+notifications:
+  irc: "irc.mozilla.org#releng"
+  on_success: always
+  on_failure: always
