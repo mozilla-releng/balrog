@@ -15,7 +15,6 @@ angular.module("app").factory('Rules', function($http) {
       return $http.put('/api/rules/' + id, data);
     },
     deleteRule: function(id, data, csrf_token) {
-      // data.csrf_token = csrf_token;
       var url = '/api/rules/' + id;
       url += '?data_version=' + data.data_version;
       url += '&csrf_token=' + encodeURIComponent(csrf_token);

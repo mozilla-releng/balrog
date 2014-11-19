@@ -12,14 +12,11 @@ angular.module("app").factory('CSRF', function($http, $q) {
     getToken: function() {
       var deferred = $q.defer();
       if (csrf_token !== null && notTooOld(60 * 60)) {
-        // console.log('Reusing csrf_token', csrf_token);
         deferred.resolve(csrf_token);
       } else {
-        // console.log('Fetching new csrf_token');
         $http.get('/api/csrf_token')
         .success(function(response, status, headers) {
           csrf_token = headers('X-CSRF-Token');
-          // console.log('Fetched csrf_token', csrf_token);
           timestamp = (new Date()).getTime();
           deferred.resolve(csrf_token);
         })
