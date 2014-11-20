@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os, os.path, glob, re, difflib, time, site
 
 try:
