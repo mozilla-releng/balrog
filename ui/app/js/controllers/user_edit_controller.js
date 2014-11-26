@@ -1,8 +1,9 @@
 /*global sweetAlert swal */
 angular.module('app').controller('UserPermissionsCtrl',
-function ($scope, $modalInstance, CSRF, Permissions, user) {
+function ($scope, $modalInstance, CSRF, Permissions, user, users) {
 
   $scope.loading = true;
+  $scope.users = users;
 
   $scope.is_edit = true;
   $scope.original_user = user;
@@ -21,7 +22,10 @@ function ($scope, $modalInstance, CSRF, Permissions, user) {
         p.options_as_json = JSON.stringify(p['options']);
       }
     });
+
     $scope.user.permissions = permissions;
+    // console.log('$scope.user.permissions');
+    // console.dbg($scope.user.permissions);
     $scope.loading = false;
   });
 
@@ -81,6 +85,16 @@ function ($scope, $modalInstance, CSRF, Permissions, user) {
         .success(function(response) {
           $scope.user.permissions.splice($scope.user.permissions.indexOf(permission), 1);
           sweetAlert("Deleted", "Permission deleted.", "success");
+          if (!$scope.user.permissions.length) {
+            var index = null;
+            _.each($scope.users, function(user, i) {
+              if (user.username === $scope.user.username) {
+                index = i;
+              }
+            });
+            $scope.users.splice(index, 1);
+          }
+          $scope.cancel();
         })
         .error(function(response) {
           console.error(response);

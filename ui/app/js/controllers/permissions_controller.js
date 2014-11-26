@@ -8,11 +8,8 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal)
   if ($scope.username) {
     // history of a specific rule
     Permissions.getUserPermissions($scope.username)
-    .success(function(response) {
-      $scope.permissions = response.permissions; //????
-    })
-    .error(function() {
-      console.error(arguments);
+    .then(function(response) {
+      $scope.permissions = response;
     });
   } else {
     Permissions.getUsers()
@@ -40,7 +37,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal)
   };
 
   $scope.hasFilter = function() {
-    return false || $scope.filters.search.length;
+    return !!(false || $scope.filters.search.length);
   };
 
   $scope.$watchCollection('filters.search', function(value) {
@@ -86,6 +83,9 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal)
       resolve: {
         user: function () {
           return user;
+        },
+        users: function () {
+          return $scope.users;
         }
       }
     });
