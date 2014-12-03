@@ -47,7 +47,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     $scope.ordering_options = [
       {
         text: "Priority, Version, Mapping",
-        value: "priority,version,mapping"
+        value: "-priority,version,mapping"
       },
       {
         text: "Product, Channel",
