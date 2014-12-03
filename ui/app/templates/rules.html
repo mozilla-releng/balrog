@@ -97,27 +97,27 @@
     </div>
 
     <dl class="dl-horizontal" style="float:right">
-      <dt>Rate:</dt>
+      <dt ng-show="rule.backgroundRate">Rate:</dt>
       <dd>{{ rule.backgroundRate }}</dd>
-      <dt>Priority:</dt>
+      <dt ng-show="rule.priority">Priority:</dt>
       <dd>{{ rule.priority }}</dd>
-      <dt>Version:</dt>
+      <dt ng-show="rule.version">Version:</dt>
       <dd>{{ rule.version }}</dd>
-      <dt>Build ID:</dt>
+      <dt ng-show="rule.buildID">Build ID:</dt>
       <dd>{{ rule.buildID }}</dd>
-      <dt>Locale:</dt>
+      <dt ng-show="rule.locale">Locale:</dt>
       <dd>{{ rule.locale }}</dd>
-      <dt>Distribution:</dt>
+      <dt ng-show="rule.distribution">Distribution:</dt>
       <dd>{{ rule.distribution }}</dd>
-      <dt>Build Target:</dt>
+      <dt ng-show="rule.buildTarget">Build Target:</dt>
       <dd>{{ rule.buildTarget }}</dd>
-      <dt>OS Version:</dt>
+      <dt ng-show="rule.osVersion">OS Version:</dt>
       <dd>{{ rule.osVersion }}</dd>
-      <dt>Dist Version:</dt>
+      <dt ng-show="rule.distVersion">Dist Version:</dt>
       <dd>{{ rule.distVersion }}</dd>
-      <dt>Update type:</dt>
+      <dt ng-show="rule.update_type">Update type:</dt>
       <dd>{{ rule.update_type }}</dd>
-      <dt>Header Architecture:</dt>
+      <dt ng-show="rule.headerArchitecture">Header Architecture:</dt>
       <dd>{{ rule.headerArchitecture }}</dd>
     </dl>
 
