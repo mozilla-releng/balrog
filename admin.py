@@ -2,7 +2,7 @@ import logging
 
 from paste.auth.basic import AuthBasicHandler
 
-import thirdparty
+from auslib.util import thirdparty
 thirdparty.extendsyspath()
 
 

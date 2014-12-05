@@ -2,7 +2,7 @@ import logging
 from os import path
 import sys
 
-import thirdparty
+from auslib.util import thirdparty
 thirdparty.extendsyspath()
 
 from auslib.admin.base import sentry
