@@ -1,15 +1,17 @@
 import logging
 from os import path
+import site
 import sys
 
+mydir = path.dirname(path.abspath(__file__))
+
+site.addsitedir(mydir)
 from auslib.util import thirdparty
 thirdparty.extendsyspath()
 
 from auslib.config import ClientConfig
 import auslib.log
 from auslib.web.base import sentry
-
-mydir = path.dirname(path.abspath(__file__))
 
 cfg = ClientConfig(path.join(mydir, 'balrog.ini'))
 errors = cfg.validate()

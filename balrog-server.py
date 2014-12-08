@@ -1,9 +1,9 @@
 from os import path
 import site
 
-mydir = path.dirname(path.abspath(__file__))
-site.addsitedir(mydir)
-site.addsitedir(path.join(mydir, 'vendor/lib/python'))
+site.addsitedir(path.dirname(path.abspath(__file__)))
+from auslib.util import thirdparty
+thirdparty.extendsyspath()
 
 from migrate import DatabaseAlreadyControlledError
 

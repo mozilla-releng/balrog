@@ -12,7 +12,6 @@ def extendsyspath():
     )
     prev_sys_path = list(sys.path)  # make a copy of the list
 
-    site.addsitedir(root_dir)
     site.addsitedir(path.join(root_dir, 'vendor/lib/python'))
 
     # Now, move the new items to the front of sys.path. (via virtualenv)

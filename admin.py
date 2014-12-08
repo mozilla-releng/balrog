@@ -1,7 +1,10 @@
 import logging
+from os import path
+import site
 
 from paste.auth.basic import AuthBasicHandler
 
+site.addsitedir(path.dirname(path.abspath(__file__)))
 from auslib.util import thirdparty
 thirdparty.extendsyspath()
 
