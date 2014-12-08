@@ -1,12 +1,10 @@
 import logging
-from os import path
-import site
 
 from paste.auth.basic import AuthBasicHandler
 
-mydir = path.dirname(path.abspath(__file__))
-site.addsitedir(mydir)
-site.addsitedir(path.join(mydir, 'vendor/lib/python'))
+from auslib.util import thirdparty
+thirdparty.extendsyspath()
+
 
 if __name__ == '__main__':
     from optparse import OptionParser

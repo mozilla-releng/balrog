@@ -1,15 +1,15 @@
 import logging
 from os import path
-import site
 import sys
 
-mydir = path.dirname(path.abspath(__file__))
-site.addsitedir(mydir)
-site.addsitedir(path.join(mydir, 'vendor/lib/python'))
+from auslib.util import thirdparty
+thirdparty.extendsyspath()
 
 from auslib.admin.base import sentry
 from auslib.config import AdminConfig
 import auslib.log
+
+mydir = path.dirname(path.abspath(__file__))
 
 cfg = AdminConfig(path.join(mydir, 'admin.ini'))
 errors = cfg.validate()
