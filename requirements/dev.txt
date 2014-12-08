@@ -1,5 +1,3 @@
--r prod.txt
-
 nose==1.1.2
 mock
 Paste
