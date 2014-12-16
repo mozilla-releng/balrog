@@ -41,16 +41,6 @@ def generic(error):
 def robots():
     return send_from_directory(app.static_folder, "robots.txt")
 
-@app.route("/cache_stats")
-def cache_stats():
-    from auslib.global_state import cache
-    return """
-Hit Percentage: %s%%<br/>
-Requests: %s<br/>
-Hits: %s<br/>
-Misses: %s<br/>
-""" % (float(cache.caches["blob"].hits) / float(cache.caches["blob"].lookups) *100, cache.caches["blob"].lookups, cache.caches["blob"].hits, cache.caches["blob"].misses)
-
 app.add_url_rule(
     '/update/2/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/update.xml',
     view_func=ClientRequestView.as_view('clientrequest2'),
