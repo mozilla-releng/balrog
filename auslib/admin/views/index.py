@@ -3,7 +3,8 @@ import collections
 
 from flask import render_template, request
 
-from auslib import dbo, version
+from auslib import version
+from auslib.global_state import dbo
 from auslib.admin.views.base import AdminView, getTimeAgo
 from auslib.util import PrinterFriendlyDict
 

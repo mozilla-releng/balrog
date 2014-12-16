@@ -3,7 +3,7 @@ import json
 
 from flask import Response
 
-from auslib import dbo
+from auslib.global_state import dbo
 from auslib.admin.views.base import AdminView
 from auslib.log import cef_event, CEF_WARN
 

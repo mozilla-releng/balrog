@@ -3,7 +3,7 @@ import re
 import logging
 log = logging.getLogger(__name__)
 
-from auslib import dbo
+from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob
 from auslib.errors import BadDataError
@@ -67,13 +67,18 @@ class ReleaseBlobBase(Blob):
         except KeyError:
             return self['platforms'][platform]['buildID']
 
-    def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
-        try:
-            fromRelease = dbo.releases.getReleaseBlob(name=patch["from"])
-        except KeyError:
-            fromRelease = None
+    def _getFromRelease(self, patch):
+        # "*" is a special case for the "from" field that means "any release".
+        # Because we know it doesn't exist in the database it's wasteful to
+        # even attempt to look it up.
+        if patch["from"] != "*":
+            return dbo.releases.getReleaseBlob(name=patch["from"])
+        else:
+            return None
 
-        if patch["from"] != "*" and fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
+    def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
+        fromRelease = self._getFromRelease(patch)
+        if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
             return None
 
         url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
@@ -287,12 +292,8 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
             if not patch:
                 continue
 
-            try:
-                fromRelease = dbo.releases.getReleaseBlob(name=patch["from"])
-            except KeyError:
-                fromRelease = None
-
-            if patch["from"] != "*" and fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
+            fromRelease = self._getFromRelease(patch)
+            if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
@@ -478,12 +479,8 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
             if not patch:
                 continue
 
-            try:
-                fromRelease = dbo.releases.getReleaseBlob(name=patch["from"])
-            except KeyError:
-                fromRelease = None
-
-            if patch["from"] != "*" and fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
+            fromRelease = self._getFromRelease(patch)
+            if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)

@@ -1,3 +1,4 @@
+import os
 from os import path
 import site
 
@@ -32,6 +33,8 @@ if __name__ == "__main__":
     parser.add_option("--special-force-host", dest="specialForceHosts", action="append",
                       help="Hosts to forward force=1 on to, use a protocol prefix like http://")
     parser.add_option("--cef-log", dest="cefLog", default="cef.log")
+    parser.add_option("--profile-dir", dest="profile_dir", default=None,
+                      help="Enables profiling and logs to the specified file."),
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
         help="Verbose output")
     options, args = parser.parse_args()
@@ -46,8 +49,11 @@ if __name__ == "__main__":
         log_level = logging.DEBUG
     logging.basicConfig(level=log_level, format=auslib.log.log_format)
 
-    from auslib import dbo
+    from auslib.global_state import dbo, cache
     from auslib.web.base import app
+
+    cache.make_cache("blob", 500, 3600)
+    cache.make_cache("blob_version", 500, 60)
 
     auslib.log.cef_config = auslib.log.get_cef_config(options.cefLog)
     dbo.setDb(options.db)
@@ -57,8 +63,15 @@ if __name__ == "__main__":
     except DatabaseAlreadyControlledError:
         pass
 
+    if options.profile_dir:
+        from werkzeug.contrib.profiler import ProfilerMiddleware
+        if not path.exists(options.profile_dir):
+            os.makedirs(options.profile_dir)
+        app.wsgi_app = ProfilerMiddleware(app.wsgi_app, profile_dir=options.profile_dir)
+
     app.config['WHITELISTED_DOMAINS'] = options.whitelistedDomains
     app.config['SPECIAL_FORCE_HOSTS'] = options.specialForceHosts
     app.config['SECRET_KEY'] = 'abc123'
     app.config['DEBUG'] = True
+
     app.run(port=options.port, host=options.host)

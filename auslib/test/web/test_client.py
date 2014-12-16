@@ -5,7 +5,7 @@ import unittest
 from xml.dom import minidom
 
 import auslib.log
-from auslib import dbo
+from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.web.base import app
 from auslib.web.views.client import ClientRequestView

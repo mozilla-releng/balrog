@@ -5,7 +5,7 @@ import unittest
 
 from flask import Response
 
-from auslib import dbo
+from auslib.global_state import dbo
 from auslib.admin.base import app
 import auslib.log
 

@@ -1,7 +1,7 @@
 import mock
 import unittest
 
-from auslib import dbo
+from auslib.global_state import dbo
 from auslib.AUS import AUS
 
 def RandomAUSTest(AUS, backgroundRate, force, mapping):

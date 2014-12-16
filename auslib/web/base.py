@@ -32,7 +32,7 @@ def generic(error):
     if not isinstance(error, BadDataError):
         if sentry.client:
             sentry.captureException()
-    log.debug('Hit exception, sending an empty response')
+    log.debug('Hit exception, sending an empty response', exc_info=True)
     response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
     response.mimetype = 'text/xml'
     return response
@@ -40,6 +40,16 @@ def generic(error):
 @app.route('/robots.txt')
 def robots():
     return send_from_directory(app.static_folder, "robots.txt")
+
+@app.route("/cache_stats")
+def cache_stats():
+    from auslib.global_state import cache
+    return """
+Hit Percentage: %s%%<br/>
+Requests: %s<br/>
+Hits: %s<br/>
+Misses: %s<br/>
+""" % (float(cache.caches["blob"].hits) / float(cache.caches["blob"].lookups) *100, cache.caches["blob"].lookups, cache.caches["blob"].hits, cache.caches["blob"].misses)
 
 app.add_url_rule(
     '/update/2/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/update.xml',

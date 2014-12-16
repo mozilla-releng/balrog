@@ -10,3 +10,4 @@ blinker==1.2
 cef==0.5
 flask-compress==1.0.2
 itsdangerous==0.24
+repoze.lru==0.6

@@ -13,6 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import migrate.versioning.schema
 import migrate.versioning.api
 
+from auslib.global_state import cache
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import createBlob
 from auslib.log import cef_event, CEF_ALERT
@@ -844,9 +845,13 @@ class Releases(AUSTable):
             where.append(self.product==product)
         if version:
             where.append(self.version==version)
-        rows = self.select(where=where, limit=limit, transaction=transaction)
+        # We could get the "data" column here too, but getReleaseBlob knows how
+        # to grab cached versions of that, so it's better to let it take care
+        # of it.
+        rows = self.select(columns=[self.name, self.product, self.version, self.data_version],
+                           where=where, limit=limit, transaction=transaction)
         for row in rows:
-            row['data'] = createBlob(row['data'])
+            row["data"] = self.getReleaseBlob(row["name"], transaction)
         return rows
 
     def countReleases(self, transaction=None):
@@ -871,11 +876,50 @@ class Releases(AUSTable):
         return self.getReleaseInfo(nameOnly=True, **kwargs)
 
     def getReleaseBlob(self, name, transaction=None):
-        try:
-            row = self.select(where=[self.name==name], columns=[self.data], limit=1, transaction=transaction)[0]
-        except IndexError:
-            raise KeyError("Couldn't find release with name '%s'" % name)
-        blob = createBlob(row['data'])
+        # Putting the data_version and blob getters into these methods lets us
+        # delegate the decision about whether or not to use the cached values
+        # to the cache class. It will either return as a cached value, or use
+        # the getter to return a fresh value (and cache it).
+        def getDataVersion():
+            try:
+                return self.select(where=[self.name==name], columns=[self.data_version], limit=1, transaction=transaction)[0]
+            except IndexError:
+                raise KeyError("Couldn't find release with name '%s'" % name)
+
+        data_version = cache.get("blob_version", name, getDataVersion)
+
+        def getBlob():
+            try:
+                row = self.select(where=[self.name==name], columns=[self.data], limit=1, transaction=transaction)[0]
+                blob = createBlob(row['data'])
+                return {"data_version": data_version, "blob": blob}
+            except IndexError:
+                raise KeyError("Couldn't find release with name '%s'" % name)
+
+        cached_blob = cache.get("blob", name, getBlob)
+
+        # Even though we may have retrieved a cached blob, we need to make sure
+        # that it's not older than the one in the database. If the data version
+        # of the cached blob and the latest data version don't match, we need
+        # to update the cache with the latest blob.
+        if data_version > cached_blob["data_version"]:
+            blob_info = getBlob()
+            cache.put("blob", name, blob_info)
+            blob = blob_info["blob"]
+        else:
+            # And while it's extremely unlikely, there is a remote possibility
+            # that the cached blob actually has a newer data version than the
+            # blob version cache. This can occur if the blob cache expired
+            # between retrieving the cached data version and cached blob.
+            # (Because the blob version cache ttl should be shorter than the
+            # blob cache ttl, if the blob cache expired prior to retrieving the
+            # data version, the blob version cache would've expired as well.
+            # If we hit one of these cases, we should bring the blob version
+            # cache up to date since we have it.
+            if cached_blob["data_version"] > data_version:
+                cache.put("blob_version", name, data_version)
+            blob = cached_blob["blob"]
+
         return blob
 
     def addRelease(self, name, product, version, blob, changed_by, transaction=None):

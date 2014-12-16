@@ -12,8 +12,8 @@ mydir = os.path.dirname(os.path.abspath(__file__))
 site.addsitedir(os.path.join(mydir, ".."))
 site.addsitedir(os.path.join(mydir, "..", 'vendor/lib/python'))
 
-from auslib import dbo
 from auslib.AUS import AUS as AUS_Class
+from auslib.global_state import dbo
 
 import logging
 log = logging.getLogger(__name__)

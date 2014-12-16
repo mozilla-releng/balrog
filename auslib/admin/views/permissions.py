@@ -2,7 +2,7 @@ import simplejson as json
 
 from flask import render_template, request, Response, jsonify, make_response
 
-from auslib import dbo
+from auslib.global_state import dbo
 from auslib.admin.views.base import requirelogin, requirepermission, AdminView
 from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm
 from auslib.log import cef_event, CEF_WARN

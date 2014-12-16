@@ -7,7 +7,7 @@ import mock
 import unittest
 from xml.dom import minidom
 
-from auslib import dbo
+from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4

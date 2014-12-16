@@ -2,7 +2,7 @@ import json
 
 from flask import render_template, Response, make_response, request, jsonify
 
-from auslib import dbo
+from auslib.global_state import dbo
 from auslib.admin.views.base import (
     requirelogin, requirepermission, AdminView, HistoryAdminView,
 )

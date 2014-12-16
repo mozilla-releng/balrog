@@ -3,7 +3,7 @@ import simplejson as json
 
 from sqlalchemy import select
 
-from auslib import dbo
+from auslib.global_state import dbo
 from auslib.test.admin.views.base import ViewTest, JSONTestMixin, HTMLTestMixin
 
 class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
@@ -382,7 +382,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testLocaleRevertsPartialUpdate(self):
         data = json.dumps(dict(complete=dict(filesize=1)))
-        with mock.patch('auslib.dbo.releases.addLocaleToRelease') as r:
+        with mock.patch('auslib.global_state.dbo.releases.addLocaleToRelease') as r:
             r.side_effect = Exception("Fail")
             ret = self._put('/api/releases/a/builds/p/l', data=dict(data=data, product='a', version='c', data_version=1, schema_version=1))
             self.assertStatusCode(ret, 500)
