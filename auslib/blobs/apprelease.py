@@ -72,7 +72,11 @@ class ReleaseBlobBase(Blob):
         # Because we know it doesn't exist in the database it's wasteful to
         # even attempt to look it up.
         if patch["from"] != "*":
-            return dbo.releases.getReleaseBlob(name=patch["from"])
+            try:
+                return dbo.releases.getReleaseBlob(name=patch["from"])
+            except KeyError:
+                # Release doesn't exist
+                return None
         else:
             return None
 
