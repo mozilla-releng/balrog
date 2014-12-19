@@ -42,7 +42,7 @@ angular.module("app").factory('Releases', function($http, $q) {
     },
     updateRelease: function(name, data, csrf_token) {
       data.csrf_token = csrf_token;
-      return $http.put('/api/releases/' + encodeURIComponent(name), data);
+      return $http.post('/api/releases/' + encodeURIComponent(name), data);
     },
     deleteRelease: function(name, data, csrf_token) {
       var url = '/api/releases/' + encodeURIComponent(name);
