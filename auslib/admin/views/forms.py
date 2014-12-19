@@ -5,8 +5,6 @@ from wtforms import StringField, IntegerField, SelectField
 from wtforms.widgets import TextInput, FileInput, HiddenInput
 from wtforms.validators import Required, Optional, NumberRange, Length
 
-from auslib.blobs.base import createBlob
-
 import logging
 log = logging.getLogger(__name__)
 
