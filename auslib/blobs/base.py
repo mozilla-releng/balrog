@@ -67,7 +67,8 @@ def createBlob(data):
         1000: GMPBlobV1,
     }
 
-    data = json.loads(data)
+    if isinstance(data, basestring):
+        data = json.loads(data)
     schema_version = data.get("schema_version")
 
     if not schema_version:

@@ -226,8 +226,9 @@ class SingleReleaseView(AdminView):
             return Response(status=400, response=form.errors)
 
         try:
+            blob = createBlob(form.blob.data)
             dbo.releases.addRelease(name=release, product=form.product.data,
-                version=form.version.data, blob=form.blob.data,
+                version=form.version.data, blob=blob,
                 changed_by=changed_by, transaction=transaction)
         except ValueError, e:
             msg = "Couldn't update release: %s" % e
@@ -245,7 +246,8 @@ class SingleReleaseView(AdminView):
 
         def commit(rel, product, version, newReleaseData, releaseData, old_data_version, extraArgs):
             releaseData.update(newReleaseData)
-            return dbo.releases.updateRelease(name=rel, blob=releaseData,
+            blob = createBlob(releaseData)
+            return dbo.releases.updateRelease(name=rel, blob=blob,
                 changed_by=changed_by, old_data_version=old_data_version,
                 transaction=transaction)
 
@@ -412,9 +414,10 @@ class ReleasesAPIView(AdminView):
             return Response(status=400, response=json.dumps(form.errors))
 
         try:
+            blob = createBlob(form.blob.data)
             name = dbo.releases.addRelease(
                 name=form.name.data, product=form.product.data,
-                version=form.version.data, blob=form.blob.data,
+                version=form.version.data, blob=blob,
                 changed_by=changed_by, transaction=transaction
             )
         except ValueError, e:

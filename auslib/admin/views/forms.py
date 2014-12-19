@@ -20,11 +20,13 @@ class DisableableTextInput(TextInput):
             kwargs['disabled'] = 'disabled'
         return TextInput.__call__(self, *args, **kwargs)
 
-class JSONFieldMixin(object):
+
+class JSONStringField(StringField):
+    """StringField that parses incoming data as JSON."""
     def process_formdata(self, valuelist):
         if valuelist and valuelist[0]:
             try:
-                self._process_JSON_data(valuelist)
+                self.data = json.loads(valuelist[0])
             # XXX: use JSONDecodeError when the servers support it
             except ValueError, e:
                 # WTForms catches ValueError, which JSONDecodeError is a child
@@ -35,23 +37,6 @@ class JSONFieldMixin(object):
         else:
             log.debug('No value list, setting self.data to default')
             self._set_default()
-
-
-# We need to be sure that we list JSONFieldMixin BEFORE the FileField in the derived classes list
-# We want to use JSONFieldMixin's version of process_formdata instead of FileField's version.
-class JSONBlobFileField(JSONFieldMixin, StringField):
-    """FileField that parses incoming data as JSON and converts it into a blob"""
-    def _process_JSON_data(self, valuelist):
-        self.data = createBlob(valuelist[0])
-        self.data.isValid()
-
-
-# We need to be sure that we list JSONFieldMixin BEFORE the StringField in the derived classes list
-# We want to use JSONFieldMixin's version of process_formdata instead of StringField's version.
-class JSONStringField(JSONFieldMixin, StringField):
-    """StringField that parses incoming data as JSON."""
-    def _process_JSON_data(self, valuelist):
-        self.data = json.loads(valuelist[0])
 
     def _set_default(self):
         self.data = {}
@@ -147,4 +132,4 @@ class NewReleaseForm(Form):
     name = StringField('Name', validators=[Required()])
     version = StringField('Version', validators=[Required()])
     product = StringField('Product', validators=[Required()])
-    blob = JSONBlobFileField('Data', validators=[Required()], widget=FileInput())
+    blob = JSONStringField('Data', validators=[Required()], widget=FileInput())
