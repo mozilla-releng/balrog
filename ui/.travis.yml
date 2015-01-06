@@ -2,3 +2,18 @@ language: node_js
 node_js:
 - 0.10
 script: "lineman spec-ci"
+
+# currently cannot customise per user fork, see:
+# https://github.com/travis-ci/travis-ci/issues/1094
+# please comment out this section in your personal fork!
+notifications:
+  irc:
+    channels:
+      - "irc.mozilla.org#releng"
+    on_success: always
+    on_failure: always
+    template:
+      - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}"
+      - "Change view : %{compare_url}"
+      - "Build details : %{build_url}"
+      - "Commit message : %{commit_message}"
