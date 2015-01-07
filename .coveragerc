@@ -22,5 +22,5 @@ exclude_lines =
 omit =
     */test_*
     */vendor/*
-    */site-packages/*
-    */site.py
+    # Omit base python and installed packages
+    */python*/lib/python*/*
