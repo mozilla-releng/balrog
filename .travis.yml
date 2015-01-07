@@ -9,7 +9,7 @@ install:
   - "pip install rednose coverage"
 
 script:
-  - PYTHONPATH=vendor/lib/python coverage run nosetests -v auslib/test
+  - PYTHONPATH=vendor/lib/python nosetests --with-coverage -v auslib/test
   - coverage run -a scripts/test-rules.py -v
   - pyflakes $(find . \( -iname "*.py" -or -iname "*.wsgi" \) -not -path "*vendor*")
 
