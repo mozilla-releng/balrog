@@ -6,10 +6,10 @@ python:
 install:
   - "pip install -r requirements/dev.txt"
   - "pip install -r requirements/compiled.txt"
-  - "pip install rednose coverage"
+  - "pip install rednose coverage coveralls"
 
 script:
-  - PYTHONPATH=vendor/lib/python nosetests --with-coverage -v auslib/test
+  - PYTHONPATH=vendor/lib/python nosetests -v --rednose --force-color auslib/test
   - coverage run -a scripts/test-rules.py -v
   - pyflakes $(find . \( -iname "*.py" -or -iname "*.wsgi" \) -not -path "*vendor*")
 
@@ -22,7 +22,7 @@ after_success:
 notifications:
   irc:
     channels:
-      - "irc.mozilla.org#releng"
+      - "irc.mozilla.org#callek"
     on_success: always
     on_failure: always
     template:
