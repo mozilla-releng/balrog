@@ -22,7 +22,7 @@ after_success:
 notifications:
   irc:
     channels:
-      - "irc.mozilla.org#callek"
+      - "irc.mozilla.org#releng"
     on_success: always
     on_failure: always
     template:
