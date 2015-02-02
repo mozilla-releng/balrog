@@ -1,7 +1,19 @@
 import logging
 from os import path
+from os import getenv
 import site
 import sys
+
+try:
+    import newrelic.agent
+except ImportError:
+    newrelic = False
+if newrelic:
+    newrelic_ini = getenv('NEWRELIC_PYTHON_INI_FILE', False)
+    if newrelic_ini:
+        newrelic.agent.initialize(newrelic_ini)
+    else:
+        newrelic = False
 
 mydir = path.dirname(path.abspath(__file__))
 
@@ -42,3 +54,6 @@ application.config['SENTRY_PROCESSORS'] = ['auslib.util.sentry.SanitizeHeadersPr
 
 if application.config['SENTRY_DSN']:
     sentry.init_app(application)
+
+if newrelic:
+    application = newrelic.agent.wsgi_application()(application)
