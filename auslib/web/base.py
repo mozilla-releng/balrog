@@ -42,6 +42,15 @@ def robots():
     return send_from_directory(app.static_folder, "robots.txt")
 
 app.add_url_rule(
+    "/update/1/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/update.xml",
+    view_func=ClientRequestView.as_view("clientrequest1"),
+    # Underlying code depends on osVersion being set. Since this route only
+    # exists to support ancient queries, and all newer versions have osVersion
+    # in them it's easier to set this here than make the all of the underlying
+    # code support queries without it.
+    defaults={"queryVersion": 2, "osVersion": ""},
+)
+app.add_url_rule(
     '/update/2/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/update.xml',
     view_func=ClientRequestView.as_view('clientrequest2'),
     defaults={'queryVersion': 2},
