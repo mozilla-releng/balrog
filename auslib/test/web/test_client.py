@@ -54,6 +54,14 @@ class ClientTest(unittest.TestCase):
                         "hashValue": "4",
                         "fileUrl": "http://a.com/z"
                     }
+                },
+                "xh": {
+                    "complete": {
+                        "filesize": "5",
+                        "from": "*",
+                        "hashValue": "6",
+                        "fileUrl": "http://a.com/x"
+                    }
                 }
             }
         }
@@ -257,6 +265,20 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(ret2.status_code, 200)
         self.assertEqual(ret2.mimetype, 'text/xml')
         self.assertEqual(ret.data, ret2.data)
+
+    def testFixForBug1125231DoesntBreakXhLocale(self):
+        ret = self.client.get('/update/4/b/1.0/1/p/xh/a/a/a/a/1/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/x" hashFunction="sha512" hashValue="6" size="5"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
 
 
 class ClientTestWithErrorHandlers(unittest.TestCase):

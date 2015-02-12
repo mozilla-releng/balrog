@@ -25,7 +25,7 @@ class ClientRequestView(MethodView):
         # Some versions of Avast have a bug in them that prepends "x86 "
         # to the locale. We need to make sure we handle this case correctly
         # so that these people can keep up to date.
-        return locale.lstrip("x86 ")
+        return locale.replace("x86 ", "")
 
     def getQueryFromURL(self, url):
         query = url.copy()
