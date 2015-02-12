@@ -244,6 +244,20 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(ret.mimetype, 'text/plain')
         self.assertTrue('User-agent' in ret.data)
 
+    def testBadAvastURLsFromBug1125231(self):
+        # Some versions of Avast have a bug in them that prepends "x86 "
+        # to the locale. We need to make sure we handle this case correctly
+        # so that these people can keep up to date.
+        ret = self.client.get('/update/4/b/1.0/1/p/x86 l/a/a/a/a/1/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        # Compare the Avast-style URL to the non-messed up equivalent. They
+        # should get the same update XML.
+        ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+        self.assertEqual(ret2.status_code, 200)
+        self.assertEqual(ret2.mimetype, 'text/xml')
+        self.assertEqual(ret.data, ret2.data)
+
 
 class ClientTestWithErrorHandlers(unittest.TestCase):
     """Most of the tests are run without the error handler because it gives more

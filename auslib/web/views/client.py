@@ -21,8 +21,15 @@ class ClientRequestView(MethodView):
         else:
             return 'Intel'
 
+    def removeAvastBrokenness(self, locale):
+        # Some versions of Avast have a bug in them that prepends "x86 "
+        # to the locale. We need to make sure we handle this case correctly
+        # so that these people can keep up to date.
+        return locale.lstrip("x86 ")
+
     def getQueryFromURL(self, url):
         query = url.copy()
+        query["locale"] = self.removeAvastBrokenness(query["locale"])
         query['osVersion'] = urllib.unquote(query['osVersion'])
         ua = request.headers.get('User-Agent')
         query['headerArchitecture'] = self.getHeaderArchitecture(query['buildTarget'], ua)
