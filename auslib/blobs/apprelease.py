@@ -106,7 +106,9 @@ class ReleaseBlobBase(Blob):
            be easily shared. Inner methods that only apply to a single blob
            version live on concrete blob classes (but should be moved if they
            need to be shared in the future).
-           * createXML() called by web layer, lives on this base class.
+           * createXML() called by web layer, lives on this base class. The V1
+             blob class overrides it to support bug 1113475, but still calls
+             the base class one to do most of the work.
            ** _getUpdateLineXML() called to get information that is independent
               of specific MARs. Most notably, version information changed
               starting with V2 blobs.
@@ -238,6 +240,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         'detailsUrl': None,
         'licenseUrl': None,
         'fakePartials': None,
+        'setExtvToIncomingVersion': None,
         'platforms': {
             '*': {
                 'alias': None,
@@ -350,6 +353,20 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         updateLine += ">"
 
         return updateLine
+
+    def createXML(self, updateQuery, *args, **kwargs):
+        xml = super(ReleaseBlobV1, self).createXML(updateQuery, *args, **kwargs)
+        # In order to update some older versions of Firefox without prompting
+        # them for add-on compatibility, we need to be able to fake out the
+        # extension version to match the incoming one. bug 998721 has additional
+        # background on this.
+        # It would be nicer to do this in _getUpdateLineXML to avoid overriding
+        # this method, but that one doesn't have access to the updateQuery, and
+        # thus can't overwrite it.
+        if self.get("setExtvToIncomingVersion"):
+            real_extv = self.getExtv(updateQuery["buildTarget"], updateQuery["locale"])
+            xml = xml.replace('extensionVersion="%s"' % real_extv, 'extensionVersion="%s"' % updateQuery["version"])
+        return xml
 
 
 class NewStyleVersionsMixin(object):

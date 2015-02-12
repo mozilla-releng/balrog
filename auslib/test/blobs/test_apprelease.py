@@ -129,6 +129,51 @@ class TestReleaseBlobV1(unittest.TestCase):
             blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(j=updates))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
+    def testHackedExtvBug1113475(self):
+        blob = ReleaseBlobV1()
+        blob.loadJSON("""
+{
+    "name": "h",
+    "schema_version": 1,
+    "appv": "15.0",
+    "extv": "15.0",
+    "hashFunction": "sha512",
+    "detailsUrl": "http://example.org/details",
+    "setExtvToIncomingVersion": true,
+    "platforms": {
+        "p": {
+            "buildID": 1,
+            "locales": {
+                "m": {
+                    "complete": {
+                        "filesize": 1,
+                        "from": "*",
+                        "hashValue": "1",
+                        "fileUrl": "http://boring.com/a"
+                    }
+                }
+            }
+        }
+    }
+}""")
+
+        updateQuery = {
+            "product": "h", "version": "1.0", "buildID": "0",
+            "buildTarget": "p", "locale": "m", "channel": "a",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = blob.createXML(updateQuery, "minor", ["boring.com"], None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="15.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
 
 class TestNewStyleVersionBlob(unittest.TestCase):
     def testGetAppVersion(self):
