@@ -41,6 +41,7 @@ def generic(error):
 def robots():
     return send_from_directory(app.static_folder, "robots.txt")
 
+# The "main" routes. 99% of requests will come in through these.
 app.add_url_rule(
     "/update/1/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/update.xml",
     view_func=ClientRequestView.as_view("clientrequest1"),
@@ -64,4 +65,12 @@ app.add_url_rule(
     '/update/4/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/<platformVersion>/update.xml',
     view_func=ClientRequestView.as_view('clientrequest4'),
     defaults={'queryVersion': 4},
+)
+
+# Routes to deal with edge cases.
+# bug 1133250 - support for old-style nightly ESR versions
+app.add_url_rule(
+    '/update/3/<product>/<version>esrpre/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml',
+    view_func=ClientRequestView.as_view('clientrequest_esrnightly'),
+    defaults={'queryVersion': 3},
 )
