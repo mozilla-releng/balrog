@@ -136,6 +136,23 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['buildTarget'], 'd')
         self.assertEquals(r[0]['product'], 'fake')
 
+    def testPostSetBackgroundRateTo0(self):
+        ret = self._post("/api/rules/4", data=dict(backgroundRate=0, data_version=1))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id==4).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['backgroundRate'], 0)
+        self.assertEquals(r[0]['data_version'], 2)
+        # And that we didn't modify other fields
+        self.assertEquals(r[0]['update_type'], 'minor')
+        self.assertEquals(r[0]['mapping'], 'a')
+        self.assertEquals(r[0]['priority'], 80)
+        self.assertEquals(r[0]['buildTarget'], 'd')
+        self.assertEquals(r[0]['product'], 'fake')
+
     def testPost404(self):
         ret = self._post("/api/rules/555", data=dict(mapping="d"))
         self.assertEquals(ret.status_code, 404)

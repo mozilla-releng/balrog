@@ -133,11 +133,11 @@ class SingleRuleView(AdminView):
             return Response(status=400, response=json.dumps(form.errors))
 
         what = dict()
-        if form.backgroundRate.data:
+        if form.backgroundRate.data is not None:
             what['backgroundRate'] = form.backgroundRate.data
         if form.mapping.data:
             what['mapping'] = form.mapping.data
-        if form.priority.data:
+        if form.priority.data is not None:
             what['priority'] = form.priority.data
         if form.product.data:
             what['product'] = form.product.data
