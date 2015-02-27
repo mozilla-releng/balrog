@@ -859,12 +859,15 @@ class Releases(AUSTable):
         count, = self.t.count().execute().fetchone()
         return count
 
-    def getReleaseInfo(self, product=None, version=None, limit=None, transaction=None, nameOnly=False):
+    def getReleaseInfo(self, product=None, version=None, limit=None,
+                       transaction=None, nameOnly=False, name_prefix=None):
         where = []
         if product:
             where.append(self.product==product)
         if version:
             where.append(self.version==version)
+        if name_prefix:
+            where.append(self.name.startswith(name_prefix))
         if nameOnly:
             column = [self.name]
         else:

@@ -67,7 +67,7 @@ class ViewTest(unittest.TestCase):
         dbo.reset()
         os.close(self.cef_fd)
         os.remove(self.cef_file)
-    
+
     def _getBadAuth(self):
         return {'REMOTE_USER': 'NotAuth!'}
 

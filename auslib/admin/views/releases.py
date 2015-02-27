@@ -84,7 +84,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         schema_version = incomingData.get("schema_version")
     else:
         return Response(status=400, response="schema_version is required")
-    
+
     if getattr(form.hashFunction, "data", None):
         hashFunction = form.hashFunction.data
     elif incomingData.get("hashFunction"):
@@ -378,14 +378,22 @@ class ReleaseHistoryView(HistoryAdminView):
 class ReleasesAPIView(AdminView):
     """/api/releases"""
     def get(self, **kwargs):
+        kwargs = {}
+        if request.args.get('product'):
+            kwargs['product'] = request.args.get('product')
+        if request.args.get('version'):
+            kwargs['version'] = request.args.get('version')
+        if request.args.get('name_prefix'):
+            kwargs['name_prefix'] = request.args.get('name_prefix')
         if request.args.get('names_only'):
-            releases = dbo.releases.getReleaseInfo(nameOnly=True)
+            kwargs['nameOnly'] = True
+        releases = dbo.releases.getReleaseInfo(**kwargs)
+        if request.args.get('names_only'):
             names = []
             for release in releases:
                 names.append(release['name'])
             data = {'names': names}
         else:
-            releases = dbo.releases.getReleaseInfo()
             _releases = []
             _mapping = {
                 # return : db name

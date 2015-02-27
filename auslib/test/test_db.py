@@ -876,6 +876,17 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         expected = [ ]
         self.assertEquals(releases, expected)
 
+    def testGetReleaseInfoNamePrefix(self):
+        releases = self.releases.getReleaseInfo(name_prefix='a')
+        expected = [dict(name='a', product='a', version='a', data_version=1),
+                    dict(name='ab', product='a', version='a', data_version=1)]
+        self.assertEquals(releases, expected)
+
+    def testGetReleaseInfoNamePrefixNameOnly(self):
+        releases = self.releases.getReleaseInfo(name_prefix='a', nameOnly=True)
+        expected = [{'name': 'a'}, {'name': 'ab'}]
+        self.assertEquals(releases, expected)
+
     def testGetReleaseNames(self):
         releases = self.releases.getReleaseNames()
         expected = [ dict(name='a'),
