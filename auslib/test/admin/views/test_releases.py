@@ -537,6 +537,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     ]
 }
 """))
+
     def testGetReleasesNamePrefix(self):
         ret = self._get("/api/releases", qs=dict(name_prefix='a'))
         self.assertStatusCode(ret, 200)
@@ -546,6 +547,27 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         {"data_version": 1, "name": "a", "product": "a", "version": "a"},
         {"data_version": 1, "name": "ab", "product": "a", "version": "a"}
     ]
+}
+"""))
+
+    def testGetReleasesNamePrefixNamesOnly(self):
+        ret = self._get("/api/releases", qs=dict(name_prefix='a',
+                                                 names_only='1'))
+        self.assertStatusCode(ret, 200)
+        self.assertEquals(json.loads(ret.data), json.loads("""
+{
+    "names": ["a", "ab"]
+}
+"""))
+
+    def testGetReleasesNamePrefixNamesOnlyVersion(self):
+        ret = self._get("/api/releases", qs=dict(name_prefix='a',
+                                                 names_only='1',
+                                                 version="b"))
+        self.assertStatusCode(ret, 200)
+        self.assertEquals(json.loads(ret.data), json.loads("""
+{
+    "names": []
 }
 """))
 

@@ -378,21 +378,22 @@ class ReleaseHistoryView(HistoryAdminView):
 class ReleasesAPIView(AdminView):
     """/api/releases"""
     def get(self, **kwargs):
+        kwargs = {}
+        if request.args.get('product'):
+            kwargs['product'] = request.args.get('product')
+        if request.args.get('version'):
+            kwargs['version'] = request.args.get('version')
+        if request.args.get('name_prefix'):
+            kwargs['name_prefix'] = request.args.get('name_prefix')
         if request.args.get('names_only'):
-            releases = dbo.releases.getReleaseInfo(nameOnly=True)
+            kwargs['nameOnly'] = True
+        releases = dbo.releases.getReleaseInfo(**kwargs)
+        if request.args.get('names_only'):
             names = []
             for release in releases:
                 names.append(release['name'])
             data = {'names': names}
         else:
-            kwargs = {}
-            if request.args.get('product'):
-                kwargs['product'] = request.args.get('product')
-            if request.args.get('version'):
-                kwargs['version'] = request.args.get('version')
-            if request.args.get('name_prefix'):
-                kwargs['name_prefix'] = request.args.get('name_prefix')
-            releases = dbo.releases.getReleaseInfo(**kwargs)
             _releases = []
             _mapping = {
                 # return : db name
