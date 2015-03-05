@@ -1,19 +1,18 @@
 import simplejson as json
 
-from flask import render_template, Response, jsonify, make_response, request
+from flask import Response, jsonify, make_response, request
 
 from auslib.global_state import dbo
 from auslib.blobs.base import createBlob
 from auslib.db import OutdatedDataError
 from auslib.log import cef_event, CEF_WARN, CEF_ALERT
-from auslib.util import getPagination
 from auslib.admin.views.base import (
     requirelogin, requirepermission, AdminView, HistoryAdminView
 )
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import ReleaseForm, NewReleaseForm, DbEditableForm
 
-__all__ = ["SingleReleaseView", "SingleLocaleView", "ReleasesPageView"]
+__all__ = ["SingleReleaseView", "SingleLocaleView"]
 
 def createRelease(release, product, version, changed_by, transaction, releaseData):
     blob = createBlob(json.dumps(releaseData))
@@ -168,7 +167,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
 
 
 class SingleLocaleView(AdminView):
-    """/api/releases/[release]/builds/[platform]/[locale]"""
+    """/releases/[release]/builds/[platform]/[locale]"""
     def get(self, release, platform, locale):
         try:
             locale = dbo.releases.getLocale(release, platform, locale)
@@ -203,19 +202,14 @@ class SingleLocaleView(AdminView):
         return changeRelease(release, changed_by, transaction, exists, commit, self.log)
 
 class SingleReleaseView(AdminView):
-    """ /api/releases/:release"""
+    """ /releases/:release"""
     def get(self, release):
         release = dbo.releases.getReleases(name=release, limit=1)
         if not release:
             return Response(status=404, mimetype="application/json")
         headers = {'X-Data-Version': release[0]['data_version']}
         headers.update(get_csrf_headers())
-        # TODO: Only return json after old ui is dead
-        if 'application/json' in request.headers.get('Accept', ''):
-            return Response(response=json.dumps(release[0]['data']), mimetype='application/json', headers=headers)
-        else:
-            form = DbEditableForm(prefix=release[0]['name'], data_version=release[0]['data_version'])
-            return Response(response=render_template('fragments/release_row.html', row=release[0], form=form), headers=headers)
+        return Response(response=json.dumps(release[0]['data']), mimetype='application/json', headers=headers)
 
     @requirelogin
     @requirepermission('/releases/:name')
@@ -282,7 +276,7 @@ class SingleReleaseView(AdminView):
 
 
 class ReleaseHistoryView(HistoryAdminView):
-    """/api/releases/:release/revisions"""
+    """/releases/:release/revisions"""
     def get(self, release):
         releases = dbo.releases.getReleases(name=release, limit=1)
         if not releases:
@@ -305,10 +299,6 @@ class ReleaseHistoryView(HistoryAdminView):
             .execute()
             .fetchone()
         )
-        if total_count > limit:
-            pagination = getPagination(page, total_count, limit)
-        else:
-            pagination = None
         revisions = table.select(
             where=[
                 table.name == release['name'],
@@ -318,27 +308,13 @@ class ReleaseHistoryView(HistoryAdminView):
             offset=offset,
             order_by=[table.timestamp.asc()],
         )
-        primary_keys = table.base_primary_key
-        all_keys = self.getAllRevisionKeys(revisions, primary_keys)
 
         self.annotateRevisionDifferences(revisions)
 
-        # TODO: Only return json after old ui is dead
-        if 'application/json' in request.headers.get('Accept', ''):
-            return jsonify({
-                'revisions': revisions,
-                'count': total_count,
-            })
-
-        return render_template(
-            'revisions.html',
-            revisions=revisions,
-            label='release',
-            primary_keys=primary_keys,
-            all_keys=all_keys,
-            pagination=pagination,
-            total_count=total_count,
-        )
+        return jsonify({
+            'revisions': revisions,
+            'count': total_count,
+        })
 
     @requirelogin
     def _post(self, release, transaction, changed_by):
@@ -376,7 +352,7 @@ class ReleaseHistoryView(HistoryAdminView):
 
 
 class ReleasesAPIView(AdminView):
-    """/api/releases"""
+    """/releases"""
     def get(self, **kwargs):
         kwargs = {}
         if request.args.get('product'):
@@ -443,29 +419,3 @@ class ReleasesAPIView(AdminView):
         )
         response.headers['Content-Type'] = 'application/json'
         return response
-
-
-# TODO: Kill me when old admin ui is shut off
-class ReleasesPageView(AdminView):
-    """ /releases.html """
-    def get(self):
-        releases = dbo.releases.getReleaseInfo()
-        addForm = NewReleaseForm(prefix="new_release")
-        forms = {}
-        for r in releases:
-            release = r["name"]
-            forms[release] = DbEditableForm(
-                prefix=release,
-                data_version=r["data_version"],
-            )
-        return render_template('releases.html', releases=releases, addForm=addForm, forms=forms)
-
-class SingleBlobView(AdminView):
-    """ /releases/[release]/data"""
-    def get(self, release):
-        try:
-            release_blob = dbo.releases.getReleaseBlob(name=release)
-            return jsonify(release_blob)
-        except KeyError:
-            return Response(status=404)
-

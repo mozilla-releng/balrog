@@ -12,6 +12,6 @@ def get_csrf_headers():
     return {'X-CSRF-Token': form.csrf_token._value()}
 
 class CSRFView(AdminView):
-    """/api/csrf_token"""
+    """/csrf_token"""
     def get(self):
         return Response(headers=get_csrf_headers())

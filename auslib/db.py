@@ -1018,14 +1018,6 @@ class Permissions(AUSTable):
        option is only valid for requests through that HTTP method."""
     allPermissions = {
         'admin': [],
-        '/api/releases/:name': ['method', 'product'],
-        '/api/releases/:name/rollback': ['product'],
-        '/api/releases/:name/builds/:platform/:locale': ['method', 'product'],
-        '/api/rules': ['product'],
-        '/api/rules/:id': ['method', 'product'],
-        '/api/rules/:id/rollback': ['product'],
-        '/api/users/:id/permissions/:permission': ['method'],
-        # TODO: Remove these old endpoints when old ui dies.
         '/releases/:name': ['method', 'product'],
         '/releases/:name/rollback': ['product'],
         '/releases/:name/builds/:platform/:locale': ['method', 'product'],

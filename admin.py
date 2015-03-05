@@ -9,6 +9,15 @@ from auslib.util import thirdparty
 thirdparty.extendsyspath()
 
 
+class APIMiddleware(object):
+    def __init__(self, wrap_app):
+        self.wrap_app = wrap_app
+
+    def __call__(self, environ, start_response):
+        environ["PATH_INFO"] = environ["PATH_INFO"].lstrip("/api")
+        return self.wrap_app(environ, start_response)
+
+
 if __name__ == '__main__':
     from optparse import OptionParser
     parser = OptionParser()
@@ -61,5 +70,9 @@ if __name__ == '__main__':
     app.config['PAGE_TITLE'] = options.pageTitle
     def auth(environ, username, password):
         return username == password
-    app.wsgi_app = AuthBasicHandler(app.wsgi_app, "Balrog standalone auth", auth)
+    # The Angular app always makes requests to "/api". The WSGI app that runs
+    # the API doesn't know about this prefix though, so we need to strip it
+    # away before the request reaches the app. In production (and the Vagrant
+    # environment) this is done by setting up the WSGI app with WSGIScriptAlias.
+    app.wsgi_app = APIMiddleware(AuthBasicHandler(app.wsgi_app, "Balrog standalone auth", auth))
     app.run(port=options.port, host=options.host)

@@ -30,7 +30,6 @@ class ViewTest(unittest.TestCase):
         dbo.setDomainWhitelist(['good.com'])
         dbo.create()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
-        # TODO: switch these to /api when old ui dies.
         dbo.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
         dbo.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
         dbo.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
@@ -101,14 +100,4 @@ class JSONTestMixin(object):
             qs["format"] = "json"
         ret = self.client.get(url, query_string=qs, headers=headers)
         self.assertEquals(ret.mimetype, 'application/json')
-        return ret
-
-class HTMLTestMixin(object):
-    """Provides a _get method that always asks for format='html', and checks
-       the returned MIME type."""
-    def _get(self, url, query_string=dict()):
-        qs = query_string.copy()
-        qs['format'] = 'html'
-        ret = self.client.get(url, query_string=qs)
-        self.assertEquals(ret.mimetype, 'text/html')
         return ret

@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.set_defaults(
         db='sqlite:///update.db',
-        port=8000,
+        port=7000,
         whitelistedDomains=[
             "download.mozilla.org",
             "stage.mozilla.org",

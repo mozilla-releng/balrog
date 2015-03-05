@@ -1,19 +1,19 @@
 import json
 
 from auslib.global_state import dbo
-from auslib.test.admin.views.base import ViewTest, HTMLTestMixin, JSONTestMixin
+from auslib.test.admin.views.base import ViewTest, JSONTestMixin
 
 
 class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
     maxDiff=1000
 
     def testGetRules(self):
-        ret = self._get("/api/rules")
+        ret = self._get("/rules")
         got = json.loads(ret.data)
         self.assertEquals(got["count"], 5)
 
     def testNewRulePost(self):
-        ret = self._post('/api/rules', data=dict(backgroundRate=31, mapping='c', priority=33,
+        ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c', priority=33,
                                                 product='Firefox', update_type='minor', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         r = dbo.rules.t.select().where(dbo.rules.rule_id==ret.data).execute().fetchall()
@@ -28,7 +28,7 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
             backgroundRate=31, mapping="c", priority=33, product="Firefox",
             update_type="minor", channel="nightly"
         ))
-        ret = self._post("/api/rules", data=data, headers={"Content-Type": "application/json"})
+        ret = self._post("/rules", data=data, headers={"Content-Type": "application/json"})
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         r = dbo.rules.t.select().where(dbo.rules.rule_id==ret.data).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -41,14 +41,14 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
     def testMissingFields(self):
         # But we still need to pass product, because permission checking
         # is done before what we're testing
-        ret = self._post('/api/rules', data=dict({'product': 'a'}))
+        ret = self._post('/rules', data=dict({'product': 'a'}))
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         self.assertTrue('backgroundRate' in  ret.data, msg=ret.data)
         self.assertTrue('priority' in  ret.data, msg=ret.data)
 
 class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
     def testGetRule(self):
-        ret = self._get("/api/rules/1")
+        ret = self._get("/rules/1")
         expected = dict(
             backgroundRate=100,
             mapping="c",
@@ -71,12 +71,12 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(json.loads(ret.data), expected)
 
     def testGetRule404(self):
-        ret = self.client.get("/api/rules/123")
+        ret = self.client.get("/rules/123")
         self.assertEquals(ret.status_code, 404)
 
     def testPost(self):
         # Make some changes to a rule
-        ret = self._post('/api/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
+        ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
                                                 product='Firefox', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
@@ -99,7 +99,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
             backgroundRate=71, mapping="d", priority=73, data_version=1,
             product="Firefox", channel="nightly"
         ))
-        ret = self._post("/api/rules/1", data=data, headers={"Content-Type": "application/json"})
+        ret = self._post("/rules/1", data=data, headers={"Content-Type": "application/json"})
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -117,7 +117,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['buildTarget'], 'd')
 
     def testPostWithoutProduct(self):
-        ret = self._post('/api/rules/4', username='bob',
+        ret = self._post('/rules/4', username='bob',
                          data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
                                    channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
@@ -154,49 +154,49 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['product'], 'fake')
 
     def testPost404(self):
-        ret = self._post("/api/rules/555", data=dict(mapping="d"))
+        ret = self._post("/rules/555", data=dict(mapping="d"))
         self.assertEquals(ret.status_code, 404)
 
     def testPostWithBadData(self):
-        ret = self._post("/api/rules/1", data=dict(mapping="uhet"))
+        ret = self._post("/rules/1", data=dict(mapping="uhet"))
         self.assertEquals(ret.status_code, 400)
 
     def testBadAuthPost(self):
-        ret = self._badAuthPost('/api/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
+        ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
         self.assertEquals(ret.status_code, 401, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         self.assertTrue("not allowed to alter" in ret.data, msg=ret.data)
 
     def testNoPermissionToAlterExistingProduct(self):
-        ret = self._post('/api/rules/1', data=dict(backgroundRate=71, data_version=1), username='bob')
+        ret = self._post('/rules/1', data=dict(backgroundRate=71, data_version=1), username='bob')
         self.assertEquals(ret.status_code, 401)
 
     def testNoPermissionToAlterNewProduct(self):
-        ret = self._post('/api/rules/4', data=dict(product='protected', mapping='a', backgroundRate=71, priority=50, update_type='minor', data_version=1), username='bob')
+        ret = self._post('/rules/4', data=dict(product='protected', mapping='a', backgroundRate=71, priority=50, update_type='minor', data_version=1), username='bob')
         self.assertEquals(ret.status_code, 401)
 
     def testGetSingleRule(self):
-        ret = self._get('/api/rules/1')
+        ret = self._get('/rules/1')
         self.assertEquals(ret.status_code, 200)
         self.assertTrue("c" in ret.data, msg=ret.data)
         for h in ("X-CSRF-Token", "X-Data-Version"):
             self.assertTrue(h in ret.headers, msg=ret.headers)
 
     def testDeleteRule(self):
-        ret = self._delete('/api/rules/1', qs=dict(data_version=1))
+        ret = self._delete('/rules/1', qs=dict(data_version=1))
         self.assertEquals(ret.status_code, 200, msg=ret.data)
 
     def testDeleteRule404(self):
-        ret = self._delete("/api/rules/112")
+        ret = self._delete("/rules/112")
         self.assertEquals(ret.status_code, 404)
 
     def testDeleteWithoutPermission(self):
-        ret = self._delete("/api/rules/2", username="tony", qs=dict(data_version=1))
+        ret = self._delete("/rules/2", username="tony", qs=dict(data_version=1))
         self.assertEquals(ret.status_code, 401)
 
 
 class TestRuleHistoryView(ViewTest, JSONTestMixin):
     def testGetNoRevisions(self):
-        url = '/api/rules/1/revisions'
+        url = '/rules/1/revisions'
         ret = self._get(url)
         self.assertEquals(ret.status_code, 200, msg=ret.data)
         got = json.loads(ret.data)
@@ -205,7 +205,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
     def testGetRevisions(self):
         # Make some changes to a rule
         ret = self._post(
-            '/api/rules/1',
+            '/rules/1',
             data=dict(
                 backgroundRate=71,
                 mapping='d',
@@ -223,7 +223,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         )
         # and again
         ret = self._post(
-            '/api/rules/1',
+            '/rules/1',
             data=dict(
                 backgroundRate=72,
                 mapping='d',
@@ -240,7 +240,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
             "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
         )
 
-        url = '/api/rules/1/revisions'
+        url = '/rules/1/revisions'
         ret = self._get(url)
         got = json.loads(ret.data)
         self.assertEquals(ret.status_code, 200, msg=ret.data)
@@ -249,7 +249,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
     def testPostRevisionRollback(self):
         # Make some changes to a rule
         ret = self._post(
-            '/api/rules/1',
+            '/rules/1',
             data=dict(
                 backgroundRate=71,
                 mapping='d',
@@ -272,7 +272,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         )
         # and again
         ret = self._post(
-            '/api/rules/1',
+            '/rules/1',
             data=dict(
                 backgroundRate=72,
                 mapping='d',
@@ -307,7 +307,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         change_id = row['change_id']
         assert row['rule_id'] == 1  # one of the fixtures
 
-        url = '/api/rules/1/revisions'
+        url = '/rules/1/revisions'
         ret = self._post(url, {'change_id': change_id})
         self.assertEquals(ret.status_code, 200, ret.data)
 
@@ -327,7 +327,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
 
     def testRollbackWithoutPermission(self):
         ret = self._post(
-            '/api/rules/1',
+            '/rules/1',
             data=dict(
                 backgroundRate=71,
                 mapping='d',
@@ -344,7 +344,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
             )
         )
         ret = self._post(
-            '/api/rules/1',
+            '/rules/1',
             data=dict(
                 backgroundRate=72,
                 mapping='d',
@@ -361,33 +361,22 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         )
         change_id = row['change_id']
 
-        url = '/api/rules/1/revisions'
+        url = '/rules/1/revisions'
         ret = self._post(url, {'change_id': change_id}, username='bob')
         self.assertEquals(ret.status_code, 401)
 
     def testPostRevisionRollbackBadRequests(self):
         # when posting you need both the rule_id and the change_id
-        wrong_url = '/api/rules/999/revisions'
+        wrong_url = '/rules/999/revisions'
         # not found rule_id
         ret = self._post(wrong_url, {'change_id': 10})
         self.assertEquals(ret.status_code, 404)
 
-        url = '/api/rules/1/revisions'
+        url = '/rules/1/revisions'
         ret = self._post(url, {'change_id': 999})
         # not found change_id
         self.assertEquals(ret.status_code, 404)
 
-        url = '/api/rules/1/revisions'
+        url = '/rules/1/revisions'
         ret = self._post(url)  # no change_id posted
         self.assertEquals(ret.status_code, 400)
-
-
-# TODO: kill this when old ui goes away
-class TestRulesView_HTML(ViewTest, HTMLTestMixin):
-    def testGetRules(self):
-        ret = self._get('/rules.html')
-        self.assertEquals(ret.status_code, 200, msg=ret.data)
-        self.assertTrue("<form id='rules_form'" in ret.data, msg=ret.data)
-        self.assertTrue('<input id="1-backgroundRate" name="1-backgroundRate" type="text" value="100">' in ret.data, msg=ret.data)
-        self.assertTrue('<input id="1-priority" name="1-priority" type="text" value="100">' in ret.data, msg=ret.data)
-
