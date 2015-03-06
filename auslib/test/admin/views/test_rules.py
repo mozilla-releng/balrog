@@ -137,7 +137,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['product'], 'fake')
 
     def testPostSetBackgroundRateTo0(self):
-        ret = self._post("/api/rules/4", data=dict(backgroundRate=0, data_version=1))
+        ret = self._post("/rules/4", data=dict(backgroundRate=0, data_version=1))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
