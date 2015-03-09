@@ -222,6 +222,14 @@ class SingleUpdateXMLMixin(object):
 
 
 class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
+    """ This is the legacy format for apps based on Gecko 1.8.0 to 1.9.2, which
+    translates to
+     * Firefox 1.5 to 3.6.x
+     * Thunderbird 1.5 to 3.1.y
+
+    It was deprecated by https://bugzilla.mozilla.org/show_bug.cgi?id=530872 during
+    Gecko 2.0 development (aka 1.9.3).
+    """
     format_ = {
         'name': None,
         'schema_version': None,
@@ -413,7 +421,11 @@ class NewStyleVersionsMixin(object):
 
 
 class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
-    """ Changes from ReleaseBlobV1:
+    """ Client-side changes in
+          https://bugzilla.mozilla.org/show_bug.cgi?id=530872
+        were introduced at Gecko 1.9.3a3, requiring this new blob class.
+
+        Changed parameters from ReleaseBlobV1:
          * appv, extv become appVersion, platformVersion, displayVersion
         Added:
          * actions, billboardURL, openURL, notificationURL,
@@ -555,7 +567,9 @@ class MultipleUpdatesXMLMixin(object):
 
 
 class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, SeparatedFileUrlsMixin):
-    """ Changes from ReleaseBlobV2:
+    """ This is an internal change to add functionality to Balrog.
+
+    Changes from ReleaseBlobV2:
          * support multiple partials
            * remove "partial" and "complete" from locale level
            * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
@@ -705,7 +719,9 @@ class UnifiedFileUrlsMixin(object):
 
 
 class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """ Changes from ReleaseBlobV4:
+    """ This is an internal change to add functionality to Balrog.
+
+    Changes from ReleaseBlobV3:
         * Support pushing release builds to the beta channel with bouncer support (bug 1021026)
         ** Combine fileUrls, bouncerProducts, and ftpFilenames into a larger data structure,
            still called "fileUrls". (See below for a more detailed description.)
