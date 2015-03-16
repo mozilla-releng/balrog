@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     action = args[0]
 
-    db = AUSDatabase(options.db)
+    db = AUSDatabase(options.db, mysql_traditional_mode=True)
     if action == 'create':
         db.create(options.version)
     elif action == 'upgrade':

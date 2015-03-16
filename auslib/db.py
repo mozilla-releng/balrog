@@ -632,7 +632,7 @@ class Rules(AUSTable):
             Column('channel', String(75)),
             Column('buildTarget', String(75)),
             Column('buildID', String(20)),
-            Column('locale', String(10)),
+            Column('locale', String(200)),
             Column('osVersion', String(1000)),
             Column('distribution', String(100)),
             Column('distVersion', String(100)),
@@ -662,6 +662,17 @@ class Rules(AUSTable):
             return True
         if self._matchesRegex(ruleChannel, fallbackChannel):
             return True
+
+    def _matchesList(self, ruleString, queryString):
+        """Decides whether a ruleString from a rule matches an incoming string.
+           The rule may specify multiple matches, delimited by a comma. Once
+           split we look for an exact match against the string from the queries.
+           We want an exact match so (eg) we only get the locales we specify"""
+        if ruleString is None:
+            return True
+        for subString in ruleString.split(','):
+            if subString == queryString:
+                return True
 
     def _versionMatchesRule(self, ruleVersion, queryVersion):
         """Decides whether a version from the rules matches an incoming version.
@@ -694,6 +705,11 @@ class Rules(AUSTable):
             if os in queryOsVersion:
                 return True
 
+    def _localeMatchesRule(self, ruleLocales, queryLocale):
+        """Decides if a comma seperated list of locales in a rule matches an
+        update request"""
+        return self._matchesList(ruleLocales, queryLocale)
+
     def addRule(self, changed_by, what, transaction=None):
         ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
         return ret.inserted_primary_key[0]
@@ -714,7 +730,6 @@ class Rules(AUSTable):
         where=[
             ((self.product==updateQuery['product']) | (self.product==None)) &
             ((self.buildTarget==updateQuery['buildTarget']) | (self.buildTarget==None)) &
-            ((self.locale==updateQuery['locale']) | (self.locale==None)) &
             ((self.headerArchitecture==updateQuery['headerArchitecture']) | (self.headerArchitecture==None))
         ]
         # Query version 2 doesn't have distribution information, and to keep
@@ -754,6 +769,10 @@ class Rules(AUSTable):
             # break them out and create clauses for each one.
             if not self._osVersionMatchesRule(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
+                continue
+            # Locales may be a comma delimited rule too, exact matches only
+            if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
+                self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
                 continue
             matchingRules.append(rule)
         self.log.debug("Reduced matches:")
@@ -1180,25 +1199,40 @@ def getHumanModificationMonitors(systemAccounts):
             cef_event('Human modification', CEF_ALERT, user=who, what=what, where=where, table=table.name, type='update')
     return onInsert, onDelete, onUpdate
 
+
+# A helper that sets sql_mode. This should only be used with MySQL, and
+# lets us put the database in a stricter mode that will disallow things like
+# automatic data truncation.
+# From http://www.enricozini.org/2012/tips/sa-sqlmode-traditional/
+from sqlalchemy.interfaces import PoolListener
+class SetSqlMode(PoolListener):
+    def connect(self, dbapi_con, connection_record):
+        cur = dbapi_con.cursor()
+        cur.execute("SET SESSION sql_mode='TRADITIONAL'")
+
+
 class AUSDatabase(object):
     engine = None
     migrate_repo = path.join(path.dirname(__file__), "migrate")
 
-    def __init__(self, dburi=None):
+    def __init__(self, dburi=None, mysql_traditional_mode=False):
         """Create a new AUSDatabase. Before this object is useful, dburi must be
            set, either through the constructor or setDburi()"""
         if dburi:
-            self.setDburi(dburi)
+            self.setDburi(dburi, mysql_traditional_mode)
         self.log = logging.getLogger(self.__class__.__name__)
 
-    def setDburi(self, dburi):
+    def setDburi(self, dburi, mysql_traditional_mode=False):
         """Setup the database connection. Note that SQLAlchemy only opens a connection
            to the database when it needs to, however."""
         if self.engine:
             raise AlreadySetupError()
         self.dburi = dburi
         self.metadata = MetaData()
-        self.engine = create_engine(self.dburi, pool_recycle=60)
+        listeners = []
+        if mysql_traditional_mode and "mysql" in dburi:
+            listeners.append(SetSqlMode())
+        self.engine = create_engine(self.dburi, pool_recycle=60, listeners=listeners)
         dialect = self.engine.name
         self.rulesTable = Rules(self.metadata, dialect)
         self.releasesTable = Releases(self.metadata, dialect)
