@@ -295,6 +295,40 @@ class ClientTest(unittest.TestCase):
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
 
+    def testAvastURLsWithBadQueryArgs(self):
+        ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1%3Favast=1")
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        returned = minidom.parseString(ret.data)
+        ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1')
+        self.assertEqual(ret2.status_code, 200)
+        self.assertEqual(ret2.mimetype, 'text/xml')
+        self.assertEqual(ret.data, ret2.data)
+
+    def testAvastURLsWithUnescapedBadQueryArgs(self):
+        ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1?avast=1")
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        returned = minidom.parseString(ret.data)
+        ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1')
+        self.assertEqual(ret2.status_code, 200)
+        self.assertEqual(ret2.mimetype, 'text/xml')
+        self.assertEqual(ret.data, ret2.data)
+
+    def testAvastURLsWithGoodQueryArgs(self):
+        ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1&avast=1")
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z?force=1" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
     def testDeprecatedEsrVersionStyleGetsUpdates(self):
         ret = self.client.get('/update/3/b/1.0esrpre/1/p/l/a/a/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)

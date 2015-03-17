@@ -22,6 +22,14 @@ class ClientRequestView(MethodView):
             return 'Intel'
 
     def removeAvastBrokenness(self, locale):
+        # Some versions of Avast make requests and blindly append "?avast=1" to
+        # them, which breaks query string parsing if ?force=1 is already
+        # there. Because we're nice people we'll fix it up.
+        qs = request.environ.get("QUERY_STRING", "")
+        if "force" in qs and "avast" in qs:
+            qs = qs.replace("?avast=1", "&avast=1")
+            qs = qs.replace("%3Favast=1", "&avast=1")
+            request.environ["QUERY_STRING"] = qs
         # Some versions of Avast have a bug in them that prepends "x86 "
         # to the locale. We need to make sure we handle this case correctly
         # so that these people can keep up to date.
