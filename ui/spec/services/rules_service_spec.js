@@ -124,22 +124,4 @@ describe("Service: Rules", function() {
     this.$httpBackend.flush();
   }));
 
-  it('should be set aliases on a rule', inject(function(Rules) {
-    var rule = {
-      buildID: '123',
-      buildTarget: '456',
-      osVersion: '789',
-      distVersion: 111,
-      headerArchitecture: 222
-    };
-    Rules.setDataAliases(rule);
-    expect(rule.build_id).toEqual('123');
-    expect(rule.build_target).toEqual('456');
-    expect(rule.os_version).toEqual('789');
-    expect(rule.dist_version).toEqual(111);
-    expect(rule.header_arch).toEqual(222);
-  }));
-
-
-
 });

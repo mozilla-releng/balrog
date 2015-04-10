@@ -17,9 +17,6 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule) {
     $scope.errors = {};
     CSRF.getToken()
     .then(function(csrf_token) {
-      // set up some aliases that the data endpoint expects
-      Rules.setDataAliases($scope.rule);
-
       rule = angular.copy($scope.rule);
       // rule.priority = '' + rule.priority;
       Rules.addRule(rule, csrf_token)
