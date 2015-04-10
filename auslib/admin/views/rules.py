@@ -48,16 +48,16 @@ class RulesAPIView(AdminView):
                 priority=form.priority.data,
                 product = form.product.data,
                 version = form.version.data,
-                buildID = form.build_id.data,
+                buildID = form.buildID.data,
                 channel = form.channel.data,
                 locale = form.locale.data,
                 distribution = form.distribution.data,
-                buildTarget = form.build_target.data,
-                osVersion = form.os_version.data,
-                distVersion = form.dist_version.data,
+                buildTarget = form.buildTarget.data,
+                osVersion = form.osVersion.data,
+                distVersion = form.distVersion.data,
                 comment = form.comment.data,
                 update_type = form.update_type.data,
-                headerArchitecture = form.header_arch.data)
+                headerArchitecture = form.headerArchitecture.data)
         rule_id = dbo.rules.addRule(changed_by=changed_by, what=what,
             transaction=transaction)
         return Response(status=200, response=str(rule_id))
@@ -106,36 +106,25 @@ class SingleRuleView(AdminView):
             return Response(status=400, response=json.dumps(form.errors))
 
         what = dict()
-        if form.backgroundRate.data is not None:
-            what['backgroundRate'] = form.backgroundRate.data
-        if form.mapping.data:
-            what['mapping'] = form.mapping.data
-        if form.priority.data is not None:
-            what['priority'] = form.priority.data
-        if form.product.data:
-            what['product'] = form.product.data
-        if form.version.data:
-            what['version'] = form.version.data
-        if form.build_id.data:
-            what['buildID'] = form.build_id.data
-        if form.channel.data:
-            what['channel'] = form.channel.data
-        if form.locale.data:
-            what['locale'] = form.locale.data
-        if form.distribution.data:
-            what['distribution'] = form.distribution.data
-        if form.build_target.data:
-            what['buildTarget'] = form.build_target.data
-        if form.os_version.data:
-            what['osVersion'] = form.os_version.data
-        if form.dist_version.data:
-            what['distVersion'] = form.dist_version.data
-        if form.comment.data:
-            what['comment'] = form.comment.data
-        if form.update_type.data:
-            what['update_type'] = form.update_type.data
-        if form.header_arch.data:
-            what['headerArchitecture'] = form.header_arch.data
+        # We need to be able to support changing AND removing parts of a rule,
+        # and because of how Flask's request object and WTForm's defaults work
+        # this gets a little hary.
+        for k, v in form.data.iteritems():
+            # data_version is a "special" column, in that it's not part of the
+            # primary data, and shouldn't be updatable by the user.
+            if k == "data_version":
+                continue
+            # We need to check for each column in both the JSON style post
+            # and the regular multipart form data. If the key is not present in
+            # either of these data structures. We treat this cases as no-op
+            # and shouldn't modify the data for that key.
+            # If the key is present we should modify the data as requested.
+            # If a value is an empty string, we should remove that restriction
+            # from the rule (aka, set as NULL in the db). The underlying Form
+            # will have already converted it to None, so we can treat it the
+            # same as a modification here.
+            if (request.json and k in request.json) or k in request.form:
+                what[k] = v
 
         dbo.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
             old_data_version=form.data_version.data, transaction=transaction)
@@ -215,16 +204,16 @@ class RuleHistoryAPIView(HistoryAdminView):
             'product': 'product',
             'version': 'version',
             'background_rate': 'backgroundRate',
-            'build_id': 'buildID',
+            'buildID': 'buildID',
             'channel': 'channel',
             'locale': 'locale',
             'distribution': 'distribution',
-            'build_target': 'buildTarget',
-            'os_version': 'osVersion',
-            'dist_version': 'distVersion',
+            'buildTarget': 'buildTarget',
+            'osVersion': 'osVersion',
+            'distVersion': 'distVersion',
             'comment': 'comment',
             'update_type': 'update_type',
-            'header_arch': 'headerArchitecture',
+            'headerArchitecture': 'headerArchitecture',
             'data_version': 'data_version',
             # specific to revisions
             'change_id': 'change_id',

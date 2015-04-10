@@ -153,6 +153,24 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['buildTarget'], 'd')
         self.assertEquals(r[0]['product'], 'fake')
 
+    def testPostRemoveRestriction(self):
+        ret = self._post("/rules/5", data=dict(buildTarget="", data_version=1))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id==5).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        r = r[0]
+        self.assertEquals(r["buildTarget"], None)
+        # ...and that other fields weren't modified
+        self.assertEquals(r["priority"], 80)
+        self.assertEquals(r["version"], "3.3")
+        self.assertEquals(r["backgroundRate"], 0)
+        self.assertEquals(r["mapping"], "c")
+        self.assertEquals(r["update_type"], "minor")
+        self.assertEquals(r["product"], None)
+
     def testPost404(self):
         ret = self._post("/rules/555", data=dict(mapping="d"))
         self.assertEquals(ret.status_code, 404)
@@ -258,11 +276,11 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
                 product='Firefox',
                 update_type='minor',
                 channel='nightly',
-                build_id='1234',
-                os_version='10.5',
-                header_arch='INTEL',
-                dist_version='19',
-                build_target='MAC',
+                buildID='1234',
+                osVersion='10.5',
+                headerArchitecture='INTEL',
+                distVersion='19',
+                buildTarget='MAC',
             )
         )
         self.assertEquals(
@@ -336,11 +354,11 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
                 product='',
                 update_type='minor',
                 channel='nightly',
-                build_id='1234',
-                os_version='10.5',
-                header_arch='INTEL',
-                dist_version='19',
-                build_target='MAC',
+                buildID='1234',
+                osVersion='10.5',
+                headerArchitecture='INTEL',
+                distVersion='19',
+                buildTarget='MAC',
             )
         )
         ret = self._post(
