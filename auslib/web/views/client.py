@@ -58,5 +58,5 @@ class ClientRequestView(MethodView):
             xml = "\n".join(xml)
         self.log.debug("Sending XML: %s", xml)
         response = make_response(xml)
-        response.mimetype = 'text/xml'
+        response.mimetype = "text/xml"
         return response
