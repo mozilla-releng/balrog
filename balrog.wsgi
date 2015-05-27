@@ -23,7 +23,6 @@ thirdparty.extendsyspath()
 
 from auslib.config import ClientConfig
 import auslib.log
-from auslib.web.base import sentry
 
 cfg = ClientConfig(path.join(mydir, 'balrog.ini'))
 errors = cfg.validate()
@@ -49,11 +48,6 @@ dbo.setDb(cfg.getDburi())
 dbo.setDomainWhitelist(cfg.getDomainWhitelist())
 application.config['WHITELISTED_DOMAINS'] = cfg.getDomainWhitelist()
 application.config['SPECIAL_FORCE_HOSTS'] = cfg.getSpecialForceHosts()
-application.config['SENTRY_DSN'] = cfg.getSentryDsn()
-application.config['SENTRY_PROCESSORS'] = ['auslib.util.sentry.SanitizeHeadersProcessor']
-
-if application.config['SENTRY_DSN']:
-    sentry.init_app(application)
 
 if newrelic:
     application = newrelic.agent.wsgi_application()(application)

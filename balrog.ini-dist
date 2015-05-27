@@ -9,7 +9,6 @@ logfile=/var/log/aus.log
 ;Where to log CEF messages. Normally set to syslog.
 cef_logfile=syslog
 ;level=ERROR
-;sentry_dsn='threaded+https://abc:def@errormill.mozilla.org/12'
 
 [site-specific]
 ;Sites that get the force=1 appended to download urls, comma separated supported

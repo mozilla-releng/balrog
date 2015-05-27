@@ -51,12 +51,6 @@ class AUSConfig(object):
         else:
             return "cef.log"
 
-    def getSentryDsn(self):
-        if self.cfg.has_option('logging', 'sentry_dsn'):
-            return self.cfg.get('logging', 'sentry_dsn')
-        else:
-            return None
-
     def getDomainWhitelist(self):
         try:
             return tuple(a.strip() for a in self.cfg.get('site-specific','domain_whitelist').split(','))

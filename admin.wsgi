@@ -9,7 +9,6 @@ site.addsitedir(mydir)
 from auslib.util import thirdparty
 thirdparty.extendsyspath()
 
-from auslib.admin.base import sentry
 from auslib.config import AdminConfig
 import auslib.log
 
@@ -36,8 +35,3 @@ dbo.setDomainWhitelist(cfg.getDomainWhitelist())
 application.config['WHITELISTED_DOMAINS'] = cfg.getDomainWhitelist()
 application.config['PAGE_TITLE'] = cfg.getPageTitle()
 application.config['SECRET_KEY'] = cfg.getSecretKey()
-application.config['SENTRY_DSN'] = cfg.getSentryDsn()
-application.config['SENTRY_PROCESSORS'] = ['auslib.util.sentry.SanitizeHeadersProcessor']
-
-if application.config['SENTRY_DSN']:
-    sentry.init_app(application)

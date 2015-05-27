@@ -3,13 +3,10 @@ log = logging.getLogger(__name__)
 
 from flask import Flask, make_response, send_from_directory
 
-from raven.contrib.flask import Sentry
-
 from auslib.AUS import AUS
 
 app = Flask(__name__)
 AUS = AUS()
-sentry = Sentry()
 
 from auslib.errors import BadDataError
 from auslib.web.views.client import ClientRequestView
@@ -24,14 +21,10 @@ def fourohfour(error):
 
 @app.errorhandler(Exception)
 def generic(error):
-    """Deals with any unhandled exceptions. If the exception is not a
-    BadDataError, it will be sent to Sentry. Regardless of the exception,
+    """Deals with any unhandled exceptions. Regardless of the exception,
     a 200 response with no updates is returned, because that's what the client
     expects. See bugs 885173 and 1069454 for additional background."""
 
-    if not isinstance(error, BadDataError):
-        if sentry.client:
-            sentry.captureException()
     log.debug('Hit exception, sending an empty response', exc_info=True)
     response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
     response.mimetype = 'text/xml'

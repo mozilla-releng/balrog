@@ -5,7 +5,6 @@ flask-wtf==0.10.2
 sqlalchemy-migrate==0.7.2
 tempita==0.5.1
 decorator==3.3.3
-raven==3.1.13
 blinker==1.2
 cef==0.5
 flask-compress==1.0.2
