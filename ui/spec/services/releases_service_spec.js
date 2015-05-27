@@ -109,7 +109,7 @@ describe("Service: Releases", function() {
     var sample_response = {
       new_data_version: 4,
     };
-    this.$httpBackend.expectPOST('/api/releases/kitkat%202014')
+    this.$httpBackend.expectPUT('/api/releases/kitkat%202014')
     .respond(200, JSON.stringify(sample_response));
     Releases.updateRelease('kitkat 2014', {}).success(function(response) {
       expect(response).toEqual(sample_response);
