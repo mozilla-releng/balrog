@@ -21,7 +21,7 @@ function ($scope, $modalInstance, CSRF, Releases, release) {
       CSRF.getToken()
       .then(function(csrf_token) {
         var data = $scope.release;
-        data.data = blob;  // it's an edit
+        data.blob = blob;
         Releases.updateRelease($scope.release.name, data, csrf_token)
         .success(function(response) {
           $scope.release.data_version = response.new_data_version;
