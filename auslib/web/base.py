@@ -8,7 +8,6 @@ from auslib.AUS import AUS
 app = Flask(__name__)
 AUS = AUS()
 
-from auslib.errors import BadDataError
 from auslib.web.views.client import ClientRequestView
 
 
