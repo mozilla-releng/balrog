@@ -79,7 +79,7 @@ class NewPermissionForm(PermissionForm):
 class ExistingPermissionForm(PermissionForm):
     permission = StringField('Permission', validators=[Required()], widget=DisableableTextInput(disabled=True))
 
-class ReleaseForm(Form):
+class PartialReleaseForm(Form):
     # Because we do implicit release creation in the Releases views, we can't
     # have data_version be Required(). The views are responsible for checking
     # for its existence in this case.
@@ -126,8 +126,9 @@ class EditRuleForm(DbEditableForm):
     update_type = SelectField('Update Type', choices=[('minor','minor'), ('major', 'major')], validators=[Optional()], coerce=NoneOrType(unicode))
     headerArchitecture = NullableStringField('Header Architecture', validators=[Optional(), Length(0,10) ])
 
-class NewReleaseForm(Form):
+class CompleteReleaseForm(Form):
     name = StringField('Name', validators=[Required()])
     version = StringField('Version', validators=[Required()])
     product = StringField('Product', validators=[Required()])
     blob = JSONStringField('Data', validators=[Required()], widget=FileInput())
+    data_version = IntegerField('data_version', widget=HiddenInput())

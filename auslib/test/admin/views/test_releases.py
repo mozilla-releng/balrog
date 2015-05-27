@@ -439,6 +439,30 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
         self.assertStatusCode(ret, 400)
 
+    def testPutExistingRelease(self):
+        ret = self._put("/releases/d", data=dict(name="d", version="3", product="Firefox", data_version=1, blob="""
+{
+    "name": "d",
+    "schema_version": 3,
+    "hashFunction": "sha512",
+    "actions": "doit"
+}
+"""))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.releases.t.select().where(dbo.releases.name=='d').execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['name'], 'd')
+        self.assertEquals(r[0]['version'], '3')
+        self.assertEquals(r[0]['product'], 'Firefox')
+        self.assertEquals(json.loads(r[0]['data']), json.loads("""
+{
+    "name": "d",
+    "schema_version": 3,
+    "hashFunction": "sha512",
+    "actions": "doit"
+}
+"""))
+
     def testGMPReleasePut(self):
 
         ret = self._put('/releases/gmprel', data=dict(name='gmprel', version='5', product='GMP',
