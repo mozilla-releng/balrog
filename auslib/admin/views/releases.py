@@ -209,7 +209,11 @@ class SingleReleaseView(AdminView):
             return Response(status=404, mimetype="application/json")
         headers = {'X-Data-Version': release[0]['data_version']}
         headers.update(get_csrf_headers())
-        return Response(response=json.dumps(release[0]['data']), mimetype='application/json', headers=headers)
+        if request.args.get("pretty"):
+            indent = 4
+        else:
+            indent = None
+        return Response(response=json.dumps(release[0]['data'], indent=indent), mimetype='application/json', headers=headers)
 
     @requirelogin
     @requirepermission('/releases/:name')
