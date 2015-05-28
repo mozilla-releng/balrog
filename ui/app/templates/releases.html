@@ -71,6 +71,7 @@
       <div style="float:right">
         <i ng-show="release_name && $first">Current</i>
         <button ng-show="release_name && !$first" class="btn btn-default btn-xs" ng-click="openRevertModal(release)">Revert to this</button>
+        <a ng-show="!release_name" class="btn btn-default btn-xs" download="{{ release.name | uriencode }}.json" target="_self" ng-href="/api/releases/{{ release.name | uriencode }}?pretty=1">Download</a>
         <button ng-show="!release_name" class="btn btn-default btn-xs" ng-click="openUpdateModal(release)">Update</button>
         <button ng-show="!release_name" class="btn btn-default btn-xs" ng-click="openDeleteModal(release)">Delete</button>
         <a ng-show="!release_name" class="btn btn-default btn-xs" ng-href="/releases/{{ release.name }}">History</a>
