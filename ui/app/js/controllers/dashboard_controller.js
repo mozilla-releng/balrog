@@ -1,6 +1,6 @@
 angular.module("app").controller('DashboardController',
 function($scope, $location, cssInjector, $localForage) {
-  cssInjector.add('http://fonts.googleapis.com/css?family=Bangers');
+  cssInjector.add('//fonts.googleapis.com/css?family=Bangers');
 
   $scope.saved_searches = [];
   $localForage.getItem('savedSearches')
