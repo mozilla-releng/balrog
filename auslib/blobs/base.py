@@ -58,6 +58,7 @@ def createBlob(data):
     # between this module and specific blob modules like apprelease.
     from auslib.blobs.apprelease import ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, ReleaseBlobV4
     from auslib.blobs.gmp import GMPBlobV1
+    from auslib.blobs.settings import SettingsBlob
 
     blob_map = {
         1:    ReleaseBlobV1,
@@ -65,6 +66,7 @@ def createBlob(data):
         3:    ReleaseBlobV3,
         4:    ReleaseBlobV4,
         1000: GMPBlobV1,
+        2000: SettingsBlob
     }
 
     if isinstance(data, basestring):
