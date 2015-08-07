@@ -25,7 +25,7 @@ class SettingsBlob(Blob):
             self["schema_version"] = 2000
 
     def shouldServeUpdate(self, updateQuery):
-        return False
+        return True
 
     def createXML(self, updateQuery, update_type, whitelistedDomains,
                   specialForceHosts):

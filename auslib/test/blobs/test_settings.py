@@ -7,7 +7,7 @@ from auslib.blobs.settings import SettingsBlob
 _DATA = """\
 {
     "name": "fake",
-    "schema_version": 1001,
+    "schema_version": 2000,
     "settings": {
         "preloaded-sts-pkp": {
             "version": "1",

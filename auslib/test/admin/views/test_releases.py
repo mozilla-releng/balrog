@@ -729,8 +729,8 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         self.assertEquals(rec['name'], 'settings')
         self.assertEquals(rec['version'], '1')
         self.assertEquals(rec['product'], 'settings')
-        self.assertDictEqual(byteify(json.loads(rec['data'])),
-                             json.loads(data['blob']))
+        self.assertEquals(byteify(json.loads(rec['data'])),
+                          json.loads(data['blob']))
 
         # let's get it
         ret = self._get('/releases/settings')
