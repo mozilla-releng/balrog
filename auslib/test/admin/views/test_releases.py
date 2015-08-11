@@ -589,8 +589,10 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
 def byteify(input):
     if isinstance(input, dict):
-        return {byteify(key): byteify(value)
-                for key, value in input.iteritems()}
+        res = {}
+        for key, value in input.items():
+            res[byteify(key)] = byteify(value)
+        return res
     elif isinstance(input, list):
         return [byteify(element) for element in input]
     elif isinstance(input, unicode):
