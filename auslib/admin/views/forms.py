@@ -8,11 +8,14 @@ from wtforms.validators import Required, Optional, NumberRange, Length
 import logging
 log = logging.getLogger(__name__)
 
+
 class DisableableTextInput(TextInput):
     """A TextInput widget that supports being disabled."""
+
     def __init__(self, disabled, *args, **kwargs):
         self.disabled = disabled
         TextInput.__init__(self, *args, **kwargs)
+
     def __call__(self, *args, **kwargs):
         if self.disabled:
             kwargs['disabled'] = 'disabled'
@@ -21,12 +24,13 @@ class DisableableTextInput(TextInput):
 
 class JSONStringField(StringField):
     """StringField that parses incoming data as JSON."""
+
     def process_formdata(self, valuelist):
         if valuelist and valuelist[0]:
             try:
                 self.data = json.loads(valuelist[0])
             # XXX: use JSONDecodeError when the servers support it
-            except ValueError, e:
+            except ValueError as e:
                 # WTForms catches ValueError, which JSONDecodeError is a child
                 # of. Because of this, we need to wrap this error in something
                 # else in order for it to be properly raised.
@@ -45,6 +49,7 @@ class JSONStringField(StringField):
 
 class NullableStringField(StringField):
     """StringField that parses incoming data converting empty strings to None's."""
+
     def process_formdata(self, valuelist):
         if valuelist and valuelist[0]:
             if valuelist[0] == '':
@@ -55,6 +60,7 @@ class NullableStringField(StringField):
         else:
             log.debug('No value list, setting self.data to None')
             self.data = None
+
 
 def NoneOrType(type_):
     """A helper method for SelectField's that returns the value coerced to
@@ -67,17 +73,29 @@ def NoneOrType(type_):
             return type_(value)
     return coercer
 
+
 class DbEditableForm(Form):
-    data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
+    data_version = IntegerField(
+        'data_version', validators=[
+            Required()], widget=HiddenInput())
+
 
 class PermissionForm(DbEditableForm):
     options = JSONStringField('Options')
 
+
 class NewPermissionForm(PermissionForm):
     permission = StringField('Permission', validators=[Required()])
 
+
 class ExistingPermissionForm(PermissionForm):
-    permission = StringField('Permission', validators=[Required()], widget=DisableableTextInput(disabled=True))
+    permission = StringField(
+        'Permission',
+        validators=[
+            Required()],
+        widget=DisableableTextInput(
+            disabled=True))
+
 
 class PartialReleaseForm(Form):
     # Because we do implicit release creation in the Releases views, we can't
@@ -92,43 +110,101 @@ class PartialReleaseForm(Form):
     copyTo = JSONStringField('Copy To', default=list)
     alias = JSONStringField('Alias', default=list)
 
+
 class RuleForm(Form):
-    backgroundRate = IntegerField('Background Rate', validators=[Required(), NumberRange(0, 100) ])
+    backgroundRate = IntegerField(
+        'Background Rate', validators=[
+            Required(), NumberRange(
+                0, 100)])
     priority = IntegerField('Priority', validators=[Required()])
     mapping = SelectField('Mapping', validators=[])
-    product = NullableStringField('Product', validators=[Length(0, 15)] )
-    version = NullableStringField('Version', validators=[Length(0,10) ])
-    buildID = NullableStringField('BuildID', validators=[Length(0,20) ])
-    channel = NullableStringField('Channel', validators=[Length(0,75) ])
-    locale = NullableStringField('Locale', validators=[Length(0,200) ])
-    distribution = NullableStringField('Distribution', validators=[Length(0,100) ])
-    buildTarget = NullableStringField('Build Target', validators=[Length(0,75) ])
-    osVersion = NullableStringField('OS Version', validators=[Length(0,1000) ])
-    distVersion = NullableStringField('Dist Version', validators=[Length(0,100) ])
-    comment = NullableStringField('Comment', validators=[Length(0,500) ])
-    update_type = SelectField('Update Type', choices=[('minor','minor'), ('major', 'major')], validators=[])
-    headerArchitecture = NullableStringField('Header Architecture', validators=[Length(0,10) ])
+    product = NullableStringField('Product', validators=[Length(0, 15)])
+    version = NullableStringField('Version', validators=[Length(0, 10)])
+    buildID = NullableStringField('BuildID', validators=[Length(0, 20)])
+    channel = NullableStringField('Channel', validators=[Length(0, 75)])
+    locale = NullableStringField('Locale', validators=[Length(0, 200)])
+    distribution = NullableStringField(
+        'Distribution', validators=[Length(0, 100)])
+    buildTarget = NullableStringField(
+        'Build Target', validators=[Length(0, 75)])
+    osVersion = NullableStringField(
+        'OS Version', validators=[Length(0, 1000)])
+    distVersion = NullableStringField(
+        'Dist Version', validators=[Length(0, 100)])
+    comment = NullableStringField('Comment', validators=[Length(0, 500)])
+    update_type = SelectField(
+        'Update Type', choices=[
+            ('minor', 'minor'), ('major', 'major')], validators=[])
+    headerArchitecture = NullableStringField(
+        'Header Architecture', validators=[Length(0, 10)])
+
 
 class EditRuleForm(DbEditableForm):
-    backgroundRate = IntegerField('Background Rate', validators=[Optional(), NumberRange(0, 100) ])
+    backgroundRate = IntegerField(
+        'Background Rate', validators=[
+            Optional(), NumberRange(
+                0, 100)])
     priority = IntegerField('Priority', validators=[Optional()])
-    mapping = SelectField('Mapping', validators=[Optional()], coerce=NoneOrType(unicode))
-    product = NullableStringField('Product', validators=[Optional(), Length(0, 15)] )
-    version = NullableStringField('Version', validators=[Optional(), Length(0,10) ])
-    buildID = NullableStringField('BuildID', validators=[Optional(), Length(0,20) ])
-    channel = NullableStringField('Channel', validators=[Optional(), Length(0,75) ])
-    locale = NullableStringField('Locale', validators=[Optional(), Length(0,200) ])
-    distribution = NullableStringField('Distribution', validators=[Optional(), Length(0,100) ])
-    buildTarget = NullableStringField('Build Target', validators=[Optional(), Length(0,75) ])
-    osVersion = NullableStringField('OS Version', validators=[Optional(), Length(0,1000) ])
-    distVersion = NullableStringField('Dist Version', validators=[Optional(), Length(0,100) ])
-    comment = NullableStringField('Comment', validators=[Optional(), Length(0,500) ])
-    update_type = SelectField('Update Type', choices=[('minor','minor'), ('major', 'major')], validators=[Optional()], coerce=NoneOrType(unicode))
-    headerArchitecture = NullableStringField('Header Architecture', validators=[Optional(), Length(0,10) ])
+    mapping = SelectField(
+        'Mapping',
+        validators=[
+            Optional()],
+        coerce=NoneOrType(unicode))
+    product = NullableStringField(
+        'Product', validators=[
+            Optional(), Length(
+                0, 15)])
+    version = NullableStringField(
+        'Version', validators=[
+            Optional(), Length(
+                0, 10)])
+    buildID = NullableStringField(
+        'BuildID', validators=[
+            Optional(), Length(
+                0, 20)])
+    channel = NullableStringField(
+        'Channel', validators=[
+            Optional(), Length(
+                0, 75)])
+    locale = NullableStringField(
+        'Locale', validators=[
+            Optional(), Length(
+                0, 200)])
+    distribution = NullableStringField(
+        'Distribution', validators=[
+            Optional(), Length(
+                0, 100)])
+    buildTarget = NullableStringField(
+        'Build Target', validators=[
+            Optional(), Length(
+                0, 75)])
+    osVersion = NullableStringField(
+        'OS Version', validators=[
+            Optional(), Length(
+                0, 1000)])
+    distVersion = NullableStringField(
+        'Dist Version', validators=[
+            Optional(), Length(
+                0, 100)])
+    comment = NullableStringField(
+        'Comment', validators=[
+            Optional(), Length(
+                0, 500)])
+    update_type = SelectField(
+        'Update Type', choices=[
+            ('minor', 'minor'), ('major', 'major')], validators=[
+            Optional()], coerce=NoneOrType(unicode))
+    headerArchitecture = NullableStringField(
+        'Header Architecture', validators=[
+            Optional(), Length(
+                0, 10)])
+
 
 class CompleteReleaseForm(Form):
     name = StringField('Name', validators=[Required()])
     version = StringField('Version', validators=[Required()])
     product = StringField('Product', validators=[Required()])
-    blob = JSONStringField('Data', validators=[Required()], widget=FileInput())
+    blob = JSONStringField(
+        'Data', validators=[
+            Required()], widget=FileInput())
     data_version = IntegerField('data_version', widget=HiddenInput())

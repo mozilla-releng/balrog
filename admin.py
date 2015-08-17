@@ -10,6 +10,7 @@ thirdparty.extendsyspath()
 
 
 class APIMiddleware(object):
+
     def __init__(self, wrap_app):
         self.wrap_app = wrap_app
 
@@ -39,7 +40,7 @@ if __name__ == '__main__':
     parser.add_option("--cef-log", dest="cefLog", default="cef.log")
     parser.add_option("--page-title", dest="pageTitle", default="AUS Management")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
-        help="Verbose output")
+                      help="Verbose output")
     options, args = parser.parse_args()
 
     # Logging needs to get set-up before importing the application
@@ -68,6 +69,7 @@ if __name__ == '__main__':
     app.config['SECRET_KEY'] = 'abc123'
     app.config['DEBUG'] = True
     app.config['PAGE_TITLE'] = options.pageTitle
+
     def auth(environ, username, password):
         return username == password
     # The Angular app always makes requests to "/api". The WSGI app that runs

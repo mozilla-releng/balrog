@@ -1,7 +1,5 @@
 import re
-
 import logging
-log = logging.getLogger(__name__)
 
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
@@ -9,8 +7,11 @@ from auslib.blobs.base import Blob
 from auslib.errors import BadDataError
 from auslib.util.versions import MozillaVersion
 
+log = logging.getLogger(__name__)
+
 
 class ReleaseBlobBase(Blob):
+
     def matchesUpdateQuery(self, updateQuery):
         self.log.debug("Trying to match update query to %s" % self["name"])
         buildTarget = updateQuery["buildTarget"]
@@ -46,7 +47,8 @@ class ReleaseBlobBase(Blob):
         try:
             return platformData["locales"][locale]
         except KeyError:
-            raise BadDataError("Can't find locale '%s' in '%s'", locale, platform)
+            raise BadDataError(
+                "Can't find locale '%s' in '%s'", locale, platform)
 
     def getLocaleOrTopLevelParam(self, platform, locale, param):
         try:
@@ -61,7 +63,9 @@ class ReleaseBlobBase(Blob):
     def getBuildID(self, platform, locale):
         platform = self.getResolvedPlatform(platform)
         if locale not in self['platforms'][platform]['locales']:
-            raise BadDataError("No such locale '%s' in platform '%s'" % (locale, platform))
+            raise BadDataError(
+                "No such locale '%s' in platform '%s'" %
+                (locale, platform))
         try:
             return self['platforms'][platform]['locales'][locale]['buildID']
         except KeyError:
@@ -80,7 +84,14 @@ class ReleaseBlobBase(Blob):
         else:
             return None
 
-    def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
+    def _getSpecificPatchXML(
+            self,
+            patchKey,
+            patchType,
+            patch,
+            updateQuery,
+            whitelistedDomains,
+            specialForceHosts):
         fromRelease = self._getFromRelease(patch)
         if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
             return None
@@ -96,7 +107,12 @@ class ReleaseBlobBase(Blob):
         return '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
             (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
 
-    def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def createXML(
+            self,
+            updateQuery,
+            update_type,
+            whitelistedDomains,
+            specialForceHosts):
         """This method is the entry point for update XML creation for all Gecko
            app blobs. However, the XML and underlying data has changed over
            time, so there is a lot of indirection and calls factored out to
@@ -134,7 +150,11 @@ class ReleaseBlobBase(Blob):
         localeData = self.getLocaleData(buildTarget, locale)
 
         updateLine = self._getUpdateLineXML(buildTarget, locale, update_type)
-        patches = self._getPatchesXML(localeData, updateQuery, whitelistedDomains, specialForceHosts)
+        patches = self._getPatchesXML(
+            localeData,
+            updateQuery,
+            whitelistedDomains,
+            specialForceHosts)
 
         xml = ['<?xml version="1.0"?>']
         xml.append('<updates>')
@@ -144,29 +164,34 @@ class ReleaseBlobBase(Blob):
             xml.append('    </update>')
         xml.append('</updates>')
         # ensure valid xml by using the right entity for ampersand
-        return re.sub('&(?!amp;)','&amp;', '\n'.join(xml))
+        return re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
 
     def shouldServeUpdate(self, updateQuery):
         buildTarget = updateQuery['buildTarget']
         locale = updateQuery['locale']
         releaseVersion = self.getApplicationVersion(buildTarget, locale)
         if not releaseVersion:
-            self.log.debug("Matching rule has no application version, will not serve update.")
+            self.log.debug(
+                "Matching rule has no application version, will not serve update.")
             return False
         releaseVersion = MozillaVersion(releaseVersion)
         queryVersion = MozillaVersion(updateQuery['version'])
         if queryVersion > releaseVersion:
-            self.log.debug("Matching rule has older version than request, will not serve update.")
+            self.log.debug(
+                "Matching rule has older version than request, will not serve update.")
             return False
         elif releaseVersion == queryVersion:
-            if updateQuery['buildID'] >= self.getBuildID(updateQuery['buildTarget'], updateQuery['locale']):
-                self.log.debug("Matching rule has older buildid than request, will not serve update.")
+            if updateQuery['buildID'] >= self.getBuildID(
+                    updateQuery['buildTarget'], updateQuery['locale']):
+                self.log.debug(
+                    "Matching rule has older buildid than request, will not serve update.")
                 return False
 
         return True
 
 
 class SeparatedFileUrlsMixin(object):
+
     def _getFtpFilename(self, patchKey, from_):
         return self.get("ftpFilenames", {}).get(patchKey, "")
 
@@ -189,7 +214,9 @@ class SeparatedFileUrlsMixin(object):
                 url = self['fileUrls'][updateQuery['channel']]
             except KeyError:
                 try:
-                    url = self['fileUrls'][getFallbackChannel(updateQuery['channel'])]
+                    url = self['fileUrls'][
+                        getFallbackChannel(
+                            updateQuery['channel'])]
                 except KeyError:
                     self.log.debug("Couldn't find fileUrl for")
                     raise
@@ -199,7 +226,8 @@ class SeparatedFileUrlsMixin(object):
             url = url.replace('%FILENAME%', ftpFilename)
             url = url.replace('%PRODUCT%', bouncerProduct)
             url = url.replace('%OS_BOUNCER%', platformData['OS_BOUNCER'])
-        # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
+        # pass on forcing for special hosts (eg download.m.o for mozilla
+        # metrics)
         if updateQuery['force']:
             url = self.processSpecialForceHosts(url, specialForceHosts)
 
@@ -207,21 +235,36 @@ class SeparatedFileUrlsMixin(object):
 
 
 class SingleUpdateXMLMixin(object):
-    def _getPatchesXML(self, localeData, updateQuery, whitelistedDomains, specialForceHosts):
+
+    def _getPatchesXML(
+            self,
+            localeData,
+            updateQuery,
+            whitelistedDomains,
+            specialForceHosts):
         patches = []
         for patchKey in ("complete", "partial"):
             patch = localeData.get(patchKey)
             if not patch:
                 continue
 
-            xml = self._getSpecificPatchXML(patchKey, patchKey, patch, updateQuery, whitelistedDomains, specialForceHosts)
+            xml = self._getSpecificPatchXML(
+                patchKey,
+                patchKey,
+                patch,
+                updateQuery,
+                whitelistedDomains,
+                specialForceHosts)
             if xml:
                 patches.append(xml)
 
         return patches
 
 
-class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
+class ReleaseBlobV1(
+        ReleaseBlobBase,
+        SingleUpdateXMLMixin,
+        SeparatedFileUrlsMixin):
     """ This is the legacy format for apps based on Gecko 1.8.0 to 1.9.2, which
     translates to
      * Firefox 1.5 to 3.6.x
@@ -297,7 +340,12 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
     # converted to unit tests.
-    def createSnippets(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def createSnippets(
+            self,
+            updateQuery,
+            update_type,
+            whitelistedDomains,
+            specialForceHosts):
         snippets = {}
         buildTarget = updateQuery["buildTarget"]
         locale = updateQuery["locale"]
@@ -308,10 +356,15 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
                 continue
 
             fromRelease = self._getFromRelease(patch)
-            if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
+            if fromRelease and not fromRelease.matchesUpdateQuery(
+                    updateQuery):
                 continue
 
-            url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
+            url = self._getUrl(
+                updateQuery,
+                patchKey,
+                patch,
+                specialForceHosts)
             if isForbiddenUrl(url, whitelistedDomains):
                 break
 
@@ -327,16 +380,19 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
                 "extv=%s" % self.getExtv(buildTarget, locale),
             ]
             if "detailsUrl" in self:
-                details = self["detailsUrl"].replace("%LOCALE%", updateQuery["locale"])
+                details = self["detailsUrl"].replace(
+                    "%LOCALE%", updateQuery["locale"])
                 snippet.append("detailsUrl=%s" % details)
             if "licenseUrl" in self:
-                license = self["licenseUrl"].replace("%LOCALE%", updateQuery["locale"])
+                license = self["licenseUrl"].replace(
+                    "%LOCALE%", updateQuery["locale"])
                 snippet.append("licenseUrl=%s" % license)
             if update_type == "major":
                 snippet.append("updateType=major")
             snippets[patchKey] = "\n".join(snippet) + "\n"
 
-        if self.get("fakePartials") and "complete" in snippets and "partial" not in snippets:
+        if self.get(
+                "fakePartials") and "complete" in snippets and "partial" not in snippets:
             partial = snippets["complete"]
             partial = partial.replace("type=complete", "type=partial")
             snippets["partial"] = partial
@@ -350,8 +406,8 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         extv = self.getExtv(buildTarget, locale)
         buildid = self.getBuildID(buildTarget, locale)
 
-        updateLine = '    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
-            (update_type, appv, extv, buildid)
+        updateLine = '    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % (
+            update_type, appv, extv, buildid)
         if "detailsUrl" in self:
             details = self["detailsUrl"].replace("%LOCALE%", locale)
             updateLine += ' detailsURL="%s"' % details
@@ -363,7 +419,13 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         return updateLine
 
     def createXML(self, updateQuery, *args, **kwargs):
-        xml = super(ReleaseBlobV1, self).createXML(updateQuery, *args, **kwargs)
+        xml = super(
+            ReleaseBlobV1,
+            self).createXML(
+            updateQuery,
+            *
+            args,
+            **kwargs)
         # In order to update some older versions of Firefox without prompting
         # them for add-on compatibility, we need to be able to fake out the
         # extension version to match the incoming one. bug 998721 has additional
@@ -372,20 +434,29 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         # this method, but that one doesn't have access to the updateQuery, and
         # thus can't overwrite it.
         if self.get("setExtvToIncomingVersion"):
-            real_extv = self.getExtv(updateQuery["buildTarget"], updateQuery["locale"])
-            xml = xml.replace('extensionVersion="%s"' % real_extv, 'extensionVersion="%s"' % updateQuery["version"])
+            real_extv = self.getExtv(
+                updateQuery["buildTarget"],
+                updateQuery["locale"])
+            xml = xml.replace(
+                'extensionVersion="%s"' %
+                real_extv,
+                'extensionVersion="%s"' %
+                updateQuery["version"])
         return xml
 
 
 class NewStyleVersionsMixin(object):
+
     def getAppVersion(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'appVersion')
 
     def getDisplayVersion(self, platform, locale):
-        return self.getLocaleOrTopLevelParam(platform, locale, 'displayVersion')
+        return self.getLocaleOrTopLevelParam(
+            platform, locale, 'displayVersion')
 
     def getPlatformVersion(self, platform, locale):
-        return self.getLocaleOrTopLevelParam(platform, locale, 'platformVersion')
+        return self.getLocaleOrTopLevelParam(
+            platform, locale, 'platformVersion')
 
     def getApplicationVersion(self, platform, locale):
         """ For v2 schema, appVersion really is the app version """
@@ -399,8 +470,8 @@ class NewStyleVersionsMixin(object):
 
         localeData = self.getLocaleData(buildTarget, locale)
 
-        updateLine = '    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"' % \
-            (update_type, displayVersion, appVersion, platformVersion, buildid)
+        updateLine = '    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"' % (
+            update_type, displayVersion, appVersion, platformVersion, buildid)
         if "detailsUrl" in self:
             details = self["detailsUrl"].replace("%LOCALE%", locale)
             updateLine += ' detailsURL="%s"' % details
@@ -412,7 +483,10 @@ class NewStyleVersionsMixin(object):
         for attr in self.optional_:
             if attr in self:
                 if self.interpolable_ and attr in self.interpolable_:
-                    updateLine += ' %s="%s"' % (attr, self[attr].replace("%LOCALE%", locale))
+                    updateLine += ' %s="%s"' % (attr,
+                                                self[attr].replace(
+                                                    "%LOCALE%",
+                                                    locale))
                 else:
                     updateLine += ' %s="%s"' % (attr, self[attr])
         updateLine += ">"
@@ -420,7 +494,11 @@ class NewStyleVersionsMixin(object):
         return updateLine
 
 
-class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
+class ReleaseBlobV2(
+        ReleaseBlobBase,
+        NewStyleVersionsMixin,
+        SingleUpdateXMLMixin,
+        SeparatedFileUrlsMixin):
     """ Client-side changes in
           https://bugzilla.mozilla.org/show_bug.cgi?id=530872
         were introduced at Gecko 1.9.3a3, requiring this new blob class.
@@ -502,7 +580,12 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
     # converted to unit tests.
-    def createSnippets(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def createSnippets(
+            self,
+            updateQuery,
+            update_type,
+            whitelistedDomains,
+            specialForceHosts):
         snippets = {}
         buildTarget = updateQuery["buildTarget"]
         locale = updateQuery["locale"]
@@ -513,37 +596,66 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
                 continue
 
             fromRelease = self._getFromRelease(patch)
-            if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
+            if fromRelease and not fromRelease.matchesUpdateQuery(
+                    updateQuery):
                 continue
 
-            url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
+            url = self._getUrl(
+                updateQuery,
+                patchKey,
+                patch,
+                specialForceHosts)
             if isForbiddenUrl(url, whitelistedDomains):
                 break
 
             snippet = [
                 "version=2",
-                "type=%s" % patchKey,
-                "url=%s" % url,
-                "hashFunction=%s" % self["hashFunction"],
-                "hashValue=%s" % patch["hashValue"],
-                "size=%s" % patch["filesize"],
-                "build=%s" % self.getBuildID(buildTarget, locale),
-                "displayVersion=%s" % self.getDisplayVersion(buildTarget, locale),
-                "appVersion=%s" % self.getAppVersion(buildTarget, locale),
-                "platformVersion=%s" % self.getPlatformVersion(buildTarget, locale),
+                "type=%s" %
+                patchKey,
+                "url=%s" %
+                url,
+                "hashFunction=%s" %
+                self["hashFunction"],
+                "hashValue=%s" %
+                patch["hashValue"],
+                "size=%s" %
+                patch["filesize"],
+                "build=%s" %
+                self.getBuildID(
+                    buildTarget,
+                    locale),
+                "displayVersion=%s" %
+                self.getDisplayVersion(
+                    buildTarget,
+                    locale),
+                "appVersion=%s" %
+                self.getAppVersion(
+                    buildTarget,
+                    locale),
+                "platformVersion=%s" %
+                self.getPlatformVersion(
+                    buildTarget,
+                    locale),
             ]
             if "detailsUrl" in self:
-                details = self["detailsUrl"].replace("%LOCALE%", updateQuery["locale"])
+                details = self["detailsUrl"].replace(
+                    "%LOCALE%", updateQuery["locale"])
                 snippet.append("detailsUrl=%s" % details)
             if "licenseUrl" in self:
-                license = self["licenseUrl"].replace("%LOCALE%", updateQuery["locale"])
+                license = self["licenseUrl"].replace(
+                    "%LOCALE%", updateQuery["locale"])
                 snippet.append("licenseUrl=%s" % license)
             if update_type == "major":
                 snippet.append("updateType=major")
             for attr in self.optional_:
                 if attr in self:
                     if attr in self.interpolable_:
-                        snippet.append("%s=%s" % (attr, self[attr].replace("%LOCALE%", updateQuery["locale"])))
+                        snippet.append(
+                            "%s=%s" %
+                            (attr,
+                             self[attr].replace(
+                                 "%LOCALE%",
+                                 updateQuery["locale"])))
                     else:
                         snippet.append("%s=%s" % (attr, self[attr]))
             snippets[patchKey] = "\n".join(snippet) + "\n"
@@ -554,11 +666,24 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
 
 
 class MultipleUpdatesXMLMixin(object):
-    def _getPatchesXML(self, localeData, updateQuery, whitelistedDomains, specialForceHosts):
+
+    def _getPatchesXML(
+            self,
+            localeData,
+            updateQuery,
+            whitelistedDomains,
+            specialForceHosts):
         patches = []
-        for patchKey, patchType in (("completes", "complete"), ("partials", "partial")):
+        for patchKey, patchType in (
+                ("completes", "complete"), ("partials", "partial")):
             for patch in localeData.get(patchKey, {}):
-                xml = self._getSpecificPatchXML(patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts)
+                xml = self._getSpecificPatchXML(
+                    patchKey,
+                    patchType,
+                    patch,
+                    updateQuery,
+                    whitelistedDomains,
+                    specialForceHosts)
                 if xml:
                     patches.append(xml)
                     break
@@ -566,7 +691,11 @@ class MultipleUpdatesXMLMixin(object):
         return patches
 
 
-class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, SeparatedFileUrlsMixin):
+class ReleaseBlobV3(
+        ReleaseBlobBase,
+        NewStyleVersionsMixin,
+        MultipleUpdatesXMLMixin,
+        SeparatedFileUrlsMixin):
     """ This is an internal change to add functionality to Balrog.
 
     Changes from ReleaseBlobV2:
@@ -670,14 +799,27 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         return self.get("ftpFilenames", {}).get(patchKey, {}).get(from_, "")
 
     def _getBouncerProduct(self, patchKey, from_):
-        return self.get("bouncerProducts", {}).get(patchKey, {}).get(from_, "")
+        return self.get(
+            "bouncerProducts",
+            {}).get(
+            patchKey,
+            {}).get(
+            from_,
+            "")
 
-    def createSnippets(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        # We have no tests that require this, probably not worthwhile to implement.
+    def createSnippets(
+            self,
+            updateQuery,
+            update_type,
+            whitelistedDomains,
+            specialForceHosts):
+        # We have no tests that require this, probably not worthwhile to
+        # implement.
         return {}
 
 
 class UnifiedFileUrlsMixin(object):
+
     def _getUrl(self, updateQuery, patchKey, patch, specialForceHosts):
         platformData = self.getPlatformData(updateQuery["buildTarget"])
         from_ = patch["from"]
@@ -698,11 +840,18 @@ class UnifiedFileUrlsMixin(object):
             ]
             url = None
             for c in channels:
-                url = self.get("fileUrls", {}).get(c, {}).get(patchKey, {}).get(from_)
+                url = self.get(
+                    "fileUrls",
+                    {}).get(
+                    c,
+                    {}).get(
+                    patchKey,
+                    {}).get(from_)
                 if url:
                     break
 
-            # If we still can't find a fileUrl, we cannot fulfill this request.
+            # If we still can't find a fileUrl, we cannot fulfill this
+            # request.
             if not url:
                 self.log.debug("Couldn't find fileUrl")
                 raise ValueError("Couldn't find fileUrl")
@@ -711,14 +860,19 @@ class UnifiedFileUrlsMixin(object):
             url = url.replace('%OS_FTP%', platformData['OS_FTP'])
             url = url.replace('%OS_BOUNCER%', platformData['OS_BOUNCER'])
 
-        # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
+        # pass on forcing for special hosts (eg download.m.o for mozilla
+        # metrics)
         if updateQuery['force']:
             url = self.processSpecialForceHosts(url, specialForceHosts)
 
         return url
 
 
-class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+class ReleaseBlobV4(
+        ReleaseBlobBase,
+        NewStyleVersionsMixin,
+        MultipleUpdatesXMLMixin,
+        UnifiedFileUrlsMixin):
     """ This is an internal change to add functionality to Balrog.
 
     Changes from ReleaseBlobV3:
@@ -741,12 +895,12 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         # specify different metadata for different channels so doing anything
         # other than above will result in MAR verification failures on the client.
         'fileUrls': {
-            '*': { # This first level contains a channel name, or "*" as a catch all.
-                '*': { # This is "partials" or "completes" (TODO: enforce this).
-                    '*': None, # And this key is a specific release (matched up
-                               # against incoming requests), "or "*" as a catch all.
-                               # The value is the URL for this specific
-                               # channel/update type/incoming release.
+            '*': {  # This first level contains a channel name, or "*" as a catch all.
+                '*': {  # This is "partials" or "completes" (TODO: enforce this).
+                    '*': None,  # And this key is a specific release (matched up
+                    # against incoming requests), "or "*" as a catch all.
+                    # The value is the URL for this specific
+                    # channel/update type/incoming release.
                 }
             }
         },
@@ -844,12 +998,14 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
             # Technically, they could have neither, but if we had blob validation,
             # that probably be considered an invalid state. Probably not worth
             # supporting here.
-            for matchstr, lookup in (("%PRODUCT%", "bouncerProducts"), ("%FILENAME%", "ftpFilenames")):
+            for matchstr, lookup in (
+                    ("%PRODUCT%", "bouncerProducts"), ("%FILENAME%", "ftpFilenames")):
                 if matchstr in baseUrl:
                     # If we've found a match, we need to replicate the inner structure
                     # of the lookup dict, substitute the match in the url,
                     # and add it to the new fileUrls.
-                    for patchKey, products in v3Blob.get(lookup, {}).iteritems():
+                    for patchKey, products in v3Blob.get(
+                            lookup, {}).iteritems():
                         if patchKey not in v4Blob["fileUrls"][channel]:
                             v4Blob["fileUrls"][channel][patchKey] = {}
                         for from_, product in products.iteritems():

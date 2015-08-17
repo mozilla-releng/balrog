@@ -12,11 +12,13 @@ from auslib.errors import BadDataError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4
 
+
 class SimpleBlob(ReleaseBlobBase):
     format_ = {'foo': None}
 
 
 class TestReleaseBlobBase(unittest.TestCase):
+
     def testGetResolvedPlatform(self):
         blob = SimpleBlob(platforms=dict(a=dict(), b=dict(alias='a')))
         self.assertEquals('a', blob.getResolvedPlatform('a'))
@@ -55,28 +57,55 @@ class TestReleaseBlobBase(unittest.TestCase):
         self.assertEquals(6, blob.getLocaleOrTopLevelParam('f', 'g', 'foo'))
 
     def testGetLocaleOrTopLevelParamMissing(self):
-        blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(foo=6)))))
+        blob = ReleaseBlobV1(
+            platforms=dict(
+                f=dict(
+                    locales=dict(
+                        g=dict(
+                            foo=6)))))
         self.assertEquals(None, blob.getLocaleOrTopLevelParam('a', 'b', 'c'))
 
     def testGetBuildIDPlatformOnly(self):
-        blob = SimpleBlob(platforms=dict(a=dict(buildID=1, locales=dict(b=dict()))))
+        blob = SimpleBlob(
+            platforms=dict(
+                a=dict(
+                    buildID=1,
+                    locales=dict(
+                        b=dict()))))
         self.assertEquals(1, blob.getBuildID('a', 'b'))
 
     def testGetBuildIDLocaleOnly(self):
-        blob = SimpleBlob(platforms=dict(c=dict(locales=dict(d=dict(buildID=9)))))
+        blob = SimpleBlob(
+            platforms=dict(
+                c=dict(
+                    locales=dict(
+                        d=dict(
+                            buildID=9)))))
         self.assertEquals(9, blob.getBuildID('c', 'd'))
 
     def testGetBuildIDMissingLocale(self):
-        blob = SimpleBlob(platforms=dict(c=dict(locales=dict(d=dict(buildID=9)))))
+        blob = SimpleBlob(
+            platforms=dict(
+                c=dict(
+                    locales=dict(
+                        d=dict(
+                            buildID=9)))))
         self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
 
     def testGetBuildIDMissingLocaleBuildIDAtPlatform(self):
-        blob = SimpleBlob(platforms=dict(c=dict(buildID=9, locales=dict(d=dict()))))
+        blob = SimpleBlob(
+            platforms=dict(
+                c=dict(
+                    buildID=9,
+                    locales=dict(
+                        d=dict()))))
         self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
-    # XXX: should we support the locale overriding the platform? this should probably be invalid
+    # XXX: should we support the locale overriding the platform? this should
+    # probably be invalid
 
 
 class TestReleaseBlobV1(unittest.TestCase):
+
     def setUp(self):
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
@@ -85,18 +114,36 @@ class TestReleaseBlobV1(unittest.TestCase):
     def testGetAppv(self):
         blob = ReleaseBlobV1(appv=1)
         self.assertEquals(1, blob.getAppv('p', 'l'))
-        blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(appv=2)))))
+        blob = ReleaseBlobV1(
+            platforms=dict(
+                f=dict(
+                    locales=dict(
+                        g=dict(
+                            appv=2)))))
         self.assertEquals(2, blob.getAppv('f', 'g'))
 
     def testGetExtv(self):
         blob = ReleaseBlobV1(extv=3)
         self.assertEquals(3, blob.getExtv('p', 'l'))
-        blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(extv=4)))))
+        blob = ReleaseBlobV1(
+            platforms=dict(
+                f=dict(
+                    locales=dict(
+                        g=dict(
+                            extv=4)))))
         self.assertEquals(4, blob.getExtv('f', 'g'))
 
     def testApplicationVersion(self):
-        blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(extv=4)))))
-        self.assertEquals(blob.getExtv('f', 'g'), blob.getApplicationVersion('f', 'g'))
+        blob = ReleaseBlobV1(
+            platforms=dict(
+                f=dict(
+                    locales=dict(
+                        g=dict(
+                            extv=4)))))
+        self.assertEquals(
+            blob.getExtv(
+                'f', 'g'), blob.getApplicationVersion(
+                'f', 'g'))
 
     def testAllowedDomain(self):
         with mock.patch("auslib.AUS.cef_event") as c:
@@ -116,7 +163,13 @@ class TestReleaseBlobV1(unittest.TestCase):
         with mock.patch("auslib.AUS.cef_event") as c:
             # We don't need to use the mock, but this shuts up pyflakes
             assert c
-            blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
+            blob = ReleaseBlobV1(
+                platforms=dict(
+                    f=dict(
+                        locales=dict(
+                            h=dict(
+                                partial=dict(
+                                    fileUrl="http://evil.com/a"))))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainAndAllowedDomain(self):
@@ -126,7 +179,11 @@ class TestReleaseBlobV1(unittest.TestCase):
             updates = OrderedDict()
             updates["partial"] = dict(fileUrl="http://a.com/a")
             updates["complete"] = dict(fileUrl="http://evil.com/a")
-            blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(j=updates))))
+            blob = ReleaseBlobV1(
+                platforms=dict(
+                    f=dict(
+                        locales=dict(
+                            j=updates))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testHackedExtvBug1113475(self):
@@ -176,30 +233,55 @@ class TestReleaseBlobV1(unittest.TestCase):
 
 
 class TestNewStyleVersionBlob(unittest.TestCase):
+
     def testGetAppVersion(self):
         blob = ReleaseBlobV2(appVersion=1)
         self.assertEquals(1, blob.getAppVersion('p', 'l'))
-        blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(appVersion=2)))))
+        blob = ReleaseBlobV2(
+            platforms=dict(
+                f=dict(
+                    locales=dict(
+                        g=dict(
+                            appVersion=2)))))
         self.assertEquals(2, blob.getAppVersion('f', 'g'))
 
     def testGetDisplayVersion(self):
         blob = ReleaseBlobV2(displayVersion=3)
         self.assertEquals(3, blob.getDisplayVersion('p', 'l'))
-        blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(displayVersion=4)))))
+        blob = ReleaseBlobV2(
+            platforms=dict(
+                f=dict(
+                    locales=dict(
+                        g=dict(
+                            displayVersion=4)))))
         self.assertEquals(4, blob.getDisplayVersion('f', 'g'))
 
     def testGetPlatformVersion(self):
         blob = ReleaseBlobV2(platformVersion=5)
         self.assertEquals(5, blob.getPlatformVersion('p', 'l'))
-        blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(platformVersion=6)))))
+        blob = ReleaseBlobV2(
+            platforms=dict(
+                f=dict(
+                    locales=dict(
+                        g=dict(
+                            platformVersion=6)))))
         self.assertEquals(6, blob.getPlatformVersion('f', 'g'))
 
     def testApplicationVersion(self):
-        blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(appVersion=6)))))
-        self.assertEquals(blob.getAppVersion('f', 'g'), blob.getApplicationVersion('f', 'g'))
+        blob = ReleaseBlobV2(
+            platforms=dict(
+                f=dict(
+                    locales=dict(
+                        g=dict(
+                            appVersion=6)))))
+        self.assertEquals(
+            blob.getAppVersion(
+                'f', 'g'), blob.getApplicationVersion(
+                'f', 'g'))
 
 
 class TestSpecialQueryParams(unittest.TestCase):
+
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = ["a.com", "boring.com"]
@@ -245,7 +327,11 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blob.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -263,7 +349,11 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 1
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blob.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -281,7 +371,11 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blob.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -299,7 +393,11 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 1
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blob.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -317,7 +415,8 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned = self.blob.createXML(
+            updateQuery, "minor", self.whitelistedDomains, None)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -328,7 +427,9 @@ class TestSpecialQueryParams(unittest.TestCase):
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
 
+
 class TestSchema2Blob(unittest.TestCase):
+
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = ["a.com", "boring.com"]
@@ -439,6 +540,7 @@ class TestSchema2Blob(unittest.TestCase):
     }
 }
 """)
+
     def testSchema2CompleteOnly(self):
         updateQuery = {
             "product": "j", "version": "35.0", "buildID": "4",
@@ -446,7 +548,11 @@ class TestSchema2Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobJ2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobJ2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -464,7 +570,11 @@ class TestSchema2Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobJ2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobJ2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -483,7 +593,11 @@ class TestSchema2Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobK.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobK.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -501,7 +615,11 @@ class TestSchema2Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobK.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobK.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -591,7 +709,11 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobJ2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobJ2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -609,7 +731,11 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobJ2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobJ2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -625,7 +751,13 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         with mock.patch("auslib.AUS.cef_event") as c:
             # We don't need to use the mock, but this shuts up pyflakes
             assert c
-            blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
+            blob = ReleaseBlobV2(
+                platforms=dict(
+                    f=dict(
+                        locales=dict(
+                            h=dict(
+                                partial=dict(
+                                    fileUrl="http://evil.com/a"))))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainAndAllowedDomain(self):
@@ -635,11 +767,16 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
             updates = OrderedDict()
             updates["partial"] = dict(fileUrl="http://a.com/a")
             updates["complete"] = dict(fileUrl="http://evil.com/a")
-            blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(j=updates))))
+            blob = ReleaseBlobV2(
+                platforms=dict(
+                    f=dict(
+                        locales=dict(
+                            j=updates))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
 
 class TestSchema3Blob(unittest.TestCase):
+
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = ["a.com", "boring.com"]
@@ -802,6 +939,7 @@ class TestSchema3Blob(unittest.TestCase):
     }
 }
 """)
+
     def testSchema3MultipleUpdates(self):
         updateQuery = {
             "product": "f", "version": "22.0", "buildID": "5",
@@ -809,7 +947,11 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobF3.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobF3.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -827,7 +969,11 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobF3.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobF3.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -846,7 +992,11 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobF3.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobF3.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -864,7 +1014,11 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobF3.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobF3.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -882,7 +1036,11 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobG2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobG2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -901,7 +1059,11 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobG2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobG2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -931,19 +1093,36 @@ class TestSchema3Blob(unittest.TestCase):
         with mock.patch("auslib.AUS.cef_event") as c:
             # We don't need to use the mock, but this shuts up pyflakes
             assert c
-            blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
+            blob = ReleaseBlobV3(
+                platforms=dict(
+                    f=dict(
+                        locales=dict(
+                            h=dict(
+                                partials=[
+                                    dict(
+                                        fileUrl="http://evil.com/a")])))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainAndAllowedDomain(self):
         with mock.patch("auslib.AUS.cef_event") as c:
             # We don't need to use the mock, but this shuts up pyflakes
             assert c
-            updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
-            blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
+            updates = dict(
+                partials=[
+                    dict(
+                        fileUrl="http://a.com/a"),
+                    dict(
+                        fileUrl="http://evil.com/a")])
+            blob = ReleaseBlobV3(
+                platforms=dict(
+                    f=dict(
+                        locales=dict(
+                            j=updates))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
 
 class TestSchema4Blob(unittest.TestCase):
+
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = ["a.com", "boring.com"]
@@ -1034,7 +1213,11 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -1052,7 +1235,11 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -1070,7 +1257,11 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -1089,7 +1280,11 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -1106,7 +1301,11 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -1123,7 +1322,11 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.createXML(
+            updateQuery,
+            "minor",
+            self.whitelistedDomains,
+            self.specialForceHosts)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -1242,27 +1445,51 @@ class TestSchema4Blob(unittest.TestCase):
         with mock.patch("auslib.AUS.cef_event") as c:
             # We don't need to use the mock, but this shuts up pyflakes
             assert c
-            blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
+            blob = ReleaseBlobV4(
+                fileUrls=dict(
+                    c=dict(
+                        completes=dict(
+                            foo="http://a.com/c"))))
             self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainFileUrls(self):
         with mock.patch("auslib.AUS.cef_event") as c:
             # We don't need to use the mock, but this shuts up pyflakes
             assert c
-            blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://evil.com/c"))))
+            blob = ReleaseBlobV4(
+                fileUrls=dict(
+                    c=dict(
+                        completes=dict(
+                            foo="http://evil.com/c"))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainInLocale(self):
         with mock.patch("auslib.AUS.cef_event") as c:
             # We don't need to use the mock, but this shuts up pyflakes
             assert c
-            blob = ReleaseBlobV4(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
+            blob = ReleaseBlobV4(
+                platforms=dict(
+                    f=dict(
+                        locales=dict(
+                            h=dict(
+                                partials=[
+                                    dict(
+                                        fileUrl="http://evil.com/a")])))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainAndAllowedDomain(self):
         with mock.patch("auslib.AUS.cef_event") as c:
             # We don't need to use the mock, but this shuts up pyflakes
             assert c
-            updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
-            blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
+            updates = dict(
+                partials=[
+                    dict(
+                        fileUrl="http://a.com/a"),
+                    dict(
+                        fileUrl="http://evil.com/a")])
+            blob = ReleaseBlobV3(
+                platforms=dict(
+                    f=dict(
+                        locales=dict(
+                            j=updates))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))

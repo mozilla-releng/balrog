@@ -4,19 +4,20 @@ import itertools
 
 
 DEFAULT_UPDATE_DATA = {
-    'products':              ['Firefox'],
-    'versions':              ['10.0a1', '12.0a1', '17.0a1'],
-    'buildids':              ['20120222174716', '20111201231412'],
+    'products': ['Firefox'],
+    'versions': ['10.0a1', '12.0a1', '17.0a1'],
+    'buildids': ['20120222174716', '20111201231412'],
     'platforms': {
-        'Linux_x86-gcc3':                ['GTK 2.17.'],
+        'Linux_x86-gcc3': ['GTK 2.17.'],
         'Darwin_x86-gcc3-u-i386-x86_64': ['Darwin 8', 'Darwin 9'],
-        'WINNT_x86-msvc':                ['Windows_NT 5.0', 'Windows_NT 6.2']
+        'WINNT_x86-msvc': ['Windows_NT 5.0', 'Windows_NT 6.2']
     },
-    'locales':               ['en-US', 'af', 'de', 'ru', 'zh-TW', 'zu'],
-    'channels':              ['nightly', 'aurora'],
-    'distributions':         ['default'],
+    'locales': ['en-US', 'af', 'de', 'ru', 'zh-TW', 'zu'],
+    'channels': ['nightly', 'aurora'],
+    'distributions': ['default'],
     'distribution_versions': ['default'],
 }
+
 
 def generate_paths(update_data, schema_version='3', force=False):
     """Generate request paths for all intersections of the update URL data

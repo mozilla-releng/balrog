@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 
-import os, os.path, glob, re, difflib, time, site
+import os
+import os.path
+import glob
+import re
+import difflib
+import time
+import site
 
 try:
     import json
-    assert json # to shut pyflakes up
+    assert json  # to shut pyflakes up
 except:
     import simplejson as json
 
@@ -21,19 +27,20 @@ log = logging.getLogger(__name__)
 WHITELISTED_DOMAINS = ('download.mozilla.org', 'stage-old.mozilla.org', 'ftp.mozilla.org', 'stage.mozilla.org')
 SPECIAL_FORCE_HOSTS = ('download.mozilla.org',)
 
+
 def populateDB(testdir):
     # assuming we're already in the right directory with a db connection
     # read any rules we already have
     rules = os.path.join(testdir, 'rules.sql')
     if os.path.exists(rules):
-        f = open(rules,'r')
+        f = open(rules, 'r')
         for line in f:
             if line.startswith('#'):
                 continue
             dbo.engine.execute(line.strip())
     # and add any json blobs we created painstakingly, converting to compact json
     for f in glob.glob('%s/*.json' % testdir):
-        data = json.load(open(f,'r'))
+        data = json.load(open(f, 'r'))
         product = data['name'].split('-')[0]
         # JSON files can have the extv version at the top level, or in the locales
         # If we can't find it at the top level, look for it in a locale. This is
@@ -44,8 +51,9 @@ def populateDB(testdir):
             if not version:
                 raise Exception("Couldn't find version for %s" % data['name'])
         dbo.engine.execute("INSERT INTO releases (name, product, version, data, data_version) VALUES ('%s', '%s', '%s','%s', 1)" %
-                   (data['name'], product, version, json.dumps(data)))
+                           (data['name'], product, version, json.dumps(data)))
     # TODO - create a proper importer that walks the snippet store to find hashes ?
+
 
 def getQueryFromPath(snippetPath):
     """ Use regexp to turn a path to a release snippet like
@@ -79,6 +87,7 @@ def getQueryFromPath(snippetPath):
         # raise an error ?
         pass
 
+
 def walkSnippets(AUS, testPath):
     start = time.time()
 
@@ -86,7 +95,7 @@ def walkSnippets(AUS, testPath):
     AUS2snippets = []
     for root, dirs, files in os.walk(testPath):
         for f in files:
-            AUS2snippets.append(os.path.join(root,f))
+            AUS2snippets.append(os.path.join(root, f))
     AUS2snippets = sorted(AUS2snippets)
 
     passCount = 0
@@ -108,13 +117,13 @@ def walkSnippets(AUS, testPath):
 
         if snipType in balrog_snippets:
             balrog_snippet = balrog_snippets[snipType]
-            AUS2snippet = open(f,'r').read()
+            AUS2snippet = open(f, 'r').read()
             if AUS2snippet != balrog_snippet:
                 diff = difflib.unified_diff(
-                           AUS2snippet.splitlines(),
-                           balrog_snippet.splitlines(),
-                           lineterm='',
-                           n=20)
+                    AUS2snippet.splitlines(),
+                    balrog_snippet.splitlines(),
+                    lineterm='',
+                    n=20)
                 log.info("FAIL: %s", f)
                 failCount += 1
                 for line in diff:
@@ -130,14 +139,15 @@ def walkSnippets(AUS, testPath):
     common_return = "(%s PASS, %s FAIL" % (passCount, failCount)
 
     if elapsed > 0.5:
-        rate = (passCount + failCount)/elapsed
+        rate = (passCount + failCount) / elapsed
         common_return += ", %1.2f sec, %1.1f tests/second)" % (elapsed, rate)
     else:
         common_return += ")"
     if failCount:
-      return "FAIL   %s" % common_return
+        return "FAIL   %s" % common_return
     else:
-      return "PASS   %s" % common_return
+        return "PASS   %s" % common_return
+
 
 def isValidTestDir(d):
     if not os.path.exists(os.path.join(d, 'rules.sql')):
@@ -193,15 +203,15 @@ if __name__ == "__main__":
             log.info("Rules are \n(id, priority, mapping, backgroundRate, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")
             for rule in AUS.rules.getOrderedRules():
                 log.info(", ".join([str(rule[k]) for k in rule.keys()]))
-            log.info("-"*50)
+            log.info("-" * 50)
 
         if options.dumpreleases:
             log.info("Releases are \n(name, product, version, data):")
             for release in AUS.releases.getReleases():
                 log.info("(%s, %s, %s, %s " % (release['name'], release['product'],
-                                       release['version'],
-                                       json.dumps(release['data'],indent=2)))
-            log.info("-"*50)
+                                               release['version'],
+                                               json.dumps(release['data'], indent=2)))
+            log.info("-" * 50)
 
         result = walkSnippets(AUS, os.path.join(td, 'snippets'))
         log.info(result)

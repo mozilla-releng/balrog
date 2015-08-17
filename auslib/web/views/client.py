@@ -7,7 +7,9 @@ from auslib.web.base import AUS, app
 
 import logging
 
+
 class ClientRequestView(MethodView):
+
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)
@@ -40,7 +42,8 @@ class ClientRequestView(MethodView):
         query["locale"] = self.removeAvastBrokenness(query["locale"])
         query['osVersion'] = urllib.unquote(query['osVersion'])
         ua = request.headers.get('User-Agent')
-        query['headerArchitecture'] = self.getHeaderArchitecture(query['buildTarget'], ua)
+        query['headerArchitecture'] = self.getHeaderArchitecture(
+            query['buildTarget'], ua)
         query['force'] = (int(request.args.get('force', 0)) == 1)
         return query
 
@@ -50,7 +53,11 @@ class ClientRequestView(MethodView):
         release, update_type = AUS.evaluateRules(query)
         # passing {},None returns empty xml
         if release:
-            xml = release.createXML(query, update_type, app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"])
+            xml = release.createXML(
+                query,
+                update_type,
+                app.config["WHITELISTED_DOMAINS"],
+                app.config["SPECIAL_FORCE_HOSTS"])
         else:
             xml = ['<?xml version="1.0"?>']
             xml.append('<updates>')

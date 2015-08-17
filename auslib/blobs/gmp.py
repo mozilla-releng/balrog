@@ -37,16 +37,23 @@ class GMPBlobV1(Blob):
 
     def getResolvedPlatform(self, vendor, platform):
         try:
-            return self['vendors'][vendor]['platforms'][platform].get('alias', platform)
+            return self['vendors'][vendor]['platforms'][
+                platform].get('alias', platform)
         except KeyError:
-            raise BadDataError("No platform '%s' in vendor '%s'", platform, vendor)
+            raise BadDataError(
+                "No platform '%s' in vendor '%s'",
+                platform,
+                vendor)
 
     def getPlatformData(self, vendor, platform):
         platform = self.getResolvedPlatform(vendor, platform)
         try:
             return self['vendors'][vendor]['platforms'][platform]
         except KeyError:
-            raise BadDataError("No platform '%s' in vendor '%s'", platform, vendor)
+            raise BadDataError(
+                "No platform '%s' in vendor '%s'",
+                platform,
+                vendor)
 
     def shouldServeUpdate(self, updateQuery):
         # GMP updates should always be returned. It is the responsibility
@@ -56,7 +63,12 @@ class GMPBlobV1(Blob):
     # Because specialForceHosts is only relevant to our own internal servers,
     # and these type of updates are always served externally, we don't process
     # them in GMP blobs.
-    def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def createXML(
+            self,
+            updateQuery,
+            update_type,
+            whitelistedDomains,
+            specialForceHosts):
         buildTarget = updateQuery["buildTarget"]
 
         vendorXML = []
@@ -67,9 +79,14 @@ class GMPBlobV1(Blob):
             url = platformData["fileUrl"]
             if isForbiddenUrl(url, whitelistedDomains):
                 continue
-            vendorXML.append('        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>' % \
-                (vendor, url, self["hashFunction"], platformData["hashValue"],
-                    platformData["filesize"], vendorInfo["version"]))
+            vendorXML.append(
+                '        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>' %
+                (vendor,
+                 url,
+                 self["hashFunction"],
+                    platformData["hashValue"],
+                    platformData["filesize"],
+                    vendorInfo["version"]))
 
         xml = ['<?xml version="1.0"?>']
         xml.append('<updates>')
@@ -79,4 +96,4 @@ class GMPBlobV1(Blob):
             xml.append('    </addons>')
         xml.append('</updates>')
         # ensure valid xml by using the right entity for ampersand
-        return re.sub('&(?!amp;)','&amp;', '\n'.join(xml))
+        return re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))

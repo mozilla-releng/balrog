@@ -1,9 +1,10 @@
 import simplejson as json
-
 import logging
+from auslib.AUS import isSpecialURL
+
+
 log = logging.getLogger(__name__)
 
-from auslib.AUS import isSpecialURL
 
 def isValidBlob(format_, blob, topLevel=True):
     """Decides whether or not 'blob' is valid based on the format provided.
@@ -19,20 +20,24 @@ def isValidBlob(format_, blob, topLevel=True):
     if not format_:
         return True
     # If the blob isn't a dictionary-like or list-like object, it's not valid!
-    if not isinstance(blob, (dict,list)):
+    if not isinstance(blob, (dict, list)):
         return False
     # If the blob format has a schema_version then that's a mandatory int
     if topLevel and 'schema_version' in format_:
-        if 'schema_version' not in blob or not isinstance(blob['schema_version'], int):
-            log.debug("blob is not valid because schema_version is not defined, or non-integer")
+        if 'schema_version' not in blob or not isinstance(
+                blob['schema_version'], int):
+            log.debug(
+                "blob is not valid because schema_version is not defined, or non-integer")
             return False
     # check the blob against the format
     if isinstance(blob, dict):
         for key in blob.keys():
-            # A '*' key in the format means that all key names in the blob are accepted.
+            # A '*' key in the format means that all key names in the blob are
+            # accepted.
             if '*' in format_:
                 # But we still need to validate the sub-blob, if it exists.
-                if format_['*'] and not isValidBlob(format_['*'], blob[key], topLevel=False):
+                if format_[
+                        '*'] and not isValidBlob(format_['*'], blob[key], topLevel=False):
                     log.debug("blob is not valid because of key '%s'" % key)
                     return False
             # If there's no '*' key, we need to make sure the key name is valid
@@ -41,7 +46,8 @@ def isValidBlob(format_, blob, topLevel=True):
                 log.debug("blob is not valid because of key '%s'" % key)
                 return False
     else:
-        # Empty lists are not allowed. These can be represented by leaving out the key entirely.
+        # Empty lists are not allowed. These can be represented by leaving out
+        # the key entirely.
         if len(blob) == 0:
             return False
         for subBlob in blob:
@@ -50,6 +56,7 @@ def isValidBlob(format_, blob, topLevel=True):
             if not isValidBlob(format_[0], subBlob, topLevel=False):
                 return False
     return True
+
 
 def createBlob(data):
     """Takes a string form of a blob (eg from DB or API) and converts into an
@@ -61,10 +68,10 @@ def createBlob(data):
     from auslib.blobs.settings import SettingsBlob
 
     blob_map = {
-        1:    ReleaseBlobV1,
-        2:    ReleaseBlobV2,
-        3:    ReleaseBlobV3,
-        4:    ReleaseBlobV4,
+        1: ReleaseBlobV1,
+        2: ReleaseBlobV2,
+        3: ReleaseBlobV3,
+        4: ReleaseBlobV4,
         1000: GMPBlobV1,
         2000: SettingsBlob
     }

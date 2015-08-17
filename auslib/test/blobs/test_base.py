@@ -2,8 +2,10 @@ import unittest
 
 from auslib.blobs.base import Blob, createBlob
 
+
 class SimpleBlob(Blob):
     format_ = {'foo': None}
+
 
 class MultiLevelBlob(Blob):
     format_ = {
@@ -14,12 +16,14 @@ class MultiLevelBlob(Blob):
         }
     }
 
+
 class BlobWithWildcard(Blob):
     format_ = {
         'foo': {
             '*': None
         }
     }
+
 
 class BlobWithList(Blob):
     format_ = {
@@ -30,7 +34,9 @@ class BlobWithList(Blob):
         ]
     }
 
+
 class TestBlob(unittest.TestCase):
+
     def testSimpleValid(self):
         blob = SimpleBlob(foo='bar')
         self.assertTrue(blob.isValid())
@@ -77,6 +83,7 @@ class TestBlob(unittest.TestCase):
 
 
 class TestCreateBlob(unittest.TestCase):
+
     def testLoadString(self):
         data = """{
 "schema_version": 2,
