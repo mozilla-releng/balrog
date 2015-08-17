@@ -1,14 +1,11 @@
 import logging
-log = logging.getLogger(__name__)
-
 from flask import Flask, make_response, send_from_directory
-
 from auslib.AUS import AUS
 
+
+log = logging.getLogger(__name__)
 app = Flask(__name__)
 AUS = AUS()
-
-from auslib.web.views.client import ClientRequestView
 
 
 @app.errorhandler(404)
@@ -17,6 +14,7 @@ def fourohfour(error):
     response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
     response.mimetype = 'text/xml'
     return response
+
 
 @app.errorhandler(Exception)
 def generic(error):
@@ -29,40 +27,52 @@ def generic(error):
     response.mimetype = 'text/xml'
     return response
 
+
 @app.route('/robots.txt')
 def robots():
     return send_from_directory(app.static_folder, "robots.txt")
 
-# The "main" routes. 99% of requests will come in through these.
-app.add_url_rule(
-    "/update/1/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/update.xml",
-    view_func=ClientRequestView.as_view("clientrequest1"),
-    # Underlying code depends on osVersion being set. Since this route only
-    # exists to support ancient queries, and all newer versions have osVersion
-    # in them it's easier to set this here than make the all of the underlying
-    # code support queries without it.
-    defaults={"queryVersion": 2, "osVersion": ""},
-)
-app.add_url_rule(
-    '/update/2/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest2'),
-    defaults={'queryVersion': 2},
-)
-app.add_url_rule(
-    '/update/3/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest3'),
-    defaults={'queryVersion': 3},
-)
-app.add_url_rule(
-    '/update/4/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/<platformVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest4'),
-    defaults={'queryVersion': 4},
-)
 
-# Routes to deal with edge cases.
-# bug 1133250 - support for old-style nightly ESR versions
-app.add_url_rule(
-    '/update/3/<product>/<version>esrpre/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest_esrnightly'),
-    defaults={'queryVersion': 3},
-)
+def set_routes():
+    from auslib.web.views.client import ClientRequestView
+
+    # The "main" routes. 99% of requests will come in through these.
+    app.add_url_rule(
+        "/update/1/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/update.xml",
+        view_func=ClientRequestView.as_view("clientrequest1"),
+        # Underlying code depends on osVersion being set. Since this route only
+        # exists to support ancient queries, and all newer versions have osVersion
+        # in them it's easier to set this here than make the all of the underlying
+        # code support queries without it.
+        defaults={"queryVersion": 2, "osVersion": ""},
+    )
+    app.add_url_rule(
+        '/update/2/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/update.xml',
+        view_func=ClientRequestView.as_view('clientrequest2'),
+        defaults={
+            'queryVersion': 2},
+    )
+    app.add_url_rule(
+        '/update/3/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml',
+        view_func=ClientRequestView.as_view('clientrequest3'),
+        defaults={
+            'queryVersion': 3},
+    )
+    app.add_url_rule(
+        '/update/4/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/<platformVersion>/update.xml',
+        view_func=ClientRequestView.as_view('clientrequest4'),
+        defaults={
+            'queryVersion': 4},
+    )
+
+    # Routes to deal with edge cases.
+    # bug 1133250 - support for old-style nightly ESR versions
+    app.add_url_rule(
+        '/update/3/<product>/<version>esrpre/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml',
+        view_func=ClientRequestView.as_view('clientrequest_esrnightly'),
+        defaults={
+            'queryVersion': 3},
+    )
+
+
+set_routes()

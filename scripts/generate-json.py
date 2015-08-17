@@ -6,7 +6,7 @@ from os.path import isdir, join, splitext
 import re
 try:
     import json
-    assert json # to shut pyflakes up
+    assert json  # to shut pyflakes up
 except:
     import simplejson as json
 
@@ -61,13 +61,15 @@ deprecated_platform_map = {
     }
 }
 
+
 def isMac(platform, version):
     if platform in ('osx', 'mac', 'macosx') or 'Universal' in platform or 'u-ppc-i386' in platform or \
-      'u-i386-x86_64' in platform:
+            'u-i386-x86_64' in platform:
         return True
     if platform == 'macosx64' and versionGte(version, '4.0b7'):
         return True
     return False
+
 
 def isMac64(platform, version):
     if platform in ('osx64', 'mac64') or 'Darwin_x86_64' in platform:
@@ -79,16 +81,21 @@ def isMac64(platform, version):
 # StrictVersion _almost_ works for all of our version numbers. Exceptions are:
 #  - RCs, which we deal with by converting them to really high numbered betas
 #  - 4 part version numbers (FIXME)
+
+
 def cmpVersions(left, right):
     left = StrictVersion(re.sub('rc(\d+)', 'b9999999\\1', left))
     right = StrictVersion(re.sub('rc(\d+)', 'b9999999\\1', right))
     return cmp(left, right)
 
+
 def versionLt(left, right):
     return cmpVersions(left, right) == -1
 
+
 def versionGte(left, right):
     return cmpVersions(left, right) >= 0
+
 
 def getPlatforms(platform, version):
     # This part is a little hairy because so many of the platform definitions
@@ -97,27 +104,27 @@ def getPlatforms(platform, version):
     # they want.
     def findPlatforms(pmap, p):
         r = []
-        for k,v in pmap.iteritems():
+        for k, v in pmap.iteritems():
             if p in k or p in v.values():
                 r.append((k, v))
         if r:
             return r
         else:
-            return [((),{})]
+            return [((), {})]
 
     # Mac universal builds have changed a few times, so we need to do some
     # hunting through version numbers to figure out what platforms to return.
     if isMac(platform, version):
         # Older universal builds use the old style mapping
         if (version.startswith('3.5') and versionLt(version, '3.5.16')) or \
-          (version.startswith('3.6') and versionLt(version, '3.6.13')) or \
-          (version.startswith('4.0') and versionLt(version, '4.0b5')):
+                (version.startswith('3.6') and versionLt(version, '3.6.13')) or \
+                (version.startswith('4.0') and versionLt(version, '4.0b5')):
             return findPlatforms(deprecated_platform_map, platform)[0]
         # Newer 3.5, 3.6, and a couple of 4.0 builds are ppc+i386
         # which are uniquely identifiable by "macosx"
         if (version.startswith('3.5') and versionGte(version, '3.5.16')) or \
-          (version.startswith('3.6') and versionGte(version, '3.6.13')) or \
-          version in ('4.0b5', '4.0b6'):
+                (version.startswith('3.6') and versionGte(version, '3.6.13')) or \
+                version in ('4.0b5', '4.0b6'):
             return findPlatforms(platform_map, 'macosx')[0]
         # And anything past that is i386+x86_64 universal, which are uniquely
         # identifiable by "macosx64"
@@ -129,11 +136,13 @@ def getPlatforms(platform, version):
     else:
         return findPlatforms(platform_map, platform)[0]
 
+
 def ftp2update(platform, version):
     u = getPlatforms(platform, version)[0]
     if not u:
         raise Exception("Couldn't find update platforms for ftp platform '%s'" % platform)
     return u
+
 
 def update2bouncer(platform, version):
     try:
@@ -141,11 +150,13 @@ def update2bouncer(platform, version):
     except KeyError:
         raise KeyError("Couldn't find bouncer platform for update platform '%s'" % platform)
 
+
 def update2ftp(platform, version):
     try:
         return getPlatforms(platform, version)[1]['ftp']
     except KeyError:
         raise KeyError("Couldn't find ftp platform for update platform '%s'" % platform)
+
 
 def update2buildbot(platform, version):
     try:
@@ -153,11 +164,13 @@ def update2buildbot(platform, version):
     except KeyError:
         raise KeyError("Couldn't find buildbot platform for update platform '%s'" % platform)
 
+
 def readFile(f):
     fd = os.open(join(f), O_RDONLY)
-    snip = read(fd,1000)
+    snip = read(fd, 1000)
     close(fd)
     return snip
+
 
 def getParameter(data, linestart):
     # eg or a snippet containting 'build=20101203075014' and linestart='build'
@@ -167,12 +180,15 @@ def getParameter(data, linestart):
             return line.split('=')[1]
     return None
 
+
 def readBuildId(info):
     data = open(info).readline()
     return data.split('=')[1].strip()
 
+
 def getInfoFile(bbPlatform):
     return "%s_info.txt" % bbPlatform
+
 
 def hashFile(filename, hash_type):
     '''Return the 'hash_type' hash of a file at 'filename' '''
@@ -186,6 +202,7 @@ def hashFile(filename, hash_type):
     f.close()
     hash = h.hexdigest()
     return hash
+
 
 def processCandidatesDir(d, version, partial, exclude_partials, hash_func, locales, relData):
     for root, dirs, files in walk(join(d, 'update')):
@@ -224,19 +241,20 @@ def processCandidatesDir(d, version, partial, exclude_partials, hash_func, local
                 lrelData[marType]["filesize"] = str(stat(mar).st_size)
                 lrelData[marType]["hashValue"] = hashFile(mar, hash_func)
 
+
 def processReleaseSnippetDir(walkdir, platform, version, partial, exclude_partials, locales, relData):
-    buildIDs = sorted(listdir(join(walkdir,platform)))
+    buildIDs = sorted(listdir(join(walkdir, platform)))
     # read snippets from last build of previous release
     if buildIDs:
         buildID = buildIDs[-1]
     else:
         return
-    base = join(walkdir,platform,buildID)
+    base = join(walkdir, platform, buildID)
     relData["platforms"][platform] = {}
 
     # get params for all platforms
-    snip = readFile(join(base,'en-US','betatest','partial.txt'))
-    relData["platforms"][platform]["buildID"] = getParameter(snip,'build')
+    snip = readFile(join(base, 'en-US', 'betatest', 'partial.txt'))
+    relData["platforms"][platform]["buildID"] = getParameter(snip, 'build')
     relData["platforms"][platform]["OS_BOUNCER"] = update2bouncer(platform, version)
     relData["platforms"][platform]["OS_FTP"] = update2ftp(platform, version)
 
@@ -246,70 +264,72 @@ def processReleaseSnippetDir(walkdir, platform, version, partial, exclude_partia
         # skip anything not in the list.
         if locales and locale not in locales:
             continue
-        lrelData =  relData["platforms"][platform]["locales"][locale] = {}
-        lbase = join(base,locale,'betatest')
+        lrelData = relData["platforms"][platform]["locales"][locale] = {}
+        lbase = join(base, locale, 'betatest')
         snipFiles = listdir(lbase)
         for snipFile in snipFiles:
-            type,ext = splitext(snipFile)
+            type, ext = splitext(snipFile)
             if exclude_partials and type == 'partial':
                 continue
             lrelData[type] = {}
-            snip = readFile(join(lbase,snipFile))
+            snip = readFile(join(lbase, snipFile))
             if type == 'partial':
                 lrelData[type]["from"] = partial
             else:
                 lrelData[type]["from"] = "*"
-            lrelData[type]["filesize"] = getParameter(snip,'size')
-            lrelData[type]["hashValue"] = getParameter(snip,'hashValue')
+            lrelData[type]["filesize"] = getParameter(snip, 'size')
+            lrelData[type]["hashValue"] = getParameter(snip, 'hashValue')
+
 
 def processNightlySnippetDir(walkdir, platform, version, partial, exclude_partials, locales, relData):
-    buildIDs = sorted(listdir(join(walkdir,platform)))
+    buildIDs = sorted(listdir(join(walkdir, platform)))
     if buildIDs:
         buildID = buildIDs[-2]
     else:
         return
-    base = join(walkdir,platform,buildID)
+    base = join(walkdir, platform, buildID)
     relData["platforms"][platform] = {}
 
     # get params for all platforms
-    snip = readFile(join(base,'en-US','partial.txt'))
+    snip = readFile(join(base, 'en-US', 'partial.txt'))
 
     relData["platforms"][platform]["locales"] = {}
     for locale in listdir(base):
         if locales and locale not in locales:
             continue
         lrelData = relData["platforms"][platform]["locales"][locale] = {}
-        lbase = join(base,locale)
+        lbase = join(base, locale)
         for snipFile in listdir(lbase):
-            type,ext = splitext(snipFile)
+            type, ext = splitext(snipFile)
             if exclude_partials and type == 'partial':
                 continue
             lrelData[type] = {}
-            snip = readFile(join(lbase,snipFile))
+            snip = readFile(join(lbase, snipFile))
             if type == 'partial':
                 lrelData[type]["from"] = partial
             else:
                 lrelData[type]["from"] = "*"
-            lrelData[type]["filesize"] = getParameter(snip,'size')
-            lrelData[type]["hashValue"] = getParameter(snip,'hashValue')
-            lrelData[type]["fileUrl"] = getParameter(snip,'url')
-            lrelData["buildID"] = getParameter(snip,'build')
-            lrelData["extv"] = getParameter(snip,'extv')
-            lrelData["appv"] = getParameter(snip,'appv')
+            lrelData[type]["filesize"] = getParameter(snip, 'size')
+            lrelData[type]["hashValue"] = getParameter(snip, 'hashValue')
+            lrelData[type]["fileUrl"] = getParameter(snip, 'url')
+            lrelData["buildID"] = getParameter(snip, 'build')
+            lrelData["extv"] = getParameter(snip, 'extv')
+            lrelData["appv"] = getParameter(snip, 'appv')
 
 
 if __name__ == "__main__":
     from optparse import OptionParser
     parser = OptionParser()
 
-    parser.add_option("-w","--walk", dest="walkdir", help="snippet directory to walk for data")
-    parser.add_option("-n","--name", dest="name", help="name of the release we're capturing")
-    parser.add_option("-p","--partial", dest="partial", help="name of the release we have partials from")
-    parser.add_option("-e","--exclude-partials", dest="exclude_partials", action="store_true", help="exclude partials where we fake them")
+    parser.add_option("-w", "--walk", dest="walkdir", help="snippet directory to walk for data")
+    parser.add_option("-n", "--name", dest="name", help="name of the release we're capturing")
+    parser.add_option("-p", "--partial", dest="partial", help="name of the release we have partials from")
+    parser.add_option("-e", "--exclude-partials", dest="exclude_partials", action="store_true", help="exclude partials where we fake them")
     parser.add_option("-v", "--version", dest="version", help="version being processed")
     parser.add_option("--product", dest="product", help="product name. Required when --db is present.")
     parser.add_option("--hash-func", dest="hash_func", default="sha512")
-    parser.add_option("-l", "--limit-locale", dest="locales", action="append", default=[], help="Limit locales to only those specified. This option may be passed multiple times. If not specified, all locales will be processed")
+    parser.add_option("-l", "--limit-locale", dest="locales", action="append", default=[],
+                      help="Limit locales to only those specified. This option may be passed multiple times. If not specified, all locales will be processed")
     parser.add_option("--db", dest="db", help="When present, specifies a database to import the release into. Eg, sqlite:///test.db")
     parser.add_option("--verbose", dest="verbose", default=False, action="store_true")
 
@@ -349,10 +369,10 @@ if __name__ == "__main__":
     if options.verbose:
         print json.dumps(relData, sort_keys=True, indent=4)
     if options.db:
-        current = db.releases.select(columns=[db.releases.data_version], where=[db.releases.name==options.name])
+        current = db.releases.select(columns=[db.releases.data_version], where=[db.releases.name == options.name])
         if current:
             # Ideally, we'd update instead of doing this, but it's not easy to yet
-            db.releases.delete(changed_by='generate-json.py', where=[db.releases.name==options.name,], old_data_version=current[0]['data_version'])
+            db.releases.delete(changed_by='generate-json.py', where=[db.releases.name == options.name, ], old_data_version=current[0]['data_version'])
         # XXX: use db.releases.addRelease() when it exists
         db.releases.insert(changed_by='generate-json.py', name=options.name, product=options.product, version=options.version,
                            data=json.dumps(relData, separators=(',', ':')))

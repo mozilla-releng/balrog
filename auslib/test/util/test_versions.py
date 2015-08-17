@@ -5,6 +5,7 @@ from auslib.util.versions import MozillaVersion
 
 class TestMozillaVersions(unittest.TestCase):
     # This tests the new behaviour we've added for suffixes
+
     def test_special_version(self):
         version = MozillaVersion('3.6.3plugin1')
         self.assertEqual(version.version, (3, 6, 3))
@@ -55,9 +56,7 @@ class TestMozillaVersions(unittest.TestCase):
                 else:
                     raise AssertionError(("cmp(%s, %s) "
                                           "shouldn't raise ValueError")
-                                            % (v1, v2))
+                                         % (v1, v2))
             self.assertEqual(res, wanted,
                              'cmp(%s, %s) should be %s, got %s' %
                              (v1, v2, wanted, res))
-
-

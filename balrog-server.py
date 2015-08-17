@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_option("--profile-dir", dest="profile_dir", default=None,
                       help="Enables profiling and logs to the specified file."),
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
-        help="Verbose output")
+                      help="Verbose output")
     options, args = parser.parse_args()
 
     # Logging needs to get set-up before importing the application

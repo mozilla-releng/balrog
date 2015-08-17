@@ -14,13 +14,32 @@ from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, Db
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
-def createRelease(release, product, version, changed_by, transaction, releaseData):
+
+def createRelease(
+        release,
+        product,
+        version,
+        changed_by,
+        transaction,
+        releaseData):
     blob = createBlob(json.dumps(releaseData))
-    dbo.releases.addRelease(name=release, product=product, version=version,
-        blob=blob, changed_by=changed_by, transaction=transaction)
+    dbo.releases.addRelease(
+        name=release,
+        product=product,
+        version=version,
+        blob=blob,
+        changed_by=changed_by,
+        transaction=transaction)
     return dbo.releases.getReleases(name=release, transaction=transaction)[0]
 
-def changeRelease(release, changed_by, transaction, existsCallback, commitCallback, log):
+
+def changeRelease(
+        release,
+        changed_by,
+        transaction,
+        existsCallback,
+        commitCallback,
+        log):
     """Generic function to change an aspect of a release. It relies on a
        PartialReleaseForm existing and does some upfront work and checks before
        doing anything. It will, for the named release and any found in the
@@ -96,25 +115,31 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         allReleases += copyTo
     for rel in allReleases:
         try:
-            releaseInfo = dbo.releases.getReleases(name=rel, transaction=transaction)[0]
+            releaseInfo = dbo.releases.getReleases(
+                name=rel, transaction=transaction)[0]
             if existsCallback(rel, product, version):
                 new = False
             # "release" is the one named in the URL (as opposed to the
             # ones that can be provided in copyTo), and we treat it as
             # the "primary" one
             if rel == release:
-                # Make sure that old_data_version is provided, because we need to verify it when updating.
+                # Make sure that old_data_version is provided, because we need
+                # to verify it when updating.
                 if not old_data_version:
                     msg = "Release exists, data_version must be provided"
                     cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                     return Response(status=400, response=msg)
-                # If the product we're given doesn't match the one in the DB, panic.
+                # If the product we're given doesn't match the one in the DB,
+                # panic.
                 if product != releaseInfo['product']:
-                    msg = "Product name '%s' doesn't match the one on the release object ('%s') for release '%s'" % (product, releaseInfo['product'], rel)
+                    msg = "Product name '%s' doesn't match the one on the release object ('%s') for release '%s'" % (
+                        product, releaseInfo['product'], rel)
                     cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                     return Response(status=400, response=msg)
-                if 'hashFunction' in releaseInfo['data'] and hashFunction and hashFunction != releaseInfo['data']['hashFunction']:
-                    msg = "hashFunction '%s' doesn't match the one on the release object ('%s') for release '%s'" % (hashFunction, releaseInfo['data']['hashFunction'], rel)
+                if 'hashFunction' in releaseInfo[
+                        'data'] and hashFunction and hashFunction != releaseInfo['data']['hashFunction']:
+                    msg = "hashFunction '%s' doesn't match the one on the release object ('%s') for release '%s'" % (
+                        hashFunction, releaseInfo['data']['hashFunction'], rel)
                     cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                     return Response(status=400, response=msg)
             # If this isn't the release in the URL...
@@ -122,13 +147,15 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                 # Use the data_version we just grabbed from the dbo.
                 old_data_version = releaseInfo['data_version']
         except IndexError:
-            # If the release doesn't already exist, create it, and set old_data_version appropriately.
+            # If the release doesn't already exist, create it, and set
+            # old_data_version appropriately.
             newReleaseData = dict(name=rel, schema_version=schema_version)
             if hashFunction:
                 newReleaseData['hashFunction'] = hashFunction
             try:
-                releaseInfo = createRelease(rel, product, version, changed_by, transaction, newReleaseData)
-            except ValueError, e:
+                releaseInfo = createRelease(
+                    rel, product, version, changed_by, transaction, newReleaseData)
+            except ValueError as e:
                 msg = "Couldn't create release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                 return Response(status=400, response=msg)
@@ -137,12 +164,19 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         # If the version doesn't match, just update it. This will be the case for nightlies
         # every time there's a version bump.
         if version != releaseInfo['version']:
-            log.debug("database version for %s is %s, updating it to %s", rel, releaseInfo['version'], version)
+            log.debug(
+                "database version for %s is %s, updating it to %s",
+                rel,
+                releaseInfo['version'],
+                version)
             try:
-                dbo.releases.updateRelease(name=rel, version=version,
-                    changed_by=changed_by, old_data_version=old_data_version,
+                dbo.releases.updateRelease(
+                    name=rel,
+                    version=version,
+                    changed_by=changed_by,
+                    old_data_version=old_data_version,
                     transaction=transaction)
-            except ValueError, e:
+            except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                 return Response(status=400, response=msg)
@@ -152,31 +186,50 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         if alias:
             extraArgs['alias'] = alias
         try:
-            commitCallback(rel, product, version, incomingData, releaseInfo['data'], old_data_version, extraArgs)
-        except (OutdatedDataError, ValueError), e:
+            commitCallback(
+                rel,
+                product,
+                version,
+                incomingData,
+                releaseInfo['data'],
+                old_data_version,
+                extraArgs)
+        except (OutdatedDataError, ValueError) as e:
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
             return Response(status=400, response=msg)
 
-    new_data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]['data_version']
+    new_data_version = dbo.releases.getReleases(
+        name=release, transaction=transaction)[0]['data_version']
     if new:
         status = 201
     else:
         status = 200
-    return make_response(json.dumps(dict(new_data_version=new_data_version)), status)
+    return make_response(
+        json.dumps(
+            dict(
+                new_data_version=new_data_version)),
+        status)
 
 
 class SingleLocaleView(AdminView):
     """/releases/[release]/builds/[platform]/[locale]"""
+
     def get(self, release, platform, locale):
         try:
             locale = dbo.releases.getLocale(release, platform, locale)
-        except KeyError, e:
-            return Response(status=404, response=json.dumps(e.args), mimetype="application/json")
-        data_version = dbo.releases.getReleases(name=release)[0]['data_version']
+        except KeyError as e:
+            return Response(
+                status=404, response=json.dumps(
+                    e.args), mimetype="application/json")
+        data_version = dbo.releases.getReleases(name=release)[0][
+            'data_version']
         headers = {'X-Data-Version': data_version}
         headers.update(get_csrf_headers())
-        return Response(response=json.dumps(locale), mimetype='application/json', headers=headers)
+        return Response(
+            response=json.dumps(locale),
+            mimetype='application/json',
+            headers=headers)
 
     @requirelogin
     @requirepermission('/releases/:name/builds/:platform/:locale')
@@ -190,19 +243,40 @@ class SingleLocaleView(AdminView):
            releases named in copyTo as well."""
         def exists(rel, product, version):
             if rel == release:
-                return dbo.releases.localeExists(name=rel, platform=platform,
-                    locale=locale, transaction=transaction)
+                return dbo.releases.localeExists(
+                    name=rel, platform=platform, locale=locale, transaction=transaction)
             return False
 
-        def commit(rel, product, version, localeData, releaseData, old_data_version, extraArgs):
-            return dbo.releases.addLocaleToRelease(name=rel, platform=platform,
-                locale=locale, data=localeData, alias=extraArgs.get('alias'), old_data_version=old_data_version,
-                changed_by=changed_by, transaction=transaction)
+        def commit(
+                rel,
+                product,
+                version,
+                localeData,
+                releaseData,
+                old_data_version,
+                extraArgs):
+            return dbo.releases.addLocaleToRelease(
+                name=rel,
+                platform=platform,
+                locale=locale,
+                data=localeData,
+                alias=extraArgs.get('alias'),
+                old_data_version=old_data_version,
+                changed_by=changed_by,
+                transaction=transaction)
 
-        return changeRelease(release, changed_by, transaction, exists, commit, self.log)
+        return changeRelease(
+            release,
+            changed_by,
+            transaction,
+            exists,
+            commit,
+            self.log)
+
 
 class SingleReleaseView(AdminView):
     """ /releases/:release"""
+
     def get(self, release):
         release = dbo.releases.getReleases(name=release, limit=1)
         if not release:
@@ -213,7 +287,12 @@ class SingleReleaseView(AdminView):
             indent = 4
         else:
             indent = None
-        return Response(response=json.dumps(release[0]['data'], indent=indent), mimetype='application/json', headers=headers)
+        return Response(
+            response=json.dumps(
+                release[0]['data'],
+                indent=indent),
+            mimetype='application/json',
+            headers=headers)
 
     @requirelogin
     @requirepermission('/releases/:name')
@@ -227,21 +306,34 @@ class SingleReleaseView(AdminView):
         if dbo.releases.getReleases(name=release, limit=1):
             data_version = form.data_version.data
             try:
-                dbo.releases.updateRelease(name=release, blob=blob, version=form.version.data,
-                    product=form.product.data, changed_by=changed_by,
-                    old_data_version=data_version, transaction=transaction)
-            except ValueError, e:
+                dbo.releases.updateRelease(
+                    name=release,
+                    blob=blob,
+                    version=form.version.data,
+                    product=form.product.data,
+                    changed_by=changed_by,
+                    old_data_version=data_version,
+                    transaction=transaction)
+            except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
                 return Response(status=400, response=msg)
             data_version += 1
-            return Response(json.dumps(dict(new_data_version=data_version)), status=200)
+            return Response(
+                json.dumps(
+                    dict(
+                        new_data_version=data_version)),
+                status=200)
         else:
             try:
-                dbo.releases.addRelease(name=release, product=form.product.data,
-                    version=form.version.data, blob=blob,
-                    changed_by=changed_by, transaction=transaction)
-            except ValueError, e:
+                dbo.releases.addRelease(
+                    name=release,
+                    product=form.product.data,
+                    version=form.version.data,
+                    blob=blob,
+                    changed_by=changed_by,
+                    transaction=transaction)
+            except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
                 return Response(status=400, response=msg)
@@ -255,14 +347,30 @@ class SingleReleaseView(AdminView):
                 return True
             return False
 
-        def commit(rel, product, version, newReleaseData, releaseData, old_data_version, extraArgs):
+        def commit(
+                rel,
+                product,
+                version,
+                newReleaseData,
+                releaseData,
+                old_data_version,
+                extraArgs):
             releaseData.update(newReleaseData)
             blob = createBlob(releaseData)
-            return dbo.releases.updateRelease(name=rel, blob=blob,
-                changed_by=changed_by, old_data_version=old_data_version,
+            return dbo.releases.updateRelease(
+                name=rel,
+                blob=blob,
+                changed_by=changed_by,
+                old_data_version=old_data_version,
                 transaction=transaction)
 
-        return changeRelease(release, changed_by, transaction, exists, commit, self.log)
+        return changeRelease(
+            release,
+            changed_by,
+            transaction,
+            exists,
+            commit,
+            self.log)
 
     @requirelogin
     def _delete(self, release, changed_by, transaction):
@@ -270,8 +378,14 @@ class SingleReleaseView(AdminView):
         if not releases:
             return Response(status=404, response='bad release')
         release = releases[0]
-        if not dbo.permissions.hasUrlPermission(changed_by, '/releases/:name', 'DELETE', urlOptions={'product': release['product']}):
-            msg = "%s is not allowed to delete %s releases" % (changed_by, release['product'])
+        if not dbo.permissions.hasUrlPermission(
+            changed_by,
+            '/releases/:name',
+            'DELETE',
+            urlOptions={
+                'product': release['product']}):
+            msg = "%s is not allowed to delete %s releases" % (
+                changed_by, release['product'])
             cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
             return Response(status=401, response=msg)
 
@@ -286,14 +400,18 @@ class SingleReleaseView(AdminView):
             cef_event("Bad input", CEF_WARN, errors=form.errors)
             return Response(status=400, response=form.errors)
 
-        dbo.releases.deleteRelease(changed_by=changed_by, name=release['name'],
-            old_data_version=form.data_version.data, transaction=transaction)
+        dbo.releases.deleteRelease(
+            changed_by=changed_by,
+            name=release['name'],
+            old_data_version=form.data_version.data,
+            transaction=transaction)
 
         return Response(status=200)
 
 
 class ReleaseHistoryView(HistoryAdminView):
     """/releases/:release/revisions"""
+
     def get(self, release):
         releases = dbo.releases.getReleases(name=release, limit=1)
         if not releases:
@@ -306,16 +424,16 @@ class ReleaseHistoryView(HistoryAdminView):
             page = int(request.args.get('page', 1))
             limit = int(request.args.get('limit', 10))
             assert page >= 1
-        except (ValueError, AssertionError), msg:
+        except (ValueError, AssertionError) as msg:
             cef_event("Bad input", CEF_WARN, errors=msg)
             return Response(status=400, response=str(msg))
         offset = limit * (page - 1)
         total_count, = (table.t.count()
-            .where(table.name == release['name'])
-            .where(table.data_version != None)
-            .execute()
-            .fetchone()
-        )
+                        .where(table.name == release['name'])
+                        .where(table.data_version != None)
+                        .execute()
+                        .fetchone()
+                        )
         revisions = table.select(
             where=[
                 table.name == release['name'],
@@ -337,7 +455,11 @@ class ReleaseHistoryView(HistoryAdminView):
     def _post(self, release, transaction, changed_by):
         change_id = request.form.get('change_id')
         if not change_id:
-            cef_event("Bad input", CEF_WARN, errors="no change id", release=release)
+            cef_event(
+                "Bad input",
+                CEF_WARN,
+                errors="no change id",
+                release=release)
             return Response(status=400, response='no change_id')
         change = dbo.releases.history.getChange(change_id=change_id)
         if change is None:
@@ -348,8 +470,14 @@ class ReleaseHistoryView(HistoryAdminView):
         if not releases:
             return Response(status=404, response='bad release')
         release = releases[0]
-        if not dbo.permissions.hasUrlPermission(changed_by, '/releases/:name', 'POST', urlOptions={'product': release['product']}):
-            msg = "%s is not allowed to alter %s releases" % (changed_by, release['product'])
+        if not dbo.permissions.hasUrlPermission(
+            changed_by,
+            '/releases/:name',
+            'POST',
+            urlOptions={
+                'product': release['product']}):
+            msg = "%s is not allowed to alter %s releases" % (
+                changed_by, release['product'])
             cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
             return Response(status=401, response=msg)
         old_data_version = release['data_version']
@@ -358,10 +486,14 @@ class ReleaseHistoryView(HistoryAdminView):
         blob = createBlob(change['data'])
 
         try:
-            dbo.releases.updateRelease(changed_by=changed_by, name=change['name'],
-                version=change['version'], blob=blob,
-                old_data_version=old_data_version, transaction=transaction)
-        except ValueError, e:
+            dbo.releases.updateRelease(
+                changed_by=changed_by,
+                name=change['name'],
+                version=change['version'],
+                blob=blob,
+                old_data_version=old_data_version,
+                transaction=transaction)
+        except ValueError as e:
             cef_event("Bad input", CEF_WARN, errors=e.args)
             return Response(status=400, response=e.args)
 
@@ -370,6 +502,7 @@ class ReleaseHistoryView(HistoryAdminView):
 
 class ReleasesAPIView(AdminView):
     """/releases"""
+
     def get(self, **kwargs):
         kwargs = {}
         if request.args.get('product'):
@@ -404,7 +537,9 @@ class ReleasesAPIView(AdminView):
                 'releases': _releases,
             }
 
-        return Response(response=json.dumps(data), mimetype="application/json")
+        return Response(
+            response=json.dumps(data),
+            mimetype="application/json")
 
     @requirelogin
     @requirepermission('/releases')
@@ -421,7 +556,7 @@ class ReleasesAPIView(AdminView):
                 version=form.version.data, blob=blob,
                 changed_by=changed_by, transaction=transaction
             )
-        except ValueError, e:
+        except ValueError as e:
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg)
             return Response(status=400, response=msg)
