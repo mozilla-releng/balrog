@@ -22,7 +22,7 @@ endif
 # auslib/util/testing.py.
 NOSE_ARGS += auslib/test
 
-ALL_PY_FILES := $(shell find . \( -iname "*.py" -or -iname "*.wsgi" \) -not -path "*vendor*")
+ALL_PY_FILES := $(shell find . \( -iname "*.py" -or -iname "*.wsgi" \) -not -path "*vendor*" -not -path "./lib*")
 
 PYTHON_ENV = PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$(PYTHONPATH)
 # Used to run the tests. Useful for both CI-driven tests and manual ones.
@@ -61,5 +61,8 @@ ci-tests: virtualenv test-in-virtualenv
 
 pyflakes: $(ALL_PY_FILES)
 	pyflakes $(ALL_PY_FILES)
+
+pep8: $(ALL_PY_FILES)
+	@pep8 --ignore E501,E711 $(ALL_PY_FILES)
 
 .PHONY: FORCE

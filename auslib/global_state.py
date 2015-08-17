@@ -6,7 +6,10 @@
 # exists solely to defer the AUSDatabase object import to work around circular
 # dependency issues that would occur if it were imported at parse time instead
 # of runtime.
+
+
 class DbWrapper(object):
+
     def __init__(self):
         self.db = None
 

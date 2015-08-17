@@ -10,13 +10,14 @@ app = Flask(__name__)
 
 from auslib.admin.views.csrf import CSRFView
 from auslib.admin.views.permissions import UsersView, PermissionsView, \
-  SpecificPermissionView
+    SpecificPermissionView
 from auslib.admin.views.releases import SingleLocaleView, \
-  SingleReleaseView, ReleaseHistoryView, \
-  ReleasesAPIView
+    SingleReleaseView, ReleaseHistoryView, \
+    ReleasesAPIView
 from auslib.admin.views.rules import RulesAPIView, \
-  SingleRuleView, RuleHistoryAPIView
+    SingleRuleView, RuleHistoryAPIView
 from auslib.admin.views.history import DiffView, FieldView
+
 
 @app.errorhandler(500)
 def isa(error):
@@ -28,6 +29,8 @@ def isa(error):
     return error
 
 # bug 887790: add necessary security headers
+
+
 @app.after_request
 def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'

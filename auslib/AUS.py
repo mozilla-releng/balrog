@@ -15,12 +15,14 @@ def isSpecialURL(url, specialForceHosts):
             return True
     return False
 
+
 def isForbiddenUrl(url, whitelistedDomains):
     domain = urlparse(url)[1]
     if domain not in whitelistedDomains:
         cef_event("Forbidden domain", CEF_ALERT, domain=domain)
         return True
     return False
+
 
 def getFallbackChannel(channel):
     return channel.split('-cck-')[0]
@@ -29,6 +31,7 @@ def getFallbackChannel(channel):
 class AUSRandom:
     """Abstract getting a randint to make it easier to test the range of
     possible values"""
+
     def __init__(self, min=0, max=99):
         self.min = min
         self.max = max
@@ -37,9 +40,11 @@ class AUSRandom:
         return randint(self.min, self.max)
 
     def getRange(self):
-        return range(self.min, self.max+1)
+        return range(self.min, self.max + 1)
+
 
 class AUS:
+
     def __init__(self):
         self.specialForceHosts = None
         self.rand = AUSRandom()
@@ -53,11 +58,11 @@ class AUS:
             fallbackChannel=getFallbackChannel(updateQuery['channel'])
         )
 
-        ### XXX throw any N->N update rules and keep the highest priority remaining one
+        # XXX throw any N->N update rules and keep the highest priority remaining one
         if len(rules) < 1:
             return None, None
 
-        rules = sorted(rules,key=lambda rule: rule['priority'], reverse=True)
+        rules = sorted(rules, key=lambda rule: rule['priority'], reverse=True)
         rule = rules[0]
         self.log.debug("Matching rule: %s" % rule)
 

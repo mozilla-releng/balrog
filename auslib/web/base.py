@@ -18,6 +18,7 @@ def fourohfour(error):
     response.mimetype = 'text/xml'
     return response
 
+
 @app.errorhandler(Exception)
 def generic(error):
     """Deals with any unhandled exceptions. Regardless of the exception,
@@ -28,6 +29,7 @@ def generic(error):
     response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
     response.mimetype = 'text/xml'
     return response
+
 
 @app.route('/robots.txt')
 def robots():

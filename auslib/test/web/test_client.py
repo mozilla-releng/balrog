@@ -9,6 +9,7 @@ from auslib.global_state import dbo
 from auslib.web.base import app
 from auslib.web.views.client import ClientRequestView
 
+
 class ClientTest(unittest.TestCase):
     maxDiff = 2000
 
@@ -346,6 +347,7 @@ class ClientTestWithErrorHandlers(unittest.TestCase):
     """Most of the tests are run without the error handler because it gives more
        useful output when things break. However, we still need to test that our
        error handlers works!"""
+
     def setUp(self):
         app.config['DEBUG'] = True
         app.config['WHITELISTED_DOMAINS'] = ('a.com',)

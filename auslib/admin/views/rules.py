@@ -13,6 +13,7 @@ from auslib.log import cef_event, CEF_WARN, CEF_ALERT
 
 class RulesAPIView(AdminView):
     """/rules"""
+
     def get(self, **kwargs):
         rules = dbo.rules.getOrderedRules()
         count = 0
@@ -36,30 +37,30 @@ class RulesAPIView(AdminView):
         # a Post here creates a new rule
         form = RuleForm()
         releaseNames = dbo.releases.getReleaseNames()
-        form.mapping.choices = [(item['name'],item['name']) for item in releaseNames]
-        form.mapping.choices.insert(0, ('', 'NULL' ) )
+        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+        form.mapping.choices.insert(0, ('', 'NULL'))
 
         if not form.validate():
             cef_event("Bad input", CEF_WARN, errors=form.errors)
             return Response(status=400, response=json.dumps(form.errors))
 
         what = dict(backgroundRate=form.backgroundRate.data,
-                mapping=form.mapping.data,
-                priority=form.priority.data,
-                product = form.product.data,
-                version = form.version.data,
-                buildID = form.buildID.data,
-                channel = form.channel.data,
-                locale = form.locale.data,
-                distribution = form.distribution.data,
-                buildTarget = form.buildTarget.data,
-                osVersion = form.osVersion.data,
-                distVersion = form.distVersion.data,
-                comment = form.comment.data,
-                update_type = form.update_type.data,
-                headerArchitecture = form.headerArchitecture.data)
+                    mapping=form.mapping.data,
+                    priority=form.priority.data,
+                    product=form.product.data,
+                    version=form.version.data,
+                    buildID=form.buildID.data,
+                    channel=form.channel.data,
+                    locale=form.locale.data,
+                    distribution=form.distribution.data,
+                    buildTarget=form.buildTarget.data,
+                    osVersion=form.osVersion.data,
+                    distVersion=form.distVersion.data,
+                    comment=form.comment.data,
+                    update_type=form.update_type.data,
+                    headerArchitecture=form.headerArchitecture.data)
         rule_id = dbo.rules.addRule(changed_by=changed_by, what=what,
-            transaction=transaction)
+                                    transaction=transaction)
         return Response(status=200, response=str(rule_id))
 
 
@@ -98,8 +99,8 @@ class SingleRuleView(AdminView):
                 return Response(status=401, response=msg)
         releaseNames = dbo.releases.getReleaseNames()
 
-        form.mapping.choices = [(item['name'],item['name']) for item in releaseNames]
-        form.mapping.choices.insert(0, ('', 'NULL' ))
+        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+        form.mapping.choices.insert(0, ('', 'NULL'))
 
         if not form.validate():
             cef_event("Bad input", CEF_WARN, errors=form.errors)
@@ -127,7 +128,7 @@ class SingleRuleView(AdminView):
                 what[k] = v
 
         dbo.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
-            old_data_version=form.data_version.data, transaction=transaction)
+                             old_data_version=form.data_version.data, transaction=transaction)
         # find out what the next data version is
         rule = dbo.rules.getRuleById(rule_id, transaction=transaction)
         new_data_version = rule['data_version']
@@ -157,7 +158,7 @@ class SingleRuleView(AdminView):
             return Response(status=401, response=msg)
 
         dbo.rules.deleteRule(changed_by=changed_by, rule_id=rule_id,
-            old_data_version=form.data_version.data, transaction=transaction)
+                             old_data_version=form.data_version.data, transaction=transaction)
 
         return Response(status=200)
 
@@ -177,16 +178,16 @@ class RuleHistoryAPIView(HistoryAdminView):
             page = int(request.args.get('page', 1))
             limit = int(request.args.get('limit', 100))
             assert page >= 1
-        except (ValueError, AssertionError), msg:
+        except (ValueError, AssertionError) as msg:
             cef_event("Bad input", CEF_WARN, errors=msg)
             return Response(status=400, response=str(msg))
         offset = limit * (page - 1)
         total_count, = (table.t.count()
-            .where(table.rule_id == rule_id)
-            .where(table.data_version != None)
-            .execute()
-            .fetchone()
-        )
+                        .where(table.rule_id == rule_id)
+                        .where(table.data_version != None)
+                        .execute()
+                        .fetchone()
+                        )
 
         revisions = table.select(
             where=[table.rule_id == rule_id,
@@ -276,6 +277,6 @@ class RuleHistoryAPIView(HistoryAdminView):
         )
 
         dbo.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
-            old_data_version=old_data_version, transaction=transaction)
+                             old_data_version=old_data_version, transaction=transaction)
 
         return Response("Excellent!")

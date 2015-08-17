@@ -43,10 +43,10 @@ class FieldView(AdminView):
     def get(self, type_, change_id, field):
         try:
             value = self.get_value(type_, change_id, field)
-        except KeyError, msg:
+        except KeyError as msg:
             cef_event("Bad input", CEF_WARN, errors=str(msg), field=field)
             return Response(status=400, response=str(msg))
-        except ValueError, msg:
+        except ValueError as msg:
             return Response(status=404, response=str(msg))
         value = self.format_value(value)
         return Response(value, content_type='text/plain')
@@ -54,6 +54,7 @@ class FieldView(AdminView):
 
 class DiffView(FieldView):
     """/diff/:type/:id/:field"""
+
     def get(self, type_, change_id, field):
         value = self.get_value(type_, change_id, field)
         previous = self.get_value(type_, int(change_id) - 1, field)

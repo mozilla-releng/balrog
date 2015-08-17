@@ -5,7 +5,7 @@ from auslib.test.admin.views.base import ViewTest, JSONTestMixin
 
 
 class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
-    maxDiff=1000
+    maxDiff = 1000
 
     def testGetRules(self):
         ret = self._get("/rules")
@@ -14,9 +14,9 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testNewRulePost(self):
         ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c', priority=33,
-                                                product='Firefox', update_type='minor', channel='nightly'))
+                                             product='Firefox', update_type='minor', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        r = dbo.rules.t.select().where(dbo.rules.rule_id==ret.data).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'c')
         self.assertEquals(r[0]['backgroundRate'], 31)
@@ -30,7 +30,7 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
         ))
         ret = self._post("/rules", data=data, headers={"Content-Type": "application/json"})
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        r = dbo.rules.t.select().where(dbo.rules.rule_id==ret.data).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'c')
         self.assertEquals(r[0]['backgroundRate'], 31)
@@ -43,10 +43,12 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
         # is done before what we're testing
         ret = self._post('/rules', data=dict({'product': 'a'}))
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        self.assertTrue('backgroundRate' in  ret.data, msg=ret.data)
-        self.assertTrue('priority' in  ret.data, msg=ret.data)
+        self.assertTrue('backgroundRate' in ret.data, msg=ret.data)
+        self.assertTrue('priority' in ret.data, msg=ret.data)
+
 
 class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
+
     def testGetRule(self):
         ret = self._get("/rules/1")
         expected = dict(
@@ -77,13 +79,13 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
     def testPost(self):
         # Make some changes to a rule
         ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
-                                                product='Firefox', channel='nightly'))
+                                               product='Firefox', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
-        r = dbo.rules.t.select().where(dbo.rules.rule_id==1).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'd')
         self.assertEquals(r[0]['backgroundRate'], 71)
@@ -105,7 +107,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
-        r = dbo.rules.t.select().where(dbo.rules.rule_id==1).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'd')
         self.assertEquals(r[0]['backgroundRate'], 71)
@@ -124,7 +126,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
         # Assure the changes made it into the database
-        r = dbo.rules.t.select().where(dbo.rules.rule_id==4).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 4).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'd')
         self.assertEquals(r[0]['backgroundRate'], 71)
@@ -142,7 +144,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
         # Assure the changes made it into the database
-        r = dbo.rules.t.select().where(dbo.rules.rule_id==4).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 4).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['backgroundRate'], 0)
         self.assertEquals(r[0]['data_version'], 2)
@@ -159,7 +161,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
         # Assure the changes made it into the database
-        r = dbo.rules.t.select().where(dbo.rules.rule_id==5).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         r = r[0]
         self.assertEquals(r["buildTarget"], None)
@@ -213,6 +215,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
 
 
 class TestRuleHistoryView(ViewTest, JSONTestMixin):
+
     def testGetNoRevisions(self):
         url = '/rules/1/revisions'
         ret = self._get(url)
