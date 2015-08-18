@@ -67,9 +67,9 @@ class GMPBlobV1(Blob):
             url = platformData["fileUrl"]
             if isForbiddenUrl(url, whitelistedDomains):
                 continue
-            vendorXML.append('        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>' % \
-                (vendor, url, self["hashFunction"], platformData["hashValue"],
-                    platformData["filesize"], vendorInfo["version"]))
+            vendorXML.append('        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>' %
+                             (vendor, url, self["hashFunction"], platformData["hashValue"],
+                              platformData["filesize"], vendorInfo["version"]))
 
         xml = ['<?xml version="1.0"?>']
         xml.append('<updates>')
@@ -79,4 +79,4 @@ class GMPBlobV1(Blob):
             xml.append('    </addons>')
         xml.append('</updates>')
         # ensure valid xml by using the right entity for ampersand
-        return re.sub('&(?!amp;)','&amp;', '\n'.join(xml))
+        return re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))

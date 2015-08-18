@@ -9,6 +9,7 @@ from auslib.log import cef_event, CEF_WARN
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 
+
 def setpermission(f):
     def decorated(*args, **kwargs):
         if kwargs['permission'] != 'admin' and not kwargs['permission'].startswith('/'):
@@ -16,12 +17,15 @@ def setpermission(f):
         return f(*args, **kwargs)
     return decorated
 
+
 def permission2selector(permission):
     """Converts a permission to a valid CSS selector."""
     return permission.replace('/', '').replace(':', '')
 
+
 class UsersView(AdminView):
     """/users"""
+
     def get(self):
         users = dbo.permissions.getAllUsers()
         self.log.debug("Found users: %s", users)
@@ -29,11 +33,14 @@ class UsersView(AdminView):
         # http://flask.pocoo.org/docs/security/#json-security
         return jsonify(dict(users=users))
 
+
 class PermissionsView(AdminView):
     """/users/:username/permissions"""
+
     def get(self, username):
         permissions = dbo.permissions.getUserPermissions(username)
         return jsonify(permissions)
+
 
 class SpecificPermissionView(AdminView):
     """/users/:username/permissions/:permission"""
@@ -61,7 +68,7 @@ class SpecificPermissionView(AdminView):
                 form = NewPermissionForm()
                 dbo.permissions.grantPermission(changed_by, username, permission, form.options.data, transaction=transaction)
                 return make_response(json.dumps(dict(new_data_version=1)), 201)
-        except ValueError, e:
+        except ValueError as e:
             cef_event("Bad input", CEF_WARN, errors=e.args)
             return Response(status=400, response=e.args)
 
@@ -76,7 +83,7 @@ class SpecificPermissionView(AdminView):
             dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
             new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
             return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
-        except ValueError, e:
+        except ValueError as e:
             cef_event("Bad input", CEF_WARN, errors=e.args)
             return Response(status=400, response=e.args)
 
@@ -93,6 +100,6 @@ class SpecificPermissionView(AdminView):
             form = ExistingPermissionForm(request.args)
             dbo.permissions.revokePermission(changed_by, username, permission, form.data_version.data, transaction=transaction)
             return Response(status=200)
-        except ValueError, e:
+        except ValueError as e:
             cef_event("Bad input", CEF_WARN, errors=e.args)
             return Response(status=400, response=e.args)

@@ -11,6 +11,7 @@ from auslib.util.versions import MozillaVersion
 
 
 class ReleaseBlobBase(Blob):
+
     def matchesUpdateQuery(self, updateQuery):
         self.log.debug("Trying to match update query to %s" % self["name"])
         buildTarget = updateQuery["buildTarget"]
@@ -144,7 +145,7 @@ class ReleaseBlobBase(Blob):
             xml.append('    </update>')
         xml.append('</updates>')
         # ensure valid xml by using the right entity for ampersand
-        return re.sub('&(?!amp;)','&amp;', '\n'.join(xml))
+        return re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
 
     def shouldServeUpdate(self, updateQuery):
         buildTarget = updateQuery['buildTarget']
@@ -167,6 +168,7 @@ class ReleaseBlobBase(Blob):
 
 
 class SeparatedFileUrlsMixin(object):
+
     def _getFtpFilename(self, patchKey, from_):
         return self.get("ftpFilenames", {}).get(patchKey, "")
 
@@ -207,6 +209,7 @@ class SeparatedFileUrlsMixin(object):
 
 
 class SingleUpdateXMLMixin(object):
+
     def _getPatchesXML(self, localeData, updateQuery, whitelistedDomains, specialForceHosts):
         patches = []
         for patchKey in ("complete", "partial"):
@@ -378,6 +381,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
 
 
 class NewStyleVersionsMixin(object):
+
     def getAppVersion(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'appVersion')
 
@@ -554,6 +558,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
 
 
 class MultipleUpdatesXMLMixin(object):
+
     def _getPatchesXML(self, localeData, updateQuery, whitelistedDomains, specialForceHosts):
         patches = []
         for patchKey, patchType in (("completes", "complete"), ("partials", "partial")):
@@ -678,6 +683,7 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
 
 class UnifiedFileUrlsMixin(object):
+
     def _getUrl(self, updateQuery, patchKey, patch, specialForceHosts):
         platformData = self.getPlatformData(updateQuery["buildTarget"])
         from_ = patch["from"]
@@ -741,12 +747,12 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         # specify different metadata for different channels so doing anything
         # other than above will result in MAR verification failures on the client.
         'fileUrls': {
-            '*': { # This first level contains a channel name, or "*" as a catch all.
-                '*': { # This is "partials" or "completes" (TODO: enforce this).
-                    '*': None, # And this key is a specific release (matched up
-                               # against incoming requests), "or "*" as a catch all.
-                               # The value is the URL for this specific
-                               # channel/update type/incoming release.
+            '*': {  # This first level contains a channel name, or "*" as a catch all.
+                '*': {  # This is "partials" or "completes" (TODO: enforce this).
+                    '*': None,  # And this key is a specific release (matched up
+                    # against incoming requests), "or "*" as a catch all.
+                    # The value is the URL for this specific
+                    # channel/update type/incoming release.
                 }
             }
         },
