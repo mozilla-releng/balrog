@@ -199,7 +199,8 @@ class SingleLocaleView(AdminView):
 
         def commit(rel, product, version, localeData, releaseData, old_data_version, extraArgs):
             return dbo.releases.addLocaleToRelease(name=rel, platform=platform,
-                                                   locale=locale, data=localeData, alias=extraArgs.get('alias'), old_data_version=old_data_version,
+                                                   locale=locale, data=localeData, alias=extraArgs.get('alias'),
+                                                   old_data_version=old_data_version,
                                                    changed_by=changed_by, transaction=transaction)
 
         return changeRelease(release, changed_by, transaction, exists, commit, self.log)

@@ -28,8 +28,6 @@ def isa(error):
     log.debug("Request headers are: %s", request.headers)
     return error
 
-# bug 887790: add necessary security headers
-
 
 @app.after_request
 def add_security_headers(response):
