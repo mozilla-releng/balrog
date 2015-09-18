@@ -650,7 +650,8 @@ class Rules(AUSTable):
                            Column('distribution', String(100)),
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),
-                           Column('comment', String(500))
+                           Column('comment', String(500)),
+                           Column('whitelist', String(100)),
                            )
         AUSTable.__init__(self, dialect)
 

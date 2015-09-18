@@ -69,6 +69,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
             headerArchitecture=None,
             data_version=1,
             rule_id=1,
+            whitelist=None,
         )
         self.assertEquals(json.loads(ret.data), expected)
 
