@@ -7,7 +7,7 @@ from auslib.AUS import AUS
 
 def RandomAUSTest(AUS, backgroundRate, force, mapping):
     with mock.patch('auslib.db.Rules.getRulesMatchingQuery') as m:
-        m.return_value = [dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor')]
+        m.return_value = [dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor', whitelist=None)]
 
         results = AUS.rand.getRange()
         resultsLength = len(results)

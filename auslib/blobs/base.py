@@ -61,6 +61,7 @@ def createBlob(data):
     from auslib.blobs.apprelease import ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, ReleaseBlobV4
     from auslib.blobs.gmp import GMPBlobV1
     from auslib.blobs.settings import SettingsBlob
+    from auslib.blobs.whitelist import WhitelistBlobV1
 
     blob_map = {
         1: ReleaseBlobV1,
@@ -68,7 +69,8 @@ def createBlob(data):
         3: ReleaseBlobV3,
         4: ReleaseBlobV4,
         1000: GMPBlobV1,
-        2000: SettingsBlob
+        2000: SettingsBlob,
+        3000: WhitelistBlobV1
     }
 
     if isinstance(data, basestring):
