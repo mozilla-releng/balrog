@@ -9,7 +9,7 @@ script: "lineman spec-ci"
 notifications:
   irc:
     channels:
-      - "irc.mozilla.org#releng"
+      - "irc.mozilla.org#balrog"
     on_success: always
     on_failure: always
     template:
