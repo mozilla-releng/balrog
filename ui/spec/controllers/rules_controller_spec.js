@@ -24,7 +24,8 @@ describe("controller: RulesController", function() {
         "osVersion": null,
         "distribution": null,
         "channel": "nightly",
-        "distVersion": null
+        "distVersion": null,
+        "whitelist": null
     },
     {
         "comment": null,
@@ -43,7 +44,8 @@ describe("controller: RulesController", function() {
         "osVersion": null,
         "distribution": null,
         "channel": null,
-        "distVersion": null
+        "distVersion": null,
+        "whitelist": null
     }
     ]
   };
@@ -234,7 +236,8 @@ describe("controller: RulesController By Id", function() {
         "buildTarget": null,
         "id": 19,
         "channel": null,
-        "update_type": "minor"
+        "update_type": "minor",
+        "whitelist": null
       },
       {
         "buildID": null,
@@ -256,7 +259,8 @@ describe("controller: RulesController By Id", function() {
         "buildTarget": null,
         "id": 19,
         "channel": null,
-        "update_type": "minor"
+        "update_type": "minor",
+        "whitelist": null
       }
     ]
   };

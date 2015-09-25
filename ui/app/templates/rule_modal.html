@@ -66,6 +66,12 @@
       <input type="text" class="form-control" id="id_distribution" ng-model="rule.distVersion">
       <p class="help-block" ng-show="errors.distVersion">{{ errors.distVersion.join(', ') }}</p>
     </div>
+    <div class="form-group" ng-class="{'has-error': errors.whitelist}">
+      <label for="id_whitelist">Whitelist</label>
+      <input type="text" class="form-control" id="id_whitelist" ng-model="rule.whitelist"
+       typeahead="name for name in names | filter:$viewValue | limitTo:16">
+      <p class="help-block" ng-show="errors.whitelist">{{ errors.whitelist.join(', ') }}</p>
+    </div>
     <div class="form-group" ng-class="{'has-error': errors.update_type}">
       <label for="id_update_type">Update Type</label>
       <input type="text" class="form-control" id="id_update_type" ng-model="rule.update_type">
