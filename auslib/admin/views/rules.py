@@ -56,6 +56,7 @@ class RulesAPIView(AdminView):
                     buildTarget=form.buildTarget.data,
                     osVersion=form.osVersion.data,
                     distVersion=form.distVersion.data,
+                    whitelist=form.whitelist.data,
                     comment=form.comment.data,
                     update_type=form.update_type.data,
                     headerArchitecture=form.headerArchitecture.data)
@@ -212,6 +213,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             'buildTarget': 'buildTarget',
             'osVersion': 'osVersion',
             'distVersion': 'distVersion',
+            'whitelist': 'whitelist',
             'comment': 'comment',
             'update_type': 'update_type',
             'headerArchitecture': 'headerArchitecture',
@@ -271,6 +273,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             buildTarget=change['buildTarget'],
             osVersion=change['osVersion'],
             distVersion=change['distVersion'],
+            whitelist=change['whitelist'],
             comment=change['comment'],
             update_type=change['update_type'],
             headerArchitecture=change['headerArchitecture'],
