@@ -22,7 +22,8 @@ describe("controller: RuleRevertCtrl", function() {
     "osVersion": null,
     "distribution": null,
     "channel": "nightly",
-    "distVersion": null
+    "distVersion": null,
+    "whitelist": null
   };
 
   var sample_revisions = {
@@ -48,7 +49,8 @@ describe("controller: RuleRevertCtrl", function() {
         "buildTarget": null,
         "id": 19,
         "channel": null,
-        "update_type": "minor"
+        "update_type": "minor",
+        "whitelist": null
       },
       {
         "buildID": null,
@@ -70,7 +72,8 @@ describe("controller: RuleRevertCtrl", function() {
         "buildTarget": null,
         "id": 19,
         "channel": null,
-        "update_type": "minor"
+        "update_type": "minor",
+        "whitelist": null
       }
     ]
   };

@@ -25,7 +25,8 @@ describe("controller: RuleDeleteCtrl", function() {
         "osVersion": null,
         "distribution": null,
         "channel": "nightly",
-        "distVersion": null
+        "distVersion": null,
+        "whitelist": null
     },
     {
         "comment": null,
@@ -44,7 +45,8 @@ describe("controller: RuleDeleteCtrl", function() {
         "osVersion": null,
         "distribution": null,
         "channel": null,
-        "distVersion": null
+        "distVersion": null,
+        "whitelist": null
     }
     ]
   };

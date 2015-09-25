@@ -22,7 +22,8 @@ describe("controller: RuleEditCtrl", function() {
     "osVersion": null,
     "distribution": null,
     "channel": "nightly",
-    "distVersion": null
+    "distVersion": null,
+    "whitelist": null
   };
 
   beforeEach(inject(function($controller, $rootScope, $location, $modal, Rules, Releases, $httpBackend) {
