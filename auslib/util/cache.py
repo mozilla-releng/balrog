@@ -12,6 +12,7 @@ class MaybeCacher(object):
     If the cache given to get/put/clear/invalidate doesn't exist, these methods
     are essentially no-ops. In a world where bug 1109295 is fixed, we might
     only need to handle the caching case."""
+
     def __init__(self):
         self.caches = {}
 

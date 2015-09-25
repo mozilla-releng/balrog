@@ -9,6 +9,7 @@ from auslib.util.timesince import timesince
 
 import logging
 
+
 def requirelogin(f):
     def decorated(*args, **kwargs):
         username = request.environ.get('REMOTE_USER')
@@ -17,6 +18,7 @@ def requirelogin(f):
             return Response(status=401)
         return f(*args, changed_by=username, **kwargs)
     return decorated
+
 
 def requirepermission(url, options=['product']):
     def wrap(f):
@@ -41,7 +43,9 @@ def requirepermission(url, options=['product']):
         return decorated
     return wrap
 
+
 class AdminView(MethodView):
+
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)
@@ -68,11 +72,10 @@ class HistoryAdminView(AdminView):
 
     def getAllRevisionKeys(self, revisions, primary_keys):
         try:
-            all_keys = [
+            all_keys = sorted([
                 x for x in revisions[0].keys()
                 if x not in self.history_keys and x not in primary_keys
-            ]
-            all_keys.sort()
+            ])
         except IndexError:
             all_keys = None
         return all_keys

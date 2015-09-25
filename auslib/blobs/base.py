@@ -5,6 +5,7 @@ log = logging.getLogger(__name__)
 
 from auslib.AUS import isSpecialURL
 
+
 def isValidBlob(format_, blob, topLevel=True):
     """Decides whether or not 'blob' is valid based on the format provided.
        Validation follows these rules:
@@ -19,7 +20,7 @@ def isValidBlob(format_, blob, topLevel=True):
     if not format_:
         return True
     # If the blob isn't a dictionary-like or list-like object, it's not valid!
-    if not isinstance(blob, (dict,list)):
+    if not isinstance(blob, (dict, list)):
         return False
     # If the blob format has a schema_version then that's a mandatory int
     if topLevel and 'schema_version' in format_:
@@ -51,6 +52,7 @@ def isValidBlob(format_, blob, topLevel=True):
                 return False
     return True
 
+
 def createBlob(data):
     """Takes a string form of a blob (eg from DB or API) and converts into an
     actual blob, taking care to notice the schema"""
@@ -59,14 +61,16 @@ def createBlob(data):
     from auslib.blobs.apprelease import ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, ReleaseBlobV4
     from auslib.blobs.gmp import GMPBlobV1
     from auslib.blobs.settings import SettingsBlob
+    from auslib.blobs.whitelist import WhitelistBlobV1
 
     blob_map = {
-        1:    ReleaseBlobV1,
-        2:    ReleaseBlobV2,
-        3:    ReleaseBlobV3,
-        4:    ReleaseBlobV4,
+        1: ReleaseBlobV1,
+        2: ReleaseBlobV2,
+        3: ReleaseBlobV3,
+        4: ReleaseBlobV4,
         1000: GMPBlobV1,
-        2000: SettingsBlob
+        2000: SettingsBlob,
+        3000: WhitelistBlobV1
     }
 
     if isinstance(data, basestring):

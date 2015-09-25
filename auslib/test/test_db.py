@@ -11,14 +11,17 @@ import migrate.versioning.api
 
 from auslib.global_state import cache
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
-  AUSTransaction, TransactionError, OutdatedDataError
+    AUSTransaction, TransactionError, OutdatedDataError
 from auslib.blobs.apprelease import ReleaseBlobV1
+
 
 class MemoryDatabaseMixin(object):
     """Use this when writing tests that don't require multiple connections to
        the database."""
+
     def setUp(self):
         self.dburi = 'sqlite:///:memory:'
+
 
 class NamedFileDatabaseMixin(object):
     """Use this when writing tests that *do* require multiple connections to
@@ -29,6 +32,7 @@ class NamedFileDatabaseMixin(object):
         http://www.sqlalchemy.org/docs/dialects/sqlite.html#threading-pooling-behavior
         http://www.sqlalchemy.org/trac/wiki/FAQ#IamusingmultipleconnectionswithaSQLitedatabasetypicallytotesttransactionoperationandmytestprogramisnotworking
        """
+
     def setUp(self):
         self.tmpfiles = []
         self.dburi = 'sqlite:///%s' % self.getTempfile()
@@ -43,13 +47,15 @@ class NamedFileDatabaseMixin(object):
         self.tmpfiles.append((fd, t))
         return t
 
+
 class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.engine = create_engine(self.dburi)
         self.metadata = MetaData(self.engine)
         self.table = Table('test', self.metadata, Column('id', Integer, primary_key=True),
-                                             Column('foo', Integer))
+                           Column('foo', Integer))
         self.metadata.create_all()
         self.table.insert().execute(id=1, foo=33)
         self.table.insert().execute(id=2, foo=22)
@@ -58,7 +64,7 @@ class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
     def testTransaction(self):
         trans = AUSTransaction(self.metadata.bind.connect())
         trans.execute(self.table.insert(values=dict(id=4, foo=55)))
-        trans.execute(self.table.update(values=dict(foo=66)).where(self.table.c.id==1))
+        trans.execute(self.table.update(values=dict(foo=66)).where(self.table.c.id == 1))
         trans.commit()
         ret = self.table.select().execute().fetchall()
         self.assertEquals(ret, [(1, 66), (2, 22), (3, 11), (4, 55)])
@@ -69,7 +75,7 @@ class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
 
     def testRollback(self):
         trans = AUSTransaction(self.metadata.bind.connect())
-        trans.execute(self.table.update(values=dict(foo=66)).where(self.table.c.id==1))
+        trans.execute(self.table.update(values=dict(foo=66)).where(self.table.c.id == 1))
         trans.rollback()
         ret = self.table.select().execute().fetchall()
         self.assertEquals(ret, [(1, 33), (2, 22), (3, 11)])
@@ -81,13 +87,15 @@ class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
             trans.execute(self.table.insert(values=dict(id=5, foo=41)))
         self.assertEqual(trans.conn.closed, True, "Connection not closed after __exit__ is called")
 
+
 class TestAUSTransactionRequiresRealFile(unittest.TestCase, NamedFileDatabaseMixin):
+
     def setUp(self):
         NamedFileDatabaseMixin.setUp(self)
         self.engine = create_engine(self.dburi)
         self.metadata = MetaData(self.engine)
         self.table = Table('test', self.metadata, Column('id', Integer, primary_key=True),
-                                             Column('foo', Integer))
+                           Column('foo', Integer))
         self.metadata.create_all()
         self.table.insert().execute(id=1, foo=33)
         self.table.insert().execute(id=2, foo=22)
@@ -95,7 +103,7 @@ class TestAUSTransactionRequiresRealFile(unittest.TestCase, NamedFileDatabaseMix
 
     def testTransactionNotChangedUntilCommit(self):
         trans = AUSTransaction(self.metadata.bind.connect())
-        trans.execute(self.table.update(values=dict(foo=66)).where(self.table.c.id==1))
+        trans.execute(self.table.update(values=dict(foo=66)).where(self.table.c.id == 1))
         # This select() runs in a different connection, so no changes should
         # be visible to it yet
         ret = self.table.select().execute().fetchall()
@@ -104,20 +112,26 @@ class TestAUSTransactionRequiresRealFile(unittest.TestCase, NamedFileDatabaseMix
         ret = self.table.select().execute().fetchall()
         self.assertEquals(ret, [(1, 66), (2, 22), (3, 11)])
 
+
 class TestTableMixin(object):
+
     def setUp(self):
         self.engine = create_engine(self.dburi)
         self.metadata = MetaData(self.engine)
+
         class TestTable(AUSTable):
+
             def __init__(self, metadata):
                 self.table = Table('test', metadata, Column('id', Integer, primary_key=True, autoincrement=True),
-                                                     Column('foo', Integer))
+                                   Column('foo', Integer))
                 AUSTable.__init__(self, 'sqlite')
+
         class TestAutoincrementTable(AUSTable):
+
             def __init__(self, metadata):
                 self.table = Table('test-autoincrement', metadata,
-                                                    Column('id', Integer, primary_key=True, autoincrement=True),
-                                                    Column('foo', Integer))
+                                   Column('id', Integer, primary_key=True, autoincrement=True),
+                                   Column('foo', Integer))
                 AUSTable.__init__(self, 'sqlite')
         self.test = TestTable(self.metadata)
         self.testAutoincrement = TestAutoincrementTable(self.metadata)
@@ -126,15 +140,19 @@ class TestTableMixin(object):
         self.test.t.insert().execute(id=2, foo=22, data_version=1)
         self.test.t.insert().execute(id=3, foo=11, data_version=2)
 
+
 class TestMultiplePrimaryTableMixin(object):
+
     def setUp(self):
         self.engine = create_engine(self.dburi)
         self.metadata = MetaData(self.engine)
+
         class TestTable(AUSTable):
+
             def __init__(self, metadata):
                 self.table = Table('test', metadata, Column('id1', Integer, primary_key=True),
-                                                     Column('id2', Integer, primary_key=True),
-                                                     Column('foo', Integer))
+                                   Column('id2', Integer, primary_key=True),
+                                   Column('foo', Integer))
                 AUSTable.__init__(self, 'sqlite')
         self.test = TestTable(self.metadata)
         self.metadata.create_all()
@@ -143,7 +161,9 @@ class TestMultiplePrimaryTableMixin(object):
         self.test.t.insert().execute(id1=2, id2=1, foo=11, data_version=1)
         self.test.t.insert().execute(id1=2, id2=2, foo=44, data_version=1)
 
+
 class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         TestTableMixin.setUp(self)
@@ -208,58 +228,60 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEquals(shared, [self.test, 'bob', what])
 
     def testDelete(self):
-        ret = self.test.delete(changed_by='bill', where=[self.test.id==1, self.test.foo==33],
-            old_data_version=1)
+        ret = self.test.delete(changed_by='bill', where=[self.test.id == 1, self.test.foo == 33],
+                               old_data_version=1)
         self.assertEquals(ret.rowcount, 1)
         self.assertEquals(len(self.test.t.select().execute().fetchall()), 2)
 
     def testDeleteFailsOnVersionMismatch(self):
         self.assertRaises(OutdatedDataError, self.test.delete, changed_by='bill',
-            where=[self.test.id==3], old_data_version=1)
+                          where=[self.test.id == 3], old_data_version=1)
 
     def testDeleteClosesConnectionOnImplicitTransaction(self):
         with mock.patch('sqlalchemy.engine.base.Connection.close') as close:
-            self.test.delete(changed_by='bill', where=[self.test.id==1], old_data_version=1)
+            self.test.delete(changed_by='bill', where=[self.test.id == 1], old_data_version=1)
             self.assertTrue(close.called, "Connection.close() never called by delete()")
 
     def testDeleteWithChangeCallback(self):
         shared = []
         self.test.onDelete = lambda *x: shared.extend(x)
-        where = [self.test.id==1]
+        where = [self.test.id == 1]
         self.test.delete(changed_by='bob', where=where, old_data_version=1)
         self.assertEquals(shared, [self.test, 'bob', where])
 
     def testUpdate(self):
-        ret = self.test.update(changed_by='bob', where=[self.test.id==1], what=dict(foo=123),
-            old_data_version=1)
+        ret = self.test.update(changed_by='bob', where=[self.test.id == 1], what=dict(foo=123),
+                               old_data_version=1)
         self.assertEquals(ret.rowcount, 1)
-        self.assertEquals(self.test.t.select(self.test.id==1).execute().fetchone(), (1, 123, 2))
+        self.assertEquals(self.test.t.select(self.test.id == 1).execute().fetchone(), (1, 123, 2))
 
     def testUpdateFailsOnVersionMismatch(self):
         self.assertRaises(OutdatedDataError, self.test.update, changed_by='bill',
-            where=[self.test.id==3], what=dict(foo=99), old_data_version=1)
+                          where=[self.test.id == 3], what=dict(foo=99), old_data_version=1)
 
     def testUpdateClosesConnectionOnImplicitTransaction(self):
         with mock.patch('sqlalchemy.engine.base.Connection.close') as close:
-            self.test.update(changed_by='bob', where=[self.test.id==1], what=dict(foo=432), old_data_version=1)
+            self.test.update(changed_by='bob', where=[self.test.id == 1], what=dict(foo=432), old_data_version=1)
             self.assertTrue(close.called, "Connection.close() never called by update()")
 
     def testUpdateWithChangeCallback(self):
         shared = []
         self.test.onUpdate = lambda *x: shared.extend(x)
-        where = [self.test.id==1]
+        where = [self.test.id == 1]
         what = dict(foo=123)
         self.test.update(changed_by='bob', where=where, what=what, old_data_version=1)
         self.assertEquals(shared, [self.test, 'bob', what, where])
 
+
 class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileDatabaseMixin):
+
     def setUp(self):
         NamedFileDatabaseMixin.setUp(self)
         TestTableMixin.setUp(self)
 
     def testDeleteWithTransaction(self):
         trans = AUSTransaction(self.metadata.bind.connect())
-        self.test.delete(changed_by='bill', transaction=trans, where=[self.test.id==2], old_data_version=1)
+        self.test.delete(changed_by='bill', transaction=trans, where=[self.test.id == 2], old_data_version=1)
         ret = self.test.t.select().execute().fetchall()
         self.assertEquals(len(ret), 3)
         trans.commit()
@@ -277,12 +299,12 @@ class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileD
 
     def testUpdateWithTransaction(self):
         trans = AUSTransaction(self.metadata.bind.connect())
-        self.test.update(changed_by='bill', transaction=trans, where=[self.test.id==1], what=dict(foo=222),
-            old_data_version=1)
-        ret = self.test.t.select(self.test.id==1).execute().fetchone()
+        self.test.update(changed_by='bill', transaction=trans, where=[self.test.id == 1], what=dict(foo=222),
+                         old_data_version=1)
+        ret = self.test.t.select(self.test.id == 1).execute().fetchone()
         self.assertEquals(ret, (1, 33, 1))
         trans.commit()
-        ret = self.test.t.select(self.test.id==1).execute().fetchone()
+        ret = self.test.t.select(self.test.id == 1).execute().fetchone()
         self.assertEquals(ret, (1, 222, 2))
 
 # TODO: Find some way of testing this with SQLite, or testing it with some other backend.
@@ -298,7 +320,9 @@ class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileD
 #        self.assertEquals(self.test.t.select(self.test.id==3).execute().fetchone(), (1, 99, 2))
 #        self.assertRaises(TransactionError, trans2.commit)
 
+
 class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         TestTableMixin.setUp(self)
@@ -333,16 +357,16 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
     def testHistoryUponDelete(self):
         with mock.patch('time.time') as t:
             t.return_value = 1.0
-            self.test.delete(changed_by='bobby', where=[self.test.id==1],
-                old_data_version=1)
+            self.test.delete(changed_by='bobby', where=[self.test.id == 1],
+                             old_data_version=1)
             ret = self.test.history.t.select().execute().fetchone()
             self.assertEquals(ret, (1, 'bobby', 1000, 1, None, None))
 
     def testHistoryUponUpdate(self):
         with mock.patch('time.time') as t:
             t.return_value = 1.0
-            self.test.update(changed_by='heather', where=[self.test.id==2], what=dict(foo=99),
-                old_data_version=1)
+            self.test.update(changed_by='heather', where=[self.test.id == 2], what=dict(foo=99),
+                             old_data_version=1)
             ret = self.test.history.t.select().execute().fetchone()
             self.assertEquals(ret, (1, 'heather', 1000, 2, 99, 2))
 
@@ -350,7 +374,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         with mock.patch('time.time') as t:
             t.return_value = 1234567890.123456
             self.test.insert(changed_by='bob', id=4)
-            ret = select([self.test.history.timestamp]).where(self.test.history.id==4).execute().fetchone()[0]
+            ret = select([self.test.history.timestamp]).where(self.test.history.id == 4).execute().fetchone()[0]
             # Insert decrements the timestamp
             self.assertEquals(ret, 1234567890122)
 
@@ -359,11 +383,11 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             t.return_value = 1.0
 
             # Update one of the rows
-            self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id==2).execute()
+            self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id == 2).execute()
             self.test.history.t.insert(values=dict(changed_by='heather', change_id=1, timestamp=1000, id=2, data_version=2, foo=99)).execute()
 
             # Update it again (this is the update we will rollback)
-            self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id==2).execute()
+            self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id == 2).execute()
             self.test.history.t.insert(values=dict(changed_by='heather', change_id=2, timestamp=1000, id=2, data_version=3, foo=100)).execute()
 
             # Rollback the second update
@@ -372,7 +396,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             ret = self.test.history.t.select().execute().fetchall()
             self.assertEquals(ret[-1], (3, 'heather', 1000, 2, 99, 4))
 
-            ret = self.test.t.select().where(self.test.id==2).execute().fetchall()
+            ret = self.test.t.select().where(self.test.id == 2).execute().fetchall()
             self.assertEquals(ret, [(2, 99, 4)])
 
     def testHistoryInsertRollback(self):
@@ -407,7 +431,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id=4, data_version=1, foo=271)).execute()
 
             # Delete it
-            self.test.t.delete().where(self.test.id==4).execute()
+            self.test.t.delete().where(self.test.id == 4).execute()
             self.test.history.t.insert(values=dict(changed_by='bobby', change_id=3, timestamp=1000, id=4, data_version=None, foo=None)).execute()
 
             # Rollback the 'delete'
@@ -419,7 +443,9 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             ret = self.test.t.select().execute().fetchall()
             self.assertEquals(len(ret), 4, msg=ret)
 
+
 class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTableMixin, MemoryDatabaseMixin):
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         TestMultiplePrimaryTableMixin.setUp(self)
@@ -447,26 +473,26 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
     def testMultiplePrimaryHistoryUponDelete(self):
         with mock.patch('time.time') as t:
             t.return_value = 1.0
-            self.test.delete(changed_by='bobby', where=[self.test.id1==1, self.test.id2==2],
-                old_data_version=1)
+            self.test.delete(changed_by='bobby', where=[self.test.id1 == 1, self.test.id2 == 2],
+                             old_data_version=1)
             ret = self.test.history.t.select().execute().fetchone()
             self.assertEquals(ret, (1, 'bobby', 1000, 1, 2, None, None))
 
     def testMultiplePrimaryHistoryUponUpdate(self):
         with mock.patch('time.time') as t:
             t.return_value = 1.0
-            self.test.update(changed_by='heather', where=[self.test.id1==2, self.test.id2==1], what=dict(foo=99),
-                old_data_version=1)
+            self.test.update(changed_by='heather', where=[self.test.id1 == 2, self.test.id2 == 1], what=dict(foo=99),
+                             old_data_version=1)
             ret = self.test.history.t.select().execute().fetchone()
             self.assertEquals(ret, (1, 'heather', 1000, 2, 1, 99, 2))
 
     def testMultiplePrimaryHistoryUpdateRollback(self):
         with mock.patch('time.time') as t:
             t.return_value = 1.0
-            self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id1==2).where(self.test.id2==1).execute()
+            self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id1 == 2).where(self.test.id2 == 1).execute()
             self.test.history.t.insert(values=dict(changed_by='heather', change_id=1, timestamp=1000, id1=2, id2=1, data_version=2, foo=99)).execute()
 
-            self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id1==2).where(self.test.id2==1).execute()
+            self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id1 == 2).where(self.test.id2 == 1).execute()
             self.test.history.t.insert(values=dict(changed_by='heather', change_id=2, timestamp=1000, id1=2, id2=1, data_version=3, foo=100)).execute()
 
             self.test.history.rollbackChange(2, 'heather')
@@ -474,7 +500,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
             ret = self.test.history.t.select().execute().fetchall()
             self.assertEquals(ret[-1], (3, 'heather', 1000, 2, 1, 99, 4))
 
-            ret = self.test.t.select().where(self.test.id1==2).where(self.test.id2==1).execute().fetchall()
+            ret = self.test.t.select().where(self.test.id1 == 2).where(self.test.id2 == 1).execute().fetchall()
             self.assertEquals(ret, [(2, 1, 99, 4)])
 
     def testMultiplePrimaryHistoryInsertRollback(self):
@@ -505,8 +531,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
             self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id1=4, id2=3, data_version=None, foo=None)).execute()
             self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id1=4, id2=3, data_version=1, foo=271)).execute()
 
-
-            self.test.t.delete().where(self.test.id1==4).where(self.test.id2==3).execute()
+            self.test.t.delete().where(self.test.id1 == 4).where(self.test.id2 == 3).execute()
             self.test.history.t.insert(values=dict(changed_by='bobby', change_id=3, timestamp=1000, id1=4, id2=3, data_version=None, foo=None)).execute()
 
             self.test.history.rollbackChange(3, 'george')
@@ -519,6 +544,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
 
 
 class RulesTestMixin(object):
+
     def _stripNullColumns(self, rules):
         # We know a bunch of columns are going to be empty...easier to strip them out
         # than to be super verbose (also should let this test continue to work even
@@ -529,7 +555,9 @@ class RulesTestMixin(object):
                     del rule[key]
         return rules
 
+
 class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
@@ -564,7 +592,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='a', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
@@ -577,7 +605,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='d', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
@@ -593,7 +621,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='d', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
@@ -609,7 +637,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='d', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=True, queryVersion=3,
-            ),
+                 ),
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
@@ -626,7 +654,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildID='', locale='', osVersion='foo 1.2.3', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
-            ),
+                 ),
             fallbackChannel='',
         )
         rules = self._stripNullColumns(rules)
@@ -642,7 +670,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildID='', locale='', osVersion='bbb foo 1.2.3', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
-            ),
+                 ),
             fallbackChannel='',
         )
         rules = self._stripNullColumns(rules)
@@ -658,7 +686,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildID='', locale='', osVersion='blah 6.3.2', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
-            ),
+                 ),
             fallbackChannel='',
         )
         rules = self._stripNullColumns(rules)
@@ -674,7 +702,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildID='', locale='foo', osVersion='', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
-            ),
+                 ),
             fallbackChannel='',
         )
         rules = self._stripNullColumns(rules)
@@ -689,7 +717,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildID='', locale='bar', osVersion='', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
-            ),
+                 ),
             fallbackChannel='',
         )
         rules = self._stripNullColumns(rules)
@@ -707,31 +735,31 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                     update_type='z',
                     priority=60)
         rule_id = self.paths.addRule(changed_by='bill', what=what)
-        rules = self.paths.t.select().where(self.paths.rule_id==rule_id).execute().fetchall()
+        rules = self.paths.t.select().where(self.paths.rule_id == rule_id).execute().fetchall()
         copy_rule = dict(rules[0].items())
-        rule = self._stripNullColumns( [copy_rule] )
-        what['rule_id']=rule_id
-        what['data_version']=1
+        rule = self._stripNullColumns([copy_rule])
+        what['rule_id'] = rule_id
+        what['data_version'] = 1
         what = [what]
         self.assertEquals(rule, what)
 
     def testUpdateRule(self):
-        rules = self.paths.t.select().where(self.paths.rule_id==1).execute().fetchall()
+        rules = self.paths.t.select().where(self.paths.rule_id == 1).execute().fetchall()
         what = dict(rules[0].items())
 
         what['mapping'] = 'd'
         self.paths.updateRule(changed_by='bill', rule_id=1, what=what, old_data_version=1)
 
-        rules = self.paths.t.select().where(self.paths.rule_id==1).execute().fetchall()
+        rules = self.paths.t.select().where(self.paths.rule_id == 1).execute().fetchall()
         copy_rule = dict(rules[0].items())
-        rule = self._stripNullColumns( [copy_rule] )
+        rule = self._stripNullColumns([copy_rule])
 
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='d', update_type='z', data_version=1)]
         self.assertEquals(rule, expected)
 
     def testDeleteRule(self):
         self.paths.deleteRule(changed_by='bill', rule_id=2, old_data_version=1)
-        rule = self.paths.t.select().where(self.paths.rule_id==2).execute().fetchall()
+        rule = self.paths.t.select().where(self.paths.rule_id == 2).execute().fetchall()
         self.assertEquals(rule, [])
 
     def testGetNumberOfRules(self):
@@ -739,6 +767,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
@@ -755,7 +784,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
@@ -766,7 +795,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
@@ -777,7 +806,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
@@ -788,7 +817,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
@@ -801,7 +830,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='', buildID='', locale='', osVersion='', distribution='',
                  distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel='releasetest'
         )
         rules = self._stripNullColumns(rules)
@@ -812,7 +841,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel='releasetest'
         )
         rules = self._stripNullColumns(rules)
@@ -825,7 +854,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='', buildID='20010101222222', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
@@ -836,7 +865,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='', buildID='20010101232323', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
@@ -847,7 +876,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  buildTarget='', buildID='20010101212121', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
-            ),
+                 ),
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
@@ -855,6 +884,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
 
 class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
@@ -884,26 +914,26 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseInfoAll(self):
         releases = self.releases.getReleaseInfo()
-        expected = [ dict(name='a', product='a', version='a', data_version=1),
-                dict(name='ab', product='a', version='a', data_version=1),
-                dict(name='b', product='b', version='b', data_version=1),
-                dict(name='c', product='c', version='c', data_version=1)]
+        expected = [dict(name='a', product='a', version='a', data_version=1),
+                    dict(name='ab', product='a', version='a', data_version=1),
+                    dict(name='b', product='b', version='b', data_version=1),
+                    dict(name='c', product='c', version='c', data_version=1)]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoProduct(self):
         releases = self.releases.getReleaseInfo(product='a')
-        expected = [ dict(name='a', product='a', version='a', data_version=1),
-                dict(name='ab', product='a', version='a', data_version=1)]
+        expected = [dict(name='a', product='a', version='a', data_version=1),
+                    dict(name='ab', product='a', version='a', data_version=1)]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoVersion(self):
         releases = self.releases.getReleaseInfo(version='b')
-        expected = [ dict(name='b', product='b', version='b', data_version=1), ]
+        expected = [dict(name='b', product='b', version='b', data_version=1), ]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNoMatch(self):
         releases = self.releases.getReleaseInfo(product='a', version='b')
-        expected = [ ]
+        expected = []
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNamePrefix(self):
@@ -919,26 +949,26 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseNames(self):
         releases = self.releases.getReleaseNames()
-        expected = [ dict(name='a'),
-                dict(name='ab'),
-                dict(name='b'),
-                dict(name='c')]
+        expected = [dict(name='a'),
+                    dict(name='ab'),
+                    dict(name='b'),
+                    dict(name='c')]
         self.assertEquals(releases, expected)
 
     def testGetReleaseNamesProduct(self):
         releases = self.releases.getReleaseNames(product='a')
-        expected = [ dict(name='a'),
-                dict(name='ab')]
+        expected = [dict(name='a'),
+                    dict(name='ab')]
         self.assertEquals(releases, expected)
 
     def testGetReleaseNamesVersion(self):
         releases = self.releases.getReleaseNames(version='b')
-        expected = [ dict(name='b'), ]
+        expected = [dict(name='b'), ]
         self.assertEquals(releases, expected)
 
     def testGetReleaseNamesNoMatch(self):
         releases = self.releases.getReleaseNames(product='a', version='b')
-        expected = [ ]
+        expected = []
         self.assertEquals(releases, expected)
 
     def testGetNumberOfReleases(self):
@@ -947,11 +977,12 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testDeleteRelease(self):
         self.releases.deleteRelease(changed_by='bill', name='a', old_data_version=1)
-        release = self.releases.t.select().where(self.releases.name=='a').execute().fetchall()
+        release = self.releases.t.select().where(self.releases.name == 'a').execute().fetchall()
         self.assertEquals(release, [])
 
 
 class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         cache.reset()
@@ -1107,6 +1138,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     """Tests for the Releases class that depend on version 1 of the blob schema."""
 
     maxDiff = 1000
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
@@ -1145,7 +1177,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         blob = ReleaseBlobV1(name=4)
         self.releases.addRelease(name='d', product='d', version='d', blob=blob, changed_by='bill')
         expected = [('d', 'd', 'd', json.dumps(dict(name=4, schema_version=1)), 1)]
-        self.assertEquals(self.releases.t.select().where(self.releases.name=='d').execute().fetchall(), expected)
+        self.assertEquals(self.releases.t.select().where(self.releases.name == 'd').execute().fetchall(), expected)
 
     def testAddReleaseAlreadyExists(self):
         blob = ReleaseBlobV1(name=1)
@@ -1155,13 +1187,13 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         blob = ReleaseBlobV1(name='a')
         self.releases.updateRelease(name='b', product='z', version='y', blob=blob, changed_by='bill', old_data_version=1)
         expected = [('b', 'z', 'y', json.dumps(dict(name='a', schema_version=1)), 2)]
-        self.assertEquals(self.releases.t.select().where(self.releases.name=='b').execute().fetchall(), expected)
+        self.assertEquals(self.releases.t.select().where(self.releases.name == 'b').execute().fetchall(), expected)
 
     def testUpdateReleaseWithBlob(self):
         blob = ReleaseBlobV1(name='b', schema_version=3)
         self.releases.updateRelease(name='b', product='z', version='y', changed_by='bill', blob=blob, old_data_version=1)
         expected = [('b', 'z', 'y', json.dumps(dict(name='b', schema_version=3)), 2)]
-        self.assertEquals(self.releases.t.select().where(self.releases.name=='b').execute().fetchall(), expected)
+        self.assertEquals(self.releases.t.select().where(self.releases.name == 'b').execute().fetchall(), expected)
 
     def testUpdateReleaseInvalidBlob(self):
         blob = ReleaseBlobV1(name=2)
@@ -1171,7 +1203,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testAddLocaleToRelease(self):
         data = dict(complete=dict(hashValue='abc'))
         self.releases.addLocaleToRelease(name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name=='a').execute().fetchone()[0])
+        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
     "name": "a",
@@ -1204,7 +1236,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testAddLocaleToReleaseWithAlias(self):
         data = dict(complete=dict(hashValue='abc'))
         self.releases.addLocaleToRelease(name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill', alias=['p4'])
-        ret = json.loads(select([self.releases.data]).where(self.releases.name=='a').execute().fetchone()[0])
+        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
     "name": "a",
@@ -1240,7 +1272,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testAddLocaleToReleaseOverride(self):
         data = dict(complete=dict(hashValue="789"))
         self.releases.addLocaleToRelease(name='a', platform='p', locale='l', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name=='a').execute().fetchone()[0])
+        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
     "name": "a",
@@ -1268,7 +1300,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testAddLocaleToReleasePlatformsDoesntExist(self):
         data = dict(complete=dict(filesize="432"))
         self.releases.addLocaleToRelease(name='b', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name=='b').execute().fetchone()[0])
+        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'b').execute().fetchone()[0])
         expected = json.loads("""
 {
     "name": "b",
@@ -1291,7 +1323,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testAddLocaleToReleaseNoLocales(self):
         data = dict(complete=dict(filesize="432"))
         self.releases.addLocaleToRelease(name='a', platform='p3', locale='l', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name=='a').execute().fetchone()[0])
+        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
     "name": "a",
@@ -1326,7 +1358,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testAddLocaleToReleaseSecondPlatform(self):
         data = dict(complete=dict(filesize="324"))
         self.releases.addLocaleToRelease(name='a', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name=='a').execute().fetchone()[0])
+        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
     "name": "a",
@@ -1363,7 +1395,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testAddLocaleToReleaseResolveAlias(self):
         data = dict(complete=dict(filesize="444"))
         self.releases.addLocaleToRelease(name='a', platform='p2', locale='j', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name=='a').execute().fetchone()[0])
+        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
     "name": "a",
@@ -1393,7 +1425,9 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
 """)
         self.assertEqual(ret, expected)
 
+
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
@@ -1407,31 +1441,32 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.t.insert().execute(permission='/rules/:id', username='fred', options=json.dumps(dict(product=['foo', 'bar'], method='POST')), data_version=1)
 
     def testGrantPermissions(self):
-        query = self.permissions.t.select().where(self.permissions.username=='jess')
+        query = self.permissions.t.select().where(self.permissions.username == 'jess')
         self.assertEquals(len(query.execute().fetchall()), 0)
         self.permissions.grantPermission('bob', 'jess', '/rules/:id')
         self.assertEquals(query.execute().fetchall(), [('/rules/:id', 'jess', None, 1)])
 
     def testGrantPermissionsWithOptions(self):
         self.permissions.grantPermission('bob', 'cathy', '/releases/:name', options=dict(product=['SeaMonkey']))
-        query = self.permissions.t.select().where(self.permissions.username=='cathy')
-        query = query.where(self.permissions.permission=='/releases/:name')
+        query = self.permissions.t.select().where(self.permissions.username == 'cathy')
+        query = query.where(self.permissions.permission == '/releases/:name')
         self.assertEquals(query.execute().fetchall(), [('/releases/:name', 'cathy', json.dumps(dict(product=['SeaMonkey'])), 1)])
 
     def testGrantPermissionsUnknownPermission(self):
         self.assertRaises(ValueError, self.permissions.grantPermission,
-            'bob', 'bud', 'bad'
-        )
+                          'bob', 'bud', 'bad'
+                          )
 
     def testGrantPermissionsUnknownOption(self):
         self.assertRaises(ValueError, self.permissions.grantPermission,
-            'bob', 'bud', '/rules/:id', dict(foo=1)
-        )
+                          'bob', 'bud', '/rules/:id', dict(foo=1)
+                          )
+
     def testRevokePermission(self):
         self.permissions.revokePermission(changed_by='bill', username='bob', permission='/releases/:name',
-            old_data_version=1)
-        query = self.permissions.t.select().where(self.permissions.username=='bob')
-        query = query.where(self.permissions.permission=='/releases/:name')
+                                          old_data_version=1)
+        query = self.permissions.t.select().where(self.permissions.username == 'bob')
+        query = query.where(self.permissions.permission == '/releases/:name')
         self.assertEquals(len(query.execute().fetchall()), 0)
 
     def testGetAllUsers(self):
@@ -1439,7 +1474,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testCountAllUsers(self):
         # bill, bob and cathy
-        self.assertEquals(self.permissions.countAllUsers(),  4)
+        self.assertEquals(self.permissions.countAllUsers(), 4)
 
     def testGetPermission(self):
         expected = {
@@ -1496,6 +1531,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
 
 class TestDB(unittest.TestCase):
+
     def testSetDburiAlreadySetup(self):
         db = AUSDatabase('sqlite:///:memory:')
         self.assertRaises(AlreadySetupError, db.setDburi, 'sqlite:///:memory:')
@@ -1509,7 +1545,9 @@ class TestDB(unittest.TestCase):
         insp = Inspector.from_engine(db.engine)
         self.assertNotEqual(insp.get_table_names(), [])
 
+
 class TestDBUpgrade(unittest.TestCase, NamedFileDatabaseMixin):
+
     def setUp(self):
         NamedFileDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)

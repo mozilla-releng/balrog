@@ -4,12 +4,14 @@ import unittest
 from auslib.global_state import dbo
 from auslib.AUS import AUS
 
+
 def RandomAUSTest(AUS, backgroundRate, force, mapping):
     with mock.patch('auslib.db.Rules.getRulesMatchingQuery') as m:
-        m.return_value=[dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor')]
+        m.return_value = [dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor', whitelist=None)]
 
         results = AUS.rand.getRange()
         resultsLength = len(results)
+
         def se(*args, **kwargs):
             return results.pop()
         with mock.patch('auslib.AUS.AUSRandom.getInt') as m2:
@@ -22,7 +24,7 @@ def RandomAUSTest(AUS, backgroundRate, force, mapping):
                     locale='a', version='1.0'
                 )
                 r, _ = AUS.evaluateRules(updateQuery)
-                tested +=1
+                tested += 1
                 if r:
                     served += 1
                 # bail out if we're not asking for any randint's
@@ -30,7 +32,9 @@ def RandomAUSTest(AUS, backgroundRate, force, mapping):
                     break
             return (served, tested)
 
+
 class TestAUSThrottling(unittest.TestCase):
+
     def setUp(self):
         self.AUS = AUS()
         dbo.setDb('sqlite:///:memory:')
@@ -44,17 +48,17 @@ class TestAUSThrottling(unittest.TestCase):
 
     def testThrottling50(self):
         (served, tested) = RandomAUSTest(self.AUS, backgroundRate=50, force=False, mapping='b')
-        self.assertEqual(served,  50)
+        self.assertEqual(served, 50)
         self.assertEqual(tested, 100)
 
     def testThrottling25(self):
         (served, tested) = RandomAUSTest(self.AUS, backgroundRate=25, force=False, mapping='b')
-        self.assertEqual(served,  25)
+        self.assertEqual(served, 25)
         self.assertEqual(tested, 100)
 
     def testThrottlingZero(self):
         (served, tested) = RandomAUSTest(self.AUS, backgroundRate=0, force=False, mapping='b')
-        self.assertEqual(served,   0)
+        self.assertEqual(served, 0)
         self.assertEqual(tested, 100)
 
     def testThrottling25WithForcing(self):

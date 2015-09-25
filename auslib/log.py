@@ -11,7 +11,9 @@ log_format = "%(asctime)s - %(levelname)s - PID: %(process)s - Request: %(reques
 # Needs to be set by entry points.
 cef_config = {}
 
+
 class BalrogLogger(Logger):
+
     def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None, extra=None):
         if extra == None:
             extra = {}
@@ -41,6 +43,7 @@ CEF_WARN = 6
 CEF_ALERT = 8
 CEF_EMERG = 10
 
+
 def cef_event(name, severity, **custom_exts):
     # Extra values need to be in the format csNLabel=xxx, csN=yyy
     extra_exts = {}
@@ -55,10 +58,11 @@ def cef_event(name, severity, **custom_exts):
     username = request.environ.get('REMOTE_USER', 'Unknown User')
     cef.log_cef(name, severity, request.environ, cef_config, username=username, **extra_exts)
 
+
 def get_cef_config(logfile):
     return {
         'cef.file': logfile,
-        'cef.version': 0, # This is the CEF format version
+        'cef.version': 0,  # This is the CEF format version
         'cef.product': 'Balrog',
         'cef.vendor': 'Mozilla',
         'cef.device_version': auslib.version,

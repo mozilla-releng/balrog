@@ -7,7 +7,9 @@ from auslib.web.base import AUS, app
 
 import logging
 
+
 class ClientRequestView(MethodView):
+
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)

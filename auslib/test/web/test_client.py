@@ -9,6 +9,7 @@ from auslib.global_state import dbo
 from auslib.web.base import app
 from auslib.web.views.client import ClientRequestView
 
+
 class ClientTest(unittest.TestCase):
     maxDiff = 2000
 
@@ -143,6 +144,43 @@ class ClientTest(unittest.TestCase):
 }
 """)
 
+        dbo.rules.t.insert().execute(backgroundRate=100, mapping='foxfood', update_type='minor', product='b2g', whitelist='b2g-whitelist', data_version=1)
+        dbo.releases.t.insert().execute(name='b2g-whitelist', product='b2g', version='2.5', data_version=1, data="""
+{
+  "name": "b2g-whitelist",
+  "schema_version": 3000,
+  "whitelist": [
+    { "imei": "000000000000000" },
+    { "imei": "000000000000001" },
+    { "imei": "000000000000002" }
+  ]
+}
+""")
+
+        dbo.releases.t.insert().execute(name='foxfood', product='b2g', version='2.5', data_version=1, data="""
+{
+    "name": "foxfood",
+    "schema_version": 1,
+    "extv": "2.5",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "25",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 22,
+                        "from": "*",
+                        "hashValue": "23",
+                        "fileUrl": "http://a.com/y"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+
     def tearDown(self):
         os.close(self.cef_fd)
         os.remove(self.cef_file)
@@ -248,6 +286,33 @@ class ClientTest(unittest.TestCase):
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
 
+    def testVersion5GetWhitelisted(self):
+        ret = self.client.get('/update/5/b2g/1.0/1/p/l/a/a/a/a/000000000000001/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+        <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="23" size="22"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testVersion5GetNotWhitelisted(self):
+        ret = self.client.get('/update/5/b2g/1.0/1/p/l/a/a/a/a/000000000000009/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
     def testGetURLNotInWhitelist(self):
         ret = self.client.get('/update/3/d/20.0/1/p/l/a/a/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)
@@ -346,6 +411,7 @@ class ClientTestWithErrorHandlers(unittest.TestCase):
     """Most of the tests are run without the error handler because it gives more
        useful output when things break. However, we still need to test that our
        error handlers works!"""
+
     def setUp(self):
         app.config['DEBUG'] = True
         app.config['WHITELISTED_DOMAINS'] = ('a.com',)

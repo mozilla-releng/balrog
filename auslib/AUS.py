@@ -6,7 +6,6 @@ import logging
 from auslib.global_state import dbo
 from auslib.log import cef_event, CEF_ALERT
 
-
 def isSpecialURL(url, specialForceHosts):
     if not specialForceHosts:
         return False
@@ -15,12 +14,14 @@ def isSpecialURL(url, specialForceHosts):
             return True
     return False
 
+
 def isForbiddenUrl(url, whitelistedDomains):
     domain = urlparse(url)[1]
     if domain not in whitelistedDomains:
         cef_event("Forbidden domain", CEF_ALERT, domain=domain)
         return True
     return False
+
 
 def getFallbackChannel(channel):
     return channel.split('-cck-')[0]
@@ -29,6 +30,7 @@ def getFallbackChannel(channel):
 class AUSRandom:
     """Abstract getting a randint to make it easier to test the range of
     possible values"""
+
     def __init__(self, min=0, max=99):
         self.min = min
         self.max = max
@@ -37,9 +39,11 @@ class AUSRandom:
         return randint(self.min, self.max)
 
     def getRange(self):
-        return range(self.min, self.max+1)
+        return range(self.min, self.max + 1)
+
 
 class AUS:
+
     def __init__(self):
         self.specialForceHosts = None
         self.rand = AUSRandom()
@@ -53,13 +57,21 @@ class AUS:
             fallbackChannel=getFallbackChannel(updateQuery['channel'])
         )
 
-        ### XXX throw any N->N update rules and keep the highest priority remaining one
+        # XXX throw any N->N update rules and keep the highest priority remaining one
         if len(rules) < 1:
             return None, None
 
-        rules = sorted(rules,key=lambda rule: rule['priority'], reverse=True)
+        rules = sorted(rules, key=lambda rule: rule['priority'], reverse=True)
         rule = rules[0]
         self.log.debug("Matching rule: %s" % rule)
+
+        # If the rule requires a whitelist, check via our whitelist blob
+        if rule['whitelist']:
+            self.log.debug("Matching rule requires a whitelist")
+            release = dbo.releases.getReleases(name=rule['whitelist'], limit=1)[0]
+            whitelistBlob = release['data']
+            if not whitelistBlob.shouldServeUpdate(updateQuery):
+                return None, None
 
         # There's a few cases where we have a matching rule but don't want
         # to serve an update:

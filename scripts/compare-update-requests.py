@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('aus_servers', metavar='aus_server', nargs=2,
-        help='AUS Servers to make requests against. There must be two.')
+                        help='AUS Servers to make requests against. There must be two.')
     parser.add_argument('--paths-file', dest='paths_file', required=True)
     parser.add_argument('-j', dest='concurrency', default=1, type=int)
 

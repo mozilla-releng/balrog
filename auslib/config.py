@@ -1,6 +1,7 @@
 from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
 import logging
 
+
 class AUSConfig(object):
     required_options = {
         'logging': ['logfile'],
@@ -53,7 +54,7 @@ class AUSConfig(object):
 
     def getDomainWhitelist(self):
         try:
-            return tuple(a.strip() for a in self.cfg.get('site-specific','domain_whitelist').split(','))
+            return tuple(a.strip() for a in self.cfg.get('site-specific', 'domain_whitelist').split(','))
         except (NoSectionError, NoOptionError):
             return tuple()
 
@@ -71,17 +72,19 @@ class AdminConfig(AUSConfig):
 
     def getSystemAccounts(self):
         try:
-            return tuple(a.strip() for a in self.cfg.get('site-specific','system_accounts').split(','))
+            return tuple(a.strip() for a in self.cfg.get('site-specific', 'system_accounts').split(','))
         except (NoSectionError, NoOptionError):
             return ()
 
     def getPageTitle(self):
         return self.cfg.get('site-specific', 'page_title')
 
+
 class ClientConfig(AUSConfig):
+
     def getSpecialForceHosts(self):
         try:
-            return tuple(a.strip() for a in self.cfg.get('site-specific','specialforcehosts').split(','))
+            return tuple(a.strip() for a in self.cfg.get('site-specific', 'specialforcehosts').split(','))
         except (NoSectionError, NoOptionError):
             return None
 

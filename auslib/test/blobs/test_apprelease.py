@@ -12,11 +12,13 @@ from auslib.errors import BadDataError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4
 
+
 class SimpleBlob(ReleaseBlobBase):
     format_ = {'foo': None}
 
 
 class TestReleaseBlobBase(unittest.TestCase):
+
     def testGetResolvedPlatform(self):
         blob = SimpleBlob(platforms=dict(a=dict(), b=dict(alias='a')))
         self.assertEquals('a', blob.getResolvedPlatform('a'))
@@ -77,6 +79,7 @@ class TestReleaseBlobBase(unittest.TestCase):
 
 
 class TestReleaseBlobV1(unittest.TestCase):
+
     def setUp(self):
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
@@ -176,6 +179,7 @@ class TestReleaseBlobV1(unittest.TestCase):
 
 
 class TestNewStyleVersionBlob(unittest.TestCase):
+
     def testGetAppVersion(self):
         blob = ReleaseBlobV2(appVersion=1)
         self.assertEquals(1, blob.getAppVersion('p', 'l'))
@@ -200,6 +204,7 @@ class TestNewStyleVersionBlob(unittest.TestCase):
 
 
 class TestSpecialQueryParams(unittest.TestCase):
+
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = ["a.com", "boring.com"]
@@ -328,7 +333,9 @@ class TestSpecialQueryParams(unittest.TestCase):
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
 
+
 class TestSchema2Blob(unittest.TestCase):
+
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = ["a.com", "boring.com"]
@@ -439,6 +446,7 @@ class TestSchema2Blob(unittest.TestCase):
     }
 }
 """)
+
     def testSchema2CompleteOnly(self):
         updateQuery = {
             "product": "j", "version": "35.0", "buildID": "4",
@@ -640,6 +648,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 
 
 class TestSchema3Blob(unittest.TestCase):
+
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = ["a.com", "boring.com"]
@@ -802,6 +811,7 @@ class TestSchema3Blob(unittest.TestCase):
     }
 }
 """)
+
     def testSchema3MultipleUpdates(self):
         updateQuery = {
             "product": "f", "version": "22.0", "buildID": "5",
@@ -944,6 +954,7 @@ class TestSchema3Blob(unittest.TestCase):
 
 
 class TestSchema4Blob(unittest.TestCase):
+
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = ["a.com", "boring.com"]

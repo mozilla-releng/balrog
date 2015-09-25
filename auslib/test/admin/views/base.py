@@ -12,13 +12,17 @@ import auslib.log
 # When running tests, there's no web server to convert uncaught exceptions to
 # 500 errors, so we need to do it here. Maybe we should just do it globally
 # anyways?
+
+
 @app.errorhandler(Exception)
 def uncaughtexceptions(error):
     return Response(response=error, status=500)
 
+
 class ViewTest(unittest.TestCase):
     """Base class for all view tests. Sets up some sample data, and provides
        some helper methods."""
+
     def setUp(self):
         self.cef_fd, self.cef_file = mkstemp()
         app.config["SECRET_KEY"] = 'abc123'
@@ -88,9 +92,11 @@ class ViewTest(unittest.TestCase):
     def assertStatusCode(self, response, expected):
         self.assertEquals(response.status_code, expected, '%d - %s' % (response.status_code, response.data))
 
+
 class JSONTestMixin(object):
     """Provides a _get method that always asks for format='json', and checks
        the returned MIME type."""
+
     def _get(self, url, qs={}):
         headers = {
             "Accept-Encoding": "application/json",
