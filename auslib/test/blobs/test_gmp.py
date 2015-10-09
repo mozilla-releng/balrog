@@ -49,6 +49,11 @@ class TestSchema1Blob(unittest.TestCase):
                     "filesize": 666,
                     "hashValue": "666",
                     "fileUrl": "http://evil.com/fire"
+                },
+                "default": {
+                    "filesize": 20,
+                    "hashValue": "20",
+                    "fileUrl": "http://boring.com/bar"
                 }
             }
         }
@@ -60,12 +65,23 @@ class TestSchema1Blob(unittest.TestCase):
         vendors = set([v for v in self.blob.getVendorsForPlatform("q")])
         self.assertEquals(set(["c", "d"]), vendors)
 
+    def testGetVendorsForPlatformDefault(self):
+        vendors = set([v for v in self.blob.getVendorsForPlatform("q2")])
+        self.assertEquals(set(["c", "d"]), vendors)
+
+    def testGetVendorsForPlatformOnlyDefault(self):
+        vendors = set([v for v in self.blob.getVendorsForPlatform("s")])
+        self.assertEquals(set(["d"]), vendors)
+
     def testGetVendorsForPlatformOnlyInOne(self):
         vendors = set([v for v in self.blob.getVendorsForPlatform("r")])
         self.assertEquals(set(["d"]), vendors)
 
     def testGetResolvedPlatform(self):
         self.assertEquals("q", self.blob.getResolvedPlatform("c", "q2"))
+
+    def testGetResolvedPlatformDefault(self):
+        self.assertEquals("default", self.blob.getResolvedPlatform("d", "q2"))
 
     def testGetResolvedPlatformRaisesBadDataError(self):
         self.assertRaises(BadDataError, self.blob.getResolvedPlatform, "c", "bbb")
@@ -94,6 +110,7 @@ class TestSchema1Blob(unittest.TestCase):
 <updates>
     <addons>
         <addon id="c" URL="http://a.com/blah" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
+        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="20" size="20" version="5"/>
     </addons>
 </updates>
 """)
@@ -112,6 +129,25 @@ class TestSchema1Blob(unittest.TestCase):
 <updates>
     <addons>
         <addon id="c" URL="http://boring.com/blah" hashFunction="SHA512" hashValue="5" size="4" version="1"/>
+        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="20" size="20" version="5"/>
+    </addons>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testGMPUpdateSingleAddons(self):
+        updateQuery = {
+            "product": "gg", "version": "3", "buildID": "1",
+            "buildTarget": "q5", "locale": "l", "channel": "a",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <addons>
+        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="20" size="20" version="5"/>
     </addons>
 </updates>
 """)
