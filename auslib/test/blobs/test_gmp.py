@@ -52,7 +52,7 @@ class TestSchema1Blob(unittest.TestCase):
                 },
                 "default": {
                     "filesize": 20,
-                    "hashValue": "20",
+                    "hashValue": "50",
                     "fileUrl": "http://boring.com/bar"
                 }
             }
@@ -83,6 +83,9 @@ class TestSchema1Blob(unittest.TestCase):
     def testGetResolvedPlatformDefault(self):
         self.assertEquals("default", self.blob.getResolvedPlatform("d", "q2"))
 
+    def testGetResolvedPlatformSpecificOverridesDefault(self):
+        self.assertEquals("r", self.blob.getResolvedPlatform("d", "r"))
+
     def testGetResolvedPlatformRaisesBadDataError(self):
         self.assertRaises(BadDataError, self.blob.getResolvedPlatform, "c", "bbb")
 
@@ -110,7 +113,7 @@ class TestSchema1Blob(unittest.TestCase):
 <updates>
     <addons>
         <addon id="c" URL="http://a.com/blah" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
-        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="20" size="20" version="5"/>
+        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
     </addons>
 </updates>
 """)
@@ -129,7 +132,7 @@ class TestSchema1Blob(unittest.TestCase):
 <updates>
     <addons>
         <addon id="c" URL="http://boring.com/blah" hashFunction="SHA512" hashValue="5" size="4" version="1"/>
-        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="20" size="20" version="5"/>
+        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
     </addons>
 </updates>
 """)
@@ -147,7 +150,7 @@ class TestSchema1Blob(unittest.TestCase):
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
     <addons>
-        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="20" size="20" version="5"/>
+        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
     </addons>
 </updates>
 """)

@@ -40,7 +40,7 @@ class GMPBlobV1(Blob):
             return self['vendors'][vendor]['platforms'][platform].get('alias', platform)
         if "default" in self['vendors'][vendor]['platforms']:
             return "default"
-        raise BadDataError("No platform '%s' in vendor '%s'", platform, vendor)
+        raise BadDataError("No platform '%s' or default in vendor '%s'", platform, vendor)
 
     def getPlatformData(self, vendor, platform):
         platform = self.getResolvedPlatform(vendor, platform)
