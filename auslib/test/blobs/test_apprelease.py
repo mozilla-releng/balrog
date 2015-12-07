@@ -10,7 +10,7 @@ from xml.dom import minidom
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
-    ReleaseBlobV3, ReleaseBlobV4
+    ReleaseBlobV3, ReleaseBlobV4, DesupportBlob
 
 
 class SimpleBlob(ReleaseBlobBase):
@@ -1277,3 +1277,33 @@ class TestSchema4Blob(unittest.TestCase):
             updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
             blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
+
+class TestDesupportBlob(unittest.TestCase):
+
+    def setUp(self):
+        self.specialForceHosts = ["http://a.com"]
+        self.whitelistedDomains = ["a.com", "boring.com"]
+        dbo.setDb('sqlite:///:memory:')
+        dbo.create()
+        dbo.setDomainWhitelist(["a.com", "boring.com"])
+        self.blob = DesupportBlob()
+        self.blob.loadJSON("""
+{
+    "name": "d1",
+    "schema_version": 50,
+    "detailsUrl": "http://moo.com/cow"
+}
+""")
+
+    def testDesupport(self):
+        updateQuery = []
+        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" unsupported="true" detailsURL="http://moo.com/cow">
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
