@@ -388,7 +388,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
                 # 3.5 needs extVersion omitted
                 xml = xml.replace('extensionVersion="%s" ' % real_extv, '')
             elif query_ver >= MozillaVersion("3.6"):
-                # 3.6 and higher need a fake extVersion
+                # 3.6 and higher need a fake extensionVersion
                 xml = xml.replace('extensionVersion="%s"' % real_extv,
                                   'extensionVersion="%s"' % updateQuery["version"])
         return xml
