@@ -387,10 +387,11 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
             elif query_ver >= MozillaVersion("3.5") and query_ver < MozillaVersion("3.6"):
                 # 3.5 needs extVersion omitted
                 xml = xml.replace('extensionVersion="%s" ' % real_extv, '')
-            elif query_ver >= MozillaVersion("3.6"):
-                # 3.6 and higher need a fake extensionVersion
+            elif query_ver >= MozillaVersion("3.6") and query_ver < MozillaVersion("4.0"):
+                # 3.6 needs a fake extensionVersion
                 xml = xml.replace('extensionVersion="%s"' % real_extv,
                                   'extensionVersion="%s"' % updateQuery["version"])
+            # and we don't use ReleaseBlobV1 to serve anything to 4.0 or later
         return xml
 
 
@@ -441,7 +442,8 @@ class NewStyleVersionsMixin(object):
 class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
     """ Client-side changes in
           https://bugzilla.mozilla.org/show_bug.cgi?id=530872
-        were introduced at Gecko 1.9.3a3, requiring this new blob class.
+        were introduced at Gecko 1.9.3a3 (which later became Firefox 4.0),
+        requiring this new blob class.
 
         Changed parameters from ReleaseBlobV1:
          * appv, extv become appVersion, platformVersion, displayVersion
