@@ -433,7 +433,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
          * appv, extv become appVersion, platformVersion, displayVersion
         Added:
          * actions, billboardURL, openURL, notificationURL,
-           alertURL, showPrompt, showSurvey, showNeverForVersion, isOSUpdate
+           alertURL, showPrompt, showNeverForVersion, isOSUpdate
     """
     format_ = {
         'name': None,
@@ -460,7 +460,6 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         'alertURL': None,
         'showPrompt': None,
         'showNeverForVersion': None,
-        'showSurvey': None,
         'platforms': {
             '*': {
                 'alias': None,
@@ -493,8 +492,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
     }
     # for the benefit of createXML and createSnippets
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
-                 'showSurvey', 'actions', 'openURL', 'notificationURL',
-                 'alertURL')
+                 'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
 
@@ -614,7 +612,6 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         'alertURL': None,
         'showPrompt': None,
         'showNeverForVersion': None,
-        'showSurvey': None,
         'platforms': {
             '*': {
                 'alias': None,
@@ -660,8 +657,7 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     }
     # for the benefit of createXML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
-                 'showSurvey', 'actions', 'openURL', 'notificationURL',
-                 'alertURL')
+                 'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
 
@@ -766,7 +762,6 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         'alertURL': None,
         'showPrompt': None,
         'showNeverForVersion': None,
-        'showSurvey': None,
         'platforms': {
             '*': {
                 'alias': None,
@@ -812,8 +807,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     }
     # for the benefit of createXML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
-                 'showSurvey', 'actions', 'openURL', 'notificationURL',
-                 'alertURL')
+                 'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
 

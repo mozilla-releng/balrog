@@ -413,7 +413,6 @@ class TestSchema2Blob(unittest.TestCase):
     "alertURL": "http://example.org/alert/%LOCALE%",
     "showPrompt": "false",
     "showNeverForVersion": "true",
-    "showSurvey": "false",
     "fileUrls": {
         "c1": "http://a.com/%FILENAME%"
     },
@@ -495,7 +494,7 @@ class TestSchema2Blob(unittest.TestCase):
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
-    <update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" buildID="35" detailsURL="http://example.org/details/l" licenseURL="http://example.org/license/l" billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true" showSurvey="false" actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" alertURL="http://example.org/alert/l">
+    <update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" buildID="35" detailsURL="http://example.org/details/l" licenseURL="http://example.org/license/l" billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true" actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" alertURL="http://example.org/alert/l">
         <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="35" size="40"/>
     </update>
 </updates>
@@ -513,7 +512,7 @@ class TestSchema2Blob(unittest.TestCase):
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
-    <update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" buildID="35" detailsURL="http://example.org/details/l2" licenseURL="http://example.org/license/l2" billboardURL="http://example.org/billboard/l2" showPrompt="false" showNeverForVersion="true" showSurvey="false" actions="silent" openURL="http://example.org/url/l2" notificationURL="http://example.org/notification/l2" alertURL="http://example.org/alert/l2" isOSUpdate="true">
+    <update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" buildID="35" detailsURL="http://example.org/details/l2" licenseURL="http://example.org/license/l2" billboardURL="http://example.org/billboard/l2" showPrompt="false" showNeverForVersion="true" actions="silent" openURL="http://example.org/url/l2" notificationURL="http://example.org/notification/l2" alertURL="http://example.org/alert/l2" isOSUpdate="true">
         <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="45" size="50"/>
     </update>
 </updates>
