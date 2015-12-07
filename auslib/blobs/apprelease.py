@@ -888,6 +888,10 @@ class DesupportBlob(Blob):
         if 'schema_version' not in self.keys():
             self['schema_version'] = 50
 
+    def shouldServeUpdate(self, updateQuery):
+        # desupport messages should always be returned
+        return True
+
     def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         xml = ['<?xml version="1.0"?>']
         xml.append('<updates>')
