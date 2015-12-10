@@ -1,6 +1,5 @@
 angular.module('app').controller('ReleaseDataCtrl',
 function($scope, $http, $modalInstance, Releases, Rules, release, diff) {
-
   $scope.release = release;
   $scope.diff = diff;
 

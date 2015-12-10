@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases) {
 
   $scope.loading = true;
   $scope.failed = false;
@@ -227,5 +227,34 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
   /* End openDeleteModal */
+
+  $scope.openReleaseDataModal = function(mapping) {
+    Releases.getRelease(mapping)
+    .success(function(response) {
+      // it's the same rule, but this works
+      var modalInstance = $modal.open({
+        templateUrl: 'release_data_modal.html',
+        controller: 'ReleaseDataCtrl',
+        size: 'lg',
+        resolve: {
+          release: function () {
+            return response;
+          },
+          diff: function() {
+            return false;
+          }
+        }
+      });
+    })
+    .error(function() {
+      console.error(arguments);
+      $scope.failed = true;
+    })
+    .finally(function() {
+      $scope.loading = false;
+    });
+  };
+  /* End openDataModal */
+
 
 });
