@@ -84,7 +84,7 @@
     <div class="left" style="float: left">
 
       <h5 title="Mapping">
-        Mapping: <b ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></b>
+        Mapping: <a href="/releases/#{{ rule.mapping }}"><b ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></b></a>
       </h5>
       <h5 title="Data version">
         Data version: <b>{{ rule.data_version }}</b>
