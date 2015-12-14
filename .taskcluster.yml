@@ -1,0 +1,27 @@
+version: 0
+metadata:
+  name: Balrog Task Graph
+  description: Balrog
+  owner: "{{ event.head.user.email }}"
+  source: "{{ event.head.repo.url }}"
+tasks:
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    payload:
+      maxRunTime: 1200
+      image: "rail/python-test-runner"
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && tox"
+    extra:
+      github:
+        env: true
+        events:
+          - push
+          - pull_request.*
+    metadata:
+      name: Balrog Pull Request
+      description: Pull Request
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"

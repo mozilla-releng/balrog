@@ -9,6 +9,7 @@ import time
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
     create_engine, select, BigInteger
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql.expression import null
 
 import migrate.versioning.schema
 import migrate.versioning.api
@@ -548,7 +549,7 @@ class History(AUSTable):
         # than to be super verbose (also should let this test continue to work even
         # if the schema changes).
         for key in change.keys():
-            if change[key] == None:
+            if change[key] is None:
                 del change[key]
         return change
 
@@ -742,21 +743,21 @@ class Rules(AUSTable):
            For cases where a particular updateQuery channel has no
            fallback, fallbackChannel should match the channel from the query."""
         where = [
-            ((self.product == updateQuery['product']) | (self.product == None)) &
-            ((self.buildTarget == updateQuery['buildTarget']) | (self.buildTarget == None)) &
-            ((self.headerArchitecture == updateQuery['headerArchitecture']) | (self.headerArchitecture == None))
+            ((self.product == updateQuery['product']) | (self.product == null())) &
+            ((self.buildTarget == updateQuery['buildTarget']) | (self.buildTarget == null())) &
+            ((self.headerArchitecture == updateQuery['headerArchitecture']) | (self.headerArchitecture == null()))
         ]
         # Query version 2 doesn't have distribution information, and to keep
         # us maximally flexible, we won't match any rules that have
         # distribution update set.
         if updateQuery['queryVersion'] == 2:
-            where.extend([(self.distribution == None) & (self.distVersion == None)])
+            where.extend([(self.distribution == null()) & (self.distVersion == null())])
         # Only query versions 3 and 4 have distribution information, so we
         # need to consider it.
         if updateQuery['queryVersion'] in (3, 4):
             where.extend([
-                ((self.distribution == updateQuery['distribution']) | (self.distribution == None)) &
-                ((self.distVersion == updateQuery['distVersion']) | (self.distVersion == None))
+                ((self.distribution == updateQuery['distribution']) | (self.distribution == null())) &
+                ((self.distVersion == updateQuery['distVersion']) | (self.distVersion == null()))
             ])
         if not updateQuery['force']:
             where.append(self.backgroundRate > 0)
@@ -1277,7 +1278,8 @@ class AUSDatabase(object):
         self.upgrade(version)
 
     def upgrade(self, version=None):
-        # This method was taken from Buildbot: https://github.com/buildbot/buildbot/blob/87108ec4088dc7fd5394ac3c1d0bd3b465300d92/master/buildbot/db/model.py#L455
+        # This method was taken from Buildbot:
+        # https://github.com/buildbot/buildbot/blob/87108ec4088dc7fd5394ac3c1d0bd3b465300d92/master/buildbot/db/model.py#L455
         # http://code.google.com/p/sqlalchemy-migrate/issues/detail?id=100
         # means  we cannot use the migrate.versioning.api module.  So these
         # methods perform similar wrapping functions to what is done by the API

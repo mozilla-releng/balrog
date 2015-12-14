@@ -39,7 +39,9 @@ class TestAUSThrottling(unittest.TestCase):
         self.AUS = AUS()
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data='{"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
+        dbo.releases.t.insert().execute(
+            name='b', product='b', version='b', data_version=1,
+            data='{"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
 
     def testThrottling100(self):
         (served, tested) = RandomAUSTest(self.AUS, backgroundRate=100, force=False, mapping='b')

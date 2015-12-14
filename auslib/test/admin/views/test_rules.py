@@ -192,7 +192,8 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 401)
 
     def testNoPermissionToAlterNewProduct(self):
-        ret = self._post('/rules/4', data=dict(product='protected', mapping='a', backgroundRate=71, priority=50, update_type='minor', data_version=1), username='bob')
+        ret = self._post(
+            '/rules/4', data=dict(product='protected', mapping='a', backgroundRate=71, priority=50, update_type='minor', data_version=1), username='bob')
         self.assertEquals(ret.status_code, 401)
 
     def testGetSingleRule(self):
