@@ -9,6 +9,7 @@ import time
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
     create_engine, select, BigInteger
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql.expression import null
 
 import migrate.versioning.schema
 import migrate.versioning.api
@@ -742,21 +743,21 @@ class Rules(AUSTable):
            For cases where a particular updateQuery channel has no
            fallback, fallbackChannel should match the channel from the query."""
         where = [
-            ((self.product == updateQuery['product']) | (self.product is None)) &
-            ((self.buildTarget == updateQuery['buildTarget']) | (self.buildTarget is None)) &
-            ((self.headerArchitecture == updateQuery['headerArchitecture']) | (self.headerArchitecture is None))
+            ((self.product == updateQuery['product']) | (self.product == null())) &
+            ((self.buildTarget == updateQuery['buildTarget']) | (self.buildTarget == null())) &
+            ((self.headerArchitecture == updateQuery['headerArchitecture']) | (self.headerArchitecture == null()))
         ]
         # Query version 2 doesn't have distribution information, and to keep
         # us maximally flexible, we won't match any rules that have
         # distribution update set.
         if updateQuery['queryVersion'] == 2:
-            where.extend([(self.distribution is None) & (self.distVersion is None)])
+            where.extend([(self.distribution == null()) & (self.distVersion == null())])
         # Only query versions 3 and 4 have distribution information, so we
         # need to consider it.
         if updateQuery['queryVersion'] in (3, 4):
             where.extend([
-                ((self.distribution == updateQuery['distribution']) | (self.distribution is None)) &
-                ((self.distVersion == updateQuery['distVersion']) | (self.distVersion is None))
+                ((self.distribution == updateQuery['distribution']) | (self.distribution == null())) &
+                ((self.distVersion == updateQuery['distVersion']) | (self.distVersion == null()))
             ])
         if not updateQuery['force']:
             where.append(self.backgroundRate > 0)

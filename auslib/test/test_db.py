@@ -589,6 +589,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEquals(rules, expected)
 
     def testGetRulesMatchingQuery(self):
+        print self.paths.t.select().execute().fetchall()
         rules = self.paths.getRulesMatchingQuery(
             dict(product='', version='3.5', channel='',
                  buildTarget='a', buildID='', locale='', osVersion='',

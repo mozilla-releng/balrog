@@ -1,5 +1,7 @@
 import json
 
+from sqlalchemy.sql.expression import null
+
 from flask import Response, make_response, request, jsonify
 
 from auslib.global_state import dbo
@@ -183,16 +185,15 @@ class RuleHistoryAPIView(HistoryAdminView):
             cef_event("Bad input", CEF_WARN, errors=msg)
             return Response(status=400, response=str(msg))
         offset = limit * (page - 1)
-        total_count, = (table.t.count()
-                        .where(table.rule_id == rule_id)
-                        .where(table.data_version is not None)
-                        .execute()
-                        .fetchone()
-                        )
+        total_count = table.t.count()\
+            .where(table.rule_id == rule_id)\
+            .where(table.data_version != null())\
+            .execute()\
+            .fetchone()[0]
 
         revisions = table.select(
             where=[table.rule_id == rule_id,
-                   table.data_version is not None],
+                   table.data_version != null()],
             limit=limit,
             offset=offset,
             order_by=[table.timestamp.asc()],
