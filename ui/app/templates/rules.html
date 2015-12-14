@@ -87,8 +87,8 @@
         Mapping: <span ng-show="rule.mapping">
             <b ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></b>
             <!--<a href="/releases/#{{ rule.mapping }}"><b ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></b></a>-->
-            <a href="" ng-show="rule.mapping" ng-click="openReleaseDataModal(rule.mapping)">(view)</a>
-            <a href="/releases/#{{ rule.mapping }}">(edit)</a>
+            <a href="" ng-show="rule.mapping" ng-click="openReleaseDataModal(rule.mapping)" class="glyphicon glyphicon-eye-open" title="View"></a>
+            <a href="/releases/#{{ rule.mapping }}" class="glyphicon glyphicon-pencil" title="Edit"></a>
         </span>
       </h5>
       <h5 title="Data version">
