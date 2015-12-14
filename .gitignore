@@ -7,3 +7,8 @@ balrog.ini
 .coverage
 htmlcov
 cef.log
+.cache
+.tox
+*.egg-info
+build
+dist
