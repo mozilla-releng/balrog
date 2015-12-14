@@ -116,7 +116,9 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                     cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                     return Response(status=400, response=msg)
                 if 'hashFunction' in releaseInfo['data'] and hashFunction and hashFunction != releaseInfo['data']['hashFunction']:
-                    msg = "hashFunction '%s' doesn't match the one on the release object ('%s') for release '%s'" % (hashFunction, releaseInfo['data']['hashFunction'], rel)
+                    msg = "hashFunction '%s' doesn't match the one on the release object ('%s') for release '%s'".format(
+                        hashFunction, releaseInfo["data"]["hashFunction"],
+                    )
                     cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                     return Response(status=400, response=msg)
             # If this isn't the release in the URL...
@@ -319,14 +321,14 @@ class ReleaseHistoryView(HistoryAdminView):
         offset = limit * (page - 1)
         total_count, = (table.t.count()
                         .where(table.name == release['name'])
-                        .where(table.data_version != None)
+                        .where(table.data_version is not None)
                         .execute()
                         .fetchone()
                         )
         revisions = table.select(
             where=[
                 table.name == release['name'],
-                table.data_version != None
+                table.data_version is not None
             ],
             limit=limit,
             offset=offset,

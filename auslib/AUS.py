@@ -6,6 +6,7 @@ import logging
 from auslib.global_state import dbo
 from auslib.log import cef_event, CEF_ALERT
 
+
 def isSpecialURL(url, specialForceHosts):
     if not specialForceHosts:
         return False

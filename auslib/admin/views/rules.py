@@ -185,14 +185,14 @@ class RuleHistoryAPIView(HistoryAdminView):
         offset = limit * (page - 1)
         total_count, = (table.t.count()
                         .where(table.rule_id == rule_id)
-                        .where(table.data_version != None)
+                        .where(table.data_version is not None)
                         .execute()
                         .fetchone()
                         )
 
         revisions = table.select(
             where=[table.rule_id == rule_id,
-                   table.data_version != None],  # sqlalchemy
+                   table.data_version is not None],
             limit=limit,
             offset=offset,
             order_by=[table.timestamp.asc()],

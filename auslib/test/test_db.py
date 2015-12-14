@@ -551,7 +551,7 @@ class RulesTestMixin(object):
         # if the schema changes).
         for rule in rules:
             for key in rule.keys():
-                if rule[key] == None:
+                if rule[key] is None:
                     del rule[key]
         return rules
 
@@ -569,8 +569,10 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.paths.t.insert().execute(id=4, priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='z', data_version=1)
         self.paths.t.insert().execute(id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='z', data_version=1)
         self.paths.t.insert().execute(id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1)
+        self.paths.t.insert().execute(
+            id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1)
+        self.paths.t.insert().execute(
+            id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1)
 
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
@@ -1438,7 +1440,8 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
         self.permissions.t.insert().execute(permission='/rules', username='cathy', data_version=1)
         self.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(method='POST')), data_version=1)
-        self.permissions.t.insert().execute(permission='/rules/:id', username='fred', options=json.dumps(dict(product=['foo', 'bar'], method='POST')), data_version=1)
+        self.permissions.t.insert().execute(
+            permission='/rules/:id', username='fred', options=json.dumps(dict(product=['foo', 'bar'], method='POST')), data_version=1)
 
     def testGrantPermissions(self):
         query = self.permissions.t.select().where(self.permissions.username == 'jess')
