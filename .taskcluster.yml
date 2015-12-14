@@ -13,7 +13,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd releasetasks && git checkout $GITHUB_HEAD_BRANCH && tox -e py26"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd releasetasks && git checkout $GITHUB_HEAD_BRANCH && tox"
     extra:
       github:
         env: true
