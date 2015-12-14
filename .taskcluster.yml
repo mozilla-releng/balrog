@@ -9,7 +9,7 @@ tasks:
     workerType: "{{ taskcluster.docker.workerType }}"
     payload:
       maxRunTime: 1200
-      image: "bhearsum/python-test-runner"
+      image: "rail/python-test-runner"
       command:
         - "/bin/bash"
         - "-c"
