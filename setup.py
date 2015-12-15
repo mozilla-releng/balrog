@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 setup(
@@ -7,17 +7,7 @@ setup(
     description="Mozilla's Update Server",
     author="Ben Hearsum",
     author_email="ben@hearsum.ca",
-    packages=[
-        "auslib",
-        "auslib.admin",
-        "auslib.admin.views",
-        "auslib.blobs",
-        "auslib.migrate",
-        "auslib.migrate.versions",
-        "auslib.util",
-        "auslib.web",
-        "auslib.web.views",
-    ],
+    packages=find_packages(exclude=["vendor"]),
     include_package_data=True,
     install_requires=[
         "flask==0.10.1",
