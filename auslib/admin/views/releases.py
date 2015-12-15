@@ -118,8 +118,8 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                     cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                     return Response(status=400, response=msg)
                 if 'hashFunction' in releaseInfo['data'] and hashFunction and hashFunction != releaseInfo['data']['hashFunction']:
-                    msg = "hashFunction '%s' doesn't match the one on the release object ('%s') for release '%s'".format(
-                        hashFunction, releaseInfo["data"]["hashFunction"],
+                    msg = "hashFunction '{0}' doesn't match the one on the release object ('{1}') for release '{2}'".format(
+                        hashFunction, releaseInfo["data"]["hashFunction"], rel
                     )
                     cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                     return Response(status=400, response=msg)
