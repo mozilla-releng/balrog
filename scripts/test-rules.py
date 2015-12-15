@@ -47,7 +47,11 @@ def populateDB(testdir):
         # less accurate, but the best we can do.
         version = data.get('appVersion', data.get('extv'))
         if not version:
-            version = data.get('platforms').values()[0].get('locales').values()[0].get('extv')
+            # Some platforms may have alias', we need to make sure to interpret it if it exists.
+            platform = data.get("platforms").values()[0]
+            if platform.get("alias"):
+                platform = data.get("platforms")[platform["alias"]]
+            version = platform.get('locales').values()[0].get('extv')
             if not version:
                 raise Exception("Couldn't find version for %s" % data['name'])
         dbo.engine.execute("INSERT INTO releases (name, product, version, data, data_version) VALUES ('%s', '%s', '%s','%s', 1)" %
@@ -201,14 +205,17 @@ if __name__ == "__main__":
         dbo.setDomainWhitelist(WHITELISTED_DOMAINS)
         populateDB(td)
         if options.dumprules:
-            log.info("Rules are \n(id, priority, mapping, backgroundRate, product, version, channel, buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):")
-            for rule in AUS.rules.getOrderedRules():
+            log.info(
+                "Rules are \n(id, priority, mapping, backgroundRate, product, version, channel, "
+                "buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):"
+            )
+            for rule in dbo.rules.getOrderedRules():
                 log.info(", ".join([str(rule[k]) for k in rule.keys()]))
             log.info("-" * 50)
 
         if options.dumpreleases:
             log.info("Releases are \n(name, product, version, data):")
-            for release in AUS.releases.getReleases():
+            for release in dbo.releases.getReleases():
                 log.info("(%s, %s, %s, %s " % (release['name'], release['product'],
                                                release['version'],
                                                json.dumps(release['data'], indent=2)))
