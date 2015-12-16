@@ -240,7 +240,9 @@ class RuleHistoryAPIView(HistoryAdminView):
     def _post(self, rule_id, transaction, changed_by):
         rule_id = int(rule_id)
 
-        change_id = request.form.get('change_id')
+        change_id = None
+        if request.json:
+            change_id = request.json.get('change_id')
         if not change_id:
             cef_event("Bad input", CEF_WARN, errors="no change_id")
             return Response(status=400, response='no change_id')
