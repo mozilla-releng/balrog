@@ -1,1 +1,2 @@
-include auslib/migrate/migrate.cfg
+recursive-include auslib/migrate *
+recursive-exclude * *.py[co]
