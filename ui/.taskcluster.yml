@@ -13,7 +13,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog-ui && git checkout $GITHUB_HEAD_BRANCH && lineman spec-ci"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog-ui && git checkout $GITHUB_HEAD_BRANCH && npm install && npm install -g lineman && lineman spec-ci"
     extra:
       github:
         env: true
