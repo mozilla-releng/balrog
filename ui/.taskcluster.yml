@@ -9,11 +9,11 @@ tasks:
     workerType: "{{ taskcluster.docker.workerType }}"
     payload:
       maxRunTime: 1200
-      image: "node"
+      image: "bhearsum/lineman-docker"
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog ui && git checkout $GITHUB_HEAD_BRANCH && lineman spec-ci"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog-ui && git checkout $GITHUB_HEAD_BRANCH && lineman spec-ci"
     extra:
       github:
         env: true
