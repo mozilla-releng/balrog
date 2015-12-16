@@ -1,0 +1,27 @@
+version: 0
+metadata:
+  name: Balrog UI Task Graph
+  description: Balrog UI
+  owner: "{{ event.head.user.email }}"
+  source: "{{ event.head.repo.url }}"
+tasks:
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    payload:
+      maxRunTime: 1200
+      image: "node"
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog ui && git checkout $GITHUB_HEAD_BRANCH && lineman spec-ci"
+    extra:
+      github:
+        env: true
+        events:
+          - push
+          - pull_request.*
+    metadata:
+      name: Balrog UI Pull Request
+      description: Pull Request
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
