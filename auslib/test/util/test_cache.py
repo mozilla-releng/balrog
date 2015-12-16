@@ -8,7 +8,7 @@ class TestMaybeCacher(unittest.TestCase):
 
     def testNoCaching(self):
         with mock.patch("auslib.util.cache.ExpiringLRUCache") as lru:
-            cache = MaybeCacher(maxsize=0, timeout=0)
+            cache = MaybeCacher()
             cache.put("cache1", "foo", "bar")
             # Nothing should be in the cache, because there _isn't_ one.
             self.assertEquals(cache.get("cache1", "foo"), None)
@@ -17,12 +17,14 @@ class TestMaybeCacher(unittest.TestCase):
             self.assertFalse(lru.get.called)
 
     def testSimpleCache(self):
-        cache = MaybeCacher(maxsize=5, timeout=5)
+        cache = MaybeCacher()
+        cache.make_cache("cache1", 5, 5)
         cache.put("cache1", "foo", "bar")
         self.assertEquals(cache.get("cache1", "foo"), "bar")
 
     def testCacheExpired(self):
-        cache = MaybeCacher(maxsize=5, timeout=5)
+        cache = MaybeCacher()
+        cache.make_cache("cache1", 5, 5)
         # In order to avoid tests failing due to clock skew or other
         # issues with system clocks we can mock time.time() and make sure
         # it always returns a difference large enough to force a cache expiry

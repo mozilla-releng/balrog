@@ -9,7 +9,9 @@ class WhitelistBlobV1(Blob):
         'name': None,
         'schema_version': None,
         'whitelist': [
-            { 'imei': None }
+            {
+                'imei': None
+            }
         ]
     }
 

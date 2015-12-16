@@ -61,7 +61,7 @@ class GMPBlobV1(Blob):
         buildTarget = updateQuery["buildTarget"]
 
         vendorXML = []
-        for vendor in self.getVendorsForPlatform(buildTarget):
+        for vendor in sorted(self.getVendorsForPlatform(buildTarget)):
             vendorInfo = self["vendors"][vendor]
             platformData = self.getPlatformData(vendor, buildTarget)
 

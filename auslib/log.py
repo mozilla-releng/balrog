@@ -15,7 +15,7 @@ cef_config = {}
 class BalrogLogger(Logger):
 
     def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None, extra=None):
-        if extra == None:
+        if extra is None:
             extra = {}
         if 'requestid' not in extra:
             # Not all logging will be done from within a request
