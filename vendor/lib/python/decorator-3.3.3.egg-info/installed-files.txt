@@ -1,8 +1,0 @@
-../decorator.py
-../decorator.pyc
-./
-not-zip-safe
-PKG-INFO
-dependency_links.txt
-SOURCES.txt
-top_level.txt

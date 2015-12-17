@@ -23,10 +23,16 @@ def html_params(**kwargs):
     frequent use of the normally reserved keywords `class` and `for`, suffixing
     these with an underscore will allow them to be used.
 
+    In order to facilitate the use of ``data-`` attributes, the first underscore
+    behind the ``data``-element is replaced with a hyphen.
+
+    >>> html_params(data_any_attribute='something')
+    'data-any_attribute="something"'
+
     In addition, the values ``True`` and ``False`` are special:
       * ``attr=True`` generates the HTML compact output of a boolean attribute,
         e.g. ``checked=True`` will generate simply ``checked``
-      * ``attr=`False`` will be ignored and generate no output.
+      * ``attr=False`` will be ignored and generate no output.
 
     >>> html_params(name='text1', id='f', class_='text')
     'class="text" id="f" name="text1"'
@@ -123,7 +129,7 @@ class TableWidget(object):
             html.append('<table %s>' % html_params(**kwargs))
         hidden = ''
         for subfield in field:
-            if subfield.type == 'HiddenField':
+            if subfield.type in ('HiddenField', 'CSRFTokenField'):
                 hidden += text_type(subfield)
             else:
                 html.append('<tr><th>%s</th><td>%s%s</td></tr>' % (text_type(subfield.label), hidden, text_type(subfield)))
@@ -188,6 +194,7 @@ class HiddenInput(Input):
     """
     Render a hidden input.
     """
+    field_flags = ('hidden', )
     input_type = 'hidden'
 
 
