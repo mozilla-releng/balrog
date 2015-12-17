@@ -1,10 +1,32 @@
-import gzip
-try:
-    from io import BytesIO as IO
-except:
-    import StringIO as IO
+import sys
+from gzip import GzipFile
+from io import BytesIO
 
 from flask import request, current_app
+
+
+if sys.version_info[:2] == (2, 6):
+    class GzipFile(GzipFile):
+        """ Backport of context manager support for python 2.6"""
+        def __enter__(self):
+            if self.fileobj is None:
+                raise ValueError("I/O operation on closed GzipFile object")
+            return self
+
+        def __exit__(self, *args):
+            self.close()
+
+
+class DictCache(object):
+
+    def __init__(self):
+        self.data = {}
+
+    def get(self, key):
+        return self.data.get(key)
+
+    def set(self, key, value):
+        self.data[key] = value
 
 
 class Compress(object):
@@ -35,60 +57,61 @@ class Compress(object):
             ('COMPRESS_MIMETYPES', ['text/html', 'text/css', 'text/xml',
                                     'application/json',
                                     'application/javascript']),
-            ('COMPRESS_DEBUG', False),
             ('COMPRESS_LEVEL', 6),
-            ('COMPRESS_MIN_SIZE', 500)
+            ('COMPRESS_MIN_SIZE', 500),
+            ('COMPRESS_CACHE_KEY', None),
+            ('COMPRESS_CACHE_BACKEND', None),
         ]
 
         for k, v in defaults:
             app.config.setdefault(k, v)
 
+        backend = app.config['COMPRESS_CACHE_BACKEND']
+        self.cache = backend() if backend else None
+        self.cache_key = app.config['COMPRESS_CACHE_KEY']
+
         if app.config['COMPRESS_MIMETYPES']:
             app.after_request(self.after_request)
 
     def after_request(self, response):
-        if self.app:
-            app = self.app
-        else:
-            app = current_app
-
-        if app.debug and not app.config['COMPRESS_DEBUG']:
-            return response
-
+        app = self.app or current_app
         accept_encoding = request.headers.get('Accept-Encoding', '')
 
-        if 'gzip' not in accept_encoding.lower():
-            return response
-
-        if response.mimetype not in app.config['COMPRESS_MIMETYPES']:
+        if (response.mimetype not in app.config['COMPRESS_MIMETYPES'] or
+            'gzip' not in accept_encoding.lower() or
+            not 200 <= response.status_code < 300 or
+            (response.content_length is not None and
+             response.content_length < app.config['COMPRESS_MIN_SIZE']) or
+            'Content-Encoding' in response.headers):
             return response
 
         response.direct_passthrough = False
 
-        if (response.status_code < 200 or
-            response.status_code >= 300 or
-            len(response.data) < app.config['COMPRESS_MIN_SIZE'] or
-            'Content-Encoding' in response.headers):
-            return response
+        if self.cache:
+            key = self.cache_key(response)
+            gzip_content = self.cache.get(key) or self.compress(app, response)
+            self.cache.set(key, gzip_content)
+        else:
+            gzip_content = self.compress(app, response)
 
-        level = app.config['COMPRESS_LEVEL']
-
-        gzip_buffer = IO()
-        gzip_file = gzip.GzipFile(mode='wb', compresslevel=level,
-                                  fileobj=gzip_buffer)
-        gzip_file.write(response.data)
-        gzip_file.close()
-
-        response.data = gzip_buffer.getvalue()
+        response.set_data(gzip_content)
 
         response.headers['Content-Encoding'] = 'gzip'
-        response.headers['Content-Length'] = len(response.data)
+        response.headers['Content-Length'] = response.content_length
 
         vary = response.headers.get('Vary')
         if vary:
-            if 'Accept-Encoding' not in vary:
-                response.headers['Vary'] = vary + ', Accept-Encoding'
+            if 'accept-encoding' not in vary.lower():
+                response.headers['Vary'] = '{}, Accept-Encoding'.format(vary)
         else:
             response.headers['Vary'] = 'Accept-Encoding'
 
         return response
+
+    def compress(self, app, response):
+        gzip_buffer = BytesIO()
+        with GzipFile(mode='wb',
+                      compresslevel=app.config['COMPRESS_LEVEL'],
+                      fileobj=gzip_buffer) as gzip_file:
+            gzip_file.write(response.get_data())
+        return gzip_buffer.getvalue()

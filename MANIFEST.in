@@ -1,0 +1,2 @@
+recursive-include auslib/migrate *
+recursive-exclude * *.py[co]

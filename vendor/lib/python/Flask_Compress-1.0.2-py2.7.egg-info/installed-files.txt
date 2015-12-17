@@ -1,9 +1,0 @@
-../flask_compress.py
-../flask_compress.pyc
-./
-dependency_links.txt
-not-zip-safe
-PKG-INFO
-requires.txt
-SOURCES.txt
-top_level.txt

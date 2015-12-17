@@ -328,7 +328,10 @@ if __name__ == "__main__":
     parser.add_option("-v", "--version", dest="version", help="version being processed")
     parser.add_option("--product", dest="product", help="product name. Required when --db is present.")
     parser.add_option("--hash-func", dest="hash_func", default="sha512")
-    parser.add_option("-l", "--limit-locale", dest="locales", action="append", default=[], help="Limit locales to only those specified. This option may be passed multiple times. If not specified, all locales will be processed")
+    parser.add_option(
+        "-l", "--limit-locale", dest="locales", action="append", default=[],
+        help="Limit locales to only those specified. This option may be passed multiple times. If not specified, all locales will be processed"
+    )
     parser.add_option("--db", dest="db", help="When present, specifies a database to import the release into. Eg, sqlite:///test.db")
     parser.add_option("--verbose", dest="verbose", default=False, action="store_true")
 

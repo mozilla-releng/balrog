@@ -44,11 +44,15 @@ def _make_text_block(name, content, content_type=None):
 
 def format_iso8601(obj):
     """Format a datetime object for iso8601"""
-    return obj.strftime('%Y-%m-%dT%H:%M:%SZ')
+    iso8601 = obj.isoformat()
+    if obj.tzinfo:
+        return iso8601
+    return iso8601 + 'Z'
 
 
 @implements_to_string
 class AtomFeed(object):
+
     """A helper class that creates Atom feeds.
 
     :param title: the title of the feed. Required.
@@ -61,6 +65,7 @@ class AtomFeed(object):
     :param updated: the time the feed was modified the last time.  Must
                     be a :class:`datetime.datetime` object.  If not
                     present the latest entry's `updated` is used.
+                    Treated as UTC if naive datetime.
     :param feed_url: the URL to the feed.  Should be the URL that was
                      requested.
     :param author: the author of the feed.  Must be either a string (the
@@ -172,8 +177,8 @@ class AtomFeed(object):
             yield u'  <link href="%s" rel="self" />\n' % \
                 escape(self.feed_url)
         for link in self.links:
-            yield u'  <link %s/>\n' % ''.join('%s="%s" ' % \
-                (k, escape(link[k])) for k in link)
+            yield u'  <link %s/>\n' % ''.join('%s="%s" ' %
+                                              (k, escape(link[k])) for k in link)
         for author in self.author:
             yield u'  <author>\n'
             yield u'    <name>%s</name>\n' % escape(author['name'])
@@ -224,6 +229,7 @@ class AtomFeed(object):
 
 @implements_to_string
 class FeedEntry(object):
+
     """Represents a single entry in a feed.
 
     :param title: the title of the entry. Required.
@@ -239,7 +245,8 @@ class FeedEntry(object):
     :param id: a globally unique id for the entry.  Must be an URI.  If
                not present the URL is used, but one of both is required.
     :param updated: the time the entry was modified the last time.  Must
-                    be a :class:`datetime.datetime` object. Required.
+                    be a :class:`datetime.datetime` object.  Treated as
+                    UTC if naive datetime. Required.
     :param author: the author of the entry.  Must be either a string (the
                    name) or a dict with name (required) and uri or
                    email (both optional).  Can be a list of (may be
@@ -247,7 +254,8 @@ class FeedEntry(object):
                    multiple authors. Required if the feed does not have an
                    author element.
     :param published: the time the entry was initially published.  Must
-                      be a :class:`datetime.datetime` object.
+                      be a :class:`datetime.datetime` object.  Treated as
+                      UTC if naive datetime.
     :param rights: copyright information for the entry.
     :param rights_type: the type attribute for the rights element.  One of
                         ``'html'``, ``'text'`` or ``'xhtml'``.  Default is
@@ -326,11 +334,11 @@ class FeedEntry(object):
                 yield u'    <email>%s</email>\n' % escape(author['email'])
             yield u'  </author>\n'
         for link in self.links:
-            yield u'  <link %s/>\n' % ''.join('%s="%s" ' % \
-                (k, escape(link[k])) for k in link)
+            yield u'  <link %s/>\n' % ''.join('%s="%s" ' %
+                                              (k, escape(link[k])) for k in link)
         for category in self.categories:
-            yield u'  <category %s/>\n' % ''.join('%s="%s" ' % \
-                (k, escape(category[k])) for k in category)
+            yield u'  <category %s/>\n' % ''.join('%s="%s" ' %
+                                                  (k, escape(category[k])) for k in category)
         if self.summary:
             yield u'  ' + _make_text_block('summary', self.summary,
                                            self.summary_type)

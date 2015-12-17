@@ -192,7 +192,8 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 401)
 
     def testNoPermissionToAlterNewProduct(self):
-        ret = self._post('/rules/4', data=dict(product='protected', mapping='a', backgroundRate=71, priority=50, update_type='minor', data_version=1), username='bob')
+        ret = self._post(
+            '/rules/4', data=dict(product='protected', mapping='a', backgroundRate=71, priority=50, update_type='minor', data_version=1), username='bob')
         self.assertEquals(ret.status_code, 401)
 
     def testGetSingleRule(self):
@@ -330,7 +331,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         assert row['rule_id'] == 1  # one of the fixtures
 
         url = '/rules/1/revisions'
-        ret = self._post(url, {'change_id': change_id})
+        ret = self._post(url, json.dumps({'change_id': change_id}), content_type="application/json")
         self.assertEquals(ret.status_code, 200, ret.data)
 
         query = table.history.t.count()
@@ -384,18 +385,18 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         change_id = row['change_id']
 
         url = '/rules/1/revisions'
-        ret = self._post(url, {'change_id': change_id}, username='bob')
+        ret = self._post(url, json.dumps({'change_id': change_id}), content_type="application/json", username='bob')
         self.assertEquals(ret.status_code, 401)
 
     def testPostRevisionRollbackBadRequests(self):
         # when posting you need both the rule_id and the change_id
         wrong_url = '/rules/999/revisions'
         # not found rule_id
-        ret = self._post(wrong_url, {'change_id': 10})
+        ret = self._post(wrong_url, json.dumps({'change_id': 10}), content_type="application/json")
         self.assertEquals(ret.status_code, 404)
 
         url = '/rules/1/revisions'
-        ret = self._post(url, {'change_id': 999})
+        ret = self._post(url, json.dumps({'change_id': 999}), content_type="application/json")
         # not found change_id
         self.assertEquals(ret.status_code, 404)
 
