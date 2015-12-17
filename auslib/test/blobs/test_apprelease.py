@@ -132,17 +132,21 @@ class TestReleaseBlobV1(unittest.TestCase):
             blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(j=updates))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
-    def testHackedExtvBug1113475(self):
-        blob = ReleaseBlobV1()
-        blob.loadJSON("""
-{
+
+class TestOldVersionSpecialCases(unittest.TestCase):
+    def setUp(self):
+        self.specialForceHosts = ["http://a.com"]
+        self.whitelistedDomains = ["a.com", "boring.com"]
+        self.blob = ReleaseBlobV1()
+        self.blob.loadJSON("""
+    {
     "name": "h",
     "schema_version": 1,
-    "appv": "15.0",
-    "extv": "15.0",
+    "appv": "12.0",
+    "extv": "12.0",
     "hashFunction": "sha512",
     "detailsUrl": "http://example.org/details",
-    "setExtvToIncomingVersion": true,
+    "oldVersionSpecialCases": true,
     "platforms": {
         "p": {
             "buildID": 1,
@@ -160,17 +164,72 @@ class TestReleaseBlobV1(unittest.TestCase):
     }
 }""")
 
+    def test2_0(self):
         updateQuery = {
-            "product": "h", "version": "1.0", "buildID": "0",
+            "product": "h", "version": "2.0.0.20", "buildID": "0",
             "buildTarget": "p", "locale": "m", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = blob.createXML(updateQuery, "minor", ["boring.com"], None)
+        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
         returned = minidom.parseString(returned)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
-    <update type="minor" version="15.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details">
+    <update type="minor" version="2.0.0.20" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def test3_0(self):
+        updateQuery = {
+            "product": "h", "version": "3.0.9", "buildID": "0",
+            "buildTarget": "p", "locale": "m", "channel": "a",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="3.0.9" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def test3_5(self):
+        updateQuery = {
+            "product": "h", "version": "3.5.19", "buildID": "0",
+            "buildTarget": "p", "locale": "m", "channel": "a",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="12.0" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def test3_6(self):
+        updateQuery = {
+            "product": "h", "version": "3.6", "buildID": "0",
+            "buildTarget": "p", "locale": "m", "channel": "a",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="12.0" extensionVersion="3.6" buildID="1" detailsURL="http://example.org/details">
         <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
     </update>
 </updates>

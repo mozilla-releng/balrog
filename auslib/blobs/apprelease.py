@@ -251,7 +251,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         'detailsUrl': None,
         'licenseUrl': None,
         'fakePartials': None,
-        'setExtvToIncomingVersion': None,
+        'oldVersionSpecialCases': None,
         'platforms': {
             '*': {
                 'alias': None,
@@ -366,17 +366,32 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         return updateLine
 
     def createXML(self, updateQuery, *args, **kwargs):
+        """ In order to update some older versions of Firefox without prompting
+        them for add-on compatibility, we need to be able to modify the appVersion
+        and extVersion attributes. bug 998721 and bug 1174605 have additional
+        background on this.
+        It would be nicer to do this in _getUpdateLineXML to avoid overriding
+        this method, but that doesn't have access to the updateQuery to lookup
+        the version making the request.
+        """
         xml = super(ReleaseBlobV1, self).createXML(updateQuery, *args, **kwargs)
-        # In order to update some older versions of Firefox without prompting
-        # them for add-on compatibility, we need to be able to fake out the
-        # extension version to match the incoming one. bug 998721 has additional
-        # background on this.
-        # It would be nicer to do this in _getUpdateLineXML to avoid overriding
-        # this method, but that one doesn't have access to the updateQuery, and
-        # thus can't overwrite it.
-        if self.get("setExtvToIncomingVersion"):
+        if self.get("oldVersionSpecialCases"):
+            query_ver = MozillaVersion(updateQuery["version"])
+            real_appv = self.getAppv(updateQuery["buildTarget"], updateQuery["locale"])
             real_extv = self.getExtv(updateQuery["buildTarget"], updateQuery["locale"])
-            xml = xml.replace('extensionVersion="%s"' % real_extv, 'extensionVersion="%s"' % updateQuery["version"])
+            if query_ver >= MozillaVersion("2.0") and query_ver < MozillaVersion("3.5"):
+                # 2.0 and 3.0 need a fake version, and extVersion omitted
+                xml = xml.replace('version="%s"' % real_appv,
+                                  'version="%s"' % updateQuery["version"])
+                xml = xml.replace('extensionVersion="%s" ' % real_extv, '')
+            elif query_ver >= MozillaVersion("3.5") and query_ver < MozillaVersion("3.6"):
+                # 3.5 needs extVersion omitted
+                xml = xml.replace('extensionVersion="%s" ' % real_extv, '')
+            elif query_ver >= MozillaVersion("3.6") and query_ver < MozillaVersion("4.0"):
+                # 3.6 needs a fake extensionVersion
+                xml = xml.replace('extensionVersion="%s"' % real_extv,
+                                  'extensionVersion="%s"' % updateQuery["version"])
+            # and we don't use ReleaseBlobV1 to serve anything to 4.0 or later
         return xml
 
 
@@ -427,7 +442,8 @@ class NewStyleVersionsMixin(object):
 class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
     """ Client-side changes in
           https://bugzilla.mozilla.org/show_bug.cgi?id=530872
-        were introduced at Gecko 1.9.3a3, requiring this new blob class.
+        were introduced at Gecko 1.9.3a3 (which later became Firefox 4.0),
+        requiring this new blob class.
 
         Changed parameters from ReleaseBlobV1:
          * appv, extv become appVersion, platformVersion, displayVersion
