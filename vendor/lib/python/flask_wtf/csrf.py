@@ -49,7 +49,7 @@ def generate_csrf(secret_key=None, time_limit=None):
         session['csrf_token'] = hashlib.sha1(os.urandom(64)).hexdigest()
 
     if time_limit:
-        expires = time.time() + time_limit
+        expires = int(time.time() + time_limit)
         csrf_build = '%s%s' % (session['csrf_token'], expires)
     else:
         expires = ''
@@ -75,18 +75,21 @@ def validate_csrf(data, secret_key=None, time_limit=None):
     if not data or '##' not in data:
         return False
 
-    expires, hmac_csrf = data.split('##', 1)
+    try:
+        expires, hmac_csrf = data.split('##', 1)
+    except ValueError:
+        return False  # unpack error
 
     if time_limit is None:
         time_limit = current_app.config.get('WTF_CSRF_TIME_LIMIT', 3600)
 
     if time_limit:
         try:
-            expires = float(expires)
-        except:
+            expires = int(expires)
+        except ValueError:
             return False
 
-        now = time.time()
+        now = int(time.time())
         if now > expires:
             return False
 
@@ -135,9 +138,14 @@ class CsrfProtect(object):
             self.init_app(app)
 
     def init_app(self, app):
+        self._app = app
         app.jinja_env.globals['csrf_token'] = generate_csrf
+        app.config.setdefault(
+            'WTF_CSRF_HEADERS', ['X-CSRFToken', 'X-CSRF-Token']
+        )
         app.config.setdefault('WTF_CSRF_SSL_STRICT', True)
         app.config.setdefault('WTF_CSRF_ENABLED', True)
+        app.config.setdefault('WTF_CSRF_CHECK_DEFAULT', True)
         app.config.setdefault('WTF_CSRF_METHODS', ['POST', 'PUT', 'PATCH'])
 
         # expose csrf_token as a helper in all templates
@@ -145,13 +153,16 @@ class CsrfProtect(object):
         def csrf_token():
             return dict(csrf_token=generate_csrf)
 
+        if not app.config['WTF_CSRF_ENABLED']:
+            return
+
+        if not app.config['WTF_CSRF_CHECK_DEFAULT']:
+            return
+
         @app.before_request
         def _csrf_protect():
             # many things come from django.middleware.csrf
-            if not app.config['WTF_CSRF_ENABLED']:
-                return
-
-            if request.method in ('GET', 'HEAD', 'OPTIONS', 'TRACE'):
+            if request.method not in app.config['WTF_CSRF_METHODS']:
                 return
 
             if self._exempt_views or self._exempt_blueprints:
@@ -168,35 +179,43 @@ class CsrfProtect(object):
                 if request.blueprint in self._exempt_blueprints:
                     return
 
-            csrf_token = None
-            if request.method in app.config['WTF_CSRF_METHODS']:
-                # find the ``csrf_token`` field in the subitted form
-                # if the form had a prefix, the name will be ``{prefix}-csrf_token``
-                for key in request.form:
-                    if key.endswith('csrf_token'):
-                        csrf_token = request.form[key]
-            if not csrf_token:
-                # You can get csrf token from header
-                # The header name is the same as Django
-                csrf_token = request.headers.get('X-CSRFToken')
-            if not csrf_token:
-                # The header name is the same as Rails
-                csrf_token = request.headers.get('X-CSRF-Token')
-            if not validate_csrf(csrf_token):
-                reason = 'CSRF token missing or incorrect.'
+            self.protect()
+
+    def _get_csrf_token(self):
+        # find the ``csrf_token`` field in the subitted form
+        # if the form had a prefix, the name will be
+        # ``{prefix}-csrf_token``
+        for key in request.form:
+            if key.endswith('csrf_token'):
+                csrf_token = request.form[key]
+                if csrf_token:
+                    return csrf_token
+
+        for header_name in self._app.config['WTF_CSRF_HEADERS']:
+            csrf_token = request.headers.get(header_name)
+            if csrf_token:
+                return csrf_token
+        return None
+
+    def protect(self):
+        if request.method not in self._app.config['WTF_CSRF_METHODS']:
+            return
+
+        if not validate_csrf(self._get_csrf_token()):
+            reason = 'CSRF token missing or incorrect.'
+            return self._error_response(reason)
+
+        if request.is_secure and self._app.config['WTF_CSRF_SSL_STRICT']:
+            if not request.referrer:
+                reason = 'Referrer checking failed - no Referrer.'
                 return self._error_response(reason)
 
-            if request.is_secure and app.config['WTF_CSRF_SSL_STRICT']:
-                if not request.referrer:
-                    reason = 'Referrer checking failed - no Referrer.'
-                    return self._error_response(reason)
+            good_referrer = 'https://%s/' % request.host
+            if not same_origin(request.referrer, good_referrer):
+                reason = 'Referrer checking failed - origin does not match.'
+                return self._error_response(reason)
 
-                good_referrer = 'https://%s/' % request.host
-                if not same_origin(request.referrer, good_referrer):
-                    reason = 'Referrer checking failed - origin not match.'
-                    return self._error_response(reason)
-
-            request.csrf_valid = True  # mark this request is csrf valid
+        request.csrf_valid = True  # mark this request is csrf valid
 
     def exempt(self, view):
         """A decorator that can exclude a view from csrf protection.

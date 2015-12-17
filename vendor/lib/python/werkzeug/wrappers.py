@@ -24,28 +24,28 @@ from functools import update_wrapper
 from datetime import datetime, timedelta
 
 from werkzeug.http import HTTP_STATUS_CODES, \
-     parse_accept_header, parse_cache_control_header, parse_etags, \
-     parse_date, generate_etag, is_resource_modified, unquote_etag, \
-     quote_etag, parse_set_header, parse_authorization_header, \
-     parse_www_authenticate_header, remove_entity_headers, \
-     parse_options_header, dump_options_header, http_date, \
-     parse_if_range_header, parse_cookie, dump_cookie, \
-     parse_range_header, parse_content_range_header, dump_header
+    parse_accept_header, parse_cache_control_header, parse_etags, \
+    parse_date, generate_etag, is_resource_modified, unquote_etag, \
+    quote_etag, parse_set_header, parse_authorization_header, \
+    parse_www_authenticate_header, remove_entity_headers, \
+    parse_options_header, dump_options_header, http_date, \
+    parse_if_range_header, parse_cookie, dump_cookie, \
+    parse_range_header, parse_content_range_header, dump_header
 from werkzeug.urls import url_decode, iri_to_uri, url_join
 from werkzeug.formparser import FormDataParser, default_stream_factory
 from werkzeug.utils import cached_property, environ_property, \
-     header_property, get_content_type
+    header_property, get_content_type
 from werkzeug.wsgi import get_current_url, get_host, \
-     ClosingIterator, get_input_stream, get_content_length
+    ClosingIterator, get_input_stream, get_content_length
 from werkzeug.datastructures import MultiDict, CombinedMultiDict, Headers, \
-     EnvironHeaders, ImmutableMultiDict, ImmutableTypeConversionDict, \
-     ImmutableList, MIMEAccept, CharsetAccept, LanguageAccept, \
-     ResponseCacheControl, RequestCacheControl, CallbackDict, \
-     ContentRange, iter_multi_items
+    EnvironHeaders, ImmutableMultiDict, ImmutableTypeConversionDict, \
+    ImmutableList, MIMEAccept, CharsetAccept, LanguageAccept, \
+    ResponseCacheControl, RequestCacheControl, CallbackDict, \
+    ContentRange, iter_multi_items
 from werkzeug._internal import _get_environ
 from werkzeug._compat import to_bytes, string_types, text_type, \
-     integer_types, wsgi_decoding_dance, wsgi_get_bytes, \
-     to_unicode, to_native, BytesIO
+    integer_types, wsgi_decoding_dance, wsgi_get_bytes, \
+    to_unicode, to_native, BytesIO
 
 
 def _run_wsgi_app(*args):
@@ -86,6 +86,7 @@ def _iter_encoded(iterable, charset):
 
 
 class BaseRequest(object):
+
     """Very basic request object.  This does not implement advanced stuff like
     entity tag parsing or cache controls.  The request object is created with
     the WSGI environment as first argument and will add itself to the WSGI
@@ -190,13 +191,17 @@ class BaseRequest(object):
 
     #: Optionally a list of hosts that is trusted by this request.  By default
     #: all hosts are trusted which means that whatever the client sends the
-    #: host is will be accepted.  This is the recommended setup as a webserver
-    #: should manually be set up to not route invalid hosts to the application.
+    #: host is will be accepted.
+    #:
+    #: This is the recommended setup as a webserver should manually be set up
+    #: to only route correct hosts to the application, and remove the
+    #: `X-Forwarded-Host` header if it is not being used (see
+    #: :func:`werkzeug.wsgi.get_host`).
     #:
     #: .. versionadded:: 0.9
     trusted_hosts = None
 
-    #: Indicates weather the data descriptor should be allowed to read and
+    #: Indicates whether the data descriptor should be allowed to read and
     #: buffer up the input stream.  By default it's enabled.
     #:
     #: .. versionadded:: 0.9
@@ -214,7 +219,7 @@ class BaseRequest(object):
         # in a debug session we don't want the repr to blow up.
         args = []
         try:
-            args.append("'%s'" % self.url)
+            args.append("'%s'" % to_native(self.url, self.url_charset))
             args.append('[%s]' % self.method)
         except Exception:
             args.append('(invalid WSGI environ)')
@@ -287,7 +292,7 @@ class BaseRequest(object):
         return update_wrapper(application, f)
 
     def _get_file_stream(self, total_content_length, content_type, filename=None,
-                        content_length=None):
+                         content_length=None):
         """Called to get a stream for the file upload.
 
         This must provide a file-like class with `read()`, `readline()`
@@ -378,7 +383,7 @@ class BaseRequest(object):
     def close(self):
         """Closes associated resources of this request object.  This
         closes all file handles explicitly.  You can also use the request
-        object in a with statement with will automatically close it.
+        object in a with statement which will automatically close it.
 
         .. versionadded:: 0.9
         """
@@ -408,9 +413,12 @@ class BaseRequest(object):
         _assert_not_shallow(self)
         return get_input_stream(self.environ)
 
-    input_stream = environ_property('wsgi.input', 'The WSGI input stream.\n'
-        'In general it\'s a bad idea to use this one because you can easily '
-        'read past the boundary.  Use the :attr:`stream` instead.')
+    input_stream = environ_property('wsgi.input', """
+    The WSGI input stream.
+
+    In general it's a bad idea to use this one because you can easily read past
+    the boundary.  Use the :attr:`stream` instead.
+    """)
 
     @cached_property
     def args(self):
@@ -550,13 +558,17 @@ class BaseRequest(object):
 
     @cached_property
     def url(self):
-        """The reconstructed current URL as IRI."""
+        """The reconstructed current URL as IRI.
+        See also: :attr:`trusted_hosts`.
+        """
         return get_current_url(self.environ,
                                trusted_hosts=self.trusted_hosts)
 
     @cached_property
     def base_url(self):
-        """Like :attr:`url` but without the querystring"""
+        """Like :attr:`url` but without the querystring
+        See also: :attr:`trusted_hosts`.
+        """
         return get_current_url(self.environ, strip_querystring=True,
                                trusted_hosts=self.trusted_hosts)
 
@@ -564,26 +576,33 @@ class BaseRequest(object):
     def url_root(self):
         """The full URL root (with hostname), this is the application
         root as IRI.
+        See also: :attr:`trusted_hosts`.
         """
         return get_current_url(self.environ, True,
                                trusted_hosts=self.trusted_hosts)
 
     @cached_property
     def host_url(self):
-        """Just the host with scheme as IRI."""
+        """Just the host with scheme as IRI.
+        See also: :attr:`trusted_hosts`.
+        """
         return get_current_url(self.environ, host_only=True,
                                trusted_hosts=self.trusted_hosts)
 
     @cached_property
     def host(self):
-        """Just the host including the port if available."""
+        """Just the host including the port if available.
+        See also: :attr:`trusted_hosts`.
+        """
         return get_host(self.environ, trusted_hosts=self.trusted_hosts)
 
-    query_string = environ_property('QUERY_STRING', '', read_only=True,
-        load_func=wsgi_get_bytes, doc=
-        '''The URL parameters as raw bytestring.''')
-    method = environ_property('REQUEST_METHOD', 'GET', read_only=True, doc=
-        '''The transmission method. (For example ``'GET'`` or ``'POST'``).''')
+    query_string = environ_property(
+        'QUERY_STRING', '', read_only=True,
+        load_func=wsgi_get_bytes, doc='The URL parameters as raw bytestring.')
+    method = environ_property(
+        'REQUEST_METHOD', 'GET', read_only=True,
+        load_func=lambda x: x.upper(),
+        doc="The transmission method. (For example ``'GET'`` or ``'POST'``).")
 
     @cached_property
     def access_route(self):
@@ -629,10 +648,11 @@ class BaseRequest(object):
     is_run_once = environ_property('wsgi.run_once', doc='''
         boolean that is `True` if the application will be executed only
         once in a process lifetime.  This is the case for CGI for example,
-        but it's not guaranteed that the exeuction only happens one time.''')
+        but it's not guaranteed that the execution only happens one time.''')
 
 
 class BaseResponse(object):
+
     """Base response class.  The most important fact about a response object
     is that it's a regular WSGI application.  It's initialized with a couple
     of response parameters (headers, body, status code etc.) and will start a
@@ -668,7 +688,7 @@ class BaseResponse(object):
     To enforce a new type of already existing responses you can use the
     :meth:`force_type` method.  This is useful if you're working with different
     subclasses of response objects and you want to post process them with a
-    know interface.
+    known interface.
 
     Per default the request object will assume all the text data is `utf-8`
     encoded.  Please refer to `the unicode chapter <unicode.txt>`_ for more
@@ -697,7 +717,7 @@ class BaseResponse(object):
     :param content_type: the content type for the request.  See notice above.
     :param direct_passthrough: if set to `True` :meth:`iter_encoded` is not
                                called before iteration which makes it
-                               possible to pass special iterators though
+                               possible to pass special iterators through
                                unchanged (see :func:`wrap_file` for more
                                details.)
     """
@@ -784,7 +804,7 @@ class BaseResponse(object):
         if self.is_sequence:
             body_info = '%d bytes' % sum(map(len, self.iter_encoded()))
         else:
-            body_info = self.is_streamed and 'streamed' or 'likely-streamed'
+            body_info = 'streamed' if self.is_streamed else 'likely-streamed'
         return '<%s %s [%s]>' % (
             self.__class__.__name__,
             body_info,
@@ -846,6 +866,7 @@ class BaseResponse(object):
 
     def _get_status_code(self):
         return self._status_code
+
     def _set_status_code(self, code):
         self._status_code = code
         try:
@@ -858,6 +879,7 @@ class BaseResponse(object):
 
     def _get_status(self):
         return self._status
+
     def _set_status(self, value):
         self._status = to_native(value)
         try:
@@ -990,8 +1012,8 @@ class BaseResponse(object):
                      span the whole domain.
         """
         self.headers.add('Set-Cookie', dump_cookie(key, value, max_age,
-                         expires, path, domain, secure, httponly,
-                         self.charset))
+                                                   expires, path, domain, secure, httponly,
+                                                   self.charset))
 
     def delete_cookie(self, key, path='/', domain=None):
         """Delete a cookie.  Fails silently if key doesn't exist.
@@ -1209,6 +1231,7 @@ class BaseResponse(object):
 
 
 class AcceptMixin(object):
+
     """A mixin for classes with an :attr:`~BaseResponse.environ` attribute
     to get all the HTTP accept headers as
     :class:`~werkzeug.datastructures.Accept` objects (or subclasses
@@ -1252,6 +1275,7 @@ class AcceptMixin(object):
 
 
 class ETagRequestMixin(object):
+
     """Add entity tag and cache descriptors to a request object or object with
     a WSGI environment available as :attr:`~BaseRequest.environ`.  This not
     only provides access to etags but also to the cache control header.
@@ -1314,6 +1338,7 @@ class ETagRequestMixin(object):
 
 
 class UserAgentMixin(object):
+
     """Adds a `user_agent` attribute to the request object which contains the
     parsed user agent of the browser that triggered the request as a
     :class:`~werkzeug.useragents.UserAgent` object.
@@ -1327,6 +1352,7 @@ class UserAgentMixin(object):
 
 
 class AuthorizationMixin(object):
+
     """Adds an :attr:`authorization` property that represents the parsed
     value of the `Authorization` header as
     :class:`~werkzeug.datastructures.Authorization` object.
@@ -1340,6 +1366,7 @@ class AuthorizationMixin(object):
 
 
 class StreamOnlyMixin(object):
+
     """If mixed in before the request object this will change the bahavior
     of it to disable handling of form parsing.  This disables the
     :attr:`files`, :attr:`form` attributes and will just provide a
@@ -1353,6 +1380,7 @@ class StreamOnlyMixin(object):
 
 
 class ETagResponseMixin(object):
+
     """Adds extra functionality to a response object for etag and cache
     handling.  This mixin requires an object with at least a `headers`
     object that implements a dict like interface similar to
@@ -1405,7 +1433,7 @@ class ETagResponseMixin(object):
             # wsgiref.
             if 'date' not in self.headers:
                 self.headers['Date'] = http_date()
-            if 'content-length' not in self.headers:
+            if self.automatically_set_content_length and 'content-length' not in self.headers:
                 length = self.calculate_content_length()
                 if length is not None:
                     self.headers['Content-Length'] = length
@@ -1460,6 +1488,7 @@ class ETagResponseMixin(object):
         if rv is None:
             rv = ContentRange(None, None, None, on_update=on_update)
         return rv
+
     def _set_content_range(self, value):
         if not value:
             del self.headers['content-range']
@@ -1478,6 +1507,7 @@ class ETagResponseMixin(object):
 
 
 class ResponseStream(object):
+
     """A file descriptor like object used by the :class:`ResponseStreamMixin` to
     represent the body of the stream.  It directly pushes into the response
     iterable of the response object.
@@ -1494,6 +1524,7 @@ class ResponseStream(object):
             raise ValueError('I/O operation on closed file')
         self.response._ensure_sequence(mutable=True)
         self.response.response.append(value)
+        self.response.headers.pop('Content-Length', None)
 
     def writelines(self, seq):
         for item in seq:
@@ -1517,6 +1548,7 @@ class ResponseStream(object):
 
 
 class ResponseStreamMixin(object):
+
     """Mixin for :class:`BaseRequest` subclasses.  Classes that inherit from
     this mixin will automatically get a :attr:`stream` property that provides
     a write-only interface to the response iterable.
@@ -1529,6 +1561,7 @@ class ResponseStreamMixin(object):
 
 
 class CommonRequestDescriptorsMixin(object):
+
     """A mixin for :class:`BaseRequest` subclasses.  Request objects that
     mix this class in will automatically get descriptors for a couple of
     HTTP headers with automatic type conversion.
@@ -1588,13 +1621,13 @@ class CommonRequestDescriptorsMixin(object):
 
     @property
     def mimetype(self):
-        """Like :attr:`content_type` but without parameters (eg, without
-        charset, type etc.).  For example if the content
-        type is ``text/html; charset=utf-8`` the mimetype would be
+        """Like :attr:`content_type`, but without parameters (eg, without
+        charset, type etc.) and always lowercase.  For example if the content
+        type is ``text/HTML; charset=utf-8`` the mimetype would be
         ``'text/html'``.
         """
         self._parse_content_type()
-        return self._parsed_content_type[0]
+        return self._parsed_content_type[0].lower()
 
     @property
     def mimetype_params(self):
@@ -1617,6 +1650,7 @@ class CommonRequestDescriptorsMixin(object):
 
 
 class CommonResponseDescriptorsMixin(object):
+
     """A mixin for :class:`BaseResponse` subclasses.  Response objects that
     mix this class in will automatically get descriptors for a couple of
     HTTP headers with automatic type conversion.
@@ -1705,6 +1739,7 @@ class CommonResponseDescriptorsMixin(object):
         elif value.isdigit():
             return datetime.utcnow() + timedelta(seconds=int(value))
         return parse_date(value)
+
     def _set_retry_after(self, value):
         if value is None:
             if 'retry-after' in self.headers:
@@ -1731,6 +1766,7 @@ class CommonResponseDescriptorsMixin(object):
                 elif header_set:
                     self.headers[name] = header_set.to_header()
             return parse_set_header(self.headers.get(name), on_update)
+
         def fset(self, value):
             if not value:
                 del self.headers[name]
@@ -1762,6 +1798,7 @@ class CommonResponseDescriptorsMixin(object):
 
 
 class WWWAuthenticateMixin(object):
+
     """Adds a :attr:`www_authenticate` property to a response object."""
 
     @property
@@ -1779,6 +1816,7 @@ class WWWAuthenticateMixin(object):
 class Request(BaseRequest, AcceptMixin, ETagRequestMixin,
               UserAgentMixin, AuthorizationMixin,
               CommonRequestDescriptorsMixin):
+
     """Full featured request object implementing the following mixins:
 
     - :class:`AcceptMixin` for accept header parsing
@@ -1790,6 +1828,7 @@ class Request(BaseRequest, AcceptMixin, ETagRequestMixin,
 
 
 class PlainRequest(StreamOnlyMixin, Request):
+
     """A request object without special form parsing capabilities.
 
     .. versionadded:: 0.9
@@ -1799,6 +1838,7 @@ class PlainRequest(StreamOnlyMixin, Request):
 class Response(BaseResponse, ETagResponseMixin, ResponseStreamMixin,
                CommonResponseDescriptorsMixin,
                WWWAuthenticateMixin):
+
     """Full featured response object implementing the following mixins:
 
     - :class:`ETagResponseMixin` for etag and cache control handling

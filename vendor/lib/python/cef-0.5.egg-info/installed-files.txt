@@ -1,7 +1,7 @@
 ../cef.py
 ../cef.pyc
 ./
-PKG-INFO
-SOURCES.txt
 top_level.txt
+SOURCES.txt
 dependency_links.txt
+PKG-INFO

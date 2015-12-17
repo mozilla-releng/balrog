@@ -39,8 +39,8 @@ class Field(object):
 
     def __init__(self, label=None, validators=None, filters=tuple(),
                  description='', id=None, default=None, widget=None,
-                 _form=None, _name=None, _prefix='', _translations=None,
-                 _meta=None):
+                 render_kw=None, _form=None, _name=None, _prefix='',
+                 _translations=None, _meta=None):
         """
         Construct a new field.
 
@@ -60,6 +60,9 @@ class Field(object):
             input is provided. May be a callable.
         :param widget:
             If provided, overrides the widget used to render the field.
+        :param dict render_kw:
+            If provided, a dictionary which provides default keywords that
+            will be given to the widget at render time.
         :param _form:
             The form holding this field. It is passed by the form itself during
             construction. You should never pass this value yourself.
@@ -93,6 +96,7 @@ class Field(object):
 
         self.default = default
         self.description = description
+        self.render_kw = render_kw
         self.filters = filters
         self.flags = Flags()
         self.name = _prefix + _name
@@ -106,7 +110,7 @@ class Field(object):
         if widget is not None:
             self.widget = widget
 
-        for v in self.validators:
+        for v in itertools.chain(self.validators, [self.widget]):
             flags = getattr(v, 'field_flags', ())
             for f in flags:
                 setattr(self.flags, f, True)
@@ -286,7 +290,7 @@ class Field(object):
 
         try:
             for filter in self.filters:
-                    self.data = filter(self.data)
+                self.data = filter(self.data)
         except ValueError as e:
             self.process_errors.append(e.args[0])
 
@@ -679,7 +683,9 @@ class FloatField(Field):
 
 class BooleanField(Field):
     """
-    Represents an ``<input type="checkbox">``.
+    Represents an ``<input type="checkbox">``. Set the ``checked``-status by using the
+    ``default``-option. Any value for ``default``, e.g. ``default="checked"`` puts
+    ``checked`` into the html-element and sets the ``data`` to ``True``
 
     :param false_values:
         If provided, a sequence of strings each of which is an exact match
@@ -946,7 +952,8 @@ class FieldList(Field):
         self.last_index = index
         name = '%s-%d' % (self.short_name, index)
         id = '%s-%d' % (self.id, index)
-        field = self.unbound_field.bind(form=None, name=name, prefix=self._prefix, id=id, _meta=self.meta)
+        field = self.unbound_field.bind(form=None, name=name, prefix=self._prefix, id=id, _meta=self.meta,
+                                        translations=self._translations)
         field.process(formdata, data)
         self.entries.append(field)
         return field
