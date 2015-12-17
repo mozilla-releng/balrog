@@ -684,7 +684,7 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         assert row['name'] == 'd'  # one of the fixtures
 
         url = '/releases/d/revisions'
-        ret = self._post(url, {'change_id': change_id})
+        ret = self._post(url, json.dumps({'change_id': change_id}), content_type="application/json")
         self.assertEquals(ret.status_code, 200, ret.data)
 
         query = table.history.t.count()
@@ -697,11 +697,11 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
 
     def testPostRevisionRollbackBadRequests(self):
         # when posting you need both the rule_id and the change_id
-        ret = self._post('/releases/CRAZYNAME/revisions', {'change_id': 1})
+        ret = self._post('/releases/CRAZYNAME/revisions', json.dumps({'change_id': 1}), content_type="application/json")
         self.assertEquals(ret.status_code, 404)
 
         url = '/releases/d/revisions'
-        ret = self._post(url, {'change_id': 999})
+        ret = self._post(url, json.dumps({'change_id': 999}), content_type="application/json")
         self.assertEquals(ret.status_code, 404)
 
         ret = self._post(url)
