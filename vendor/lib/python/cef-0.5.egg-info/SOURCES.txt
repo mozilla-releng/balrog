@@ -1,6 +1,0 @@
-README.txt
-cef.py
-cef.egg-info/PKG-INFO
-cef.egg-info/SOURCES.txt
-cef.egg-info/dependency_links.txt
-cef.egg-info/top_level.txt
