@@ -10,7 +10,7 @@ from xml.dom import minidom
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
-    ReleaseBlobV3, ReleaseBlobV4
+    ReleaseBlobV3, ReleaseBlobV4, DesupportBlob
 
 
 class SimpleBlob(ReleaseBlobBase):
@@ -472,7 +472,6 @@ class TestSchema2Blob(unittest.TestCase):
     "alertURL": "http://example.org/alert/%LOCALE%",
     "showPrompt": "false",
     "showNeverForVersion": "true",
-    "showSurvey": "false",
     "fileUrls": {
         "c1": "http://a.com/%FILENAME%"
     },
@@ -556,7 +555,7 @@ class TestSchema2Blob(unittest.TestCase):
 <updates>
     <update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" buildID="35" detailsURL="http://example.org/details/l"
             licenseURL="http://example.org/license/l" billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true"
-            showSurvey="false" actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l"
+            actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l"
             alertURL="http://example.org/alert/l">
         <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="35" size="40"/>
     </update>
@@ -577,7 +576,7 @@ class TestSchema2Blob(unittest.TestCase):
 <updates>
     <update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" buildID="35" detailsURL="http://example.org/details/l2"
             licenseURL="http://example.org/license/l2" billboardURL="http://example.org/billboard/l2" showPrompt="false" showNeverForVersion="true"
-            showSurvey="false" actions="silent" openURL="http://example.org/url/l2" notificationURL="http://example.org/notification/l2"
+            actions="silent" openURL="http://example.org/url/l2" notificationURL="http://example.org/notification/l2"
             alertURL="http://example.org/alert/l2" isOSUpdate="true">
         <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="45" size="50"/>
     </update>
@@ -1342,3 +1341,33 @@ class TestSchema4Blob(unittest.TestCase):
             updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
             blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
             self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
+
+class TestDesupportBlob(unittest.TestCase):
+
+    def setUp(self):
+        self.specialForceHosts = ["http://a.com"]
+        self.whitelistedDomains = ["a.com", "boring.com"]
+        dbo.setDb('sqlite:///:memory:')
+        dbo.create()
+        dbo.setDomainWhitelist(["a.com", "boring.com"])
+        self.blob = DesupportBlob()
+        self.blob.loadJSON("""
+{
+    "name": "d1",
+    "schema_version": 50,
+    "detailsUrl": "http://moo.com/cow"
+}
+""")
+
+    def testDesupport(self):
+        updateQuery = []
+        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" unsupported="true" detailsURL="http://moo.com/cow">
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())

@@ -449,7 +449,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
          * appv, extv become appVersion, platformVersion, displayVersion
         Added:
          * actions, billboardURL, openURL, notificationURL,
-           alertURL, showPrompt, showSurvey, showNeverForVersion, isOSUpdate
+           alertURL, showPrompt, showNeverForVersion, isOSUpdate
     """
     format_ = {
         'name': None,
@@ -476,7 +476,6 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         'alertURL': None,
         'showPrompt': None,
         'showNeverForVersion': None,
-        'showSurvey': None,
         'platforms': {
             '*': {
                 'alias': None,
@@ -509,8 +508,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
     }
     # for the benefit of createXML and createSnippets
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
-                 'showSurvey', 'actions', 'openURL', 'notificationURL',
-                 'alertURL')
+                 'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
 
@@ -630,7 +628,6 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         'alertURL': None,
         'showPrompt': None,
         'showNeverForVersion': None,
-        'showSurvey': None,
         'platforms': {
             '*': {
                 'alias': None,
@@ -676,8 +673,7 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     }
     # for the benefit of createXML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
-                 'showSurvey', 'actions', 'openURL', 'notificationURL',
-                 'alertURL')
+                 'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
 
@@ -782,7 +778,6 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         'alertURL': None,
         'showPrompt': None,
         'showNeverForVersion': None,
-        'showSurvey': None,
         'platforms': {
             '*': {
                 'alias': None,
@@ -828,8 +823,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     }
     # for the benefit of createXML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
-                 'showSurvey', 'actions', 'openURL', 'notificationURL',
-                 'alertURL')
+                 'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
 
@@ -879,3 +873,41 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
                             v4Blob["fileUrls"][channel][patchKey][from_] = url
 
         return v4Blob
+
+
+class DesupportBlob(Blob):
+    """ This blob is used to inform users that their OS is no longer supported. This is available
+    on the client side since Firefox 24 (bug 843497).
+
+    The XML should look like this (whitespace for clarity & consistency only):
+        <?xml version="1.0"?>
+        <updates>
+            <update type="major" unsupported="true" detailsURL="http://moreinfo">
+            </update>
+        </updates>
+    """
+    format_ = {
+        'name': None,
+        'schema_version': None,
+        'detailsUrl': None,
+    }
+
+    def __init__(self, **kwargs):
+        # ensure schema_version is set if we init DesupportBlob directly
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 50
+
+    def shouldServeUpdate(self, updateQuery):
+        # desupport messages should always be returned
+        return True
+
+    def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        xml = ['<?xml version="1.0"?>']
+        xml.append('<updates>')
+        xml.append('    <update type="%s" unsupported="true" detailsURL="%s">' % (update_type,
+                                                                                  self['detailsUrl']))
+        xml.append('    </update>')
+        xml.append('</updates>')
+        xml = "\n".join(xml)
+        return xml
