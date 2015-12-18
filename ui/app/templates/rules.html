@@ -84,7 +84,17 @@
     <div class="left" style="float: left">
 
       <h5 title="Mapping">
-        Mapping: <b ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></b>
+        Mapping: <span ng-show="rule.mapping">
+            <b ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></b>
+            <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.mapping)">
+                <i class="glyphicon glyphicon-eye-open"></i>
+                View
+            </a>
+            <a class="btn btn-default btn-xs" href="/releases/#{{ rule.mapping }}">
+                <i class="glyphicon glyphicon-pencil"></i>
+                Edit
+            </a>
+        </span>
       </h5>
       <h5 title="Data version">
         Data version: <b>{{ rule.data_version }}</b>
