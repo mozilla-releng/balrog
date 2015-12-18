@@ -2,8 +2,6 @@
 test.done
 *.db
 .vagrant
-admin.ini
-balrog.ini
 .coverage
 htmlcov
 cef.log

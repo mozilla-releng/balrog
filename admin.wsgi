@@ -1,37 +1,33 @@
 import logging
-from os import path
-import site
-import sys
+import os
 
-mydir = path.dirname(path.abspath(__file__))
-
-site.addsitedir(mydir)
-from auslib.util import thirdparty
-thirdparty.extendsyspath()
-
-from auslib.config import AdminConfig
 import auslib.log
 
-cfg = AdminConfig(path.join(mydir, 'admin.ini'))
-errors = cfg.validate()
-if errors:
-    print >>sys.stderr, "Invalid configuration file:"
-    for err in errors:
-        print >>sys.stderr, err
-    sys.exit(1)
 
-# Logging needs to get set-up before importing the application
-# to make sure that logging done from other modules uses our Logger.
+SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "b2gbld", "stage-ffxbld", "stage-tbirdbld", "stage-b2gbld"]
+DOMAIN_WHITELIST = [
+    "download.mozilla.org", "stage.mozilla.org", "ftp.mozilla.org",
+    "ciscobinary.openh264.org", "cdmdownload.adobe.com",
+    "queue.taskcluster.net", "download.cdn.mozilla.net",
+    "mozilla-nightly-updates.s3.amazonaws.com",
+    "archive.mozilla.org",
+    "mozilla-releng-nightly-promotion-mozilla-central.b2gdroid.s3.amazonaws.com",
+]
+
+# Logging needs to be set-up before importing the application to make sure that
+# logging done from other modules uses our Logger.
 logging.setLoggerClass(auslib.log.BalrogLogger)
-logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel(), format=auslib.log.log_format)
+logging.basicConfig(level=logging.INFO, format=auslib.log.log_format)
 
-from auslib.global_state import dbo
 from auslib.admin.base import app as application
+from auslib.global_state import dbo
 
-auslib.log.cef_config = auslib.log.get_cef_config(cfg.getCefLogfile())
-dbo.setDb(cfg.getDburi())
-dbo.setupChangeMonitors(cfg.getSystemAccounts())
-dbo.setDomainWhitelist(cfg.getDomainWhitelist())
-application.config['WHITELISTED_DOMAINS'] = cfg.getDomainWhitelist()
-application.config['PAGE_TITLE'] = cfg.getPageTitle()
-application.config['SECRET_KEY'] = cfg.getSecretKey()
+# TODO: How to do cef logging in CloudOps? Do we need to?
+auslib.log.cef_config = auslib.log.get_cef_config("cef.log")
+
+dbo.setDb(os.environ["DBURI"])
+dbo.setupChangeMonitors(SYSTEM_ACCOUNTS)
+dbo.setDomainWhitelist(DOMAIN_WHITELIST)
+application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
+application.config["PAGE_TITLE"] = "Balrog Administration"
+application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
