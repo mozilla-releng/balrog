@@ -9,6 +9,8 @@ RUN apt-get -q update && \
     apt-get clean
 
 WORKDIR /app
+
+COPY . /app
 RUN python setup.py install
 
 WORKDIR /app/ui
