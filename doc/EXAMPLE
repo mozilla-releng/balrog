@@ -1,6 +1,17 @@
-How to run admin app in Docker image with uwsgi
+How to run a dev set-up with Docker:
 ----------------------------------
-docker run --net host -e DBURI=sqlite:///:memory: -e SECRET_KEY=blahblah -t -i balrog uwsgi --plugin python,http --http :8080 --mount /api=admin.wsgi --manage-script-name --check-static /app/ui/dist --static-index index.html
+1) Start a MySQL Docker image:
+# TODO: make the database persistent
+  docker run --net host -e MYSQL_DATABASE=balrog -e MYSQL_USER=balrogadmin -e MYSQL_PASSWORD=balrogadmin -e MYSQL_ROOT_PASSWORD=admin -it mysql:5.7
+2) Initialize the database:
+# TODO: insert admin user
+  docker run --net host -it bhearsum/balrog:latest python scripts/manage-db.py -d mysql://balrogadmin:balrogadmin@127.0.0.1/balrog create 
+3) Start the admin app:
+# TODO: require login
+  docker run --net host -e DBURI=mysql://balrogadmin:balrogadmin@127.0.0.1/balrog -e SECRET_KEY=blahblah -t -i bhearsum/balrog:latest uwsgi --plugin python,http --http :8080 --mount /api=admin.wsgi --manage-script-name --check-static /app/ui/dist --static-index index.html
+4) Start the public app:
+  docker run --net host -e DBURI=mysql://balrogadmin:balrogadmin@127.0.0.1/balrog -e SECRET_KEY=blahblah -t -i bhearsum/balrog:latest uwsgi --plugin python,http --http :9090 --wsgi-file balrog.wsgi
+
 
 balrog-server.py
 --------------
