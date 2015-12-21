@@ -1,3 +1,7 @@
+How to run admin app in Docker image with uwsgi
+----------------------------------
+docker run --net host -e DBURI=sqlite:///:memory: -e SECRET_KEY=blahblah -t -i balrog uwsgi --plugin python,http --http :8080 --mount /api=admin.wsgi --manage-script-name --check-static /app/ui/dist --static-index index.html
+
 balrog-server.py
 --------------
 
