@@ -5,7 +5,7 @@ How to run a dev set-up with Docker:
   # TODO: Make refreshes of UI work.
   # TODO: how to capture applog?
   docker create --net host -e DBURI=mysql://balrogadmin:balrogadmin@127.0.0.1/balrog -e SECRET_KEY=blahblah --name balrog-admin -it bhearsum/balrog:latest uwsgi --http :8080 --mount /api=admin.wsgi --manage-script-name --check-static /app/ui/dist --static-index index.html --route "^/.*$ addvar:REMOTE_USER=balrogadmin"
-  docker create --net host -e DBURI=mysql://balrogadmin:balrogadmin@127.0.0.1/balrog -e SECRET_KEY=blahblah --name balrog-public -it bhearsum/balrog:latest uwsgi --http :9090 --wsgi-file balrog.wsgi
+  docker create --net host -e DBURI=mysql://balrogadmin:balrogadmin@127.0.0.1/balrog --name balrog-public -it bhearsum/balrog:latest uwsgi --http :9090 --wsgi-file balrog.wsgi
 
 2) Initialize the Database:
   docker start balrog-database
