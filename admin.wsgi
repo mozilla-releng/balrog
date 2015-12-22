@@ -17,7 +17,7 @@ DOMAIN_WHITELIST = [
 # Logging needs to be set-up before importing the application to make sure that
 # logging done from other modules uses our Logger.
 logging.setLoggerClass(auslib.log.BalrogLogger)
-logging.basicConfig(level=logging.INFO, format=auslib.log.log_format)
+logging.basicConfig(level=logging.DEBUG, format=auslib.log.log_format)
 
 from auslib.admin.base import app as application
 from auslib.global_state import dbo
