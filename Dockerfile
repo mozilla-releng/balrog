@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get -q update && \
     apt-get -q --yes install \
+      mysql-client \
       nodejs-legacy \
       npm && \
     apt-get clean
