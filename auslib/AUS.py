@@ -69,28 +69,29 @@ class AUS:
         # mapping based on the whitelist.
         # We end up with the highest priority rule where either the whitelist
         # check passes, or there is no whitelist at all.
-        rule = rules[0]
-        for i in xrange(len(rules)):
-            rule = rules[i]
+        matching_rule = None
+        for i, rule in enumerate(rules):
             # If no whitelist is required, we're done!
             if not rule["whitelist"]:
+                matching_rule = rule
                 break
 
             # If the rule requires a whitelist, check via our whitelist blob
-            if rule['whitelist']:
+            if rule["whitelist"]:
                 self.log.debug("Matching rule requires a whitelist")
-                release = dbo.releases.getReleases(name=rule['whitelist'], limit=1)[0]
-                whitelistBlob = release['data']
-                # If we pass the check, we're done!
+                release = dbo.releases.getReleases(name=rule["whitelist"], limit=1)[0]
+                whitelistBlob = release["data"]
+                # If we pass the check, we"re done!
                 if whitelistBlob.shouldServeUpdate(updateQuery):
+                    matching_rule = rule
                     break
 
-        self.log.debug("Matching rule: %s" % rule)
+        self.log.debug("Matching rule: %s" % matching_rule)
 
         # There's a few cases where we have a matching rule but don't want
         # to serve an update:
         # 1) No mapping.
-        if not rule['mapping']:
+        if not matching_rule['mapping']:
             self.log.debug("Matching rule points at null mapping.")
             return None, None
 
@@ -98,19 +99,19 @@ class AUS:
         # serve every request an update
         # backgroundRate=100 means all requests are served
         # backgroundRate=25 means only one quarter of requests are served
-        if not updateQuery['force'] and rule['backgroundRate'] < 100:
+        if not updateQuery['force'] and matching_rule['backgroundRate'] < 100:
             self.log.debug("backgroundRate < 100, rolling the dice")
-            if self.rand.getInt() >= rule['backgroundRate']:
+            if self.rand.getInt() >= matching_rule['backgroundRate']:
                 self.log.debug("request was dropped")
                 return None, None
 
         # 3) Incoming release is older than the one in the mapping, defined as one of:
         #    * version decreases
         #    * version is the same and buildID doesn't increase
-        release = dbo.releases.getReleases(name=rule['mapping'], limit=1)[0]
+        release = dbo.releases.getReleases(name=matching_rule['mapping'], limit=1)[0]
         blob = release['data']
         if not blob.shouldServeUpdate(updateQuery):
             return None, None
 
         self.log.debug("Returning release %s", release['name'])
-        return blob, rule['update_type']
+        return blob, matching_rule['update_type']
