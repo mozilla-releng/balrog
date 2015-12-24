@@ -792,14 +792,19 @@ class Rules(AUSTable):
             # If a rule has a whitelist attached to it, the rule is only
             # considered "matching" if it passes the whitelist check.
             # The decision about matching or not is delegated to the whitelist blob.
-            if rule["whitelist"]:
+            if rule.get("whitelist"):
                 self.log.debug("Matching rule requires a whitelist")
-                release = dbo.releases.getReleases(name=rule["whitelist"], limit=1)[0]
-                whitelistBlob = release["data"]
-                if not whitelistBlob.shouldServeUpdate(updateQuery):
-                    continue
+                try:
+                    whitelist = dbo.releases.getReleaseBlob(name=rule["whitelist"], transaction=transaction)
+                    if whitelist and not whitelist.shouldServeUpdate(updateQuery):
+                        continue
+                # It shouldn't be possible for the whitelist blob not to exist,
+                # but just in case...
+                except KeyError:
+                    self.log.warning("Got exeception when looking for whitelist blob %s", rule["whitelist"], exc_info=True)
 
             matchingRules.append(rule)
+
         self.log.debug("Reduced matches:")
         if self.log.isEnabledFor(logging.DEBUG):
             for r in matchingRules:
