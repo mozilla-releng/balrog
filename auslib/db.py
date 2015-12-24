@@ -14,7 +14,7 @@ from sqlalchemy.sql.expression import null
 import migrate.versioning.schema
 import migrate.versioning.api
 
-from auslib.global_state import cache
+from auslib.global_state import cache, dbo
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import createBlob
 from auslib.log import cef_event, CEF_ALERT
@@ -789,6 +789,16 @@ class Rules(AUSTable):
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
                 continue
+            # If a rule has a whitelist attached to it, the rule is only
+            # considered "matching" if it passes the whitelist check.
+            # The decision about matching or not is delegated to the whitelist blob.
+            if rule["whitelist"]:
+                self.log.debug("Matching rule requires a whitelist")
+                release = dbo.releases.getReleases(name=rule["whitelist"], limit=1)[0]
+                whitelistBlob = release["data"]
+                if not whitelistBlob.shouldServeUpdate(updateQuery):
+                    continue
+
             matchingRules.append(rule)
         self.log.debug("Reduced matches:")
         if self.log.isEnabledFor(logging.DEBUG):
