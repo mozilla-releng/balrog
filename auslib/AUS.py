@@ -58,21 +58,34 @@ class AUS:
             fallbackChannel=getFallbackChannel(updateQuery['channel'])
         )
 
-        # XXX throw any N->N update rules and keep the highest priority remaining one
+        # TODO: throw any N->N update rules and keep the highest priority remaining one?
         if len(rules) < 1:
             return None, None
 
         rules = sorted(rules, key=lambda rule: rule['priority'], reverse=True)
-        rule = rules[0]
-        self.log.debug("Matching rule: %s" % rule)
 
-        # If the rule requires a whitelist, check via our whitelist blob
-        if rule['whitelist']:
-            self.log.debug("Matching rule requires a whitelist")
-            release = dbo.releases.getReleases(name=rule['whitelist'], limit=1)[0]
-            whitelistBlob = release['data']
-            if not whitelistBlob.shouldServeUpdate(updateQuery):
-                return None, None
+        # If a rule has a whitelist attached to it, we want to process it and
+        # fall through to the next rule if the incoming request is refused the
+        # mapping based on the whitelist.
+        # We end up with the highest priority rule where either the whitelist
+        # check passes, or there is no whitelist at all.
+        rule = rules[0]
+        for i in xrange(len(rules)):
+            rule = rules[i]
+            # If no whitelist is required, we're done!
+            if not rule["whitelist"]:
+                break
+
+            # If the rule requires a whitelist, check via our whitelist blob
+            if rule['whitelist']:
+                self.log.debug("Matching rule requires a whitelist")
+                release = dbo.releases.getReleases(name=rule['whitelist'], limit=1)[0]
+                whitelistBlob = release['data']
+                # If we pass the check, we're done!
+                if whitelistBlob.shouldServeUpdate(updateQuery):
+                    break
+
+        self.log.debug("Matching rule: %s" % rule)
 
         # There's a few cases where we have a matching rule but don't want
         # to serve an update:
