@@ -24,7 +24,7 @@ setup(
         "sqlalchemy==0.7.1",
         "sqlalchemy-migrate==0.7.2",
         "tempita==0.5.1",
-        "uwsgi",
+        "uwsgi==2.0.11.2",
         "Werkzeug==0.11.2",
         "wtforms==2.1",
     ],

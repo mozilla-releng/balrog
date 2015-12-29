@@ -25,7 +25,7 @@ from auslib.global_state import cache, dbo
 from auslib.web.base import app as application
 
 # TODO: How to do cef logging in CloudOps? Do we need to?
-auslib.log.cef_config = auslib.log.get_cef_config("cef.log")
+auslib.log.cef_config = auslib.log.get_cef_config("syslog")
 
 cache.make_cache("blob", 500, 3600)
 cache.make_cache("blob_version", 500, 60)

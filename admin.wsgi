@@ -24,7 +24,7 @@ from auslib.admin.base import app as application
 from auslib.global_state import dbo
 
 # TODO: How to do cef logging in CloudOps? Do we need to?
-auslib.log.cef_config = auslib.log.get_cef_config("cef.log")
+auslib.log.cef_config = auslib.log.get_cef_config("syslog")
 
 dbo.setDb(os.environ["DBURI"])
 dbo.setupChangeMonitors(SYSTEM_ACCOUNTS)
