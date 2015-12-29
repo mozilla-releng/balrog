@@ -3,26 +3,8 @@ provide updates to Firefox. It uses a database to store a series of rules
 which map update requests to releases. Documentation is available at
 https://wiki.mozilla.org/Balrog.
 
-
-# TODO: Test on Windows
-# TODO: Move to script or makefile?
-How to run a Balrog dev environment with Docker:
-1) Create Database and App containers:
-  docker create --net host -e MYSQL_DATABASE=balrog -e MYSQL_USER=balrogadmin -e MYSQL_PASSWORD=balrogadmin -e MYSQL_ROOT_PASSWORD=admin --name balrog-database -v /var/lib/mysql -it mysql:5.7
-  docker create --net host -e DBURI=mysql://balrogadmin:balrogadmin@127.0.0.1/balrog -e SECRET_KEY=blahblah --name balrog-admin -it bhearsum/balrog:latest uwsgi --ini /app/uwsgi/admin.ini
-  docker create --net host -e DBURI=mysql://balrogadmin:balrogadmin@127.0.0.1/balrog --name balrog-public -it bhearsum/balrog:latest uwsgi --ini /app/uwsgi/public.ini
-
-2) Initialize the Database:
-  docker start balrog-database
-  # Wait for the database to come up
-  sleep 30
-  docker run --rm --net host -it bhearsum/balrog:latest python scripts/manage-db.py -d mysql://balrogadmin:balrogadmin@127.0.0.1/balrog create
-  docker run --rm --net host -it bhearsum/balrog:latest sh -c 'exec mysql -h 127.0.0.1 -P 3306 -u balrogadmin --password=balrogadmin balrog < sample-data.sql'
-  docker run --rm --net host -it bhearsum/balrog:latest sh -c 'exec mysql -h 127.0.0.1 -P 3306 -u balrogadmin --password=balrogadmin -e "insert into permissions (username, permission, data_version) values (\"balrogadmin\", \"admin\", 0);" balrog'
-
-3) Start the apps:
-  docker start balrog-admin
-  docker start balrog-public
+To run a development environment you must have Docker installed (if you're on Windows or Mac you probably want Docker Machine as well). Once these prerequisites are installed, run the following command to create the necessary images:
+  bash scripts/create-docker-containers.sh
 
 Now you should be able to access the admin interface at:
 http://127.0.0.1:8080
