@@ -1,7 +1,19 @@
 import logging
 from os import path
+from os import getenv
 import site
 import sys
+
+try:
+    import newrelic.agent
+except ImportError:
+    newrelic = False
+if newrelic:
+    newrelic_ini = getenv('NEWRELIC_PYTHON_INI_FILE', False)
+    if newrelic_ini:
+        newrelic.agent.initialize(newrelic_ini)
+    else:
+        newrelic = False
 
 mydir = path.dirname(path.abspath(__file__))
 
@@ -9,10 +21,10 @@ site.addsitedir(mydir)
 from auslib.util import thirdparty
 thirdparty.extendsyspath()
 
-from auslib.config import AdminConfig
+from auslib.config import ClientConfig
 import auslib.log
 
-cfg = AdminConfig(path.join(mydir, 'admin.ini'))
+cfg = ClientConfig(path.join(mydir, 'balrog.ini'))
 errors = cfg.validate()
 if errors:
     print >>sys.stderr, "Invalid configuration file:"
@@ -25,13 +37,17 @@ if errors:
 logging.setLoggerClass(auslib.log.BalrogLogger)
 logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel(), format=auslib.log.log_format)
 
-from auslib.global_state import dbo
-from auslib.admin.base import app as application
+from auslib.global_state import dbo, cache
+from auslib.web.base import app as application
+
+for cache_name, cache_cfg in cfg.getCaches().iteritems():
+    cache.make_cache(cache_name, *cache_cfg)
 
 auslib.log.cef_config = auslib.log.get_cef_config(cfg.getCefLogfile())
 dbo.setDb(cfg.getDburi())
-dbo.setupChangeMonitors(cfg.getSystemAccounts())
 dbo.setDomainWhitelist(cfg.getDomainWhitelist())
 application.config['WHITELISTED_DOMAINS'] = cfg.getDomainWhitelist()
-application.config['PAGE_TITLE'] = cfg.getPageTitle()
-application.config['SECRET_KEY'] = cfg.getSecretKey()
+application.config['SPECIAL_FORCE_HOSTS'] = cfg.getSpecialForceHosts()
+
+if newrelic:
+    application = newrelic.agent.wsgi_application()(application)
