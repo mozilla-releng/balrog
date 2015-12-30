@@ -49,6 +49,7 @@ class RulesAPIView(AdminView):
         what = dict(backgroundRate=form.backgroundRate.data,
                     mapping=form.mapping.data,
                     priority=form.priority.data,
+                    alias=form.alias.data,
                     product=form.product.data,
                     version=form.version.data,
                     buildID=form.buildID.data,
@@ -130,7 +131,7 @@ class SingleRuleView(AdminView):
             if (request.json and k in request.json) or k in request.form:
                 what[k] = v
 
-        dbo.rules.updateRule(changed_by=changed_by, rule_id=id_or_alias, what=what,
+        dbo.rules.updateRule(changed_by=changed_by, id_or_alias=id_or_alias, what=what,
                              old_data_version=form.data_version.data, transaction=transaction)
         # find out what the next data version is
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
@@ -160,7 +161,7 @@ class SingleRuleView(AdminView):
             cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
             return Response(status=401, response=msg)
 
-        dbo.rules.deleteRule(changed_by=changed_by, rule_id=id_or_alias,
+        dbo.rules.deleteRule(changed_by=changed_by, id_or_alias=id_or_alias,
                              old_data_version=form.data_version.data, transaction=transaction)
 
         return Response(status=200)
@@ -205,6 +206,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             'id': 'rule_id',
             'mapping': 'mapping',
             'priority': 'priority',
+            'alias': 'alias',
             'product': 'product',
             'version': 'version',
             'background_rate': 'backgroundRate',
@@ -268,6 +270,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             backgroundRate=change['backgroundRate'],
             mapping=change['mapping'],
             priority=change['priority'],
+            alias=change['alias'],
             product=change['product'],
             version=change['version'],
             buildID=change['buildID'],
@@ -283,7 +286,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             headerArchitecture=change['headerArchitecture'],
         )
 
-        dbo.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
+        dbo.rules.updateRule(changed_by=changed_by, id_or_alias=rule_id, what=what,
                              old_data_version=old_data_version, transaction=transaction)
 
         return Response("Excellent!")

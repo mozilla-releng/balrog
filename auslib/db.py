@@ -809,13 +809,13 @@ class Rules(AUSTable):
             return None
         return rules[0]
 
-    def updateRule(self, changed_by, rule_id, what, old_data_version, transaction=None):
+    def updateRule(self, changed_by, id_or_alias, what, old_data_version, transaction=None):
         """ Update the rule given by rule_id with the parameter what """
-        where = [self.rule_id == rule_id]
+        where = [(self.alias == id_or_alias) | (self.rule_id == id_or_alias)]
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
-    def deleteRule(self, changed_by, rule_id, old_data_version, transaction=None):
-        where = [self.rule_id == rule_id]
+    def deleteRule(self, changed_by, id_or_alias, old_data_version, transaction=None):
+        where = [(self.alias == id_or_alias) | (self.rule_id == id_or_alias)]
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
 
