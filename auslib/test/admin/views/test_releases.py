@@ -696,7 +696,7 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         self.assertEqual(row['data_version'], 6)
 
     def testPostRevisionRollbackBadRequests(self):
-        # when posting you need both the rule_id and the change_id
+        # when posting you need both the release name and the change_id
         ret = self._post('/releases/CRAZYNAME/revisions', json.dumps({'change_id': 1}), content_type="application/json")
         self.assertEquals(ret.status_code, 404)
 

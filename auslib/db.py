@@ -798,7 +798,7 @@ class Rules(AUSTable):
         return matchingRules
 
     def getRule(self, id_or_alias, transaction=None):
-        """ Returns the unique rule that matches the give rule_id """
+        """ Returns the unique rule that matches the give rule_id or alias."""
         rules = self.select(
             where=[(self.alias == id_or_alias) | (self.rule_id == id_or_alias)],
             transaction=transaction
@@ -810,7 +810,7 @@ class Rules(AUSTable):
         return rules[0]
 
     def updateRule(self, changed_by, id_or_alias, what, old_data_version, transaction=None):
-        """ Update the rule given by rule_id with the parameter what """
+        """ Update the rule given by rule_id or alias with the parameter what """
         where = [(self.alias == id_or_alias) | (self.rule_id == id_or_alias)]
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 

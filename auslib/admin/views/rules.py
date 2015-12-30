@@ -84,7 +84,7 @@ class SingleRuleView(AdminView):
     # changed_by is available via the requirelogin decorator
     @requirelogin
     def _post(self, id_or_alias, transaction, changed_by):
-        # Verify that the rule_id exists.
+        # Verify that the rule_id or alias exists.
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
             return Response(status=404)
@@ -144,7 +144,7 @@ class SingleRuleView(AdminView):
 
     @requirelogin
     def _delete(self, id_or_alias, transaction, changed_by):
-        # Verify that the rule_id exists.
+        # Verify that the rule_id or alias exists.
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
             return Response(status=404)
