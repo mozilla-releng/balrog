@@ -637,6 +637,7 @@ class Rules(AUSTable):
     def __init__(self, metadata, dialect):
         self.table = Table('rules', metadata,
                            Column('rule_id', Integer, primary_key=True, autoincrement=True),
+                           Column('alias', String(50), unique=True),
                            Column('priority', Integer),
                            Column('mapping', String(100)),
                            Column('backgroundRate', Integer),
@@ -796,9 +797,12 @@ class Rules(AUSTable):
                 self.log.debug(r)
         return matchingRules
 
-    def getRuleById(self, rule_id, transaction=None):
+    def getRule(self, id_or_alias, transaction=None):
         """ Returns the unique rule that matches the give rule_id """
-        rules = self.select(where=[self.rule_id == rule_id], transaction=transaction)
+        rules = self.select(
+            where=[(self.alias == id_or_alias) | (self.rule_id == id_or_alias)],
+            transaction=transaction
+        )
         found = len(rules)
         if found > 1 or found == 0:
             self.log.debug("Found %s rules, should have been 1", found)

@@ -70,8 +70,8 @@ class RulesAPIView(AdminView):
 class SingleRuleView(AdminView):
     """ /rules/:id"""
 
-    def get(self, rule_id):
-        rule = dbo.rules.getRuleById(rule_id=rule_id)
+    def get(self, id_or_alias):
+        rule = dbo.rules.getRule(id_or_alias)
         if not rule:
             return Response(status=404, response="Requested rule does not exist")
 
@@ -82,9 +82,9 @@ class SingleRuleView(AdminView):
 
     # changed_by is available via the requirelogin decorator
     @requirelogin
-    def _post(self, rule_id, transaction, changed_by):
+    def _post(self, id_or_alias, transaction, changed_by):
         # Verify that the rule_id exists.
-        rule = dbo.rules.getRuleById(rule_id, transaction=transaction)
+        rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
             return Response(status=404)
         form = EditRuleForm()
@@ -130,10 +130,10 @@ class SingleRuleView(AdminView):
             if (request.json and k in request.json) or k in request.form:
                 what[k] = v
 
-        dbo.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
+        dbo.rules.updateRule(changed_by=changed_by, rule_id=id_or_alias, what=what,
                              old_data_version=form.data_version.data, transaction=transaction)
         # find out what the next data version is
-        rule = dbo.rules.getRuleById(rule_id, transaction=transaction)
+        rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         new_data_version = rule['data_version']
         response = make_response(json.dumps(dict(new_data_version=new_data_version)))
         response.headers['Content-Type'] = 'application/json'
@@ -142,9 +142,9 @@ class SingleRuleView(AdminView):
     _put = _post
 
     @requirelogin
-    def _delete(self, rule_id, transaction, changed_by):
+    def _delete(self, id_or_alias, transaction, changed_by):
         # Verify that the rule_id exists.
-        rule = dbo.rules.getRuleById(rule_id, transaction=transaction)
+        rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
             return Response(status=404)
 
@@ -160,7 +160,7 @@ class SingleRuleView(AdminView):
             cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
             return Response(status=401, response=msg)
 
-        dbo.rules.deleteRule(changed_by=changed_by, rule_id=rule_id,
+        dbo.rules.deleteRule(changed_by=changed_by, rule_id=id_or_alias,
                              old_data_version=form.data_version.data, transaction=transaction)
 
         return Response(status=200)
@@ -169,8 +169,9 @@ class SingleRuleView(AdminView):
 class RuleHistoryAPIView(HistoryAdminView):
     """/rules/:id/revisions"""
 
+    # TODO: How does History work with alias? Maybe it *must* be retrieved by ID? Or take the current alias and then figure out its ID?
     def get(self, rule_id):
-        rule = dbo.rules.getRuleById(rule_id=rule_id)
+        rule = dbo.rules.getRule(rule_id)
         if not rule:
             return Response(status=404,
                             response='Requested rule does not exist')
@@ -251,7 +252,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             return Response(status=404, response='bad change_id')
         if change['rule_id'] != rule_id:
             return Response(status=404, response='bad rule_id')
-        rule = dbo.rules.getRuleById(rule_id=rule_id)
+        rule = dbo.rules.getRule(rule_id)
         if rule is None:
             return Response(status=404, response='bad rule_id')
         # Verify that the user has permission for the existing rule _and_ what the rule would become.

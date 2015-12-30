@@ -69,6 +69,32 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
             headerArchitecture=None,
             data_version=1,
             rule_id=1,
+            alias=None,
+            whitelist=None,
+        )
+        self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetRuleByAlias(self):
+        ret = self._get("/rules/frodo")
+        expected = dict(
+            backgroundRate=100,
+            mapping="b",
+            priority=100,
+            product=None,
+            version="3.3",
+            buildID=None,
+            channel=None,
+            locale=None,
+            distribution=None,
+            buildTarget="d",
+            osVersion=None,
+            distVersion=None,
+            comment=None,
+            update_type="minor",
+            headerArchitecture=None,
+            data_version=1,
+            rule_id=2,
+            alias="frodo",
             whitelist=None,
         )
         self.assertEquals(json.loads(ret.data), expected)

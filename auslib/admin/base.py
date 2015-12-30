@@ -49,7 +49,7 @@ app.add_url_rule("/users/<username>/permissions/<path:permission>", view_func=Sp
 # Some permissions may start with a slash, and the <path> converter won"t match them, so we need an extra rule to cope.
 app.add_url_rule("/users/<username>/permissions//<path:permission>", view_func=SpecificPermissionView.as_view("specific_permission2"))
 app.add_url_rule("/rules", view_func=RulesAPIView.as_view("rules"))
-app.add_url_rule("/rules/<rule_id>", view_func=SingleRuleView.as_view("rule"))
+app.add_url_rule("/rules/<id_or_alias>", view_func=SingleRuleView.as_view("rule"))
 app.add_url_rule("/rules/<rule_id>/revisions", view_func=RuleHistoryAPIView.as_view("rules_revisions"))
 app.add_url_rule("/releases", view_func=ReleasesAPIView.as_view("releases"))
 app.add_url_rule("/releases/<release>", view_func=SingleReleaseView.as_view("single_release"))
