@@ -30,7 +30,7 @@ if [ "$?" == "0" ]; then
     echo "balrog-admin container already exists, skipping..."
 else
     echo "Creating balrog-admin container..."
-    docker create --net host -e DBURI=mysql://balrogadmin:balrogadmin@127.0.0.1/balrog -e SECRET_KEY=blahblah --name balrog-admin -v $balrog_repo:/app -it bhearsum/balrog:latest uwsgi --ini /app/uwsgi/admin.ini
+    docker create --net host -e DBURI=mysql://balrogadmin:balrogadmin@127.0.0.1/balrog -e SECRET_KEY=blahblah --name balrog-admin -v $balrog_repo:/app -it bhearsum/balrog:latest uwsgi --ini /app/uwsgi/admin.ini --python-autoreload 1
     docker start balrog-admin
 fi
 
@@ -39,6 +39,6 @@ if [ "$?" == "0" ]; then
     echo "balrog-public container already exists, skipping..."
 else
     echo "Creating balrog-public container..."
-    docker create --net host -e DBURI=mysql://balrogadmin:balrogadmin@127.0.0.1/balrog --name balrog-public -v $balrog_repo:/app -it bhearsum/balrog:latest uwsgi --ini /app/uwsgi/public.ini
+    docker create --net host -e DBURI=mysql://balrogadmin:balrogadmin@127.0.0.1/balrog --name balrog-public -v $balrog_repo:/app -it bhearsum/balrog:latest uwsgi --ini /app/uwsgi/public.ini --python-autoreload 1
     docker start balrog-public
 fi
