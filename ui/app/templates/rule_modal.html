@@ -5,6 +5,11 @@
 </div>
 <div class="modal-body">
   <form role="form">
+    <div class="form-group" ng-class="{'has-error': errors.alias}">
+      <label for="id_distribution">Alias</label>
+      <input type="text" class="form-control" id="id_distribution" ng-model="rule.alias">
+      <p class="help-block" ng-show="errors.alias">{{ errors.alias.join(', ') }}</p>
+    </div>
     <div class="form-group" ng-class="{'has-error': errors.product}">
       <label for="id_product">Product</label>
       <input type="text" class="form-control" id="id_product" ng-model="rule.product">

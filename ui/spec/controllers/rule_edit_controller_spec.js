@@ -22,6 +22,7 @@ describe("controller: RuleEditCtrl", function() {
     "osVersion": null,
     "distribution": null,
     "channel": "nightly",
+    "alias": null,
     "distVersion": null,
     "whitelist": null
   };
