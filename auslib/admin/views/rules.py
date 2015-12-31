@@ -170,7 +170,6 @@ class SingleRuleView(AdminView):
 class RuleHistoryAPIView(HistoryAdminView):
     """/rules/:id/revisions"""
 
-    # TODO: How does History work with alias? Maybe it *must* be retrieved by ID? Or take the current alias and then figure out its ID?
     def get(self, rule_id):
         rule = dbo.rules.getRule(rule_id)
         if not rule:
@@ -241,8 +240,6 @@ class RuleHistoryAPIView(HistoryAdminView):
 
     @requirelogin
     def _post(self, rule_id, transaction, changed_by):
-        rule_id = int(rule_id)
-
         change_id = None
         if request.json:
             change_id = request.json.get('change_id')

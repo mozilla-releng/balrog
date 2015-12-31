@@ -296,6 +296,10 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         got = json.loads(ret.data)
         self.assertEquals(got["count"], 0)
 
+    def testGetRefusesAlias(self):
+        ret = self._get("/rules/frodo/revisions")
+        self.assertEquals(ret.status_code, 404)
+
     def testGetRevisions(self):
         # Make some changes to a rule
         ret = self._post(

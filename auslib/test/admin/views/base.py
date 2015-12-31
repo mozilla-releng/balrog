@@ -110,5 +110,4 @@ class JSONTestMixin(object):
         if "format" not in qs:
             qs["format"] = "json"
         ret = self.client.get(url, query_string=qs, headers=headers)
-        self.assertEquals(ret.mimetype, 'application/json')
         return ret
