@@ -116,7 +116,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                 if product != releaseInfo['product']:
                     msg = "Product name '%s' doesn't match the one on the release object ('%s') for release '%s'" % (product, releaseInfo['product'], rel)
                     cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
-                    return Response(status=400, response=json.dumps({"product": [msg]}))
+                    return Response(status=400, response=msg)
                 if 'hashFunction' in releaseInfo['data'] and hashFunction and hashFunction != releaseInfo['data']['hashFunction']:
                     msg = "hashFunction '{0}' doesn't match the one on the release object ('{1}') for release '{2}'".format(
                         hashFunction, releaseInfo["data"]["hashFunction"], rel
@@ -137,7 +137,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
             except ValueError as e:
                 msg = "Couldn't create release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
-                return Response(status=400, response=json.dumps({"data": [msg]}))
+                return Response(status=400, response=msg)
             old_data_version = 1
 
         # If the version doesn't match, just update it. This will be the case for nightlies
@@ -151,7 +151,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
             except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
-                return Response(status=400, response=json.dumps({"data": [msg]}))
+                return Response(status=400, response=msg)
             old_data_version += 1
 
         extraArgs = {}
@@ -162,7 +162,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         except (OutdatedDataError, ValueError) as e:
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
-            return Response(status=400, response=json.dumps({"data": [msg]}))
+            return Response(status=400, response=msg)
 
     new_data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]['data_version']
     if new:
@@ -231,7 +231,7 @@ class SingleReleaseView(AdminView):
         form = CompleteReleaseForm()
         if not form.validate():
             cef_event("Bad input", CEF_WARN, errors=form.errors)
-            return Response(status=400, response=form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
 
         blob = createBlob(form.blob.data)
         if dbo.releases.getReleases(name=release, limit=1):
