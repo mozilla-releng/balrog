@@ -231,7 +231,7 @@ class SingleReleaseView(AdminView):
         form = CompleteReleaseForm()
         if not form.validate():
             cef_event("Bad input", CEF_WARN, errors=form.errors)
-            return Response(status=400, response=form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
 
         blob = createBlob(form.blob.data)
         if dbo.releases.getReleases(name=release, limit=1):
@@ -243,7 +243,7 @@ class SingleReleaseView(AdminView):
             except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
-                return Response(status=400, response=msg)
+                return Response(status=400, response=json.dumps({"data": [msg]}))
             data_version += 1
             return Response(json.dumps(dict(new_data_version=data_version)), status=200)
         else:
@@ -254,7 +254,7 @@ class SingleReleaseView(AdminView):
             except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
-                return Response(status=400, response=msg)
+                return Response(status=400, response=json.dumps({"data": [msg]}))
             return Response(status=201)
 
     @requirelogin
@@ -438,7 +438,7 @@ class ReleasesAPIView(AdminView):
         except ValueError as e:
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg)
-            return Response(status=400, response=msg)
+            return Response(status=400, response=json.dumps({"data": [msg]}))
 
         release = dbo.releases.getReleases(
             name=name, transaction=transaction, limit=1
