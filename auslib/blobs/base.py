@@ -1,4 +1,8 @@
+from os import path
+
 import simplejson as json
+
+import jsonschema
 
 import logging
 log = logging.getLogger(__name__)
@@ -93,12 +97,26 @@ class Blob(dict):
 
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(self.__class__.__name__)
+        self.cached_schemas = {}
         dict.__init__(self, *args, **kwargs)
 
     def isValid(self):
         """Decides whether or not this blob is valid based."""
         self.log.debug('Validating blob %s' % self)
+        if hasattr(self, "jsonschema"):
+            schema = self.getSchema()
+            # raises exception if broken
+            jsonschema.validate(self, schema)
+            return True
         return isValidBlob(self.format_, self)
+
+    def getSchema(self):
+        if self.jsonschema in self.cached_schemas:
+            return self.cached_schemas[self.jsonschema]
+
+        schema = json.load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
+        self.cached_schemas[self.jsonschema] = self.cached_schemas
+        return schema
 
     def loadJSON(self, data):
         """Replaces this blob's contents with parsed contents of the json

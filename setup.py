@@ -18,6 +18,7 @@ setup(
         "flask-wtf==0.12",
         "itsdangerous==0.24",
         "jinja2==2.5.5",
+        "jsonschema==2.5.1",
         "mysql-python==1.2.3",
         "repoze.lru==0.6",
         "simplejson==2.0.9",

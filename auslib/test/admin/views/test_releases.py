@@ -1,5 +1,6 @@
 import mock
 import simplejson as json
+import unittest
 
 from sqlalchemy import select
 
@@ -382,6 +383,9 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._get("/releases/c/builds/h/u")
         self.assertStatusCode(ret, 404)
 
+    # FIXME: We shouldn't rely on 500 to validate behaviour. This test should fake a 400 instead.
+    # Currently, causing a 400 in this will NOT make version revert to the original value. Need to
+    # fix the bug at the same time as changing the test.
     def testLocaleRevertsPartialUpdate(self):
         data = json.dumps(dict(complete=dict(filesize=1)))
         with mock.patch('auslib.global_state.dbo.releases.addLocaleToRelease') as r:

@@ -20,7 +20,6 @@
         },
         "vendors": {
             "type": "object",
-            "additionalProperties": false,
             "properties": {
                 "vendorName": {
                     "type": "object",
