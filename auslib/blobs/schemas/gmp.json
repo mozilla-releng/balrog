@@ -12,7 +12,8 @@
         },
         "schema_version": {
             "type": "number",
-            "description": "Blob identifier number"
+            "description": "Blob identifier number",
+            "enum": [1000]
         },
         "hashFunction": {
             "type": "string",

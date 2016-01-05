@@ -12,7 +12,8 @@
         },
         "schema_version": {
             "type": "number",
-            "description": "Blob identifier number"
+            "description": "Blob identifier number",
+            "enum": [3000]
         },
         "whitelist": {
             "type": "array",
