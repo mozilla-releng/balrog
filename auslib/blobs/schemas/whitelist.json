@@ -1,0 +1,33 @@
+{
+    "title": "Whitelist Blob",
+    "type": "object",
+    "required": ["name", "schema_version", "whitelist"],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Human readable identifier",
+            "minLength": 1,
+            "maxLength": 100
+        },
+        "schema_version": {
+            "type": "number",
+            "description": "Blob identifier number"
+        },
+        "whitelist": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": ["imei"],
+                "additionalProperties": false,
+                "properties": {
+                    "imei": {
+                        "type": "string",
+                        "description": ""
+                    }
+                }
+            }
+        }
+    }
+}

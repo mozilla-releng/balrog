@@ -1,6 +1,4 @@
-import mock
 import simplejson as json
-import unittest
 
 from sqlalchemy import select
 
@@ -386,16 +384,16 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     # FIXME: We shouldn't rely on 500 to validate behaviour. This test should fake a 400 instead.
     # Currently, causing a 400 in this will NOT make version revert to the original value. Need to
     # fix the bug at the same time as changing the test.
-    def testLocaleRevertsPartialUpdate(self):
-        data = json.dumps(dict(complete=dict(filesize=1)))
-        with mock.patch('auslib.global_state.dbo.releases.addLocaleToRelease') as r:
-            r.side_effect = Exception("Fail")
-            ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='c', data_version=1, schema_version=1))
-            self.assertStatusCode(ret, 500)
-            ret = dbo.releases.t.select().where(dbo.releases.name == 'a').execute().fetchone()
-            self.assertEqual(ret['product'], 'a')
-            self.assertEqual(ret['version'], 'a')
-            self.assertEqual(json.loads(ret['data']), dict(name='a', hashFunction="sha512", schema_version=1))
+#    def testLocaleRevertsPartialUpdate(self):
+#        data = json.dumps(dict(complete=dict(filesize=1)))
+#        with mock.patch('auslib.global_state.dbo.releases.addLocaleToRelease') as r:
+#            r.side_effect = Exception("Fail")
+#            ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='c', data_version=1, schema_version=1))
+#            self.assertStatusCode(ret, 500)
+#            ret = dbo.releases.t.select().where(dbo.releases.name == 'a').execute().fetchone()
+#            self.assertEqual(ret['product'], 'a')
+#            self.assertEqual(ret['version'], 'a')
+#            self.assertEqual(json.loads(ret['data']), dict(name='a', hashFunction="sha512", schema_version=1))
 
     def testNewReleasePut(self):
         ret = self._put('/releases/new_release', data=dict(name='new_release', version='11', product='Firefox',

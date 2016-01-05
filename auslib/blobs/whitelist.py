@@ -5,15 +5,7 @@ log = logging.getLogger(__name__)
 
 
 class WhitelistBlobV1(Blob):
-    format_ = {
-        'name': None,
-        'schema_version': None,
-        'whitelist': [
-            {
-                'imei': None
-            }
-        ]
-    }
+    jsonschema = "whitelist.json"
 
     def __init__(self, **kwargs):
         Blob.__init__(self, **kwargs)
