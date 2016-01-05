@@ -65,7 +65,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 400)
 
     def testReleasePostCreatesNewReleasev1(self):
-        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
+        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e', hashFunction="sha512"))
         ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=1))
         self.assertStatusCode(ret, 201)
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
@@ -75,6 +75,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret['data']), json.loads("""
 {
     "name": "e",
+    "hashFunction": "sha512",
     "schema_version": 1,
     "bouncerProducts": {
         "linux": "foo"
@@ -83,7 +84,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testReleasePostCreatesNewReleasev2(self):
-        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
+        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e', hashFunction="sha512"))
         ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=2))
         self.assertStatusCode(ret, 201)
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
@@ -93,6 +94,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret['data']), json.loads("""
 {
     "name": "e",
+    "hashFunction": "sha512",
     "schema_version": 2,
     "bouncerProducts": {
         "linux": "foo"
@@ -221,13 +223,14 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         data = json.dumps(dict(complete=dict(filesize='678')))
         # setting schema_version in the incoming blob is a hack for testing
         # SingleLocaleView._put() doesn't give us access to the form
-        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', alias='["p2"]', schema_version=1))
+        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', alias='["p2"]', schema_version=1, hashFunction="sha512"))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'e').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "e",
+    "hashFunction": "sha512",
     "schema_version": 1,
     "platforms": {
         "p": {
@@ -400,6 +403,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
                                                            blob="""
 {
     "name": "a",
+    "hashFunction": "sha512",
     "schema_version": 1,
     "platforms": {
         "p": {
@@ -421,6 +425,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(json.loads(r[0]['data']), json.loads("""
 {
     "name": "a",
+    "hashFunction": "sha512",
     "schema_version": 1,
     "platforms": {
         "p": {
@@ -573,7 +578,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testReleasesPost(self):
-        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e', schema_version=1))
+        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e', schema_version=1, hashFunction="sha512"))
         ret = self._post('/releases', data=dict(blob=data, name="e", product='e', version='e'))
         self.assertStatusCode(ret, 201)
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
@@ -583,6 +588,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret['data']), json.loads("""
 {
     "name": "e",
+    "hashFunction": "sha512",
     "schema_version": 1,
     "bouncerProducts": {
         "linux": "foo"

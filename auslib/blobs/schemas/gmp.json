@@ -51,11 +51,7 @@
                                             "required": ["filesize", "hashValue", "fileUrl"],
                                             "properties": {
                                                 "filesize": {
-                                                    "anyOf": [
-                                                        {
-                                                            "type": ["string", "number"]
-                                                        }
-                                                    ],
+                                                    "type": "number",
                                                     "description": ""
                                                 },
                                                 "hashValue": {

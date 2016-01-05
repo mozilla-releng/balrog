@@ -1,5 +1,7 @@
 import simplejson as json
 
+from jsonschema import ValidationError
+
 from sqlalchemy.sql.expression import null
 
 from flask import Response, jsonify, make_response, request
@@ -159,7 +161,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
             extraArgs['alias'] = alias
         try:
             commitCallback(rel, product, version, incomingData, releaseInfo['data'], old_data_version, extraArgs)
-        except (OutdatedDataError, ValueError) as e:
+        except (ValidationError, OutdatedDataError, ValueError) as e:
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
             return Response(status=400, response=msg)
@@ -374,7 +376,7 @@ class ReleaseHistoryView(HistoryAdminView):
             dbo.releases.updateRelease(changed_by=changed_by, name=change['name'],
                                        version=change['version'], blob=blob,
                                        old_data_version=old_data_version, transaction=transaction)
-        except ValueError as e:
+        except (ValidationError, ValueError) as e:
             cef_event("Bad input", CEF_WARN, errors=e.args)
             return Response(status=400, response=e.args)
 

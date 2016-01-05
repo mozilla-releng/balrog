@@ -233,53 +233,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
     It was deprecated by https://bugzilla.mozilla.org/show_bug.cgi?id=530872 during
     Gecko 2.0 development (aka 1.9.3).
     """
-    format_ = {
-        'name': None,
-        'schema_version': None,
-        'extv': None,
-        'appv': None,
-        'fileUrls': {
-            '*': None
-        },
-        'ftpFilenames': {
-            '*': None
-        },
-        'bouncerProducts': {
-            '*': None
-        },
-        'hashFunction': None,
-        'detailsUrl': None,
-        'licenseUrl': None,
-        'fakePartials': None,
-        'oldVersionSpecialCases': None,
-        'platforms': {
-            '*': {
-                'alias': None,
-                'buildID': None,
-                'OS_BOUNCER': None,
-                'OS_FTP': None,
-                'locales': {
-                    '*': {
-                        'buildID': None,
-                        'extv': None,
-                        'appv': None,
-                        'partial': {
-                            'filesize': None,
-                            'from': None,
-                            'hashValue': None,
-                            'fileUrl': None
-                        },
-                        'complete': {
-                            'filesize': None,
-                            'from': None,
-                            'hashValue': None,
-                            'fileUrl': None
-                        }
-                    }
-                }
-            }
-        }
-    }
+    jsonschema = "apprelease-v1.json"
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV1 directly
