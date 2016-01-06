@@ -1055,12 +1055,13 @@ class Permissions(AUSTable):
        option is only valid for requests through that HTTP method."""
     allPermissions = {
         'admin': [],
+        '/releases': ['method', 'product'],
         '/releases/:name': ['method', 'product'],
-        '/releases/:name/rollback': ['product'],
+        '/releases/:name/revisions': ['product'],
         '/releases/:name/builds/:platform/:locale': ['method', 'product'],
         '/rules': ['product'],
         '/rules/:id': ['method', 'product'],
-        '/rules/:id/rollback': ['product'],
+        '/rules/:id/revisions': ['product'],
         '/users/:id/permissions/:permission': ['method'],
     }
 
