@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 # If present, rule alias' must be a string containing at least one non-numeric character.
-RULE_ALIAS_REGEXP = "(^.*[^0-9].*$|^$)"
+RULE_ALIAS_REGEXP = "(^[a-zA-Z][a-zA-Z0-9-]*$|^$)"
 
 
 class DisableableTextInput(TextInput):

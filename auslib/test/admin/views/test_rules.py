@@ -182,6 +182,10 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]["version"], "3.5")
         self.assertEquals(r[0]["buildTarget"], "d")
 
+    def testPostAddBadAlias(self):
+        ret = self._post("/rules/1", data=dict(alias="abc#$%", data_version=1))
+        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
     def testPostWithoutProduct(self):
         ret = self._post('/rules/4', username='bob',
                          data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
