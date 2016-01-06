@@ -799,10 +799,17 @@ class Rules(AUSTable):
 
     def getRule(self, id_or_alias, transaction=None):
         """ Returns the unique rule that matches the give rule_id or alias."""
-        rules = self.select(
-            where=[(self.alias == id_or_alias) | (self.rule_id == id_or_alias)],
-            transaction=transaction
-        )
+        where = []
+        # Figuring out which column to use ahead of times means there's only
+        # one potential index for the database to use, which should make
+        # queries faster (it will always use the most efficient one).
+        try:
+            int(id_or_alias)
+            where.append(self.rule_id == id_or_alias)
+        except ValueError:
+            where.append(self.alias == id_or_alias)
+
+        rules = self.select(where=where, transaction=transaction)
         found = len(rules)
         if found > 1 or found == 0:
             self.log.debug("Found %s rules, should have been 1", found)
