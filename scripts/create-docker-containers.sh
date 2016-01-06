@@ -22,7 +22,7 @@ else
     sleep 30
     docker run --rm --net host -it -v $balrog_repo:/app bhearsum/balrog:latest python scripts/manage-db.py -d mysql://balrogadmin:balrogadmin@127.0.0.1/balrog create
     docker run --rm --net host -it -v $balrog_repo:/app bhearsum/balrog:latest sh -c 'exec mysql -h 127.0.0.1 -P 3306 -u balrogadmin --password=balrogadmin balrog < /app/scripts/sample-data.sql'
-    docker run --rm --net host -it -v $balrog_repo:/app bhearsum/balrog:latest sh -c 'exec mysql -h 127.0.0.1 -P 3306 -u balrogadmin --password=balrogadmin -e "insert into permissions (username, permission, data_version) values (\"balrogadmin\", \"admin\", 0);" balrog'
+    docker run --rm --net host -it -v $balrog_repo:/app bhearsum/balrog:latest sh -c 'exec mysql -h 127.0.0.1 -P 3306 -u balrogadmin --password=balrogadmin -e "insert into permissions (username, permission, data_version) values (\"balrogadmin\", \"admin\", 1);" balrog'
 fi
 
 docker ps -a | grep -q balrog-admin
