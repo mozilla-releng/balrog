@@ -40,7 +40,7 @@
             "description": ""
         },
         "oldVersionSpecialCases": {
-            "type": "string",
+            "type": "boolean",
             "description": ""
         },
         "fileUrls": {
@@ -73,8 +73,9 @@
         },
         "platforms": {
             "type": "object",
-            "properties": {
-                "platformName": {
+            "additionalProperties": false,
+            "patternProperties": {
+                "^.+$": {
                     "oneOf": [
                         {
                             "type": "object",
@@ -94,59 +95,83 @@
                                     "type": "number",
                                     "description": ""
                                 },
-                                "extv": {
+                                "OS_BOUNCER": {
                                     "type": "string",
                                     "description": ""
                                 },
-                                "appv": {
+                                "OS_FTP": {
                                     "type": "string",
                                     "description": ""
                                 },
-                                "partial": {
+                                "locales": {
                                     "type": "object",
-                                    "required": ["filesize", "from", "hashValue"],
                                     "additionalProperties": false,
-                                    "properties": {
-                                        "filesize": {
-                                            "type": "number",
-                                            "description": ""
-                                        },
-                                        "from": {
-                                            "type": "string",
-                                            "description": ""
-                                        },
-                                        "hashValue": {
-                                            "type": "string",
-                                            "description": ""
-                                        },
-                                        "fileUrl": {
-                                            "type": "string",
-                                            "description": "",
-                                            "format": "uri"
-                                        }
-                                    }
-                                },
-                                "complete": {
-                                    "type": "object",
-                                    "required": ["filesize", "from", "hashValue"],
-                                    "additionalProperties": false,
-                                    "properties": {
-                                        "filesize": {
-                                            "type": "number",
-                                            "description": ""
-                                        },
-                                        "from": {
-                                            "type": "string",
-                                            "description": ""
-                                        },
-                                        "hashValue": {
-                                            "type": "string",
-                                            "description": ""
-                                        },
-                                        "fileUrl": {
-                                            "type": "string",
-                                            "description": "",
-                                            "format": "uri"
+                                    "patternProperties": {
+                                        "^.+$": {
+                                            "type": "object",
+                                            "additionalProperties": false,
+                                            "properties": {
+                                                "buildID": {
+                                                    "type": "string",
+                                                    "description": ""
+                                                },
+                                                "extv": {
+                                                    "type": "string",
+                                                    "description": ""
+                                                },
+                                                "appv": {
+                                                    "type": "string",
+                                                    "description": ""
+                                                },
+                                                "partial": {
+                                                    "type": "object",
+                                                    "required": ["filesize", "from", "hashValue"],
+                                                    "additionalProperties": false,
+                                                    "properties": {
+                                                        "filesize": {
+                                                            "type": "number",
+                                                            "description": ""
+                                                        },
+                                                        "from": {
+                                                            "type": "string",
+                                                            "description": ""
+                                                        },
+                                                        "hashValue": {
+                                                            "type": "string",
+                                                            "description": ""
+                                                        },
+                                                        "fileUrl": {
+                                                            "type": "string",
+                                                            "description": "",
+                                                            "format": "uri"
+                                                        }
+                                                    }
+                                                },
+                                                "complete": {
+                                                    "type": "object",
+                                                    "required": ["filesize", "from", "hashValue"],
+                                                    "additionalProperties": false,
+                                                    "properties": {
+                                                        "filesize": {
+                                                            "type": "number",
+                                                            "description": ""
+                                                        },
+                                                        "from": {
+                                                            "type": "string",
+                                                            "description": ""
+                                                        },
+                                                        "hashValue": {
+                                                            "type": "string",
+                                                            "description": ""
+                                                        },
+                                                        "fileUrl": {
+                                                            "type": "string",
+                                                            "description": "",
+                                                            "format": "uri"
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }

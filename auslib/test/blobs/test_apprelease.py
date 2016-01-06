@@ -164,6 +164,9 @@ class TestOldVersionSpecialCases(unittest.TestCase):
     }
 }""")
 
+    def testIsValid(self):
+        self.assertTrue(self.blob.isValid())
+
     def test2_0(self):
         updateQuery = {
             "product": "h", "version": "2.0.0.20", "buildID": "0",

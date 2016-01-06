@@ -404,6 +404,8 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         Added:
          * actions, billboardURL, openURL, notificationURL,
            alertURL, showPrompt, showNeverForVersion, isOSUpdate
+        Removed:
+         * oldVersionSpecialCases
     """
     format_ = {
         'name': None,

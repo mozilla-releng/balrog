@@ -1205,7 +1205,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testUpdateReleaseWithBlob(self):
         blob = ReleaseBlobV1(name='b', schema_version=1, hashFunction="sha512")
         self.releases.updateRelease(name='b', product='z', version='y', changed_by='bill', blob=blob, old_data_version=1)
-        expected = [('b', 'z', 'y', json.dumps(dict(name='b', schema_version=3, hashFunction="sha512")), 2)]
+        expected = [('b', 'z', 'y', json.dumps(dict(name='b', schema_version=1, hashFunction="sha512")), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'b').execute().fetchall(), expected)
 
     def testUpdateReleaseInvalidBlob(self):
