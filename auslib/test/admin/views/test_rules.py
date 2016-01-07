@@ -69,6 +69,32 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
             headerArchitecture=None,
             data_version=1,
             rule_id=1,
+            alias=None,
+            whitelist=None,
+        )
+        self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetRuleByAlias(self):
+        ret = self._get("/rules/frodo")
+        expected = dict(
+            backgroundRate=100,
+            mapping="b",
+            priority=100,
+            product=None,
+            version="3.3",
+            buildID=None,
+            channel=None,
+            locale=None,
+            distribution=None,
+            buildTarget="d",
+            osVersion=None,
+            distVersion=None,
+            comment=None,
+            update_type="minor",
+            headerArchitecture=None,
+            data_version=1,
+            rule_id=2,
+            alias="frodo",
             whitelist=None,
         )
         self.assertEquals(json.loads(ret.data), expected)
@@ -97,6 +123,26 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['version'], '3.5')
         self.assertEquals(r[0]['buildTarget'], 'd')
 
+    def testPostByAlias(self):
+        # Make some changes to a rule
+        ret = self._post('/rules/frodo', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
+                                                   product='Firefox', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], 'd')
+        self.assertEquals(r[0]['backgroundRate'], 71)
+        self.assertEquals(r[0]['priority'], 73)
+        self.assertEquals(r[0]['data_version'], 2)
+        # And that we didn't modify other fields
+        self.assertEquals(r[0]['update_type'], 'minor')
+        self.assertEquals(r[0]['version'], '3.3')
+        self.assertEquals(r[0]['buildTarget'], 'd')
+
     def testPostJSON(self):
         data = json.dumps(dict(
             backgroundRate=71, mapping="d", priority=73, data_version=1,
@@ -118,6 +164,27 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['update_type'], 'minor')
         self.assertEquals(r[0]['version'], '3.5')
         self.assertEquals(r[0]['buildTarget'], 'd')
+
+    def testPostAddAlias(self):
+        # Make some changes to a rule
+        ret = self._post("/rules/1", data=dict(alias="sam", data_version=1))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load["new_data_version"], 2)
+
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]["alias"], "sam")
+        self.assertEquals(r[0]["data_version"], 2)
+        # And that we didn"t modify other fields
+        self.assertEquals(r[0]["update_type"], "minor")
+        self.assertEquals(r[0]["version"], "3.5")
+        self.assertEquals(r[0]["buildTarget"], "d")
+
+    def testPostAddBadAlias(self):
+        ret = self._post("/rules/1", data=dict(alias="abc#$%", data_version=1))
+        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
     def testPostWithoutProduct(self):
         ret = self._post('/rules/4', username='bob',
@@ -182,6 +249,10 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         ret = self._post("/rules/1", data=dict(mapping="uhet"))
         self.assertEquals(ret.status_code, 400)
 
+    def testPostWithBadAlias(self):
+        ret = self._post("/rules/1", data=dict(alias="3", data_version=1))
+        self.assertEquals(ret.status_code, 400)
+
     def testBadAuthPost(self):
         ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
         self.assertEquals(ret.status_code, 401, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
@@ -207,6 +278,10 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         ret = self._delete('/rules/1', qs=dict(data_version=1))
         self.assertEquals(ret.status_code, 200, msg=ret.data)
 
+    def testDeleteRuleByAlias(self):
+        ret = self._delete('/rules/frodo', qs=dict(data_version=1))
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+
     def testDeleteRule404(self):
         ret = self._delete("/rules/112")
         self.assertEquals(ret.status_code, 404)
@@ -224,6 +299,10 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 200, msg=ret.data)
         got = json.loads(ret.data)
         self.assertEquals(got["count"], 0)
+
+    def testGetRefusesAlias(self):
+        ret = self._get("/rules/frodo/revisions")
+        self.assertEquals(ret.status_code, 404)
 
     def testGetRevisions(self):
         # Make some changes to a rule

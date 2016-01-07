@@ -3,10 +3,14 @@ import simplejson as json
 from flask_wtf import Form
 from wtforms import StringField, IntegerField, SelectField
 from wtforms.widgets import TextInput, FileInput, HiddenInput
-from wtforms.validators import Required, Optional, NumberRange, Length
+from wtforms.validators import Required, Optional, NumberRange, Length, Regexp
 
 import logging
 log = logging.getLogger(__name__)
+
+
+# If present, rule alias' must be a string containing at least one non-numeric character.
+RULE_ALIAS_REGEXP = "(^[a-zA-Z][a-zA-Z0-9-]*$|^$)"
 
 
 class DisableableTextInput(TextInput):
@@ -108,6 +112,7 @@ class RuleForm(Form):
     backgroundRate = IntegerField('Background Rate', validators=[Required(), NumberRange(0, 100)])
     priority = IntegerField('Priority', validators=[Required()])
     mapping = SelectField('Mapping', validators=[])
+    alias = NullableStringField('Alias', validators=[Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Length(0, 15)])
     version = NullableStringField('Version', validators=[Length(0, 10)])
     buildID = NullableStringField('BuildID', validators=[Length(0, 20)])
@@ -127,6 +132,7 @@ class EditRuleForm(DbEditableForm):
     backgroundRate = IntegerField('Background Rate', validators=[Optional(), NumberRange(0, 100)])
     priority = IntegerField('Priority', validators=[Optional()])
     mapping = SelectField('Mapping', validators=[Optional()], coerce=NoneOrType(unicode))
+    alias = NullableStringField('Alias', validators=[Optional(), Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Optional(), Length(0, 15)])
     version = NullableStringField('Version', validators=[Optional(), Length(0, 10)])
     buildID = NullableStringField('BuildID', validators=[Optional(), Length(0, 20)])

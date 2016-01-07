@@ -566,7 +566,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.paths.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='z', data_version=1)
         self.paths.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='z', data_version=1)
         self.paths.t.insert().execute(id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=4, priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='z', data_version=1)
+        self.paths.t.insert().execute(id=4, alias="gandalf", priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='z', data_version=1)
         self.paths.t.insert().execute(id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='z', data_version=1)
         self.paths.t.insert().execute(id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z', data_version=1)
         self.paths.t.insert().execute(
@@ -577,7 +577,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
         expected = [
-            dict(rule_id=4, priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
             dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z', data_version=1),
             dict(rule_id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z', data_version=1),
             dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1),
@@ -614,7 +614,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         expected = [
             dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1),
-            dict(rule_id=4, priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
         ]
         self.assertEquals(rules, expected)
 
@@ -630,7 +630,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         expected = [
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
-            dict(rule_id=4, priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
         ]
         self.assertEquals(rules, expected)
 
@@ -646,7 +646,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         expected = [
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
-            dict(rule_id=4, priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
             dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z', data_version=1),
         ]
         self.assertEquals(rules, expected)
@@ -662,7 +662,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         expected = [
-            dict(rule_id=4, priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
             dict(rule_id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z', data_version=1)
         ]
         self.assertEquals(rules, expected)
@@ -678,7 +678,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         expected = [
-            dict(rule_id=4, priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
             dict(rule_id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z', data_version=1)
         ]
         self.assertEquals(rules, expected)
@@ -694,7 +694,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         expected = [
-            dict(rule_id=4, priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
             dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1)
         ]
         self.assertEquals(rules, expected)
@@ -728,8 +728,13 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEquals(rules, expected)
 
     def testGetRuleById(self):
-        rule = self._stripNullColumns([self.paths.getRuleById(1)])
+        rule = self._stripNullColumns([self.paths.getRule(1)])
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1)]
+        self.assertEquals(rule, expected)
+
+    def testGetRuleByAlias(self):
+        rule = self._stripNullColumns([self.paths.getRule(4)])
+        expected = [dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1)]
         self.assertEquals(rule, expected)
 
     def testAddRule(self):
@@ -751,7 +756,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         what = dict(rules[0].items())
 
         what['mapping'] = 'd'
-        self.paths.updateRule(changed_by='bill', rule_id=1, what=what, old_data_version=1)
+        self.paths.updateRule(changed_by='bill', id_or_alias=1, what=what, old_data_version=1)
 
         rules = self.paths.t.select().where(self.paths.rule_id == 1).execute().fetchall()
         copy_rule = dict(rules[0].items())
@@ -760,9 +765,28 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='d', update_type='z', data_version=1)]
         self.assertEquals(rule, expected)
 
+    def testUpdateRuleByAlias(self):
+        rules = self.paths.t.select().where(self.paths.rule_id == 4).execute().fetchall()
+        what = dict(rules[0].items())
+
+        what['mapping'] = 'd'
+        self.paths.updateRule(changed_by='bill', id_or_alias="gandalf", what=what, old_data_version=1)
+
+        rules = self.paths.t.select().where(self.paths.rule_id == 4).execute().fetchall()
+        copy_rule = dict(rules[0].items())
+        rule = self._stripNullColumns([copy_rule])
+
+        expected = [dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='d', update_type='z', data_version=1)]
+        self.assertEquals(rule, expected)
+
     def testDeleteRule(self):
-        self.paths.deleteRule(changed_by='bill', rule_id=2, old_data_version=1)
+        self.paths.deleteRule(changed_by='bill', id_or_alias=2, old_data_version=1)
         rule = self.paths.t.select().where(self.paths.rule_id == 2).execute().fetchall()
+        self.assertEquals(rule, [])
+
+    def testDeleteRuleByAlias(self):
+        self.paths.deleteRule(changed_by='bill', id_or_alias="gandalf", old_data_version=1)
+        rule = self.paths.t.select().where(self.paths.rule_id == 4).execute().fetchall()
         self.assertEquals(rule, [])
 
     def testGetNumberOfRules(self):

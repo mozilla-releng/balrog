@@ -49,6 +49,7 @@ class RulesAPIView(AdminView):
         what = dict(backgroundRate=form.backgroundRate.data,
                     mapping=form.mapping.data,
                     priority=form.priority.data,
+                    alias=form.alias.data,
                     product=form.product.data,
                     version=form.version.data,
                     buildID=form.buildID.data,
@@ -70,8 +71,8 @@ class RulesAPIView(AdminView):
 class SingleRuleView(AdminView):
     """ /rules/:id"""
 
-    def get(self, rule_id):
-        rule = dbo.rules.getRuleById(rule_id=rule_id)
+    def get(self, id_or_alias):
+        rule = dbo.rules.getRule(id_or_alias)
         if not rule:
             return Response(status=404, response="Requested rule does not exist")
 
@@ -82,9 +83,9 @@ class SingleRuleView(AdminView):
 
     # changed_by is available via the requirelogin decorator
     @requirelogin
-    def _post(self, rule_id, transaction, changed_by):
-        # Verify that the rule_id exists.
-        rule = dbo.rules.getRuleById(rule_id, transaction=transaction)
+    def _post(self, id_or_alias, transaction, changed_by):
+        # Verify that the rule_id or alias exists.
+        rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
             return Response(status=404)
         form = EditRuleForm()
@@ -130,10 +131,10 @@ class SingleRuleView(AdminView):
             if (request.json and k in request.json) or k in request.form:
                 what[k] = v
 
-        dbo.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
+        dbo.rules.updateRule(changed_by=changed_by, id_or_alias=id_or_alias, what=what,
                              old_data_version=form.data_version.data, transaction=transaction)
         # find out what the next data version is
-        rule = dbo.rules.getRuleById(rule_id, transaction=transaction)
+        rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         new_data_version = rule['data_version']
         response = make_response(json.dumps(dict(new_data_version=new_data_version)))
         response.headers['Content-Type'] = 'application/json'
@@ -142,9 +143,9 @@ class SingleRuleView(AdminView):
     _put = _post
 
     @requirelogin
-    def _delete(self, rule_id, transaction, changed_by):
-        # Verify that the rule_id exists.
-        rule = dbo.rules.getRuleById(rule_id, transaction=transaction)
+    def _delete(self, id_or_alias, transaction, changed_by):
+        # Verify that the rule_id or alias exists.
+        rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
             return Response(status=404)
 
@@ -160,7 +161,7 @@ class SingleRuleView(AdminView):
             cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
             return Response(status=401, response=msg)
 
-        dbo.rules.deleteRule(changed_by=changed_by, rule_id=rule_id,
+        dbo.rules.deleteRule(changed_by=changed_by, id_or_alias=id_or_alias,
                              old_data_version=form.data_version.data, transaction=transaction)
 
         return Response(status=200)
@@ -170,7 +171,7 @@ class RuleHistoryAPIView(HistoryAdminView):
     """/rules/:id/revisions"""
 
     def get(self, rule_id):
-        rule = dbo.rules.getRuleById(rule_id=rule_id)
+        rule = dbo.rules.getRule(rule_id)
         if not rule:
             return Response(status=404,
                             response='Requested rule does not exist')
@@ -204,6 +205,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             'id': 'rule_id',
             'mapping': 'mapping',
             'priority': 'priority',
+            'alias': 'alias',
             'product': 'product',
             'version': 'version',
             'background_rate': 'backgroundRate',
@@ -238,8 +240,6 @@ class RuleHistoryAPIView(HistoryAdminView):
 
     @requirelogin
     def _post(self, rule_id, transaction, changed_by):
-        rule_id = int(rule_id)
-
         change_id = None
         if request.json:
             change_id = request.json.get('change_id')
@@ -251,7 +251,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             return Response(status=404, response='bad change_id')
         if change['rule_id'] != rule_id:
             return Response(status=404, response='bad rule_id')
-        rule = dbo.rules.getRuleById(rule_id=rule_id)
+        rule = dbo.rules.getRule(rule_id)
         if rule is None:
             return Response(status=404, response='bad rule_id')
         # Verify that the user has permission for the existing rule _and_ what the rule would become.
@@ -267,6 +267,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             backgroundRate=change['backgroundRate'],
             mapping=change['mapping'],
             priority=change['priority'],
+            alias=change['alias'],
             product=change['product'],
             version=change['version'],
             buildID=change['buildID'],
@@ -282,7 +283,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             headerArchitecture=change['headerArchitecture'],
         )
 
-        dbo.rules.updateRule(changed_by=changed_by, rule_id=rule_id, what=what,
+        dbo.rules.updateRule(changed_by=changed_by, id_or_alias=rule_id, what=what,
                              old_data_version=old_data_version, transaction=transaction)
 
         return Response("Excellent!")

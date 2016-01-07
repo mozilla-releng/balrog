@@ -637,6 +637,7 @@ class Rules(AUSTable):
     def __init__(self, metadata, dialect):
         self.table = Table('rules', metadata,
                            Column('rule_id', Integer, primary_key=True, autoincrement=True),
+                           Column('alias', String(50), unique=True),
                            Column('priority', Integer),
                            Column('mapping', String(100)),
                            Column('backgroundRate', Integer),
@@ -725,6 +726,11 @@ class Rules(AUSTable):
         update request"""
         return self._matchesList(ruleLocales, queryLocale)
 
+    def _isAlias(self, id_or_alias):
+        if re.match("^[a-zA-Z][a-zA-Z0-9-]*$", str(id_or_alias)):
+            return True
+        return False
+
     def addRule(self, changed_by, what, transaction=None):
         ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
         return ret.inserted_primary_key[0]
@@ -811,22 +817,41 @@ class Rules(AUSTable):
                 self.log.debug(r)
         return matchingRules
 
-    def getRuleById(self, rule_id, transaction=None):
-        """ Returns the unique rule that matches the give rule_id """
-        rules = self.select(where=[self.rule_id == rule_id], transaction=transaction)
+    def getRule(self, id_or_alias, transaction=None):
+        """ Returns the unique rule that matches the give rule_id or alias."""
+        where = []
+        # Figuring out which column to use ahead of times means there's only
+        # one potential index for the database to use, which should make
+        # queries faster (it will always use the most efficient one).
+        if self._isAlias(id_or_alias):
+            where.append(self.alias == id_or_alias)
+        else:
+            where.append(self.rule_id == id_or_alias)
+
+        rules = self.select(where=where, transaction=transaction)
         found = len(rules)
         if found > 1 or found == 0:
             self.log.debug("Found %s rules, should have been 1", found)
             return None
         return rules[0]
 
-    def updateRule(self, changed_by, rule_id, what, old_data_version, transaction=None):
-        """ Update the rule given by rule_id with the parameter what """
-        where = [self.rule_id == rule_id]
+    def updateRule(self, changed_by, id_or_alias, what, old_data_version, transaction=None):
+        """ Update the rule given by rule_id or alias with the parameter what """
+        where = []
+        if self._isAlias(id_or_alias):
+            where.append(self.alias == id_or_alias)
+        else:
+            where.append(self.rule_id == id_or_alias)
+
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
-    def deleteRule(self, changed_by, rule_id, old_data_version, transaction=None):
-        where = [self.rule_id == rule_id]
+    def deleteRule(self, changed_by, id_or_alias, old_data_version, transaction=None):
+        where = []
+        if self._isAlias(id_or_alias):
+            where.append(self.alias == id_or_alias)
+        else:
+            where.append(self.rule_id == id_or_alias)
+
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
 
