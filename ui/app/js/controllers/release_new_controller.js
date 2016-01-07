@@ -40,8 +40,26 @@ function($scope, $http, $modalInstance, CSRF, Releases, releases) {
           $scope.releases.push($scope.release);
           $modalInstance.close();
         })
-        .error(function(){
-          console.error(arguments);
+        .error(function(response){
+          if (typeof response === 'object') {
+            $scope.errors = response;
+            sweetAlert(
+              "Form submission error",
+              "See fields highlighted in red.",
+              "error"
+            );
+          } else if (typeof response === 'string') {
+            // quite possibly an error in the blob validation
+            sweetAlert(
+              "Form submission error",
+              "Unable to submit successfully.\n" +
+              "(" + response+ ")",
+              "error"
+            );
+          }
+        })
+        .finally(function() {
+          $scope.saving = false;
         });
       });
     };
