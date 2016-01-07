@@ -107,6 +107,8 @@
     </div>
 
     <dl class="dl-horizontal" style="float:right">
+      <dt ng-show="rule.alias" title="Can be used in place of rule_id in REST operations">Alias:</dt>
+      <dd>{{ rule.alias }}</dd>
       <dt ng-show="rule.backgroundRate !== null">Rate:</dt>
       <dd>{{ rule.backgroundRate }}</dd>
       <dt ng-show="rule.priority !== null">Priority:</dt>

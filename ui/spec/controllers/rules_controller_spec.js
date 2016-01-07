@@ -24,6 +24,7 @@ describe("controller: RulesController", function() {
         "osVersion": null,
         "distribution": null,
         "channel": "nightly",
+        "alias": null,
         "distVersion": null,
         "whitelist": null
     },
@@ -44,6 +45,7 @@ describe("controller: RulesController", function() {
         "osVersion": null,
         "distribution": null,
         "channel": null,
+        "alias": null,
         "distVersion": null,
         "whitelist": null
     }
@@ -230,6 +232,7 @@ describe("controller: RulesController By Id", function() {
         "data_version": 1,
         "version": null,
         "background_rate": 100,
+        "alias": null,
         "distVersion": null,
         "headerArchitecture": null,
         "distribution": null,
@@ -253,6 +256,7 @@ describe("controller: RulesController By Id", function() {
         "data_version": 1,
         "version": null,
         "background_rate": 100,
+        "alias": null,
         "distVersion": null,
         "headerArchitecture": null,
         "distribution": null,
