@@ -726,6 +726,11 @@ class Rules(AUSTable):
         update request"""
         return self._matchesList(ruleLocales, queryLocale)
 
+    def _isAlias(self, id_or_alias):
+        if re.match("^[a-zA-Z][a-zA-Z0-9-]*$", str(id_or_alias)):
+            return True
+        return False
+
     def addRule(self, changed_by, what, transaction=None):
         ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
         return ret.inserted_primary_key[0]
@@ -803,11 +808,10 @@ class Rules(AUSTable):
         # Figuring out which column to use ahead of times means there's only
         # one potential index for the database to use, which should make
         # queries faster (it will always use the most efficient one).
-        try:
-            int(id_or_alias)
-            where.append(self.rule_id == id_or_alias)
-        except ValueError:
+        if self._isAlias(id_or_alias):
             where.append(self.alias == id_or_alias)
+        else:
+            where.append(self.rule_id == id_or_alias)
 
         rules = self.select(where=where, transaction=transaction)
         found = len(rules)
@@ -818,11 +822,21 @@ class Rules(AUSTable):
 
     def updateRule(self, changed_by, id_or_alias, what, old_data_version, transaction=None):
         """ Update the rule given by rule_id or alias with the parameter what """
-        where = [(self.alias == id_or_alias) | (self.rule_id == id_or_alias)]
+        where = []
+        if self._isAlias(id_or_alias):
+            where.append(self.alias == id_or_alias)
+        else:
+            where.append(self.rule_id == id_or_alias)
+
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
     def deleteRule(self, changed_by, id_or_alias, old_data_version, transaction=None):
-        where = [(self.alias == id_or_alias) | (self.rule_id == id_or_alias)]
+        where = []
+        if self._isAlias(id_or_alias):
+            where.append(self.alias == id_or_alias)
+        else:
+            where.append(self.rule_id == id_or_alias)
+
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
 
