@@ -58,21 +58,13 @@ class AUS:
             fallbackChannel=getFallbackChannel(updateQuery['channel'])
         )
 
-        # XXX throw any N->N update rules and keep the highest priority remaining one
+        # TODO: throw any N->N update rules and keep the highest priority remaining one?
         if len(rules) < 1:
             return None, None
 
         rules = sorted(rules, key=lambda rule: rule['priority'], reverse=True)
         rule = rules[0]
         self.log.debug("Matching rule: %s" % rule)
-
-        # If the rule requires a whitelist, check via our whitelist blob
-        if rule['whitelist']:
-            self.log.debug("Matching rule requires a whitelist")
-            release = dbo.releases.getReleases(name=rule['whitelist'], limit=1)[0]
-            whitelistBlob = release['data']
-            if not whitelistBlob.shouldServeUpdate(updateQuery):
-                return None, None
 
         # There's a few cases where we have a matching rule but don't want
         # to serve an update:

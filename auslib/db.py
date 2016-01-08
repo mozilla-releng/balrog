@@ -14,7 +14,7 @@ from sqlalchemy.sql.expression import null
 import migrate.versioning.schema
 import migrate.versioning.api
 
-from auslib.global_state import cache
+from auslib.global_state import cache, dbo
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import createBlob
 from auslib.log import cef_event, CEF_ALERT
@@ -637,6 +637,7 @@ class Rules(AUSTable):
     def __init__(self, metadata, dialect):
         self.table = Table('rules', metadata,
                            Column('rule_id', Integer, primary_key=True, autoincrement=True),
+                           Column('alias', String(50), unique=True),
                            Column('priority', Integer),
                            Column('mapping', String(100)),
                            Column('backgroundRate', Integer),
@@ -725,6 +726,11 @@ class Rules(AUSTable):
         update request"""
         return self._matchesList(ruleLocales, queryLocale)
 
+    def _isAlias(self, id_or_alias):
+        if re.match("^[a-zA-Z][a-zA-Z0-9-]*$", str(id_or_alias)):
+            return True
+        return False
+
     def addRule(self, changed_by, what, transaction=None):
         ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
         return ret.inserted_primary_key[0]
@@ -789,29 +795,63 @@ class Rules(AUSTable):
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
                 continue
+            # If a rule has a whitelist attached to it, the rule is only
+            # considered "matching" if it passes the whitelist check.
+            # The decision about matching or not is delegated to the whitelist blob.
+            if rule.get("whitelist"):
+                self.log.debug("Matching rule requires a whitelist")
+                try:
+                    whitelist = dbo.releases.getReleaseBlob(name=rule["whitelist"], transaction=transaction)
+                    if whitelist and not whitelist.shouldServeUpdate(updateQuery):
+                        continue
+                # It shouldn't be possible for the whitelist blob not to exist,
+                # but just in case...
+                except KeyError:
+                    self.log.warning("Got exeception when looking for whitelist blob %s", rule["whitelist"], exc_info=True)
+
             matchingRules.append(rule)
+
         self.log.debug("Reduced matches:")
         if self.log.isEnabledFor(logging.DEBUG):
             for r in matchingRules:
                 self.log.debug(r)
         return matchingRules
 
-    def getRuleById(self, rule_id, transaction=None):
-        """ Returns the unique rule that matches the give rule_id """
-        rules = self.select(where=[self.rule_id == rule_id], transaction=transaction)
+    def getRule(self, id_or_alias, transaction=None):
+        """ Returns the unique rule that matches the give rule_id or alias."""
+        where = []
+        # Figuring out which column to use ahead of times means there's only
+        # one potential index for the database to use, which should make
+        # queries faster (it will always use the most efficient one).
+        if self._isAlias(id_or_alias):
+            where.append(self.alias == id_or_alias)
+        else:
+            where.append(self.rule_id == id_or_alias)
+
+        rules = self.select(where=where, transaction=transaction)
         found = len(rules)
         if found > 1 or found == 0:
             self.log.debug("Found %s rules, should have been 1", found)
             return None
         return rules[0]
 
-    def updateRule(self, changed_by, rule_id, what, old_data_version, transaction=None):
-        """ Update the rule given by rule_id with the parameter what """
-        where = [self.rule_id == rule_id]
+    def updateRule(self, changed_by, id_or_alias, what, old_data_version, transaction=None):
+        """ Update the rule given by rule_id or alias with the parameter what """
+        where = []
+        if self._isAlias(id_or_alias):
+            where.append(self.alias == id_or_alias)
+        else:
+            where.append(self.rule_id == id_or_alias)
+
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
-    def deleteRule(self, changed_by, rule_id, old_data_version, transaction=None):
-        where = [self.rule_id == rule_id]
+    def deleteRule(self, changed_by, id_or_alias, old_data_version, transaction=None):
+        where = []
+        if self._isAlias(id_or_alias):
+            where.append(self.alias == id_or_alias)
+        else:
+            where.append(self.rule_id == id_or_alias)
+
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
 
@@ -1055,12 +1095,13 @@ class Permissions(AUSTable):
        option is only valid for requests through that HTTP method."""
     allPermissions = {
         'admin': [],
+        '/releases': ['method', 'product'],
         '/releases/:name': ['method', 'product'],
-        '/releases/:name/rollback': ['product'],
+        '/releases/:name/revisions': ['product'],
         '/releases/:name/builds/:platform/:locale': ['method', 'product'],
         '/rules': ['product'],
         '/rules/:id': ['method', 'product'],
-        '/rules/:id/rollback': ['product'],
+        '/rules/:id/revisions': ['product'],
         '/users/:id/permissions/:permission': ['method'],
     }
 

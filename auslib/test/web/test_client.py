@@ -144,7 +144,11 @@ class ClientTest(unittest.TestCase):
 }
 """)
 
-        dbo.rules.t.insert().execute(backgroundRate=100, mapping='foxfood', update_type='minor', product='b2g', whitelist='b2g-whitelist', data_version=1)
+        dbo.rules.t.insert().execute(priority=100, backgroundRate=100, mapping='foxfood-whitelisted', update_type='minor', product='b2g',
+                                     whitelist='b2g-whitelist', data_version=1)
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='foxfood-whitelisted', update_type='minor', product='b2g',
+                                     channel="foxfood", whitelist='b2g-whitelist', data_version=1)
+        dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping='foxfood-fallback', update_type='minor', product='b2g', data_version=1)
         dbo.releases.t.insert().execute(name='b2g-whitelist', product='b2g', version='2.5', data_version=1, data="""
 {
   "name": "b2g-whitelist",
@@ -157,9 +161,9 @@ class ClientTest(unittest.TestCase):
 }
 """)
 
-        dbo.releases.t.insert().execute(name='foxfood', product='b2g', version='2.5', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='foxfood-whitelisted', product='b2g', version='2.5', data_version=1, data="""
 {
-    "name": "foxfood",
+    "name": "foxfood-whitelisted",
     "schema_version": 1,
     "extv": "2.5",
     "hashFunction": "sha512",
@@ -172,7 +176,30 @@ class ClientTest(unittest.TestCase):
                         "filesize": 22,
                         "from": "*",
                         "hashValue": "23",
-                        "fileUrl": "http://a.com/y"
+                        "fileUrl": "http://a.com/secrets"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+        dbo.releases.t.insert().execute(name='foxfood-fallback', product='b2g', version='2.5', data_version=1, data="""
+{
+    "name": "foxfood-fallback",
+    "schema_version": 1,
+    "extv": "2.5",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "25",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 22,
+                        "from": "*",
+                        "hashValue": "23",
+                        "fileUrl": "http://a.com/public"
                     }
                 }
             }
@@ -286,8 +313,8 @@ class ClientTest(unittest.TestCase):
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
 
-    def testVersion5GetWhitelisted(self):
-        ret = self.client.get('/update/5/b2g/1.0/1/p/l/a/a/a/a/000000000000001/update.xml')
+    def testVersion5GetWhitelistedOneLevel(self):
+        ret = self.client.get('/update/5/b2g/1.0/1/p/l/foxfood/a/a/a/000000000000001/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
         # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
@@ -295,13 +322,13 @@ class ClientTest(unittest.TestCase):
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
     <update type="minor" version="None" extensionVersion="2.5" buildID="25">
-        <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="23" size="22"/>
+        <patch type="complete" URL="http://a.com/secrets" hashFunction="sha512" hashValue="23" size="22"/>
     </update>
 </updates>
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
 
-    def testVersion5GetNotWhitelisted(self):
+    def testVersion5GetNotWhitelistedOneLevel(self):
         ret = self.client.get('/update/5/b2g/1.0/1/p/l/a/a/a/a/000000000000009/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
@@ -309,6 +336,24 @@ class ClientTest(unittest.TestCase):
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
+    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+        <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testVersion5GetNotWhitelistedMultiLevel(self):
+        ret = self.client.get('/update/5/b2g/1.0/1/p/l/foxfood/a/a/a/000000000000009/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+        <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
+    </update>
 </updates>
 """)
         self.assertEqual(returned.toxml(), expected.toxml())

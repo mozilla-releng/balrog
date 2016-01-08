@@ -53,7 +53,8 @@ class ViewTest(unittest.TestCase):
 }
 """)
         dbo.rules.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='minor', data_version=1)
-        dbo.rules.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='minor', data_version=1)
+        dbo.rules.t.insert().execute(id=2, alias="frodo", priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='minor',
+                                     data_version=1)
         dbo.rules.t.insert().execute(id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
         dbo.rules.t.insert().execute(id=4, product='fake', priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
         dbo.rules.t.insert().execute(id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='minor', data_version=1)
@@ -98,5 +99,4 @@ class JSONTestMixin(object):
         if "format" not in qs:
             qs["format"] = "json"
         ret = self.client.get(url, query_string=qs, headers=headers)
-        self.assertEquals(ret.mimetype, 'application/json')
         return ret

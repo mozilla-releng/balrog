@@ -129,7 +129,10 @@ class Blob(dict):
         return json.dumps(self)
 
     def shouldServeUpdate(self, updateQuery):
-        raise NotImplementedError()
+        """Should be implemented by subclasses. In the event that it's not,
+        False is the safest thing to return (it will fail closed instead of
+        failing open)."""
+        return False
 
     def processSpecialForceHosts(self, url, specialForceHosts):
         if isSpecialURL(url, specialForceHosts):
