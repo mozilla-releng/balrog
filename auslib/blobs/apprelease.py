@@ -407,61 +407,8 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         Removed:
          * oldVersionSpecialCases
     """
-    format_ = {
-        'name': None,
-        'schema_version': None,
-        'appVersion': None,
-        'displayVersion': None,
-        'platformVersion': None,
-        'fileUrls': {
-            '*': None
-        },
-        'ftpFilenames': {
-            '*': None
-        },
-        'bouncerProducts': {
-            '*': None
-        },
-        'hashFunction': None,
-        'detailsUrl': None,
-        'licenseUrl': None,
-        'actions': None,
-        'billboardURL': None,
-        'openURL': None,
-        'notificationURL': None,
-        'alertURL': None,
-        'showPrompt': None,
-        'showNeverForVersion': None,
-        'platforms': {
-            '*': {
-                'alias': None,
-                'buildID': None,
-                'OS_BOUNCER': None,
-                'OS_FTP': None,
-                'locales': {
-                    '*': {
-                        'isOSUpdate': None,
-                        'buildID': None,
-                        'appVersion': None,
-                        'displayVersion': None,
-                        'platformVersion': None,
-                        'partial': {
-                            'filesize': None,
-                            'from': None,
-                            'hashValue': None,
-                            'fileUrl': None
-                        },
-                        'complete': {
-                            'filesize': None,
-                            'from': None,
-                            'hashValue': None,
-                            'fileUrl': None
-                        }
-                    }
-                }
-            }
-        }
-    }
+    schema = "apprelease-v2"
+
     # for the benefit of createXML and createSnippets
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL')

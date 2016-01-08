@@ -508,6 +508,10 @@ class TestSchema2Blob(unittest.TestCase):
 }
 """)
 
+    def testIsValid(self):
+        self.assertTrue(self.blobJ2.isValid())
+        self.assertTrue(self.blobK.isValid())
+
     def testSchema2CompleteOnly(self):
         updateQuery = {
             "product": "j", "version": "35.0", "buildID": "4",
