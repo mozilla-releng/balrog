@@ -79,8 +79,6 @@ def _assert_not_shallow(request):
 
 def _iter_encoded(iterable, charset):
     for item in iterable:
-        print type(item)
-        print item
         if isinstance(item, text_type):
             yield item.encode(charset)
         else:

@@ -233,7 +233,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
     It was deprecated by https://bugzilla.mozilla.org/show_bug.cgi?id=530872 during
     Gecko 2.0 development (aka 1.9.3).
     """
-    jsonschema = "apprelease-v1.json"
+    jsonschema = "apprelease-v1.yml"
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV1 directly
@@ -387,6 +387,8 @@ class NewStyleVersionsMixin(object):
                 if self.interpolable_ and attr in self.interpolable_:
                     updateLine += ' %s="%s"' % (attr, self[attr].replace("%LOCALE%", locale))
                 else:
+                    # Responses require lower cased version of True/False for
+                    # boolean properties. Strings are sent as stored.
                     value = self[attr]
                     if isinstance(value, bool):
                         value = str(value).lower()
@@ -410,7 +412,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         Removed:
          * oldVersionSpecialCases
     """
-    jsonschema = "apprelease-v2.json"
+    jsonschema = "apprelease-v2.yml"
 
     # for the benefit of createXML and createSnippets
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
@@ -499,7 +501,7 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
            * remove "partial" and "complete" from locale level
            * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
     """
-    jsonschema = "apprelease-v3.json"
+    jsonschema = "apprelease-v3.yml"
 
     # for the benefit of createXML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
@@ -574,84 +576,8 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         ** Combine fileUrls, bouncerProducts, and ftpFilenames into a larger data structure,
            still called "fileUrls". (See below for a more detailed description.)
     """
-    jsonschema = "apprelease-v4.json"
-    format_ = {
-        'name': None,
-        'schema_version': None,
-        'appVersion': None,
-        'displayVersion': None,
-        'platformVersion': None,
-        # Top level fileUrls are useful primarily for release style builds,
-        # where the URLs are predictable and only vary by locale and platform.
-        # It's worth noting that while we normally serve different channels
-        # through different fileUrls (eg, ftp.mozilla.org vs. download.mozilla.org),
-        # each platform+locale combination is expected to receive the same
-        # MAR contents regardless of channel. As of yet there is no way to
-        # specify different metadata for different channels so doing anything
-        # other than above will result in MAR verification failures on the client.
-        'fileUrls': {
-            '*': {  # This first level contains a channel name, or "*" as a catch all.
-                '*': {  # This is "partials" or "completes" (TODO: enforce this).
-                    '*': None,  # And this key is a specific release (matched up
-                    # against incoming requests), "or "*" as a catch all.
-                    # The value is the URL for this specific
-                    # channel/update type/incoming release.
-                }
-            }
-        },
-        'hashFunction': None,
-        'detailsUrl': None,
-        'licenseUrl': None,
-        'actions': None,
-        'billboardURL': None,
-        'openURL': None,
-        'notificationURL': None,
-        'alertURL': None,
-        'showPrompt': None,
-        'showNeverForVersion': None,
-        'platforms': {
-            '*': {
-                'alias': None,
-                'buildID': None,
-                'OS_BOUNCER': None,
-                'OS_FTP': None,
-                'locales': {
-                    '*': {
-                        'isOSUpdate': None,
-                        'buildID': None,
-                        'appVersion': None,
-                        'displayVersion': None,
-                        'platformVersion': None,
-                        # Using lists instead of dicts for multiple updates
-                        # gives us a way to reduce load a bit. As this is
-                        # iterated over, each "from" release is looked up
-                        # in the database. If the "from" releases that we
-                        # we expect to be the most common are earlier in the
-                        # list, we can avoid looking up every single entry.
-                        # The server doesn't know anything about which order is
-                        # best, so we assume the client will make the right
-                        # decision about this.
-                        'partials': [
-                            {
-                                'filesize': None,
-                                'from': None,
-                                'hashValue': None,
-                                'fileUrl': None
-                            }
-                        ],
-                        'completes': [
-                            {
-                                'filesize': None,
-                                'from': None,
-                                'hashValue': None,
-                                'fileUrl': None
-                            }
-                        ]
-                    }
-                }
-            }
-        }
-    }
+    jsonschema = "apprelease-v4.yml"
+
     # for the benefit of createXML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL')

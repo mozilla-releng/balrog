@@ -20,6 +20,7 @@ setup(
         "jinja2==2.5.5",
         "jsonschema==2.5.1",
         "mysql-python==1.2.3",
+        "pyyaml==3.11",
         "repoze.lru==0.6",
         "simplejson==2.0.9",
         "sqlalchemy==0.7.1",

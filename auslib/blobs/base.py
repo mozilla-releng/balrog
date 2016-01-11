@@ -1,8 +1,9 @@
 from os import path
-
 import simplejson as json
 
 import jsonschema
+
+import yaml
 
 import logging
 log = logging.getLogger(__name__)
@@ -114,7 +115,7 @@ class Blob(dict):
         if self.jsonschema in self.cached_schemas:
             return self.cached_schemas[self.jsonschema]
 
-        schema = json.load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
+        schema = yaml.load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
         self.cached_schemas[self.jsonschema] = self.cached_schemas
         return schema
 
