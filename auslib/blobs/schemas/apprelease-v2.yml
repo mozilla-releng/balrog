@@ -97,7 +97,7 @@
               additionalProperties: false
               properties:
                 buildID:
-                  type: "number"
+                  type: "string"
                   description: ""
                 OS_BOUNCER:
                   type: "string"
@@ -117,7 +117,7 @@
                           type: "boolean"
                           description: ""
                         buildID:
-                          type: "number"
+                          type: "string"
                           description: ""
                         appVersion:
                           type: "string"
@@ -137,7 +137,11 @@
                           additionalProperties: false
                           properties:
                             filesize:
-                              type: "number"
+                              oneOf:
+                                -
+                                  type: "number"
+                                -
+                                  type: "string"
                               description: ""
                             from:
                               type: "string"
@@ -158,7 +162,11 @@
                           additionalProperties: false
                           properties:
                             filesize:
-                              type: "number"
+                              oneOf:
+                                -
+                                  type: "number"
+                                -
+                                  type: "string"
                               description: ""
                             from:
                               type: "string"

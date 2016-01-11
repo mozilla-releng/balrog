@@ -76,7 +76,8 @@
               additionalProperties: false
               properties:
                 buildID:
-                  type: "number"
+                  # TODO: validate that it's just numbers!
+                  type: "string"
                   description: ""
                 OS_BOUNCER:
                   type: "string"
@@ -93,7 +94,7 @@
                       additionalProperties: false
                       properties:
                         buildID:
-                          type: "number"
+                          type: "string"
                           description: ""
                         extv:
                           type: "string"
@@ -110,7 +111,11 @@
                           additionalProperties: false
                           properties:
                             filesize:
-                              type: "number"
+                              oneOf:
+                                -
+                                  type: "number"
+                                -
+                                  type: "string"
                               description: ""
                             from:
                               type: "string"
@@ -131,7 +136,11 @@
                           additionalProperties: false
                           properties:
                             filesize:
-                              type: "number"
+                              oneOf:
+                                -
+                                  type: "number"
+                                -
+                                  type: "string"
                               description: ""
                             from:
                               type: "string"
