@@ -1,32 +1,32 @@
 ---
   title: "Whitelist Blob"
   type: "object"
-  required: 
+  required:
     - "name"
     - "schema_version"
     - "whitelist"
   additionalProperties: false
-  properties: 
-    name: 
+  properties:
+    name:
       type: "string"
       description: "Human readable identifier"
       minLength: 1
       maxLength: 100
-    schema_version: 
+    schema_version:
       type: "number"
       description: "Blob identifier number"
-      enum: 
+      enum:
         - 3000
-    whitelist: 
+    whitelist:
       type: "array"
       minItems: 1
-      items: 
+      items:
         type: "object"
-        required: 
+        required:
           - "imei"
         additionalProperties: false
-        properties: 
-          imei: 
+        properties:
+          imei:
             type: "string"
             description: ""
 
