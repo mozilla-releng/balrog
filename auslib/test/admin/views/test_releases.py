@@ -510,6 +510,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 {
     "name": "ueohueo",
     "schema_version": 3,
+    "hashFunction": "sha512",
     "borken": "yes"
 }
 """))

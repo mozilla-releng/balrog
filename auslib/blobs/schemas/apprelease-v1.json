@@ -112,7 +112,7 @@
                                             "additionalProperties": false,
                                             "properties": {
                                                 "buildID": {
-                                                    "type": "string",
+                                                    "type": "number",
                                                     "description": ""
                                                 },
                                                 "extv": {

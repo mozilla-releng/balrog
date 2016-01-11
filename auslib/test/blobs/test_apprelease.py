@@ -436,7 +436,7 @@ class TestSchema2Blob(unittest.TestCase):
     },
     "platforms": {
         "p": {
-            "buildID": "30",
+            "buildID": 30,
             "OS_FTP": "o",
             "OS_BOUNCER": "o",
             "locales": {
@@ -444,7 +444,7 @@ class TestSchema2Blob(unittest.TestCase):
                     "partial": {
                         "filesize": 6,
                         "from": "j1",
-                        "hashValue": 5
+                        "hashValue": "5"
                     },
                     "complete": {
                         "filesize": 38,
@@ -473,8 +473,8 @@ class TestSchema2Blob(unittest.TestCase):
     "openURL": "http://example.org/url/%LOCALE%",
     "notificationURL": "http://example.org/notification/%LOCALE%",
     "alertURL": "http://example.org/alert/%LOCALE%",
-    "showPrompt": "false",
-    "showNeverForVersion": "true",
+    "showPrompt": false,
+    "showNeverForVersion": true,
     "fileUrls": {
         "c1": "http://a.com/%FILENAME%"
     },
@@ -483,7 +483,7 @@ class TestSchema2Blob(unittest.TestCase):
     },
     "platforms": {
         "p": {
-            "buildID": "35",
+            "buildID": 35,
             "OS_FTP": "o",
             "OS_BOUNCER": "o",
             "locales": {
@@ -640,14 +640,14 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         "p": {
             "locales": {
                 "l": {
-                    "buildID": "3",
+                    "buildID": 3,
                     "appVersion": "2",
                     "platformVersion": "2",
                     "displayVersion": "2",
                     "partial": {
                         "filesize": 3,
                         "from": "j1",
-                        "hashValue": 4,
+                        "hashValue": "4",
                         "fileUrl": "http://a.com/p"
                     },
                     "complete": {
@@ -662,6 +662,9 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
     }
 }
 """)
+
+    def testIsValid(self):
+        self.assertTrue(self.blobJ2.isValid())
 
     def testCompleteOnly(self):
         updateQuery = {
@@ -765,20 +768,20 @@ class TestSchema3Blob(unittest.TestCase):
     "platformVersion": "25.0",
     "platforms": {
         "p": {
-            "buildID": "29",
+            "buildID": 29,
             "locales": {
                 "l": {
                     "partials": [
                         {
                             "filesize": 2,
                             "from": "f1",
-                            "hashValue": 3,
+                            "hashValue": "3",
                             "fileUrl": "http://a.com/p1"
                         },
                         {
                             "filesize": 4,
                             "from": "f2",
-                            "hashValue": 5,
+                            "hashValue": "5",
                             "fileUrl": "http://a.com/p2"
                         }
                     ],
@@ -786,7 +789,7 @@ class TestSchema3Blob(unittest.TestCase):
                         {
                             "filesize": 29,
                             "from": "f2",
-                            "hashValue": 6,
+                            "hashValue": "6",
                             "fileUrl": "http://a.com/c1"
                         },
                         {
@@ -857,7 +860,7 @@ class TestSchema3Blob(unittest.TestCase):
     },
     "platforms": {
         "p": {
-            "buildID": "40",
+            "buildID": 40,
             "OS_FTP": "o",
             "OS_BOUNCER": "o",
             "locales": {
@@ -866,7 +869,7 @@ class TestSchema3Blob(unittest.TestCase):
                         {
                             "filesize": 4,
                             "from": "g1",
-                            "hashValue": 5
+                            "hashValue": "5"
                         }
                     ],
                     "completes": [
@@ -882,6 +885,10 @@ class TestSchema3Blob(unittest.TestCase):
     }
 }
 """)
+
+    def testIsValid(self):
+        self.assertTrue(self.blobF3.isValid())
+        self.assertTrue(self.blobG2.isValid())
 
     def testSchema3MultipleUpdates(self):
         updateQuery = {

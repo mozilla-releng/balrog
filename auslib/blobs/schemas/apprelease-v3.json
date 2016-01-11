@@ -1,5 +1,5 @@
 {
-    "title": "App Release Blob (V2)",
+    "title": "App Release Blob (V3)",
     "type": "object",
     "required": ["name", "schema_version", "hashFunction"],
     "additionalProperties": false,
@@ -13,7 +13,7 @@
         "schema_version": {
             "type": "number",
             "description": "Blob identifier number",
-            "enum": [2]
+            "enum": [3]
         },
         "hashFunction": {
             "type": "string",
@@ -84,18 +84,50 @@
         "ftpFilenames": {
             "type": "object",
             "properties": {
-                "updateType": {
-                    "type": "string",
-                    "description": ""
+                "partials": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "patternProperties": {
+                        "^.*": {
+                            "type": "string",
+                            "description": ""
+                        }
+                    }
+                },
+                "completes": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "patternProperties": {
+                        "^.*": {
+                            "type": "string",
+                            "description": ""
+                        }
+                    }
                 }
             }
         },
         "bouncerProducts": {
             "type": "object",
             "properties": {
-                "updateType": {
-                    "type": "string",
-                    "description": ""
+                "partials": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "patternProperties": {
+                        "^.*": {
+                            "type": "string",
+                            "description": ""
+                        }
+                    }
+                },
+                "completes": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "patternProperties": {
+                        "^.*": {
+                            "type": "string",
+                            "description": ""
+                        }
+                    }
                 }
             }
         },
@@ -140,7 +172,7 @@
                                             "additionalProperties": false,
                                             "properties": {
                                                 "isOSUpdate": {
-                                                    "type": "boolean",
+                                                    "type": "string",
                                                     "description": ""
                                                 },
                                                 "buildID": {
@@ -159,51 +191,57 @@
                                                     "type": "string",
                                                     "description": ""
                                                 },
-                                                "partial": {
-                                                    "type": "object",
-                                                    "required": ["filesize", "from", "hashValue"],
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                        "filesize": {
-                                                            "type": "number",
-                                                            "description": ""
-                                                        },
-                                                        "from": {
-                                                            "type": "string",
-                                                            "description": ""
-                                                        },
-                                                        "hashValue": {
-                                                            "type": "string",
-                                                            "description": ""
-                                                        },
-                                                        "fileUrl": {
-                                                            "type": "string",
-                                                            "description": "",
-                                                            "format": "uri"
+                                                "partials": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "required": ["filesize", "from", "hashValue"],
+                                                        "additionalProperties": false,
+                                                        "properties": {
+                                                            "filesize": {
+                                                                "type": "number",
+                                                                "description": ""
+                                                            },
+                                                            "from": {
+                                                                "type": "string",
+                                                                "description": ""
+                                                            },
+                                                            "hashValue": {
+                                                                "type": "string",
+                                                                "description": ""
+                                                            },
+                                                            "fileUrl": {
+                                                                "type": "string",
+                                                                "description": "",
+                                                                "format": "uri"
+                                                            }
                                                         }
                                                     }
                                                 },
-                                                "complete": {
-                                                    "type": "object",
-                                                    "required": ["filesize", "from", "hashValue"],
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                        "filesize": {
-                                                            "type": "number",
-                                                            "description": ""
-                                                        },
-                                                        "from": {
-                                                            "type": "string",
-                                                            "description": ""
-                                                        },
-                                                        "hashValue": {
-                                                            "type": "string",
-                                                            "description": ""
-                                                        },
-                                                        "fileUrl": {
-                                                            "type": "string",
-                                                            "description": "",
-                                                            "format": "uri"
+                                                "completes": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "required": ["filesize", "from", "hashValue"],
+                                                        "additionalProperties": false,
+                                                        "properties": {
+                                                            "filesize": {
+                                                                "type": "number",
+                                                                "description": ""
+                                                            },
+                                                            "from": {
+                                                                "type": "string",
+                                                                "description": ""
+                                                            },
+                                                            "hashValue": {
+                                                                "type": "string",
+                                                                "description": ""
+                                                            },
+                                                            "fileUrl": {
+                                                                "type": "string",
+                                                                "description": "",
+                                                                "format": "uri"
+                                                            }
                                                         }
                                                     }
                                                 }

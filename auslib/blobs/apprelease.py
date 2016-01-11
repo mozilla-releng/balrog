@@ -387,7 +387,10 @@ class NewStyleVersionsMixin(object):
                 if self.interpolable_ and attr in self.interpolable_:
                     updateLine += ' %s="%s"' % (attr, self[attr].replace("%LOCALE%", locale))
                 else:
-                    updateLine += ' %s="%s"' % (attr, self[attr])
+                    value = self[attr]
+                    if isinstance(value, bool):
+                        value = str(value).lower()
+                    updateLine += ' %s="%s"' % (attr, value)
         updateLine += ">"
 
         return updateLine
@@ -407,7 +410,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         Removed:
          * oldVersionSpecialCases
     """
-    schema = "apprelease-v2"
+    jsonschema = "apprelease-v2.json"
 
     # for the benefit of createXML and createSnippets
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
@@ -496,84 +499,8 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
            * remove "partial" and "complete" from locale level
            * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
     """
-    format_ = {
-        'name': None,
-        'schema_version': None,
-        'appVersion': None,
-        'displayVersion': None,
-        'platformVersion': None,
-        'fileUrls': {
-            '*': None
-        },
-        'ftpFilenames': {
-            'partials': {
-                '*': None
-            },
-            'completes': {
-                '*': None
-            }
-        },
-        'bouncerProducts': {
-            'partials': {
-                '*': None
-            },
-            'completes': {
-                '*': None
-            }
-        },
-        'hashFunction': None,
-        'detailsUrl': None,
-        'licenseUrl': None,
-        'actions': None,
-        'billboardURL': None,
-        'openURL': None,
-        'notificationURL': None,
-        'alertURL': None,
-        'showPrompt': None,
-        'showNeverForVersion': None,
-        'platforms': {
-            '*': {
-                'alias': None,
-                'buildID': None,
-                'OS_BOUNCER': None,
-                'OS_FTP': None,
-                'locales': {
-                    '*': {
-                        'isOSUpdate': None,
-                        'buildID': None,
-                        'appVersion': None,
-                        'displayVersion': None,
-                        'platformVersion': None,
-                        # Using lists instead of dicts for multiple updates
-                        # gives us a way to reduce load a bit. As this is
-                        # iterated over, each "from" release is looked up
-                        # in the database. If the "from" releases that we
-                        # we expect to be the most common are earlier in the
-                        # list, we can avoid looking up every single entry.
-                        # The server doesn't know anything about which order is
-                        # best, so we assume the client will make the right
-                        # decision about this.
-                        'partials': [
-                            {
-                                'filesize': None,
-                                'from': None,
-                                'hashValue': None,
-                                'fileUrl': None
-                            }
-                        ],
-                        'completes': [
-                            {
-                                'filesize': None,
-                                'from': None,
-                                'hashValue': None,
-                                'fileUrl': None
-                            }
-                        ]
-                    }
-                }
-            }
-        }
-    }
+    jsonschema = "apprelease-v3.json"
+
     # for the benefit of createXML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL')
