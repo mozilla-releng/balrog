@@ -5,7 +5,7 @@ log = logging.getLogger(__name__)
 
 
 class WhitelistBlobV1(Blob):
-    jsonschema = "whitelist.json"
+    jsonschema = "whitelist.yml"
 
     def __init__(self, **kwargs):
         Blob.__init__(self, **kwargs)

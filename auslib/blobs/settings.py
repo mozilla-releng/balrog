@@ -8,7 +8,7 @@ SETTING_TMPL = ('<setting id="%(id)s" '
 
 
 class SettingsBlob(Blob):
-    jsonschema = "settings.json"
+    jsonschema = "settings.yml"
 
     def __init__(self, **kwargs):
         Blob.__init__(self, **kwargs)
