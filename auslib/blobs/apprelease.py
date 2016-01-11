@@ -574,6 +574,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         ** Combine fileUrls, bouncerProducts, and ftpFilenames into a larger data structure,
            still called "fileUrls". (See below for a more detailed description.)
     """
+    jsonschema = "apprelease-v4.json"
     format_ = {
         'name': None,
         'schema_version': None,

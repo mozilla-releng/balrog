@@ -1090,7 +1090,7 @@ class TestSchema4Blob(unittest.TestCase):
     },
     "platforms": {
         "p": {
-            "buildID": "50",
+            "buildID": 50,
             "OS_FTP": "p",
             "OS_BOUNCER": "p",
             "locales": {
@@ -1099,7 +1099,7 @@ class TestSchema4Blob(unittest.TestCase):
                         {
                             "filesize": 8,
                             "from": "h1",
-                            "hashValue": 9
+                            "hashValue": "9"
                         }
                     ],
                     "completes": [
@@ -1115,6 +1115,9 @@ class TestSchema4Blob(unittest.TestCase):
     }
 }
 """)
+
+    def testIsValid(self):
+        self.assertTrue(self.blobH2.isValid())
 
     def testSchema4WithPartials(self):
         updateQuery = {
@@ -1287,11 +1290,11 @@ class TestSchema4Blob(unittest.TestCase):
         v3Blob.loadJSON("""
 {
     "name": "g2",
-    "schema_version": 3,
+    "schema_version": 4,
     "hashFunction": "sha512",
     "platforms": {
         "p": {
-            "buildID": "40",
+            "buildID": 40,
             "OS_FTP": "o",
             "OS_BOUNCER": "o",
             "locales": {
@@ -1300,7 +1303,7 @@ class TestSchema4Blob(unittest.TestCase):
                         {
                             "filesize": 4,
                             "from": "g1",
-                            "hashValue": 5,
+                            "hashValue": "5",
                             "fileUrl": "http://a.com/g1-partial"
                         }
                     ],
