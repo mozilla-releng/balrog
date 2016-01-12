@@ -38,6 +38,7 @@
       </div>
       <div class="panel-body">
         <textarea ng-model="permission.options_as_json" class="options-as-json"></textarea>
+        <p class="help-block" ng-show="errors.permissions[permission.permission]">{{ errors.permissions[permission.permission].options.join(', ') }}</p>
       </div>
       <div class="panel-footer" ng-show="rule_id">
         <button class="btn btn-primary" ng-show="!saving" ng-click="updatePermissionChanges(permission)">Update</button>
