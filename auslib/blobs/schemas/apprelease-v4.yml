@@ -67,7 +67,7 @@
     fileUrls:
       type: object
       additionalProperties: false
-      description: Key/value pairs whose keys are channel names (or * as a catch-all) and values are updates details for that channel.
+      description: Key/value pairs where the key is a platform name (aka Build Target) and the values are the platform specific details.
       patternProperties:
         ^.+$:
           type: object
@@ -84,6 +84,7 @@
     platforms:
       type: object
       additionalProperties: false
+      description: Key/value pairs whose keys are the names of platforms (aka Build Targets) and values are platform-specific update details.
       patternProperties:
         ^.+$:
           oneOf:
@@ -117,6 +118,7 @@
                 locales:
                   type: object
                   additionalProperties: false
+                  description: Key/value pairs whose keys are the name of locales and values are locale-specific update details.
                   patternProperties:
                     ^.+$:
                       type: object
@@ -142,6 +144,15 @@
                         displayVersion:
                           type: string
                           description: The displayVersion to return with the update. Generally, the client will show this in the UI. If set, the displayVersion at the locale level takes priority. If set, the locale level version overrides this one.
+                        # Using lists instead of dicts for multiple updates
+                        # gives us a way to reduce load a bit. As this is
+                        # iterated over, each "from" release is looked up
+                        # in the database. If the "from" releases that we
+                        # we expect to be the most common are earlier in the
+                        # list, we can avoid looking up every single entry.
+                        # The server doesn't know anything about which order is
+                        # best, so we assume the client will make the right
+                        # decision about this.
                         partials:
                           type: array
                           items:
@@ -151,6 +162,7 @@
                               - from
                               - hashValue
                             additionalProperties: false
+                            description: A list of available partial updates for this platform+locale. Order is significant here, in that a database query is required to determine whether or not the partial is appropriate for an incoming request. For best performance, this list should be organized from most common to least common partial.
                             properties:
                               filesize:
                                 oneOf:

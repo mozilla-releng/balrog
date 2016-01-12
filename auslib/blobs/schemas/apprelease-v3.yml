@@ -96,6 +96,7 @@
     platforms:
       type: object
       additionalProperties: false
+      description: Key/value pairs where the key is a platform name (aka Build Target) and the values are the platform specific details.
       patternProperties:
         ^.+$:
           oneOf:
