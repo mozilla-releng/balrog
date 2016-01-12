@@ -131,7 +131,7 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
         permission.data_version = response.new_data_version;
         $scope.errors = {
             permissions: {}
-        }
+        };
         sweetAlert("Saved", "Permission changes saved.", "success");
       })
       .error(function(response) {
