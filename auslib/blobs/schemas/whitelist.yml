@@ -28,5 +28,4 @@
         properties:
           imei:
             type: "string"
-            description: ""
-
+            description: "A whitelist SHA512 summed IMEI to be included in this whitelist."
