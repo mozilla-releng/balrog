@@ -1,36 +1,36 @@
 ---
-  title: "Settings Blob"
-  type: "object"
+  title: Settings Blob
+  type: object
   required:
-    - "name"
-    - "schema_version"
-    - "settings"
+    - name
+    - schema_version
+    - settings
   additionalProperties: false
   properties:
     name:
-      type: "string"
-      description: "Human readable identifier"
+      type: string
+      description: Human readable identifier
       minLength: 1
       maxLength: 100
     schema_version:
-      type: "number"
-      description: "Blob identifier number"
+      type: number
+      description: Blob identifier number
       enum:
         - 2000
     settings:
-      type: "object"
+      type: object
       properties:
         settingName:
-          type: "object"
+          type: object
           required:
-            - "version"
-            - "last_modified"
+            - version
+            - last_modified
           additionalProperties: false
           properties:
             version:
-              type: "string"
-              description: "Version id of the setting"
+              type: string
+              description: Version id of the setting
             last_modified:
-              type: "number"
-              description: "Last modified timestamp of the setting"
+              type: number
+              description: Last modified timestamp of the setting
 
