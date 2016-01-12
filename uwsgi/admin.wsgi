@@ -21,10 +21,13 @@ logging.setLoggerClass(auslib.log.BalrogLogger)
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG, format=auslib.log.log_format)
 
 from auslib.admin.base import app as application
-from auslib.global_state import dbo
+from auslib.global_state import cache, dbo
 
 # TODO: How to do cef logging in CloudOps? Do we need to?
 auslib.log.cef_config = auslib.log.get_cef_config("syslog")
+
+cache.make_cache("blob", 500, 3600)
+cache.make_cache("blob_version", 500, 60)
 
 dbo.setDb(os.environ["DBURI"])
 dbo.setupChangeMonitors(SYSTEM_ACCOUNTS)
