@@ -12,7 +12,9 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
     permission: '',
     options_as_json: ''
   };
-  $scope.errors = {};
+  $scope.errors = {
+    permissions: {}
+  };
 
   $scope.user.permissions = [];
   Permissions.getUserPermissions(user.username)
@@ -50,17 +52,28 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
           permission: '',
           options_as_json: ''
         };
-        $scope.errors = {};
+        $scope.errors = {
+          permissions: {}
+        };
         sweetAlert("Saved", "Permission added.", "success");
       })
       .error(function(response) {
-        $scope.errors.permission = [response];
-        sweetAlert(
-          "Form submission error",
-          response,
-          "error"
-        );
-        console.error(response);
+        if (typeof response === 'object') {
+          $scope.errors = response;
+          sweetAlert(
+            "Form submission error",
+            "See fields highlighted in red.",
+            "error"
+          );
+        } else if (typeof response === 'string') {
+          // quite possibly an error in the blob validation
+          sweetAlert(
+            "Form submission error",
+            "Unable to submit successfully.\n" +
+            "(" + response+ ")",
+            "error"
+          );
+        }
       })
       .finally(function() {
         $scope.saving = false;
@@ -116,16 +129,28 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
       Permissions.updatePermission($scope.user.username, permission, csrf_token)
       .success(function(response) {
         permission.data_version = response.new_data_version;
+        $scope.errors = {
+            permissions: {}
+        };
         sweetAlert("Saved", "Permission changes saved.", "success");
       })
       .error(function(response) {
-        // $scope.errors.permission = [response];
-        sweetAlert(
-          "Form submission error",
-          response,
-          "error"
-        );
-        console.error(response);
+        if (typeof response === 'object') {
+          $scope.errors.permissions[permission.permission] = response;
+          sweetAlert(
+            "Form submission error",
+            "See fields highlighted in red.",
+            "error"
+          );
+        } else if (typeof response === 'string') {
+          // quite possibly an error in the blob validation
+          sweetAlert(
+            "Form submission error",
+            "Unable to submit successfully.\n" +
+            "(" + response+ ")",
+            "error"
+          );
+        }
       })
       .finally(function() {
         $scope.saving = false;

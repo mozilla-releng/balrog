@@ -45,7 +45,7 @@ describe("controller: UserPermissionsCtrl", function() {
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.flush();
-      expect(this.scope.errors).toEqual({});
+      expect(this.scope.errors).toEqual({permissions:{}});
       expect(this.scope.saving).toEqual(false);
       expect(this.scope.loading).toEqual(false);
       expect(this.scope.user).toEqual({
@@ -83,7 +83,7 @@ describe("controller: UserPermissionsCtrl", function() {
       expect(this.scope.saving).toEqual(false);
       expect(this.scope.user.permissions.length).toEqual(2);
       expect(this.scope.saving).toEqual(false);
-      expect(this.scope.errors).toEqual({});
+      expect(this.scope.errors).toEqual({permissions:{}});
     });
 
     it("should should be able update a permission", function() {
@@ -105,7 +105,7 @@ describe("controller: UserPermissionsCtrl", function() {
       expect(this.scope.saving).toEqual(false);
       expect(this.scope.user.permissions.length).toEqual(1);
       expect(this.scope.saving).toEqual(false);
-      expect(this.scope.errors).toEqual({});
+      expect(this.scope.errors).toEqual({permissions:{}});
     });
 
   });
