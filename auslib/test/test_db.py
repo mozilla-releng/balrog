@@ -1099,16 +1099,9 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self._checkCacheStats(cache.caches["blob"], 3, 2, 1)
             self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
 
-            # Now change it, which will change data_version.
+            # Now change it, which should update the caches
             newBlob = ReleaseBlobV1(name="b", appv="2")
             self.releases.updateRelease("b", "bob", 1, blob=newBlob)
-
-            # Because the ttl of the blob_version cache is 4 and t is only at 3
-            # we need to retrieve the blob one more time before we will get the
-            # updated version.
-            blob = self.releases.getReleaseBlob(name="b")
-            self.assertTrue("appv" not in blob)
-            t.return_value += 1
 
             # Ensure that we have the updated version, not the originally
             # cached one.
@@ -1123,13 +1116,65 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             t.return_value += 1
             self.releases.getReleaseBlob(name="b")
 
-            # Because getReleaseBlob can't decide whether or not the cached
-            # blob is fresh enough until after it retrieves it (and adjusts
-            # the statistics), these numbers are a bit of a lie. In an ideal
-            # world we'd adjust these to be 100% accurate.
-            self._checkCacheStats(cache.caches["blob"], 8, 7, 1)
-            # Data version hit counts are 100% accurate though.
-            self._checkCacheStats(cache.caches["blob_version"], 8, 6, 2)
+            self._checkCacheStats(cache.caches["blob"], 7, 6, 1)
+            self._checkCacheStats(cache.caches["blob_version"], 7, 6, 1)
+
+    def testUpdateReleaseUpdatesCaches(self):
+        with mock.patch("time.time") as t:
+            t.return_value = 0
+            self.releases.getReleaseBlob(name="b")
+            t.return_value += 1
+            self.releases.getReleaseBlob(name="b")
+            t.return_value += 1
+            newBlob = ReleaseBlobV1(name="b", appv="2")
+            self.releases.updateRelease("b", "bob", 1, blob=newBlob)
+            t.return_value += 1
+            blob = self.releases.getReleaseBlob(name="b")
+
+            self.assertEquals(blob, newBlob)
+            self._checkCacheStats(cache.caches["blob"], 3, 2, 1)
+            self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
+
+    def testDeleteReleaseClobbersCache(self):
+        with mock.patch("time.time") as t:
+            t.return_value = 0
+            self.releases.getReleaseBlob(name="b")
+            t.return_value += 1
+            self.releases.getReleaseBlob(name="b")
+            t.return_value += 1
+            self.releases.deleteRelease("bob", "b", 1)
+            t.return_value += 1
+
+            self._checkCacheStats(cache.caches["blob"], 2, 1, 1)
+            self._checkCacheStats(cache.caches["blob_version"], 2, 1, 1)
+            self.assertRaises(KeyError, self.releases.getReleaseBlob, name="b")
+
+    def testAddLocaleToReleaseUpdatesCaches(self):
+        with mock.patch("time.time") as t:
+            t.return_value = 0
+            self.releases.getReleaseBlob(name="b")
+            t.return_value += 1
+            self.releases.addLocaleToRelease("b", "win", "zu", dict(buildID=123), 1, "bob")
+            t.return_value += 1
+            blob = self.releases.getReleaseBlob(name="b")
+
+            newBlob = {
+                "schema_version": 1,
+                "name": "b",
+                "platforms": {
+                    "win": {
+                        "locales": {
+                            "zu": {
+                                "buildID": 123,
+                            }
+                        }
+                    }
+                }
+            }
+            # XXX: THIS check should fail right now. why doesn't it?!
+            self.assertEquals(blob, newBlob)
+            self._checkCacheStats(cache.caches["blob"], 3, 2, 1)
+            self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
 
 #    def testGetReleaseBlobDataChangesBetweenCacheLooksup(self):
 #        """Makes sure that data changing between retrieval of data version

@@ -1025,6 +1025,9 @@ class Releases(AUSTable):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
         self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        new_data_version = old_data_version + 1
+        cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
+        cache.put("blob_version", name, new_data_version)
 
     def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
         """Adds or update's the existing data for a specific platform + locale
@@ -1064,6 +1067,9 @@ class Releases(AUSTable):
         what = dict(data=releaseBlob.getJSON())
         self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                     transaction=transaction)
+        new_data_version = old_data_version + 1
+        cache.put("blob", name, {"data_version": new_data_version, "blob": releaseBlob})
+        cache.put("blob_version", name, new_data_version)
 
     def getLocale(self, name, platform, locale, transaction=None):
         try:
@@ -1082,6 +1088,8 @@ class Releases(AUSTable):
     def deleteRelease(self, changed_by, name, old_data_version, transaction=None):
         where = [self.name == name]
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+        cache.invalidate("blob", name)
+        cache.invalidate("blob_version", name)
 
 
 class Permissions(AUSTable):

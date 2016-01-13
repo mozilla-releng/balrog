@@ -27,7 +27,6 @@ from auslib.global_state import cache, dbo
 auslib.log.cef_config = auslib.log.get_cef_config("syslog")
 
 cache.make_cache("blob", 500, 3600)
-cache.make_cache("blob_version", 500, 60)
 
 dbo.setDb(os.environ["DBURI"])
 dbo.setupChangeMonitors(SYSTEM_ACCOUNTS)
