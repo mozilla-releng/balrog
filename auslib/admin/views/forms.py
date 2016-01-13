@@ -82,16 +82,12 @@ class DbEditableForm(Form):
     data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 
 
-class PermissionForm(DbEditableForm):
+class NewPermissionForm(Form):
     options = JSONStringField('Options')
 
 
-class NewPermissionForm(PermissionForm):
-    permission = StringField('Permission', validators=[Required()])
-
-
-class ExistingPermissionForm(PermissionForm):
-    permission = StringField('Permission', validators=[Required()], widget=DisableableTextInput(disabled=True))
+class ExistingPermissionForm(DbEditableForm):
+    options = JSONStringField('Options')
 
 
 class PartialReleaseForm(Form):
