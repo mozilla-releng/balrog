@@ -59,13 +59,17 @@ class SpecificPermissionView(AdminView):
         try:
             if dbo.permissions.getUserPermissions(username, transaction).get(permission):
                 form = ExistingPermissionForm()
-                if not form.data_version.data:
-                    raise ValueError("Must provide the data version when updating an existing permission.")
+                if not form.validate():
+                    cef_event("Bad input", CEF_WARN, errors=form.errors)
+                    return Response(status=400, response=json.dumps(form.errors))
                 dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
                 new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
                 return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
             else:
                 form = NewPermissionForm()
+                if not form.validate():
+                    cef_event("Bad input", CEF_WARN, errors=form.errors)
+                    return Response(status=400, response=json.dumps(form.errors))
                 dbo.permissions.grantPermission(changed_by, username, permission, form.options.data, transaction=transaction)
                 return make_response(json.dumps(dict(new_data_version=1)), 201)
         except ValueError as e:
@@ -80,6 +84,9 @@ class SpecificPermissionView(AdminView):
             return Response(status=404)
         try:
             form = ExistingPermissionForm()
+            if not form.validate():
+                cef_event("Bad input", CEF_WARN, errors=form.errors)
+                return Response(status=400, response=json.dumps(form.errors))
             dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
             new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
             return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
@@ -98,6 +105,9 @@ class SpecificPermissionView(AdminView):
             # won't find data where it's expecting it. Instead, we have to tell it to look at
             # the query string, which Flask puts in request.args.
             form = ExistingPermissionForm(request.args)
+            if not form.validate():
+                cef_event("Bad input", CEF_WARN, errors=form.errors)
+                return Response(status=400, response=json.dumps(form.errors))
             dbo.permissions.revokePermission(changed_by, username, permission, form.data_version.data, transaction=transaction)
             return Response(status=200)
         except ValueError as e:

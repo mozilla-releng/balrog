@@ -93,6 +93,11 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/users/bob/permissions/admin', data=dict(options=json.dumps(dict(foo=2))))
         self.assertStatusCode(ret, 400)
 
+    # Discovered in https://bugzilla.mozilla.org/show_bug.cgi?id=1237264
+    def testPermissionPutBadJSON(self):
+        ret = self._put("/users/bob/permissions/rules", data=dict(options='{"METHOD":'))
+        self.assertStatusCode(ret, 400)
+
     def testPermissionDelete(self):
         ret = self._delete('/users/bob/permissions/users/:id/permissions/:permission', qs=dict(data_version=1))
         self.assertStatusCode(ret, 200)

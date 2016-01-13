@@ -1099,7 +1099,7 @@ class Permissions(AUSTable):
         '/releases/:name': ['method', 'product'],
         '/releases/:name/revisions': ['product'],
         '/releases/:name/builds/:platform/:locale': ['method', 'product'],
-        '/rules': ['product'],
+        '/rules': ['method', 'product'],
         '/rules/:id': ['method', 'product'],
         '/rules/:id/revisions': ['product'],
         '/users/:id/permissions/:permission': ['method'],
