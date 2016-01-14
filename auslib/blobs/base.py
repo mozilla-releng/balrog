@@ -9,6 +9,7 @@ import logging
 log = logging.getLogger(__name__)
 
 from auslib.AUS import isSpecialURL
+from auslib.global_state import cache
 
 
 def createBlob(data):
@@ -50,7 +51,6 @@ class Blob(dict):
 
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(self.__class__.__name__)
-        self.cached_schemas = {}
         dict.__init__(self, *args, **kwargs)
 
     def isValid(self):
@@ -62,12 +62,10 @@ class Blob(dict):
         return True
 
     def getSchema(self):
-        if self.jsonschema in self.cached_schemas:
-            return self.cached_schemas[self.jsonschema]
+        def loadSchema():
+            return yaml.load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
 
-        schema = yaml.load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
-        self.cached_schemas[self.jsonschema] = self.cached_schemas
-        return schema
+        return cache.get("blob_schema", self.jsonschema, loadSchema)
 
     def loadJSON(self, data):
         """Replaces this blob's contents with parsed contents of the json

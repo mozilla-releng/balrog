@@ -1,41 +1,18 @@
+import mock
 import unittest
 
-from auslib.blobs.base import Blob, createBlob
-
-
-class SimpleBlob(Blob):
-    format_ = {'foo': None}
-
-
-class MultiLevelBlob(Blob):
-    format_ = {
-        'foo': {
-            'bar': {
-                'baz': None
-            }
-        }
-    }
-
-
-class BlobWithWildcard(Blob):
-    format_ = {
-        'foo': {
-            '*': None
-        }
-    }
-
-
-class BlobWithList(Blob):
-    format_ = {
-        'foo': [
-            {
-                'bar': None
-            }
-        ]
-    }
+from auslib.blobs.base import createBlob
+from auslib.global_state import cache
 
 
 class TestCreateBlob(unittest.TestCase):
+
+    def setUp(self):
+        cache.reset()
+        cache.make_cache("blob_schema", 50, 10000)
+
+    def tearDown(self):
+        cache.reset()
 
     def testLoadString(self):
         data = """{
@@ -57,3 +34,32 @@ class TestCreateBlob(unittest.TestCase):
 
     def testBadSchemaVersion(self):
         self.assertRaises(ValueError, createBlob, dict(schema_version=666))
+
+    def testSchemaCaching(self):
+        with mock.patch("yaml.load") as yaml_load:
+            yaml_load.return_value = {
+                "title": "Test",
+                "type": "object",
+                "required": ["schema_version", "name"],
+                "additionalProperties": False,
+                "properties": {
+                    "schema_version": {
+                        "type": "number"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            }
+            blob = createBlob(dict(
+                schema_version=1,
+                name="foo",
+            ))
+            blob.isValid()
+            blob = createBlob(dict(
+                schema_version=1,
+                name="foo",
+            ))
+            blob.isValid()
+
+            self.assertEquals(yaml_load.call_count, 1)
