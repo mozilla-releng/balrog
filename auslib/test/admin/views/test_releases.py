@@ -67,7 +67,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 400)
 
     def testReleasePostCreatesNewReleasev1(self):
-        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e', hashFunction="sha512"))
+        data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
         ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=1))
         self.assertStatusCode(ret, 201)
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
@@ -80,13 +80,13 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     "hashFunction": "sha512",
     "schema_version": 1,
     "bouncerProducts": {
-        "linux": "foo"
+        "partial": "foo"
     }
 }
 """))
 
     def testReleasePostCreatesNewReleasev2(self):
-        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e', hashFunction="sha512"))
+        data = json.dumps(dict(bouncerProducts=dict(complete='foo'), name='e', hashFunction="sha512"))
         ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=2))
         self.assertStatusCode(ret, 201)
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
@@ -99,7 +99,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     "hashFunction": "sha512",
     "schema_version": 2,
     "bouncerProducts": {
-        "linux": "foo"
+        "complete": "foo"
     }
 }
 """))
@@ -646,7 +646,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testReleasesPost(self):
-        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e', schema_version=1, hashFunction="sha512"))
+        data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', schema_version=1, hashFunction="sha512"))
         ret = self._post('/releases', data=dict(blob=data, name="e", product='e', version='e'))
         self.assertStatusCode(ret, 201)
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
@@ -659,7 +659,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     "hashFunction": "sha512",
     "schema_version": 1,
     "bouncerProducts": {
-        "linux": "foo"
+        "partial": "foo"
     }
 }
 """))

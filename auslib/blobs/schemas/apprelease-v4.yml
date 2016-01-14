@@ -103,12 +103,13 @@
                 buildID:
                   oneOf:
                     -
-                      # TODO: validate that it"s just numbers!
                       type: string
                       description: The buildID to serve for this platform"s updates. Overridden by buildID at the locale level if present.
+                      pattern: ^[0-9]*$
                     -
                       type: number
                       description: The buildID to serve for this platform"s updates. Overridden by buildID at the locale level if present.
+                      pattern: ^[0-9]*$
                 OS_BOUNCER:
                   type: string
                   description: The value to use when substituing %OS_BOUNCER% in file URLs. See top-level fileUrls for additional detail.
@@ -132,9 +133,11 @@
                             -
                               type: string
                               description: The buildID to serve for this locale"s updates. Overrides the platform-level buildID
+                              pattern: ^[0-9]*$
                             -
                               type: number
                               description: The buildID to serve for this locale"s updates. Overrides the platform-level buildID
+                              pattern: ^[0-9]*$
                         appVersion:
                           type: string
                           description: The version of the application represented by this Blob. If set, the locale level version overrides this one.
@@ -169,9 +172,11 @@
                                   -
                                     type: number
                                     description: The filesize of this partial update
+                                    pattern: ^[0-9]*$
                                   -
                                     type: string
                                     description: The filesize of this partial update
+                                    pattern: ^[0-9]*$
                               from:
                                 type: string
                                 description: The release this partial update can be applied to. Should match another release in Balrog"s database.
@@ -196,10 +201,12 @@
                                 oneOf:
                                   -
                                     type: number
-                                    description: The filesize of this partial update
+                                    description: The filesize of this complete update
+                                    pattern: ^[0-9]*$
                                   -
                                     type: string
-                                    description: The filesize of this partial update
+                                    description: The filesize of this complete update
+                                    pattern: ^[0-9]*$
                               from:
                                 type: string
                                 description: The release this partial update can be applied to. Should match another release in Balrog"s database.

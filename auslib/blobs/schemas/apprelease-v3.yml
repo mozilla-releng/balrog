@@ -59,8 +59,9 @@
     fileUrls:
       type: object
       description: Key/value pairs where the key is the name of an update channel, and the value is the URL for that channel. %LOCALE% will be substitued with the locale of the update request. %OS_FTP% and %OS_BOUNCER% will be substitude with values from the "platforms" block corresponding to the update request. %FILENAME% and %PRODUCT% will be replaced based on the values looked up in the ftpFilenames and bouncerProducts blocks respectively.
-      properties:
-        channelName:
+      additionalProperties: false
+      patternProperties:
+        ^.*$:
           type: string
           format: uri
     ftpFilenames:
@@ -70,13 +71,13 @@
           type: object
           additionalProperties: false
           patternProperties:
-            ^.*:
+            ^.*$:
               type: string
         completes:
           type: object
           additionalProperties: false
           patternProperties:
-            ^.*:
+            ^.*$:
               type: string
     bouncerProducts:
       type: object
@@ -85,13 +86,13 @@
           type: object
           additionalProperties: false
           patternProperties:
-            ^.*:
+            ^.*$:
               type: string
         completes:
           type: object
           additionalProperties: false
           patternProperties:
-            ^.*:
+            ^.*$:
               type: string
     platforms:
       type: object
@@ -115,12 +116,13 @@
                 buildID:
                   oneOf:
                     -
-                      # TODO: validate that it"s just numbers!
                       type: string
                       description: The buildID to serve for this platform"s updates. Overridden by buildID at the locale level if present.
+                      pattern: ^[0-9]*$
                     -
                       type: number
                       description: The buildID to serve for this platform"s updates. Overridden by buildID at the locale level if present.
+                      pattern: ^[0-9]*$
                 OS_BOUNCER:
                   type: string
                   description: The value to use when substituing %OS_BOUNCER% in file URLs. See top-level fileUrls for additional detail.
@@ -143,9 +145,11 @@
                             -
                               type: string
                               description: The buildID to serve for this locale"s updates. Overrides the platform-level buildID
+                              pattern: ^[0-9]*$
                             -
                               type: number
                               description: The buildID to serve for this locale"s updates. Overrides the platform-level buildID
+                              pattern: ^[0-9]*$
                         appVersion:
                           type: string
                           description: The version of the application represented by this Blob. If set, the locale level version overrides this one.
@@ -179,9 +183,11 @@
                                   -
                                     type: number
                                     description: The filesize of this partial update
+                                    pattern: ^[0-9]*$
                                   -
                                     type: string
                                     description: The filesize of this partial update
+                                    pattern: ^[0-9]*$
                               from:
                                 type: string
                                 description: The release this partial update can be applied to. Should match another release in Balrog"s database.
@@ -206,10 +212,12 @@
                                 oneOf:
                                   -
                                     type: number
-                                    description: The filesize of this partial update
+                                    description: The filesize of this complete update
+                                    pattern: ^[0-9]*$
                                   -
                                     type: string
-                                    description: The filesize of this partial update
+                                    description: The filesize of this complete update
+                                    pattern: ^[0-9]*$
                               from:
                                 type: string
                                 description: The release this partial update can be applied to. Should match another release in Balrog"s database.
