@@ -1096,9 +1096,6 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.getReleaseBlob(name="b")
             t.return_value += 1
 
-            self._checkCacheStats(cache.caches["blob"], 3, 2, 1)
-            self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
-
             # Now change it, which should update the caches
             newBlob = ReleaseBlobV1(name="b", appv="2")
             self.releases.updateRelease("b", "bob", 1, blob=newBlob)
@@ -1116,24 +1113,15 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             t.return_value += 1
             self.releases.getReleaseBlob(name="b")
 
+            # The first 3 retrievals here cause a miss and then 2 hits.
+            # updateRelease doesn't affect the stats at all (but it updates
+            # the cache with the new version
+            # Which means that all 4 subsequent retrievals should be hits.
             self._checkCacheStats(cache.caches["blob"], 7, 6, 1)
+            # Because we updated the blob before the blob_version cache
+            # expired at t=4, its expiry got reset, which means that its only
+            # miss was the original lookup.
             self._checkCacheStats(cache.caches["blob_version"], 7, 6, 1)
-
-    def testUpdateReleaseUpdatesCaches(self):
-        with mock.patch("time.time") as t:
-            t.return_value = 0
-            self.releases.getReleaseBlob(name="b")
-            t.return_value += 1
-            self.releases.getReleaseBlob(name="b")
-            t.return_value += 1
-            newBlob = ReleaseBlobV1(name="b", appv="2")
-            self.releases.updateRelease("b", "bob", 1, blob=newBlob)
-            t.return_value += 1
-            blob = self.releases.getReleaseBlob(name="b")
-
-            self.assertEquals(blob, newBlob)
-            self._checkCacheStats(cache.caches["blob"], 3, 2, 1)
-            self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
 
     def testDeleteReleaseClobbersCache(self):
         with mock.patch("time.time") as t:
@@ -1145,8 +1133,12 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.deleteRelease("bob", "b", 1)
             t.return_value += 1
 
+            # We've just got two lookups here (one hit, one miss).
+            # Deleting shouldn't cause any cache lookups...
             self._checkCacheStats(cache.caches["blob"], 2, 1, 1)
             self._checkCacheStats(cache.caches["blob_version"], 2, 1, 1)
+            # ...but we do need to verify that the blob is no longer in the
+            # cache or otherwise retrievable.
             self.assertRaises(KeyError, self.releases.getReleaseBlob, name="b")
 
     def testAddLocaleToReleaseUpdatesCaches(self):
@@ -1171,8 +1163,13 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
                     }
                 }
             }
-            # XXX: THIS check should fail right now. why doesn't it?!
+
             self.assertEquals(blob, newBlob)
+            # The first getReleaseBlob call is a miss
+            # addLocaleToRelease retrieve the blob (a hit) before updating it,
+            # and updates the cache.
+            # The second getReleaseBlob call will be a cache hit of the newly
+            # updated contents.
             self._checkCacheStats(cache.caches["blob"], 3, 2, 1)
             self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
 
