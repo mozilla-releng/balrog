@@ -51,6 +51,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
+    def testReleasePostMismatchedName(self):
+        data = json.dumps(dict(name="eee", schema_version=1))
+        ret = self._post('/releases/d', data=dict(data=data, product='d', version='d', data_version=1))
+        self.assertStatusCode(ret, 400)
+
     def testReleasePostUpdateChangeHashFunction(self):
         data = json.dumps(dict(detailsUrl='blah', hashFunction="sha1024", schema_version=1))
         ret = self._post('/releases/d', data=dict(data=data, product='d', version='d', data_version=1))
@@ -469,7 +474,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/new_release', data=dict(name='new_release', version='11', product='Firefox',
                                                            blob="""
 {
-    "name": "a",
+    "name": "new_release",
     "hashFunction": "sha512",
     "schema_version": 1,
     "platforms": {
@@ -491,7 +496,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['product'], 'Firefox')
         self.assertEquals(json.loads(r[0]['data']), json.loads("""
 {
-    "name": "a",
+    "name": "new_release",
     "hashFunction": "sha512",
     "schema_version": 1,
     "platforms": {
@@ -512,6 +517,15 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     "schema_version": 3,
     "hashFunction": "sha512",
     "borken": "yes"
+}
+"""))
+        self.assertStatusCode(ret, 400)
+
+    def testNewReleasePutMismatchedName(self):
+        ret = self._put("/releases/aaaa", data=dict(name="ueohueo", version="1", product="aa", blob="""
+{
+    "name": "bbbb",
+    "schema_version": 3
 }
 """))
         self.assertStatusCode(ret, 400)
