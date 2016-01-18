@@ -1131,6 +1131,27 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             # miss was the original lookup.
             self._checkCacheStats(cache.caches["blob_version"], 7, 6, 1)
 
+    def testAddReleaseUpdatesCache(self):
+        with mock.patch("time.time") as t:
+            t.return_value = 0
+            self.releases.addRelease(
+                name="abc",
+                product="bbb",
+                version="3.2",
+                blob=ReleaseBlobV1(name="abc", schema_version=1, hashFunction="sha512"),
+                changed_by="bill",
+            )
+            t.return_value += 1
+            self.releases.getReleaseBlob(name="abc")
+            t.return_value += 1
+            self.releases.getReleaseBlob(name="abc")
+
+            # Adding the release should've caused the cache to get an initial
+            # version of the blob without changing the stats. The two retrievals
+            # should both be cache hits because of this.
+            self._checkCacheStats(cache.caches["blob"], 2, 2, 0)
+            self._checkCacheStats(cache.caches["blob_version"], 2, 2, 0)
+
     def testDeleteReleaseClobbersCache(self):
         with mock.patch("time.time") as t:
             t.return_value = 0
