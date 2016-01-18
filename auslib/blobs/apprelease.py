@@ -1,7 +1,6 @@
 import re
 
 import logging
-log = logging.getLogger(__name__)
 
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
@@ -233,6 +232,8 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
     It was deprecated by https://bugzilla.mozilla.org/show_bug.cgi?id=530872 during
     Gecko 2.0 development (aka 1.9.3).
     """
+    log = logging.getLogger("ReleaseBlobV41")
+
     format_ = {
         'name': None,
         'schema_version': None,
@@ -451,6 +452,8 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
          * actions, billboardURL, openURL, notificationURL,
            alertURL, showPrompt, showNeverForVersion, isOSUpdate
     """
+    log = logging.getLogger("ReleaseBlobV2")
+
     format_ = {
         'name': None,
         'schema_version': None,
@@ -593,6 +596,8 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
            * remove "partial" and "complete" from locale level
            * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
     """
+    log = logging.getLogger("ReleaseBlobV3")
+
     format_ = {
         'name': None,
         'schema_version': None,
@@ -744,6 +749,8 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         ** Combine fileUrls, bouncerProducts, and ftpFilenames into a larger data structure,
            still called "fileUrls". (See below for a more detailed description.)
     """
+    log = logging.getLogger("ReleaseBlobV4")
+
     format_ = {
         'name': None,
         'schema_version': None,

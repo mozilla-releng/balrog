@@ -90,9 +90,9 @@ def createBlob(data):
 class Blob(dict):
     """See isValidBlob for details on how format is used to validate blobs."""
     format_ = {}
+    log = logging.getLogger("Blob")
 
     def __init__(self, *args, **kwargs):
-        self.log = logging.getLogger(self.__class__.__name__)
         dict.__init__(self, *args, **kwargs)
 
     def isValid(self):

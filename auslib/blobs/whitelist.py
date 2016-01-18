@@ -1,10 +1,11 @@
-from auslib.blobs.base import Blob
-
 import logging
-log = logging.getLogger(__name__)
+
+from auslib.blobs.base import Blob
 
 
 class WhitelistBlobV1(Blob):
+    log = logging.getLogger("WhitelistBlobV1")
+
     format_ = {
         'name': None,
         'schema_version': None,

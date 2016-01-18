@@ -1,4 +1,6 @@
+import logging
 import re
+
 from auslib.blobs.base import Blob
 
 
@@ -8,6 +10,8 @@ SETTING_TMPL = ('<setting id="%(id)s" '
 
 
 class SettingsBlob(Blob):
+    log = logging.getLogger("SettingsBlob")
+
     format_ = {
         'name': None,
         'schema_version': None,

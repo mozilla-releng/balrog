@@ -1,6 +1,8 @@
+import logging
 import mock
 import os
 import simplejson as json
+import sys
 from tempfile import mkstemp
 import unittest
 
@@ -1028,9 +1030,22 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
         self.releases = self.db.releases
         self.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name="a", schema_version=1)), data_version=1)
         self.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name="b", schema_version=1)), data_version=1)
+        # When we started copying objects that go in or out of the cache we
+        # discovered that Blob objects were not copyable at the time, due to
+        # deepycopy() trying to copy their instance-level "log" attribute.
+        # Unit tests at the time didn't catch this because the logger used
+        # in tests is copyable (whereas one that points at an actual file
+        # stream is not). In order to make sure this doesn't regress, we
+        # override the logging for these tests to make sure the loggers are
+        # configured as they are in production.
+        self.handler = logging.StreamHandler(sys.stderr)
+        logger = logging.getLogger()
+        logger.addHandler(self.handler)
 
     def tearDown(self):
         cache.reset()
+        logger = logging.getLogger()
+        logger.removeHandler(self.handler)
 
     def _checkCacheStats(self, cache, lookups, hits, misses):
         self.assertEquals(cache.lookups, lookups)
