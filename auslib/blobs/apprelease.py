@@ -232,7 +232,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
     It was deprecated by https://bugzilla.mozilla.org/show_bug.cgi?id=530872 during
     Gecko 2.0 development (aka 1.9.3).
     """
-    log = logging.getLogger("ReleaseBlobV41")
+    log = logging.getLogger("ReleaseBlobV1")
 
     format_ = {
         'name': None,
