@@ -26,8 +26,11 @@ from auslib.global_state import cache, dbo
 # TODO: How to do cef logging in CloudOps? Do we need to?
 auslib.log.cef_config = auslib.log.get_cef_config("syslog")
 
+# We explicitly don't want a blob_version cache here because it will cause
+# issues where we run multiple instances of the admin app. Even though each
+# app will update its caches when it updates the db, the others would still
+# be out of sync for up to the length of the blob_version cache timeout.
 cache.make_cache("blob", 500, 3600)
-cache.make_cache("blob_version", 500, 60)
 
 dbo.setDb(os.environ["DBURI"])
 dbo.setupChangeMonitors(SYSTEM_ACCOUNTS)
