@@ -1181,35 +1181,6 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self._checkCacheStats(cache.caches["blob"], 3, 2, 1)
             self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
 
-#    def testGetReleaseBlobDataChangesBetweenCacheLooksup(self):
-#        """Makes sure that data changing between retrieval of data version
-#        and retrieval of actual data is handled correctly."""
-#        with mock.patch("time.time") as t:
-#            # Setting side_effect instead of return_value causes the mocked
-#            # time to return a different value with each call. This is
-#            # necessary in this test because we need it to return different
-#            # values when called by the blob_version and blob caches within the
-#            # same getReleaseBlob call.
-#            t.return_value = 0
-#
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            newBlob = ReleaseBlobV1(name="b", appv="3")
-#            self.releases.updateBlob("b", "bob", 1, blob=newBlob)
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#
-#            # How to verify this? Cache stats are wrong =\
-#            self._checkCacheStats(cache.caches["blob"], 1,1,1)
-
 
 class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     """Tests for the Releases class that depend on version 1 of the blob schema."""
