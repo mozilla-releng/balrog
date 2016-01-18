@@ -46,8 +46,7 @@ class MaybeCacher(object):
         # Copy the value to make sure the caller can't accidentally update the
         # cached version. If they want to update it, they should call "put"
         # explicitly.
-        value = deepcopy(value)
-        return value
+        return deepcopy(value)
 
     def put(self, name, key, value):
         if name not in self.caches:
@@ -55,8 +54,7 @@ class MaybeCacher(object):
 
         # Copy the value to make sure the caller can't accicdentally update the
         # cached version.
-        value = deepcopy(value)
-        return self.caches[name].put(key, value)
+        return self.caches[name].put(key, deepcopy(value))
 
     def clear(self, name=None):
         if name and name not in self.caches:
