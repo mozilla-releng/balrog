@@ -16,6 +16,7 @@ setup(
         "flask==0.10.1",
         "flask-compress==1.3.0",
         "flask-wtf==0.12",
+        "functools32==3.2.3-2",
         "itsdangerous==0.24",
         "jinja2==2.5.5",
         "jsonschema==2.5.1",
