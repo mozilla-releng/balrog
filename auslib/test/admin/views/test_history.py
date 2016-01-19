@@ -33,7 +33,7 @@ class TestHistoryView(ViewTest):
 
     def testFieldViewRelease(self):
         # add a release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1, name="d", hashFunction="sha512"))
         ret = self._post(
             '/releases/d',
             data=dict(data=data, product='d', version='d', data_version=1)
@@ -63,7 +63,9 @@ class TestHistoryView(ViewTest):
             "locales": {
                 "d": {
                     "complete": {
-                        "filesize": "1234"
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "abc"
                     }
                 }
             }
@@ -72,7 +74,7 @@ class TestHistoryView(ViewTest):
 }
 """))
 
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=False, schema_version=1))
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=False, schema_version=1, name="d", hashFunction="sha512"))
         ret = self._post(
             '/releases/d',
             data=dict(data=data, product='d', version='d', data_version=2)

@@ -3,20 +3,9 @@ import simplejson as json
 from tempfile import mkstemp
 import unittest
 
-from flask import Response
-
 from auslib.global_state import dbo
 from auslib.admin.base import app
 import auslib.log
-
-# When running tests, there's no web server to convert uncaught exceptions to
-# 500 errors, so we need to do it here. Maybe we should just do it globally
-# anyways?
-
-
-@app.errorhandler(Exception)
-def uncaughtexceptions(error):
-    return Response(response=error, status=500)
 
 
 class ViewTest(unittest.TestCase):
@@ -55,7 +44,9 @@ class ViewTest(unittest.TestCase):
             "locales": {
                 "d": {
                     "complete": {
-                        "filesize": "1234"
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "abc"
                     }
                 }
             }
