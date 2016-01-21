@@ -16,7 +16,11 @@ setup(
         "flask==0.10.1",
         "flask-compress==1.3.0",
         "flask-wtf==0.12",
-        "functools32==3.2.3-2",
+        # Uncomment me when Python 2.6 is desupported.
+        # This module actually appears to work in Python 2.6 (for our purposes, anyways),
+        # and is included in the vendor lib. Including in setup.py breaks tests on
+        # Python 2.6 though, because the module is uninstallable on 2.6.
+        #"functools32==3.2.3-2",
         "itsdangerous==0.24",
         "jinja2==2.5.5",
         "jsonschema==2.5.1",
