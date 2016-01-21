@@ -5,16 +5,7 @@ from auslib.blobs.base import Blob
 
 class WhitelistBlobV1(Blob):
     log = logging.getLogger("WhitelistBlobV1")
-
-    format_ = {
-        'name': None,
-        'schema_version': None,
-        'whitelist': [
-            {
-                'imei': None
-            }
-        ]
-    }
+    jsonschema = "whitelist.yml"
 
     def __init__(self, **kwargs):
         Blob.__init__(self, **kwargs)

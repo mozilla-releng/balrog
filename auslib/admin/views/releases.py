@@ -1,5 +1,7 @@
 import simplejson as json
 
+from jsonschema import ValidationError
+
 from sqlalchemy.sql.expression import null
 
 from flask import Response, jsonify, make_response, request
@@ -134,7 +136,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                 newReleaseData['hashFunction'] = hashFunction
             try:
                 releaseInfo = createRelease(rel, product, version, changed_by, transaction, newReleaseData)
-            except ValueError as e:
+            except (ValidationError, ValueError) as e:
                 msg = "Couldn't create release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                 return Response(status=400, response=msg)
@@ -148,7 +150,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                 dbo.releases.updateRelease(name=rel, version=version,
                                            changed_by=changed_by, old_data_version=old_data_version,
                                            transaction=transaction)
-            except ValueError as e:
+            except (ValidationError, ValueError) as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
                 return Response(status=400, response=msg)
@@ -159,7 +161,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
             extraArgs['alias'] = alias
         try:
             commitCallback(rel, product, version, incomingData, releaseInfo['data'], old_data_version, extraArgs)
-        except (OutdatedDataError, ValueError) as e:
+        except (ValidationError, ValueError, OutdatedDataError) as e:
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
             return Response(status=400, response=msg)
@@ -240,7 +242,7 @@ class SingleReleaseView(AdminView):
                 dbo.releases.updateRelease(name=release, blob=blob, version=form.version.data,
                                            product=form.product.data, changed_by=changed_by,
                                            old_data_version=data_version, transaction=transaction)
-            except ValueError as e:
+            except (ValidationError, ValueError) as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
                 return Response(status=400, response=json.dumps({"data": [msg]}))
@@ -251,7 +253,7 @@ class SingleReleaseView(AdminView):
                 dbo.releases.addRelease(name=release, product=form.product.data,
                                         version=form.version.data, blob=blob,
                                         changed_by=changed_by, transaction=transaction)
-            except ValueError as e:
+            except (ValidationError, ValueError) as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
                 return Response(status=400, response=json.dumps({"data": [msg]}))
@@ -317,7 +319,7 @@ class ReleaseHistoryView(HistoryAdminView):
             page = int(request.args.get('page', 1))
             limit = int(request.args.get('limit', 10))
             assert page >= 1
-        except (ValueError, AssertionError) as msg:
+        except (ValidationError, ValueError, AssertionError) as msg:
             cef_event("Bad input", CEF_WARN, errors=msg)
             return Response(status=400, response=str(msg))
         offset = limit * (page - 1)
@@ -374,7 +376,7 @@ class ReleaseHistoryView(HistoryAdminView):
             dbo.releases.updateRelease(changed_by=changed_by, name=change['name'],
                                        version=change['version'], blob=blob,
                                        old_data_version=old_data_version, transaction=transaction)
-        except ValueError as e:
+        except (ValidationError, ValueError) as e:
             cef_event("Bad input", CEF_WARN, errors=e.args)
             return Response(status=400, response=e.args)
 
@@ -435,7 +437,7 @@ class ReleasesAPIView(AdminView):
                 version=form.version.data, blob=blob,
                 changed_by=changed_by, transaction=transaction
             )
-        except ValueError as e:
+        except (ValidationError, ValueError) as e:
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg)
             return Response(status=400, response=json.dumps({"data": [msg]}))
