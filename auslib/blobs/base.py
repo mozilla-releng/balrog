@@ -56,7 +56,8 @@ class Blob(dict):
         # pickleable. Moving them to the class level avoids this issue without
         # the need for subclasses to worry about instantiating their own
         # Loggers.
-        self.__class__.log = logging.getLogger(self.__class__.__name__)
+        logger_name = "{0}.{1}".format(self.__class__.__module__, self.__class__.__name__)
+        self.__class__.log = logging.getLogger(logger_name)
 
     def isValid(self):
         """Decides whether or not this blob is valid based."""
