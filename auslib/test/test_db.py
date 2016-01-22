@@ -1,6 +1,8 @@
+import logging
 import mock
 import os
 import simplejson as json
+import sys
 from tempfile import mkstemp
 import unittest
 
@@ -1036,9 +1038,22 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
                                          data_version=1)
         self.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
+        # When we started copying objects that go in or out of the cache we
+        # discovered that Blob objects were not copyable at the time, due to
+        # deepycopy() trying to copy their instance-level "log" attribute.
+        # Unit tests at the time didn't catch this because the logger used
+        # in tests is copyable (whereas one that points at an actual file
+        # stream is not). In order to make sure this doesn't regress, we
+        # override the logging for these tests to make sure the loggers are
+        # configured as they are in production.
+        self.handler = logging.StreamHandler(sys.stderr)
+        logger = logging.getLogger()
+        logger.addHandler(self.handler)
 
     def tearDown(self):
         cache.reset()
+        logger = logging.getLogger()
+        logger.removeHandler(self.handler)
 
     def _checkCacheStats(self, cache, lookups, hits, misses):
         self.assertEquals(cache.lookups, lookups)
@@ -1112,19 +1127,12 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.getReleaseBlob(name="b")
             t.return_value += 1
 
+            newBlob = ReleaseBlobV1(name="b", appv="2", hashFunction="sha512")
             self._checkCacheStats(cache.caches["blob"], 3, 2, 1)
             self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
 
             # Now change it, which will change data_version.
-            newBlob = ReleaseBlobV1(name="b", appv="2", hashFunction="sha512")
             self.releases.updateRelease("b", "bob", 1, blob=newBlob)
-
-            # Because the ttl of the blob_version cache is 4 and t is only at 3
-            # we need to retrieve the blob one more time before we will get the
-            # updated version.
-            blob = self.releases.getReleaseBlob(name="b")
-            self.assertTrue("appv" not in blob)
-            t.return_value += 1
 
             # Ensure that we have the updated version, not the originally
             # cached one.
@@ -1139,42 +1147,87 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             t.return_value += 1
             self.releases.getReleaseBlob(name="b")
 
-            # Because getReleaseBlob can't decide whether or not the cached
-            # blob is fresh enough until after it retrieves it (and adjusts
-            # the statistics), these numbers are a bit of a lie. In an ideal
-            # world we'd adjust these to be 100% accurate.
-            self._checkCacheStats(cache.caches["blob"], 8, 7, 1)
-            # Data version hit counts are 100% accurate though.
-            self._checkCacheStats(cache.caches["blob_version"], 8, 6, 2)
+            # The first 3 retrievals here cause a miss and then 2 hits.
+            # updateRelease doesn't affect the stats at all (but it updates
+            # the cache with the new version
+            # Which means that all 4 subsequent retrievals should be hits.
+            self._checkCacheStats(cache.caches["blob"], 7, 6, 1)
+            # Because we updated the blob before the blob_version cache
+            # expired at t=4, its expiry got reset, which means that its only
+            # miss was the original lookup.
+            self._checkCacheStats(cache.caches["blob_version"], 7, 6, 1)
 
-#    def testGetReleaseBlobDataChangesBetweenCacheLooksup(self):
-#        """Makes sure that data changing between retrieval of data version
-#        and retrieval of actual data is handled correctly."""
-#        with mock.patch("time.time") as t:
-#            # Setting side_effect instead of return_value causes the mocked
-#            # time to return a different value with each call. This is
-#            # necessary in this test because we need it to return different
-#            # values when called by the blob_version and blob caches within the
-#            # same getReleaseBlob call.
-#            t.return_value = 0
-#
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            newBlob = ReleaseBlobV1(name="b", appv="3")
-#            self.releases.updateBlob("b", "bob", 1, blob=newBlob)
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#            self.releases.getReleaseBlob(name="b")
-#
-#            # How to verify this? Cache stats are wrong =\
-#            self._checkCacheStats(cache.caches["blob"], 1,1,1)
+    def testAddReleaseUpdatesCache(self):
+        with mock.patch("time.time") as t:
+            t.return_value = 0
+            self.releases.addRelease(
+                name="abc",
+                product="bbb",
+                version="3.2",
+                blob=ReleaseBlobV1(name="abc", schema_version=1, hashFunction="sha512"),
+                changed_by="bill",
+            )
+            t.return_value += 1
+            self.releases.getReleaseBlob(name="abc")
+            t.return_value += 1
+            self.releases.getReleaseBlob(name="abc")
+
+            # Adding the release should've caused the cache to get an initial
+            # version of the blob without changing the stats. The two retrievals
+            # should both be cache hits because of this.
+            self._checkCacheStats(cache.caches["blob"], 2, 2, 0)
+            self._checkCacheStats(cache.caches["blob_version"], 2, 2, 0)
+
+    def testDeleteReleaseClobbersCache(self):
+        with mock.patch("time.time") as t:
+            t.return_value = 0
+            self.releases.getReleaseBlob(name="b")
+            t.return_value += 1
+            self.releases.getReleaseBlob(name="b")
+            t.return_value += 1
+            self.releases.deleteRelease("bob", "b", 1)
+            t.return_value += 1
+
+            # We've just got two lookups here (one hit, one miss).
+            # Deleting shouldn't cause any cache lookups...
+            self._checkCacheStats(cache.caches["blob"], 2, 1, 1)
+            self._checkCacheStats(cache.caches["blob_version"], 2, 1, 1)
+            # ...but we do need to verify that the blob is no longer in the
+            # cache or otherwise retrievable.
+            self.assertRaises(KeyError, self.releases.getReleaseBlob, name="b")
+
+    def testAddLocaleToReleaseUpdatesCaches(self):
+        with mock.patch("time.time") as t:
+            t.return_value = 0
+            self.releases.getReleaseBlob(name="b")
+            t.return_value += 1
+            self.releases.addLocaleToRelease("b", "win", "zu", dict(buildID=123), 1, "bob")
+            t.return_value += 1
+            blob = self.releases.getReleaseBlob(name="b")
+
+            newBlob = {
+                "schema_version": 1,
+                "name": "b",
+                "hashFunction": "sha512",
+                "platforms": {
+                    "win": {
+                        "locales": {
+                            "zu": {
+                                "buildID": 123,
+                            }
+                        }
+                    }
+                }
+            }
+
+            self.assertEquals(blob, newBlob)
+            # The first getReleaseBlob call is a miss
+            # addLocaleToRelease retrieve the blob (a hit) before updating it,
+            # and updates the cache.
+            # The second getReleaseBlob call will be a cache hit of the newly
+            # updated contents.
+            self._checkCacheStats(cache.caches["blob"], 3, 2, 1)
+            self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
 
 
 class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):

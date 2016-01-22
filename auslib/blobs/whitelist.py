@@ -1,8 +1,5 @@
 from auslib.blobs.base import Blob
 
-import logging
-log = logging.getLogger(__name__)
-
 
 class WhitelistBlobV1(Blob):
     jsonschema = "whitelist.yml"

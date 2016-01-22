@@ -1,8 +1,5 @@
 import re
 
-import logging
-log = logging.getLogger(__name__)
-
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob
