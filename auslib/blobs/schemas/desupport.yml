@@ -1,0 +1,23 @@
+---
+  title: Desupport Blob
+  type: object
+  required:
+    - name
+    - schema_version
+    - detailsUrl
+  additionalProperties: false
+  properties:
+    name:
+      type: string
+      description: Human readable identifier
+      minLength: 1
+      maxLength: 100
+    schema_version:
+      type: number
+      description: Blob identifier number
+      enum:
+        - 50
+    settings:
+      type: string
+      description: URL that shows more information about why users getting this release are desupported
+      format: uri
