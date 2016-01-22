@@ -1,4 +1,3 @@
-import logging
 import re
 
 from auslib.AUS import isForbiddenUrl
@@ -7,7 +6,6 @@ from auslib.errors import BadDataError
 
 
 class GMPBlobV1(Blob):
-    log = logging.getLogger("GMPBlobV1")
     jsonschema = "gmp.yml"
 
     def __init__(self, **kwargs):

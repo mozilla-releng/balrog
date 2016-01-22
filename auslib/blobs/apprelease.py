@@ -1,7 +1,5 @@
 import re
 
-import logging
-
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob
@@ -232,7 +230,6 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
     It was deprecated by https://bugzilla.mozilla.org/show_bug.cgi?id=530872 during
     Gecko 2.0 development (aka 1.9.3).
     """
-    log = logging.getLogger("ReleaseBlobV1")
     jsonschema = "apprelease-v1.yml"
 
     def __init__(self, **kwargs):
@@ -412,7 +409,6 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         Removed:
          * oldVersionSpecialCases
     """
-    log = logging.getLogger("ReleaseBlobV2")
     jsonschema = "apprelease-v2.yml"
 
     # for the benefit of createXML and createSnippets
@@ -502,7 +498,6 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
            * remove "partial" and "complete" from locale level
            * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
     """
-    log = logging.getLogger("ReleaseBlobV3")
     jsonschema = "apprelease-v3.yml"
 
     # for the benefit of createXML
@@ -578,7 +573,6 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         ** Combine fileUrls, bouncerProducts, and ftpFilenames into a larger data structure,
            still called "fileUrls". (See below for a more detailed description.)
     """
-    log = logging.getLogger("ReleaseBlobV4")
     jsonschema = "apprelease-v4.yml"
 
     # for the benefit of createXML

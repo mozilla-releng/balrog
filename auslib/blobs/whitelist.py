@@ -1,10 +1,7 @@
-import logging
-
 from auslib.blobs.base import Blob
 
 
 class WhitelistBlobV1(Blob):
-    log = logging.getLogger("WhitelistBlobV1")
     jsonschema = "whitelist.yml"
 
     def __init__(self, **kwargs):

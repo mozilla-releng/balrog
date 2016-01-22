@@ -6,7 +6,6 @@ import jsonschema
 import yaml
 
 import logging
-log = logging.getLogger(__name__)
 
 from auslib.AUS import isSpecialURL
 from auslib.global_state import cache
@@ -48,11 +47,16 @@ def createBlob(data):
 
 class Blob(dict):
     """See isValidBlob for details on how format is used to validate blobs."""
-    log = logging.getLogger("Blob")
     jsonschema = None
 
     def __init__(self, *args, **kwargs):
-        dict.__init__(self, *args, **kwargs)
+        super(Blob, self).__init__(self, *args, **kwargs)
+        # Blobs need to be pickable to go into the cache properly. Pickling
+        # extendes to all instance-level attributes, and our Loggers are not
+        # pickleable. Moving them to the class level avoids this issue without
+        # the need for subclasses to worry about instantiating their own
+        # Loggers.
+        self.__class__.log = logging.getLogger(self.__class__.__name__)
 
     def isValid(self):
         """Decides whether or not this blob is valid based."""

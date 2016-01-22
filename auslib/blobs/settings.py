@@ -1,4 +1,3 @@
-import logging
 import re
 
 from auslib.blobs.base import Blob
@@ -10,7 +9,6 @@ SETTING_TMPL = ('<setting id="%(id)s" '
 
 
 class SettingsBlob(Blob):
-    log = logging.getLogger("SettingsBlob")
     jsonschema = "settings.yml"
 
     def __init__(self, **kwargs):
