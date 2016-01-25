@@ -165,7 +165,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
 }""")
 
     def testIsValid(self):
-        self.assertTrue(self.blob.isValid())
+        self.assertTrue(self.blob.validate())
 
     def test2_0(self):
         updateQuery = {
@@ -509,8 +509,8 @@ class TestSchema2Blob(unittest.TestCase):
 """)
 
     def testIsValid(self):
-        self.assertTrue(self.blobJ2.isValid())
-        self.assertTrue(self.blobK.isValid())
+        self.assertTrue(self.blobJ2.validate())
+        self.assertTrue(self.blobK.validate())
 
     def testSchema2CompleteOnly(self):
         updateQuery = {
@@ -664,7 +664,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 """)
 
     def testIsValid(self):
-        self.assertTrue(self.blobJ2.isValid())
+        self.assertTrue(self.blobJ2.validate())
 
     def testCompleteOnly(self):
         updateQuery = {
@@ -887,8 +887,8 @@ class TestSchema3Blob(unittest.TestCase):
 """)
 
     def testIsValid(self):
-        self.assertTrue(self.blobF3.isValid())
-        self.assertTrue(self.blobG2.isValid())
+        self.assertTrue(self.blobF3.validate())
+        self.assertTrue(self.blobG2.validate())
 
     def testSchema3MultipleUpdates(self):
         updateQuery = {
@@ -1117,7 +1117,7 @@ class TestSchema4Blob(unittest.TestCase):
 """)
 
     def testIsValid(self):
-        self.assertTrue(self.blobH2.isValid())
+        self.assertTrue(self.blobH2.validate())
 
     def testSchema4WithPartials(self):
         updateQuery = {
@@ -1257,7 +1257,7 @@ class TestSchema4Blob(unittest.TestCase):
 """)
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
-        self.assertTrue(v4Blob.isValid())
+        self.assertTrue(v4Blob.validate())
 
         expected = {
             "name": "g2",
@@ -1323,7 +1323,7 @@ class TestSchema4Blob(unittest.TestCase):
 """)
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
-        self.assertTrue(v4Blob.isValid())
+        self.assertTrue(v4Blob.validate())
 
         expected = v3Blob.copy()
         expected["schema_version"] = 4

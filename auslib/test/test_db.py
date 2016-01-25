@@ -6,8 +6,6 @@ import sys
 from tempfile import mkstemp
 import unittest
 
-from jsonschema import ValidationError
-
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select
 from sqlalchemy.engine.reflection import Inspector
 
@@ -16,6 +14,7 @@ import migrate.versioning.api
 from auslib.global_state import cache
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError
+from auslib.blobs.base import BlobValidationError
 from auslib.blobs.apprelease import ReleaseBlobV1
 
 
@@ -1298,7 +1297,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testUpdateReleaseInvalidBlob(self):
         blob = ReleaseBlobV1(name="2", hashFunction="sha512")
         blob['foo'] = 'bar'
-        self.assertRaises(ValidationError, self.releases.updateRelease, changed_by='bill', name='b', blob=blob, old_data_version=1)
+        self.assertRaises(BlobValidationError, self.releases.updateRelease, changed_by='bill', name='b', blob=blob, old_data_version=1)
 
     def testAddLocaleToRelease(self):
         data = {

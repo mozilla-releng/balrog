@@ -11,6 +11,12 @@ from auslib.AUS import isSpecialURL
 from auslib.global_state import cache
 
 
+class BlobValidationError(ValueError):
+    def __init__(self, message, errors, *args, **kwargs):
+        self.errors = errors
+        super(BlobValidationError, self).__init__(message, *args, **kwargs)
+
+
 def createBlob(data):
     """Takes a string form of a blob (eg from DB or API) and converts into an
     actual blob, taking care to notice the schema"""
@@ -46,7 +52,6 @@ def createBlob(data):
 
 
 class Blob(dict):
-    """See isValidBlob for details on how format is used to validate blobs."""
     jsonschema = None
 
     def __init__(self, *args, **kwargs):
@@ -59,13 +64,20 @@ class Blob(dict):
         logger_name = "{0}.{1}".format(self.__class__.__module__, self.__class__.__name__)
         self.__class__.log = logging.getLogger(logger_name)
 
-    def isValid(self):
-        """Decides whether or not this blob is valid based."""
+    def validate(self):
+        """Raises a BlobValidationError if the blob is invalid."""
         self.log.debug('Validating blob %s' % self)
-        schema = self.getSchema()
-        # raises exception if broken
-        jsonschema.validate(self, schema)
-        return True
+        validator = jsonschema.Draft4Validator(self.getSchema())
+        # Normal usage is to use .validate(), but errors raised by it return
+        # a massive error message that includes the entire blob, which is way
+        # too big to be useful in the UI. Instead, we iterate over the
+        # individual errors (which are all single sentences which contain
+        # the name of the failing property and why it failed), and return those.
+        errors = [e.message for e in validator.iter_errors(self)]
+        if errors:
+            raise BlobValidationError("Invalid blob!", errors)
+        else:
+            return True
 
     def getSchema(self):
         def loadSchema():

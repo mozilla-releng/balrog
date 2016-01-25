@@ -21,7 +21,7 @@ class TestWhitelist(unittest.TestCase):
     def test_whitelist_blob(self):
         self.blob = WhitelistBlobV1()
         self.blob.loadJSON(_DATA)
-        self.assertTrue(self.blob.isValid())
+        self.assertTrue(self.blob.validate())
 
         update_query = {
             "product": "b2g", "version": "2.5", "buildID": "1",
