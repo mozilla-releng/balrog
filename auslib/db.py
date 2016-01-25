@@ -1007,7 +1007,7 @@ class Releases(AUSTable):
         if blob.get("name"):
             # If they do, we should not let the column and the in-blob name be different.
             if name != blob["name"]:
-                raise ValueError("name in database (%s) does not match name in blob (%s)", name, blob.get("name"))
+                raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
         if self.containsForbiddenDomain(blob):
             raise ValueError("Release blob contains forbidden domain.")
 
@@ -1030,7 +1030,7 @@ class Releases(AUSTable):
             if blob.get("name"):
                 # If they do, we should not let the column and the in-blob name be different.
                 if name != blob["name"]:
-                    raise ValueError("name in database (%s) does not match name in blob (%s)", name, blob.get("name"))
+                    raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
             if self.containsForbiddenDomain(blob):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
