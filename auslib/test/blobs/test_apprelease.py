@@ -7,10 +7,9 @@ import mock
 import unittest
 from xml.dom import minidom
 
-from jsonschema import ValidationError
-
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
+from auslib.blobs.base import BlobValidationError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4, DesupportBlob
 
@@ -1393,4 +1392,4 @@ class TestDesupportBlob(unittest.TestCase):
 
     def testBrokenDesupport(self):
         blob = DesupportBlob(name="d2", schema_version=50, foo="bar")
-        self.assertRaises(ValidationError, blob.isValid)
+        self.assertRaises(BlobValidationError, blob.validate)

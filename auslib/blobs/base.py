@@ -75,7 +75,7 @@ class Blob(dict):
         # the name of the failing property and why it failed), and return those.
         errors = [e.message for e in validator.iter_errors(self)]
         if errors:
-            raise BlobValidationError("Invalid blob!", errors)
+            raise BlobValidationError("Invalid blob! See 'errors' for details.", errors)
         else:
             return True
 
