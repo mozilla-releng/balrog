@@ -7,6 +7,8 @@ import mock
 import unittest
 from xml.dom import minidom
 
+from jsonschema import ValidationError
+
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
@@ -1388,3 +1390,7 @@ class TestDesupportBlob(unittest.TestCase):
 </updates>
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testBrokenDesupport(self):
+        blob = DesupportBlob(name="d2", schema_version=50, foo="bar")
+        self.assertRaises(ValidationError, blob.isValid)

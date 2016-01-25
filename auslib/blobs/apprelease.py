@@ -640,11 +640,7 @@ class DesupportBlob(Blob):
             </update>
         </updates>
     """
-    format_ = {
-        'name': None,
-        'schema_version': None,
-        'detailsUrl': None,
-    }
+    jsonschema = "desupport.yml"
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init DesupportBlob directly
