@@ -23,7 +23,9 @@
     <div class="form-group" ng-class="{'has-error': errors.data}">
       <label for="id_data">Data</label>
       <input type="file" id="id_data" file-model="dataFile">
-      <p class="help-block" ng-show="errors.data">{{ errors.data.join(', ') }}</p>
+      <ul class="help-block" style="padding: 0px" ng-show="errors.data">
+        <li class="help-block" ng-repeat="error in errors.data">{{ error }}</li>
+      </ul>
     </div>
     <input type="hidden" name="data_version" ng-model="release.data_version">
   </form>
