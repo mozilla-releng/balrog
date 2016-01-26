@@ -76,8 +76,6 @@ class Blob(dict):
         errors = [e.message for e in validator.iter_errors(self)]
         if errors:
             raise BlobValidationError("Invalid blob! See 'errors' for details.", errors)
-        else:
-            return True
 
     def getSchema(self):
         def loadSchema():
