@@ -7,10 +7,9 @@ import mock
 import unittest
 from xml.dom import minidom
 
-from jsonschema import ValidationError
-
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
+from auslib.blobs.base import BlobValidationError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4, DesupportBlob
 
@@ -167,7 +166,8 @@ class TestOldVersionSpecialCases(unittest.TestCase):
 }""")
 
     def testIsValid(self):
-        self.assertTrue(self.blob.isValid())
+        # Raises on error
+        self.blob.validate()
 
     def test2_0(self):
         updateQuery = {
@@ -511,8 +511,9 @@ class TestSchema2Blob(unittest.TestCase):
 """)
 
     def testIsValid(self):
-        self.assertTrue(self.blobJ2.isValid())
-        self.assertTrue(self.blobK.isValid())
+        # Raises on error
+        self.blobJ2.validate()
+        self.blobK.validate()
 
     def testSchema2CompleteOnly(self):
         updateQuery = {
@@ -666,7 +667,8 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 """)
 
     def testIsValid(self):
-        self.assertTrue(self.blobJ2.isValid())
+        # Raises on error
+        self.blobJ2.validate()
 
     def testCompleteOnly(self):
         updateQuery = {
@@ -889,8 +891,9 @@ class TestSchema3Blob(unittest.TestCase):
 """)
 
     def testIsValid(self):
-        self.assertTrue(self.blobF3.isValid())
-        self.assertTrue(self.blobG2.isValid())
+        # Raises on error
+        self.blobF3.validate()
+        self.blobG2.validate()
 
     def testSchema3MultipleUpdates(self):
         updateQuery = {
@@ -1119,7 +1122,8 @@ class TestSchema4Blob(unittest.TestCase):
 """)
 
     def testIsValid(self):
-        self.assertTrue(self.blobH2.isValid())
+        # Raises on error
+        self.blobH2.validate()
 
     def testSchema4WithPartials(self):
         updateQuery = {
@@ -1259,7 +1263,8 @@ class TestSchema4Blob(unittest.TestCase):
 """)
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
-        self.assertTrue(v4Blob.isValid())
+        # Raises on error
+        v4Blob.validate()
 
         expected = {
             "name": "g2",
@@ -1325,7 +1330,8 @@ class TestSchema4Blob(unittest.TestCase):
 """)
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
-        self.assertTrue(v4Blob.isValid())
+        # Raises on error
+        v4Blob.validate()
 
         expected = v3Blob.copy()
         expected["schema_version"] = 4
@@ -1393,4 +1399,4 @@ class TestDesupportBlob(unittest.TestCase):
 
     def testBrokenDesupport(self):
         blob = DesupportBlob(name="d2", schema_version=50, foo="bar")
-        self.assertRaises(ValidationError, blob.isValid)
+        self.assertRaises(BlobValidationError, blob.validate)

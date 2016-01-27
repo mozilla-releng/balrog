@@ -1002,13 +1002,12 @@ class Releases(AUSTable):
         return blob
 
     def addRelease(self, name, product, version, blob, changed_by, transaction=None):
-        if not blob.isValid():
-            raise ValueError("Release blob is invalid.")
+        blob.validate()
         # Generally blobs have names, but there's no requirement that they have to.
         if blob.get("name"):
             # If they do, we should not let the column and the in-blob name be different.
             if name != blob["name"]:
-                raise ValueError("name in database (%s) does not match name in blob (%s)", name, blob.get("name"))
+                raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
         if self.containsForbiddenDomain(blob):
             raise ValueError("Release blob contains forbidden domain.")
 
@@ -1026,13 +1025,12 @@ class Releases(AUSTable):
         if version:
             what['version'] = version
         if blob:
-            if not blob.isValid():
-                raise ValueError("Release blob is invalid.")
+            blob.validate()
             # Generally blobs have names, but there's no requirement that they have to.
             if blob.get("name"):
                 # If they do, we should not let the column and the in-blob name be different.
                 if name != blob["name"]:
-                    raise ValueError("name in database (%s) does not match name in blob (%s)", name, blob.get("name"))
+                    raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
             if self.containsForbiddenDomain(blob):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
@@ -1071,8 +1069,7 @@ class Releases(AUSTable):
                 if a not in releaseBlob['platforms']:
                     releaseBlob['platforms'][a] = {'alias': platform}
 
-        if not releaseBlob.isValid():
-            raise ValueError("New release blob is invalid.")
+        releaseBlob.validate()
         if self.containsForbiddenDomain(releaseBlob):
             raise ValueError("Release blob contains forbidden domain.")
         where = [self.name == name]

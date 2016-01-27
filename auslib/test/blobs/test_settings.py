@@ -23,7 +23,7 @@ class TestSchemaSettings(unittest.TestCase):
     def test_basic_blob(self):
         self.blob = SettingsBlob()
         self.blob.loadJSON(_DATA)
-        self.assertTrue(self.blob.isValid())
+        self.blob.validate()
 
         update_query = {
             "product": "gg", "version": "3", "buildID": "1",
