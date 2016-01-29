@@ -5,7 +5,7 @@ from sqlalchemy.sql.expression import null
 from flask import Response, jsonify, make_response, request
 
 from auslib.global_state import dbo
-from auslib.blobs.base import createBlob
+from auslib.blobs.base import createBlob, BlobValidationError
 from auslib.db import OutdatedDataError
 from auslib.log import cef_event, CEF_WARN, CEF_ALERT
 from auslib.admin.views.base import (
@@ -134,10 +134,14 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                 newReleaseData['hashFunction'] = hashFunction
             try:
                 releaseInfo = createRelease(rel, product, version, changed_by, transaction, newReleaseData)
+            except BlobValidationError as e:
+                msg = "Couldn't create release: %s" % e
+                cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
+                return Response(status=400, response=json.dumps({"data": e.errors}))
             except ValueError as e:
                 msg = "Couldn't create release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
-                return Response(status=400, response=msg)
+                return Response(status=400, response=json.dumps({"data": e.args}))
             old_data_version = 1
 
         # If the version doesn't match, just update it. This will be the case for nightlies
@@ -148,10 +152,14 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                 dbo.releases.updateRelease(name=rel, version=version,
                                            changed_by=changed_by, old_data_version=old_data_version,
                                            transaction=transaction)
+            except BlobValidationError as e:
+                msg = "Couldn't update release: %s" % e
+                cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
+                return Response(status=400, response=json.dumps({"data": e.errors}))
             except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
-                return Response(status=400, response=msg)
+                return Response(status=400, response=json.dumps({"data": e.args}))
             old_data_version += 1
 
         extraArgs = {}
@@ -159,10 +167,14 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
             extraArgs['alias'] = alias
         try:
             commitCallback(rel, product, version, incomingData, releaseInfo['data'], old_data_version, extraArgs)
-        except (OutdatedDataError, ValueError) as e:
+        except BlobValidationError as e:
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
-            return Response(status=400, response=msg)
+            return Response(status=400, response=json.dumps({"data": e.errors}))
+        except (ValueError, OutdatedDataError) as e:
+            msg = "Couldn't update release: %s" % e
+            cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
+            return Response(status=400, response=json.dumps({"data": e.args}))
 
     new_data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]['data_version']
     if new:
@@ -240,10 +252,14 @@ class SingleReleaseView(AdminView):
                 dbo.releases.updateRelease(name=release, blob=blob, version=form.version.data,
                                            product=form.product.data, changed_by=changed_by,
                                            old_data_version=data_version, transaction=transaction)
+            except BlobValidationError as e:
+                msg = "Couldn't update release: %s" % e
+                cef_event("Bad input", CEF_WARN, errors=msg)
+                return Response(status=400, response=json.dumps({"data": e.errors}))
             except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
-                return Response(status=400, response=json.dumps({"data": [msg]}))
+                return Response(status=400, response=json.dumps({"data": e.args}))
             data_version += 1
             return Response(json.dumps(dict(new_data_version=data_version)), status=200)
         else:
@@ -251,10 +267,14 @@ class SingleReleaseView(AdminView):
                 dbo.releases.addRelease(name=release, product=form.product.data,
                                         version=form.version.data, blob=blob,
                                         changed_by=changed_by, transaction=transaction)
+            except BlobValidationError as e:
+                msg = "Couldn't update release: %s" % e
+                cef_event("Bad input", CEF_WARN, errors=msg)
+                return Response(status=400, response=json.dumps({"data": e.errors}))
             except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
-                return Response(status=400, response=json.dumps({"data": [msg]}))
+                return Response(status=400, response=json.dumps({"data": e.args}))
             return Response(status=201)
 
     @requirelogin
@@ -294,7 +314,7 @@ class SingleReleaseView(AdminView):
         form = DbEditableForm(request.args)
         if not form.validate():
             cef_event("Bad input", CEF_WARN, errors=form.errors)
-            return Response(status=400, response=form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
 
         dbo.releases.deleteRelease(changed_by=changed_by, name=release['name'],
                                    old_data_version=form.data_version.data, transaction=transaction)
@@ -317,9 +337,9 @@ class ReleaseHistoryView(HistoryAdminView):
             page = int(request.args.get('page', 1))
             limit = int(request.args.get('limit', 10))
             assert page >= 1
-        except (ValueError, AssertionError) as msg:
-            cef_event("Bad input", CEF_WARN, errors=msg)
-            return Response(status=400, response=str(msg))
+        except (ValueError, AssertionError) as e:
+            cef_event("Bad input", CEF_WARN, errors=json.dumps(e.args))
+            return Response(status=400, response=json.dumps({"data": e.args}))
         offset = limit * (page - 1)
         total_count = table.t.count()\
             .where(table.name == release['name'])\
@@ -374,9 +394,12 @@ class ReleaseHistoryView(HistoryAdminView):
             dbo.releases.updateRelease(changed_by=changed_by, name=change['name'],
                                        version=change['version'], blob=blob,
                                        old_data_version=old_data_version, transaction=transaction)
+        except BlobValidationError as e:
+            cef_event("Bad input", CEF_WARN, errors=e.args)
+            return Response(status=400, response=json.dumps({"data": e.errors}))
         except ValueError as e:
             cef_event("Bad input", CEF_WARN, errors=e.args)
-            return Response(status=400, response=e.args)
+            return Response(status=400, response=json.dumps({"data": e.args}))
 
         return Response("Excellent!")
 
@@ -435,10 +458,14 @@ class ReleasesAPIView(AdminView):
                 version=form.version.data, blob=blob,
                 changed_by=changed_by, transaction=transaction
             )
+        except BlobValidationError as e:
+            msg = "Couldn't update release: %s" % e
+            cef_event("Bad input", CEF_WARN, errors=msg)
+            return Response(status=400, response=json.dumps({"data": e.errors}))
         except ValueError as e:
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg)
-            return Response(status=400, response=json.dumps({"data": [msg]}))
+            return Response(status=400, response=json.dumps({"data": e.args}))
 
         release = dbo.releases.getReleases(
             name=name, transaction=transaction, limit=1

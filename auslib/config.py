@@ -58,6 +58,15 @@ class AUSConfig(object):
         except (NoSectionError, NoOptionError):
             return tuple()
 
+    def getCaches(self):
+        caches = {}
+        if self.cfg.has_section("caches"):
+            for cache_name in self.cfg.options("caches"):
+                size, timeout = self.cfg.get("caches", cache_name).split(",")
+                caches[cache_name] = (int(size), int(timeout))
+
+        return caches
+
 
 class AdminConfig(AUSConfig):
     required_options = {
@@ -87,12 +96,3 @@ class ClientConfig(AUSConfig):
             return tuple(a.strip() for a in self.cfg.get('site-specific', 'specialforcehosts').split(','))
         except (NoSectionError, NoOptionError):
             return None
-
-    def getCaches(self):
-        caches = {}
-        if self.cfg.has_section("caches"):
-            for cache_name in self.cfg.options("caches"):
-                size, timeout = self.cfg.get("caches", cache_name).split(",")
-                caches[cache_name] = (int(size), int(timeout))
-
-        return caches
