@@ -20,7 +20,7 @@ from auslib.admin.views.history import DiffView, FieldView
 
 
 @app.errorhandler(500)
-def ise(error):
+def isa(error):
     log.error("Caught ISE 500 error.")
     log.debug("Balrog version is: %s", auslib.version)
     log.debug("Request path is: %s", request.path)

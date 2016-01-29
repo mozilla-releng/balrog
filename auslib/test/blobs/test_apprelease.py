@@ -9,7 +9,6 @@ from xml.dom import minidom
 
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
-from auslib.blobs.base import BlobValidationError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4, DesupportBlob
 
@@ -164,10 +163,6 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         }
     }
 }""")
-
-    def testIsValid(self):
-        # Raises on error
-        self.blob.validate()
 
     def test2_0(self):
         updateQuery = {
@@ -438,7 +433,7 @@ class TestSchema2Blob(unittest.TestCase):
     },
     "platforms": {
         "p": {
-            "buildID": 30,
+            "buildID": "30",
             "OS_FTP": "o",
             "OS_BOUNCER": "o",
             "locales": {
@@ -446,7 +441,7 @@ class TestSchema2Blob(unittest.TestCase):
                     "partial": {
                         "filesize": 6,
                         "from": "j1",
-                        "hashValue": "5"
+                        "hashValue": 5
                     },
                     "complete": {
                         "filesize": 38,
@@ -475,8 +470,8 @@ class TestSchema2Blob(unittest.TestCase):
     "openURL": "http://example.org/url/%LOCALE%",
     "notificationURL": "http://example.org/notification/%LOCALE%",
     "alertURL": "http://example.org/alert/%LOCALE%",
-    "showPrompt": false,
-    "showNeverForVersion": true,
+    "showPrompt": "false",
+    "showNeverForVersion": "true",
     "fileUrls": {
         "c1": "http://a.com/%FILENAME%"
     },
@@ -485,7 +480,7 @@ class TestSchema2Blob(unittest.TestCase):
     },
     "platforms": {
         "p": {
-            "buildID": 35,
+            "buildID": "35",
             "OS_FTP": "o",
             "OS_BOUNCER": "o",
             "locales": {
@@ -509,11 +504,6 @@ class TestSchema2Blob(unittest.TestCase):
     }
 }
 """)
-
-    def testIsValid(self):
-        # Raises on error
-        self.blobJ2.validate()
-        self.blobK.validate()
 
     def testSchema2CompleteOnly(self):
         updateQuery = {
@@ -643,14 +633,14 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         "p": {
             "locales": {
                 "l": {
-                    "buildID": 3,
+                    "buildID": "3",
                     "appVersion": "2",
                     "platformVersion": "2",
                     "displayVersion": "2",
                     "partial": {
                         "filesize": 3,
                         "from": "j1",
-                        "hashValue": "4",
+                        "hashValue": 4,
                         "fileUrl": "http://a.com/p"
                     },
                     "complete": {
@@ -665,10 +655,6 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
     }
 }
 """)
-
-    def testIsValid(self):
-        # Raises on error
-        self.blobJ2.validate()
 
     def testCompleteOnly(self):
         updateQuery = {
@@ -772,20 +758,20 @@ class TestSchema3Blob(unittest.TestCase):
     "platformVersion": "25.0",
     "platforms": {
         "p": {
-            "buildID": 29,
+            "buildID": "29",
             "locales": {
                 "l": {
                     "partials": [
                         {
                             "filesize": 2,
                             "from": "f1",
-                            "hashValue": "3",
+                            "hashValue": 3,
                             "fileUrl": "http://a.com/p1"
                         },
                         {
                             "filesize": 4,
                             "from": "f2",
-                            "hashValue": "5",
+                            "hashValue": 5,
                             "fileUrl": "http://a.com/p2"
                         }
                     ],
@@ -793,7 +779,7 @@ class TestSchema3Blob(unittest.TestCase):
                         {
                             "filesize": 29,
                             "from": "f2",
-                            "hashValue": "6",
+                            "hashValue": 6,
                             "fileUrl": "http://a.com/c1"
                         },
                         {
@@ -864,7 +850,7 @@ class TestSchema3Blob(unittest.TestCase):
     },
     "platforms": {
         "p": {
-            "buildID": 40,
+            "buildID": "40",
             "OS_FTP": "o",
             "OS_BOUNCER": "o",
             "locales": {
@@ -873,7 +859,7 @@ class TestSchema3Blob(unittest.TestCase):
                         {
                             "filesize": 4,
                             "from": "g1",
-                            "hashValue": "5"
+                            "hashValue": 5
                         }
                     ],
                     "completes": [
@@ -889,11 +875,6 @@ class TestSchema3Blob(unittest.TestCase):
     }
 }
 """)
-
-    def testIsValid(self):
-        # Raises on error
-        self.blobF3.validate()
-        self.blobG2.validate()
 
     def testSchema3MultipleUpdates(self):
         updateQuery = {
@@ -1095,7 +1076,7 @@ class TestSchema4Blob(unittest.TestCase):
     },
     "platforms": {
         "p": {
-            "buildID": 50,
+            "buildID": "50",
             "OS_FTP": "p",
             "OS_BOUNCER": "p",
             "locales": {
@@ -1104,7 +1085,7 @@ class TestSchema4Blob(unittest.TestCase):
                         {
                             "filesize": 8,
                             "from": "h1",
-                            "hashValue": "9"
+                            "hashValue": 9
                         }
                     ],
                     "completes": [
@@ -1120,10 +1101,6 @@ class TestSchema4Blob(unittest.TestCase):
     }
 }
 """)
-
-    def testIsValid(self):
-        # Raises on error
-        self.blobH2.validate()
 
     def testSchema4WithPartials(self):
         updateQuery = {
@@ -1263,8 +1240,7 @@ class TestSchema4Blob(unittest.TestCase):
 """)
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
-        # Raises on error
-        v4Blob.validate()
+        self.assertTrue(v4Blob.isValid())
 
         expected = {
             "name": "g2",
@@ -1297,11 +1273,11 @@ class TestSchema4Blob(unittest.TestCase):
         v3Blob.loadJSON("""
 {
     "name": "g2",
-    "schema_version": 4,
+    "schema_version": 3,
     "hashFunction": "sha512",
     "platforms": {
         "p": {
-            "buildID": 40,
+            "buildID": "40",
             "OS_FTP": "o",
             "OS_BOUNCER": "o",
             "locales": {
@@ -1310,7 +1286,7 @@ class TestSchema4Blob(unittest.TestCase):
                         {
                             "filesize": 4,
                             "from": "g1",
-                            "hashValue": "5",
+                            "hashValue": 5,
                             "fileUrl": "http://a.com/g1-partial"
                         }
                     ],
@@ -1330,8 +1306,7 @@ class TestSchema4Blob(unittest.TestCase):
 """)
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
-        # Raises on error
-        v4Blob.validate()
+        self.assertTrue(v4Blob.isValid())
 
         expected = v3Blob.copy()
         expected["schema_version"] = 4
@@ -1396,7 +1371,3 @@ class TestDesupportBlob(unittest.TestCase):
 </updates>
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
-
-    def testBrokenDesupport(self):
-        blob = DesupportBlob(name="d2", schema_version=50, foo="bar")
-        self.assertRaises(BlobValidationError, blob.validate)

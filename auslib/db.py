@@ -1002,20 +1002,14 @@ class Releases(AUSTable):
         return blob
 
     def addRelease(self, name, product, version, blob, changed_by, transaction=None):
-        blob.validate()
-        # Generally blobs have names, but there's no requirement that they have to.
-        if blob.get("name"):
-            # If they do, we should not let the column and the in-blob name be different.
-            if name != blob["name"]:
-                raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
+        if not blob.isValid():
+            raise ValueError("Release blob is invalid.")
         if self.containsForbiddenDomain(blob):
             raise ValueError("Release blob contains forbidden domain.")
 
         columns = dict(name=name, product=product, version=version, data=blob.getJSON())
         # Raises DuplicateDataError if the release already exists.
         ret = self.insert(changed_by=changed_by, transaction=transaction, **columns)
-        cache.put("blob", name, {"data_version": 1, "blob": blob})
-        cache.put("blob_version", name, 1)
         return ret.inserted_primary_key[0]
 
     def updateRelease(self, name, changed_by, old_data_version, product=None, version=None, blob=None, transaction=None):
@@ -1025,19 +1019,12 @@ class Releases(AUSTable):
         if version:
             what['version'] = version
         if blob:
-            blob.validate()
-            # Generally blobs have names, but there's no requirement that they have to.
-            if blob.get("name"):
-                # If they do, we should not let the column and the in-blob name be different.
-                if name != blob["name"]:
-                    raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
+            if not blob.isValid():
+                raise ValueError("Release blob is invalid.")
             if self.containsForbiddenDomain(blob):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
         self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
-        new_data_version = old_data_version + 1
-        cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
-        cache.put("blob_version", name, new_data_version)
 
     def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
         """Adds or update's the existing data for a specific platform + locale
@@ -1069,16 +1056,14 @@ class Releases(AUSTable):
                 if a not in releaseBlob['platforms']:
                     releaseBlob['platforms'][a] = {'alias': platform}
 
-        releaseBlob.validate()
+        if not releaseBlob.isValid():
+            raise ValueError("New release blob is invalid.")
         if self.containsForbiddenDomain(releaseBlob):
             raise ValueError("Release blob contains forbidden domain.")
         where = [self.name == name]
         what = dict(data=releaseBlob.getJSON())
         self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                     transaction=transaction)
-        new_data_version = old_data_version + 1
-        cache.put("blob", name, {"data_version": new_data_version, "blob": releaseBlob})
-        cache.put("blob_version", name, new_data_version)
 
     def getLocale(self, name, platform, locale, transaction=None):
         try:
@@ -1097,8 +1082,6 @@ class Releases(AUSTable):
     def deleteRelease(self, changed_by, name, old_data_version, transaction=None):
         where = [self.name == name]
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
-        cache.invalidate("blob", name)
-        cache.invalidate("blob_version", name)
 
 
 class Permissions(AUSTable):

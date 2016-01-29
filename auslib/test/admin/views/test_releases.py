@@ -1,3 +1,4 @@
+import mock
 import simplejson as json
 
 from sqlalchemy import select
@@ -40,9 +41,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "d": {
                     "complete": {
-                        "filesize": 1234,
-                        "from": "*",
-                        "hashValue": "abc"
+                        "filesize": "1234"
                     }
                 }
             }
@@ -50,11 +49,6 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     }
 }
 """))
-
-    def testReleasePostMismatchedName(self):
-        data = json.dumps(dict(name="eee", schema_version=1))
-        ret = self._post('/releases/d', data=dict(data=data, product='d', version='d', data_version=1))
-        self.assertStatusCode(ret, 400)
 
     def testReleasePostUpdateChangeHashFunction(self):
         data = json.dumps(dict(detailsUrl='blah', hashFunction="sha1024", schema_version=1))
@@ -72,7 +66,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 400)
 
     def testReleasePostCreatesNewReleasev1(self):
-        data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
+        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
         ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=1))
         self.assertStatusCode(ret, 201)
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
@@ -82,16 +76,15 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret['data']), json.loads("""
 {
     "name": "e",
-    "hashFunction": "sha512",
     "schema_version": 1,
     "bouncerProducts": {
-        "partial": "foo"
+        "linux": "foo"
     }
 }
 """))
 
     def testReleasePostCreatesNewReleasev2(self):
-        data = json.dumps(dict(bouncerProducts=dict(complete='foo'), name='e', hashFunction="sha512"))
+        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e'))
         ret = self._post('/releases/e', data=dict(data=data, product='e', version='e', schema_version=2))
         self.assertStatusCode(ret, 201)
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
@@ -101,10 +94,9 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret['data']), json.loads("""
 {
     "name": "e",
-    "hashFunction": "sha512",
     "schema_version": 2,
     "bouncerProducts": {
-        "complete": "foo"
+        "linux": "foo"
     }
 }
 """))
@@ -134,13 +126,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 401)
 
     def testLocalePut(self):
-        data = json.dumps({
-            "complete": {
-                "filesize": 435,
-                "from": "*",
-                "hashValue": "abc",
-            }
-        })
+        data = json.dumps(dict(complete=dict(filesize='435')))
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
@@ -155,9 +141,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "l": {
                     "complete": {
-                        "filesize": 435,
-                        "from": "*",
-                        "hashValue": "abc"
+                        "filesize": "435"
                     }
                 }
             }
@@ -167,6 +151,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testLocalePutWithBadHashFunction(self):
+        return
         data = json.dumps(dict(complete=dict(filesize='435')))
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 400)
@@ -177,13 +162,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 401)
 
     def testLocalePutForNewRelease(self):
-        data = json.dumps({
-            "complete": {
-                "filesize": 678,
-                "from": "*",
-                "hashValue": "abc",
-            }
-        })
+        data = json.dumps(dict(complete=dict(filesize='678')))
         # setting schema_version in the incoming blob is a hack for testing
         # SingleLocaleView._put() doesn't give us access to the form
         ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', hashFunction="sha512", schema_version=1))
@@ -200,9 +179,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "a": {
                     "complete": {
-                        "filesize": 678,
-                        "from": "*",
-                        "hashValue": "abc"
+                        "filesize": "678"
                     }
                 }
             }
@@ -212,14 +189,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testLocalePutAppend(self):
-        data = json.dumps({
-            "partial": {
-                "filesize": 234,
-                "from": "c",
-                "hashValue": "abc",
-                "fileUrl": "http://good.com/blah",
-            }
-        })
+        data = json.dumps(dict(partial=dict(fileUrl='http://good.com/blah')))
         ret = self._put('/releases/d/builds/p/g', data=dict(data=data, product='d', version='d', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
@@ -234,16 +204,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "d": {
                     "complete": {
-                        "filesize": 1234,
-                        "from": "*",
-                        "hashValue": "abc"
+                        "filesize": "1234"
                     }
                 },
                 "g": {
                     "partial": {
-                        "filesize": 234,
-                        "from": "c",
-                        "hashValue": "abc",
                         "fileUrl": "http://good.com/blah"
                     }
                 }
@@ -254,32 +219,23 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testLocalePutForNewReleaseWithAlias(self):
-        data = json.dumps({
-            "complete": {
-                "filesize": 678,
-                "from": "*",
-                "hashValue": "abc",
-            }
-        })
+        data = json.dumps(dict(complete=dict(filesize='678')))
         # setting schema_version in the incoming blob is a hack for testing
         # SingleLocaleView._put() doesn't give us access to the form
-        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', alias='["p2"]', schema_version=1, hashFunction="sha512"))
+        ret = self._put('/releases/e/builds/p/a', data=dict(data=data, product='e', version='e', alias='["p2"]', schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'e').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads("""
 {
     "name": "e",
-    "hashFunction": "sha512",
     "schema_version": 1,
     "platforms": {
         "p": {
             "locales": {
                 "a": {
                     "complete": {
-                        "filesize": 678,
-                        "from": "*",
-                        "hashValue": "abc"
+                        "filesize": "678"
                     }
                 }
             }
@@ -292,14 +248,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testLocalePutAppendWithAlias(self):
-        data = json.dumps({
-            "partial": {
-                "filesize": 123,
-                "from": "c",
-                "hashValue": "abc",
-                "fileUrl": "http://good.com/blah",
-            }
-        })
+        data = json.dumps(dict(partial=dict(fileUrl='http://good.com/blah')))
         ret = self._put('/releases/d/builds/q/g', data=dict(data=data, product='d', version='d', data_version=1, alias='["q2"]', schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
@@ -314,9 +263,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "d": {
                     "complete": {
-                        "filesize": 1234,
-                        "from": "*",
-                        "hashValue": "abc"
+                        "filesize": "1234"
                     }
                 }
             }
@@ -325,9 +272,6 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "g": {
                     "partial": {
-                        "filesize": 123,
-                        "from": "c",
-                        "hashValue": "abc",
                         "fileUrl": "http://good.com/blah"
                     }
                 }
@@ -341,13 +285,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testLocalePutWithCopy(self):
-        data = json.dumps({
-            "partial": {
-                "filesize": 123,
-                "from": "b",
-                "hashValue": "abc",
-            }
-        })
+        data = json.dumps(dict(partial=dict(filesize='123')))
         data = dict(data=data, product='a', version='a', copyTo=json.dumps(['ab']), data_version=1, schema_version=1)
         ret = self._put('/releases/a/builds/p/l', data=data)
         self.assertStatusCode(ret, 201)
@@ -363,9 +301,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "l": {
                     "partial": {
-                        "filesize": 123,
-                        "from": "b",
-                        "hashValue": "abc"
+                        "filesize": "123"
                     }
                 }
             }
@@ -384,9 +320,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "locales": {
                 "l": {
                     "partial": {
-                        "filesize": 123,
-                        "from": "b",
-                        "hashValue": "abc"
+                        "filesize": "123"
                     }
                 }
             }
@@ -432,15 +366,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     def testLocaleGet(self):
         ret = self._get('/releases/d/builds/p/d')
         self.assertStatusCode(ret, 200)
-        got = json.loads(ret.data)
-        expected = {
-            "complete": {
-                "filesize": 1234,
-                "from": "*",
-                "hashValue": "abc",
-            }
-        }
-        self.assertEquals(got, expected)
+        self.assertEqual(json.loads(ret.data), dict(complete=dict(filesize='1234')))
         self.assertEqual(ret.headers['X-Data-Version'], '1')
 
     def testLocalePutNotAllowed(self):
@@ -456,26 +382,22 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._get("/releases/c/builds/h/u")
         self.assertStatusCode(ret, 404)
 
-    # FIXME: We shouldn't rely on 500 to validate behaviour. This test should fake a 400 instead.
-    # Currently, causing a 400 in this will NOT make version revert to the original value. Need to
-    # fix the bug at the same time as changing the test.
-#    def testLocaleRevertsPartialUpdate(self):
-#        data = json.dumps(dict(complete=dict(filesize=1)))
-#        with mock.patch('auslib.global_state.dbo.releases.addLocaleToRelease') as r:
-#            r.side_effect = Exception("Fail")
-#            ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='c', data_version=1, schema_version=1))
-#            self.assertStatusCode(ret, 500)
-#            ret = dbo.releases.t.select().where(dbo.releases.name == 'a').execute().fetchone()
-#            self.assertEqual(ret['product'], 'a')
-#            self.assertEqual(ret['version'], 'a')
-#            self.assertEqual(json.loads(ret['data']), dict(name='a', hashFunction="sha512", schema_version=1))
+    def testLocaleRevertsPartialUpdate(self):
+        data = json.dumps(dict(complete=dict(filesize=1)))
+        with mock.patch('auslib.global_state.dbo.releases.addLocaleToRelease') as r:
+            r.side_effect = Exception("Fail")
+            ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', version='c', data_version=1, schema_version=1))
+            self.assertStatusCode(ret, 500)
+            ret = dbo.releases.t.select().where(dbo.releases.name == 'a').execute().fetchone()
+            self.assertEqual(ret['product'], 'a')
+            self.assertEqual(ret['version'], 'a')
+            self.assertEqual(json.loads(ret['data']), dict(name='a', hashFunction="sha512", schema_version=1))
 
     def testNewReleasePut(self):
         ret = self._put('/releases/new_release', data=dict(name='new_release', version='11', product='Firefox',
                                                            blob="""
 {
-    "name": "new_release",
-    "hashFunction": "sha512",
+    "name": "a",
     "schema_version": 1,
     "platforms": {
         "p": {
@@ -496,8 +418,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['product'], 'Firefox')
         self.assertEquals(json.loads(r[0]['data']), json.loads("""
 {
-    "name": "new_release",
-    "hashFunction": "sha512",
+    "name": "a",
     "schema_version": 1,
     "platforms": {
         "p": {
@@ -515,17 +436,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 {
     "name": "ueohueo",
     "schema_version": 3,
-    "hashFunction": "sha512",
     "borken": "yes"
-}
-"""))
-        self.assertStatusCode(ret, 400)
-
-    def testNewReleasePutMismatchedName(self):
-        ret = self._put("/releases/aaaa", data=dict(name="ueohueo", version="1", product="aa", blob="""
-{
-    "name": "bbbb",
-    "schema_version": 3
 }
 """))
         self.assertStatusCode(ret, 400)
@@ -660,7 +571,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 """))
 
     def testReleasesPost(self):
-        data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', schema_version=1, hashFunction="sha512"))
+        data = json.dumps(dict(bouncerProducts=dict(linux='foo'), name='e', schema_version=1))
         ret = self._post('/releases', data=dict(blob=data, name="e", product='e', version='e'))
         self.assertStatusCode(ret, 201)
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
@@ -670,10 +581,9 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret['data']), json.loads("""
 {
     "name": "e",
-    "hashFunction": "sha512",
     "schema_version": 1,
     "bouncerProducts": {
-        "partial": "foo"
+        "linux": "foo"
     }
 }
 """))

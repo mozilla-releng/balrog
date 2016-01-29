@@ -6,7 +6,24 @@ from auslib.errors import BadDataError
 
 
 class GMPBlobV1(Blob):
-    jsonschema = "gmp.yml"
+    format_ = {
+        "name": None,
+        "schema_version": None,
+        "hashFunction": None,
+        "vendors": {
+            "*": {
+                "version": None,
+                "platforms": {
+                    "*": {
+                        "alias": None,
+                        "filesize": None,
+                        "hashValue": None,
+                        "fileUrl": None
+                    }
+                }
+            }
+        }
+    }
 
     def __init__(self, **kwargs):
         Blob.__init__(self, **kwargs)
