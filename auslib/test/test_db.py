@@ -1028,6 +1028,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         cache.reset()
+        cache.make_copies = True
         cache.make_cache("blob", 10, 10)
         cache.make_cache("blob_version", 10, 4)
         self.db = AUSDatabase(self.dburi)

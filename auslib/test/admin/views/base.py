@@ -3,7 +3,7 @@ import simplejson as json
 from tempfile import mkstemp
 import unittest
 
-from auslib.global_state import dbo
+from auslib.global_state import dbo, cache
 from auslib.admin.base import app
 import auslib.log
 
@@ -14,6 +14,8 @@ class ViewTest(unittest.TestCase):
 
     def setUp(self):
         self.cef_fd, self.cef_file = mkstemp()
+        cache.reset()
+        cache.make_copies = True
         app.config["SECRET_KEY"] = 'abc123'
         app.config['DEBUG'] = True
         app.config["WTF_CSRF_ENABLED"] = False

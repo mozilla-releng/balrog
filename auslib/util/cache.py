@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from repoze.lru import ExpiringLRUCache
 
 
@@ -15,6 +17,17 @@ class MaybeCacher(object):
 
     def __init__(self):
         self.caches = {}
+        self._make_copies = False
+
+    @property
+    def make_copies(self):
+        return self._make_copies
+
+    @make_copies.setter
+    def make_copies(self, value):
+        if value not in (True, False):
+            raise TypeError("make_copies must be True or False")
+        self._make_copies = value
 
     def make_cache(self, name, maxsize, timeout):
         if name in self.caches:
@@ -41,12 +54,22 @@ class MaybeCacher(object):
             value = value_getter()
             self.put(name, key, value)
 
-        return value
+        # Copy the value to make sure the caller can't accidentally update the
+        # cached version. If they want to update it, they should call "put"
+        # explicitly.
+        if self.make_copies:
+            return deepcopy(value)
+        else:
+            return value
 
     def put(self, name, key, value):
         if name not in self.caches:
             return
 
+        # Copy the value to make sure the caller can't accicdentally update the
+        # cached version.
+        if self.make_copies:
+            value = deepcopy(value)
         return self.caches[name].put(key, value)
 
     def clear(self, name=None):
