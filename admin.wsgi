@@ -28,6 +28,7 @@ logging.basicConfig(filename=cfg.getLogfile(), level=cfg.getLogLevel(), format=a
 from auslib.global_state import dbo, cache
 from auslib.admin.base import app as application
 
+cache.make_copies = True
 for cache_name, cache_cfg in cfg.getCaches().iteritems():
     cache.make_cache(cache_name, *cache_cfg)
 

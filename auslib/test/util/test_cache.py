@@ -33,3 +33,44 @@ class TestMaybeCacher(unittest.TestCase):
             cache.put("cache1", "foo", "bar")
             t.return_value = 200
             self.assertEquals(cache.get("cache1", "foo"), None)
+
+    def testGetDoesntCopyByDefault(self):
+        cache = MaybeCacher()
+        cache.make_cache("cache1", 5, 5)
+        obj = [1, 2, 3]
+        # We put this into the cache manually to avoid a false pass from something .put does
+        # cache entry format is (pos, value, expiration)
+        cache.caches["cache1"].data["foo"] = (0, obj, 9999999999999999)
+        cached_obj = cache.get("cache1", "foo")
+        print obj
+        print cached_obj
+        self.assertEquals(id(obj), id(cached_obj))
+
+    def testPutDoesntCopyByDefault(self):
+        cache = MaybeCacher()
+        cache.make_cache("cache1", 5, 5)
+        obj = [1, 2, 3]
+        # We put this into the cache manually to avoid a false pass from something .get does
+        cache.put("cache1", "foo", obj)
+        cached_obj = cache.caches["cache1"].data["foo"][1]
+        self.assertEquals(id(obj), id(cached_obj))
+
+    def testCopyOnGet(self):
+        cache = MaybeCacher()
+        cache.make_cache("cache1", 5, 5)
+        cache.make_copies = True
+        obj = [1, 2, 3]
+        # We put this into the cache manually to avoid a false pass from something .put does
+        cache.caches["cache1"].data["foo"] = obj
+        cached_obj = cache.get("cache1", "foo")
+        self.assertNotEquals(id(obj), id(cached_obj))
+
+    def testCopyOnPut(self):
+        cache = MaybeCacher()
+        cache.make_cache("cache1", 5, 5)
+        cache.make_copies = True
+        obj = [1, 2, 3]
+        # We put this into the cache manually to avoid a false pass from something .get does
+        cache.put("cache1", "foo", obj)
+        cached_obj = cache.caches["cache1"].data["foo"]
+        self.assertNotEquals(id(obj), id(cached_obj))
