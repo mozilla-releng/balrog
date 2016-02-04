@@ -1,6 +1,10 @@
 #!/bin/bash
 
-balrog_repo=$(dirname $(dirname $(realpath $0)))
+cwd=$(pwd)
+cd "`dirname $0`"
+balrog_repo=$(dirname $(pwd))
+cd "$pwd"
+echo $balrog_repo
 
 which docker &>/dev/null
 if [ "$?" != "0" ]; then
