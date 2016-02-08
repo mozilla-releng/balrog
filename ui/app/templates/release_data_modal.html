@@ -1,6 +1,5 @@
 <div class="modal-header">
-    <h3 class="modal-title">Release Data for {{ release.product }} {{ release.version }}</h3>
-    <h4 class="modal-title">{{ release.name }}</h3>
+    <h3 class="modal-title">Release Data for {{ release.name }}</h3>
 </div>
 <div class="modal-body">
   <pre ng-if="!diff">{{ release.data | json }}</pre>

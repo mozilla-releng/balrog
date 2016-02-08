@@ -58,14 +58,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
         text: "Product (reverse)",
         value: "-product"
       },
-      {
-        text: "Version",
-        value: "version"
-      },
-      {
-        text: "Version (reverse)",
-        value: "-version"
-      },
     ];
   }
   $scope.ordering_str = $scope.ordering_options[0];
@@ -108,10 +100,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
         var on = each[1];
         // console.log(regex, on);
         if ((on === '*' || on === 'product') && release.product && release.product.match(regex)) {
-          matches++;
-          return;
-        }
-        if ((on === '*' || on === 'version') && release.version && release.version.match(regex)) {
           matches++;
           return;
         }
