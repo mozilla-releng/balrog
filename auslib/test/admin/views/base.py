@@ -29,14 +29,14 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
         dbo.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
         dbo.releases.t.insert().execute(
-            name='a', product='a', version='a', data=json.dumps(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
+            name='a', product='a', data=json.dumps(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
-            name='ab', product='a', version='a', data=json.dumps(dict(name='ab', hashFunction="sha512", schema_version=1)), data_version=1)
+            name='ab', product='a', data=json.dumps(dict(name='ab', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
-            name='b', product='b', version='b', data=json.dumps(dict(name='b', hashFunction="sha512", schema_version=1)), data_version=1)
+            name='b', product='b', data=json.dumps(dict(name='b', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
-            name='c', product='c', version='c', data=json.dumps(dict(name='c', hashFunction="sha512", schema_version=1)), data_version=1)
-        dbo.releases.t.insert().execute(name='d', product='d', version='d', data_version=1, data="""
+            name='c', product='c', data=json.dumps(dict(name='c', hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.releases.t.insert().execute(name='d', product='d', data_version=1, data="""
 {
     "name": "d",
     "schema_version": 1,

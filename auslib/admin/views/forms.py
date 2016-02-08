@@ -96,7 +96,6 @@ class PartialReleaseForm(Form):
     # for its existence in this case.
     data_version = IntegerField('data_version', widget=HiddenInput())
     product = StringField('Product', validators=[Required()])
-    version = StringField('Version', validators=[Required()])
     hashFunction = StringField('Hash Function')
     data = JSONStringField('Data', validators=[Required()])
     schema_version = IntegerField('Schema Version')
@@ -146,7 +145,6 @@ class EditRuleForm(DbEditableForm):
 
 class CompleteReleaseForm(Form):
     name = StringField('Name', validators=[Required()])
-    version = StringField('Version', validators=[Required()])
     product = StringField('Product', validators=[Required()])
     blob = JSONStringField('Data', validators=[Required()], widget=FileInput())
     data_version = IntegerField('data_version', widget=HiddenInput())

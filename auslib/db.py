@@ -863,7 +863,6 @@ class Releases(AUSTable):
         self.table = Table('releases', metadata,
                            Column('name', String(100), primary_key=True),
                            Column('product', String(15), nullable=False),
-                           Column('version', String(25), nullable=False),
                            )
         if dialect == 'mysql':
             from sqlalchemy.dialects.mysql import LONGTEXT
@@ -909,22 +908,19 @@ class Releases(AUSTable):
 
         return False
 
-    def getReleases(self, name=None, product=None, version=None, limit=None, transaction=None):
+    def getReleases(self, name=None, product=None, limit=None, transaction=None):
         self.log.debug("Looking for releases with:")
         self.log.debug("name: %s", name)
         self.log.debug("product: %s", product)
-        self.log.debug("version: %s", version)
         where = []
         if name:
             where.append(self.name == name)
         if product:
             where.append(self.product == product)
-        if version:
-            where.append(self.version == version)
         # We could get the "data" column here too, but getReleaseBlob knows how
         # to grab cached versions of that, so it's better to let it take care
         # of it.
-        rows = self.select(columns=[self.name, self.product, self.version, self.data_version],
+        rows = self.select(columns=[self.name, self.product, self.data_version],
                            where=where, limit=limit, transaction=transaction)
         for row in rows:
             row["data"] = self.getReleaseBlob(row["name"], transaction)
@@ -935,19 +931,17 @@ class Releases(AUSTable):
         count, = self.t.count().execute().fetchone()
         return count
 
-    def getReleaseInfo(self, product=None, version=None, limit=None,
+    def getReleaseInfo(self, product=None, limit=None,
                        transaction=None, nameOnly=False, name_prefix=None):
         where = []
         if product:
             where.append(self.product == product)
-        if version:
-            where.append(self.version == version)
         if name_prefix:
             where.append(self.name.startswith(name_prefix))
         if nameOnly:
             column = [self.name]
         else:
-            column = [self.name, self.product, self.version, self.data_version]
+            column = [self.name, self.product, self.data_version]
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
         return rows
 
@@ -1001,7 +995,7 @@ class Releases(AUSTable):
 
         return blob
 
-    def addRelease(self, name, product, version, blob, changed_by, transaction=None):
+    def addRelease(self, name, product, blob, changed_by, transaction=None):
         blob.validate()
         # Generally blobs have names, but there's no requirement that they have to.
         if blob.get("name"):
@@ -1011,19 +1005,17 @@ class Releases(AUSTable):
         if self.containsForbiddenDomain(blob):
             raise ValueError("Release blob contains forbidden domain.")
 
-        columns = dict(name=name, product=product, version=version, data=blob.getJSON())
+        columns = dict(name=name, product=product, data=blob.getJSON())
         # Raises DuplicateDataError if the release already exists.
         ret = self.insert(changed_by=changed_by, transaction=transaction, **columns)
         cache.put("blob", name, {"data_version": 1, "blob": blob})
         cache.put("blob_version", name, 1)
         return ret.inserted_primary_key[0]
 
-    def updateRelease(self, name, changed_by, old_data_version, product=None, version=None, blob=None, transaction=None):
+    def updateRelease(self, name, changed_by, old_data_version, product=None, blob=None, transaction=None):
         what = {}
         if product:
             what['product'] = product
-        if version:
-            what['version'] = version
         if blob:
             blob.validate()
             # Generally blobs have names, but there's no requirement that they have to.
