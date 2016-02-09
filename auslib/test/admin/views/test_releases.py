@@ -685,7 +685,7 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
 
     def testPostRevisionRollback(self):
         # Make some changes to a release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        data = json.dumps(dict(detailsUrl='beep', fakePartials=True, schema_version=1))
         ret = self._post(
             '/releases/d',
             data=dict(
@@ -696,7 +696,7 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         )
         self.assertStatusCode(ret, 200)
 
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=False, schema_version=1))
+        data = json.dumps(dict(detailsUrl='boop', fakePartials=False, schema_version=1))
         ret = self._post(
             '/releases/d',
             data=dict(
@@ -712,13 +712,14 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         self.assertEqual(row['data_version'], 3)
         data = json.loads(row['data'])
         self.assertEqual(data['fakePartials'], False)
+        self.assertEqual(data['detailsUrl'], 'boop')
 
         query = table.history.t.count()
         count, = query.execute().first()
         self.assertEqual(count, 2)
 
         row, = table.history.select(
-            where=[table.history.product == 'd'],
+            where=[(table.history.product == 'd') & (table.history.data_version == 2)],
             limit=1
         )
         change_id = row['change_id']
@@ -734,6 +735,9 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
 
         row, = table.select(where=[table.name == 'd'])
         self.assertEqual(row['data_version'], 4)
+        data = json.loads(row['data'])
+        self.assertEqual(data['fakePartials'], True)
+        self.assertEqual(data['detailsUrl'], 'beep')
 
     def testPostRevisionRollbackBadRequests(self):
         # when posting you need both the release name and the change_id
