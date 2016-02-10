@@ -83,8 +83,7 @@
   </div>
   <div class="panel-body">
     <div class="left" style="float: left">
-      <b title="Product" ng-bind-html="highlightSearch(release.product, 'product')"></b>
-      <b title="Version" ng-bind-html="highlightSearch(release.version, 'version')"></b>
+      <span>Product: <b title="Product" ng-bind-html="highlightSearch(release.product, 'product')"></b></span>
 
       <h5 title="Data version">
         Data version: <b>{{ release.data_version }}</b>
