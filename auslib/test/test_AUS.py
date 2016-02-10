@@ -40,7 +40,7 @@ class TestAUSThrottling(unittest.TestCase):
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         dbo.releases.t.insert().execute(
-            name='b', product='b', version='b', data_version=1,
+            name='b', product='b', data_version=1,
             data='{"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
 
     def testThrottling100(self):

@@ -42,20 +42,8 @@ def populateDB(testdir):
     for f in glob.glob('%s/*.json' % testdir):
         data = json.load(open(f, 'r'))
         product = data['name'].split('-')[0]
-        # JSON files can have the extv version at the top level, or in the locales
-        # If we can't find it at the top level, look for it in a locale. This is
-        # less accurate, but the best we can do.
-        version = data.get('appVersion', data.get('extv'))
-        if not version:
-            # Some platforms may have alias', we need to make sure to interpret it if it exists.
-            platform = data.get("platforms").values()[0]
-            if platform.get("alias"):
-                platform = data.get("platforms")[platform["alias"]]
-            version = platform.get('locales').values()[0].get('extv')
-            if not version:
-                raise Exception("Couldn't find version for %s" % data['name'])
-        dbo.engine.execute("INSERT INTO releases (name, product, version, data, data_version) VALUES ('%s', '%s', '%s','%s', 1)" %
-                           (data['name'], product, version, json.dumps(data)))
+        dbo.engine.execute("INSERT INTO releases (name, product, data, data_version) VALUES ('%s', '%s','%s', 1)" %
+                           (data['name'], product, json.dumps(data)))
     # TODO - create a proper importer that walks the snippet store to find hashes ?
 
 
@@ -214,10 +202,9 @@ if __name__ == "__main__":
             log.info("-" * 50)
 
         if options.dumpreleases:
-            log.info("Releases are \n(name, product, version, data):")
+            log.info("Releases are \n(name, product, data):")
             for release in dbo.releases.getReleases():
                 log.info("(%s, %s, %s, %s " % (release['name'], release['product'],
-                                               release['version'],
                                                json.dumps(release['data'], indent=2)))
             log.info("-" * 50)
 

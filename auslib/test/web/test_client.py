@@ -36,7 +36,7 @@ class ClientTest(unittest.TestCase):
         self.view = ClientRequestView()
         auslib.log.cef_config = auslib.log.get_cef_config(self.cef_file)
         dbo.rules.t.insert().execute(backgroundRate=100, mapping='b', update_type='minor', product='b', data_version=1)
-        dbo.releases.t.insert().execute(name='b', product='b', version='1.0', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='b', product='b', data_version=1, data="""
 {
     "name": "b",
     "schema_version": 1,
@@ -70,7 +70,7 @@ class ClientTest(unittest.TestCase):
 """)
         dbo.rules.t.insert().execute(backgroundRate=100, mapping='c', update_type='minor', product='c',
                                      distribution='default', data_version=1)
-        dbo.releases.t.insert().execute(name='c', product='c', version='10.0', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='c', product='c', data_version=1, data="""
 {
     "name": "c",
     "schema_version": 1,
@@ -95,7 +95,7 @@ class ClientTest(unittest.TestCase):
 }
 """)
         dbo.rules.t.insert().execute(backgroundRate=100, mapping='d', update_type='minor', product='d', data_version=1)
-        dbo.releases.t.insert().execute(name='d', product='d', version='20.0', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='d', product='d', data_version=1, data="""
 {
     "name": "d",
     "schema_version": 1,
@@ -121,7 +121,7 @@ class ClientTest(unittest.TestCase):
 """)
 
         dbo.rules.t.insert().execute(backgroundRate=100, mapping='e', update_type='minor', product='e', data_version=1)
-        dbo.releases.t.insert().execute(name='e', product='e', version='22.0', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='e', product='e', data_version=1, data="""
 {
     "name": "e",
     "schema_version": 1,
@@ -149,7 +149,7 @@ class ClientTest(unittest.TestCase):
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='foxfood-whitelisted', update_type='minor', product='b2g',
                                      channel="foxfood", whitelist='b2g-whitelist', data_version=1)
         dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping='foxfood-fallback', update_type='minor', product='b2g', data_version=1)
-        dbo.releases.t.insert().execute(name='b2g-whitelist', product='b2g', version='2.5', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='b2g-whitelist', product='b2g', data_version=1, data="""
 {
   "name": "b2g-whitelist",
   "schema_version": 3000,
@@ -161,7 +161,7 @@ class ClientTest(unittest.TestCase):
 }
 """)
 
-        dbo.releases.t.insert().execute(name='foxfood-whitelisted', product='b2g', version='2.5', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='foxfood-whitelisted', product='b2g', data_version=1, data="""
 {
     "name": "foxfood-whitelisted",
     "schema_version": 1,
@@ -184,7 +184,7 @@ class ClientTest(unittest.TestCase):
     }
 }
 """)
-        dbo.releases.t.insert().execute(name='foxfood-fallback', product='b2g', version='2.5', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='foxfood-fallback', product='b2g', data_version=1, data="""
 {
     "name": "foxfood-fallback",
     "schema_version": 1,

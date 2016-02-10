@@ -920,13 +920,13 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
         self.releases = self.db.releases
-        self.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.releases.t.insert().execute(name='ab', product='a', version='a', data=json.dumps(dict(name="ab", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='ab', product='a', data=json.dumps(dict(name="ab", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='b', product='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.releases.t.insert().execute(name='c', product='c', version='c', data=json.dumps(dict(name="c", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='c', product='c', data=json.dumps(dict(name="c", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
 
     def testGetReleases(self):
@@ -936,7 +936,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(len(self.releases.getReleases(limit=1)), 1)
 
     def testGetReleasesWithWhere(self):
-        expected = [dict(product='b', version='b', name='b', data=dict(name="b", schema_version=1, hashFunction="sha512"), data_version=1)]
+        expected = [dict(product='b', name='b', data=dict(name="b", schema_version=1, hashFunction="sha512"), data_version=1)]
         self.assertEquals(self.releases.getReleases(name='b'), expected)
 
     def testGetReleaseBlob(self):
@@ -948,32 +948,27 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseInfoAll(self):
         releases = self.releases.getReleaseInfo()
-        expected = [dict(name='a', product='a', version='a', data_version=1),
-                    dict(name='ab', product='a', version='a', data_version=1),
-                    dict(name='b', product='b', version='b', data_version=1),
-                    dict(name='c', product='c', version='c', data_version=1)]
+        expected = [dict(name='a', product='a', data_version=1),
+                    dict(name='ab', product='a', data_version=1),
+                    dict(name='b', product='b', data_version=1),
+                    dict(name='c', product='c', data_version=1)]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoProduct(self):
         releases = self.releases.getReleaseInfo(product='a')
-        expected = [dict(name='a', product='a', version='a', data_version=1),
-                    dict(name='ab', product='a', version='a', data_version=1)]
-        self.assertEquals(releases, expected)
-
-    def testGetReleaseInfoVersion(self):
-        releases = self.releases.getReleaseInfo(version='b')
-        expected = [dict(name='b', product='b', version='b', data_version=1), ]
+        expected = [dict(name='a', product='a', data_version=1),
+                    dict(name='ab', product='a', data_version=1)]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNoMatch(self):
-        releases = self.releases.getReleaseInfo(product='a', version='b')
+        releases = self.releases.getReleaseInfo(product='ue')
         expected = []
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNamePrefix(self):
         releases = self.releases.getReleaseInfo(name_prefix='a')
-        expected = [dict(name='a', product='a', version='a', data_version=1),
-                    dict(name='ab', product='a', version='a', data_version=1)]
+        expected = [dict(name='a', product='a', data_version=1),
+                    dict(name='ab', product='a', data_version=1)]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNamePrefixNameOnly(self):
@@ -995,13 +990,8 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                     dict(name='ab')]
         self.assertEquals(releases, expected)
 
-    def testGetReleaseNamesVersion(self):
-        releases = self.releases.getReleaseNames(version='b')
-        expected = [dict(name='b'), ]
-        self.assertEquals(releases, expected)
-
     def testGetReleaseNamesNoMatch(self):
-        releases = self.releases.getReleaseNames(product='a', version='b')
+        releases = self.releases.getReleaseNames(product='oo')
         expected = []
         self.assertEquals(releases, expected)
 
@@ -1016,7 +1006,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testAddReleaseWithNameMismatch(self):
         blob = ReleaseBlobV1(name="f", schema_version=1, hashFunction="sha512")
-        self.assertRaises(ValueError, self.releases.addRelease, "g", "g", "23.0", blob, "bill")
+        self.assertRaises(ValueError, self.releases.addRelease, "g", "g", blob, "bill")
 
     def testUpdateReleaseWithNameMismatch(self):
         newBlob = ReleaseBlobV1(name="c", schema_version=1, hashFunction="sha512")
@@ -1034,9 +1024,9 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
         self.releases = self.db.releases
-        self.releases.t.insert().execute(name='a', product='a', version='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.releases.t.insert().execute(name='b', product='b', version='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='b', product='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         # When we started copying objects that go in or out of the cache we
         # discovered that Blob objects were not copyable at the time, due to
@@ -1163,7 +1153,6 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.addRelease(
                 name="abc",
                 product="bbb",
-                version="3.2",
                 blob=ReleaseBlobV1(name="abc", schema_version=1, hashFunction="sha512"),
                 changed_by="bill",
             )
@@ -1240,7 +1229,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
         self.releases = self.db.releases
-        self.releases.t.insert().execute(name='a', product='a', version='a', data_version=1, data="""
+        self.releases.t.insert().execute(name='a', product='a', data_version=1, data="""
 {
     "name": "a",
     "schema_version": 1,
@@ -1265,7 +1254,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        self.releases.t.insert().execute(name='b', product='b', version='b', data_version=1, data="""
+        self.releases.t.insert().execute(name='b', product='b', data_version=1, data="""
 {
     "name": "b",
     "hashFunction": "sha512",
@@ -1275,24 +1264,24 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
 
     def testAddRelease(self):
         blob = ReleaseBlobV1(name="d", hashFunction="sha512")
-        self.releases.addRelease(name='d', product='d', version='d', blob=blob, changed_by='bill')
-        expected = [('d', 'd', 'd', json.dumps(dict(name="d", schema_version=1, hashFunction="sha512")), 1)]
+        self.releases.addRelease(name='d', product='d', blob=blob, changed_by='bill')
+        expected = [('d', 'd', json.dumps(dict(name="d", schema_version=1, hashFunction="sha512")), 1)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'd').execute().fetchall(), expected)
 
     def testAddReleaseAlreadyExists(self):
         blob = ReleaseBlobV1(name="a", hashFunction="sha512")
-        self.assertRaises(TransactionError, self.releases.addRelease, name='a', product='a', version='a', blob=blob, changed_by='bill')
+        self.assertRaises(TransactionError, self.releases.addRelease, name='a', product='a', blob=blob, changed_by='bill')
 
     def testUpdateRelease(self):
         blob = ReleaseBlobV1(name='a', hashFunction="sha512")
-        self.releases.updateRelease(name='a', product='z', version='y', blob=blob, changed_by='bill', old_data_version=1)
-        expected = [('a', 'z', 'y', json.dumps(dict(name='a', schema_version=1, hashFunction="sha512")), 2)]
+        self.releases.updateRelease(name='a', product='z', blob=blob, changed_by='bill', old_data_version=1)
+        expected = [('a', 'z', json.dumps(dict(name='a', schema_version=1, hashFunction="sha512")), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'a').execute().fetchall(), expected)
 
     def testUpdateReleaseWithBlob(self):
         blob = ReleaseBlobV1(name='b', schema_version=1, hashFunction="sha512")
-        self.releases.updateRelease(name='b', product='z', version='y', changed_by='bill', blob=blob, old_data_version=1)
-        expected = [('b', 'z', 'y', json.dumps(dict(name='b', schema_version=1, hashFunction="sha512")), 2)]
+        self.releases.updateRelease(name='b', product='z', changed_by='bill', blob=blob, old_data_version=1)
+        expected = [('b', 'z', json.dumps(dict(name='b', schema_version=1, hashFunction="sha512")), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'b').execute().fetchall(), expected)
 
     def testUpdateReleaseInvalidBlob(self):

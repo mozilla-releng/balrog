@@ -17,9 +17,9 @@ from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, Db
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
 
-def createRelease(release, product, version, changed_by, transaction, releaseData):
+def createRelease(release, product, changed_by, transaction, releaseData):
     blob = createBlob(json.dumps(releaseData))
-    dbo.releases.addRelease(name=release, product=product, version=version,
+    dbo.releases.addRelease(name=release, product=product,
                             blob=blob, changed_by=changed_by, transaction=transaction)
     return dbo.releases.getReleases(name=release, transaction=transaction)[0]
 
@@ -72,7 +72,6 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         cef_event("Bad input", CEF_WARN, errors=form.errors)
         return Response(status=400, response=json.dumps(form.errors))
     product = form.product.data
-    version = form.version.data
     incomingData = form.data.data
     copyTo = form.copyTo.data
     alias = form.alias.data
@@ -101,7 +100,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
     for rel in allReleases:
         try:
             releaseInfo = dbo.releases.getReleases(name=rel, transaction=transaction)[0]
-            if existsCallback(rel, product, version):
+            if existsCallback(rel, product):
                 new = False
             # "release" is the one named in the URL (as opposed to the
             # ones that can be provided in copyTo), and we treat it as
@@ -133,7 +132,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
             if hashFunction:
                 newReleaseData['hashFunction'] = hashFunction
             try:
-                releaseInfo = createRelease(rel, product, version, changed_by, transaction, newReleaseData)
+                releaseInfo = createRelease(rel, product, changed_by, transaction, newReleaseData)
             except BlobValidationError as e:
                 msg = "Couldn't create release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
@@ -144,29 +143,11 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                 return Response(status=400, response=json.dumps({"data": e.args}))
             old_data_version = 1
 
-        # If the version doesn't match, just update it. This will be the case for nightlies
-        # every time there's a version bump.
-        if version != releaseInfo['version']:
-            log.debug("database version for %s is %s, updating it to %s", rel, releaseInfo['version'], version)
-            try:
-                dbo.releases.updateRelease(name=rel, version=version,
-                                           changed_by=changed_by, old_data_version=old_data_version,
-                                           transaction=transaction)
-            except BlobValidationError as e:
-                msg = "Couldn't update release: %s" % e
-                cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
-                return Response(status=400, response=json.dumps({"data": e.errors}))
-            except ValueError as e:
-                msg = "Couldn't update release: %s" % e
-                cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
-                return Response(status=400, response=json.dumps({"data": e.args}))
-            old_data_version += 1
-
         extraArgs = {}
         if alias:
             extraArgs['alias'] = alias
         try:
-            commitCallback(rel, product, version, incomingData, releaseInfo['data'], old_data_version, extraArgs)
+            commitCallback(rel, product, incomingData, releaseInfo['data'], old_data_version, extraArgs)
         except BlobValidationError as e:
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
@@ -207,13 +188,13 @@ class SingleLocaleView(AdminView):
            what to set the status code to, and what data_version applies to.
            In an ideal world we would probably require a data_version for the
            releases named in copyTo as well."""
-        def exists(rel, product, version):
+        def exists(rel, product):
             if rel == release:
                 return dbo.releases.localeExists(name=rel, platform=platform,
                                                  locale=locale, transaction=transaction)
             return False
 
-        def commit(rel, product, version, localeData, releaseData, old_data_version, extraArgs):
+        def commit(rel, product, localeData, releaseData, old_data_version, extraArgs):
             return dbo.releases.addLocaleToRelease(name=rel, platform=platform,
                                                    locale=locale, data=localeData, alias=extraArgs.get('alias'),
                                                    old_data_version=old_data_version,
@@ -249,7 +230,7 @@ class SingleReleaseView(AdminView):
         if dbo.releases.getReleases(name=release, limit=1):
             data_version = form.data_version.data
             try:
-                dbo.releases.updateRelease(name=release, blob=blob, version=form.version.data,
+                dbo.releases.updateRelease(name=release, blob=blob,
                                            product=form.product.data, changed_by=changed_by,
                                            old_data_version=data_version, transaction=transaction)
             except BlobValidationError as e:
@@ -265,7 +246,7 @@ class SingleReleaseView(AdminView):
         else:
             try:
                 dbo.releases.addRelease(name=release, product=form.product.data,
-                                        version=form.version.data, blob=blob,
+                                        blob=blob,
                                         changed_by=changed_by, transaction=transaction)
             except BlobValidationError as e:
                 msg = "Couldn't update release: %s" % e
@@ -280,12 +261,12 @@ class SingleReleaseView(AdminView):
     @requirelogin
     @requirepermission('/releases/:name')
     def _post(self, release, changed_by, transaction):
-        def exists(rel, product, version):
+        def exists(rel, product):
             if rel == release:
                 return True
             return False
 
-        def commit(rel, product, version, newReleaseData, releaseData, old_data_version, extraArgs):
+        def commit(rel, product, newReleaseData, releaseData, old_data_version, extraArgs):
             releaseData.update(newReleaseData)
             blob = createBlob(releaseData)
             return dbo.releases.updateRelease(name=rel, blob=blob,
@@ -392,7 +373,7 @@ class ReleaseHistoryView(HistoryAdminView):
 
         try:
             dbo.releases.updateRelease(changed_by=changed_by, name=change['name'],
-                                       version=change['version'], blob=blob,
+                                       blob=blob,
                                        old_data_version=old_data_version, transaction=transaction)
         except BlobValidationError as e:
             cef_event("Bad input", CEF_WARN, errors=e.args)
@@ -411,8 +392,6 @@ class ReleasesAPIView(AdminView):
         kwargs = {}
         if request.args.get('product'):
             kwargs['product'] = request.args.get('product')
-        if request.args.get('version'):
-            kwargs['version'] = request.args.get('version')
         if request.args.get('name_prefix'):
             kwargs['name_prefix'] = request.args.get('name_prefix')
         if request.args.get('names_only'):
@@ -429,7 +408,6 @@ class ReleasesAPIView(AdminView):
                 # return : db name
                 'name': 'name',
                 'product': 'product',
-                'version': 'version',
                 'data_version': 'data_version',
             }
             for release in releases:
@@ -455,7 +433,7 @@ class ReleasesAPIView(AdminView):
             blob = createBlob(form.blob.data)
             name = dbo.releases.addRelease(
                 name=form.name.data, product=form.product.data,
-                version=form.version.data, blob=blob,
+                blob=blob,
                 changed_by=changed_by, transaction=transaction
             )
         except BlobValidationError as e:
