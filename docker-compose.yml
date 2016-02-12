@@ -9,7 +9,7 @@ balrogadmin:
   volumes:
     - .:/app
   links:
-      - balrogdb
+    - balrogdb
   environment:
     - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
     - SECRET_KEY=blahblah
@@ -38,4 +38,3 @@ balrogdb:
     - MYSQL_ROOT_PASSWORD=admin
   volumes:
     - .cache/mysql:/var/lib/mysql
-
