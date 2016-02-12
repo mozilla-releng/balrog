@@ -13,3 +13,12 @@ And you can access the public interface with URLs such as:
 http://127.0.0.1:9090/update/3/Firefox/33.0/20141202185629/Darwin_x86_64-gcc3-u-i386-x86_64/en-US/release/default/default/default/update.xml?force=1
 
 If you're on Mac, Windows, or running Docker in a VM for another reason, you'll need to replace 127.0.0.1 with the IP of your VM.
+
+Alternatively, you can use `docker-compose` to automatically build or pull
+required docker images and run them. The following command will start 3 docker
+instances linked together:
+
+  docker-compose up
+
+MySQL data will persist across runs and stored under `.cache/mysql`. To reset
+the data, you can delete the directory and run `docker-compose up`.
