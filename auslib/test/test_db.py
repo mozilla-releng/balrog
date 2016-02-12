@@ -550,8 +550,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
 class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
     """Tests to ensure that the current sample data (used by Docker) is
     compatible with the current schema."""
-    sample_data = path.join(__file__, "..", "..", "scripts", "sample-data.sql")
-    sample_data = "/home/bhearsum/repos/master/balrog/scripts/sample-data.sql"
+    sample_data = path.join(path.dirname(__file__), "..", "..", "scripts", "sample-data.sql")
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
