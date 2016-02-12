@@ -1,6 +1,7 @@
 import logging
 import mock
 import os
+from os import path
 import simplejson as json
 import sys
 from tempfile import mkstemp
@@ -544,6 +545,24 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
 
             ret = self.test.t.select().execute().fetchall()
             self.assertEquals(len(ret), 5, msg=ret)
+
+
+class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
+    """Tests to ensure that the current sample data (used by Docker) is
+    compatible with the current schema."""
+    sample_data = path.join(__file__, "..", "..", "scripts", "sample-data.sql")
+    sample_data = "/home/bhearsum/repos/master/balrog/scripts/sample-data.sql"
+
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+
+    def testSampleDataImport(self):
+        with self.db.begin() as trans:
+            with open(self.sample_data) as f:
+                for q in f:
+                    trans.execute(q)
 
 
 class RulesTestMixin(object):
