@@ -1,6 +1,8 @@
 balrogadmin:
   build: ./
-  entrypoint: bash scripts/initdb_and_run.sh
+  entrypoint:
+      - bash
+      - scripts/initdb_and_run.sh
   command: uwsgi --ini /app/uwsgi/admin.ini --python-autoreload 1
   ports:
     - "8080:8080"
