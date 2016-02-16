@@ -3,8 +3,15 @@ provide updates to Firefox. It uses a database to store a series of rules
 which map update requests to releases. Documentation is available at
 https://wiki.mozilla.org/Balrog.
 
-To run a development environment you must have Docker installed (if you're on Windows or Mac you probably want Docker Machine as well). Once these prerequisites are installed, run the following command to create the necessary images:
-  bash scripts/create-docker-containers.sh
+To run a development environment you must have Docker and docker-compose
+installed (if you're on Windows or Mac you probably want Docker Machine as
+well). Once these prerequisites are installed, run the following command to
+create  and run the necessary images:
+
+  docker-compose up
+
+MySQL data will persist across runs and stored under `.cache/mysql`. To reset
+the data, you can delete the directory and run `docker-compose up`.
 
 Now you should be able to access the admin interface at:
 http://127.0.0.1:8080
@@ -14,11 +21,3 @@ http://127.0.0.1:9090/update/3/Firefox/33.0/20141202185629/Darwin_x86_64-gcc3-u-
 
 If you're on Mac, Windows, or running Docker in a VM for another reason, you'll need to replace 127.0.0.1 with the IP of your VM.
 
-Alternatively, you can use `docker-compose` to automatically build or pull
-required docker images and run them. The following command will start 3 docker
-instances linked together:
-
-  docker-compose up
-
-MySQL data will persist across runs and stored under `.cache/mysql`. To reset
-the data, you can delete the directory and run `docker-compose up`.
