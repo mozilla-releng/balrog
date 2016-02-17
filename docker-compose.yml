@@ -1,0 +1,40 @@
+balrogadmin:
+  build: ./
+  entrypoint:
+    - bash
+    - scripts/initdb_and_run.sh
+  command: uwsgi --ini /app/uwsgi/admin.ini --python-autoreload 1
+  ports:
+    - "8080:8080"
+  volumes:
+    - .:/app
+  links:
+    - balrogdb
+  environment:
+    - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
+    - SECRET_KEY=blahblah
+
+balrogpub:
+  build: .
+  command: uwsgi --ini /app/uwsgi/public.ini --python-autoreload 1
+  ports:
+    - "9090:9090"
+  volumes:
+    - .:/app
+  environment:
+    - "DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog"
+    - "SECRET_KEY=blahblah"
+  links:
+    - balrogdb
+
+balrogdb:
+  image: mysql:5.7
+  expose:
+    - "3306"
+  environment:
+    - MYSQL_DATABASE=balrog
+    - MYSQL_USER=balrogadmin
+    - MYSQL_PASSWORD=balrogadmin
+    - MYSQL_ROOT_PASSWORD=admin
+  volumes:
+    - .cache/mysql:/var/lib/mysql
