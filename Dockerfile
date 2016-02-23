@@ -6,17 +6,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get -q update && \
     apt-get -q --yes install \
-      mysql-client \
-      nodejs-legacy \
-      npm && \
+      mysql-client && \
     apt-get clean
 
 WORKDIR /app
 
 COPY . /app
-RUN python setup.py install
-
-WORKDIR /app/ui
-RUN npm install
-
-WORKDIR /app
+RUN pip install -r requirements.txt
