@@ -10,6 +10,7 @@ from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
     create_engine, select, BigInteger
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
+import sqlalchemy.types
 
 import migrate.versioning.schema
 import migrate.versioning.api
@@ -58,6 +59,10 @@ class OutdatedDataError(SQLAlchemyError):
 
 class WrongNumberOfRowsError(SQLAlchemyError):
     """Raised when an update or delete fails because the clause matches more than one row."""
+
+
+class UpdateMergeError(SQLAlchemyError):
+    pass
 
 
 class AUSTransaction(object):
@@ -143,6 +148,13 @@ class AUSTable(object):
                          update. This is useful for detecting colliding
                          updates.
        @type versioned: bool
+       @param scheduled_changes: Whether or not this table should allow changes
+                                 to be scheduled. When True, two additional tables
+                                 will be created: a $name_scheduled_changes, which
+                                 will contain data needed to schedule changes to
+                                 $name, and $name_scheduled_changes_history, which
+                                 tracks the history of a scheduled change.
+       @type scheduled_changes: bool
        @param onInsert: A callback that will be called whenever an insert is
                         made to the table. It must accept the following 2
                         parameters:
@@ -161,8 +173,8 @@ class AUSTable(object):
        @type onUpdate: callable
     """
 
-    def __init__(self, dialect, history=True, versioned=True, onInsert=None,
-                 onUpdate=None, onDelete=None):
+    def __init__(self, dialect, history=True, versioned=True, scheduled_changes=False,
+                 onInsert=None, onUpdate=None, onDelete=None):
         self.t = self.table
         # Enable versioning, if required
         if versioned:
@@ -182,6 +194,11 @@ class AUSTable(object):
             self.history = History(dialect, self.t.metadata, self)
         else:
             self.history = None
+        # Set-up a scheduled changes table if required
+        if scheduled_changes:
+            self.scheduled_changes = ScheduledChangeTable(dialect, self.t.metadata, self)
+        else:
+            self.scheduled_changes = None
         self.log = logging.getLogger(self.__class__.__name__)
 
     # Can't do this in the constructor, because the engine is always
@@ -382,20 +399,25 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        row = self._returnRowOrRaise(where=where, transaction=trans)
+        orig_row = self._returnRowOrRaise(where=where, transaction=trans)
+        new_row = orig_row.copy()
         if self.versioned:
             where = copy(where)
             where.append(self.data_version == old_data_version)
-            row['data_version'] += 1
+            new_row['data_version'] += 1
+            what["data_version"] = new_row["data_version"]
 
         # Copy the new data into the row
         for col in what:
-            row[col] = what[col]
+            new_row[col] = what[col]
 
-        query = self._updateStatement(where, row)
+        query = self._updateStatement(where, new_row)
         ret = trans.execute(query)
         if self.history:
-            trans.execute(self.history.forUpdate(row, changed_by))
+            trans.execute(self.history.forUpdate(new_row, changed_by))
+        # TODO: call this for delete() as well
+        if self.scheduled_changes:
+            self.scheduled_changes.mergeUpdate(what, orig_row, changed_by, trans)
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
@@ -632,6 +654,177 @@ class History(AUSTable):
             self.log.debug("ERROR, change doesn't correspond to any known operation")
 
 
+class ScheduledChangeTable(AUSTable):
+    """A Table that stores the necessary information to schedule changes
+    to the baseTable provided. A ScheduledChangeTable ends up mirroring the
+    columns of its base, and adding the necessary ones to provide the schedule.
+    By default, ScheduledChangeTables enable History on themselves.
+    TODO UPDATE THIS COMMENT IT SUCKS"""
+    # It's possible that some of our column names may conflict with those on
+    # a base table. For those that do (such as data_version) we rename the
+    # base table's column in this table.
+    renamed_columns = {
+        "data_version": "table_data_version",
+    }
+    condition_groups = (
+        ("when",),
+        ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
+    )
+
+    def __init__(self, dialect, metadata, baseTable):
+        self.baseTable = baseTable
+        self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
+                           Column("sc_id", Integer, primary_key=True, autoincrement=True),
+                           Column("scheduled_by", String(100), nullable=False),
+                           Column("telemetry_product", String(15)),
+                           Column("telemetry_channel", String(75)),
+                           Column("telemetry_uptake", Integer),
+                           )
+        if dialect == 'sqlite':
+            self.table.append_column(Column('when', Integer))
+        else:
+            self.table.append_column(Column('when', BigInteger))
+
+        # In order to collate data and make decisions about rows being new or
+        # existing, we need to keep track of the base table's columns in these
+        # data structures.
+        # The primary key column(s) are used in construct "where" clauses for
+        # existing rows.
+        self.base_primary_key = []
+        # The data columns are the actual data of the row. Note that this does
+        # *not* include data_version for versioned tables.
+        self.data_columns = []
+        # A ScheduledChangesTable requires all of the columns from its base
+        # table, with a few tweaks:
+        for col in baseTable.t.get_children():
+            if col.primary_key:
+                self.base_primary_key.append(col.name)
+            elif col.name != "data_version":
+                self.data_columns.append(col.name)
+            newcol = col.copy()
+            # 1) Some columns need to be renamed, because the would otherwise
+            # conflict with ScheduledChanges columns.
+            if newcol.name in self.renamed_columns:
+                # Renaming a column requires to change both the key and the name
+                # See https://github.com/zzzeek/sqlalchemy/blob/rel_0_7/lib/sqlalchemy/schema.py#L781
+                # for background.
+                newcol.key = newcol.name = self.renamed_columns[newcol.name]
+            # 2) Primary keys on the base table are normal columns here,
+            # and are allowed to be null (because we support adding new rows
+            # to tables with autoincrementing keys via scheduled changes).
+            # The base table's data version may also be null for the same reason.
+            if col.primary_key or newcol.name == "table_data_version":
+                newcol.primary_key = False
+                newcol.nullable = True
+            # Notable because of its abscence, other columns retain their
+            # nullability because whether or not we're adding a new row or
+            # modifying an existing one, those NOT NULL columns are required.
+            self.table.append_column(newcol)
+
+        super(ScheduledChangeTable, self).__init__(dialect, history=True, versioned=True)
+
+    def _validateConditions(self, conditions):
+        for group in self.condition_groups:
+            if set(group) == set(conditions.keys()):
+                break
+        else:
+            raise ValueError("Invalid combination of conditions: %s", conditions.keys())
+
+        if "when" in conditions:
+            try:
+                time.gmtime(conditions["when"])
+            except:
+                raise ValueError("Cannot parse 'when' as a unix timestamp.")
+
+    def insert(self, changed_by, transaction=None, **columns):
+        what = {}
+        conditions = {}
+        base_columns = [c.name for c in self.baseTable.t.get_children()]
+        for col in columns:
+            if col in base_columns:
+                what[col] = columns[col]
+            else:
+                conditions[col] = columns[col]
+        self._validateConditions(conditions)
+
+        what["scheduled_by"] = changed_by
+        # If we're adding a change for an existing row, we need to translate its
+        # data_version column to table_data_version, because the scheduled change
+        # has its own data_version as well.
+        if what.get("data_version"):
+            what["table_data_version"] = what["data_version"]
+            del what["data_version"]
+        # Make sure that any columns which are not nullable are present in "what",
+        # except for autoincrementing integers.
+        for col in self.baseTable.t.get_children():
+            if col.nullable:
+                continue
+            if isinstance(col.type, (sqlalchemy.types.Integer,)) and col.autoincrement:
+                continue
+            if col.name not in what:
+                raise ValueError("Missing primary key column '%s' which is not autoincrement", col.name)
+
+        data_version_where = []
+        for pk_col in [getattr(self.baseTable, c) for c in self.base_primary_key]:
+            if pk_col.name in what:
+                data_version_where.append(pk_col == what[pk_col.name])
+        if data_version_where:
+            current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=data_version_where, transaction=transaction)
+
+            if current_data_version and current_data_version[0]["data_version"] != what.get("table_data_version"):
+                raise ValueError("Wrong data_version given for base table, cannot create scheduled change.")
+
+        for column, value in conditions.iteritems():
+            what[column] = value
+        ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **what)
+        return ret.inserted_primary_key[0]
+
+    def enactChange(self, sc_id, transaction=None):
+        scheduled_change = self.select(where=[(self.sc_id == sc_id)], transaction=transaction)[0]
+        what = {}
+        for col in self.data_columns:
+            what[col] = scheduled_change[col]
+
+        if scheduled_change["table_data_version"]:
+            where = []
+            for col in self.base_primary_key:
+                where.append((getattr(self.baseTable, col) == scheduled_change[col]))
+            self.baseTable.update(where, what, scheduled_change["scheduled_by"], scheduled_change["table_data_version"], transaction=transaction)
+        else:
+            for col in self.base_primary_key:
+                what[col] = scheduled_change[col]
+            self.baseTable.insert(scheduled_change["scheduled_by"], transaction=transaction, **what)
+
+    def mergeUpdate(self, what, orig_row, changed_by, trans):
+        where = []
+        for col in self.base_primary_key:
+            where.append((getattr(self, col) == orig_row[col]))
+        scheduled_changes = self.select(where=where, transaction=trans)
+        if not scheduled_changes:
+            self.log.debug("No scheduled changes found for update; nothing to do")
+            return
+        for sc in scheduled_changes:
+            self.log.debug("Trying to merge update with scheduled changed '%s'", sc["sc_id"])
+            # "what" need to be copied because we'll be modifying the original in the loop.
+            for col in what.copy():
+                # Some columns may be differently named between base table and sc table, we need to
+                # make sure we're looking up proprely in both...
+                sc_col = col
+                if col in self.renamed_columns:
+                    sc_col = self.renamed_columns[col]
+                    # ...and updating "what" to match it, because we'll be using this data structure
+                    # to update the scheduled changes table later.
+                    what[sc_col] = what[col]
+                    del what[col]
+
+                if sc[sc_col] != orig_row.get(col) and sc[sc_col] != what.get(col):
+                    raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
+
+            # If we get here, the change is safely mergeable
+            self.log.debug("Merging %s for scheduled change '%s'", what, sc["sc_id"])
+            self.update(where=[self.sc_id == sc["sc_id"]], what=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=trans)
+
+
 class Rules(AUSTable):
 
     def __init__(self, metadata, dialect):
@@ -655,7 +848,7 @@ class Rules(AUSTable):
                            Column('comment', String(500)),
                            Column('whitelist', String(100)),
                            )
-        AUSTable.__init__(self, dialect)
+        AUSTable.__init__(self, dialect, scheduled_changes=True)
 
     def _matchesRegex(self, foo, bar):
         # Expand wildcards and use ^/$ to make sure we don't succeed on partial
