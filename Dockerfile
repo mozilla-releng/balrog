@@ -11,5 +11,7 @@ RUN apt-get -q update && \
 
 WORKDIR /app
 
+# Copying Balrog to /app instead of installing it means that production can run
+# it, and we can bind mount to override it for local development.
 COPY . /app
 RUN pip install -r requirements.txt
