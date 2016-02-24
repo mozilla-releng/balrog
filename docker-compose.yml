@@ -38,3 +38,5 @@ balrogdb:
     - MYSQL_ROOT_PASSWORD=admin
   volumes:
     - .cache/mysql:/var/lib/mysql
+    - scripts/run-mysqld.sh:/run-mysqld.sh
+  entrypoint: /run-mysqld.sh
