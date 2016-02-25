@@ -17,6 +17,7 @@ from auslib.admin.views.releases import SingleLocaleView, \
 from auslib.admin.views.rules import RulesAPIView, \
     SingleRuleView, RuleHistoryAPIView
 from auslib.admin.views.history import DiffView, FieldView
+from auslib.global_state import dbo
 
 
 @app.errorhandler(500)
@@ -59,3 +60,30 @@ app.add_url_rule("/releases/<release>/builds/<platform>/<locale>", view_func=Sin
 app.add_url_rule("/releases/<release>/revisions", view_func=ReleaseHistoryView.as_view("release_revisions"))
 app.add_url_rule("/history/diff/<type_>/<change_id>/<field>", view_func=DiffView.as_view("diff"))
 app.add_url_rule("/history/view/<type_>/<change_id>/<field>", view_func=FieldView.as_view("field"))
+
+
+# Endpoints required by CloudOps as part of the Dockerflow spec: https://github.com/mozilla-services/Dockerflow
+@app.route("/__version__")
+def version():
+    return '{"foo": "bar"}'
+
+
+@app.route("/__heartbeat__")
+def heartbeat():
+    """Per the Dockerflow spec:
+    Respond to /__heartbeat__ with a HTTP 200 or 5xx on error. This should
+    depend on services like the database to also ensure they are healthy."""
+    # Counting the rules should be a trivial enough operation that it won't
+    # cause notable load, but will verify that the database works.
+    raise Exception("kaboom!")
+    dbo.rules.countRules()
+    return "OK!"
+
+
+@app.route("/__lbheartbeat__")
+def lbheartbeat():
+    """Per the Dockerflow spec:
+    Respond to /__lbheartbeat__ with an HTTP 200. This is for load balancer
+    checks and should not check any dependent services."""
+    raise Exception("kaboom!")
+    return "OK!"
