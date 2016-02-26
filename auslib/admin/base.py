@@ -63,6 +63,7 @@ app.add_url_rule("/history/view/<type_>/<change_id>/<field>", view_func=FieldVie
 
 
 # Endpoints required by CloudOps as part of the Dockerflow spec: https://github.com/mozilla-services/Dockerflow
+# TODO: need to disable ISE 500 eaters for these, and in public app
 
 version_json = None
 
