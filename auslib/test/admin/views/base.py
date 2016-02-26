@@ -14,12 +14,23 @@ class ViewTest(unittest.TestCase):
 
     def setUp(self):
         self.cef_fd, self.cef_file = mkstemp()
+        self.version_fd, self.version_file = mkstemp()
         cache.reset()
         cache.make_copies = True
         app.config["SECRET_KEY"] = 'abc123'
         app.config['DEBUG'] = True
         app.config["WTF_CSRF_ENABLED"] = False
         app.config['WHITELISTED_DOMAINS'] = ['good.com']
+        # TODO: switch to a tempfile
+        app.config["VERSION_FILE"] = self.version_file
+        with open(self.version_file, "w+") as f:
+            f.write("""
+{
+  "source":"https://github.com/mozilla/balrog",
+  "version":"1.0",
+  "commit":"abcdef123456"
+}
+""")
         auslib.log.cef_config = auslib.log.get_cef_config(self.cef_file)
         dbo.setDb('sqlite:///:memory:')
         dbo.setDomainWhitelist(['good.com'])
@@ -68,6 +79,8 @@ class ViewTest(unittest.TestCase):
         dbo.reset()
         os.close(self.cef_fd)
         os.remove(self.cef_file)
+        os.close(self.version_fd)
+        os.remove(self.version_file)
 
     def _getBadAuth(self):
         return {'REMOTE_USER': 'NotAuth!'}

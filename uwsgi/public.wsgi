@@ -39,3 +39,7 @@ dbo.setDb(os.environ["DBURI"])
 dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["SPECIAL_FORCE_HOSTS"] = SPECIAL_FORCE_HOSTS
+# version.json is created when the Docker image is built, and contains details
+# about the current code (version number, commit hash), but doesn't exist in
+# the repo itself
+application.config["VERSION_FILE"] = "/app/version.json"

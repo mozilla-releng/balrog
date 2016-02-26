@@ -63,9 +63,17 @@ app.add_url_rule("/history/view/<type_>/<change_id>/<field>", view_func=FieldVie
 
 
 # Endpoints required by CloudOps as part of the Dockerflow spec: https://github.com/mozilla-services/Dockerflow
+
+version_json = None
+
+
 @app.route("/__version__")
 def version():
-    return '{"foo": "bar"}'
+    global version_json
+    if not version_json:
+        with open(app.config["VERSION_FILE"]) as f:
+            version_json = f.read()
+    return version_json
 
 
 @app.route("/__heartbeat__")

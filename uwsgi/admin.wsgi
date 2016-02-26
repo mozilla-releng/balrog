@@ -44,3 +44,7 @@ dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["PAGE_TITLE"] = "Balrog Administration"
 application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+# version.json is created when the Docker image is built, and contains details
+# about the current code (version number, commit hash), but doesn't exist in
+# the repo itself
+application.config["VERSION_FILE"] = "/app/version.json"
