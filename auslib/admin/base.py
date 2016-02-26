@@ -75,7 +75,6 @@ def heartbeat():
     depend on services like the database to also ensure they are healthy."""
     # Counting the rules should be a trivial enough operation that it won't
     # cause notable load, but will verify that the database works.
-    raise Exception("kaboom!")
     dbo.rules.countRules()
     return "OK!"
 
@@ -85,5 +84,4 @@ def lbheartbeat():
     """Per the Dockerflow spec:
     Respond to /__lbheartbeat__ with an HTTP 200. This is for load balancer
     checks and should not check any dependent services."""
-    raise Exception("kaboom!")
     return "OK!"
