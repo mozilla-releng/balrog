@@ -10,7 +10,7 @@ from auslib.web.base import app
 from auslib.web.views.client import ClientRequestView
 
 
-class ClientTest(unittest.TestCase):
+class ClientTestBase(unittest.TestCase):
     maxDiff = 2000
 
     @classmethod
@@ -26,9 +26,19 @@ class ClientTest(unittest.TestCase):
 
     def setUp(self):
         self.cef_fd, self.cef_file = mkstemp()
+        self.version_fd, self.version_file = mkstemp()
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
         app.config['WHITELISTED_DOMAINS'] = ('a.com', 'boring.com')
+        app.config["VERSION_FILE"] = self.version_file
+        with open(self.version_file, "w+") as f:
+            f.write("""
+{
+  "source":"https://github.com/mozilla/balrog",
+  "version":"1.0",
+  "commit":"abcdef123456"
+}
+""")
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         dbo.setDomainWhitelist(('a.com', 'boring.com'))
@@ -211,6 +221,12 @@ class ClientTest(unittest.TestCase):
     def tearDown(self):
         os.close(self.cef_fd)
         os.remove(self.cef_file)
+        os.close(self.version_fd)
+        os.remove(self.version_file)
+
+
+
+class ClientTest(ClientTestBase):
 
     def testGetHeaderArchitectureWindows(self):
         self.assertEqual(self.view.getHeaderArchitecture('WINNT_x86-msvc', 'Firefox Intel Windows'), 'Intel')

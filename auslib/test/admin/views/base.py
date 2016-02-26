@@ -21,7 +21,6 @@ class ViewTest(unittest.TestCase):
         app.config['DEBUG'] = True
         app.config["WTF_CSRF_ENABLED"] = False
         app.config['WHITELISTED_DOMAINS'] = ['good.com']
-        # TODO: switch to a tempfile
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
             f.write("""

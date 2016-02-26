@@ -1,9 +1,9 @@
 import mock
 
-from auslib.test.admin.views.base import ViewTest
+from auslib.test.web.test_client import ClientTestBase
 
 
-class TestDockerflowEndpoints(ViewTest):
+class TestDockerflowEndpoints(ClientTestBase):
 
     def testVersion(self):
         ret = self.client.get("/__version__")
