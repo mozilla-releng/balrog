@@ -3,7 +3,7 @@
 password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:dockerhub"
 dockerhub_email=bhearsum+test@gmail.com
 dockerhub_username=bhearsumtest
-dockerhub_password=$(curl ${password_url} | python -c 'import json, sys; a = json.load(sys.stdin); print a["dockerhub_password"]')
+dockerhub_password=$(curl ${password_url} | python -c 'import json, sys; a = json.load(sys.stdin); print a["secret"]["dockerhub_password"]')
 
 if [ -z $dockerhub_password ]; then
     echo "Dockerhub password not set, can't continue!"
