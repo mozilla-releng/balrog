@@ -73,6 +73,16 @@ class TestReleaseBlobBase(unittest.TestCase):
         blob = SimpleBlob(platforms=dict(c=dict(locales=dict(d=dict(buildID=9)))))
         self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
 
+    def testGetBuildIDMissingPlatform(self):
+        blob = SimpleBlob(platforms=dict())
+
+        self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
+
+    def testGetBuildIDMissingLocalesFieldInPlatform(self):
+        blob = SimpleBlob(platforms=dict(c=dict()))
+
+        self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
+
     def testGetBuildIDMissingLocaleBuildIDAtPlatform(self):
         blob = SimpleBlob(platforms=dict(c=dict(buildID=9, locales=dict(d=dict()))))
         self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
