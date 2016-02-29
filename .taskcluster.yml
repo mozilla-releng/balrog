@@ -18,10 +18,28 @@ tasks:
       github:
         env: true
         events:
-          - push
           - pull_request.*
     metadata:
       name: Balrog Pull Request
       description: Pull Request
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "taskcluster-images"
+    payload:
+      maxRunTime: 3600
+      image: "taskcluster/image_builder"
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && tox && scripts/push-dockerimage.sh"
+    extra:
+      github:
+        env: true
+        events:
+          - push
+    metadata:
+      name: Balrog Push
+      description: Push
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
