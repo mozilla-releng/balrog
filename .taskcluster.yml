@@ -19,11 +19,13 @@ tasks:
         env: true
         events:
           - pull_request.*
+          - push
     metadata:
       name: Balrog Pull Request
       description: Pull Request
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
+# TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     payload:
@@ -34,7 +36,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && pip install tox && tox && scripts/push-dockerimage.sh"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh"
     extra:
       github:
         env: true
