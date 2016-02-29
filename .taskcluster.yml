@@ -33,6 +33,7 @@ tasks:
       image: "taskcluster/image_builder:0.1.3"
       features:
         dind: true
+        taskclusterProxy: true
       command:
         - "/bin/bash"
         - "-c"
