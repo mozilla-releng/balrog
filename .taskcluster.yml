@@ -30,7 +30,7 @@ tasks:
       maxRunTime: 3600
       image: "taskcluster/image_builder:0.1.3"
       features:
-        - dind
+        dind: true
       command:
         - "/bin/bash"
         - "-c"
