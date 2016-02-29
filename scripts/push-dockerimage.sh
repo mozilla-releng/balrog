@@ -1,6 +1,6 @@
 #!/bin/bash
 
-curl taskcluster/secrets/repo:github.com/mozilla/balrog:dockerhub
+curl -v taskcluster/secrets/repo:github.com/mozilla/balrog:dockerhub
 
 dockerhub_email=bhearsum+test@gmail.com
 dockerhub_username=bhearsumtest
