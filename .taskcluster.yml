@@ -28,7 +28,9 @@ tasks:
     workerType: "{{ taskcluster.docker.workerType }}"
     payload:
       maxRunTime: 3600
-      image: "taskcluster/image_builder"
+      image: "taskcluster/image_builder:0.1.3"
+      features:
+        - dind
       command:
         - "/bin/bash"
         - "-c"
