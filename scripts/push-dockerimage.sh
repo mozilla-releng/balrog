@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:dockerhub"
 dockerhub_email=bhearsum+test@gmail.com
 dockerhub_username=bhearsumtest
