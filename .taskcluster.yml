@@ -34,7 +34,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && tox && scripts/push-dockerimage.sh"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && pip install tox && tox && scripts/push-dockerimage.sh"
     extra:
       github:
         env: true
