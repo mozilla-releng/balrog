@@ -1,6 +1,8 @@
 import difflib
 import json
 
+from sqlalchemy.sql.expression import null
+
 from flask import Response
 
 from auslib.global_state import dbo
@@ -55,9 +57,28 @@ class FieldView(AdminView):
 class DiffView(FieldView):
     """/diff/:type/:id/:field"""
 
+    def get_prev_id(self, value, change_id):
+
+        release_name = json.loads(value)['name']
+
+        table = dbo.releases.history
+        old_revision = table.select(
+            where=[
+                table.name == release_name,
+                table.change_id < change_id,
+                table.data_version != null()
+            ],
+            limit=1,
+            order_by=[table.timestamp.desc()],
+        )
+
+        return old_revision[0]['change_id']
+
     def get(self, type_, change_id, field):
         value = self.get_value(type_, change_id, field)
-        previous = self.get_value(type_, int(change_id) - 1, field)
+
+        prev_id = self.get_prev_id(value, change_id)
+        previous = self.get_value(type_, prev_id, field)
 
         value = self.format_value(value)
         previous = self.format_value(previous)
