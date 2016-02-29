@@ -1,5 +1,7 @@
 #!/bin/bash
 
+curl taskcluster/secrets/repo:github.com/mozilla/balrog:dockerhub
+
 dockerhub_email=bhearsum+test@gmail.com
 dockerhub_username=bhearsumtest
 dockerhub_password=$(curl taskcluster/secrets/repo:github.com/mozilla/balrog:dockerhub | python -c 'import json, sys; a = json.load(sys.stdin); print a["dockerhub_password"]')
