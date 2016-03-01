@@ -58,11 +58,16 @@ class ReleaseBlobBase(Blob):
 
     def getBuildID(self, platform, locale):
         platform = self.getResolvedPlatform(platform)
-        if locale not in self['platforms'][platform]['locales']:
+        if locale not in self['platforms'].get(platform, {}) \
+                                          .get('locales', {}):
             raise BadDataError("No such locale '%s' in platform '%s'" % (locale, platform))
         try:
             return self['platforms'][platform]['locales'][locale]['buildID']
         except KeyError:
+            if platform not in self['platforms']:
+                raise BadDataError("No such platform '%s'" % (platform))
+            if 'buildID' not in self['platforms'][platform].keys():
+                raise BadDataError("No buildID for platform '%s'" % (platform))
             return self['platforms'][platform]['buildID']
 
     def _getFromRelease(self, patch):
