@@ -13,5 +13,5 @@ WORKDIR /app
 
 # Copying Balrog to /app instead of installing it means that production can run
 # it, and we can bind mount to override it for local development.
-COPY auslib requirements.txt setup.py ui uwsgi /app/
+COPY auslib requirements.txt setup.py ui uwsgi version.json /app/
 RUN pip install -r requirements.txt

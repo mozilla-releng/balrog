@@ -12,8 +12,14 @@ if [ -z $dockerhub_password ]; then
     exit 1
 fi
 
-# TODO: create version.json
-# TODO: how can uninsntalled versions of library use version.json? maybe a stub one in the repo?
+commit=$(git rev-parse HEAD)
+version=$(cat version.txt)
+
+echo "{
+    \"commit\": \"${commit}\",
+    \"version\": \"${version}\",
+    \"source\": \"https://github.com/mozilla/balrog\"
+}" > version.json
 
 docker build -t mozilla/balrog:latest .
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
