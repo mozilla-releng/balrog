@@ -21,6 +21,14 @@ class TestDockerflowEndpoints(ViewTest):
             self.assertEqual(ret.status_code, 200)
             self.assertEqual(cr.call_count, 1)
 
+    def testHeartbeatWithException(self):
+        with mock.patch("auslib.global_state.dbo.rules.countRules") as cr:
+            cr.side_effect = Exception("kabom!")
+            # Because there's no web server between us and the endpoint, we recieve
+            # the Exception directly instead of a 500 error
+            self.assertRaises(Exception, self.client.get, "/__heartbeat__")
+            self.assertEqual(cr.call_count, 1)
+
     def testLbHeartbeat(self):
         ret = self.client.get("/__lbheartbeat__")
         self.assertEqual(ret.status_code, 200)

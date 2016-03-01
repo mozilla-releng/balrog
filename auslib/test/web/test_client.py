@@ -225,7 +225,6 @@ class ClientTestBase(unittest.TestCase):
         os.remove(self.version_file)
 
 
-
 class ClientTest(ClientTestBase):
 
     def testGetHeaderArchitectureWindows(self):
