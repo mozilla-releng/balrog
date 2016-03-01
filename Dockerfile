@@ -6,17 +6,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get -q update && \
     apt-get -q --yes install \
-      mysql-client \
-      nodejs-legacy \
-      npm && \
+      mysql-client && \
     apt-get clean
 
 WORKDIR /app
 
-COPY . /app
-RUN python setup.py install
-
-WORKDIR /app/ui
-RUN npm install
-
-WORKDIR /app
+# Copying Balrog to /app instead of installing it means that production can run
+# it, and we can bind mount to override it for local development.
+COPY auslib requirements.txt setup.py ui uwsgi version.json /app/
+RUN pip install -r requirements.txt

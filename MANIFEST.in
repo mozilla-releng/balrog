@@ -1,3 +1,5 @@
+include requirements.txt
+
 recursive-include auslib/migrate *
 recursive-include auslib/blobs/schemas *
 recursive-include ui/dist *
