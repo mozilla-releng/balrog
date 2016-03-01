@@ -1,7 +1,9 @@
+from os import path
+
 import logging
 log = logging.getLogger(__name__)
 
-from flask import Flask, make_response, send_from_directory
+from flask import Flask, make_response, send_from_directory, jsonify
 
 from auslib.AUS import AUS
 from auslib.global_state import dbo
@@ -83,11 +85,17 @@ version_json = None
 
 @app.route("/__version__")
 def version():
-    global version_json
-    if not version_json:
+    version_file = app.config.get("VERSION_FILE")
+    if version_file and path.exists(version_file):
         with open(app.config["VERSION_FILE"]) as f:
             version_json = f.read()
-    return version_json
+        return Response(version_json, mimetype="application/json")
+    else:
+        return jsonify({
+            "source": "https://github.com/mozilla/balrog",
+            "version": "unknown",
+            "commit": "unknown",
+        })
 
 
 @app.route("/__heartbeat__")
