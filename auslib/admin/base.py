@@ -1,4 +1,6 @@
-from flask import Flask, request
+from os import path
+
+from flask import Flask, request, jsonify, Response
 from flask_compress import Compress
 
 import auslib
@@ -64,17 +66,23 @@ app.add_url_rule("/history/view/<type_>/<change_id>/<field>", view_func=FieldVie
 
 # Endpoints required by CloudOps as part of the Dockerflow spec: https://github.com/mozilla-services/Dockerflow
 # TODO: need to disable ISE 500 eaters for these, and in public app
-
-version_json = None
+# TODO: need tests
+# TODO: copy to public app
 
 
 @app.route("/__version__")
 def version():
-    global version_json
-    if not version_json:
+    version_file = app.config.get("VERSION_FILE")
+    if version_file and path.exists(version_file):
         with open(app.config["VERSION_FILE"]) as f:
             version_json = f.read()
-    return version_json
+        return Response(version_json, mimetype="application/json")
+    else:
+        return jsonify({
+            "source": "https://github.com/mozilla/balrog",
+            "version": "unknown",
+            "commit": "unknown",
+        })
 
 
 @app.route("/__heartbeat__")
