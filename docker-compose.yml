@@ -13,6 +13,7 @@ balrogadmin:
   environment:
     - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
     - SECRET_KEY=blahblah
+    - PORT=8080
 
 balrogpub:
   build: .
@@ -22,8 +23,9 @@ balrogpub:
   volumes:
     - .:/app
   environment:
-    - "DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog"
-    - "SECRET_KEY=blahblah"
+    - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
+    - SECRET_KEY=blahblah
+    - PORT=9090
   links:
     - balrogdb
 
