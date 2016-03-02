@@ -28,8 +28,8 @@ tasks:
 # TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
-#    scopes:
-#      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+    scopes:
+      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
     payload:
       maxRunTime: 3600
       image: "taskcluster/image_builder:0.1.3"
@@ -45,6 +45,8 @@ tasks:
         env: true
         events:
           - push
+        branches:
+          - master
     metadata:
       name: Balrog Docker Image Creation
       description: Balrog Docker Image Creation
