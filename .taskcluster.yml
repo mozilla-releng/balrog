@@ -1,7 +1,7 @@
 version: 0
 metadata:
-  name: Balrog Task Graph
-  description: Balrog
+  name: Balrog
+  description: Balrog CI Tasks
   owner: "{{ event.head.user.email }}"
   source: "{{ event.head.repo.url }}"
 tasks:
@@ -21,8 +21,8 @@ tasks:
           - pull_request.*
           - push
     metadata:
-      name: Balrog Pull Request
-      description: Pull Request
+      name: Balrog Tests
+      description: Balrog Tests
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
 # TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
@@ -46,7 +46,7 @@ tasks:
         events:
           - push
     metadata:
-      name: Balrog Push
-      description: Push
+      name: Balrog Docker Image Creation
+      description: Balrog Docker Image Creation
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
