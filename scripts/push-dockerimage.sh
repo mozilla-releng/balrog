@@ -21,6 +21,8 @@ echo "{
     \"source\": \"https://github.com/mozilla/balrog\"
 }" > version.json
 
+# TODO: We probably should build this for other branches at some point, maybe as
+# mozilla/balrog:$branch ?
 docker build -t mozilla/balrog:latest .
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
 docker push mozilla/balrog:latest
