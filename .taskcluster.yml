@@ -28,7 +28,7 @@ tasks:
 # TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
+#    scopes:
 #      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
     payload:
       maxRunTime: 3600
