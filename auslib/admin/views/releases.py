@@ -303,6 +303,39 @@ class SingleReleaseView(AdminView):
         return Response(status=200)
 
 
+class ReleaseReadOnlyView(AdminView):
+    """/releases/:release/read_only"""
+
+    def get(self, release):
+        releases = dbo.releases.getReleases(name=release, limit=1)
+        is_release_read_only = dbo.releases.isReadOnly(name=release, limit=1)
+        if not releases:
+            return Response(status=404,
+                            response='Requested release does not exist')
+        release = releases[0]
+        return jsonify({
+            'read_only': is_release_read_only
+        })
+
+    @requirelogin
+    @requirepermission('/releases/:name/read_only')
+    def _put(self, release, changed_by, transaction):
+        req_read_only = request.form.get('read_only')
+        is_release_read_only = dbo.releases.isReadOnly(release)
+        old_data_version = request.form.get('data_version')
+
+        if req_read_only and not is_release_read_only:
+            dbo.releases.changeReadOnly(name=release, read_only=True, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        elif not req_read_only and is_release_read_only:
+            # Only an admin user can unset the read_only field once it's set to True
+            if dbo.permissions.hasUrlPermission(changed_by, 'admin'):
+                dbo.releases.changeReadOnly(name=release, read_only=False, changed_by=changed_by, transaction=transaction)
+            else:
+                msg = "%s is not allowed to set releases as read-write" % changed_by
+                cef_event("Unauthorized attempt to mark release as read-write", CEF_ALERT, msg=msg)
+        return Response(status=201, response='read_only changed')
+
+
 class ReleaseHistoryView(HistoryAdminView):
     """/releases/:release/revisions"""
 

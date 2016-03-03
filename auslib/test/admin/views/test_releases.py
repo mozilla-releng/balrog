@@ -783,3 +783,22 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         ret = self._get('/releases/settings')
         self.assertStatusCode(ret, 200)
         self.assertEqual(json.loads(ret.data), json.loads(data['blob']))
+
+
+class TestReadOnlyView(ViewTest, JSONTestMixin):
+
+    def testReadOnlyGet(self):
+        ret = self._get('/releases/b/read_only')
+        is_read_only = dbo.releases.t.select(dbo.releases.name == 'b').execute().first()['read_only']
+        self.assertEqual(json.loads(ret.data)['read_only'], is_read_only)
+
+    def testReadOnlySetTrue(self):
+        data = dict(read_only=True, product='Firefox', data_version=1)
+        self._put('/releases/b/read_only', data=data)
+        read_only = dbo.releases.isReadOnly(name='b')
+        self.assertEqual(read_only, True)
+
+    def testReadOnlySetFalseWithoutPermissionForProduct(self):
+        data = dict(read_only=False, product='Firefox', data_version=1)
+        ret = self._put('/releases/b/read_only', username='bob', data=data)
+        self.assertStatusCode(ret, 401)
