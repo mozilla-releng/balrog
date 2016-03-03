@@ -4,7 +4,6 @@ from urlparse import urlparse
 import logging
 
 from auslib.global_state import dbo
-from auslib.log import cef_event, CEF_ALERT
 
 
 def isSpecialURL(url, specialForceHosts):
@@ -19,7 +18,7 @@ def isSpecialURL(url, specialForceHosts):
 def isForbiddenUrl(url, whitelistedDomains):
     domain = urlparse(url)[1]
     if domain not in whitelistedDomains:
-        cef_event("Forbidden domain", CEF_ALERT, domain=domain)
+        logging.warning("Forbidden domain: %s", domain)
         return True
     return False
 

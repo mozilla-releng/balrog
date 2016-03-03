@@ -1,7 +1,5 @@
 blinker==1.4 \
 #    --hash=sha256:471aee25f3992bd325afa3772f1063dbdbbca947a041b8b89466dc00d606f8b6
-# no hash for cef because it's going to get removed before we switch to docker in prod
-cef==0.5
 decorator==4.0.6 \
 #    --hash=sha256:1c6254597777fd003da2e8fb503c3dbf3d9e8f8d55f054709c0e65be3467209c --hash=sha256:cc3dcda7835a7eafa887fad9d6a69b2d5fd77c0b1c2a1608f52b48e345e37206
 flask==0.10.1 \

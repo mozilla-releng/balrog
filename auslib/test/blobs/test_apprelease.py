@@ -3,7 +3,6 @@ try:
 except ImportError:
     # so you're in python <2.7
     from ordereddict import OrderedDict
-import mock
 import unittest
 from xml.dom import minidom
 
@@ -119,35 +118,23 @@ class TestReleaseBlobV1(unittest.TestCase):
         self.assertEquals(blob.getExtv('f', 'g'), blob.getApplicationVersion('f', 'g'))
 
     def testAllowedDomain(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV1(fileUrls=dict(c="http://a.com/a"))
-            self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV1(fileUrls=dict(c="http://a.com/a"))
+        self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainFileUrls(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV1(fileUrls=dict(c="http://evil.com/a"))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV1(fileUrls=dict(c="http://evil.com/a"))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainInLocale(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainAndAllowedDomain(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            updates = OrderedDict()
-            updates["partial"] = dict(fileUrl="http://a.com/a")
-            updates["complete"] = dict(fileUrl="http://evil.com/a")
-            blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(j=updates))))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        updates = OrderedDict()
+        updates["partial"] = dict(fileUrl="http://a.com/a")
+        updates["complete"] = dict(fileUrl="http://evil.com/a")
+        blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(j=updates))))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
 
 class TestOldVersionSpecialCases(unittest.TestCase):
@@ -611,18 +598,12 @@ class TestSchema2Blob(unittest.TestCase):
         self.assertEqual(returned.toxml(), expected.toxml())
 
     def testAllowedDomain(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV2(fileUrls=dict(c="http://a.com/a"))
-            self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV2(fileUrls=dict(c="http://a.com/a"))
+        self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainFileUrls(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV2(fileUrls=dict(c="http://evil.com/a"))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV2(fileUrls=dict(c="http://evil.com/a"))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
 
 class TestSchema2BlobNightlyStyle(unittest.TestCase):
@@ -724,21 +705,15 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         self.assertEqual(returned.toxml(), expected.toxml())
 
     def testForbiddenDomainInLocale(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainAndAllowedDomain(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            updates = OrderedDict()
-            updates["partial"] = dict(fileUrl="http://a.com/a")
-            updates["complete"] = dict(fileUrl="http://evil.com/a")
-            blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(j=updates))))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        updates = OrderedDict()
+        updates["partial"] = dict(fileUrl="http://a.com/a")
+        updates["complete"] = dict(fileUrl="http://evil.com/a")
+        blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(j=updates))))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
 
 class TestSchema3Blob(unittest.TestCase):
@@ -1023,33 +998,21 @@ class TestSchema3Blob(unittest.TestCase):
         self.assertEqual(returned.toxml(), expected.toxml())
 
     def testAllowedDomain(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV3(fileUrls=dict(c="http://a.com/a"))
-            self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV3(fileUrls=dict(c="http://a.com/a"))
+        self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainFileUrls(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV3(fileUrls=dict(c="http://evil.com/a"))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV3(fileUrls=dict(c="http://evil.com/a"))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainInLocale(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainAndAllowedDomain(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
-            blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
+        blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
 
 class TestSchema4Blob(unittest.TestCase):
@@ -1355,33 +1318,21 @@ class TestSchema4Blob(unittest.TestCase):
         self.assertEquals(v4Blob, expected)
 
     def testAllowedDomain(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
-            self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
+        self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainFileUrls(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://evil.com/c"))))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://evil.com/c"))))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainInLocale(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            blob = ReleaseBlobV4(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        blob = ReleaseBlobV4(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
     def testForbiddenDomainAndAllowedDomain(self):
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
-            blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
-            self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
+        blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
 
 
 class TestDesupportBlob(unittest.TestCase):

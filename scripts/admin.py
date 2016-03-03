@@ -37,7 +37,6 @@ if __name__ == '__main__':
     parser.add_option("-p", "--port", dest="port", type="int", help="port for server")
     parser.add_option("--host", dest="host", default='127.0.0.1', help="host to listen on. for example, 0.0.0.0 binds on all interfaces.")
     parser.add_option("--whitelist-domain", dest="whitelistedDomains", action="append")
-    parser.add_option("--cef-log", dest="cefLog", default="cef.log")
     parser.add_option("--page-title", dest="pageTitle", default="AUS Management")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="Verbose output")
@@ -57,7 +56,6 @@ if __name__ == '__main__':
     from auslib.admin.base import app
     from migrate.exceptions import DatabaseAlreadyControlledError
 
-    auslib.log.cef_config = auslib.log.get_cef_config(options.cefLog)
     dbo.setDb(options.db)
     dbo.setDomainWhitelist(options.whitelistedDomains)
     try:

@@ -1,8 +1,7 @@
 import logging
 import os
-import sys
 
-import auslib.log
+from auslib.log import configure_logging
 
 
 SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "b2gbld", "stage-ffxbld", "stage-tbirdbld", "stage-b2gbld"]
@@ -18,14 +17,15 @@ DOMAIN_WHITELIST = [
 
 # Logging needs to be set-up before importing the application to make sure that
 # logging done from other modules uses our Logger.
-logging.setLoggerClass(auslib.log.BalrogLogger)
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG, format=auslib.log.log_format)
+logging_kwargs = {
+    "level": os.environ.get("LOG_LEVEL", logging.INFO)
+}
+if os.environ.get("LOG_FORMAT") == "plain":
+    logging_kwargs["formatter"] = logging.Formatter
+configure_logging(**logging_kwargs)
 
 from auslib.global_state import cache, dbo
 from auslib.web.base import app as application
-
-# TODO: How to do cef logging in CloudOps? Do we need to?
-auslib.log.cef_config = auslib.log.get_cef_config("syslog")
 
 cache.make_cache("blob", 500, 3600)
 # There's probably no no need to ever expire items in the blob schema cache
