@@ -14,6 +14,7 @@ fi
 
 commit=$(git rev-parse HEAD)
 version=$(cat version.txt)
+branch=$(git rev-parse --abbrev-ref HEAD)
 
 echo "{
     \"commit\": \"${commit}\",
@@ -23,6 +24,10 @@ echo "{
 
 # TODO: We probably should build this for other branches at some point, maybe as
 # mozilla/balrog:$branch ?
-docker build -t mozilla/balrog:latest .
+image_tag="${branch}"
+if [ "$branch" == "master" ]; then
+    image_tag = "latest"
+fi
+docker build -t mozilla/balrog:${image_tag} .
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
-docker push mozilla/balrog:latest
+docker push mozilla/balrog:${image_tag}
