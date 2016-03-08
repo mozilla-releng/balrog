@@ -25,7 +25,6 @@ from auslib.global_state import dbo
 @app.errorhandler(500)
 def ise(error):
     log.error("Caught ISE 500 error.")
-    log.debug("Balrog version is: %s", auslib.version)
     log.debug("Request path is: %s", request.path)
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)

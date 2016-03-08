@@ -65,5 +65,5 @@ def get_cef_config(logfile):
         'cef.version': 0,  # This is the CEF format version
         'cef.product': 'Balrog',
         'cef.vendor': 'Mozilla',
-        'cef.device_version': auslib.version,
+        'cef.device_version': '1.0',
     }
