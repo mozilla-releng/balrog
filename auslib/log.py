@@ -4,8 +4,6 @@ from flask import request
 
 import cef
 
-import auslib
-
 log_format = "%(asctime)s - %(levelname)s - PID: %(process)s - Request: %(requestid)s - %(name)s.%(funcName)s#%(lineno)s: %(message)s"
 
 # Needs to be set by entry points.

@@ -1,17 +1,17 @@
-from os import path
-
 import logging
 log = logging.getLogger(__name__)
 
-from flask import Flask, make_response, send_from_directory, jsonify, Response
+from flask import Flask, make_response, send_from_directory
 
 from auslib.AUS import AUS
-from auslib.global_state import dbo
+from auslib.dockerflow import create_dockerflow_endpoints
 
 app = Flask(__name__)
 AUS = AUS()
 
 from auslib.web.views.client import ClientRequestView
+
+create_dockerflow_endpoints(app)
 
 
 @app.errorhandler(404)
@@ -76,42 +76,3 @@ app.add_url_rule(
     view_func=ClientRequestView.as_view('clientrequest_esrnightly'),
     defaults={'queryVersion': 3},
 )
-
-
-# Endpoints required by CloudOps as part of the Dockerflow spec: https://github.com/mozilla-services/Dockerflow
-
-version_json = None
-
-
-@app.route("/__version__")
-def version():
-    version_file = app.config.get("VERSION_FILE")
-    if version_file and path.exists(version_file):
-        with open(app.config["VERSION_FILE"]) as f:
-            version_json = f.read()
-        return Response(version_json, mimetype="application/json")
-    else:
-        return jsonify({
-            "source": "https://github.com/mozilla/balrog",
-            "version": "unknown",
-            "commit": "unknown",
-        })
-
-
-@app.route("/__heartbeat__")
-def heartbeat():
-    """Per the Dockerflow spec:
-    Respond to /__heartbeat__ with a HTTP 200 or 5xx on error. This should
-    depend on services like the database to also ensure they are healthy."""
-    # Counting the rules should be a trivial enough operation that it won't
-    # cause notable load, but will verify that the database works.
-    dbo.rules.countRules()
-    return "OK!"
-
-
-@app.route("/__lbheartbeat__")
-def lbheartbeat():
-    """Per the Dockerflow spec:
-    Respond to /__lbheartbeat__ with an HTTP 200. This is for load balancer
-    checks and should not check any dependent services."""
-    return "OK!"
