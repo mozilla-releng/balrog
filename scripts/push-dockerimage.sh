@@ -28,6 +28,7 @@ image_tag="${branch}"
 if [ "$branch" == "master" ]; then
     image_tag = "latest"
 fi
+# TODO: Create tags based on branch name and/or date.
 docker build -t mozilla/balrog:${image_tag} .
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
 docker push mozilla/balrog:${image_tag}
