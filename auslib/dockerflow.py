@@ -30,7 +30,7 @@ def create_dockerflow_endpoints(app):
         # Counting the rules should be a trivial enough operation that it won't
         # cause notable load, but will verify that the database works.
         dbo.rules.countRules()
-        return "OK!"
+        return Response("OK!", headers={"Cache-Control": "max-age: 20"})
 
     @app.route("/__lbheartbeat__")
     def lbheartbeat():
