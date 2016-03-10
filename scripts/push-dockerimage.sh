@@ -15,6 +15,7 @@ fi
 commit=$(git rev-parse HEAD)
 version=$(cat version.txt)
 branch=$(git rev-parse --abbrev-ref HEAD)
+date=$(date --utc +%Y-%m-%d-%H:%M)
 
 echo "{
     \"commit\": \"${commit}\",
@@ -22,13 +23,12 @@ echo "{
     \"source\": \"https://github.com/mozilla/balrog\"
 }" > version.json
 
-# TODO: We probably should build this for other branches at some point, maybe as
-# mozilla/balrog:$branch ?
-image_tag="${branch}"
+branch_tag="${branch}"
 if [ "$branch" == "master" ]; then
-    image_tag = "latest"
+    branch_tag = "latest"
 fi
-# TODO: Create tags based on branch name and/or date.
-docker build -t mozilla/balrog:${image_tag} .
+date_tag="${branch}-${date}"
+docker build -t mozilla/balrog:${branch_tag} .
+docker tag -t mozilla/balrog:${branch_tag} mozilla/balrog:${date_tag}
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
 docker push mozilla/balrog:${image_tag}
