@@ -966,16 +966,16 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseInfoAll(self):
         releases = self.releases.getReleaseInfo()
-        expected = [dict(name='a', product='a', data_version=1),
-                    dict(name='ab', product='a', data_version=1),
-                    dict(name='b', product='b', data_version=1),
-                    dict(name='c', product='c', data_version=1)]
+        expected = [dict(name='a', product='a', data_version=1, read_only=False),
+                    dict(name='ab', product='a', data_version=1, read_only=False),
+                    dict(name='b', product='b', data_version=1, read_only=False),
+                    dict(name='c', product='c', data_version=1, read_only=False)]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoProduct(self):
         releases = self.releases.getReleaseInfo(product='a')
-        expected = [dict(name='a', product='a', data_version=1),
-                    dict(name='ab', product='a', data_version=1)]
+        expected = [dict(name='a', product='a', data_version=1, read_only=False),
+                    dict(name='ab', product='a', data_version=1, read_only=False)]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNoMatch(self):
@@ -985,8 +985,8 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseInfoNamePrefix(self):
         releases = self.releases.getReleaseInfo(name_prefix='a')
-        expected = [dict(name='a', product='a', data_version=1),
-                    dict(name='ab', product='a', data_version=1)]
+        expected = [dict(name='a', product='a', data_version=1, read_only=False),
+                    dict(name='ab', product='a', data_version=1, read_only=False)]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNamePrefixNameOnly(self):
@@ -1023,7 +1023,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(release, [])
 
     def testDeleteReleaseWhenReadOnly(self):
-        self.releases.changeReadOnly('a', True, changed_by='me', old_data_version=1)
+        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
         self.assertRaises(ReadOnlyError, self.releases.deleteRelease, changed_by='me', name='a', old_data_version=2)
 
     def testAddReleaseWithNameMismatch(self):
@@ -1034,16 +1034,16 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         newBlob = ReleaseBlobV1(name="c", schema_version=1, hashFunction="sha512")
         self.assertRaises(ValueError, self.releases.updateRelease, "a", "bill", 1, blob=newBlob)
 
-    def testChangeReadOnly(self):
-        self.releases.changeReadOnly('a', True, changed_by='me', old_data_version=1)
+    def testUpdateReleaseChangeReadOnly(self):
+        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
         self.assertEqual(select([self.releases.read_only]).where(self.releases.name == 'a').execute().fetchone()[0], True)
 
     def testIsReadOnly(self):
-        self.releases.changeReadOnly('a', True, changed_by='me', old_data_version=1)
+        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
         self.assertEqual(self.releases.isReadOnly('a'), True)
 
     def testProceedIfNotReadOnly(self):
-        self.releases.changeReadOnly('a', True, changed_by='me', old_data_version=1)
+        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
         self.assertRaises(ReadOnlyError, self.releases._proceedIfNotReadOnly, 'a')
 
 
@@ -1315,7 +1315,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testUpdateReleaseWhenReadOnly(self):
         blob = ReleaseBlobV1(name='a', hashFunction="sha512")
         # set release 'a' to read-only
-        self.releases.changeReadOnly('a', True, changed_by='me', old_data_version=1)
+        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
         self.assertRaises(ReadOnlyError, self.releases.updateRelease, name='a', product='z', blob=blob, changed_by='me', old_data_version=2)
 
     def testUpdateReleaseWithBlob(self):
@@ -1635,7 +1635,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc",
             }
         }
-        self.releases.changeReadOnly('a', True, changed_by='me', old_data_version=1)
+        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
         self.assertRaises(ReadOnlyError, self.releases.addLocaleToRelease, name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
 
 

@@ -946,7 +946,7 @@ class Releases(AUSTable):
         if nameOnly:
             column = [self.name]
         else:
-            column = [self.name, self.product, self.data_version]
+            column = [self.name, self.product, self.data_version, self.read_only]
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
         return rows
 
@@ -1017,9 +1017,13 @@ class Releases(AUSTable):
         cache.put("blob_version", name, 1)
         return ret.inserted_primary_key[0]
 
-    def updateRelease(self, name, changed_by, old_data_version, product=None, blob=None, transaction=None):
-        self._proceedIfNotReadOnly(name, transaction=transaction)
+    def updateRelease(self, name, changed_by, old_data_version, product=None, read_only=None, blob=None, transaction=None):
+        if product or blob:
+            self._proceedIfNotReadOnly(name, transaction=transaction)
         what = {}
+        if read_only:
+            what['read_only'] = read_only
+            import pdb; pdb.set_trace()
         if product:
             what['product'] = product
         if blob:
@@ -1110,11 +1114,6 @@ class Releases(AUSTable):
         if self.isReadOnly(name, limit, transaction):
             raise ReadOnlyError("Release '%s' is read only" % name)
 
-    def changeReadOnly(self, name, read_only, changed_by, old_data_version=None, transaction=None):
-        where = [self.name == name]
-        what = dict(read_only=read_only)
-        self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
-
 
 class Permissions(AUSTable):
     """allPermissions defines the structure and possible options for all
@@ -1131,7 +1130,7 @@ class Permissions(AUSTable):
         '/releases/:name': ['method', 'product'],
         '/releases/:name/revisions': ['product'],
         '/releases/:name/builds/:platform/:locale': ['method', 'product'],
-        '/releases/:name/read_only': ['product'],
+        '/releases/:name/read_only': ['method', 'product'],
         '/rules': ['method', 'product'],
         '/rules/:id': ['method', 'product'],
         '/rules/:id/revisions': ['product'],

@@ -8,10 +8,10 @@ def upgrade(migrate_engine):
     releases_history = Table('releases_history', metadata, autoload=True)
 
     read_only = Column('read_only', Boolean)
-    read_only.create(releases)
+    read_only.create(releases, default=False)
 
     history_read_only = Column('read_only', Boolean)
-    history_read_only.create(releases_history)
+    history_read_only.create(releases_history, default=False)
 
 
 def downgrade(migrate_engine):

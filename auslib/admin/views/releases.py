@@ -6,13 +6,13 @@ from flask import Response, jsonify, make_response, request
 
 from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
-from auslib.db import OutdatedDataError
+from auslib.db import OutdatedDataError, ReadOnlyError
 from auslib.log import cef_event, CEF_WARN, CEF_ALERT
 from auslib.admin.views.base import (
     requirelogin, requirepermission, AdminView, HistoryAdminView
 )
 from auslib.admin.views.csrf import get_csrf_headers
-from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, DbEditableForm
+from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, DbEditableForm, ReadOnlyForm
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
@@ -152,6 +152,10 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
             return Response(status=400, response=json.dumps({"data": e.errors}))
+        except ReadOnlyError as e:
+            msg = "Couldn't update release: %s" % e
+            cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
+            return Response(status=403, response=json.dumps({"data": e.args}))
         except (ValueError, OutdatedDataError) as e:
             msg = "Couldn't update release: %s" % e
             cef_event("Bad input", CEF_WARN, errors=msg, release=rel)
@@ -237,6 +241,10 @@ class SingleReleaseView(AdminView):
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
                 return Response(status=400, response=json.dumps({"data": e.errors}))
+            except ReadOnlyError as e:
+                msg = "Couldn't update release: %s" % e
+                cef_event("Bad input", CEF_WARN, errors=msg)
+                return Response(status=403, response=json.dumps({"data": e.args}))
             except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
@@ -297,8 +305,13 @@ class SingleReleaseView(AdminView):
             cef_event("Bad input", CEF_WARN, errors=form.errors)
             return Response(status=400, response=json.dumps(form.errors))
 
-        dbo.releases.deleteRelease(changed_by=changed_by, name=release['name'],
-                                   old_data_version=form.data_version.data, transaction=transaction)
+        try:
+            dbo.releases.deleteRelease(changed_by=changed_by, name=release['name'],
+                                       old_data_version=form.data_version.data, transaction=transaction)
+        except ReadOnlyError as e:
+                msg = "Couldn't update release: %s" % e
+                cef_event("Bad input", CEF_WARN, errors=msg)
+                return Response(status=403, response=json.dumps({"data": e.args}))
 
         return Response(status=200)
 
@@ -307,12 +320,12 @@ class ReleaseReadOnlyView(AdminView):
     """/releases/:release/read_only"""
 
     def get(self, release):
-        releases = dbo.releases.getReleases(name=release, limit=1)
-        is_release_read_only = dbo.releases.isReadOnly(name=release, limit=1)
-        if not releases:
+        try:
+            is_release_read_only = dbo.releases.isReadOnly(name=release, limit=1)
+        except:
             return Response(status=404,
                             response='Requested release does not exist')
-        release = releases[0]
+
         return jsonify({
             'read_only': is_release_read_only
         })
@@ -320,19 +333,21 @@ class ReleaseReadOnlyView(AdminView):
     @requirelogin
     @requirepermission('/releases/:name/read_only')
     def _put(self, release, changed_by, transaction):
-        req_read_only = request.form.get('read_only')
+        form = ReadOnlyForm()
         is_release_read_only = dbo.releases.isReadOnly(release)
-        old_data_version = request.form.get('data_version')
 
-        if req_read_only and not is_release_read_only:
-            dbo.releases.changeReadOnly(name=release, read_only=True, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
-        elif not req_read_only and is_release_read_only:
-            # Only an admin user can unset the read_only field once it's set to True
-            if dbo.permissions.hasUrlPermission(changed_by, 'admin'):
-                dbo.releases.changeReadOnly(name=release, read_only=False, changed_by=changed_by, transaction=transaction)
-            else:
-                msg = "%s is not allowed to set releases as read-write" % changed_by
-                cef_event("Unauthorized attempt to mark release as read-write", CEF_ALERT, msg=msg)
+        if form.read_only:
+            if not is_release_read_only:
+                dbo.releases.updateRelease(release, read_only=True, changed_by=changed_by, old_data_version=form.data_version, transaction=transaction)
+        else:
+            if is_release_read_only:
+                # Only an admin user can unset the read_only field once it's set to True
+                if dbo.permissions.hasUrlPermission(changed_by, 'admin'):
+                    dbo.releases.updateRelease(release, read_only=False, changed_by=changed_by, old_data_version=form.data_version, transaction=transaction)
+                else:
+                    msg = "%s is not allowed to set releases as read-write" % changed_by
+                    cef_event("Unauthorized attempt to mark release as read-write", CEF_ALERT, msg=msg)
+                    return Response(status=403, response=msg)
         return Response(status=201, response='read_only changed')
 
 
@@ -442,6 +457,7 @@ class ReleasesAPIView(AdminView):
                 'name': 'name',
                 'product': 'product',
                 'data_version': 'data_version',
+                'read_only': 'read_only'
             }
             for release in releases:
                 _releases.append(dict(

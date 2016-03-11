@@ -131,6 +131,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._delete("/releases/a", username="bob")
         self.assertStatusCode(ret, 401)
 
+    def testDeleteReadOnlyRelease(self):
+        dbo.releases.updateRelease('a', changed_by='bill', read_only=True, old_data_version=1)
+        ret = self._delete("releases/a", username="bill", qs=dict(data_version=2))
+        self.assertStatusCode(ret, 403)
+
     def testLocalePut(self):
         data = json.dumps({
             "complete": {
@@ -420,6 +425,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self.client.put('/releases/d/builds/p/d', data=dict(product='a'))
         self.assertStatusCode(ret, 401)
 
+    def testLocalePutReadOnlyRelease(self):
+        dbo.releases.updateRelease('d', changed_by='bill', read_only=True, old_data_version=1)
+        ret = self.client.put('/releases/d/builds/p/d', data=dict(product='a'))
+        self.assertStatusCode(ret, 403)
+
     def testLocalePutCantChangeProduct(self):
         data = json.dumps(dict(complete=dict(filesize=435)))
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='b', schema_version=1))
@@ -602,8 +612,8 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(json.loads(ret.data), json.loads("""
 {
     "releases": [
-        {"data_version": 1, "name": "a", "product": "a"},
-        {"data_version": 1, "name": "ab", "product": "a"}
+        {"data_version": 1, "name": "a", "product": "a", "read_only": false},
+        {"data_version": 1, "name": "ab", "product": "a", "read_only": false}
     ]
 }
 """))
@@ -792,13 +802,34 @@ class TestReadOnlyView(ViewTest, JSONTestMixin):
         is_read_only = dbo.releases.t.select(dbo.releases.name == 'b').execute().first()['read_only']
         self.assertEqual(json.loads(ret.data)['read_only'], is_read_only)
 
-    def testReadOnlySetTrue(self):
-        data = dict(read_only=True, product='Firefox', data_version=1)
-        self._put('/releases/b/read_only', data=data)
+    def testReadOnlySetTrueAdmin(self):
+        data = dict(read_only=True, product='Firefox', data_version=2)
+        self._put('/releases/b/read_only', username='bill', data=data)
         read_only = dbo.releases.isReadOnly(name='b')
         self.assertEqual(read_only, True)
 
-    def testReadOnlySetFalseWithoutPermissionForProduct(self):
+    def testReadOnlySetTrueNonAdmin(self):
+        data = dict(read_only=True, product='Firefox', data_version=1)
+        self._put('/releases/b/read_only', username='bob', data=data)
+        read_only = dbo.releases.isReadOnly(name='b')
+        self.assertEqual(read_only, True)
+
+    def testReadOnlyUnsetWithoutPermissionForProduct(self):
         data = dict(read_only=False, product='Firefox', data_version=1)
         ret = self._put('/releases/b/read_only', username='bob', data=data)
         self.assertStatusCode(ret, 401)
+
+    def testReadOnlyAdminUnsetFlag(self):
+        data = dict(read_only=False, product='Firefox', data_version=1)
+        dbo.releases.updateRelease('b', changed_by='bill', read_only=True, old_data_version=1)
+        data = dict(read_only=False, product='Firefox', data_version=1)
+        ret = self._put('/releases/b/read_only', username='bill', data=data)
+        self.assertStatusCode(ret, 201)
+
+    def testReadOnlyNonAdminCanSetFlagButNotUnset(self):
+        data = dict(read_only=True, product='Firefox', data_version=1)
+        ret = self._put('/releases/b/read_only', username='bob', data=data)
+        self.assertStatusCode(ret, 201)
+        data = dict(read_only=False, product='Firefox', data_version=2)
+        ret = self._put('/releases/b/read_only', username='bob', data=data)
+        self.assertStatusCode(ret, 403)
