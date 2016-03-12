@@ -1021,9 +1021,8 @@ class Releases(AUSTable):
         if product or blob:
             self._proceedIfNotReadOnly(name, transaction=transaction)
         what = {}
-        if read_only:
+        if read_only is not None:
             what['read_only'] = read_only
-            import pdb; pdb.set_trace()
         if product:
             what['product'] = product
         if blob:

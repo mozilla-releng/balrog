@@ -334,16 +334,20 @@ class ReleaseReadOnlyView(AdminView):
     @requirepermission('/releases/:name/read_only')
     def _put(self, release, changed_by, transaction):
         form = ReadOnlyForm()
+
+        if not form.validate() and not request.json:
+            cef_event("Bad input", CEF_WARN, errors=form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
         is_release_read_only = dbo.releases.isReadOnly(release)
 
-        if form.read_only:
+        if form.read_only.data:
             if not is_release_read_only:
-                dbo.releases.updateRelease(release, read_only=True, changed_by=changed_by, old_data_version=form.data_version, transaction=transaction)
+                dbo.releases.updateRelease(release, changed_by, form.data_version.data, read_only=True, transaction=transaction)
         else:
             if is_release_read_only:
                 # Only an admin user can unset the read_only field once it's set to True
-                if dbo.permissions.hasUrlPermission(changed_by, 'admin'):
-                    dbo.releases.updateRelease(release, read_only=False, changed_by=changed_by, old_data_version=form.data_version, transaction=transaction)
+                if dbo.permissions.hasUrlPermission(changed_by, 'admin', 'PUT'):
+                    dbo.releases.updateRelease(release, changed_by, form.data_version.data, read_only=False, transaction=transaction)
                 else:
                     msg = "%s is not allowed to set releases as read-write" % changed_by
                     cef_event("Unauthorized attempt to mark release as read-write", CEF_ALERT, msg=msg)
