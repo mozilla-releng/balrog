@@ -7,7 +7,7 @@ import sys
 import time
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger
+    create_engine, select, BigInteger, Boolean
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 
@@ -58,6 +58,10 @@ class OutdatedDataError(SQLAlchemyError):
 
 class WrongNumberOfRowsError(SQLAlchemyError):
     """Raised when an update or delete fails because the clause matches more than one row."""
+
+
+class ReadOnlyError(SQLAlchemyError):
+    """Raised when a release marked as read-only is attempted to be changed."""
 
 
 class AUSTransaction(object):
@@ -863,6 +867,7 @@ class Releases(AUSTable):
         self.table = Table('releases', metadata,
                            Column('name', String(100), primary_key=True),
                            Column('product', String(15), nullable=False),
+                           Column('read_only', Boolean, default=False),
                            )
         if dialect == 'mysql':
             from sqlalchemy.dialects.mysql import LONGTEXT
@@ -941,7 +946,7 @@ class Releases(AUSTable):
         if nameOnly:
             column = [self.name]
         else:
-            column = [self.name, self.product, self.data_version]
+            column = [self.name, self.product, self.data_version, self.read_only]
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
         return rows
 
@@ -1012,8 +1017,12 @@ class Releases(AUSTable):
         cache.put("blob_version", name, 1)
         return ret.inserted_primary_key[0]
 
-    def updateRelease(self, name, changed_by, old_data_version, product=None, blob=None, transaction=None):
+    def updateRelease(self, name, changed_by, old_data_version, product=None, read_only=None, blob=None, transaction=None):
+        if product or blob:
+            self._proceedIfNotReadOnly(name, transaction=transaction)
         what = {}
+        if read_only is not None:
+            what['read_only'] = read_only
         if product:
             what['product'] = product
         if blob:
@@ -1037,6 +1046,7 @@ class Releases(AUSTable):
            validated before commiting it, and a ValueError is raised if it is
            invalid.
         """
+        self._proceedIfNotReadOnly(name, transaction=transaction)
         releaseBlob = self.getReleaseBlob(name, transaction=transaction)
         if 'platforms' not in releaseBlob:
             releaseBlob['platforms'] = {}
@@ -1087,10 +1097,21 @@ class Releases(AUSTable):
             return False
 
     def deleteRelease(self, changed_by, name, old_data_version, transaction=None):
+        self._proceedIfNotReadOnly(name, transaction=transaction)
         where = [self.name == name]
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
         cache.invalidate("blob", name)
         cache.invalidate("blob_version", name)
+
+    def isReadOnly(self, name, limit=None, transaction=None):
+        where = [self.name == name]
+        column = [self.read_only]
+        row = self.select(where=where, columns=column, limit=limit, transaction=transaction)[0]
+        return row['read_only']
+
+    def _proceedIfNotReadOnly(self, name, limit=None, transaction=None):
+        if self.isReadOnly(name, limit, transaction):
+            raise ReadOnlyError("Release '%s' is read only" % name)
 
 
 class Permissions(AUSTable):
@@ -1108,6 +1129,7 @@ class Permissions(AUSTable):
         '/releases/:name': ['method', 'product'],
         '/releases/:name/revisions': ['product'],
         '/releases/:name/builds/:platform/:locale': ['method', 'product'],
+        '/releases/:name/read_only': ['method', 'product'],
         '/rules': ['method', 'product'],
         '/rules/:id': ['method', 'product'],
         '/rules/:id/revisions': ['product'],
