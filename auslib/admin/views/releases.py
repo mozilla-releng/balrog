@@ -309,7 +309,7 @@ class SingleReleaseView(AdminView):
             dbo.releases.deleteRelease(changed_by=changed_by, name=release['name'],
                                        old_data_version=form.data_version.data, transaction=transaction)
         except ReadOnlyError as e:
-                msg = "Couldn't update release: %s" % e
+                msg = "Couldn't delete release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
                 return Response(status=403, response=json.dumps({"data": e.args}))
 
@@ -322,9 +322,8 @@ class ReleaseReadOnlyView(AdminView):
     def get(self, release):
         try:
             is_release_read_only = dbo.releases.isReadOnly(name=release, limit=1)
-        except:
-            return Response(status=404,
-                            response='Requested release does not exist')
+        except KeyError as e:
+            return Response(status=404, response=json.dumps(e.args), mimetype="application/json")
 
         return jsonify({
             'read_only': is_release_read_only
@@ -335,7 +334,7 @@ class ReleaseReadOnlyView(AdminView):
     def _put(self, release, changed_by, transaction):
         form = ReadOnlyForm()
 
-        if not form.validate() and not request.json:
+        if not form.validate():
             cef_event("Bad input", CEF_WARN, errors=form.errors)
             return Response(status=400, response=json.dumps(form.errors))
         is_release_read_only = dbo.releases.isReadOnly(release)
