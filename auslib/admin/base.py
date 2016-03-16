@@ -1,8 +1,6 @@
 from flask import Flask, request
 from flask_compress import Compress
 
-import auslib
-
 import logging
 log = logging.getLogger(__name__)
 
@@ -17,12 +15,14 @@ from auslib.admin.views.releases import SingleLocaleView, \
 from auslib.admin.views.rules import RulesAPIView, \
     SingleRuleView, RuleHistoryAPIView
 from auslib.admin.views.history import DiffView, FieldView
+from auslib.dockerflow import create_dockerflow_endpoints
+
+create_dockerflow_endpoints(app)
 
 
 @app.errorhandler(500)
 def ise(error):
     log.error("Caught ISE 500 error.")
-    log.debug("Balrog version is: %s", auslib.version)
     log.debug("Request path is: %s", request.path)
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)

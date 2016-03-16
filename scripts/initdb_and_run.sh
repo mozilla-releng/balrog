@@ -10,4 +10,4 @@ if [ ! -e /app/.cache/mysql/db.done ]; then
 fi
 
 # run the command passed from docker
-$@
+/app/uwsgi/run.sh $@
