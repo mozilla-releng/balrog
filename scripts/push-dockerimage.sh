@@ -25,7 +25,7 @@ echo "{
 
 branch_tag="${branch}"
 if [ "$branch" == "master" ]; then
-    branch_tag = "latest"
+    branch_tag="latest"
 fi
 date_tag="${branch}-${date}"
 docker build -t mozilla/balrog:${branch_tag} .
