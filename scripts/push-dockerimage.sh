@@ -29,7 +29,7 @@ if [ "$branch" == "master" ]; then
 fi
 date_tag="${branch}-${date}"
 docker build -t mozilla/balrog:${branch_tag} .
-docker tag mozilla/balrog:${branch_tag} mozilla/balrog:${date_tag}
+docker tag balrog:${branch_tag} mozilla/balrog:${date_tag}
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
 docker push mozilla/balrog:${date_tag}
 # TODO: need to push branch tag as well?
