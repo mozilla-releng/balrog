@@ -35,5 +35,5 @@ docker tag mozilla/balrog:${branch_tag} "mozilla/balrog:${date_tag}"
 echo "Logging into Dockerhub"
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
 echo "Pushing Docker image"
+docker push mozilla/balrog:${branch_tag}
 docker push mozilla/balrog:${date_tag}
-# TODO: need to push branch tag as well?
