@@ -15,7 +15,7 @@ fi
 commit=$(git rev-parse HEAD)
 version=$(cat version.txt)
 branch=$(git rev-parse --abbrev-ref HEAD)
-date=$(date --utc +%Y-%m-%d-%H:%M)
+date=$(date --utc +%Y-%m-%d-%H-%M)
 
 echo "{
     \"commit\": \"${commit}\",
@@ -31,7 +31,7 @@ date_tag="${branch}-${date}"
 echo "Building Docker image"
 docker build -t mozilla/balrog:${branch_tag} .
 echo "Tagging Docker image with date tag"
-docker tag balrog:${branch_tag} mozilla/balrog:${date_tag}
+docker tag mozilla/balrog:${branch_tag} "mozilla/balrog:${date_tag}"
 echo "Logging into Dockerhub"
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
 echo "Pushing Docker image"
