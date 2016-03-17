@@ -51,6 +51,41 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
+    def testReleasePostUpdateDataError(self):
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        ret = self._post('/releases/d', data=dict(data=data, product='d', data_version=1))
+        self.assertStatusCode(ret, 200)
+        ret2 = select([dbo.releases.data]).where(dbo.releases.name == 'd').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret2), json.loads("""
+        {
+            "name": "d",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "d": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        """))
+
+        load = json.loads(ret.data)
+        print json.dumps(load)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        ret3 = self._put('/releases/d', data=dict(data=data, product='d', data_version=1))
+        self.assertStatusCode(ret3, 400)
+
     def testReleasePostMismatchedName(self):
         data = json.dumps(dict(name="eee", schema_version=1))
         ret = self._post('/releases/d', data=dict(data=data, product='d', data_version=1))

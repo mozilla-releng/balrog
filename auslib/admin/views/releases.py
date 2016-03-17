@@ -241,8 +241,12 @@ class SingleReleaseView(AdminView):
                 msg = "Couldn't update release: %s" % e
                 cef_event("Bad input", CEF_WARN, errors=msg)
                 return Response(status=400, response=json.dumps({"data": e.args}))
+            except OutdatedDataError as e:
+                msg = "Couldn't update release: %s" % e
+                cef_event("Bad input", CEF_WARN, errors=msg)
+                return Response(status=400, response=json.dumps({"data": e.args}))
             data_version += 1
-            return Response(json.dumps(dict(new_data_version=data_version)), status=200)
+            return Response(json.dumps(dict(new_data_version=data_version)), status=200)            
         else:
             try:
                 dbo.releases.addRelease(name=release, product=form.product.data,
