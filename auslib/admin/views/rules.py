@@ -18,18 +18,25 @@ class RulesAPIView(AdminView):
 
     def get(self, **kwargs):
         rules = dbo.rules.getOrderedRules()
-        count = 0
-        _rules = []
-        for rule in rules:
-            _rules.append(dict(
-                (key, value)
-                for key, value in rule.items()
-            ))
-            count += 1
-        ret = {
-            "count": count,
-            "rules": _rules,
-        }
+        if request.args.get('channels_only'):
+            channels = []
+            for rule in rules:
+                if rule['channel'] is not None:
+                    channels.append(rule['channel'])
+            ret = {'channels': list(set(channels))}
+        else:
+            count = 0
+            _rules = []
+            for rule in rules:
+                _rules.append(dict(
+                    (key, value)
+                    for key, value in rule.items()
+                ))
+                count += 1
+            ret = {
+                "count": count,
+                "rules": _rules,
+            }
         return jsonify(ret)
 
     # changed_by is available via the requirelogin decorator
