@@ -45,7 +45,7 @@ def requirepermission(url, options=['product']):
     return wrap
 
 
-def catchOutDataError(messages):
+def catchOutdatedDataError(messages):
     def wrap(f):
         def decorated(*args, **kwargs):
             try:
@@ -64,19 +64,19 @@ class AdminView(MethodView):
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)
 
-    @catchOutDataError("POST")
+    @catchOutdatedDataError("POST")
     def post(self, *args, **kwargs):
         self.log.debug("processing POST request to %s" % request.path)
         with dbo.begin() as trans:
             return self._post(*args, transaction=trans, **kwargs)
 
-    @catchOutDataError("Update")
+    @catchOutdatedDataError("PUT")
     def put(self, *args, **kwargs):
         self.log.debug("processing PUT request to %s" % request.path)
         with dbo.begin() as trans:
             return self._put(*args, transaction=trans, **kwargs)
 
-    @catchOutDataError("Delete")
+    @catchOutdatedDataError("DELETE")
     def delete(self, *args, **kwargs):
         self.log.debug("processing DELETE request to %s" % request.path)
         with dbo.begin() as trans:

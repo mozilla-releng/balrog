@@ -51,7 +51,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
-    def testReleasePutUpdateDataError(self):
+    def testReleasePutUpdateOutdatedData(self):
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
         blob = """
         {
@@ -92,7 +92,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/dd', data=dict(data=data, name='dd', product='dd', blob=blob, data_version=1))
         self.assertStatusCode(ret, 400)
 
-    def testReleasePostUpdateDataError(self):
+    def testReleasePostUpdateOutdatedData(self):
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
         blob = """
         {
