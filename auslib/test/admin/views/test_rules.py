@@ -123,9 +123,23 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['version'], '3.5')
         self.assertEquals(r[0]['buildTarget'], 'd')
 
-    def testPutOutdatedError400(self):
+    def testPutOutdatedError(self):
         # Make changes to a rule
         ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1, product='Firefox', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
+        self.assertEquals(r[0]['data_version'], 2)
+
+        # OutdatedDataVersion Request
+        ret2 = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1, product='Firefox', channel='nightly'))
+        self.assertEquals(ret2.status_code, 400, "Status Code: %d, Data: %s" % (ret2.status_code, ret2.data))
+
+    def testPostOutdatedError(self):
+        # Make changes to a rule
+        ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1, product='Firefox', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -291,6 +305,12 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
     def testDeleteRule(self):
         ret = self._delete('/rules/1', qs=dict(data_version=1))
         self.assertEquals(ret.status_code, 200, msg=ret.data)
+
+    def testDeleteRuleOutdatedError(self):
+        ret = self._get('/rules/1')
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        ret = self._delete('/rules/1', qs=dict(data_version=7))
+        self.assertEquals(ret.status_code, 400, msg=ret.data)
 
     def testDeleteRuleByAlias(self):
         ret = self._delete('/rules/frodo', qs=dict(data_version=1))

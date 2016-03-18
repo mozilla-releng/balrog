@@ -92,6 +92,45 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/dd', data=dict(data=data, name='dd', product='dd', blob=blob, data_version=1))
         self.assertStatusCode(ret, 400)
 
+    def testReleasePostUpdateDataError(self):
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        blob = """
+        {
+            "name": "ee",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "ee": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+        # Testing Post request to add new release
+        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', blob=blob, product='ee', data_version=1))
+        self.assertStatusCode(ret, 201)
+
+        # Updating same release
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', product='ee', blob=blob, data_version=2))
+        self.assertStatusCode(ret, 200)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=3)), "Data: %s" % ret.data)
+
+        # Outdated Data Error on same release
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', product='ee', blob=blob, data_version=1))
+        self.assertStatusCode(ret, 400)
+
     def testReleasePostMismatchedName(self):
         data = json.dumps(dict(name="eee", schema_version=1))
         ret = self._post('/releases/d', data=dict(data=data, product='d', data_version=1))
@@ -163,6 +202,13 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 200)
         ret = dbo.releases.t.count().where(dbo.releases.name == 'd').execute().first()[0]
         self.assertEqual(ret, 0)
+
+    def testDeleteReleaseOutdatedData(self):
+        # Release's data version is outdated
+        ret = self._get("/releases/d")
+        self.assertStatusCode(ret, 200)
+        ret = self._delete("/releases/d", qs=dict(data_version=7))
+        self.assertStatusCode(ret, 400)
 
     def testDeleteNonExistentRelease(self):
         ret = self._delete("/releases/ueo")

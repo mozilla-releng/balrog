@@ -45,27 +45,38 @@ def requirepermission(url, options=['product']):
     return wrap
 
 
+def catchOutDataError(messages):
+    def wrap(f):
+        def decorated(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except OutdatedDataError as e:
+                msg = "Couldn't preform the request %s. Outdated Data Version. old_data_version doesn't match current data_version: %s" % (messages, e)
+                cef_event("Bad input", CEF_WARN, errors=msg)
+                return Response(status=400, response=json.dumps({"data": e.args}))
+        return decorated
+    return wrap
+
+
 class AdminView(MethodView):
 
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)
 
+    @catchOutDataError("POST")
     def post(self, *args, **kwargs):
         self.log.debug("processing POST request to %s" % request.path)
         with dbo.begin() as trans:
             return self._post(*args, transaction=trans, **kwargs)
 
+    @catchOutDataError("Update")
     def put(self, *args, **kwargs):
         self.log.debug("processing PUT request to %s" % request.path)
-        try:
-            with dbo.begin() as trans:
-                return self._put(*args, transaction=trans, **kwargs)
-        except OutdatedDataError as e:
-            msg = "Couldn't Update. Outdated Data Version: %s" % e
-            cef_event("Bad input", CEF_WARN, errors=msg)
-            return Response(status=400, response=json.dumps({"data": e.args}))
+        with dbo.begin() as trans:
+            return self._put(*args, transaction=trans, **kwargs)
 
+    @catchOutDataError("Delete")
     def delete(self, *args, **kwargs):
         self.log.debug("processing DELETE request to %s" % request.path)
         with dbo.begin() as trans:
