@@ -51,7 +51,7 @@ def catchOutDataError(messages):
             try:
                 return f(*args, **kwargs)
             except OutdatedDataError as e:
-                msg = "Couldn't preform the request %s. Outdated Data Version. old_data_version doesn't match current data_version: %s" % (messages, e)
+                msg = "Couldn't perform the request %s. Outdated Data Version. old_data_version doesn't match current data_version: %s" % (messages, e)
                 cef_event("Bad input", CEF_WARN, errors=msg)
                 return Response(status=400, response=json.dumps({"data": e.args}))
         return decorated
