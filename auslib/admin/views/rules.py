@@ -11,7 +11,6 @@ from auslib.admin.views.base import (
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm
 from auslib.log import cef_event, CEF_WARN, CEF_ALERT
-from auslib.db import OutdatedDataError
 
 
 class RulesAPIView(AdminView):
@@ -132,13 +131,8 @@ class SingleRuleView(AdminView):
             if (request.json and k in request.json) or k in request.form:
                 what[k] = v
 
-        try:
-            dbo.rules.updateRule(changed_by=changed_by, id_or_alias=id_or_alias, what=what,
+        dbo.rules.updateRule(changed_by=changed_by, id_or_alias=id_or_alias, what=what,
                              old_data_version=form.data_version.data, transaction=transaction)
-        except OutdatedDataError as e:
-            msg = "Couldn't Update Rule: %s" % e
-            cef_event("Bad input", CEF_WARN, errors=msg)
-            return Response(status=400, response=json.dumps({"data": e.args}))
 
         # find out what the next data version is
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)

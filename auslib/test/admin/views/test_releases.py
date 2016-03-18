@@ -51,14 +51,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
-    def testReleasePostUpdateDataError(self):
+    def testReleasePutUpdateDataError(self):
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
-        ret = self._post('/releases/d', data=dict(data=data, product='d', data_version=1))
-        self.assertStatusCode(ret, 200)
-        ret2 = select([dbo.releases.data]).where(dbo.releases.name == 'd').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret2), json.loads("""
+        blob = """
         {
-            "name": "d",
+            "name": "dd",
             "schema_version": 1,
             "detailsUrl": "blah",
             "fakePartials": true,
@@ -66,7 +63,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
             "platforms": {
                 "p": {
                     "locales": {
-                        "d": {
+                        "dd": {
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
@@ -76,15 +73,24 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
                     }
                 }
             }
-        }
-        """))
+        }"""
+        # Testing Put request to add new release
+        ret = self._put('/releases/dd', data=dict(data=data, name='dd', blob=blob , product='dd', data_version=1))
+        self.assertStatusCode(ret, 201)
 
-        load = json.loads(ret.data)
-        print json.dumps(load)
-        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret), json.loads(blob))
+
+        # Updating same release
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
-        ret3 = self._put('/releases/d', data=dict(data=data, product='d', data_version=1))
-        self.assertStatusCode(ret3, 400)
+        ret = self._put('/releases/dd', data=dict(data=data, name='dd' , product='dd', blob=blob , data_version=1))
+        self.assertStatusCode(ret, 200)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+
+        # Outdated Data Error on same release
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        ret = self._put('/releases/dd', data=dict(data=data, name='dd' , product='dd', blob=blob , data_version=1))
+        self.assertStatusCode(ret,400)
 
     def testReleasePostMismatchedName(self):
         data = json.dumps(dict(name="eee", schema_version=1))

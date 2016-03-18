@@ -6,7 +6,8 @@ from flask.views import MethodView
 from auslib.global_state import dbo
 from auslib.log import cef_event, CEF_ALERT, CEF_WARN
 from auslib.util.timesince import timesince
-
+from auslib.db import OutdatedDataError
+import json
 import logging
 
 
@@ -57,9 +58,15 @@ class AdminView(MethodView):
 
     def put(self, *args, **kwargs):
         self.log.debug("processing PUT request to %s" % request.path)
-        with dbo.begin() as trans:
-            return self._put(*args, transaction=trans, **kwargs)
-
+        
+        try:
+            with dbo.begin() as trans:
+                return self._put(*args, transaction=trans, **kwargs)
+        except OutdatedDataError as e:
+            msg = "Couldn't Update. Outdated Data Version: %s" % e
+            cef_event("Bad input", CEF_WARN, errors=msg)
+            return Response(status=400, response=json.dumps({"data": e.args}))
+            
     def delete(self, *args, **kwargs):
         self.log.debug("processing DELETE request to %s" % request.path)
         with dbo.begin() as trans:
