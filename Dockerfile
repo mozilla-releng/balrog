@@ -2,21 +2,18 @@ FROM python:2.7
 
 MAINTAINER bhearsum@mozilla.com
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get -q update && \
-    apt-get -q --yes install \
-      mysql-client \
-      nodejs-legacy \
-      npm && \
-    apt-get clean
-
 WORKDIR /app
 
-COPY . /app
-RUN python setup.py install
+# install the requirements into the container first
+# these rarely change and is more cache friendly
+# ... really speeds up building new containers
+COPY requirements.txt /app/
+RUN pip install -r requirements.txt
 
-WORKDIR /app/ui
-RUN npm install
+# copy in sources after
+# Copying Balrog to /app instead of installing it means that production can run
+# it, and we can bind mount to override it for local development.
+COPY auslib setup.py ui uwsgi version.json /app/
 
-WORKDIR /app
+ENTRYPOINT ["/app/uwsgi/run.sh"]
+CMD ["public"]

@@ -51,6 +51,86 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
+    def testReleasePutUpdateOutdatedData(self):
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        blob = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+        # Testing Put request to add new release
+        ret = self._put('/releases/dd', data=dict(data=data, name='dd', blob=blob, product='dd', data_version=1))
+        self.assertStatusCode(ret, 201)
+
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret), json.loads(blob))
+
+        # Updating same release
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        ret = self._put('/releases/dd', data=dict(data=data, name='dd', product='dd', blob=blob, data_version=1))
+        self.assertStatusCode(ret, 200)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+
+        # Outdated Data Error on same release
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        ret = self._put('/releases/dd', data=dict(data=data, name='dd', product='dd', blob=blob, data_version=1))
+        self.assertStatusCode(ret, 400)
+
+    def testReleasePostUpdateOutdatedData(self):
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        blob = """
+        {
+            "name": "ee",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "ee": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+        # Testing Post request to add new release
+        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', blob=blob, product='ee', data_version=1))
+        self.assertStatusCode(ret, 201)
+
+        # Updating same release
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', product='ee', blob=blob, data_version=2))
+        self.assertStatusCode(ret, 200)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=3)), "Data: %s" % ret.data)
+
+        # Outdated Data Error on same release
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', product='ee', blob=blob, data_version=1))
+        self.assertStatusCode(ret, 400)
+
     def testReleasePostMismatchedName(self):
         data = json.dumps(dict(name="eee", schema_version=1))
         ret = self._post('/releases/d', data=dict(data=data, product='d', data_version=1))
@@ -123,6 +203,13 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = dbo.releases.t.count().where(dbo.releases.name == 'd').execute().first()[0]
         self.assertEqual(ret, 0)
 
+    def testDeleteReleaseOutdatedData(self):
+        # Release's data version is outdated
+        ret = self._get("/releases/d")
+        self.assertStatusCode(ret, 200)
+        ret = self._delete("/releases/d", qs=dict(data_version=7))
+        self.assertStatusCode(ret, 400)
+
     def testDeleteNonExistentRelease(self):
         ret = self._delete("/releases/ueo")
         self.assertStatusCode(ret, 404)
@@ -130,11 +217,6 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     def testDeleteWithoutPermission(self):
         ret = self._delete("/releases/a", username="bob")
         self.assertStatusCode(ret, 401)
-
-    def testDeleteReadOnlyRelease(self):
-        dbo.releases.updateRelease('a', changed_by='bill', read_only=True, old_data_version=1)
-        ret = self._delete("releases/a", username="bill", qs=dict(data_version=2))
-        self.assertStatusCode(ret, 403)
 
     def testLocalePut(self):
         data = json.dumps({
@@ -425,18 +507,6 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self.client.put('/releases/d/builds/p/d', data=dict(product='a'))
         self.assertStatusCode(ret, 401)
 
-    def testLocalePutReadOnlyRelease(self):
-        dbo.releases.updateRelease('a', changed_by='bill', read_only=True, old_data_version=1)
-        data = json.dumps({
-            "complete": {
-                "filesize": 435,
-                "from": "*",
-                "hashValue": "abc",
-            }
-        })
-        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
-        self.assertStatusCode(ret, 403)
-
     def testLocalePutCantChangeProduct(self):
         data = json.dumps(dict(complete=dict(filesize=435)))
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='b', schema_version=1))
@@ -619,8 +689,8 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(json.loads(ret.data), json.loads("""
 {
     "releases": [
-        {"data_version": 1, "name": "a", "product": "a", "read_only": false},
-        {"data_version": 1, "name": "ab", "product": "a", "read_only": false}
+        {"data_version": 1, "name": "a", "product": "a"},
+        {"data_version": 1, "name": "ab", "product": "a"}
     ]
 }
 """))
@@ -800,68 +870,3 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         ret = self._get('/releases/settings')
         self.assertStatusCode(ret, 200)
         self.assertEqual(json.loads(ret.data), json.loads(data['blob']))
-
-
-class TestReadOnlyView(ViewTest, JSONTestMixin):
-
-    def testReadOnlyGet(self):
-        ret = self._get('/releases/b/read_only')
-        is_read_only = dbo.releases.t.select(dbo.releases.name == 'b').execute().first()['read_only']
-        self.assertEqual(json.loads(ret.data)['read_only'], is_read_only)
-
-    def testReadOnlySetTrueAdmin(self):
-        data = dict(name='b', read_only=True, product='Firefox', data_version=1)
-        self._put('/releases/b/read_only', username='bill', data=data)
-        read_only = dbo.releases.isReadOnly(name='b')
-        self.assertEqual(read_only, True)
-
-    def testReadOnlySetTrueNonAdmin(self):
-        data = dict(name='b', read_only=True, product='Firefox', data_version=1)
-        self._put('/releases/b/read_only', username='bob', data=data)
-        read_only = dbo.releases.isReadOnly(name='b')
-        self.assertEqual(read_only, True)
-        read_only = dbo.releases.isReadOnly(name='b')
-        self.assertEqual(read_only, True)
-
-    def testReadOnlySetFalseAdmin(self):
-        dbo.releases.updateRelease('b', 'bill', 1, read_only=True)
-        data = dict(name='b', read_only='', product='Firefox', data_version=2)
-        self._put('/releases/b/read_only', username='bill', data=data)
-        read_only = dbo.releases.isReadOnly(name='b')
-        self.assertEqual(read_only, False)
-
-    def testReadOnlyUnsetWithoutPermissionForProduct(self):
-        dbo.releases.updateRelease('b', changed_by='bob', read_only=True, old_data_version=1)
-        data = dict(name='b', read_only='', product='Firefox', data_version=1)
-        ret = self._put('/releases/b/read_only', username='me', data=data)
-        self.assertStatusCode(ret, 401)
-
-    def testReadOnlyAdminSetAndUnsetFlag(self):
-        # Setting flag
-        data = dict(name='b', read_only=True, product='Firefox', data_version=1)
-        ret = self._put('/releases/b/read_only', username='bill', data=data)
-        self.assertStatusCode(ret, 201)
-
-        # Resetting flag
-        data = dict(name='b', read_only='', product='Firefox', data_version=2)
-        ret = self._put('/releases/b/read_only', username='bill', data=data)
-        self.assertStatusCode(ret, 201)
-
-        # Verify reset
-        read_only = dbo.releases.isReadOnly(name='b')
-        self.assertEqual(read_only, False)
-
-    def testReadOnlyNonAdminCanSetFlagButNotUnset(self):
-        # Setting read only flag
-        data_set = dict(name='b', read_only=True, product='Firefox', data_version=1)
-        ret = self._put('/releases/b/read_only', username='bob', data=data_set)
-        self.assertStatusCode(ret, 201)
-
-        # Verifying if flag was set to true
-        read_only = dbo.releases.isReadOnly(name='b')
-        self.assertEqual(read_only, True)
-
-        # Resetting flag, which should fail with 403
-        data_unset = dict(name='b', read_only='', product='Firefox', data_version=2)
-        ret = self._put('/releases/b/read_only', username='bob', data=data_unset)
-        self.assertStatusCode(ret, 403)

@@ -4,8 +4,6 @@ from flask import request
 
 import cef
 
-import auslib
-
 log_format = "%(asctime)s - %(levelname)s - PID: %(process)s - Request: %(requestid)s - %(name)s.%(funcName)s#%(lineno)s: %(message)s"
 
 # Needs to be set by entry points.
@@ -65,5 +63,5 @@ def get_cef_config(logfile):
         'cef.version': 0,  # This is the CEF format version
         'cef.product': 'Balrog',
         'cef.vendor': 'Mozilla',
-        'cef.device_version': auslib.version,
+        'cef.device_version': '1.0',
     }

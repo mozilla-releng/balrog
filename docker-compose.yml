@@ -1,9 +1,10 @@
 balrogadmin:
-  build: ./
+  build: .
+  dockerfile: Dockerfile.dev
   entrypoint:
     - bash
     - scripts/initdb_and_run.sh
-  command: uwsgi --ini /app/uwsgi/admin.ini --python-autoreload 1
+  command: admin-dev
   ports:
     - "8080:8080"
   volumes:
@@ -13,17 +14,20 @@ balrogadmin:
   environment:
     - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
     - SECRET_KEY=blahblah
+    - PORT=8080
 
 balrogpub:
   build: .
-  command: uwsgi --ini /app/uwsgi/public.ini --python-autoreload 1
+  dockerfile: Dockerfile.dev
+  command: public
   ports:
     - "9090:9090"
   volumes:
     - .:/app
   environment:
-    - "DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog"
-    - "SECRET_KEY=blahblah"
+    - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
+    - SECRET_KEY=blahblah
+    - PORT=9090
   links:
     - balrogdb
 
@@ -38,3 +42,6 @@ balrogdb:
     - MYSQL_ROOT_PASSWORD=admin
   volumes:
     - .cache/mysql:/var/lib/mysql
+    # Not sure why, but "scripts/run-mysqld.sh" doesn't work here on Mac, but this does.
+    - ./scripts/run-mysqld.sh:/run-mysqld.sh
+  entrypoint: /run-mysqld.sh

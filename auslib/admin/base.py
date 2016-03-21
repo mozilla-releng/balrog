@@ -1,8 +1,6 @@
 from flask import Flask, request
 from flask_compress import Compress
 
-import auslib
-
 import logging
 log = logging.getLogger(__name__)
 
@@ -13,16 +11,18 @@ from auslib.admin.views.permissions import UsersView, PermissionsView, \
     SpecificPermissionView
 from auslib.admin.views.releases import SingleLocaleView, \
     SingleReleaseView, ReleaseHistoryView, \
-    ReleasesAPIView, ReleaseReadOnlyView
+    ReleasesAPIView
 from auslib.admin.views.rules import RulesAPIView, \
     SingleRuleView, RuleHistoryAPIView
 from auslib.admin.views.history import DiffView, FieldView
+from auslib.dockerflow import create_dockerflow_endpoints
+
+create_dockerflow_endpoints(app)
 
 
 @app.errorhandler(500)
 def ise(error):
     log.error("Caught ISE 500 error.")
-    log.debug("Balrog version is: %s", auslib.version)
     log.debug("Request path is: %s", request.path)
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)
@@ -55,7 +55,6 @@ app.add_url_rule("/rules/<id_or_alias>", view_func=SingleRuleView.as_view("rule"
 app.add_url_rule("/rules/<int:rule_id>/revisions", view_func=RuleHistoryAPIView.as_view("rules_revisions"))
 app.add_url_rule("/releases", view_func=ReleasesAPIView.as_view("releases"))
 app.add_url_rule("/releases/<release>", view_func=SingleReleaseView.as_view("single_release"))
-app.add_url_rule("/releases/<release>/read_only", view_func=ReleaseReadOnlyView.as_view("read_only"))
 app.add_url_rule("/releases/<release>/builds/<platform>/<locale>", view_func=SingleLocaleView.as_view("single_locale"))
 app.add_url_rule("/releases/<release>/revisions", view_func=ReleaseHistoryView.as_view("release_revisions"))
 app.add_url_rule("/history/diff/<type_>/<change_id>/<field>", view_func=DiffView.as_view("diff"))

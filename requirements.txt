@@ -1,0 +1,44 @@
+blinker==1.4 \
+#    --hash=sha256:471aee25f3992bd325afa3772f1063dbdbbca947a041b8b89466dc00d606f8b6
+# no hash for cef because it's going to get removed before we switch to docker in prod
+cef==0.5
+decorator==4.0.6 \
+#    --hash=sha256:1c6254597777fd003da2e8fb503c3dbf3d9e8f8d55f054709c0e65be3467209c --hash=sha256:cc3dcda7835a7eafa887fad9d6a69b2d5fd77c0b1c2a1608f52b48e345e37206
+flask==0.10.1 \
+#    --hash=sha256:4c83829ff83d408b5e1d4995472265411d2c414112298f2eb4b359d9e4563373
+flask-compress==1.3.0 \
+#    --hash=sha256:e6c52f1e56b59e8702aed6eb73c6fb0bffe942e5ca188f10e54a33ec11bc5ed4
+flask-wtf==0.12 \
+#    --hash=sha256:bd99316c97ed1d1cb90b8f0c242c86420a891a6a2058f20717e424bf5b0bb80e --hash=sha256:99c5d75663d6bfcbf4dd0d71ffcb7313f64ae90e6f89e09ad99080107033e8b6
+# Uncomment me when Python 2.6 is desupported.
+# This module actually appears to work in Python 2.6 (for our purposes anyways)
+# and is included in the vendor lib. Including in setup.py breaks tests on
+# Python 2.6 though because the module is uninstallable on 2.6.
+#functools32==3.2.3-2 \
+#    --hash=sha256:f6253dfbe0538ad2e387bd8fdfd9293c925d63553f5813c4e587745416501e6d
+itsdangerous==0.24 \
+#    --hash=sha256:cbb3fcf8d3e33df861709ecaf89d9e6629cff0a217bc2848f1b41cd30d360519
+jinja2==2.5.5 \
+#    --hash=sha256:22f9675e42dc640c4469d4f7d210baecb5e695823af954c813d51c930235675d
+jsonschema==2.5.1 \
+#    --hash=sha256:36673ac378feed3daa5956276a829699056523d7961027911f064b52255ead41 --hash=sha256:71e7b3bcf9fca408bcb65bb60892f375d3abdd2e4f296eeeb8fe0bbbfcde598e
+mysql-python==1.2.3 \
+#    --hash=sha256:7de66fbbf923634e7c965aeaefa74642ba75ae20ee1cefcefc3009595b7a7e6e
+pyyaml==3.11 \
+#    --hash=sha256:c36c938a872e5ff494938b33b14aaa156cb439ec67548fcab3535bb78b0846e8
+repoze.lru==0.6 \
+#    --hash=sha256:0f7a323bf716d3cb6cb3910cd4fccbee0b3d3793322738566ecce163b01bbd31
+simplejson==2.0.9 \
+#    --hash=sha256:abcdf460778beff48ba13faf5b5810cf3803e5c8d872b5fc529226aa56ec93ee
+sqlalchemy==0.7.1 \
+#    --hash=sha256:5ef95d19c31a8cd3905c697be0a7e94e70ab1926ecd4159c3e6c1cf01fc3c492
+sqlalchemy-migrate==0.7.2 \
+#    --hash=sha256:7f55c768ee26f143fedb11b365a4c57c3bbdb5211e049c7f04b8ae8107c28333
+tempita==0.5.1 \
+#    --hash=sha256:0ebe6938ca7401db79bac279849fffcb5752029150bcb6f3c3edbe7aa9a077d8
+uwsgi==2.0.11.2 \
+#    --hash=sha256:0b889b0b4d2dd3f6625df28cb0b86ec44a68d074ede2d0dfad0b91e88914885c
+Werkzeug==0.11.2 \
+#    --hash=sha256:eb4f98994b40a8e2edce289e811c9a38880ae53eb9ff6f031d0e243a69b0fcbf --hash=sha256:b6a93e909b31e3e14659584ff7329864275905ddc1b8653861bdfe1e597250f4
+wtforms==2.1 \
+#    --hash=sha256:ffdf10bd1fa565b8233380cb77a304cd36fd55c73023e91d4b803c96bc11d46f
