@@ -99,6 +99,10 @@
       <h5 title="Data version">
         Data version: <b>{{ rule.data_version }}</b>
       </h5>
+      <h5 title="Rule ID">
+        Rule ID: <b>{{ rule.rule_id }}</b>
+      </h5>
+
       <p ng-if="rule.comment">
         <b>Comment:</b>
         <span ng-bind-html="highlightSearch(rule.comment, 'comment')"></span>
