@@ -6,7 +6,8 @@ from flask.views import MethodView
 from auslib.global_state import dbo
 from auslib.log import cef_event, CEF_ALERT, CEF_WARN
 from auslib.util.timesince import timesince
-
+from auslib.db import OutdatedDataError
+import json
 import logging
 
 
@@ -44,22 +45,38 @@ def requirepermission(url, options=['product']):
     return wrap
 
 
+def catchOutdatedDataError(messages):
+    def wrap(f):
+        def decorated(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except OutdatedDataError as e:
+                msg = "Couldn't perform the request %s. Outdated Data Version. old_data_version doesn't match current data_version: %s" % (messages, e)
+                cef_event("Bad input", CEF_WARN, errors=msg)
+                return Response(status=400, response=json.dumps({"data": e.args}))
+        return decorated
+    return wrap
+
+
 class AdminView(MethodView):
 
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)
 
+    @catchOutdatedDataError("POST")
     def post(self, *args, **kwargs):
         self.log.debug("processing POST request to %s" % request.path)
         with dbo.begin() as trans:
             return self._post(*args, transaction=trans, **kwargs)
 
+    @catchOutdatedDataError("PUT")
     def put(self, *args, **kwargs):
         self.log.debug("processing PUT request to %s" % request.path)
         with dbo.begin() as trans:
             return self._put(*args, transaction=trans, **kwargs)
 
+    @catchOutdatedDataError("DELETE")
     def delete(self, *args, **kwargs):
         self.log.debug("processing DELETE request to %s" % request.path)
         with dbo.begin() as trans:

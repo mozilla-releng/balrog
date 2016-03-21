@@ -133,6 +133,7 @@ class SingleRuleView(AdminView):
 
         dbo.rules.updateRule(changed_by=changed_by, id_or_alias=id_or_alias, what=what,
                              old_data_version=form.data_version.data, transaction=transaction)
+
         # find out what the next data version is
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         new_data_version = rule['data_version']
