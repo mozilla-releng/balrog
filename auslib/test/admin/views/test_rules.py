@@ -516,3 +516,16 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         url = '/rules/1/revisions'
         ret = self._post(url)  # no change_id posted
         self.assertEquals(ret.status_code, 400)
+
+
+class TestSingleColumn_JSON(ViewTest, JSONTestMixin):
+
+    def testGetRules(self):
+        expected_product = ["fake"]
+        expected = dict(count=1, product=expected_product)
+        ret = self._get("/rules/columns/product")
+        self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetRuleColumn404(self):
+        ret = self.client.get("/rules/columns/blah")
+        self.assertEquals(ret.status_code, 404)

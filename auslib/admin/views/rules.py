@@ -288,3 +288,24 @@ class RuleHistoryAPIView(HistoryAdminView):
                              old_data_version=old_data_version, transaction=transaction)
 
         return Response("Excellent!")
+
+
+class SingleRuleColumnView(AdminView):
+    """ /rules/columns/:column"""
+
+    def get(self, column):
+        rules = dbo.rules.getOrderedRules()
+        column_values = []
+        if column not in rules[0].keys():
+            return Response(status=404, response="Requested column does not exist")
+
+        for rule in rules:
+            for key, value in rule.items():
+                if key == column and value is not None:
+                    column_values.append(value)
+        column_values = list(set(column_values))
+        ret = {
+            "count": len(column_values),
+            column: column_values,
+        }
+        return jsonify(ret)

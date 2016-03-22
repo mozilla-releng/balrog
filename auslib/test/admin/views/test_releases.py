@@ -870,3 +870,18 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         ret = self._get('/releases/settings')
         self.assertStatusCode(ret, 200)
         self.assertEqual(json.loads(ret.data), json.loads(data['blob']))
+
+
+class TestSingleColumn_JSON(ViewTest, JSONTestMixin):
+
+    def testGetReleasesSingleColumn(self):
+        expected_product = ["a", "c", "b", "d"]
+        expected = dict(count=4, product=expected_product)
+        ret = self._get("/releases/columns/product")
+        ret_data = json.loads(ret.data)
+        self.assertEquals(ret_data['count'], expected['count'])
+        self.assertEquals(ret_data['product'].sort(), expected['product'].sort())
+
+    def testGetReleaseColumn404(self):
+        ret = self.client.get("/releases/columns/blah")
+        self.assertEquals(ret.status_code, 404)

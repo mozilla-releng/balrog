@@ -455,3 +455,24 @@ class ReleasesAPIView(AdminView):
         )
         response.headers['Content-Type'] = 'application/json'
         return response
+
+
+class SingleReleaseColumnView(AdminView):
+    """ /releases/columns/:column"""
+
+    def get(self, column):
+        releases = dbo.releases.getReleaseInfo()
+        column_values = []
+        if column not in releases[0].keys():
+            return Response(status=404, response="Requested column does not exist")
+
+        for release in releases:
+            for key, value in release.items():
+                if key == column and value is not None:
+                    column_values.append(value)
+        column_values = list(set(column_values))
+        ret = {
+            "count": len(column_values),
+            column: column_values,
+        }
+        return jsonify(ret)
