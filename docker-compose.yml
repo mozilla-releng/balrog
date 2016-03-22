@@ -15,6 +15,8 @@ balrogadmin:
     - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
     - SECRET_KEY=blahblah
     - PORT=8080
+    - LOG_FORMAT=plain
+    - LOG_LEVEL=DEBUG
 
 balrogpub:
   build: .
@@ -28,6 +30,8 @@ balrogpub:
     - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
     - SECRET_KEY=blahblah
     - PORT=9090
+    - LOG_FORMAT=plain
+    - LOG_LEVEL=DEBUG
   links:
     - balrogdb
 

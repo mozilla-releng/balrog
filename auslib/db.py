@@ -17,7 +17,6 @@ import migrate.versioning.api
 from auslib.global_state import cache, dbo
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import createBlob
-from auslib.log import cef_event, CEF_ALERT
 from auslib.util.comparison import string_compare, version_compare
 
 import logging
@@ -1253,20 +1252,22 @@ class Permissions(AUSTable):
         return True
 
 
+# TODO: replace these with e-mails about rules/permissions changes?
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1251338
 def getHumanModificationMonitors(systemAccounts):
     # Long lines from "what" get truncated to avoid printing out massive
     # release blobs ty the logs.
     def onInsert(table, who, what):
         if who not in systemAccounts:
-            cef_event('Human modification', CEF_ALERT, user=who, what=what, table=table.name, type='insert')
+            pass
 
     def onDelete(table, who, where):
         if who not in systemAccounts:
-            cef_event('Human modification', CEF_ALERT, user=who, where=where, table=table.name, type='delete')
+            pass
 
     def onUpdate(table, who, where, what):
         if who not in systemAccounts:
-            cef_event('Human modification', CEF_ALERT, user=who, what=what, where=where, table=table.name, type='update')
+            pass
     return onInsert, onDelete, onUpdate
 
 

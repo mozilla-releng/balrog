@@ -13,7 +13,11 @@ RUN pip install -r requirements.txt
 # copy in sources after
 # Copying Balrog to /app instead of installing it means that production can run
 # it, and we can bind mount to override it for local development.
-COPY auslib setup.py ui uwsgi version.json /app/
+COPY auslib/ /app/auslib/
+COPY ui/ /app/ui/
+COPY uwsgi/ /app/uwsgi/
+COPY scripts/ /app/scripts/
+COPY setup.py version.json /app/
 
 ENTRYPOINT ["/app/uwsgi/run.sh"]
 CMD ["public"]

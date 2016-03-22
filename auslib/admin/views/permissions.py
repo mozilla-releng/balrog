@@ -5,7 +5,6 @@ from flask import request, Response, jsonify, make_response
 from auslib.global_state import dbo
 from auslib.admin.views.base import requirelogin, requirepermission, AdminView
 from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm
-from auslib.log import cef_event, CEF_WARN
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 
@@ -60,7 +59,7 @@ class SpecificPermissionView(AdminView):
             if dbo.permissions.getUserPermissions(username, transaction).get(permission):
                 form = ExistingPermissionForm()
                 if not form.validate():
-                    cef_event("Bad input", CEF_WARN, errors=form.errors)
+                    self.log.warning("Bad input: %s", form.errors)
                     return Response(status=400, response=json.dumps(form.errors))
                 dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
                 new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
@@ -68,12 +67,12 @@ class SpecificPermissionView(AdminView):
             else:
                 form = NewPermissionForm()
                 if not form.validate():
-                    cef_event("Bad input", CEF_WARN, errors=form.errors)
+                    self.log.warning("Bad input: %s", form.errors)
                     return Response(status=400, response=json.dumps(form.errors))
                 dbo.permissions.grantPermission(changed_by, username, permission, form.options.data, transaction=transaction)
                 return make_response(json.dumps(dict(new_data_version=1)), 201)
         except ValueError as e:
-            cef_event("Bad input", CEF_WARN, errors=e.args)
+            self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)
 
     @setpermission
@@ -85,13 +84,13 @@ class SpecificPermissionView(AdminView):
         try:
             form = ExistingPermissionForm()
             if not form.validate():
-                cef_event("Bad input", CEF_WARN, errors=form.errors)
+                self.log.warning("Bad input: %s", form.errors)
                 return Response(status=400, response=json.dumps(form.errors))
             dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
             new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
             return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
         except ValueError as e:
-            cef_event("Bad input", CEF_WARN, errors=e.args)
+            self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)
 
     @setpermission
@@ -106,10 +105,10 @@ class SpecificPermissionView(AdminView):
             # the query string, which Flask puts in request.args.
             form = ExistingPermissionForm(request.args)
             if not form.validate():
-                cef_event("Bad input", CEF_WARN, errors=form.errors)
+                self.log.warning("Bad input: %s", form.errors)
                 return Response(status=400, response=json.dumps(form.errors))
             dbo.permissions.revokePermission(changed_by, username, permission, form.data_version.data, transaction=transaction)
             return Response(status=200)
         except ValueError as e:
-            cef_event("Bad input", CEF_WARN, errors=e.args)
+            self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)

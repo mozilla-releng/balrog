@@ -4,7 +4,6 @@ from flask import request, Response
 from flask.views import MethodView
 
 from auslib.global_state import dbo
-from auslib.log import cef_event, CEF_ALERT, CEF_WARN
 from auslib.util.timesince import timesince
 from auslib.db import OutdatedDataError
 import json
@@ -15,7 +14,7 @@ def requirelogin(f):
     def decorated(*args, **kwargs):
         username = request.environ.get('REMOTE_USER')
         if not username:
-            cef_event('Login Required', CEF_WARN)
+            logging.warning("Login Required")
             return Response(status=401)
         return f(*args, changed_by=username, **kwargs)
     return decorated
@@ -34,11 +33,11 @@ def requirepermission(url, options=['product']):
                     extra[opt] = request.json[opt]
                 else:
                     msg = "Couldn't find required option %s in form" % opt
-                    cef_event("Bad input", CEF_WARN, msg=msg)
+                    logging.warning("Bad input: %s", msg)
                     return Response(status=400, response=msg)
             if not dbo.permissions.hasUrlPermission(username, url, method, urlOptions=extra):
                 msg = "%s is not allowed to access %s by %s" % (username, url, method)
-                cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
+                logging.warning("Unauthorized access attempt: %s", msg)
                 return Response(status=401, response=msg)
             return f(*args, **kwargs)
         return decorated
@@ -52,7 +51,7 @@ def catchOutdatedDataError(messages):
                 return f(*args, **kwargs)
             except OutdatedDataError as e:
                 msg = "Couldn't perform the request %s. Outdated Data Version. old_data_version doesn't match current data_version: %s" % (messages, e)
-                cef_event("Bad input", CEF_WARN, errors=msg)
+                logging.warning("Bad input: %s", msg)
                 return Response(status=400, response=json.dumps({"data": e.args}))
         return decorated
     return wrap

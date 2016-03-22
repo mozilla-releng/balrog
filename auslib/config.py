@@ -46,12 +46,6 @@ class AUSConfig(object):
     def getDburi(self):
         return self.cfg.get('database', 'dburi')
 
-    def getCefLogfile(self):
-        if self.cfg.has_option('logging', 'cef_logfile'):
-            return self.cfg.get('logging', 'cef_logfile')
-        else:
-            return "cef.log"
-
     def getDomainWhitelist(self):
         try:
             return tuple(a.strip() for a in self.cfg.get('site-specific', 'domain_whitelist').split(','))
