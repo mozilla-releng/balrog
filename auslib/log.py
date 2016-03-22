@@ -74,9 +74,9 @@ class JsonLogFormatter(logging.Formatter):
     ))
 
     def __init__(self, fmt=None, datefmt=None, logger_name='Balrog'):
-        super(JsonLogFormatter, self).__init__(fmt, datefmt)
         self.logger_name = logger_name
         self.hostname = socket.gethostname()
+        logging.Formatter.__init__(self, fmt, datefmt)
 
     def format(self, record):
         """
@@ -138,7 +138,7 @@ def safer_format_traceback(exc_typ, exc_val, exc_tb):
 def configure_logging(stream=sys.stdout, formatter=JsonLogFormatter, format_=log_format, level=logging.DEBUG):
     logging.setLoggerClass(BalrogLogger)
     handler = logging.StreamHandler(stream)
-    formatter = formatter(fmt=format_)
+    formatter = JsonLogFormatter(fmt=format_)
     handler.setFormatter(formatter)
     logging.root.addHandler(handler)
     logging.root.setLevel(level)
