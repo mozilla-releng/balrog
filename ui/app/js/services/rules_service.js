@@ -4,6 +4,13 @@ angular.module("app").factory('Rules', function($http) {
     getRules: function() {
       return $http.get('/api/rules');
     },
+    getChannels: function(){
+      return $http.get('/api/rules/columns/channel');
+    },
+    getProducts: function(){
+      return $http.get('/api/rules/columns/product');
+    },
+
     getHistory: function(id) {
       return $http.get('/api/rules/' + id + '/revisions');
     },

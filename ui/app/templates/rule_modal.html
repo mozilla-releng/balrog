@@ -12,12 +12,14 @@
     </div>
     <div class="form-group" ng-class="{'has-error': errors.product}">
       <label for="id_product">Product</label>
-      <input type="text" class="form-control" id="id_product" ng-model="rule.product">
+      <input type="text" class="form-control" id="id_product" ng-model="rule.product"
+       typeahead="product for product in products | filter:$viewValue | limitTo:16">
       <p class="help-block" ng-show="errors.product">{{ errors.product.join(', ') }}</p>
     </div>
     <div class="form-group" ng-class="{'has-error': errors.channel}">
       <label for="id_channel">Channel</label>
-      <input type="text" class="form-control" id="id_product" ng-model="rule.channel">
+      <input type="text" class="form-control" id="id_product" ng-model="rule.channel"
+       typeahead="channel for channel in channels | filter:$viewValue | limitTo:16">
       <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(', ') }}</p>
     </div>
     <div class="form-group" ng-class="{'has-error': errors.mapping}">

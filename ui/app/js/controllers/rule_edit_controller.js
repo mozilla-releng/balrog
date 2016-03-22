@@ -6,6 +6,14 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule) {
   Releases.getNames().then(function(names) {
     $scope.names = names;
   });
+  $scope.channels = [];
+  Rules.getChannels().success(function(response) {
+    $scope.channels = response.channel;
+  });
+  $scope.products = [];
+  Rules.getProducts().success(function(response) {
+    $scope.products = response.product;
+  });
 
   $scope.errors = {};
   $scope.is_edit = true;

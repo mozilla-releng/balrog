@@ -10,6 +10,11 @@ function($scope, $http, $modalInstance, CSRF, Releases, releases) {
     product: '',
     version: ''
   };
+  $scope.products = [];
+  Releases.getProducts().success(function(response) {
+    $scope.products = response.product;
+  });
+
   $scope.errors = {};
   $scope.saving = false;
 

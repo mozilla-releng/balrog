@@ -55,8 +55,14 @@ describe("controller: RuleEditCtrl", function() {
     it("should should all defaults", function() {
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.flush();
       expect(this.scope.names).toEqual(['Name1', 'Name2']);
+      expect(this.scope.channels).toEqual(['Channel1', 'Channel2']);
+      expect(this.scope.products).toEqual(['Product1', 'Product2']);
       expect(this.scope.errors).toEqual({});
       expect(this.scope.saving).toEqual(false);
       expect(this.scope.rule).toEqual(rule);
@@ -67,6 +73,10 @@ describe("controller: RuleEditCtrl", function() {
     it("should should be able to save changes", function() {
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.expectGET('/api/csrf_token')
       .respond(200, 'token');
       var next_data_version = rule.data_version + 1;
@@ -88,6 +98,10 @@ describe("controller: RuleEditCtrl", function() {
     it("should should notice errors", function() {
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.expectGET('/api/csrf_token')
       .respond(200, 'token');
       var next_data_version = rule.data_version + 1;
