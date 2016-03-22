@@ -878,7 +878,9 @@ class TestSingleColumn_JSON(ViewTest, JSONTestMixin):
         expected_product = ["a", "c", "b", "d"]
         expected = dict(count=4, product=expected_product)
         ret = self._get("/releases/columns/product")
-        self.assertEquals(json.loads(ret.data), expected)
+        ret_data = json.loads(ret.data)
+        self.assertEquals(ret_data['count'], expected['count'])
+        self.assertEquals(ret_data['product'].sort(), expected['product'].sort())
 
     def testGetReleaseColumn404(self):
         ret = self.client.get("/releases/columns/blah")
