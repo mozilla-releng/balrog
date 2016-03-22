@@ -174,6 +174,10 @@ describe("controller: RulesController", function() {
       .respond(200, JSON.stringify(sample_rules));
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({channel: ['Product1', 'Product2'], count: 2}));
       this.scope.openNewRuleModal();
     });
 
@@ -182,6 +186,10 @@ describe("controller: RulesController", function() {
       .respond(200, JSON.stringify(sample_rules));
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({channel: ['Product1', 'Product2'], count: 2}));
       this.scope.openUpdateModal();
     });
 
@@ -202,6 +210,10 @@ describe("controller: RulesController", function() {
       .respond(200, JSON.stringify(sample_rules));
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({channel: ['Product1', 'Product2'], count: 2}));
       this.scope.openDuplicateModal(sample_rules.rules[0]);
     });
   });

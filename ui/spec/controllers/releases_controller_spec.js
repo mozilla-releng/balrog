@@ -187,6 +187,8 @@ describe("controller: ReleasesController", function() {
     it("should be possible to open the add modal", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
+      this.$httpBackend.expectGET('/api/releases/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.flush();
       // this.$httpBackend.expectGET('/api/releases?names_only=1')
       // .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
@@ -199,6 +201,8 @@ describe("controller: ReleasesController", function() {
     it("should be possible to open the edit modal", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
+      this.$httpBackend.expectGET('/api/releases/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.flush();
       this.scope.openUpdateModal(sample_releases.releases[0]);
     });

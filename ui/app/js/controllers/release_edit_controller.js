@@ -6,6 +6,10 @@ function ($scope, $modalInstance, CSRF, Releases, release) {
   $scope.is_edit = true;
   $scope.original_release = release;
   $scope.release = angular.copy(release);
+  $scope.products = [];
+  Releases.getProducts().success(function(response) {
+    $scope.products = response.product;
+  });
 
   $scope.saving = false;
 

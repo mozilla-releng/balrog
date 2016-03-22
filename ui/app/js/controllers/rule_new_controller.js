@@ -5,6 +5,15 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule) {
   Releases.getNames().then(function(names) {
     $scope.names = names;
   });
+  $scope.channels = [];
+  Rules.getChannels().success(function(response) {
+    $scope.channels = response.channel;
+  });
+  $scope.products = [];
+  Rules.getProducts().success(function(response) {
+    $scope.products = response.product;
+  });
+
   $scope.is_duplicate = !!rule._duplicate;
   $scope.is_edit = false;
   $scope.rules = rules;
