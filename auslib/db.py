@@ -1252,23 +1252,40 @@ class Permissions(AUSTable):
         return True
 
 
-# TODO: replace these with e-mails about rules/permissions changes?
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1251338
-def getHumanModificationMonitors(systemAccounts):
-    # Long lines from "what" get truncated to avoid printing out massive
-    # release blobs ty the logs.
-    def onInsert(table, who, what):
-        if who not in systemAccounts:
-            pass
+def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
+    from email.mime.text import MIMEText
+    from smtplib import SMTP
 
-    def onDelete(table, who, where):
-        if who not in systemAccounts:
-            pass
+    def bleet(table, *args, **kwargs):
+        body = "Details of change:"
+        for a in args:
+            body += "\n%s" % a
+        for k, v in kwargs.iteritems():
+            body += "\n%s: %s" % (k, v)
 
-    def onUpdate(table, who, where, what):
-        if who not in systemAccounts:
-            pass
-    return onInsert, onDelete, onUpdate
+        msg = MIMEText(body, "plain")
+        msg["Subject"] = "Change to %s detected" % table.t.name
+        msg["from"] = from_addr
+
+        table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
+        try:
+            conn = SMTP()
+            conn.connect(relayhost, port)
+            conn.ehlo()
+            conn.starttls()
+            conn.ehlo()
+        except:
+            table.log.exception("Failed to connect to SMTP server:", exc_info=True)
+            return
+        try:
+            conn.login(username, password)
+            conn.sendmail(from_addr, to_addr, msg.as_string())
+        except:
+            table.log.exception("Failed to send change notification:", exc_info=True)
+        finally:
+            conn.quit()
+
+    return bleet
 
 
 # A helper that sets sql_mode. This should only be used with MySQL, and
@@ -1313,11 +1330,17 @@ class AUSDatabase(object):
         self.permissionsTable = Permissions(self.metadata, dialect)
         self.metadata.bind = self.engine
 
-    def setupChangeMonitors(self, systemAccounts):
-        self.releases.onInsert, self.releases.onDelete, self.releases.onUpdate = getHumanModificationMonitors(systemAccounts)
-
     def setDomainWhitelist(self, domainWhitelist):
         self.releasesTable.setDomainWhitelist(domainWhitelist)
+
+    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr):
+        bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr)
+        self.rules.onInsert = bleeter
+        self.rules.onUpdate = bleeter
+        self.rules.onDelete = bleeter
+        self.permissions.onInsert = bleeter
+        self.permissions.onUpdate = bleeter
+        self.permissions.onDelete = bleeter
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,
