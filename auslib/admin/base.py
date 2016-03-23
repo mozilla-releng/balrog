@@ -11,7 +11,7 @@ from auslib.admin.views.permissions import UsersView, PermissionsView, \
     SpecificPermissionView
 from auslib.admin.views.releases import SingleLocaleView, \
     SingleReleaseView, ReleaseHistoryView, \
-    ReleasesAPIView, SingleReleaseColumnView
+    ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView
 from auslib.admin.views.rules import RulesAPIView, \
     SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView
 from auslib.admin.views.history import DiffView, FieldView
@@ -56,8 +56,9 @@ app.add_url_rule("/rules/columns/<column>", view_func=SingleRuleColumnView.as_vi
 app.add_url_rule("/rules/<int:rule_id>/revisions", view_func=RuleHistoryAPIView.as_view("rules_revisions"))
 app.add_url_rule("/releases", view_func=ReleasesAPIView.as_view("releases"))
 app.add_url_rule("/releases/<release>", view_func=SingleReleaseView.as_view("single_release"))
-app.add_url_rule("/releases/columns/<column>", view_func=SingleReleaseColumnView.as_view("release_columns"))
+app.add_url_rule("/releases/<release>/read_only", view_func=ReleaseReadOnlyView.as_view("read_only"))
 app.add_url_rule("/releases/<release>/builds/<platform>/<locale>", view_func=SingleLocaleView.as_view("single_locale"))
 app.add_url_rule("/releases/<release>/revisions", view_func=ReleaseHistoryView.as_view("release_revisions"))
+app.add_url_rule("/releases/columns/<column>", view_func=SingleReleaseColumnView.as_view("release_columns"))
 app.add_url_rule("/history/diff/<type_>/<change_id>/<field>", view_func=DiffView.as_view("diff"))
 app.add_url_rule("/history/view/<type_>/<change_id>/<field>", view_func=FieldView.as_view("field"))

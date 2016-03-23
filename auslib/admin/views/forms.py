@@ -1,7 +1,7 @@
 import simplejson as json
 
 from flask_wtf import Form
-from wtforms import StringField, IntegerField, SelectField
+from wtforms import StringField, IntegerField, SelectField, BooleanField
 from wtforms.widgets import TextInput, FileInput, HiddenInput
 from wtforms.validators import Required, Optional, NumberRange, Length, Regexp
 
@@ -147,4 +147,10 @@ class CompleteReleaseForm(Form):
     name = StringField('Name', validators=[Required()])
     product = StringField('Product', validators=[Required()])
     blob = JSONStringField('Data', validators=[Required()], widget=FileInput())
+    data_version = IntegerField('data_version', widget=HiddenInput())
+
+
+class ReadOnlyForm(Form):
+    name = StringField('Name', validators=[Required()])
+    read_only = BooleanField('read_only')
     data_version = IntegerField('data_version', widget=HiddenInput())
