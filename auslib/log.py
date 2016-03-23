@@ -138,7 +138,7 @@ def safer_format_traceback(exc_typ, exc_val, exc_tb):
 def configure_logging(stream=sys.stdout, formatter=JsonLogFormatter, format_=log_format, level=logging.DEBUG):
     logging.setLoggerClass(BalrogLogger)
     handler = logging.StreamHandler(stream)
-    formatter = JsonLogFormatter(fmt=format_)
+    formatter = formatter(fmt=format_)
     handler.setFormatter(formatter)
     logging.root.addHandler(handler)
     logging.root.setLevel(level)
