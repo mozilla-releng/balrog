@@ -74,9 +74,9 @@ class JsonLogFormatter(logging.Formatter):
     ))
 
     def __init__(self, fmt=None, datefmt=None, logger_name='Balrog'):
-        super(JsonLogFormatter, self).__init__(fmt, datefmt)
         self.logger_name = logger_name
         self.hostname = socket.gethostname()
+        logging.Formatter.__init__(self, fmt, datefmt)
 
     def format(self, record):
         """
