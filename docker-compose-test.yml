@@ -1,0 +1,7 @@
+balrogtest:
+  build: .
+  dockerfile: Dockerfile.dev
+  entrypoint:
+    - tox
+  volumes:
+    - .:/app

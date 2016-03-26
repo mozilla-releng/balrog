@@ -16,6 +16,7 @@ WORKDIR /app
 # ... really speeds up building new containers
 COPY requirements.txt /app/
 RUN pip install -r requirements.txt
+RUN pip install tox
 
 # copy in sources after
 # Copying Balrog to /app instead of installing it means that production can run
