@@ -966,16 +966,16 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseInfoAll(self):
         releases = self.releases.getReleaseInfo()
-        expected = [dict(name='a', product='a', data_version=1, read_only=False),
-                    dict(name='ab', product='a', data_version=1, read_only=False),
-                    dict(name='b', product='b', data_version=1, read_only=False),
-                    dict(name='c', product='c', data_version=1, read_only=False)]
+        expected = [dict(name='a', product='a', data_version=1, read_only=False, rule_ids=[]),
+                    dict(name='ab', product='a', data_version=1, read_only=False, rule_ids=[]),
+                    dict(name='b', product='b', data_version=1, read_only=False, rule_ids=[]),
+                    dict(name='c', product='c', data_version=1, read_only=False, rule_ids=[])]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoProduct(self):
         releases = self.releases.getReleaseInfo(product='a')
-        expected = [dict(name='a', product='a', data_version=1, read_only=False),
-                    dict(name='ab', product='a', data_version=1, read_only=False)]
+        expected = [dict(name='a', product='a', data_version=1, read_only=False, rule_ids=[]),
+                    dict(name='ab', product='a', data_version=1, read_only=False, rule_ids=[])]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNoMatch(self):
@@ -985,8 +985,8 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseInfoNamePrefix(self):
         releases = self.releases.getReleaseInfo(name_prefix='a')
-        expected = [dict(name='a', product='a', data_version=1, read_only=False),
-                    dict(name='ab', product='a', data_version=1, read_only=False)]
+        expected = [dict(name='a', product='a', data_version=1, read_only=False, rule_ids=[]),
+                    dict(name='ab', product='a', data_version=1, read_only=False, rule_ids=[])]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNamePrefixNameOnly(self):

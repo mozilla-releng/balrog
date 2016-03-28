@@ -948,19 +948,24 @@ class Releases(AUSTable):
             column = [self.name, self.product, self.data_version, self.read_only]
 
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
-        j = join(dbo.releases.t, dbo.rules.t, dbo.releases.name == dbo.rules.mapping)
-        ref_list = select([dbo.releases.name, dbo.rules.rule_id]).select_from(j).execute().fetchall()
-        ref_dict = {}
 
-        for ref in ref_list:
-          rel_name, rule_id = ref
-          try:
-            ref_dict[rel_name].append(rule_id)
-          except KeyError:
-            ref_dict[rel_name] = [rule_id]
+        if not nameOnly:
+            j = join(dbo.releases.t, dbo.rules.t, ((dbo.releases.name == dbo.rules.mapping) | (dbo.releases.name == dbo.rules.whitelist)))
+            ref_list = select([dbo.releases.name, dbo.rules.rule_id]).select_from(j).execute().fetchall()
+            ref_dict = {}
 
-        for row in rows:
-          row['rule_ids'] = ref_dict[row['name']]
+            for ref in ref_list:
+                rel_name, rule_id = ref
+                try:
+                    ref_dict[rel_name].append(rule_id)
+                except KeyError:
+                    ref_dict[rel_name] = [rule_id]
+
+            for row in rows:
+                try:
+                    row['rule_ids'] = ref_dict[row['name']]
+                except KeyError:
+                    row['rule_ids'] = []
 
         return rows
 
