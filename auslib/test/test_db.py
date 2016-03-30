@@ -937,6 +937,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.db.create()
+        self.rules = self.db.rules
         self.releases = self.db.releases
         self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
@@ -993,6 +994,44 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         releases = self.releases.getReleaseInfo(name_prefix='a', nameOnly=True)
         expected = [{'name': 'a'}, {'name': 'ab'}]
         self.assertEquals(releases, expected)
+
+    def testPresentRuleIdField(self):
+        releases = self.releases.getReleaseInfo()
+        self.assertTrue('rule_ids' in releases[0])
+
+    def testWhitelistIncluded(self):
+        rel_name = 'ab'
+        rule_id = 6
+
+        releases = self.releases.getReleaseInfo()
+        not_whitelisted_rel = next(rel for rel in releases if rel['name'] == rel_name)
+        self.assertEqual(len(not_whitelisted_rel['rule_ids']), 0)
+        self.assertFalse(rule_id in not_whitelisted_rel['rule_ids'])
+
+        self.rules.t.insert().execute(id=rule_id, priority=100, version='3.5', buildTarget='d',
+                                      backgroundRate=100, whitelist=rel_name, update_type='minor', data_version=1)
+
+        releases = self.releases.getReleaseInfo()
+        whitelisted_rel = next(rel for rel in releases if rel['name'] == rel_name)
+        self.assertEqual(len(whitelisted_rel['rule_ids']), 1)
+        self.assertTrue(rule_id in whitelisted_rel['rule_ids'])
+
+    def testMappingIncluded(self):
+        rel_name = 'ab'
+        rule_id = 6
+
+        releases = self.releases.getReleaseInfo()
+        not_mapped_rel = next(rel for rel in releases if rel['name'] == rel_name)
+        self.assertEqual(len(not_mapped_rel['rule_ids']), 0)
+        self.assertFalse(rule_id in not_mapped_rel['rule_ids'])
+
+        self.rules.t.insert().execute(id=rule_id, priority=100, version='3.5', buildTarget='d',
+                                      backgroundRate=100, mapping=rel_name, update_type='minor', data_version=1)
+
+        releases = self.releases.getReleaseInfo()
+        mapped_rel = next(rel for rel in releases if rel['name'] == rel_name)
+        self.assertEqual(len(mapped_rel['rule_ids']), 1)
+        self.assertTrue(rule_id in mapped_rel['rule_ids'])
 
     def testGetReleaseNames(self):
         releases = self.releases.getReleaseNames()
