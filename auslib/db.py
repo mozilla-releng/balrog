@@ -956,7 +956,7 @@ class Releases(AUSTable):
             for row in rows:
                 refs = [ref for ref in ref_list if ref[0] == row['name']]
                 ref_list = [ref for ref in ref_list if ref[0] != row['name']]
-                if len(refs) is not 0:
+                if len(refs) > 0:
                     row['rule_ids'] = [ref[1] for ref in refs]
                 else:
                     row['rule_ids'] = []
