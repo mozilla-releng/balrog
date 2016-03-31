@@ -999,64 +999,6 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         releases = self.releases.getReleaseInfo()
         self.assertTrue('rule_ids' in releases[0])
 
-    def testWhitelistIncluded(self):
-        rel_name = 'ab'
-        rule_id = 6
-
-        with mock.patch('auslib.db.dbo') as mock_dbo:
-            mock_dbo.releases.t = self.db.releases.t
-            mock_dbo.rules.t = self.db.rules.t
-            mock_dbo.releases.name = self.releases.name
-            mock_dbo.rules.mapping = self.rules.mapping
-            mock_dbo.rules.whitelist = self.rules.whitelist
-            releases = self.releases.getReleaseInfo()
-        not_whitelisted_rel = next(rel for rel in releases if rel['name'] == rel_name)
-        self.assertEqual(len(not_whitelisted_rel['rule_ids']), 0)
-        self.assertFalse(rule_id in not_whitelisted_rel['rule_ids'])
-
-        self.rules.t.insert().execute(id=rule_id, priority=100, version='3.5', buildTarget='d',
-                                      backgroundRate=100, whitelist=rel_name, update_type='minor', data_version=1)
-
-        with mock.patch('auslib.db.dbo') as mock_dbo:
-            mock_dbo.releases.t = self.db.releases.t
-            mock_dbo.rules.t = self.db.rules.t
-            mock_dbo.releases.name = self.releases.name
-            mock_dbo.rules.mapping = self.rules.mapping
-            mock_dbo.rules.whitelist = self.rules.whitelist
-            releases = self.releases.getReleaseInfo()
-        whitelisted_rel = next(rel for rel in releases if rel['name'] == rel_name)
-        self.assertEqual(len(whitelisted_rel['rule_ids']), 1)
-        self.assertTrue(rule_id in whitelisted_rel['rule_ids'])
-
-    def testMappingIncluded(self):
-        rel_name = 'ab'
-        rule_id = 6
-
-        with mock.patch('auslib.db.dbo') as mock_dbo:
-            mock_dbo.releases.t = self.db.releases.t
-            mock_dbo.rules.t = self.db.rules.t
-            mock_dbo.releases.name = self.releases.name
-            mock_dbo.rules.mapping = self.rules.mapping
-            mock_dbo.rules.whitelist = self.rules.whitelist
-            releases = self.releases.getReleaseInfo()
-        not_mapped_rel = next(rel for rel in releases if rel['name'] == rel_name)
-        self.assertEqual(len(not_mapped_rel['rule_ids']), 0)
-        self.assertFalse(rule_id in not_mapped_rel['rule_ids'])
-
-        self.rules.t.insert().execute(id=rule_id, priority=100, version='3.5', buildTarget='d',
-                                      backgroundRate=100, mapping=rel_name, update_type='minor', data_version=1)
-
-        with mock.patch('auslib.db.dbo') as mock_dbo:
-            mock_dbo.releases.t = self.db.releases.t
-            mock_dbo.rules.t = self.db.rules.t
-            mock_dbo.releases.name = self.releases.name
-            mock_dbo.rules.mapping = self.rules.mapping
-            mock_dbo.rules.whitelist = self.rules.whitelist
-            releases = self.releases.getReleaseInfo()
-        mapped_rel = next(rel for rel in releases if rel['name'] == rel_name)
-        self.assertEqual(len(mapped_rel['rule_ids']), 1)
-        self.assertTrue(rule_id in mapped_rel['rule_ids'])
-
     def testGetReleaseNames(self):
         releases = self.releases.getReleaseNames()
         expected = [dict(name='a'),
