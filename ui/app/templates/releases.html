@@ -89,6 +89,18 @@
         Data version: <b>{{ release.data_version }}</b>
       </h5>
 
+      <h5 title="Rules referencing it" ng-switch="release.rule_ids">
+        <b ng-show="!release.rule_ids.length">
+            Neither whitelisted nor mapped to.
+        </b>
+        <span ng-show="release.rule_ids.length">
+        Pointed at by rules:
+        </span>
+        <b ng-repeat="rule in release.rule_ids">
+            {{ rule }}<span ng-show="!$last">,</span>
+        </b>
+      </h5>
+
       <button class="btn btn-default btn-xs" ng-click="openDataModal(release)">View Data</button>
       <button ng-show="release_name" class="btn btn-default btn-xs" ng-click="openDiffModal(release)">View Diff</button>
     </div>
