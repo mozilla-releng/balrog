@@ -7,7 +7,7 @@ import sys
 import time
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger, Boolean
+    create_engine, select, BigInteger, Boolean, join
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 
@@ -946,7 +946,21 @@ class Releases(AUSTable):
             column = [self.name]
         else:
             column = [self.name, self.product, self.data_version, self.read_only]
+
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
+
+        if not nameOnly:
+            j = join(dbo.releases.t, dbo.rules.t, ((dbo.releases.name == dbo.rules.mapping) | (dbo.releases.name == dbo.rules.whitelist)))
+            ref_list = select([dbo.releases.name, dbo.rules.rule_id]).select_from(j).execute().fetchall()
+
+            for row in rows:
+                refs = [ref for ref in ref_list if ref[0] == row['name']]
+                ref_list = [ref for ref in ref_list if ref[0] != row['name']]
+                if len(refs) > 0:
+                    row['rule_ids'] = [ref[1] for ref in refs]
+                else:
+                    row['rule_ids'] = []
+
         return rows
 
     def getReleaseNames(self, **kwargs):

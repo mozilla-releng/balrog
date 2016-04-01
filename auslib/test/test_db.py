@@ -937,6 +937,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.db.create()
+        self.rules = self.db.rules
         self.releases = self.db.releases
         self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
@@ -966,16 +967,16 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseInfoAll(self):
         releases = self.releases.getReleaseInfo()
-        expected = [dict(name='a', product='a', data_version=1, read_only=False),
-                    dict(name='ab', product='a', data_version=1, read_only=False),
-                    dict(name='b', product='b', data_version=1, read_only=False),
-                    dict(name='c', product='c', data_version=1, read_only=False)]
+        expected = [dict(name='a', product='a', data_version=1, read_only=False, rule_ids=[]),
+                    dict(name='ab', product='a', data_version=1, read_only=False, rule_ids=[]),
+                    dict(name='b', product='b', data_version=1, read_only=False, rule_ids=[]),
+                    dict(name='c', product='c', data_version=1, read_only=False, rule_ids=[])]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoProduct(self):
         releases = self.releases.getReleaseInfo(product='a')
-        expected = [dict(name='a', product='a', data_version=1, read_only=False),
-                    dict(name='ab', product='a', data_version=1, read_only=False)]
+        expected = [dict(name='a', product='a', data_version=1, read_only=False, rule_ids=[]),
+                    dict(name='ab', product='a', data_version=1, read_only=False, rule_ids=[])]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNoMatch(self):
@@ -985,14 +986,18 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseInfoNamePrefix(self):
         releases = self.releases.getReleaseInfo(name_prefix='a')
-        expected = [dict(name='a', product='a', data_version=1, read_only=False),
-                    dict(name='ab', product='a', data_version=1, read_only=False)]
+        expected = [dict(name='a', product='a', data_version=1, read_only=False, rule_ids=[]),
+                    dict(name='ab', product='a', data_version=1, read_only=False, rule_ids=[])]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNamePrefixNameOnly(self):
         releases = self.releases.getReleaseInfo(name_prefix='a', nameOnly=True)
         expected = [{'name': 'a'}, {'name': 'ab'}]
         self.assertEquals(releases, expected)
+
+    def testPresentRuleIdField(self):
+        releases = self.releases.getReleaseInfo()
+        self.assertTrue('rule_ids' in releases[0])
 
     def testGetReleaseNames(self):
         releases = self.releases.getReleaseNames()

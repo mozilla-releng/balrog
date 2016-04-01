@@ -459,7 +459,8 @@ class ReleasesAPIView(AdminView):
                 'name': 'name',
                 'product': 'product',
                 'data_version': 'data_version',
-                'read_only': 'read_only'
+                'read_only': 'read_only',
+                'rule_ids': 'rule_ids',
             }
             for release in releases:
                 _releases.append(dict(

@@ -706,8 +706,8 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(json.loads(ret.data), json.loads("""
 {
     "releases": [
-        {"data_version": 1, "name": "a", "product": "a", "read_only": false},
-        {"data_version": 1, "name": "ab", "product": "a", "read_only": false}
+        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4]},
+        {"data_version": 1, "name": "ab", "product": "a", "read_only": false, "rule_ids": []}
     ]
 }
 """))
@@ -967,3 +967,49 @@ class TestReadOnlyView(ViewTest, JSONTestMixin):
         data_unset = dict(name='b', read_only='', product='Firefox', data_version=2)
         ret = self._put('/releases/b/read_only', username='bob', data=data_unset)
         self.assertStatusCode(ret, 403)
+
+
+class TestRuleIdsReturned(ViewTest, JSONTestMixin):
+
+    def testPresentRuleIdField(self):
+        releases = self._get("/releases")
+        releases_data = json.loads(releases.data)
+        self.assertTrue('rule_ids' in releases_data['releases'][0])
+
+    def testWhitelistIncluded(self):
+        rel_name = 'ab'
+        rule_id = 6
+
+        releases = self._get("/releases")
+        releases_data = json.loads(releases.data)
+        not_whitelisted_rel = next(rel for rel in releases_data['releases'] if rel['name'] == rel_name)
+        self.assertEqual(len(not_whitelisted_rel['rule_ids']), 0)
+        self.assertFalse(rule_id in not_whitelisted_rel['rule_ids'])
+
+        dbo.rules.t.insert().execute(id=rule_id, priority=100, version='3.5', buildTarget='d',
+                                     backgroundRate=100, whitelist=rel_name, update_type='minor', data_version=1)
+
+        releases = self._get("/releases")
+        releases_data = json.loads(releases.data)
+        whitelisted_rel = next(rel for rel in releases_data['releases'] if rel['name'] == rel_name)
+        self.assertEqual(len(whitelisted_rel['rule_ids']), 1)
+        self.assertTrue(rule_id in whitelisted_rel['rule_ids'])
+
+    def testMappingIncluded(self):
+        rel_name = 'ab'
+        rule_id = 6
+
+        releases = self._get("/releases")
+        releases_data = json.loads(releases.data)
+        not_mapped_rel = next(rel for rel in releases_data['releases'] if rel['name'] == rel_name)
+        self.assertEqual(len(not_mapped_rel['rule_ids']), 0)
+        self.assertFalse(rule_id in not_mapped_rel['rule_ids'])
+
+        dbo.rules.t.insert().execute(id=rule_id, priority=100, version='3.5', buildTarget='d',
+                                     backgroundRate=100, mapping=rel_name, update_type='minor', data_version=1)
+
+        releases = self._get("/releases")
+        releases_data = json.loads(releases.data)
+        mapped_rel = next(rel for rel in releases_data['releases'] if rel['name'] == rel_name)
+        self.assertEqual(len(mapped_rel['rule_ids']), 1)
+        self.assertTrue(rule_id in mapped_rel['rule_ids'])
