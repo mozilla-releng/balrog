@@ -1049,7 +1049,8 @@ class TestSchema4Blob(unittest.TestCase):
     "fileUrls": {
         "c1": {
             "partials": {
-                "h1": "http://a.com/h1-partial.mar"
+                "h1": "http://a.com/h1-partial.mar",
+                "h2": "http://a.com/h2-partial.mar"
             },
             "completes": {
                 "*": "http://a.com/complete.mar"
@@ -1057,7 +1058,8 @@ class TestSchema4Blob(unittest.TestCase):
         },
         "c2": {
             "partials": {
-                "h1": "http://a.com/h1-%LOCALE%-partial"
+                "h1": "http://a.com/h1-%LOCALE%-partial",
+                "h2": "http://a.com/h2-%LOCALE%-partial"
             },
             "completes": {
                 "*": "http://a.com/%LOCALE%-complete"
@@ -1065,7 +1067,8 @@ class TestSchema4Blob(unittest.TestCase):
         },
         "*": {
             "partials": {
-                "h1": "http://a.com/h1-partial-catchall"
+                "h1": "http://a.com/h1-partial-catchall",
+                "h2": "http://a.com/h2-partial-catchall"
             },
             "completes": {
                 "*": "http://a.com/complete-catchall"
@@ -1080,6 +1083,11 @@ class TestSchema4Blob(unittest.TestCase):
             "locales": {
                 "l": {
                     "partials": [
+                        {
+                            "filesize": 6,
+                            "from": "h2",
+                            "hashValue": "7"
+                        },
                         {
                             "filesize": 8,
                             "from": "h1",
