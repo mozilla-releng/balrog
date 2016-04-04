@@ -1,6 +1,7 @@
 from collections import defaultdict
 from copy import copy
 from os import path
+from pprint import pformat
 import re
 import simplejson as json
 import sys
@@ -262,6 +263,10 @@ class AUSTable(object):
         if self.versioned:
             data['data_version'] = 1
         query = self._insertStatement(**data)
+
+        if self.onInsert:
+            self.onInsert(self, "INSERT", changed_by, query)
+
         ret = trans.execute(query)
         if self.history:
             for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
@@ -284,9 +289,6 @@ class AUSTable(object):
         """
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
-
-        if self.onInsert:
-            self.onInsert(self, changed_by, columns)
 
         if transaction:
             return self._prepareInsert(transaction, changed_by, **columns)
@@ -324,6 +326,10 @@ class AUSTable(object):
             where.append(self.data_version == old_data_version)
 
         query = self._deleteStatement(where)
+
+        if self.onDelete:
+            self.onDelete(self, "DELETE", changed_by, query)
+
         ret = trans.execute(query)
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to delete row, old_data_version doesn't match current data_version")
@@ -352,9 +358,6 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("old_data_version must be passed for Tables that are versioned")
-
-        if self.onDelete:
-            self.onDelete(self, changed_by, where)
 
         if transaction:
             return self._prepareDelete(transaction, where, changed_by, old_data_version)
@@ -396,6 +399,10 @@ class AUSTable(object):
             row[col] = what[col]
 
         query = self._updateStatement(where, row)
+
+        if self.onUpdate:
+            self.onUpdate(self, "UPDATE", changed_by, query)
+
         ret = trans.execute(query)
         if self.history:
             trans.execute(self.history.forUpdate(row, changed_by))
@@ -424,9 +431,6 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("update: old_data_version must be passed for Tables that are versioned")
-
-        if self.onUpdate:
-            self.onUpdate(self, changed_by, what, where)
 
         if transaction:
             return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
@@ -1292,15 +1296,18 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
     from email.mime.text import MIMEText
     from smtplib import SMTP
 
-    def bleet(table, *args, **kwargs):
-        body = "Details of change:"
-        for a in args:
-            body += "\n%s" % a
-        for k, v in kwargs.iteritems():
-            body += "\n%s: %s" % (k, v)
+    def bleet(table, type_, changed_by, query):
+        body = ["Changed by: %s" % changed_by]
+        if getattr(query, "parameters", None):
+            body.append("Row to be updated as follows:")
+            body.append(pformat(query.parameters))
+        if getattr(query, "where", None):
+            body.append("WHERE clause:")
+            for clause in query._whereclause.get_children():
+                body.append(str(clause.__dict__))
 
-        msg = MIMEText(body, "plain")
-        msg["Subject"] = "Change to %s detected" % table.t.name
+        msg = MIMEText("\n".join(body), "plain")
+        msg["Subject"] = "%s to %s detected" % (type_, table.t.name)
         msg["from"] = from_addr
 
         table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
@@ -1311,13 +1318,13 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             conn.starttls()
             conn.ehlo()
         except:
-            table.log.exception("Failed to connect to SMTP server:", exc_info=True)
+            table.log.exception("Failed to connect to SMTP server:")
             return
         try:
             conn.login(username, password)
             conn.sendmail(from_addr, to_addr, msg.as_string())
         except:
-            table.log.exception("Failed to send change notification:", exc_info=True)
+            table.log.exception("Failed to send change notification:")
         finally:
             conn.quit()
 
