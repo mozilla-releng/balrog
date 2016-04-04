@@ -148,11 +148,12 @@ class AUSTable(object):
                          updates.
        @type versioned: bool
        @param onInsert: A callback that will be called whenever an insert is
-                        made to the table. It must accept the following 3
+                        made to the table. It must accept the following 4
                         parameters:
+                         * The table object the query is being performed on
                          * The type of query being performed (eg: INSERT)
                          * The name of the user making the change
-                         * The query object that will be execeuted.
+                         * The query object that will be execeuted
                         If the callback raises an exception the change will
                         be aborted.
        @type onInsert: callable

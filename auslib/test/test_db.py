@@ -229,7 +229,12 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.test.onInsert = lambda *x: shared.extend(x)
         what = {'id': 4, 'foo': 1}
         self.test.insert(changed_by='bob', **what)
-        self.assertEquals(shared, [self.test, 'bob', what])
+        # insert adds data_version to the query, so we need to add that before comparing
+        what["data_version"] = 1
+        self.assertEquals(shared[0], self.test)
+        self.assertEquals(shared[1], "INSERT")
+        self.assertEquals(shared[2], "bob")
+        self.assertEquals(shared[3].parameters, what)
 
     def testDelete(self):
         ret = self.test.delete(changed_by='bill', where=[self.test.id == 1, self.test.foo == 33],
@@ -251,7 +256,13 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.test.onDelete = lambda *x: shared.extend(x)
         where = [self.test.id == 1]
         self.test.delete(changed_by='bob', where=where, old_data_version=1)
-        self.assertEquals(shared, [self.test, 'bob', where])
+        # update adds data_version and id to the query, so we need to add that before comparing
+        self.assertEquals(shared[0], self.test)
+        self.assertEquals(shared[1], "DELETE")
+        self.assertEquals(shared[2], "bob")
+        # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
+        # to the id condition above.
+        self.assertEquals(len(shared[3]._whereclause.get_children()), 2)
 
     def testUpdate(self):
         ret = self.test.update(changed_by='bob', where=[self.test.id == 1], what=dict(foo=123),
@@ -274,7 +285,16 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         where = [self.test.id == 1]
         what = dict(foo=123)
         self.test.update(changed_by='bob', where=where, what=what, old_data_version=1)
-        self.assertEquals(shared, [self.test, 'bob', what, where])
+        # update adds data_version and id to the query, so we need to add that before comparing
+        what["data_version"] = 2
+        what["id"] = 1
+        self.assertEquals(shared[0], self.test)
+        self.assertEquals(shared[1], "UPDATE")
+        self.assertEquals(shared[2], "bob")
+        self.assertEquals(shared[3].parameters, what)
+        # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
+        # to the id condition above.
+        self.assertEquals(len(shared[3]._whereclause.get_children()), 2)
 
 
 class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileDatabaseMixin):
