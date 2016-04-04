@@ -1303,7 +1303,9 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
         # generic way to print them nicely, because some of the objects
         # inside are operator classes and other things that don't repr() well.
         # This ends up printing things such as:
-        # {'modifiers': {}, 'negate': <built-in function ne>, 'right': _BindParamClause(u'%(139873530012112 data_version)s', 2, type_=Integer()), 'operator': <built-in function eq>, 'type': Boolean(create_constraint=True, name=None), 'left': Column('data_version', Integer(), table=<rules>, nullable=False)}
+        # {'modifiers': {}, 'negate': <built-in function ne>, 'right': _BindParamClause(u'%(139873530012112 data_version)s', 2, type_=Integer()),
+        # 'operator': <built-in function eq>, 'type': Boolean(create_constraint=True, name=None), 'left': Column('data_version', Integer(), table=<rules>,
+        # nullable=False)}
         # ...which is not the prettiest, but contains all of the important
         # information.
         if getattr(query, "where", None):
