@@ -220,4 +220,24 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
   };
   /* End openDeleteModal */
 
+  $scope.openReadOnlyModal = function (release) {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'release_read_only_modal.html',
+      controller: 'ReleaseReadOnlyCtrl',
+      // size: 'sm',
+      resolve: {
+        release: function() {
+          return release;
+        }
+      }
+    });
+
+    modalInstance.result.then(function () {
+      $location.path('/releases');
+    }, function () {
+      // modal closed
+    });
+  };
+  /* End openReadOnlyModal */
 });

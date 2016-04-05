@@ -26,6 +26,9 @@ angular.module("app").factory('Releases', function($http, $q) {
     getRelease: function(name) {
       return $http.get('/api/releases/' + encodeURIComponent(name));
     },
+    getReadOnly: function(name) {
+      return $http.get('/api/releases/' + encodeURIComponent(name) + '/read_only');
+    },
     getData: function(change_id) {
       var url = '/api/history/view/release/' + change_id + '/data';
       return $http.get(url);
@@ -46,6 +49,10 @@ angular.module("app").factory('Releases', function($http, $q) {
     updateRelease: function(name, data, csrf_token) {
       data.csrf_token = csrf_token;
       return $http.put('/api/releases/' + encodeURIComponent(name), data);
+    },
+    changeReadOnly: function(name, data, csrf_token) {
+      data.csrf_token = csrf_token;
+      return $http.put('/api/releases/' + encodeURIComponent(name) + '/read_only', data);
     },
     deleteRelease: function(name, data, csrf_token) {
       var url = '/api/releases/' + encodeURIComponent(name);

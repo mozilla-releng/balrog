@@ -15,8 +15,27 @@ function ($scope, $modalInstance, CSRF, Releases, release, releases) {
         $scope.saving = false;
         $modalInstance.close();
       })
-      .error(function() {
-        console.error(arguments);
+      .error(function(response) {
+         if (typeof response === 'object') {
+          message = '';
+          if (release.read_only) {
+            message = 'Product is read only';
+          }
+          $scope.errors = response;
+          sweetAlert(
+            "Deletion error",
+            message
+          );
+        } else if (typeof response === 'string') {
+          // quite possibly an error in the blob validation
+          sweetAlert(
+            "Deletion error",
+            "Unable to delete successfully.\n" +
+            "(" + response+ ")",
+            "error"
+          );
+        }
+        console.error(response);
         $scope.saving = false;
       });
     });
