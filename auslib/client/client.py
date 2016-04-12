@@ -1,47 +1,54 @@
 import asyncio
 import aiohttp
+import json
 import logging
 
 
-class APIClient(object):
-    
-    def __init__(self, event_loop, api_root="http://localhost:8080/api", auth=None, timeout=60):
-        self.event_loop = event_loop
-        self.api_root = api_root.rstrip("/")
-        self.auth = auth
-        self.timeout = timeout
+headers = {
+    "Accept-Encoding": "application/json",
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+}
 
-    async def request(self, path, method="GET", data=None):
-        url = self.api_root + path
-        logging.debug("Preparing request to %s", url)
-        if data:
-            data = data.copy()
+def get_url(api_root, path):
+    return api_root.rstrip("/") + path
 
-        with aiohttp.ClientSession(loop=self.event_loop) as session:
-            if method not in ("GET", "HEAD"):
-                resp = await self.do_request(session, url, "HEAD")
-                if resp.status in range(200, 300):
-                    if "data_version" not in data:
-                        data["data_version"] = resp.headers["X-Data-Version"]
-                    data["csrf_token"] = resp.headers["X-CSRF-Token"]
-                elif resp.status == 404:
-                    resp = await self.do_request(session, self.api_root + "/csrf_token", "HEAD")
-                    data["csrf_token"] = resp.headers["X-CSRF_Token"]
-                else:
-                    raise Exception("fail")
 
-            resp = await self.do_request(session, url, method, data)
-            if resp.status in range(200, 300):
-                return await resp.json()
-            else:
-                raise Exception("fail")
+async def request(session, api_root, path, method="GET", data=None, auth=None):
+    url = get_url(api_root, path)
+    if data:
+        data = data.copy()
 
-    async def do_request(self, session, url, method, data=None):
-        headers = {
-            "Accept-Encoding": "application/json",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-        logging.debug("Making request to %s", url)
-        with aiohttp.Timeout(self.timeout):
-            return await session.request(method, url, data=data, headers=headers, auth=self.auth)
+    if method not in ("GET", "HEAD"):
+        resp = await session.request("HEAD", get_url(api_root, "/csrf_token"), auth=auth)
+        if resp.status in range(200, 300):
+            data["csrf_token"] = resp.headers["X-CSRF-Token"]
+        else:
+            raise Exception("fail!")
+
+    resp = await session.request(method, url, data=json.dumps(data), headers=headers, auth=auth)
+    if resp.status in range(200, 300):
+        return await resp.json()
+    else:
+        raise Exception(resp.reason)
+
+
+# get rule
+# modify rule
+# update rule
+
+loop = asyncio.get_event_loop()
+#with aiohttp.ClientSession(loop=loop) as session:
+#    fut = asyncio.ensure_future(request(session, "http://localhost:8080/api", "/rules/69"))
+#    fut.add_done_callback(lambda x: print("Here: {}", x.result()))
+#
+#    loop.run_until_complete(fut)
+
+
+async def change_rule():
+    with aiohttp.ClientSession(loop=loop) as session:
+        res = await request(session, "http;//localhost:8080/api", "/rules/69")
+        res["comment"] = "WTF"
+        return await request(session, http://localhost:8080/api, "/rules/69", method="POST", data=res)
+
+loop.run_until_complete(change_rule)
