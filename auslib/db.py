@@ -1299,6 +1299,11 @@ class UTF8PrettyPrinter(pprint.PrettyPrinter):
         return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 
 
+class Unchanged(str):
+    def __repr__(self):
+        return "unchanged"
+
+
 def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
     from email.mime.text import MIMEText
     from smtplib import SMTP
@@ -1313,7 +1318,7 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
                     if query.parameters[k] != row[k]:
                         row[k] = query.parameters[k]
                     else:
-                        row[k] = "unchanged"
+                        row[k] = Unchanged()
                 body.append(UTF8PrettyPrinter().pformat(row))
         elif type_ == "DELETE":
             body.append("Row(s) to be removed:")

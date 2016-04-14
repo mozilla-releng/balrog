@@ -1828,7 +1828,7 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'product': 'blah'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': 'unchanged'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': unchanged"))
 
     def testOnDelete(self):
         def doit():
