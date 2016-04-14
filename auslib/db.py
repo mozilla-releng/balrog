@@ -1305,19 +1305,6 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
 
     def bleet(table, type_, changed_by, query):
         body = ["Changed by: %s" % changed_by]
-        #if getattr(query, "parameters", None):
-        #    body.append("Row(s) to be updated as follows:")
-        #    body.append(pformat(query.parameters))
-        # Introspection on where clauses is Very Difficult. The children of
-        # _whereclauses have all the necessary information, but there's no
-        # generic way to print them nicely, because some of the objects
-        # inside are operator classes and other things that don't repr() well.
-        # This ends up printing things such as:
-        # {'modifiers': {}, 'negate': <built-in function ne>, 'right': _BindParamClause(u'%(139873530012112 data_version)s', 2, type_=Integer()),
-        # 'operator': <built-in function eq>, 'type': Boolean(create_constraint=True, name=None), 'left': Column('data_version', Integer(), table=<rules>,
-        # nullable=False)}
-        # ...which is not the prettiest, but contains all of the important
-        # information.
         if type_ == "UPDATE":
             body.append("Row(s) to be updated as follows:")
             where = [c for c in query._whereclause.get_children()]
@@ -1339,11 +1326,6 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
         elif type_ == "INSERT":
             body.append("Row to be inserted:")
             body.append(UTF8PrettyPrinter().pformat(query.parameters))
-
-        #if getattr(query, "where", None):
-        #    body.append("WHERE clause:")
-        #    for clause in query._whereclause.get_children():
-        #        body.append(str(clause.__dict__))
 
         msg = MIMEText("\n".join(body), "plain")
         msg["Subject"] = "%s to %s detected" % (type_, table.t.name)
