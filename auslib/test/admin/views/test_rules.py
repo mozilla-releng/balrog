@@ -72,7 +72,7 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
             self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.data, bogus))
             self.assertTrue('version' in ret.data, msg=ret.data)
 
-    def testValidationBadInput(self):
+    def testValidationEmptyInput(self):
         ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                          product='Firefox', update_type='minor', version='', buildID=''))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
