@@ -1,7 +1,7 @@
 from collections import defaultdict
 from copy import copy
 from os import path
-from pprint import pformat
+import pprint
 import re
 import simplejson as json
 import sys
@@ -1290,15 +1290,24 @@ class Permissions(AUSTable):
         return True
 
 
+class UTF8PrettyPrinter(pprint.PrettyPrinter):
+    """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
+    Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
+    def format(self, object, context, maxlevels, level):
+        if isinstance(object, unicode):
+            return pprint._safe_repr(object.encode('utf8'), context, maxlevels, level)
+        return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
+
+
 def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
     from email.mime.text import MIMEText
     from smtplib import SMTP
 
     def bleet(table, type_, changed_by, query):
         body = ["Changed by: %s" % changed_by]
-        if getattr(query, "parameters", None):
-            body.append("Row to be updated as follows:")
-            body.append(pformat(query.parameters))
+        #if getattr(query, "parameters", None):
+        #    body.append("Row(s) to be updated as follows:")
+        #    body.append(pformat(query.parameters))
         # Introspection on where clauses is Very Difficult. The children of
         # _whereclauses have all the necessary information, but there's no
         # generic way to print them nicely, because some of the objects
@@ -1309,10 +1318,32 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
         # nullable=False)}
         # ...which is not the prettiest, but contains all of the important
         # information.
-        if getattr(query, "where", None):
-            body.append("WHERE clause:")
-            for clause in query._whereclause.get_children():
-                body.append(str(clause.__dict__))
+        if type_ == "UPDATE":
+            body.append("Row(s) to be updated as follows:")
+            where = [c for c in query._whereclause.get_children()]
+            for row in table.select(where=where):
+                for k in row:
+                    if query.parameters[k] != row[k]:
+                        row[k] = query.parameters[k]
+                    else:
+                        row[k] = "unchanged"
+                body.append(UTF8PrettyPrinter().pformat(row))
+        elif type_ == "DELETE":
+            body.append("Row(s) to be removed:")
+            where = [c for c in query._whereclause.get_children()]
+            for row in table.select(where=where):
+                for k in row:
+                    if isinstance(row[k], (unicode,)):
+                        row[k] = str(row[k])
+                body.append(UTF8PrettyPrinter().pformat(row))
+        elif type_ == "INSERT":
+            body.append("Row to be inserted:")
+            body.append(UTF8PrettyPrinter().pformat(query.parameters))
+
+        #if getattr(query, "where", None):
+        #    body.append("WHERE clause:")
+        #    for clause in query._whereclause.get_children():
+        #        body.append(str(clause.__dict__))
 
         msg = MIMEText("\n".join(body), "plain")
         msg["Subject"] = "%s to %s detected" % (type_, table.t.name)

@@ -1818,6 +1818,7 @@ class TestChangeNotifiers(unittest.TestCase):
             self.db.rules.addRule("bob", {"product": "foo", "channel": "bar", "backgroundRate": 100, "priority": 50, "update_type": "minor"})
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': 'bar'"))
 
     def testOnUpdate(self):
@@ -1825,15 +1826,18 @@ class TestChangeNotifiers(unittest.TestCase):
             self.db.rules.updateRule("bob", 2, {"product": "blah"}, 1)
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'product': 'blah'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("BindParam"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': 'unchanged'"))
 
     def testOnDelete(self):
         def doit():
             self.db.rules.deleteRule("bob", 2, 1)
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("DELETE"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("BindParam"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be removed:"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'rule_id': 2"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': 'release'"))
 
 
 class TestDBUpgrade(unittest.TestCase, NamedFileDatabaseMixin):
