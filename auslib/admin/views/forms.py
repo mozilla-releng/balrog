@@ -80,12 +80,11 @@ def NoneOrType(type_):
     return coercer
 
 
-def operator(check_version=False):
-    log.debug('starting in operator, check_version is %s' % check_version)
+def operator_validator():
+    log.debug('starting in operator_validator for buildID')
 
     def _validator(form, field):
-        log.debug('starting in _validator: field.data is %s' % field.data)
-        log.debug('starting in _validator, check_version is %s' % check_version)
+        log.debug('starting in operator_validator: field.data is %s' % field.data)
         # empty input is fine
         if field.data is None:
             return
@@ -95,15 +94,27 @@ def operator(check_version=False):
         except TypeError:
             # get_op field returns None if no operator or no match, can't be unpacked
             raise ValidationError('Invalid input for %s' % field.label)
+    return _validator
 
-        if check_version:
-            try:
-                version = MozillaVersion(operand)
-            except ValueError:
-                raise ValidationError("Couldn't parse version for %s" % field.label)
-            # MozillaVersion doesn't error on empty strings
-            if not hasattr(version, 'version'):
-                raise ValidationError("Couldn't parse version for %s" % field.label)
+
+def version_validator():
+    log.debug('starting in version_validator for version')
+
+    def _validator(form, field):
+        log.debug('starting in version_validator: field.data is %s' % field.data)
+        # empty input
+        if field.data is None:
+            return
+        try:
+            op, operand = get_op(field.data)
+            version = MozillaVersion(operand)
+        except ValueError:
+            raise ValidationError("Couldn't parse version for %s" % field.label)
+        except:
+            raise ValidationError('Invalid input for %s' % field.label)
+        # MozillaVersion doesn't error on empty strings
+        if not hasattr(version, 'version'):
+            raise ValidationError("Couldn't parse the version for %s" % field.label)
 
     return _validator
 
@@ -139,8 +150,8 @@ class RuleForm(Form):
     mapping = SelectField('Mapping', validators=[])
     alias = NullableStringField('Alias', validators=[Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Length(0, 15)])
-    version = NullableStringField('Version', validators=[Length(0, 10), operator(check_version=True)])
-    buildID = NullableStringField('BuildID', validators=[Length(0, 20), operator(check_version=False)])
+    version = NullableStringField('Version', validators=[Length(0, 10), version_validator()])
+    buildID = NullableStringField('BuildID', validators=[Length(0, 20), operator_validator()])
     channel = NullableStringField('Channel', validators=[Length(0, 75)])
     locale = NullableStringField('Locale', validators=[Length(0, 200)])
     distribution = NullableStringField('Distribution', validators=[Length(0, 100)])
@@ -159,8 +170,8 @@ class EditRuleForm(DbEditableForm):
     mapping = SelectField('Mapping', validators=[Optional()], coerce=NoneOrType(unicode))
     alias = NullableStringField('Alias', validators=[Optional(), Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Optional(), Length(0, 15)])
-    version = NullableStringField('Version', validators=[Optional(), Length(0, 10), operator(check_version=True)])
-    buildID = NullableStringField('BuildID', validators=[Optional(), Length(0, 20), operator(check_version=False)])
+    version = NullableStringField('Version', validators=[Optional(), Length(0, 10), version_validator()])
+    buildID = NullableStringField('BuildID', validators=[Optional(), Length(0, 20), operator_validator()])
     channel = NullableStringField('Channel', validators=[Optional(), Length(0, 75)])
     locale = NullableStringField('Locale', validators=[Optional(), Length(0, 200)])
     distribution = NullableStringField('Distribution', validators=[Optional(), Length(0, 100)])
