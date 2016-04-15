@@ -1,7 +1,6 @@
 balrogtest:
   build: .
-  dockerfile: Dockerfile.dev
-  entrypoint:
-    - tox
   volumes:
     - .:/app
+  entrypoint:
+    - /app/scripts/test-entrypoint.sh
