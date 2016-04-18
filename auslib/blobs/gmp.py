@@ -49,7 +49,7 @@ class GMPBlobV1(Blob):
             platformData = self.getPlatformData(vendor, buildTarget)
 
             url = platformData["fileUrl"]
-            if isForbiddenUrl(url, whitelistedDomains):
+            if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
                 continue
             vendorXML.append('        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>' %
                              (vendor, url, self["hashFunction"], platformData["hashValue"],

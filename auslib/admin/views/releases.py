@@ -198,7 +198,7 @@ class SingleLocaleView(AdminView):
             return False
 
         def commit(rel, product, localeData, releaseData, old_data_version, extraArgs):
-            return dbo.releases.addLocaleToRelease(name=rel, platform=platform,
+            return dbo.releases.addLocaleToRelease(name=rel, product=product, platform=platform,
                                                    locale=locale, data=localeData, alias=extraArgs.get('alias'),
                                                    old_data_version=old_data_version,
                                                    changed_by=changed_by, transaction=transaction)
@@ -276,7 +276,7 @@ class SingleReleaseView(AdminView):
         def commit(rel, product, newReleaseData, releaseData, old_data_version, extraArgs):
             releaseData.update(newReleaseData)
             blob = createBlob(releaseData)
-            return dbo.releases.updateRelease(name=rel, blob=blob,
+            return dbo.releases.updateRelease(name=rel, blob=blob, product=product,
                                               changed_by=changed_by, old_data_version=old_data_version,
                                               transaction=transaction)
 
@@ -341,6 +341,7 @@ class ReleaseReadOnlyView(AdminView):
 
         if form.read_only.data:
             if not is_release_read_only:
+                # TODO - figure this out
                 dbo.releases.updateRelease(release, changed_by, data_version, read_only=True, transaction=transaction)
                 data_version += 1
         else:
@@ -426,7 +427,7 @@ class ReleaseHistoryView(HistoryAdminView):
 
         try:
             dbo.releases.updateRelease(changed_by=changed_by, name=change['name'],
-                                       blob=blob,
+                                       blob=blob, product=change['product'],
                                        old_data_version=old_data_version, transaction=transaction)
         except BlobValidationError as e:
             self.log.warning("Bad input: %s", e.args)

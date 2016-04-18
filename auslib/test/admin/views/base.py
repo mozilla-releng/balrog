@@ -18,7 +18,7 @@ class ViewTest(unittest.TestCase):
         app.config["SECRET_KEY"] = 'abc123'
         app.config['DEBUG'] = True
         app.config["WTF_CSRF_ENABLED"] = False
-        app.config['WHITELISTED_DOMAINS'] = ['good.com']
+        app.config['WHITELISTED_DOMAINS'] = {'good.com': ('a', 'b', 'c', 'd')}
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
             f.write("""
@@ -29,7 +29,7 @@ class ViewTest(unittest.TestCase):
 }
 """)
         dbo.setDb('sqlite:///:memory:')
-        dbo.setDomainWhitelist(['good.com'])
+        dbo.setDomainWhitelist({'good.com': ('a', 'b', 'c', 'd')})
         dbo.create()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)

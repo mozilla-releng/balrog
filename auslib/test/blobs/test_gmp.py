@@ -10,7 +10,7 @@ class TestSchema1Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = ["a.com", "boring.com"]
+        self.whitelistedDomains = {"a.com": ('gg',), 'boring.com': ('gg',)}
         self.blob = GMPBlobV1()
         self.blob.loadJSON("""
 {

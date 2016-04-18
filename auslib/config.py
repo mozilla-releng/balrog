@@ -46,6 +46,8 @@ class AUSConfig(object):
     def getDburi(self):
         return self.cfg.get('database', 'dburi')
 
+    # TODO - rewrite this for new dict format, use suffixes like this ?
+    #   download.mozilla.org:Firefox|Fennec|Thunderbird, <site>:<product>, ...
     def getDomainWhitelist(self):
         try:
             return tuple(a.strip() for a in self.cfg.get('site-specific', 'domain_whitelist').split(','))

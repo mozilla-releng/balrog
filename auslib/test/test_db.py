@@ -1229,7 +1229,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             t.return_value = 0
             self.releases.getReleaseBlob(name="b")
             t.return_value += 1
-            self.releases.addLocaleToRelease("b", "win", "zu", dict(buildID=123), 1, "bob")
+            self.releases.addLocaleToRelease("b", "b", "win", "zu", dict(buildID=123), 1, "bob")
             t.return_value += 1
             blob = self.releases.getReleaseBlob(name="b")
 
@@ -1342,7 +1342,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc",
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1386,7 +1386,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc"
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill', alias=['p4'])
+        self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill', alias=['p4'])
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1433,7 +1433,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "789"
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='p', locale='l', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='l', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1470,7 +1470,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc"
             }
         }
-        self.releases.addLocaleToRelease(name='b', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='b', product='b', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'b').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1502,7 +1502,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc",
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='p3', locale='l', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='a', product='a', platform='p3', locale='l', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1548,7 +1548,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc",
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='a', product='a', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1596,7 +1596,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc",
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='p2', locale='j', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='a', product='a', platform='p2', locale='j', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1641,7 +1641,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             }
         }
         self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
-        self.assertRaises(ReadOnlyError, self.releases.addLocaleToRelease, name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
+        self.assertRaises(ReadOnlyError, self.releases.addLocaleToRelease, name='a', product='a', platform='p',
+                          locale='c', data=data, old_data_version=1, changed_by='bill')
 
 
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):

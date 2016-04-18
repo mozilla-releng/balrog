@@ -881,7 +881,7 @@ class Releases(AUSTable):
 
     # TODO: This should really be part of the blob class(es) because it depends
     # on a lot of blob schema specific stuff.
-    def containsForbiddenDomain(self, data):
+    def containsForbiddenDomain(self, data, product):
         """Returns True if "data" contains any file URLs that contain a
            domain that we're not allowed to serve updates to."""
         # Check the top level URLs, if the exist.
@@ -890,11 +890,11 @@ class Releases(AUSTable):
             if isinstance(c, dict):
                 for from_ in c.values():
                     for url in from_.values():
-                        if isForbiddenUrl(url, self.domainWhitelist):
+                        if isForbiddenUrl(url, product, self.domainWhitelist):
                             return True
             # Old-style
             else:
-                if isForbiddenUrl(c, self.domainWhitelist):
+                if isForbiddenUrl(c, product, self.domainWhitelist):
                     return True
 
         # And also the locale-level URLs.
@@ -902,12 +902,12 @@ class Releases(AUSTable):
             for locale in platform.get('locales', {}).values():
                 for type_ in ('partial', 'complete'):
                     if type_ in locale and 'fileUrl' in locale[type_]:
-                        if isForbiddenUrl(locale[type_]['fileUrl'], self.domainWhitelist):
+                        if isForbiddenUrl(locale[type_]['fileUrl'], product, self.domainWhitelist):
                             return True
                 for type_ in ('partials', 'completes'):
                     for update in locale.get(type_, {}):
                         if 'fileUrl' in update:
-                            if isForbiddenUrl(update["fileUrl"], self.domainWhitelist):
+                            if isForbiddenUrl(update["fileUrl"], product, self.domainWhitelist):
                                 return True
 
         return False
@@ -1020,7 +1020,7 @@ class Releases(AUSTable):
             # If they do, we should not let the column and the in-blob name be different.
             if name != blob["name"]:
                 raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-        if self.containsForbiddenDomain(blob):
+        if self.containsForbiddenDomain(blob, product):
             raise ValueError("Release blob contains forbidden domain.")
 
         columns = dict(name=name, product=product, data=blob.getJSON())
@@ -1040,12 +1040,12 @@ class Releases(AUSTable):
             what['product'] = product
         if blob:
             blob.validate()
-            # Generally blobs have names, but there's no requirement that they have to.
+            # Blob schemas often require a name property but we can't assume so here
             if blob.get("name"):
                 # If they do, we should not let the column and the in-blob name be different.
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-            if self.containsForbiddenDomain(blob):
+            if self.containsForbiddenDomain(blob, product):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
         self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
@@ -1053,7 +1053,7 @@ class Releases(AUSTable):
         cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
         cache.put("blob_version", name, new_data_version)
 
-    def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
+    def addLocaleToRelease(self, name, product, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
         """Adds or update's the existing data for a specific platform + locale
            combination, in the release identified by 'name'. The data is
            validated before commiting it, and a ValueError is raised if it is
@@ -1085,7 +1085,7 @@ class Releases(AUSTable):
                     releaseBlob['platforms'][a] = {'alias': platform}
 
         releaseBlob.validate()
-        if self.containsForbiddenDomain(releaseBlob):
+        if self.containsForbiddenDomain(releaseBlob, product):
             raise ValueError("Release blob contains forbidden domain.")
         where = [self.name == name]
         what = dict(data=releaseBlob.getJSON())
