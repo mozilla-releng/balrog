@@ -1,0 +1,1 @@
+/update/3/Firefox/46.0/20160316065941/Linux_x86-gcc3/zh-TW/beta/default/default/default/update.xml?force=1

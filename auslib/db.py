@@ -1299,9 +1299,9 @@ class UTF8PrettyPrinter(pprint.PrettyPrinter):
         return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 
 
-class Unchanged(str):
+class UnquotedStr(str):
     def __repr__(self):
-        return "unchanged"
+        return self.__str__()
 
 
 def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
@@ -1316,9 +1316,9 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             for row in table.select(where=where):
                 for k in row:
                     if query.parameters[k] != row[k]:
-                        row[k] = query.parameters[k]
+                        row[k] = UnquotedStr("%s ---> %s" % (row[k], query.parameters[k]))
                     else:
-                        row[k] = Unchanged()
+                        row[k] = UnquotedStr("%s (unchanged)" % row[k])
                 body.append(UTF8PrettyPrinter().pformat(row))
         elif type_ == "DELETE":
             body.append("Row(s) to be removed:")
