@@ -13,6 +13,7 @@ DOMAIN_WHITELIST = [
     "mozilla-nightly-updates.s3.amazonaws.com",
     "archive.mozilla.org",
     "mozilla-releng-nightly-promotion-mozilla-central.b2gdroid.s3.amazonaws.com",
+    "clients2.googleusercontent.com",
 ]
 
 # Logging needs to be set-up before importing the application to make sure that
