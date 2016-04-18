@@ -93,7 +93,7 @@ def operator_validator():
             log.debug('Got (%s, %s) from get_op', op, operand)
         except TypeError:
             # get_op field returns None if no operator or no match, can't be unpacked
-            raise ValidationError('Invalid input for %s' % field.label)
+            raise ValidationError("Invalid input for %s. No Operator or Match found." % field.name)
     return _validator
 
 
@@ -109,12 +109,12 @@ def version_validator():
             op, operand = get_op(field.data)
             version = MozillaVersion(operand)
         except ValueError:
-            raise ValidationError("Couldn't parse version for %s" % field.label)
+            raise ValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value" % (field.name, field.name))
         except:
-            raise ValidationError('Invalid input for %s' % field.label)
+            raise ValidationError('Invalid input for %s . No Operator or Match found.' % field.name)
         # MozillaVersion doesn't error on empty strings
         if not hasattr(version, 'version'):
-            raise ValidationError("Couldn't parse the version for %s" % field.label)
+            raise ValidationError("Couldn't parse the version for %s. No attribute 'version' was detected." % field.name)
 
     return _validator
 
