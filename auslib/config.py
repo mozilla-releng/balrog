@@ -46,13 +46,19 @@ class AUSConfig(object):
     def getDburi(self):
         return self.cfg.get('database', 'dburi')
 
-    # TODO - rewrite this for new dict format, use suffixes like this ?
-    #   download.mozilla.org:Firefox|Fennec|Thunderbird, <site>:<product>, ...
     def getDomainWhitelist(self):
+        # the config should have a format like this
+        # domain_whitelist = download.mozilla.org:Firefox|Fennec|Thunderbird, ftp.mozilla.org:SystemAddons
         try:
-            return tuple(a.strip() for a in self.cfg.get('site-specific', 'domain_whitelist').split(','))
+            d = dict()
+            pref = self.cfg.get('site-specific', 'domain_whitelist').split(', ')
+            for domain_pref in pref:
+                domain, products = domain_pref.split(':')
+                products = products.split('|')
+                d[domain] = tuple(products)
+            return d
         except (NoSectionError, NoOptionError):
-            return tuple()
+            return dict()
 
     def getCaches(self):
         caches = {}

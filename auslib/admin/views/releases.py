@@ -341,7 +341,6 @@ class ReleaseReadOnlyView(AdminView):
 
         if form.read_only.data:
             if not is_release_read_only:
-                # TODO - figure this out
                 dbo.releases.updateRelease(release, changed_by, data_version, read_only=True, transaction=transaction)
                 data_version += 1
         else:
