@@ -1,6 +1,4 @@
 balrogtest:
   build: .
-  volumes:
-    - .:/app
   entrypoint:
     - /app/scripts/test-entrypoint.sh

@@ -1,3 +1,6 @@
 #!/bin/bash
 
-docker-compose -f docker-compose-test.yml run balrogtest
+# TODO: When we can run docker-compose in Taskcluster, we should use
+# docker-compose-test.yml instead of running docker directly.
+docker build -t balrogtest .
+docker run --entrypoint /app/scripts/test-entrypoint.sh balrogtest
