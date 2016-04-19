@@ -1,6 +1,5 @@
 balrogadmin:
   build: .
-  dockerfile: Dockerfile.dev
   entrypoint:
     - bash
     - scripts/initdb_and_run.sh
@@ -27,7 +26,6 @@ balrogadmin:
 
 balrogpub:
   build: .
-  dockerfile: Dockerfile.dev
   command: public
   ports:
     - "9090:9090"
