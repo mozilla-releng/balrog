@@ -3,7 +3,9 @@ import simplejson as json
 from flask_wtf import Form
 from wtforms import StringField, IntegerField, SelectField, BooleanField
 from wtforms.widgets import TextInput, FileInput, HiddenInput
-from wtforms.validators import Required, Optional, NumberRange, Length, Regexp
+from wtforms.validators import Required, Optional, NumberRange, Length, Regexp, ValidationError
+from auslib.util.comparison import get_op
+from auslib.util.versions import MozillaVersion
 
 import logging
 log = logging.getLogger(__name__)
@@ -78,6 +80,45 @@ def NoneOrType(type_):
     return coercer
 
 
+def operator_validator():
+    log.debug('starting in operator_validator for buildID')
+
+    def _validator(form, field):
+        log.debug('starting in operator_validator: field.data is %s' % field.data)
+        # empty input is fine
+        if field.data is None:
+            return
+        try:
+            op, operand = get_op(field.data)
+            log.debug('Got (%s, %s) from get_op', op, operand)
+        except TypeError:
+            # get_op field returns None if no operator or no match, can't be unpacked
+            raise ValidationError("Invalid input for %s. No Operator or Match found." % field.name)
+    return _validator
+
+
+def version_validator():
+    log.debug('starting in version_validator for version')
+
+    def _validator(form, field):
+        log.debug('starting in version_validator: field.data is %s' % field.data)
+        # empty input
+        if field.data is None:
+            return
+        try:
+            op, operand = get_op(field.data)
+            version = MozillaVersion(operand)
+        except ValueError:
+            raise ValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value" % (field.name, field.name))
+        except:
+            raise ValidationError('Invalid input for %s . No Operator or Match found.' % field.name)
+        # MozillaVersion doesn't error on empty strings
+        if not hasattr(version, 'version'):
+            raise ValidationError("Couldn't parse the version for %s. No attribute 'version' was detected." % field.name)
+
+    return _validator
+
+
 class DbEditableForm(Form):
     data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 
@@ -109,8 +150,8 @@ class RuleForm(Form):
     mapping = SelectField('Mapping', validators=[])
     alias = NullableStringField('Alias', validators=[Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Length(0, 15)])
-    version = NullableStringField('Version', validators=[Length(0, 10)])
-    buildID = NullableStringField('BuildID', validators=[Length(0, 20)])
+    version = NullableStringField('Version', validators=[Length(0, 10), version_validator()])
+    buildID = NullableStringField('BuildID', validators=[Length(0, 20), operator_validator()])
     channel = NullableStringField('Channel', validators=[Length(0, 75)])
     locale = NullableStringField('Locale', validators=[Length(0, 200)])
     distribution = NullableStringField('Distribution', validators=[Length(0, 100)])
@@ -129,8 +170,8 @@ class EditRuleForm(DbEditableForm):
     mapping = SelectField('Mapping', validators=[Optional()], coerce=NoneOrType(unicode))
     alias = NullableStringField('Alias', validators=[Optional(), Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Optional(), Length(0, 15)])
-    version = NullableStringField('Version', validators=[Optional(), Length(0, 10)])
-    buildID = NullableStringField('BuildID', validators=[Optional(), Length(0, 20)])
+    version = NullableStringField('Version', validators=[Optional(), Length(0, 10), version_validator()])
+    buildID = NullableStringField('BuildID', validators=[Optional(), Length(0, 20), operator_validator()])
     channel = NullableStringField('Channel', validators=[Optional(), Length(0, 75)])
     locale = NullableStringField('Locale', validators=[Optional(), Length(0, 200)])
     distribution = NullableStringField('Distribution', validators=[Optional(), Length(0, 100)])
