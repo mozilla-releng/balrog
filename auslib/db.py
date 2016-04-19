@@ -1316,17 +1316,14 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             for row in table.select(where=where):
                 for k in row:
                     if query.parameters[k] != row[k]:
-                        row[k] = UnquotedStr("%s ---> %s" % (row[k], query.parameters[k]))
+                        row[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(query.parameters[k])))
                     else:
-                        row[k] = UnquotedStr("%s (unchanged)" % row[k])
+                        row[k] = UnquotedStr("%s (unchanged)" % repr(row[k]))
                 body.append(UTF8PrettyPrinter().pformat(row))
         elif type_ == "DELETE":
             body.append("Row(s) to be removed:")
             where = [c for c in query._whereclause.get_children()]
             for row in table.select(where=where):
-                for k in row:
-                    if isinstance(row[k], (unicode,)):
-                        row[k] = str(row[k])
                 body.append(UTF8PrettyPrinter().pformat(row))
         elif type_ == "INSERT":
             body.append("Row to be inserted:")
