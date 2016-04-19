@@ -1,4 +1,9 @@
 set -xe
+
+apt-get -q update
+apt-get -q --yes install mysql-client
+apt-get clean
+
 if [ ! -e /app/.cache/mysql/db.done ]; then
     sleep 30
     echo "Initializing DB..."
