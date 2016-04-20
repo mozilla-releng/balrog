@@ -40,7 +40,15 @@ cache.make_cache("blob", 500, 3600)
 cache.make_cache("blob_schema", 50, 24 * 60 * 60)
 
 dbo.setDb(os.environ["DBURI"])
-dbo.setupChangeMonitors(SYSTEM_ACCOUNTS)
+if os.environ.get("NOTIFY_TO_ADDR"):
+    dbo.setupChangeMonitors(
+        os.environ["SMTP_HOST"],
+        os.environ["SMTP_PORT"],
+        os.environ["SMTP_USERNAME"],
+        os.environ["SMTP_PASSWORD"],
+        os.environ["NOTIFY_TO_ADDR"],
+        os.environ["NOTIFY_FROM_ADDR"]
+    )
 dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["PAGE_TITLE"] = "Balrog Administration"

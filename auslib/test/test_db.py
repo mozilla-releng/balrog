@@ -229,7 +229,12 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.test.onInsert = lambda *x: shared.extend(x)
         what = {'id': 4, 'foo': 1}
         self.test.insert(changed_by='bob', **what)
-        self.assertEquals(shared, [self.test, 'bob', what])
+        # insert adds data_version to the query, so we need to add that before comparing
+        what["data_version"] = 1
+        self.assertEquals(shared[0], self.test)
+        self.assertEquals(shared[1], "INSERT")
+        self.assertEquals(shared[2], "bob")
+        self.assertEquals(shared[3].parameters, what)
 
     def testDelete(self):
         ret = self.test.delete(changed_by='bill', where=[self.test.id == 1, self.test.foo == 33],
@@ -251,7 +256,13 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.test.onDelete = lambda *x: shared.extend(x)
         where = [self.test.id == 1]
         self.test.delete(changed_by='bob', where=where, old_data_version=1)
-        self.assertEquals(shared, [self.test, 'bob', where])
+        # update adds data_version and id to the query, so we need to add that before comparing
+        self.assertEquals(shared[0], self.test)
+        self.assertEquals(shared[1], "DELETE")
+        self.assertEquals(shared[2], "bob")
+        # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
+        # to the id condition above.
+        self.assertEquals(len(shared[3]._whereclause.get_children()), 2)
 
     def testUpdate(self):
         ret = self.test.update(changed_by='bob', where=[self.test.id == 1], what=dict(foo=123),
@@ -274,7 +285,16 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         where = [self.test.id == 1]
         what = dict(foo=123)
         self.test.update(changed_by='bob', where=where, what=what, old_data_version=1)
-        self.assertEquals(shared, [self.test, 'bob', what, where])
+        # update adds data_version and id to the query, so we need to add that before comparing
+        what["data_version"] = 2
+        what["id"] = 1
+        self.assertEquals(shared[0], self.test)
+        self.assertEquals(shared[1], "UPDATE")
+        self.assertEquals(shared[2], "bob")
+        self.assertEquals(shared[3].parameters, what)
+        # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
+        # to the id condition above.
+        self.assertEquals(len(shared[3]._whereclause.get_children()), 2)
 
 
 class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileDatabaseMixin):
@@ -584,16 +604,18 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
         self.paths = self.db.rules
-        self.paths.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=2, priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=4, alias="gandalf", priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='z', data_version=1)
-        self.paths.t.insert().execute(id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z', data_version=1)
+        self.paths.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='z', data_version=1)
+        self.paths.t.insert().execute(rule_id=2, priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='z', data_version=1)
+        self.paths.t.insert().execute(rule_id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='z', data_version=1)
+        self.paths.t.insert().execute(rule_id=4, alias="gandalf", priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='z',
+                                      data_version=1)
+        self.paths.t.insert().execute(rule_id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='z', data_version=1)
+        self.paths.t.insert().execute(rule_id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
+                                      data_version=1)
         self.paths.t.insert().execute(
-            id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1)
+            rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1)
         self.paths.t.insert().execute(
-            id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1)
+            rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1)
 
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
@@ -821,9 +843,9 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
         self.rules = self.db.rules
-        self.rules.t.insert().execute(id=1, priority=100, version='>=4.0b1', backgroundRate=100, update_type='z', data_version=1)
-        self.rules.t.insert().execute(id=2, priority=100, channel='release*', backgroundRate=100, update_type='z', data_version=1)
-        self.rules.t.insert().execute(id=3, priority=100, buildID='>=20010101222222', backgroundRate=100, update_type='z', data_version=1)
+        self.rules.t.insert().execute(rule_id=1, priority=100, version='>=4.0b1', backgroundRate=100, update_type='z', data_version=1)
+        self.rules.t.insert().execute(rule_id=2, priority=100, channel='release*', backgroundRate=100, update_type='z', data_version=1)
+        self.rules.t.insert().execute(rule_id=3, priority=100, buildID='>=20010101222222', backgroundRate=100, update_type='z', data_version=1)
 
     def testGetRulesMatchingQueryVersionComparison(self):
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='>=4.0b1', update_type='z', data_version=1)]
@@ -1763,6 +1785,59 @@ class TestDB(unittest.TestCase):
         db.create()
         insp = Inspector.from_engine(db.engine)
         self.assertNotEqual(insp.get_table_names(), [])
+
+
+class PartialString(str):
+    """Super hacky way to do partial string matches in mock's assert_called_with, because
+    it doesn't provide a way to access individual arguments of a call."""
+
+    def __eq__(self, other):
+        return self in other
+
+    def __repr__(self):
+        return "Partial string of: '%s'" % self
+
+
+class TestChangeNotifiers(unittest.TestCase):
+
+    def setUp(self):
+        self.db = AUSDatabase('sqlite:///:memory:')
+        self.db.create()
+        self.db.rules.t.insert().execute(rule_id=2, priority=100, channel='release', backgroundRate=100, update_type='z', data_version=1)
+
+    def _runTest(self, changer):
+        with mock.patch("smtplib.SMTP") as smtp:
+            mock_conn = mock.Mock()
+            smtp.return_value = mock_conn
+            self.db.setupChangeMonitors("fake", 25, "fake", "fake", "fake@to.com", "fake@from.com")
+            changer()
+            return mock_conn
+
+    def testOnInsert(self):
+        def doit():
+            self.db.rules.addRule("bob", {"product": "foo", "channel": "bar", "backgroundRate": 100, "priority": 50, "update_type": "minor"})
+        mock_conn = self._runTest(doit)
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': 'bar'"))
+
+    def testOnUpdate(self):
+        def doit():
+            self.db.rules.updateRule("bob", 2, {"product": "blah"}, 1)
+        mock_conn = self._runTest(doit)
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'product': None ---> 'blah'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': u'release' (unchanged)"))
+
+    def testOnDelete(self):
+        def doit():
+            self.db.rules.deleteRule("bob", 2, 1)
+        mock_conn = self._runTest(doit)
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("DELETE"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be removed:"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'rule_id': 2"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': 'release'"))
 
 
 class TestDBUpgrade(unittest.TestCase, NamedFileDatabaseMixin):
