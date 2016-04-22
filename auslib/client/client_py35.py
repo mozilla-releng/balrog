@@ -9,6 +9,7 @@ headers = {
     "Content-Type": "application/json",
 }
 
+
 def get_url(api_root, path):
     return api_root.rstrip("/") + path
 

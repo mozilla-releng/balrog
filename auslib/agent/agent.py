@@ -7,7 +7,7 @@ def is_ready(change, current_uptake=None):
         if time.now() > change.when:
             return True
     elif change.type == "uptake":
-        if current_uptake >= change.telemetry_uptake
+        if current_uptake >= change.telemetry_uptake:
             return True
 
     return False
