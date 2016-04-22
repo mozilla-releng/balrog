@@ -41,11 +41,16 @@ balrogpub:
     - balrogdb
 
 balrogagent:
-  build: https://github.com/bhearsum/balrogagent
+  build: ./agent
   volumes:
-    - .:/app
+    - ./agent:/app
   links:
     - balrogadmin
+  environment:
+    - BALROG_API_ROOT=http://balrogadmin:8080
+    - BALROG_USERNAME=balrogadmin
+    - BALROG_PASSWORD=balrogadmin
+    - TELEMETRY_API_ROOT=abc
 
 balrogdb:
   image: mysql:5.7

@@ -36,25 +36,12 @@ def run_agent(balrog_api_root, balrog_username, balrog_password, telemetry_api_r
 
 
 def main():
-    import configargparse
-    import daemonize
-    import functools
+    import os
 
-    parser = configargparse.ArgParser(description="Balrog Agent", default_config_files=["balrog_agent.ini"])
-    parser.add_argument("--balrog-api-root", required=True)
-    parser.add_argument("--balrog-username", required=True)
-    parser.add_argument("--balrog-password", required=True)
-    parser.add_argument("-t", "--telemetry-api-root", required=True)
-
-    args = parser.parse_args()
-
-    runner = functools.partial(
-        run_agent,
-        args.balrog_api_root, args.balrog_username, args.balrog_password,
-        args.telemetry_api_root
+    run_agent(
+        os.environ["BALROG_API_ROOT"], os.environ["BALROG_USERNAME"], os.environ["BALROG_PASSWORD"],
+        os.environ["TELEMETRY_API_ROOT"]
     )
-    daemon = daemonize.Daemonize(app="balrog_agent", pid="balrog_agent.pid", action=runner, foreground=True)
-    daemon.start()
 
 
 if __name__ == "__main__":
