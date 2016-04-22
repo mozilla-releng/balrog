@@ -40,6 +40,13 @@ balrogpub:
   links:
     - balrogdb
 
+balrogagent:
+  build: https://github.com/bhearsum/balrogagent
+  volumes:
+    - .:/app
+  links:
+    - balrogadmin
+
 balrogdb:
   image: mysql:5.7
   expose:
