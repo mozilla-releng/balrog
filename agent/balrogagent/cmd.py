@@ -12,9 +12,9 @@ __version__ = 0.1
 async def get_telemetry_uptake(*args):
     pass
 
-async def is_ready(change):
+
+def is_ready(change, current_uptake=None):
     if change["type"] == "uptake":
-        current_uptake = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"])
         if current_uptake >= change["telemetry_uptake"]:
             return True
     elif change["type"] == "time":
@@ -33,7 +33,10 @@ async def run_agent(balrog_api_root, balrog_username, balrog_password, telemetry
     while True:
         with aiohttp.ClientSession(loop=loop) as session:
             for change in await client.request(session, balrog_api_root, "/scheduled_changes/rules", auth=auth):
-                if await is_ready(change):
+                current_uptake = None
+                if change["type"] == "uptake":
+                    current_uptake = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"])
+                if is_ready(change, current_uptake):
                     await client.request(session, balrog_api_root, "/scheduled_changes/rules/{}".format(change["sc_id"]), method="POST", auth=auth)
 
         time.sleep(sleeptime)
