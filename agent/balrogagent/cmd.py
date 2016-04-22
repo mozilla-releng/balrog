@@ -1,38 +1,42 @@
+import aiohttp
+import asyncio
 import logging
 import time
+
+from . import client
 
 
 __version__ = 0.1
 
 
-def get_telemetry_uptake(uri, product, channel):
+async def get_telemetry_uptake(*args):
     pass
 
-
-def is_ready(change, current_uptake=None):
-    if change.type == "time":
-        if time.now() > change.when:
+async def is_ready(change):
+    if change["type"] == "uptake":
+        current_uptake = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"])
+        if current_uptake >= change["telemetry_uptake"]:
             return True
-    elif change.type == "uptake":
-        if current_uptake >= change.telemetry_uptake:
+    elif change["type"] == "time":
+        if time.now() > change["when"]:
             return True
+    else:
+        logging.warning("Unknown change type!")
 
     return False
 
 
-def run_agent(balrog_api_root, balrog_username, balrog_password, telemetry_api_root, sleeptime=30):
+async def run_agent(balrog_api_root, balrog_username, balrog_password, telemetry_api_root, sleeptime=30):
+    auth = asyncio.BasicAuth(balrog_username, balrog_password)
+    loop = asyncio.get_loop()
+
     while True:
-        logging.warning("doing stuff")
+        with aiohttp.ClientSession(loop=loop) as session:
+            for change in await client.request(session, balrog_api_root, "/scheduled_changes/rules", auth=auth):
+                if await is_ready(change):
+                    await client.request(session, balrog_api_root, "/scheduled_changes/rules/{}".format(change["sc_id"]), method="POST", auth=auth)
+
         time.sleep(sleeptime)
-#    scheduled_change_client = ScheduledChangesAPI(balrog_api_root, balrog_api_auth)
-#    telemetry_client = TelemetryClient(telemetry_api_root)
-#
-#    for change in scheduled_change_client.get_changes():
-#        current_uptake = None
-#        if change.type == "uptake":
-#            current_uptake = telemetry_client.get_uptake(change.telemetry_product, change.telemetry_channel)
-#        if is_ready(change):
-#            scheduled_change_client.enact_change(change)
 
 
 def main():
