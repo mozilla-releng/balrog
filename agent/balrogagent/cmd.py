@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import logging
 import time
+import traceback
 
 from . import client
 
@@ -26,28 +27,37 @@ def is_ready(change, current_uptake=None):
     return False
 
 
-async def run_agent(balrog_api_root, balrog_username, balrog_password, telemetry_api_root, sleeptime=30):
-    auth = asyncio.BasicAuth(balrog_username, balrog_password)
-    loop = asyncio.get_loop()
+async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, telemetry_api_root, sleeptime=30):
+    auth = aiohttp.BasicAuth(balrog_username, balrog_password)
 
     while True:
-        with aiohttp.ClientSession(loop=loop) as session:
-            for change in await client.request(session, balrog_api_root, "/scheduled_changes/rules", auth=auth):
-                current_uptake = None
-                if change["type"] == "uptake":
-                    current_uptake = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"])
-                if is_ready(change, current_uptake):
-                    await client.request(session, balrog_api_root, "/scheduled_changes/rules/{}".format(change["sc_id"]), method="POST", auth=auth)
+        try:
+            with aiohttp.ClientSession(loop=loop) as session:
+                for change in await client.request(session, balrog_api_root, "/scheduled_changes/rules", auth=auth):
+                    current_uptake = None
+                    if change["type"] == "uptake":
+                        current_uptake = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"])
+                    if is_ready(change, current_uptake):
+                        await client.request(session, balrog_api_root, "/scheduled_changes/rules/{}".format(change["sc_id"]), method="POST", auth=auth)
 
-        time.sleep(sleeptime)
+            time.sleep(sleeptime)
+        except:
+            logging.error(traceback.format_exc())
+            time.sleep(sleeptime)
 
 
 def main():
     import os
 
-    run_agent(
-        os.environ["BALROG_API_ROOT"], os.environ["BALROG_USERNAME"], os.environ["BALROG_PASSWORD"],
-        os.environ["TELEMETRY_API_ROOT"]
+    logging.basicConfig(level=logging.DEBUG)
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(
+        run_agent(
+            loop,
+            os.environ["BALROG_API_ROOT"], os.environ["BALROG_USERNAME"], os.environ["BALROG_PASSWORD"],
+            os.environ["TELEMETRY_API_ROOT"]
+        )
     )
 
 

@@ -6,6 +6,8 @@ balrogadmin:
   command: admin-dev
   ports:
     - "8080:8080"
+  expose:
+    - "8080"
   volumes:
     - .:/app
   links:
@@ -47,7 +49,7 @@ balrogagent:
   links:
     - balrogadmin
   environment:
-    - BALROG_API_ROOT=http://balrogadmin:8080
+    - BALROG_API_ROOT=http://balrogadmin:8080/api
     - BALROG_USERNAME=balrogadmin
     - BALROG_PASSWORD=balrogadmin
     - TELEMETRY_API_ROOT=abc
