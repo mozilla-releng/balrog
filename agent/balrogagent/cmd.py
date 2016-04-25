@@ -33,14 +33,15 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
     while True:
         try:
             with aiohttp.ClientSession(loop=loop) as session:
+                # TODO: switch this to a HEAD after https://github.com/KeepSafe/aiohttp/issues/852 is released
+                csrf_token = await client.request(session, balrog_api_root, "/csrf_token", method="GET", auth=auth)["csrf_token"]
                 for change in await client.request(session, balrog_api_root, "/scheduled_changes/rules", auth=auth):
                     current_uptake = None
                     if change["type"] == "uptake":
+                        # TODO: probably replace this with a simple client.request()...
                         current_uptake = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"])
                     if is_ready(change, current_uptake):
-                        # TODO: switch this to a HEAD after https://github.com/KeepSafe/aiohttp/issues/852 is released
-                        resp = await client.request(session, balrog_api_root, "/csrf_token", method="GET", auth=auth)
-                        data = {"csrf_token": resp["csrf_token"]}
+                        data = {"csrf_token": csrf_token}
                         await client.request(session, balrog_api_root, "/scheduled_changes/rules/{}".format(change["sc_id"]), method="POST", data=data, auth=auth)
 
             time.sleep(sleeptime)
