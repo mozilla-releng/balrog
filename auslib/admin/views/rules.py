@@ -308,3 +308,35 @@ class SingleRuleColumnView(AdminView):
             column: column_values,
         }
         return jsonify(ret)
+
+
+class RulesGridView(AdminView):
+    """ /api/rules/columns/all/rules_grid """
+
+    def get(self):
+        srcv = SingleRuleColumnView()
+        ch_response = srcv.get("channel")
+        ch_list = json.loads(ch_response.data, encoding=ch_response.charset)['channel']
+        pr_response = srcv.get("product")
+        pr_list = json.loads(pr_response.data, encoding=pr_response.charset)['product']
+
+        rules = dbo.rules.getOrderedRules()
+        ret = []
+        count = 0
+
+        for pr in pr_list:
+            ret_entry = {}
+            pr_rules = [rule for rule in rules if rule['product'] == pr]
+            rules = [rule for rule in rules if rule['product'] != pr]
+            for ch in ch_list:
+                ch_rules = [rule['mapping'] for rule in pr_rules if rule['channel'] == ch]
+                pr_rules = [rule for rule in pr_rules if rule['channel'] != ch]
+                ret_entry.update({ch: ch_rules})
+            ret.append(ret_entry)
+            count += 1
+
+        ret = {
+            'count': count,
+            'rules': ret,
+        }
+        return jsonify(ret)

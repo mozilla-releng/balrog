@@ -13,7 +13,8 @@ from auslib.admin.views.releases import SingleLocaleView, \
     SingleReleaseView, ReleaseHistoryView, \
     ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView
 from auslib.admin.views.rules import RulesAPIView, \
-    SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView
+    SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView, \
+    RulesGridView
 from auslib.admin.views.history import DiffView, FieldView
 from auslib.dockerflow import create_dockerflow_endpoints
 
@@ -52,6 +53,7 @@ app.add_url_rule("/rules", view_func=RulesAPIView.as_view("rules"))
 # Normal operations (get/update/delete) on rules can be done by id or alias...
 app.add_url_rule("/rules/<id_or_alias>", view_func=SingleRuleView.as_view("rule"))
 app.add_url_rule("/rules/columns/<column>", view_func=SingleRuleColumnView.as_view("rule_columns"))
+app.add_url_rule("/rules/columns/all/rules_grid", view_func=RulesGridView.as_view("rules_grid"))
 # ...but anything to do with history must be done by id, beacuse alias may change over time
 app.add_url_rule("/rules/<int:rule_id>/revisions", view_func=RuleHistoryAPIView.as_view("rules_revisions"))
 app.add_url_rule("/releases", view_func=ReleasesAPIView.as_view("releases"))
