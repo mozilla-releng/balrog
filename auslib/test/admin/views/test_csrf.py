@@ -1,3 +1,5 @@
+import json
+
 import flask_wtf.form
 
 from auslib.admin.base import app
@@ -13,7 +15,7 @@ class TestCSRFEndpoint(ViewTest):
         # with this class for some reason....
 
         def g(self, x):
-            return 111
+            return "111"
         self.old_generate_csrf_token = flask_wtf.form.Form.generate_csrf_token
         flask_wtf.form.Form.generate_csrf_token = g
 
@@ -25,3 +27,5 @@ class TestCSRFEndpoint(ViewTest):
         ret = self.client.get('/csrf_token')
         self.assertEquals(ret.status_code, 200)
         self.assertEquals(ret.headers['X-CSRF-Token'], '111')
+        data = json.loads(ret.data)
+        self.assertEquals(data["csrf_token"], "111")
