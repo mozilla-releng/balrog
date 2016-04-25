@@ -16,6 +16,7 @@ def get_url(api_root, path):
 async def request(session, api_root, path, method="GET", data=None, auth=None):
     if auth:
         auth = aiohttp.BasicAuth(*auth)
+    # todo: move this out
     url = get_url(api_root, path)
     if data:
         data = data.copy()
