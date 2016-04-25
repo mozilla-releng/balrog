@@ -40,5 +40,3 @@ Werkzeug==0.11.2 \
 #    --hash=sha256:eb4f98994b40a8e2edce289e811c9a38880ae53eb9ff6f031d0e243a69b0fcbf --hash=sha256:b6a93e909b31e3e14659584ff7329864275905ddc1b8653861bdfe1e597250f4
 wtforms==2.1 \
 #    --hash=sha256:ffdf10bd1fa565b8233380cb77a304cd36fd55c73023e91d4b803c96bc11d46f
-daemonize
-configargparse
