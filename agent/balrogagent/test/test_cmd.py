@@ -70,5 +70,5 @@ class TestIsReady(unittest.TestCase):
             t.return_value = 498
             self.assertFalse(cmd.is_ready(change))
 
-    def testUnknownChangeType(self):
-    def testCantDetectType(self):
+#    def testUnknownChangeType(self):
+#    def testCantDetectType(self):

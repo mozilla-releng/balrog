@@ -41,10 +41,10 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     data = {"csrf_token": csrf_token}
                     await client.request(balrog_api_root, "/scheduled_changes/rules/{}".format(change["sc_id"]), method="POST", data=data, auth=auth, loop=loop)
 
-            time.sleep(sleeptime)
+            await asyncio.sleep(sleeptime)
         except:
             logging.error(traceback.format_exc())
-            time.sleep(sleeptime)
+            await asyncio.sleep(sleeptime)
 
 
 def main():
