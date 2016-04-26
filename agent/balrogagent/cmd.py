@@ -15,12 +15,10 @@ async def get_telemetry_uptake(*args):
 
 
 def is_ready(change, current_uptake=None):
-    if change["type"] == "uptake":
-        if current_uptake >= change["telemetry_uptake"]:
-            return True
-    elif change["type"] == "time":
-        if time.now() > change["when"]:
-            return True
+    if change.get("telemetry_uptake") and current_uptake >= change["telemetry_uptake"]:
+        return True
+    elif change.get("when") and time.time() >= change["when"]:
+        return True
     else:
         logging.warning("Unknown change type!")
 
