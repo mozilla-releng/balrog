@@ -1,6 +1,7 @@
 from collections import defaultdict
 from copy import copy
 from os import path
+import pprint
 import re
 import simplejson as json
 import sys
@@ -147,20 +148,18 @@ class AUSTable(object):
                          updates.
        @type versioned: bool
        @param onInsert: A callback that will be called whenever an insert is
-                        made to the table. It must accept the following 2
+                        made to the table. It must accept the following 4
                         parameters:
+                         * The table object the query is being performed on
+                         * The type of query being performed (eg: INSERT)
                          * The name of the user making the change
-                         * The row data that will be inserted
+                         * The query object that will be execeuted
                         If the callback raises an exception the change will
                         be aborted.
        @type onInsert: callable
-       @param onDelete: Like onInsert, but the second argument that the callable
-                        receives will be the conditions used in deciding which
-                        rows to delete, rather than row data.
+       @param onDelete: See onInsert
        @type onDelete: callable
-       @param onUpdate: Like onInsert, but the callable must support an
-                        addition parameter:
-                         * The conditions used in deciding which rows to update
+       @param onUpdate: See onInsert
        @type onUpdate: callable
     """
 
@@ -262,6 +261,10 @@ class AUSTable(object):
         if self.versioned:
             data['data_version'] = 1
         query = self._insertStatement(**data)
+
+        if self.onInsert:
+            self.onInsert(self, "INSERT", changed_by, query)
+
         ret = trans.execute(query)
         if self.history:
             for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
@@ -284,9 +287,6 @@ class AUSTable(object):
         """
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
-
-        if self.onInsert:
-            self.onInsert(self, changed_by, columns)
 
         if transaction:
             return self._prepareInsert(transaction, changed_by, **columns)
@@ -324,6 +324,10 @@ class AUSTable(object):
             where.append(self.data_version == old_data_version)
 
         query = self._deleteStatement(where)
+
+        if self.onDelete:
+            self.onDelete(self, "DELETE", changed_by, query)
+
         ret = trans.execute(query)
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to delete row, old_data_version doesn't match current data_version")
@@ -352,9 +356,6 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("old_data_version must be passed for Tables that are versioned")
-
-        if self.onDelete:
-            self.onDelete(self, changed_by, where)
 
         if transaction:
             return self._prepareDelete(transaction, where, changed_by, old_data_version)
@@ -396,6 +397,10 @@ class AUSTable(object):
             row[col] = what[col]
 
         query = self._updateStatement(where, row)
+
+        if self.onUpdate:
+            self.onUpdate(self, "UPDATE", changed_by, query)
+
         ret = trans.execute(query)
         if self.history:
             trans.execute(self.history.forUpdate(row, changed_by))
@@ -424,9 +429,6 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("update: old_data_version must be passed for Tables that are versioned")
-
-        if self.onUpdate:
-            self.onUpdate(self, changed_by, what, where)
 
         if transaction:
             return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
@@ -1288,23 +1290,68 @@ class Permissions(AUSTable):
         return True
 
 
-# TODO: replace these with e-mails about rules/permissions changes?
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1251338
-def getHumanModificationMonitors(systemAccounts):
-    # Long lines from "what" get truncated to avoid printing out massive
-    # release blobs ty the logs.
-    def onInsert(table, who, what):
-        if who not in systemAccounts:
-            pass
+class UTF8PrettyPrinter(pprint.PrettyPrinter):
+    """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
+    Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
+    def format(self, object, context, maxlevels, level):
+        if isinstance(object, unicode):
+            return pprint._safe_repr(object.encode('utf8'), context, maxlevels, level)
+        return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 
-    def onDelete(table, who, where):
-        if who not in systemAccounts:
-            pass
 
-    def onUpdate(table, who, where, what):
-        if who not in systemAccounts:
-            pass
-    return onInsert, onDelete, onUpdate
+class UnquotedStr(str):
+    def __repr__(self):
+        return self.__str__()
+
+
+def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
+    from email.mime.text import MIMEText
+    from smtplib import SMTP
+
+    def bleet(table, type_, changed_by, query):
+        body = ["Changed by: %s" % changed_by]
+        if type_ == "UPDATE":
+            body.append("Row(s) to be updated as follows:")
+            where = [c for c in query._whereclause.get_children()]
+            for row in table.select(where=where):
+                for k in row:
+                    if query.parameters[k] != row[k]:
+                        row[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(query.parameters[k])))
+                    else:
+                        row[k] = UnquotedStr("%s (unchanged)" % repr(row[k]))
+                body.append(UTF8PrettyPrinter().pformat(row))
+        elif type_ == "DELETE":
+            body.append("Row(s) to be removed:")
+            where = [c for c in query._whereclause.get_children()]
+            for row in table.select(where=where):
+                body.append(UTF8PrettyPrinter().pformat(row))
+        elif type_ == "INSERT":
+            body.append("Row to be inserted:")
+            body.append(UTF8PrettyPrinter().pformat(query.parameters))
+
+        msg = MIMEText("\n".join(body), "plain")
+        msg["Subject"] = "%s to %s detected" % (type_, table.t.name)
+        msg["from"] = from_addr
+
+        table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
+        try:
+            conn = SMTP()
+            conn.connect(relayhost, port)
+            conn.ehlo()
+            conn.starttls()
+            conn.ehlo()
+        except:
+            table.log.exception("Failed to connect to SMTP server:")
+            return
+        try:
+            conn.login(username, password)
+            conn.sendmail(from_addr, to_addr, msg.as_string())
+        except:
+            table.log.exception("Failed to send change notification:")
+        finally:
+            conn.quit()
+
+    return bleet
 
 
 # A helper that sets sql_mode. This should only be used with MySQL, and
@@ -1349,11 +1396,17 @@ class AUSDatabase(object):
         self.permissionsTable = Permissions(self.metadata, dialect)
         self.metadata.bind = self.engine
 
-    def setupChangeMonitors(self, systemAccounts):
-        self.releases.onInsert, self.releases.onDelete, self.releases.onUpdate = getHumanModificationMonitors(systemAccounts)
-
     def setDomainWhitelist(self, domainWhitelist):
         self.releasesTable.setDomainWhitelist(domainWhitelist)
+
+    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr):
+        bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr)
+        self.rules.onInsert = bleeter
+        self.rules.onUpdate = bleeter
+        self.rules.onDelete = bleeter
+        self.permissions.onInsert = bleeter
+        self.permissions.onUpdate = bleeter
+        self.permissions.onDelete = bleeter
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,

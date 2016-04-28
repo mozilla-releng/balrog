@@ -13,7 +13,9 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && tox"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh"
+      features:
+        dind: true
     extra:
       github:
         env: true

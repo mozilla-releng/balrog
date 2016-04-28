@@ -17,7 +17,11 @@ COPY auslib/ /app/auslib/
 COPY ui/ /app/ui/
 COPY uwsgi/ /app/uwsgi/
 COPY scripts/ /app/scripts/
-COPY setup.py version.json /app/
+COPY MANIFEST.in setup.py version.json /app/
+# These files are only needed for CI, but they're not very big so we may as
+# well just include them here to avoid forking the Dockerfile.
+COPY .coveragerc requirements-test.txt run-tests.sh tox.ini version.txt /app/
+COPY aus-data-snapshots/ /app/aus-data-snapshots/
 
 ENTRYPOINT ["/app/uwsgi/run.sh"]
 CMD ["public"]
