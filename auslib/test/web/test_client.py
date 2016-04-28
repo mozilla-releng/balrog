@@ -4,7 +4,6 @@ from tempfile import mkstemp
 import unittest
 from xml.dom import minidom
 
-import auslib.log
 from auslib.global_state import dbo
 from auslib.web.base import app
 from auslib.web.views.client import ClientRequestView
@@ -25,7 +24,6 @@ class ClientTestBase(unittest.TestCase):
         app.error_handler_spec = cls.error_spec
 
     def setUp(self):
-        self.cef_fd, self.cef_file = mkstemp()
         self.version_fd, self.version_file = mkstemp()
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
@@ -44,7 +42,6 @@ class ClientTestBase(unittest.TestCase):
         dbo.setDomainWhitelist(('a.com', 'boring.com'))
         self.client = app.test_client()
         self.view = ClientRequestView()
-        auslib.log.cef_config = auslib.log.get_cef_config(self.cef_file)
         dbo.rules.t.insert().execute(backgroundRate=100, mapping='b', update_type='minor', product='b', data_version=1)
         dbo.releases.t.insert().execute(name='b', product='b', data_version=1, data="""
 {
@@ -219,8 +216,6 @@ class ClientTestBase(unittest.TestCase):
 """)
 
     def tearDown(self):
-        os.close(self.cef_fd)
-        os.remove(self.cef_file)
         os.close(self.version_fd)
         os.remove(self.version_file)
 

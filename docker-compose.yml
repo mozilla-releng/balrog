@@ -1,6 +1,5 @@
 balrogadmin:
   build: .
-  dockerfile: Dockerfile.dev
   entrypoint:
     - bash
     - scripts/initdb_and_run.sh
@@ -15,10 +14,18 @@ balrogadmin:
     - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
     - SECRET_KEY=blahblah
     - PORT=8080
+    - LOG_FORMAT=plain
+    - LOG_LEVEL=DEBUG
+    # Grab mail information from the local environment
+    - SMTP_HOST
+    - SMTP_PORT
+    - SMTP_USERNAME
+    - SMTP_PASSWORD
+    - NOTIFY_TO_ADDR
+    - NOTIFY_FROM_ADDR
 
 balrogpub:
   build: .
-  dockerfile: Dockerfile.dev
   command: public
   ports:
     - "9090:9090"
@@ -28,6 +35,8 @@ balrogpub:
     - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
     - SECRET_KEY=blahblah
     - PORT=9090
+    - LOG_FORMAT=plain
+    - LOG_LEVEL=DEBUG
   links:
     - balrogdb
 

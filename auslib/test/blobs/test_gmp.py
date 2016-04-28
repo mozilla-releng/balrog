@@ -1,4 +1,3 @@
-import mock
 import unittest
 from xml.dom import minidom
 
@@ -182,9 +181,6 @@ class TestSchema1Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        with mock.patch("auslib.AUS.cef_event") as c:
-            # We don't need to use the mock, but this shuts up pyflakes
-            assert c
-            returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-            returned = minidom.parseString(returned)
-            self.assertEqual(returned.getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = minidom.parseString(returned)
+        self.assertEqual(returned.getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')

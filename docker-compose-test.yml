@@ -1,0 +1,4 @@
+balrogtest:
+  build: .
+  entrypoint:
+    - /app/scripts/test-entrypoint.sh

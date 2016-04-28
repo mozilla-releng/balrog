@@ -1,13 +1,14 @@
 from collections import defaultdict
 from copy import copy
 from os import path
+import pprint
 import re
 import simplejson as json
 import sys
 import time
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger
+    create_engine, select, BigInteger, Boolean, join
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 import sqlalchemy.types
@@ -18,7 +19,6 @@ import migrate.versioning.api
 from auslib.global_state import cache, dbo
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import createBlob
-from auslib.log import cef_event, CEF_ALERT
 from auslib.util.comparison import string_compare, version_compare
 
 import logging
@@ -63,6 +63,10 @@ class WrongNumberOfRowsError(SQLAlchemyError):
 
 class UpdateMergeError(SQLAlchemyError):
     pass
+
+
+class ReadOnlyError(SQLAlchemyError):
+    """Raised when a release marked as read-only is attempted to be changed."""
 
 
 class AUSTransaction(object):
@@ -156,20 +160,18 @@ class AUSTable(object):
                                  tracks the history of a scheduled change.
        @type scheduled_changes: bool
        @param onInsert: A callback that will be called whenever an insert is
-                        made to the table. It must accept the following 2
+                        made to the table. It must accept the following 4
                         parameters:
+                         * The table object the query is being performed on
+                         * The type of query being performed (eg: INSERT)
                          * The name of the user making the change
-                         * The row data that will be inserted
+                         * The query object that will be execeuted
                         If the callback raises an exception the change will
                         be aborted.
        @type onInsert: callable
-       @param onDelete: Like onInsert, but the second argument that the callable
-                        receives will be the conditions used in deciding which
-                        rows to delete, rather than row data.
+       @param onDelete: See onInsert
        @type onDelete: callable
-       @param onUpdate: Like onInsert, but the callable must support an
-                        addition parameter:
-                         * The conditions used in deciding which rows to update
+       @param onUpdate: See onInsert
        @type onUpdate: callable
     """
 
@@ -276,6 +278,10 @@ class AUSTable(object):
         if self.versioned:
             data['data_version'] = 1
         query = self._insertStatement(**data)
+
+        if self.onInsert:
+            self.onInsert(self, "INSERT", changed_by, query)
+
         ret = trans.execute(query)
         if self.history:
             for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
@@ -298,9 +304,6 @@ class AUSTable(object):
         """
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
-
-        if self.onInsert:
-            self.onInsert(self, changed_by, columns)
 
         if transaction:
             return self._prepareInsert(transaction, changed_by, **columns)
@@ -338,6 +341,10 @@ class AUSTable(object):
             where.append(self.data_version == old_data_version)
 
         query = self._deleteStatement(where)
+
+        if self.onDelete:
+            self.onDelete(self, "DELETE", changed_by, query)
+
         ret = trans.execute(query)
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to delete row, old_data_version doesn't match current data_version")
@@ -366,9 +373,6 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("old_data_version must be passed for Tables that are versioned")
-
-        if self.onDelete:
-            self.onDelete(self, changed_by, where)
 
         if transaction:
             return self._prepareDelete(transaction, where, changed_by, old_data_version)
@@ -412,6 +416,10 @@ class AUSTable(object):
             new_row[col] = what[col]
 
         query = self._updateStatement(where, new_row)
+
+        if self.onUpdate:
+            self.onUpdate(self, "UPDATE", changed_by, query)
+
         ret = trans.execute(query)
         if self.history:
             trans.execute(self.history.forUpdate(new_row, changed_by))
@@ -443,9 +451,6 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("update: old_data_version must be passed for Tables that are versioned")
-
-        if self.onUpdate:
-            self.onUpdate(self, changed_by, what, where)
 
         if transaction:
             return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
@@ -1056,6 +1061,7 @@ class Releases(AUSTable):
         self.table = Table('releases', metadata,
                            Column('name', String(100), primary_key=True),
                            Column('product', String(15), nullable=False),
+                           Column('read_only', Boolean, default=False),
                            )
         if dialect == 'mysql':
             from sqlalchemy.dialects.mysql import LONGTEXT
@@ -1134,8 +1140,22 @@ class Releases(AUSTable):
         if nameOnly:
             column = [self.name]
         else:
-            column = [self.name, self.product, self.data_version]
+            column = [self.name, self.product, self.data_version, self.read_only]
+
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
+
+        if not nameOnly:
+            j = join(dbo.releases.t, dbo.rules.t, ((dbo.releases.name == dbo.rules.mapping) | (dbo.releases.name == dbo.rules.whitelist)))
+            ref_list = select([dbo.releases.name, dbo.rules.rule_id]).select_from(j).execute().fetchall()
+
+            for row in rows:
+                refs = [ref for ref in ref_list if ref[0] == row['name']]
+                ref_list = [ref for ref in ref_list if ref[0] != row['name']]
+                if len(refs) > 0:
+                    row['rule_ids'] = [ref[1] for ref in refs]
+                else:
+                    row['rule_ids'] = []
+
         return rows
 
     def getReleaseNames(self, **kwargs):
@@ -1205,8 +1225,12 @@ class Releases(AUSTable):
         cache.put("blob_version", name, 1)
         return ret.inserted_primary_key[0]
 
-    def updateRelease(self, name, changed_by, old_data_version, product=None, blob=None, transaction=None):
+    def updateRelease(self, name, changed_by, old_data_version, product=None, read_only=None, blob=None, transaction=None):
+        if product or blob:
+            self._proceedIfNotReadOnly(name, transaction=transaction)
         what = {}
+        if read_only is not None:
+            what['read_only'] = read_only
         if product:
             what['product'] = product
         if blob:
@@ -1230,6 +1254,7 @@ class Releases(AUSTable):
            validated before commiting it, and a ValueError is raised if it is
            invalid.
         """
+        self._proceedIfNotReadOnly(name, transaction=transaction)
         releaseBlob = self.getReleaseBlob(name, transaction=transaction)
         if 'platforms' not in releaseBlob:
             releaseBlob['platforms'] = {}
@@ -1280,10 +1305,21 @@ class Releases(AUSTable):
             return False
 
     def deleteRelease(self, changed_by, name, old_data_version, transaction=None):
+        self._proceedIfNotReadOnly(name, transaction=transaction)
         where = [self.name == name]
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
         cache.invalidate("blob", name)
         cache.invalidate("blob_version", name)
+
+    def isReadOnly(self, name, limit=None, transaction=None):
+        where = [self.name == name]
+        column = [self.read_only]
+        row = self.select(where=where, columns=column, limit=limit, transaction=transaction)[0]
+        return row['read_only']
+
+    def _proceedIfNotReadOnly(self, name, limit=None, transaction=None):
+        if self.isReadOnly(name, limit, transaction):
+            raise ReadOnlyError("Release '%s' is read only" % name)
 
 
 class Permissions(AUSTable):
@@ -1301,6 +1337,7 @@ class Permissions(AUSTable):
         '/releases/:name': ['method', 'product'],
         '/releases/:name/revisions': ['product'],
         '/releases/:name/builds/:platform/:locale': ['method', 'product'],
+        '/releases/:name/read_only': ['method', 'product'],
         '/rules': ['method', 'product'],
         '/rules/:id': ['method', 'product'],
         '/rules/:id/revisions': ['product'],
@@ -1446,21 +1483,68 @@ class Permissions(AUSTable):
         return True
 
 
-def getHumanModificationMonitors(systemAccounts):
-    # Long lines from "what" get truncated to avoid printing out massive
-    # release blobs ty the logs.
-    def onInsert(table, who, what):
-        if who not in systemAccounts:
-            cef_event('Human modification', CEF_ALERT, user=who, what=what, table=table.name, type='insert')
+class UTF8PrettyPrinter(pprint.PrettyPrinter):
+    """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
+    Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
+    def format(self, object, context, maxlevels, level):
+        if isinstance(object, unicode):
+            return pprint._safe_repr(object.encode('utf8'), context, maxlevels, level)
+        return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 
-    def onDelete(table, who, where):
-        if who not in systemAccounts:
-            cef_event('Human modification', CEF_ALERT, user=who, where=where, table=table.name, type='delete')
 
-    def onUpdate(table, who, where, what):
-        if who not in systemAccounts:
-            cef_event('Human modification', CEF_ALERT, user=who, what=what, where=where, table=table.name, type='update')
-    return onInsert, onDelete, onUpdate
+class UnquotedStr(str):
+    def __repr__(self):
+        return self.__str__()
+
+
+def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
+    from email.mime.text import MIMEText
+    from smtplib import SMTP
+
+    def bleet(table, type_, changed_by, query):
+        body = ["Changed by: %s" % changed_by]
+        if type_ == "UPDATE":
+            body.append("Row(s) to be updated as follows:")
+            where = [c for c in query._whereclause.get_children()]
+            for row in table.select(where=where):
+                for k in row:
+                    if query.parameters[k] != row[k]:
+                        row[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(query.parameters[k])))
+                    else:
+                        row[k] = UnquotedStr("%s (unchanged)" % repr(row[k]))
+                body.append(UTF8PrettyPrinter().pformat(row))
+        elif type_ == "DELETE":
+            body.append("Row(s) to be removed:")
+            where = [c for c in query._whereclause.get_children()]
+            for row in table.select(where=where):
+                body.append(UTF8PrettyPrinter().pformat(row))
+        elif type_ == "INSERT":
+            body.append("Row to be inserted:")
+            body.append(UTF8PrettyPrinter().pformat(query.parameters))
+
+        msg = MIMEText("\n".join(body), "plain")
+        msg["Subject"] = "%s to %s detected" % (type_, table.t.name)
+        msg["from"] = from_addr
+
+        table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
+        try:
+            conn = SMTP()
+            conn.connect(relayhost, port)
+            conn.ehlo()
+            conn.starttls()
+            conn.ehlo()
+        except:
+            table.log.exception("Failed to connect to SMTP server:")
+            return
+        try:
+            conn.login(username, password)
+            conn.sendmail(from_addr, to_addr, msg.as_string())
+        except:
+            table.log.exception("Failed to send change notification:")
+        finally:
+            conn.quit()
+
+    return bleet
 
 
 # A helper that sets sql_mode. This should only be used with MySQL, and
@@ -1505,11 +1589,17 @@ class AUSDatabase(object):
         self.permissionsTable = Permissions(self.metadata, dialect)
         self.metadata.bind = self.engine
 
-    def setupChangeMonitors(self, systemAccounts):
-        self.releases.onInsert, self.releases.onDelete, self.releases.onUpdate = getHumanModificationMonitors(systemAccounts)
-
     def setDomainWhitelist(self, domainWhitelist):
         self.releasesTable.setDomainWhitelist(domainWhitelist)
+
+    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr):
+        bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr)
+        self.rules.onInsert = bleeter
+        self.rules.onUpdate = bleeter
+        self.rules.onDelete = bleeter
+        self.permissions.onInsert = bleeter
+        self.permissions.onUpdate = bleeter
+        self.permissions.onDelete = bleeter
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,

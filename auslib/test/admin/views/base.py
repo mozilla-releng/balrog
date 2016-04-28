@@ -5,7 +5,6 @@ import unittest
 
 from auslib.global_state import dbo, cache
 from auslib.admin.base import app
-import auslib.log
 
 
 class ViewTest(unittest.TestCase):
@@ -13,7 +12,6 @@ class ViewTest(unittest.TestCase):
        some helper methods."""
 
     def setUp(self):
-        self.cef_fd, self.cef_file = mkstemp()
         self.version_fd, self.version_file = mkstemp()
         cache.reset()
         cache.make_copies = True
@@ -30,13 +28,13 @@ class ViewTest(unittest.TestCase):
   "commit":"abcdef123456"
 }
 """)
-        auslib.log.cef_config = auslib.log.get_cef_config(self.cef_file)
         dbo.setDb('sqlite:///:memory:')
         dbo.setDomainWhitelist(['good.com'])
         dbo.create()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
         dbo.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
+        dbo.permissions.t.insert().execute(permission='/releases/:name/read_only', username='bob', options=json.dumps(dict(method='PUT')), data_version=1)
         dbo.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
         dbo.releases.t.insert().execute(
             name='a', product='a', data=json.dumps(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
@@ -76,8 +74,6 @@ class ViewTest(unittest.TestCase):
 
     def tearDown(self):
         dbo.reset()
-        os.close(self.cef_fd)
-        os.remove(self.cef_file)
         os.close(self.version_fd)
         os.remove(self.version_file)
 

@@ -43,7 +43,6 @@ from auslib.web.base import app as application
 for cache_name, cache_cfg in cfg.getCaches().iteritems():
     cache.make_cache(cache_name, *cache_cfg)
 
-auslib.log.cef_config = auslib.log.get_cef_config(cfg.getCefLogfile())
 dbo.setDb(cfg.getDburi())
 dbo.setDomainWhitelist(cfg.getDomainWhitelist())
 application.config['WHITELISTED_DOMAINS'] = cfg.getDomainWhitelist()

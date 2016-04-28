@@ -2,6 +2,7 @@ import json
 
 from auslib.global_state import dbo
 from auslib.test.admin.views.base import ViewTest, JSONTestMixin
+from auslib.util.comparison import operators
 
 
 class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
@@ -45,6 +46,47 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         self.assertTrue('backgroundRate' in ret.data, msg=ret.data)
         self.assertTrue('priority' in ret.data, msg=ret.data)
+
+    def testVersionValidation(self):
+        for op in operators:
+            ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
+                             product='Firefox', update_type='minor', version='%s4.0' % op))
+            self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" % (ret.status_code, ret.data, op))
+            r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+            self.assertEquals(len(r), 1)
+            self.assertEquals(r[0]['version'], '%s4.0' % op)
+
+    def testBuildIDValidation(self):
+        for op in operators:
+            ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
+                             product='Firefox', update_type='minor', buildID='%s20010101000000' % op))
+            self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" % (ret.status_code, ret.data, op))
+            r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+            self.assertEquals(len(r), 1)
+            self.assertEquals(r[0]['buildID'], '%s20010101000000' % op)
+
+    def testVersionValidationBogusInput(self):
+        for bogus in ('<= 4.0', ' <=4.0', '<>4.0', '<=-4.0', '=4.0', '> 4.0', '>= 4.0', ' >=4.0', ' 4.0 '):
+            ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
+                             product='Firefox', update_type='minor', version=bogus))
+            self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.data, bogus))
+            self.assertTrue('version' in ret.data, msg=ret.data)
+
+    def testBuilIDValidationBogusInput(self):
+        for bogus in ('<= 4120', ' <=4120', '<>4120', '<=-4120', '=41230', '> 41210', '>= 41220', ' >=41220', ' 41220 '):
+            ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
+                             product='Firefox', update_type='minor', buildID=bogus))
+            self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.data, bogus))
+            self.assertTrue('buildID' in ret.data, msg=ret.data)
+
+    def testValidationEmptyInput(self):
+        ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
+                         product='Firefox', update_type='minor', version='', buildID=''))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['buildID'], None)
+        self.assertEquals(r[0]['version'], None)
 
 
 class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
@@ -516,3 +558,16 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         url = '/rules/1/revisions'
         ret = self._post(url)  # no change_id posted
         self.assertEquals(ret.status_code, 400)
+
+
+class TestSingleColumn_JSON(ViewTest, JSONTestMixin):
+
+    def testGetRules(self):
+        expected_product = ["fake"]
+        expected = dict(count=1, product=expected_product)
+        ret = self._get("/rules/columns/product")
+        self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetRuleColumn404(self):
+        ret = self.client.get("/rules/columns/blah")
+        self.assertEquals(ret.status_code, 404)

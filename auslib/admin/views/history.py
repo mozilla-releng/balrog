@@ -7,7 +7,6 @@ from flask import Response
 
 from auslib.global_state import dbo
 from auslib.admin.views.base import AdminView
-from auslib.log import cef_event, CEF_WARN
 
 
 class FieldView(AdminView):
@@ -46,7 +45,7 @@ class FieldView(AdminView):
         try:
             value = self.get_value(type_, change_id, field)
         except KeyError as msg:
-            cef_event("Bad input", CEF_WARN, errors=str(msg), field=field)
+            self.log.warning("Bad input: %s", field)
             return Response(status=400, response=str(msg))
         except ValueError as msg:
             return Response(status=404, response=str(msg))

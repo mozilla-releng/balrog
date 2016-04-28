@@ -10,7 +10,6 @@ from auslib.admin.views.base import (
 )
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm
-from auslib.log import cef_event, CEF_WARN, CEF_ALERT
 
 
 class RulesAPIView(AdminView):
@@ -43,7 +42,7 @@ class RulesAPIView(AdminView):
         form.mapping.choices.insert(0, ('', 'NULL'))
 
         if not form.validate():
-            cef_event("Bad input", CEF_WARN, errors=form.errors)
+            self.log.warning("Bad input: %s", form.errors)
             return Response(status=400, response=json.dumps(form.errors))
 
         what = dict(backgroundRate=form.backgroundRate.data,
@@ -99,7 +98,7 @@ class SingleRuleView(AdminView):
         for product in toCheck:
             if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
                 msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
-                cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
+                self.log.warning("Unauthorized access attempt: %s", msg)
                 return Response(status=401, response=msg)
         releaseNames = dbo.releases.getReleaseNames()
 
@@ -107,7 +106,7 @@ class SingleRuleView(AdminView):
         form.mapping.choices.insert(0, ('', 'NULL'))
 
         if not form.validate():
-            cef_event("Bad input", CEF_WARN, errors=form.errors)
+            self.log.warning("Bad input: %s", form.errors)
             return Response(status=400, response=json.dumps(form.errors))
 
         what = dict()
@@ -159,7 +158,7 @@ class SingleRuleView(AdminView):
 
         if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'DELETE', urlOptions={'product': rule['product']}):
             msg = "%s is not allowed to alter rules that affect %s" % (changed_by, rule['product'])
-            cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
+            self.log.warning("Unauthorized access_attempt: %s", msg)
             return Response(status=401, response=msg)
 
         dbo.rules.deleteRule(changed_by=changed_by, id_or_alias=id_or_alias,
@@ -184,7 +183,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             limit = int(request.args.get('limit', 100))
             assert page >= 1
         except (ValueError, AssertionError) as msg:
-            cef_event("Bad input", CEF_WARN, errors=msg)
+            self.log.warning("Bad input: %s", msg)
             return Response(status=400, response=str(msg))
         offset = limit * (page - 1)
         total_count = table.t.count()\
@@ -245,7 +244,7 @@ class RuleHistoryAPIView(HistoryAdminView):
         if request.json:
             change_id = request.json.get('change_id')
         if not change_id:
-            cef_event("Bad input", CEF_WARN, errors="no change_id")
+            self.log.warning("Bad input: %s", "no change_id")
             return Response(status=400, response='no change_id')
         change = dbo.rules.history.getChange(change_id=change_id)
         if change is None:
@@ -259,7 +258,7 @@ class RuleHistoryAPIView(HistoryAdminView):
         for product in (rule['product'], change['product']):
             if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
                 msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
-                cef_event('Unauthorized access attempt', CEF_ALERT, msg=msg)
+                self.log.warning("Unauthorized access attempt: %s", msg)
                 return Response(status=401, response=msg)
         old_data_version = rule['data_version']
 
@@ -288,3 +287,24 @@ class RuleHistoryAPIView(HistoryAdminView):
                              old_data_version=old_data_version, transaction=transaction)
 
         return Response("Excellent!")
+
+
+class SingleRuleColumnView(AdminView):
+    """ /rules/columns/:column"""
+
+    def get(self, column):
+        rules = dbo.rules.getOrderedRules()
+        column_values = []
+        if column not in rules[0].keys():
+            return Response(status=404, response="Requested column does not exist")
+
+        for rule in rules:
+            for key, value in rule.items():
+                if key == column and value is not None:
+                    column_values.append(value)
+        column_values = list(set(column_values))
+        ret = {
+            "count": len(column_values),
+            column: column_values,
+        }
+        return jsonify(ret)

@@ -32,7 +32,6 @@ cache.make_copies = True
 for cache_name, cache_cfg in cfg.getCaches().iteritems():
     cache.make_cache(cache_name, *cache_cfg)
 
-auslib.log.cef_config = auslib.log.get_cef_config(cfg.getCefLogfile())
 dbo.setDb(cfg.getDburi())
 dbo.setupChangeMonitors(cfg.getSystemAccounts())
 dbo.setDomainWhitelist(cfg.getDomainWhitelist())
