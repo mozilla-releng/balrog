@@ -694,8 +694,6 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         what = {"fooid": 3, "data_version": 1, "bar": "blah", "when": 456}
         self.assertRaises(ValueError, self.sc_table.insert, changed_by="bob", **what)
 
-    # All merges and conflicts are handled when the base table is updated, so
-    # there's not much to test when updating a scheduled change.
     def testUpdateNoChangesSinceCreation(self):
         where = [self.sc_table.sc_id == 1]
         what = {"when": 888, "foo": "bb"}
@@ -717,6 +715,16 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_row.base_foo, "bb")
         self.assertEquals(history_row.base_bar, "barbar")
         self.assertEquals(history_row.base_data_version, 1)
+
+    def testUpdateWithBadConditions(self):
+        where = [self.sc_table.sc_id == 1]
+        what = {"telemetry_product": "boop"}
+        self.assertRaises(ValueError, self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+
+    def testUpdateRemoveConditions(self):
+        where = [self.sc_table.sc_id == 2]
+        what = {"when": None}
+        self.assertRaises(ValueError, self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
     def testUpdateBaseTableNoConflictWithChanges(self):
         """Tests to make sure a scheduled change is properly updated when an
@@ -769,6 +777,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.fooid, 4)
         self.assertEquals(row.foo, "cc")
         self.assertEquals(row.bar, "ceecee")
+
         self.assertEquals(row.data_version, 1)
         self.assertEquals(history_rows[0].fooid, 4)
         self.assertEquals(history_rows[0].foo, None)
@@ -793,9 +802,12 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_row.changed_by, "bob")
         self.assertEquals(history_row.data_version, 2)
 
-#    def testEnactChangeNoPermissions(self):
-#        # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
-#        self.fail()
+    # how the crap to test for this? should this check even happen at the db level? maybe at the web layer instead?
+    #def testEnactChangeNoPermissions(self):
+        # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
+        #self.db.permissions.t.delete().where(dbo.permissions.username == "bill").execute()
+        # todo: raise a different exception?
+        #self.assertRaises(ValueError, self.table.scheduled_changes.enactChange, 1)
 
 
 class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):

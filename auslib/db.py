@@ -775,7 +775,8 @@ class ScheduledChangeTable(AUSTable):
             if col in base_columns:
                 what["base_%s" % col] = columns[col]
             else:
-                conditions[col] = columns[col]
+                if columns[col]:
+                    conditions[col] = columns[col]
                 what[col] = columns[col]
         self._validateConditions(conditions)
         for col in where:
