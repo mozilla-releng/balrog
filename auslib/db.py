@@ -753,8 +753,8 @@ class ScheduledChangeTable(AUSTable):
 
         data_version_where = []
         for pk_col in [getattr(self.baseTable, c) for c in self.base_primary_key]:
-            if pk_col.name in what:
-                data_version_where.append(pk_col == what[pk_col.name])
+            if "base_%s" % pk_col.name in what:
+                data_version_where.append(pk_col == what["base_%s" % pk_col.name])
         if data_version_where:
             current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=data_version_where, transaction=transaction)
 
@@ -765,6 +765,26 @@ class ScheduledChangeTable(AUSTable):
             what[column] = value
         ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **what)
         return ret.inserted_primary_key[0]
+
+    # TODO: do we need to override update and delete as well?
+    def update(self, where, columns, changed_by, old_data_version, transaction=None):
+        what = {}
+        conditions = {}
+        base_columns = [c.name for c in self.baseTable.t.get_children()]
+        for col in columns:
+            if col in base_columns:
+                what["base_%s" % col] = columns[col]
+            else:
+                conditions[col] = columns[col]
+                what[col] = columns[col]
+        self._validateConditions(conditions)
+        for col in where:
+            if col in base_columns:
+                where["base_%s" % col] = where[col]
+                del where[col]
+        # TODO: need to validate conditions against combination of what + existing row
+        # TODO: probably need to mergeUpdate? or check base table data_version?
+        return super(ScheduledChangeTable, self).update(where, what, changed_by, old_data_version, transaction)
 
     def enactChange(self, sc_id, transaction=None):
         scheduled_change = self.select(where=[(self.sc_id == sc_id)], transaction=transaction)[0]
@@ -801,12 +821,12 @@ class ScheduledChangeTable(AUSTable):
                 what["base_%s" % col] = what[col]
                 del what[col]
 
-                if sc["base_%s" % col] != orig_row.get(col) and sc["base_%s" % col] != what.get(col):
+                if sc["base_%s" % col] != orig_row.get(col) and sc["base_%s" % col] != what.get("base_%s" % col):
                     raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
 
             # If we get here, the change is safely mergeable
             self.log.debug("Merging %s for scheduled change '%s'", what, sc["sc_id"])
-            self.update(where=[self.sc_id == sc["sc_id"]], what=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=trans)
+            super(ScheduledChangeTable, self).update(where=[self.sc_id == sc["sc_id"]], what=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=trans)
 
 
 class Rules(AUSTable):
