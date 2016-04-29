@@ -588,9 +588,9 @@ class ScheduledChangesTableMixin(object):
         self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
         self.table.t.insert().execute(fooid=2, foo="b", data_version=1)
         self.table.t.insert().execute(fooid=3, foo="c", data_version=1)
-        self.sc_table.t.insert().execute(sc_id=1, when=234, scheduled_by="bob", fooid=1, foo="aa", bar="barbar", table_data_version=1, data_version=1)
-        self.sc_table.t.insert().execute(sc_id=2, when=567, scheduled_by="bob", foo="cc", bar="ceecee", data_version=1)
-        self.sc_table.t.insert().execute(sc_id=3, when=333, scheduled_by="bob", fooid=2, foo="dd", table_data_version=1, data_version=1)
+        self.sc_table.t.insert().execute(sc_id=1, when=234, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1, data_version=1)
+        self.sc_table.t.insert().execute(sc_id=2, when=567, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1)
+        self.sc_table.t.insert().execute(sc_id=3, when=333, scheduled_by="bob", base_fooid=2, base_foo="dd", base_data_version=1, data_version=1)
 
 
 class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, MemoryDatabaseMixin):
@@ -614,10 +614,10 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue("telemetry_uptake" in columns)
         self.assertTrue("when" in columns)
         self.assertTrue("data_version" in columns)
-        self.assertTrue("fooid" in columns)
-        self.assertTrue("foo" in columns)
-        self.assertTrue("bar" in columns)
-        self.assertTrue("table_data_version" in columns)
+        self.assertTrue("base_fooid" in columns)
+        self.assertTrue("base_foo" in columns)
+        self.assertTrue("base_bar" in columns)
+        self.assertTrue("base_data_version" in columns)
 
     def testValidateConditionsNone(self):
         self.assertRaises(ValueError, self.sc_table._validateConditions, {})
@@ -651,10 +651,10 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.scheduled_by, "bob")
         self.assertEquals(row.when, 999)
         self.assertEquals(row.data_version, 1)
-        self.assertEquals(row.fooid, 2)
-        self.assertEquals(row.foo, "thing")
-        self.assertEquals(row.bar, "thing2")
-        self.assertEquals(row.table_data_version, 1)
+        self.assertEquals(row.base_fooid, 2)
+        self.assertEquals(row.base_foo, "thing")
+        self.assertEquals(row.base_bar, "thing2")
+        self.assertEquals(row.base_data_version, 1)
 
     def testInsertForNewRow(self):
         what = {"foo": "newthing1", "when": 888}
@@ -663,10 +663,10 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.scheduled_by, "bob")
         self.assertEquals(row.when, 888)
         self.assertEquals(row.data_version, 1)
-        self.assertEquals(row.fooid, None)
-        self.assertEquals(row.foo, "newthing1")
-        self.assertEquals(row.bar, None)
-        self.assertEquals(row.table_data_version, None)
+        self.assertEquals(row.base_fooid, None)
+        self.assertEquals(row.base_foo, "newthing1")
+        self.assertEquals(row.base_bar, None)
+        self.assertEquals(row.base_data_version, None)
 
     def testInsertMissingRequiredPartOfPK(self):
         class TestTable2(AUSTable):
@@ -705,18 +705,18 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.scheduled_by, "bob")
         self.assertEquals(row.when, 888)
         self.assertEquals(row.data_version, 2)
-        self.assertEquals(row.fooid, 1)
-        self.assertEquals(row.foo, "bb")
-        self.assertEquals(row.bar, "barbar")
-        self.assertEquals(row.table_data_version, 1)
+        self.assertEquals(row.base_fooid, 1)
+        self.assertEquals(row.base_foo, "bb")
+        self.assertEquals(row.base_bar, "barbar")
+        self.assertEquals(row.base_data_version, 1)
         self.assertEquals(history_row.changed_by, "bob")
         self.assertEquals(history_row.scheduled_by, "bob")
         self.assertEquals(history_row.when, 888)
         self.assertEquals(history_row.data_version, 2)
-        self.assertEquals(history_row.fooid, 1)
-        self.assertEquals(history_row.foo, "bb")
-        self.assertEquals(history_row.bar, "barbar")
-        self.assertEquals(history_row.table_data_version, 1)
+        self.assertEquals(history_row.base_fooid, 1)
+        self.assertEquals(history_row.base_foo, "bb")
+        self.assertEquals(history_row.base_bar, "barbar")
+        self.assertEquals(history_row.base_data_version, 1)
 
     def testUpdateBaseTableNoConflictWithChanges(self):
         """Tests to make sure a scheduled change is properly updated when an
@@ -738,19 +738,19 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(sc_row.scheduled_by, "bob")
         self.assertEquals(sc_row.when, 333)
         self.assertEquals(sc_row.data_version, 2)
-        self.assertEquals(sc_row.fooid, 2)
-        self.assertEquals(sc_row.foo, "dd")
-        self.assertEquals(sc_row.bar, "bar")
-        self.assertEquals(sc_row.table_data_version, 2)
+        self.assertEquals(sc_row.base_fooid, 2)
+        self.assertEquals(sc_row.base_foo, "dd")
+        self.assertEquals(sc_row.base_bar, "bar")
+        self.assertEquals(sc_row.base_data_version, 2)
         # ...As well as a new history table entry.
         self.assertEquals(history_row.changed_by, "bob")
         self.assertEquals(history_row.scheduled_by, "bob")
         self.assertEquals(history_row.when, 333)
         self.assertEquals(history_row.data_version, 2)
-        self.assertEquals(history_row.fooid, 2)
-        self.assertEquals(history_row.foo, "dd")
-        self.assertEquals(history_row.bar, "bar")
-        self.assertEquals(history_row.table_data_version, 2)
+        self.assertEquals(history_row.base_fooid, 2)
+        self.assertEquals(history_row.base_foo, "dd")
+        self.assertEquals(history_row.base_bar, "bar")
+        self.assertEquals(history_row.base_data_version, 2)
 
     def testUpdateBaseTableConflictWithRecentChanges(self):
         where = [self.table.fooid == 1]
