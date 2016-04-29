@@ -775,21 +775,15 @@ class ScheduledChangeTable(AUSTable):
 
     # TODO: do we need to override update and delete as well?
     def update(self, where, columns, changed_by, old_data_version, transaction=None):
-        what = {}
+        what = self._prefixColumns(columns)
         conditions = {}
-        base_columns = [c.name for c in self.baseTable.t.get_children()]
-        for col in columns:
-            if col in base_columns:
-                what["base_%s" % col] = columns[col]
-            else:
-                if columns[col]:
-                    conditions[col] = columns[col]
-                what[col] = columns[col]
+        for col in what:
+            if not col.startswith("base_") and what[col]:
+                conditions[col] = what[col]
+
         self._validateConditions(conditions)
-        for col in where:
-            if col in base_columns:
-                where["base_%s" % col] = where[col]
-                del where[col]
+
+        what["scheduled_by"] = changed_by
         # TODO: need to validate conditions against combination of what + existing row
         # TODO: probably need to mergeUpdate? or check base table data_version?
         return super(ScheduledChangeTable, self).update(where, what, changed_by, old_data_version, transaction)
