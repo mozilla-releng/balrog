@@ -673,7 +673,6 @@ class ScheduledChangeTable(AUSTable):
     def __init__(self, dialect, metadata, baseTable):
         self.baseTable = baseTable
         self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
-                           # TODO: rename sc_id because it conflicts with the prefix we use for base tabel columns
                            Column("sc_id", Integer, primary_key=True, autoincrement=True),
                            Column("scheduled_by", String(100), nullable=False),
                            Column("telemetry_product", String(15)),
@@ -685,9 +684,6 @@ class ScheduledChangeTable(AUSTable):
         else:
             self.table.append_column(Column('when', BigInteger))
 
-        # In order to collate data and make decisions about rows being new or
-        # existing, we need to keep track of the base table's columns in these
-        # data structures.
         # The primary key column(s) are used in construct "where" clauses for
         # existing rows.
         self.base_primary_key = []
@@ -697,11 +693,13 @@ class ScheduledChangeTable(AUSTable):
             if col.primary_key:
                 self.base_primary_key.append(col.name)
             newcol = col.copy()
+            # 1) Columns are prefixed with "base_", to make them easy to
+            # identify and avoid conflicts.
             # Renaming a column requires to change both the key and the name
             # See https://github.com/zzzeek/sqlalchemy/blob/rel_0_7/lib/sqlalchemy/schema.py#L781
             # for background.
             newcol.key = newcol.name = "base_%s" % col.name
-            # 1) Primary keys on the base table are normal columns here,
+            # 2) Primary keys on the base table are normal columns here,
             # and are allowed to be null (because we support adding new rows
             # to tables with autoincrementing keys via scheduled changes).
             # The base table's data version may also be null for the same reason.
@@ -714,6 +712,16 @@ class ScheduledChangeTable(AUSTable):
             self.table.append_column(newcol)
 
         super(ScheduledChangeTable, self).__init__(dialect, history=True, versioned=True)
+
+    def _prefixColumns(self, columns):
+        ret = {}
+        base_columns = [c.name for c in self.baseTable.t.get_children()]
+        for k, v in columns.iteritems():
+            if k in base_columns:
+                ret["base_%s" % k] = v
+            else:
+                ret[k] = v
+        return ret
 
     def _validateConditions(self, conditions):
         for group in self.condition_groups:
@@ -728,41 +736,40 @@ class ScheduledChangeTable(AUSTable):
             except:
                 raise ValueError("Cannot parse 'when' as a unix timestamp.")
 
-    # TODO: do we need to override update and delete as well?
     def insert(self, changed_by, transaction=None, **columns):
-        what = {}
-        conditions = {}
-        base_columns = [c.name for c in self.baseTable.t.get_children()]
-        for col in columns:
-            if col in base_columns:
-                what["base_%s" % col] = columns[col]
-            else:
-                conditions[col] = columns[col]
-        self._validateConditions(conditions)
-
-        what["scheduled_by"] = changed_by
-        # Make sure that any columns which are not nullable are present in "what",
-        # except for autoincrementing integers.
-        for col in self.baseTable.t.get_children():
-            if col.nullable:
-                continue
-            if isinstance(col.type, (sqlalchemy.types.Integer,)) and col.autoincrement:
-                continue
-            if col.name not in what:
-                raise ValueError("Missing primary key column '%s' which is not autoincrement", col.name)
-
         data_version_where = []
-        for pk_col in [getattr(self.baseTable, c) for c in self.base_primary_key]:
-            if "base_%s" % pk_col.name in what:
-                data_version_where.append(pk_col == what["base_%s" % pk_col.name])
+        for pk in self.base_primary_key:
+            base_column = getattr(self.baseTable, pk)
+            if pk in columns:
+                data_version_where.append(getattr(self.baseTable, pk) == columns[pk])
+            # Non-Integer columns can have autoincrement set to True for some reason.
+            # Any non-integer columns in the primary key are always required (because
+            # autoincrement actually isn't a thing for them), and any Integer columns
+            # that _aren't_ autoincrement are required as well.
+            elif not isinstance(base_column.type, (sqlalchemy.types.Integer,)) or not base_column.autoincrement:
+                raise ValueError("Missing primary key column '%s' which is not autoincrement", pk)
+
+        # If anything ended up in data_version_where, it means that a key column
+        # is present in the data, which means that the baseTable row already exists.
+        # In these cases, we need to check to make sure that the scheduled change
+        # has the same data version as the base table, to ensure that a change
+        # is not being scheduled from an out of date version of the base table row.
         if data_version_where:
             current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=data_version_where, transaction=transaction)
 
-            if current_data_version and current_data_version[0]["data_version"] != what.get("base_data_version"):
+            if current_data_version and current_data_version[0]["data_version"] != columns.get("data_version"):
                 raise ValueError("Wrong data_version given for base table, cannot create scheduled change.")
 
-        for column, value in conditions.iteritems():
-            what[column] = value
+        what = self._prefixColumns(columns)
+        conditions = {}
+        for col in what:
+            if not col.startswith("base_"):
+                conditions[col] = what[col]
+
+        self._validateConditions(conditions)
+
+        what["scheduled_by"] = changed_by
+
         ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **what)
         return ret.inserted_primary_key[0]
 
