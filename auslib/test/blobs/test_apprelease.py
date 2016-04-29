@@ -603,7 +603,7 @@ class TestSchema2Blob(unittest.TestCase):
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV2(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'l'))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'j'))
 
 
 class TestSchema2BlobNightlyStyle(unittest.TestCase):
@@ -713,7 +713,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         updates["partial"] = dict(fileUrl="http://a.com/a")
         updates["complete"] = dict(fileUrl="http://evil.com/a")
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'j'))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'a'))
 
 
 class TestSchema3Blob(unittest.TestCase):
@@ -1323,7 +1323,7 @@ class TestSchema4Blob(unittest.TestCase):
 
     def testAllowedDomainWrongProduct(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'j'))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'hhh'))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://evil.com/c"))))

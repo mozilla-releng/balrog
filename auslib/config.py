@@ -50,13 +50,13 @@ class AUSConfig(object):
         # the config should have a format like this
         # domain_whitelist = download.mozilla.org:Firefox|Fennec|Thunderbird, ftp.mozilla.org:SystemAddons
         try:
-            d = dict()
+            whitelist_config = dict()
             pref = self.cfg.get('site-specific', 'domain_whitelist').split(', ')
             for domain_pref in pref:
                 domain, products = domain_pref.split(':')
                 products = products.split('|')
-                d[domain] = tuple(products)
-            return d
+                whitelist_config[domain] = tuple(products)
+            return whitelist_config
         except (NoSectionError, NoOptionError):
             return dict()
 
