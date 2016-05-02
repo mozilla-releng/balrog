@@ -586,7 +586,7 @@ class ScheduledChangesTableMixin(object):
         self.sc_table = self.table.scheduled_changes
         self.metadata.create_all()
         self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
-        self.table.t.insert().execute(fooid=2, foo="b", data_version=1)
+        self.table.t.insert().execute(fooid=2, foo="b", bar="bb", data_version=1)
         self.table.t.insert().execute(fooid=3, foo="c", data_version=1)
         self.sc_table.t.insert().execute(sc_id=1, when=234, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1, data_version=1)
         self.sc_table.t.insert().execute(sc_id=2, when=567, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1)
@@ -609,6 +609,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         columns = [c.name for c in self.table.scheduled_changes.t.get_children()]
         self.assertTrue("sc_id" in columns)
         self.assertTrue("scheduled_by" in columns)
+        self.assertTrue("complete" in columns)
         self.assertTrue("telemetry_product" in columns)
         self.assertTrue("telemetry_channel" in columns)
         self.assertTrue("telemetry_uptake" in columns)
@@ -620,16 +621,16 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue("base_data_version" in columns)
 
     def testValidateConditionsNone(self):
-        self.assertRaises(ValueError, self.sc_table._validateConditions, {})
+        self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table._validateConditions, {})
 
     def testValdiateConditionsInvalid(self):
-        self.assertRaises(ValueError, self.sc_table._validateConditions, {"blah": "blah"})
+        self.assertRaisesRegexp(ValueError, "Invalid condition", self.sc_table._validateConditions, {"blah": "blah"})
 
     def testValidateConditionsJustWhen(self):
         self.sc_table._validateConditions({"when": 12345678})
 
     def testValidateConditionsBadWhen(self):
-        self.assertRaises(ValueError, self.sc_table._validateConditions, {"when": "abc"})
+        self.assertRaises(ValueErrorRegexp, "Couldn't parse condition", self.sc_table._validateConditions, {"when": "abc"})
 
     def testValidateConditionsJustTelemetry(self):
         self.sc_table._validateConditions({
@@ -639,10 +640,10 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         })
 
     def testValidateConditionsNotAllowedWhenAndOther(self):
-        self.assertRaises(ValueError, self.sc_table._validateConditions, {"when": "12345", "telemetry_product": "foo"})
+        self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table._validateConditions, {"when": "12345", "telemetry_product": "foo"})
 
     def testValidateConditionsMissingTelemetryValue(self):
-        self.assertRaises(ValueError, self.sc_table._validateConditions, {"telemetry_product": "foo"})
+        self.assertRaisesRegexp(ValueError, "Missing required part of condition", self.sc_table._validateConditions, {"telemetry_product": "foo"})
 
     def testInsertForExistingRow(self):
         what = {"fooid": 2, "foo": "thing", "bar": "thing2", "data_version": 1, "when": 999}
@@ -668,6 +669,10 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.base_bar, None)
         self.assertEquals(row.base_data_version, None)
 
+    def testInsertForExistingNoSuchRow(self):
+        what = {"fooid": 10, "foo": "thing", "data_version": 1, "when": 999}
+        self.assertRaisesRegexp(ValueError, "Can't create scheduled change for non-existent", self.sc_table.insert, changed_by="bob", **what)
+
     def testInsertMissingRequiredPartOfPK(self):
         class TestTable2(AUSTable):
 
@@ -680,11 +685,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         table = TestTable2(self.metadata)
         self.metadata.create_all()
         what = {"fooid": 2, "when": 4532}
-        self.assertRaises(ValueError, table.scheduled_changes.insert, changed_by="bob", **what)
+        self.assertRaisesRegexp(ValueError, "Missing primary key field", table.scheduled_changes.insert, changed_by="bob", **what)
 
     def testInsertWithIncompatibleConditions(self):
         what = {"foo": "blah", "when": "abc"}
-        self.assertRaises(ValueError, self.sc_table.insert, changed_by="bob", **what)
+        self.assertRaisesRegexp(ValueError, "Couldn't parse condition", self.sc_table.insert, changed_by="bob", **what)
 
     def testInsertDataVersionChanged(self):
         """Tests to make sure a scheduled change update is rejected if data
@@ -692,7 +697,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         submitting the scheduled change."""
         self.table.update([self.table.fooid == 3], what={"foo": "bb"}, changed_by="bob", old_data_version=1)
         what = {"fooid": 3, "data_version": 1, "bar": "blah", "when": 456}
-        self.assertRaises(ValueError, self.sc_table.insert, changed_by="bob", **what)
+        self.assertRaises(OutdatedDataError, self.sc_table.insert, changed_by="bob", **what)
 
     def testUpdateNoChangesSinceCreation(self):
         where = [self.sc_table.sc_id == 1]
@@ -718,13 +723,13 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testUpdateWithBadConditions(self):
         where = [self.sc_table.sc_id == 1]
-        what = {"telemetry_product": "boop"}
-        self.assertRaises(ValueError, self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+        what = {"telemetry_product": "boop", "telemetry_channel": "boop", "telemetry_uptake": 99}
+        self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
     def testUpdateRemoveConditions(self):
         where = [self.sc_table.sc_id == 2]
         what = {"when": None}
-        self.assertRaises(ValueError, self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+        self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
     def testUpdateBaseTableNoConflictWithChanges(self):
         """Tests to make sure a scheduled change is properly updated when an
@@ -774,10 +779,10 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.table.scheduled_changes.enactChange(2)
         row = self.table.t.select().where(self.table.fooid == 4).execute().fetchall()[0]
         history_rows = self.table.history.t.select().where(self.table.history.fooid == 4).execute().fetchall()
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).fetchall()[0]
         self.assertEquals(row.fooid, 4)
         self.assertEquals(row.foo, "cc")
         self.assertEquals(row.bar, "ceecee")
-
         self.assertEquals(row.data_version, 1)
         self.assertEquals(history_rows[0].fooid, 4)
         self.assertEquals(history_rows[0].foo, None)
@@ -789,11 +794,14 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_rows[1].bar, "ceecee")
         self.assertEquals(history_rows[1].changed_by, "bob")
         self.assertEquals(history_rows[1].data_version, 1)
+        self.assertEquals(sc_row.complete, True)
 
     def testEnactChangeExistingRow(self):
         self.table.scheduled_changes.enactChange(1)
         row = self.table.t.select().where(self.table.fooid == 1).execute().fetchall()[0]
+        print self.table.history.t.select().execute().fetchall()
         history_row = self.table.history.t.select().where(self.table.history.fooid == 1).where(self.table.history.data_version == 2).execute().fetchall()[0]
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).fetchall()[0]
         self.assertEquals(row.foo, "aa")
         self.assertEquals(row.bar, "barbar")
         self.assertEquals(row.data_version, 2)
@@ -801,6 +809,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_row.bar, "barbar")
         self.assertEquals(history_row.changed_by, "bob")
         self.assertEquals(history_row.data_version, 2)
+        self.assertEquals(sc_row.complete, True)
 
     # how the crap to test for this? should this check even happen at the db level? maybe at the web layer instead?
     #def testEnactChangeNoPermissions(self):
@@ -808,6 +817,29 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         #self.db.permissions.t.delete().where(dbo.permissions.username == "bill").execute()
         # todo: raise a different exception?
         #self.assertRaises(ValueError, self.table.scheduled_changes.enactChange, 1)
+
+    def testMergeUpdateNoConflict(self):
+        old_row = self.table.t.select().where(self.table.fooid == 2).execute().fetchall()[0]
+        new_row = {"fooid": 2, "bar": "bar", "data_version": 2}
+        self.sc_table.mergeUpdate(old_row, new_row, old_data_version=1, "bob")
+        sc_row = self.sc_table.t.select().where(sc_id == 3).execute().fetchall()[0]
+        self.assertEquals(sc_row.base_foo, "dd")
+        self.assertEquals(sc_row.base_bar, "bar")
+        self.assertEquals(sc_row.base_data_version, 2)
+
+    def testMergeUpdateNoConflictChangingToNull(self):
+        old_row = self.table.t.select().where(self.table.fooid == 2).execute().fetchall()[0]
+        new_row = {"fooid": 2, "bar": None, "data_version": 2}
+        self.sc_table.mergeUpdate(old_row, new_row, old_data_version=1, "bob")
+        sc_row = self.sc_table.t.select().where(sc_id == 3).execute().fetchall()[0]
+        self.assertEquals(sc_row.base_foo, "dd")
+        self.assertEquals(sc_row.base_bar, None)
+        self.assertEquals(sc_row.base_data_version, 2)
+
+    def testMergeUpdateWithConflict(self):
+        old_row = self.table.t.select().where(self.table.fooid == 1).execute().fetchall()[0]
+        new_row = {"fooid": 1, "bar": "abc", "data_version": 1}
+        self.assertRaises(UpdateMergeError, self.mergeUpdate, old_row, new_row, old_data_version=1, "bob")
 
 
 class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):

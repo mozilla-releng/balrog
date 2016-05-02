@@ -1,5 +1,6 @@
 from collections import defaultdict
 from copy import copy
+import itertools
 from os import path
 import pprint
 import re
@@ -774,12 +775,17 @@ class ScheduledChangeTable(AUSTable):
         return ret.inserted_primary_key[0]
 
     # TODO: do we need to override update and delete as well?
+    # todo: rename columns to what
     def update(self, where, columns, changed_by, old_data_version, transaction=None):
+        row = self.select(where=where)[0]
+
         what = self._prefixColumns(columns)
         conditions = {}
-        for col in what:
-            if not col.startswith("base_") and what[col]:
-                conditions[col] = what[col]
+        for cond in itertools.chain(*self.condition_groups):
+            if what.get(cond):
+                conditions[cond] = what[cond]
+            elif row.get(cond):
+                conditions[cond] = row[cond]
 
         self._validateConditions(conditions)
 
@@ -788,6 +794,7 @@ class ScheduledChangeTable(AUSTable):
         # TODO: probably need to mergeUpdate? or check base table data_version?
         return super(ScheduledChangeTable, self).update(where, what, changed_by, old_data_version, transaction)
 
+    # todo: somehow note in the db that the scheduled change has been fulfilled
     def enactChange(self, sc_id, transaction=None):
         scheduled_change = self.select(where=[(self.sc_id == sc_id)], transaction=transaction)[0]
         what = {}
@@ -806,8 +813,6 @@ class ScheduledChangeTable(AUSTable):
             self.baseTable.insert(scheduled_change["scheduled_by"], transaction=transaction, **what)
 
     def mergeUpdate(self, what, orig_row, changed_by, trans):
-        self.log.info("New data is: %s", what)
-        self.log.info("Orig data is: %s", orig_row)
         where = []
         for col in self.base_primary_key:
             where.append((getattr(self, "base_%s" % col) == orig_row[col]))
@@ -817,18 +822,13 @@ class ScheduledChangeTable(AUSTable):
             return
         for sc in scheduled_changes:
             self.log.debug("Trying to merge update with scheduled changed '%s'", sc["sc_id"])
-            self.log.info("Scheduled change info: %s", sc)
-            # "what" need to be copied because we'll be modifying the original in the loop.
-            for col in what.copy():
-                what["base_%s" % col] = what[col]
-                del what[col]
 
-                if sc["base_%s" % col] != orig_row.get(col) and sc["base_%s" % col] != what.get("base_%s" % col):
-                    raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
+            if sc["base_%s" % col] != orig_row.get(col) and sc["base_%s" % col] != what.get("base_%s" % col):
+                raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
 
             # If we get here, the change is safely mergeable
-            self.log.debug("Merging %s for scheduled change '%s'", what, sc["sc_id"])
-            super(ScheduledChangeTable, self).update(where=[self.sc_id == sc["sc_id"]], what=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=trans)
+            self.update(where=[self.sc_id == sc["sc_id"]], columns=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=trans)
+            self.log.debug("Merged %s into scheduled change '%s'", what, sc["sc_id"])
 
 
 class Rules(AUSTable):
