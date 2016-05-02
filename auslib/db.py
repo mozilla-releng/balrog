@@ -810,7 +810,7 @@ class ScheduledChangeTable(AUSTable):
         scheduled_change = self.select(where=[(self.sc_id == sc_id)], transaction=transaction)[0]
         what = {}
         for col in scheduled_change:
-            if col.startswith("base_") and col[5:] not in self.base_primary_key:
+            if col.startswith("base_"):
                 what[col[5:]] = scheduled_change[col]
 
         if what["data_version"]:
@@ -819,8 +819,6 @@ class ScheduledChangeTable(AUSTable):
                 where.append((getattr(self.baseTable, col) == scheduled_change["base_%s" % col]))
             self.baseTable.update(where, what, scheduled_change["scheduled_by"], scheduled_change["base_data_version"], transaction=transaction)
         else:
-            for col in self.base_primary_key:
-                what[col] = scheduled_change["base_%s" % col]
             self.baseTable.insert(scheduled_change["scheduled_by"], transaction=transaction, **what)
 
     def mergeUpdate(self, old_row, what, changed_by, transaction=None):

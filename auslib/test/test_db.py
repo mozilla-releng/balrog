@@ -806,7 +806,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.table.scheduled_changes.enactChange(1)
         row = self.table.t.select().where(self.table.fooid == 1).execute().fetchall()[0]
         history_row = self.table.history.t.select().where(self.table.history.fooid == 1).where(self.table.history.data_version == 2).execute().fetchall()[0]
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).fetchall()[0]
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
         self.assertEquals(row.foo, "aa")
         self.assertEquals(row.bar, "barbar")
         self.assertEquals(row.data_version, 2)
