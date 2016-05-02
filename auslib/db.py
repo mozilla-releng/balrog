@@ -807,19 +807,25 @@ class ScheduledChangeTable(AUSTable):
 
     # todo: somehow note in the db that the scheduled change has been fulfilled
     def enactChange(self, sc_id, transaction=None):
-        scheduled_change = self.select(where=[(self.sc_id == sc_id)], transaction=transaction)[0]
+        sc = self.select(where=[self.sc_id == sc_id], transaction=transaction)[0]
         what = {}
-        for col in scheduled_change:
+        for col in sc:
             if col.startswith("base_"):
-                what[col[5:]] = scheduled_change[col]
+                what[col[5:]] = sc[col]
+
+        # The scheduled change is marked as complete first to avoid it being
+        # updated unnecessarily when the base table's update method calls
+        # mergeUpdate. If the base table update fails, this will get reverted
+        # when the transaction is rolled back.
+        self.update([self.sc_id == sc_id], {"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"], transaction=transaction)
 
         if what["data_version"]:
             where = []
             for col in self.base_primary_key:
-                where.append((getattr(self.baseTable, col) == scheduled_change["base_%s" % col]))
-            self.baseTable.update(where, what, scheduled_change["scheduled_by"], scheduled_change["base_data_version"], transaction=transaction)
+                where.append((getattr(self.baseTable, col) == sc["base_%s" % col]))
+            self.baseTable.update(where, what, sc["scheduled_by"], sc["base_data_version"], transaction=transaction)
         else:
-            self.baseTable.insert(scheduled_change["scheduled_by"], transaction=transaction, **what)
+            self.baseTable.insert(sc["scheduled_by"], transaction=transaction, **what)
 
     def mergeUpdate(self, old_row, what, changed_by, transaction=None):
         where = []
@@ -831,7 +837,11 @@ class ScheduledChangeTable(AUSTable):
             self.log.debug("No scheduled changes found for update; nothing to do")
             return
         for sc in scheduled_changes:
-            self.log.debug("Trying to merge update with scheduled changed '%s'", sc["sc_id"])
+            if sc["complete"]:
+                self.log.debug("Scheduled change %s is complete, nothing to do", sc["sc_id"])
+                continue
+
+            self.log.debug("Trying to merge update with scheduled change '%s'", sc["sc_id"])
 
             for col in what:
                 if sc["base_%s" % col] != old_row.get(col) and sc["base_%s" % col] != what.get(col):

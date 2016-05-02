@@ -586,12 +586,14 @@ class ScheduledChangesTableMixin(object):
         self.sc_table = self.table.scheduled_changes
         self.metadata.create_all()
         self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
-        self.table.t.insert().execute(fooid=2, foo="b", bar="bb", data_version=1)
+        self.table.t.insert().execute(fooid=2, foo="b", bar="bb", data_version=2)
         self.table.t.insert().execute(fooid=3, foo="c", data_version=1)
         self.sc_table.t.insert().execute(sc_id=1, when=234, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1,
                                          data_version=1)
         self.sc_table.t.insert().execute(sc_id=2, when=567, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1)
-        self.sc_table.t.insert().execute(sc_id=3, when=333, scheduled_by="bob", base_fooid=2, base_foo="dd", base_bar="bb", base_data_version=1, data_version=1)
+        self.sc_table.t.insert().execute(sc_id=3, when=1, scheduled_by="bob", complete=True, base_fooid=2, base_foo="b", base_bar="bb", base_data_version=1,
+                                         data_version=1)
+        self.sc_table.t.insert().execute(sc_id=4, when=333, scheduled_by="bob", base_fooid=2, base_foo="dd", base_bar="bb", base_data_version=2, data_version=1)
 
 
 class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, MemoryDatabaseMixin):
@@ -651,21 +653,21 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table._validateConditions, {"telemetry_product": "foo"})
 
     def testInsertForExistingRow(self):
-        what = {"fooid": 2, "foo": "thing", "bar": "thing2", "data_version": 1, "when": 999}
+        what = {"fooid": 2, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999}
         self.sc_table.insert(changed_by="bob", **what)
-        row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 5).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
         self.assertEquals(row.when, 999)
         self.assertEquals(row.data_version, 1)
         self.assertEquals(row.base_fooid, 2)
         self.assertEquals(row.base_foo, "thing")
         self.assertEquals(row.base_bar, "thing2")
-        self.assertEquals(row.base_data_version, 1)
+        self.assertEquals(row.base_data_version, 2)
 
     def testInsertForNewRow(self):
         what = {"foo": "newthing1", "when": 888}
         self.sc_table.insert(changed_by="bob", **what)
-        row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 5).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
         self.assertEquals(row.when, 888)
         self.assertEquals(row.data_version, 1)
@@ -744,14 +746,14 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         # we'll change "bar" underneath it. This doesn't conflict with the
         # scheduled change, so it should simply be updated with the new "bar"
         # value.
-        self.table.update([self.table.fooid == 2], what={"bar": "bar"}, changed_by="bob", old_data_version=1)
+        self.table.update([self.table.fooid == 2], what={"bar": "bar"}, changed_by="bob", old_data_version=2)
         row = self.table.t.select().where(self.table.fooid == 2).execute().fetchall()[0]
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 3).execute().fetchall()[0]
-        history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 3).execute().fetchall()[0]
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
+        history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 4).execute().fetchall()[0]
         self.assertEquals(row.fooid, 2)
         self.assertEquals(row.foo, "b")
         self.assertEquals(row.bar, "bar")
-        self.assertEquals(row.data_version, 2)
+        self.assertEquals(row.data_version, 3)
         # This should end up with the scheduled changed incorporating our new
         # value for "foo" as well as the new "bar" value.
         self.assertEquals(sc_row.scheduled_by, "bob")
@@ -760,7 +762,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(sc_row.base_fooid, 2)
         self.assertEquals(sc_row.base_foo, "dd")
         self.assertEquals(sc_row.base_bar, "bar")
-        self.assertEquals(sc_row.base_data_version, 2)
+        self.assertEquals(sc_row.base_data_version, 3)
         # ...As well as a new history table entry.
         self.assertEquals(history_row.changed_by, "bob")
         self.assertEquals(history_row.scheduled_by, "bob")
@@ -769,7 +771,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_row.base_fooid, 2)
         self.assertEquals(history_row.base_foo, "dd")
         self.assertEquals(history_row.base_bar, "bar")
-        self.assertEquals(history_row.base_data_version, 2)
+        self.assertEquals(history_row.base_data_version, 3)
 
     def testUpdateBaseTableConflictWithRecentChanges(self):
         where = [self.table.fooid == 1]
@@ -825,21 +827,21 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testMergeUpdateNoConflict(self):
         old_row = self.table.select(where=[self.table.fooid == 2])[0]
-        what = {"fooid": 2, "bar": "bar", "data_version": 2}
+        what = {"fooid": 2, "bar": "bar", "data_version": 3}
         self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 3).execute().fetchall()[0]
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
         self.assertEquals(sc_row.base_foo, "dd")
         self.assertEquals(sc_row.base_bar, "bar")
-        self.assertEquals(sc_row.base_data_version, 2)
+        self.assertEquals(sc_row.base_data_version, 3)
 
     def testMergeUpdateNoConflictChangingToNull(self):
         old_row = self.table.select(where=[self.table.fooid == 2])[0]
-        what = {"fooid": 2, "bar": None, "data_version": 2}
+        what = {"fooid": 2, "bar": None, "data_version": 3}
         self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 3).execute().fetchall()[0]
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
         self.assertEquals(sc_row.base_foo, "dd")
         self.assertEquals(sc_row.base_bar, None)
-        self.assertEquals(sc_row.base_data_version, 2)
+        self.assertEquals(sc_row.base_data_version, 3)
 
     def testMergeUpdateWithConflict(self):
         old_row = self.table.select(where=[self.table.fooid == 1])[0]
