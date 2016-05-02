@@ -821,7 +821,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_row.data_version, 2)
         self.assertEquals(sc_row.complete, True)
 
-#    #  how the crap to test for this? should this check even happen at the db level? maybe at the web layer instead?
+# todo
 #    def testEnactChangeNoPermissions(self):
 #        # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
 #        self.db.permissions.t.delete().where(dbo.permissions.username == "bill").execute()

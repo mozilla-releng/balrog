@@ -671,8 +671,7 @@ class ScheduledChangeTable(AUSTable):
     """A Table that stores the necessary information to schedule changes
     to the baseTable provided. A ScheduledChangeTable ends up mirroring the
     columns of its base, and adding the necessary ones to provide the schedule.
-    By default, ScheduledChangeTables enable History on themselves.
-    TODO UPDATE THIS COMMENT IT SUCKS"""
+    By default, ScheduledChangeTables enable History on themselves."""
     condition_groups = (
         ("when",),
         ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
@@ -823,6 +822,8 @@ class ScheduledChangeTable(AUSTable):
         # when the transaction is rolled back.
         self.update([self.sc_id == sc_id], {"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"], transaction=transaction)
 
+        # If the scheduled change had a data version, it means the row already
+        # exists, and we need to use update() to enact it.
         if what["data_version"]:
             where = []
             for col in self.base_primary_key:
@@ -848,6 +849,10 @@ class ScheduledChangeTable(AUSTable):
             self.log.debug("Trying to merge update with scheduled change '%s'", sc["sc_id"])
 
             for col in what:
+                # If the scheduled change is different than the old row it will
+                # be modifying the row when enacted. If the update to the row
+                # ("what") is also modifying the same column, this is a conflict
+                # that the server cannot resolve.
                 if sc["base_%s" % col] != old_row.get(col) and sc["base_%s" % col] != what.get(col):
                     raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
 
