@@ -673,7 +673,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testInsertForExistingNoSuchRow(self):
         what = {"fooid": 10, "foo": "thing", "data_version": 1, "when": 999}
-        self.assertRaisesRegexp(ValueError, "Can't create scheduled change for non-existent", self.sc_table.insert, changed_by="bob", **what)
+        self.assertRaisesRegexp(ValueError, "Cannot create scheduled change with data_version for non-existent row", self.sc_table.insert, changed_by="bob",
+                                **what)
 
     def testInsertMissingRequiredPartOfPK(self):
         class TestTable2(AUSTable):
@@ -781,7 +782,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.table.scheduled_changes.enactChange(2)
         row = self.table.t.select().where(self.table.fooid == 4).execute().fetchall()[0]
         history_rows = self.table.history.t.select().where(self.table.history.fooid == 4).execute().fetchall()
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).fetchall()[0]
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
         self.assertEquals(row.fooid, 4)
         self.assertEquals(row.foo, "cc")
         self.assertEquals(row.bar, "ceecee")
@@ -801,6 +802,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testEnactChangeExistingRow(self):
         self.table.scheduled_changes.enactChange(1)
         row = self.table.t.select().where(self.table.fooid == 1).execute().fetchall()[0]
+        print self.table.t.select().execute().fetchall()
         print self.table.history.t.select().execute().fetchall()
         history_row = self.table.history.t.select().where(self.table.history.fooid == 1).where(self.table.history.data_version == 2).execute().fetchall()[0]
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).fetchall()[0]

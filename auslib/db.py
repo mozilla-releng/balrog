@@ -759,15 +759,18 @@ class ScheduledChangeTable(AUSTable):
                 raise ValueError("Missing primary key column '%s' which is not autoincrement", pk)
 
         # If anything ended up in data_version_where, it means that a key column
-        # is present in the data, which means that the baseTable row already exists.
+        # is present in the data, which means that the baseTable should already exist.
         # In these cases, we need to check to make sure that the scheduled change
         # has the same data version as the base table, to ensure that a change
         # is not being scheduled from an out of date version of the base table row.
         if data_version_where:
             current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=data_version_where, transaction=transaction)
 
+            if not current_data_version:
+                raise ValueError("Cannot create scheduled change with data_version for non-existent row") 
+
             if current_data_version and current_data_version[0]["data_version"] != columns.get("data_version"):
-                raise ValueError("Wrong data_version given for base table, cannot create scheduled change.")
+                raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
 
         what = self._prefixColumns(columns)
         conditions = {}
@@ -815,6 +818,7 @@ class ScheduledChangeTable(AUSTable):
             for col in self.base_primary_key:
                 where.append((getattr(self.baseTable, col) == scheduled_change["base_%s" % col]))
             self.baseTable.update(where, what, scheduled_change["scheduled_by"], scheduled_change["base_data_version"], transaction=transaction)
+            print self.baseTable.select(transaction=transaction)
         else:
             for col in self.base_primary_key:
                 what[col] = scheduled_change["base_%s" % col]
