@@ -767,7 +767,7 @@ class ScheduledChangeTable(AUSTable):
             current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=data_version_where, transaction=transaction)
 
             if not current_data_version:
-                raise ValueError("Cannot create scheduled change with data_version for non-existent row") 
+                raise ValueError("Cannot create scheduled change with data_version for non-existent row")
 
             if current_data_version and current_data_version[0]["data_version"] != columns.get("data_version"):
                 raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
@@ -818,28 +818,29 @@ class ScheduledChangeTable(AUSTable):
             for col in self.base_primary_key:
                 where.append((getattr(self.baseTable, col) == scheduled_change["base_%s" % col]))
             self.baseTable.update(where, what, scheduled_change["scheduled_by"], scheduled_change["base_data_version"], transaction=transaction)
-            print self.baseTable.select(transaction=transaction)
         else:
             for col in self.base_primary_key:
                 what[col] = scheduled_change["base_%s" % col]
             self.baseTable.insert(scheduled_change["scheduled_by"], transaction=transaction, **what)
 
-    def mergeUpdate(self, what, orig_row, changed_by, trans):
+    def mergeUpdate(self, old_row, what, changed_by, transaction=None):
         where = []
         for col in self.base_primary_key:
-            where.append((getattr(self, "base_%s" % col) == orig_row[col]))
-        scheduled_changes = self.select(where=where, transaction=trans)
+            where.append((getattr(self, "base_%s" % col) == old_row[col]))
+
+        scheduled_changes = self.select(where=where, transaction=transaction)
         if not scheduled_changes:
             self.log.debug("No scheduled changes found for update; nothing to do")
             return
         for sc in scheduled_changes:
             self.log.debug("Trying to merge update with scheduled changed '%s'", sc["sc_id"])
 
-            if sc["base_%s" % col] != orig_row.get(col) and sc["base_%s" % col] != what.get("base_%s" % col):
-                raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
+            for col in what:
+                if sc["base_%s" % col] != getattr(old_row, col) and sc["base_%s" % col] != what.get(col):
+                    raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
 
             # If we get here, the change is safely mergeable
-            self.update(where=[self.sc_id == sc["sc_id"]], columns=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=trans)
+            self.update(where=[self.sc_id == sc["sc_id"]], columns=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=transaction)
             self.log.debug("Merged %s into scheduled change '%s'", what, sc["sc_id"])
 
 

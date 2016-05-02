@@ -591,7 +591,7 @@ class ScheduledChangesTableMixin(object):
         self.sc_table.t.insert().execute(sc_id=1, when=234, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1,
                                          data_version=1)
         self.sc_table.t.insert().execute(sc_id=2, when=567, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1)
-        self.sc_table.t.insert().execute(sc_id=3, when=333, scheduled_by="bob", base_fooid=2, base_foo="dd", base_data_version=1, data_version=1)
+        self.sc_table.t.insert().execute(sc_id=3, when=333, scheduled_by="bob", base_fooid=2, base_foo="dd", base_bar="bb", base_data_version=1, data_version=1)
 
 
 class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, MemoryDatabaseMixin):
@@ -802,8 +802,6 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testEnactChangeExistingRow(self):
         self.table.scheduled_changes.enactChange(1)
         row = self.table.t.select().where(self.table.fooid == 1).execute().fetchall()[0]
-        print self.table.t.select().execute().fetchall()
-        print self.table.history.t.select().execute().fetchall()
         history_row = self.table.history.t.select().where(self.table.history.fooid == 1).where(self.table.history.data_version == 2).execute().fetchall()[0]
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).fetchall()[0]
         self.assertEquals(row.foo, "aa")
@@ -824,8 +822,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testMergeUpdateNoConflict(self):
         old_row = self.table.t.select().where(self.table.fooid == 2).execute().fetchall()[0]
-        new_row = {"fooid": 2, "bar": "bar", "data_version": 2}
-        self.sc_table.mergeUpdate(old_row, new_row, old_data_version=1, changed_by="bob")
+        what = {"fooid": 2, "bar": "bar", "data_version": 2}
+        self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 3).execute().fetchall()[0]
         self.assertEquals(sc_row.base_foo, "dd")
         self.assertEquals(sc_row.base_bar, "bar")
@@ -833,8 +831,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testMergeUpdateNoConflictChangingToNull(self):
         old_row = self.table.t.select().where(self.table.fooid == 2).execute().fetchall()[0]
-        new_row = {"fooid": 2, "bar": None, "data_version": 2}
-        self.sc_table.mergeUpdate(old_row, new_row, old_data_version=1, changed_by="bob")
+        what = {"fooid": 2, "bar": None, "data_version": 2}
+        self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 3).execute().fetchall()[0]
         self.assertEquals(sc_row.base_foo, "dd")
         self.assertEquals(sc_row.base_bar, None)
@@ -842,8 +840,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testMergeUpdateWithConflict(self):
         old_row = self.table.t.select().where(self.table.fooid == 1).execute().fetchall()[0]
-        new_row = {"fooid": 1, "bar": "abc", "data_version": 1}
-        self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, new_row, old_data_version=1, changed_by="bob")
+        what = {"fooid": 1, "bar": "abc", "data_version": 1}
+        self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, what, changed_by="bob")
 
 
 class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
