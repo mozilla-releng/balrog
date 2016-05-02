@@ -783,6 +783,9 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         ret = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()
         self.assertEquals(len(ret), 0)
 
+    def testBaseTableDeletesFailsWithScheduledChange(self):
+        self.assertRaises(UpdateMergeError, self.table.delete, where=[self.table.fooid == 2], changed_by="bill", old_data_version=2)
+
     def testEnactChangeNewRow(self):
         self.table.scheduled_changes.enactChange(2)
         row = self.table.t.select().where(self.table.fooid == 4).execute().fetchall()[0]

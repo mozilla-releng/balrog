@@ -351,6 +351,14 @@ class AUSTable(object):
             raise OutdatedDataError("Failed to delete row, old_data_version doesn't match current data_version")
         if self.history:
             trans.execute(self.history.forDelete(row, changed_by))
+        if self.scheduled_changes:
+            # We don't allow rows that have changes scheduled to them to be
+            # deleted because we don't know if the user deleting the row has
+            # permission to cancel the scheduled changes. Feeding mergeUpdate
+            # an object with all the rows values set to None will cause it to
+            # raise an exception if any change is scheduled for it.
+            new_row = dict.fromkeys([c.name for c in self.table.get_children()])
+            self.scheduled_changes.mergeUpdate(row, new_row, changed_by, trans)
         return ret
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
@@ -424,7 +432,6 @@ class AUSTable(object):
         ret = trans.execute(query)
         if self.history:
             trans.execute(self.history.forUpdate(new_row, changed_by))
-        # TODO: call this for delete() as well
         if self.scheduled_changes:
             self.scheduled_changes.mergeUpdate(orig_row, what, changed_by, trans)
         if ret.rowcount != 1:
