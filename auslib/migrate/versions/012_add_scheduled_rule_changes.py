@@ -1,5 +1,5 @@
 from sqlalchemy import Table, Column, Integer, String, MetaData, \
-    BigInteger
+    BigInteger, Boolean
 
 metadata = MetaData()
 
@@ -8,6 +8,7 @@ rules_scheduled_changes = Table(
     "rules_scheduled_changes", metadata,
     Column("sc_id", Integer, primary_key=True, autoincrement=True),
     Column("scheduled_by", String(100), nullable=False),
+    Column("complete", Boolean, default=False),
     Column("telemetry_product", String(15)),
     Column("telemetry_channel", String(75)),
     Column("telemetry_uptake", Integer),
@@ -40,6 +41,7 @@ rules_scheduled_changes_history = Table(
     Column("changed_by", String(100), nullable=False),
     Column("sc_id", Integer, nullable=False, autoincrement=True),
     Column("scheduled_by", String(100)),
+    Column("complete", Boolean, default=False),
     Column("telemetry_product", String(15)),
     Column("telemetry_channel", String(75)),
     Column("telemetry_uptake", Integer),

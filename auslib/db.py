@@ -676,6 +676,7 @@ class ScheduledChangeTable(AUSTable):
         self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
                            Column("sc_id", Integer, primary_key=True, autoincrement=True),
                            Column("scheduled_by", String(100), nullable=False),
+                           Column("complete", Boolean, default=False),
                            Column("telemetry_product", String(15)),
                            Column("telemetry_channel", String(75)),
                            Column("telemetry_uptake", Integer),
@@ -725,6 +726,13 @@ class ScheduledChangeTable(AUSTable):
         return ret
 
     def _validateConditions(self, conditions):
+        if not conditions:
+            raise ValueError("No conditions found")
+
+        for c in conditions:
+            if c not in itertools.chain(*self.condition_groups):
+                raise ValueError("Invalid condition: %s", c)
+
         for group in self.condition_groups:
             if set(group) == set(conditions.keys()):
                 break

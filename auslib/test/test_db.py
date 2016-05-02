@@ -12,7 +12,7 @@ from sqlalchemy.engine.reflection import Inspector
 
 import migrate.versioning.api
 
-from auslib.global_state import cache
+from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
     ReadOnlyError
@@ -588,7 +588,8 @@ class ScheduledChangesTableMixin(object):
         self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
         self.table.t.insert().execute(fooid=2, foo="b", bar="bb", data_version=1)
         self.table.t.insert().execute(fooid=3, foo="c", data_version=1)
-        self.sc_table.t.insert().execute(sc_id=1, when=234, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1, data_version=1)
+        self.sc_table.t.insert().execute(sc_id=1, when=234, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1,
+                                         data_version=1)
         self.sc_table.t.insert().execute(sc_id=2, when=567, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1)
         self.sc_table.t.insert().execute(sc_id=3, when=333, scheduled_by="bob", base_fooid=2, base_foo="dd", base_data_version=1, data_version=1)
 
@@ -630,7 +631,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.sc_table._validateConditions({"when": 12345678})
 
     def testValidateConditionsBadWhen(self):
-        self.assertRaises(ValueErrorRegexp, "Couldn't parse condition", self.sc_table._validateConditions, {"when": "abc"})
+        self.assertRaisesRegexp(ValueError, "Cannot parse", self.sc_table._validateConditions, {"when": "abc"})
 
     def testValidateConditionsJustTelemetry(self):
         self.sc_table._validateConditions({
@@ -640,10 +641,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         })
 
     def testValidateConditionsNotAllowedWhenAndOther(self):
-        self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table._validateConditions, {"when": "12345", "telemetry_product": "foo"})
+        self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table._validateConditions,
+                                {"when": "12345", "telemetry_product": "foo"})
 
     def testValidateConditionsMissingTelemetryValue(self):
-        self.assertRaisesRegexp(ValueError, "Missing required part of condition", self.sc_table._validateConditions, {"telemetry_product": "foo"})
+        self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table._validateConditions, {"telemetry_product": "foo"})
 
     def testInsertForExistingRow(self):
         what = {"fooid": 2, "foo": "thing", "bar": "thing2", "data_version": 1, "when": 999}
@@ -685,11 +687,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         table = TestTable2(self.metadata)
         self.metadata.create_all()
         what = {"fooid": 2, "when": 4532}
-        self.assertRaisesRegexp(ValueError, "Missing primary key field", table.scheduled_changes.insert, changed_by="bob", **what)
+        self.assertRaisesRegexp(ValueError, "Missing primary key column", table.scheduled_changes.insert, changed_by="bob", **what)
 
     def testInsertWithIncompatibleConditions(self):
         what = {"foo": "blah", "when": "abc"}
-        self.assertRaisesRegexp(ValueError, "Couldn't parse condition", self.sc_table.insert, changed_by="bob", **what)
+        self.assertRaisesRegexp(ValueError, "Cannot parse", self.sc_table.insert, changed_by="bob", **what)
 
     def testInsertDataVersionChanged(self):
         """Tests to make sure a scheduled change update is rejected if data
@@ -811,18 +813,18 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_row.data_version, 2)
         self.assertEquals(sc_row.complete, True)
 
-    # how the crap to test for this? should this check even happen at the db level? maybe at the web layer instead?
-    #def testEnactChangeNoPermissions(self):
-        # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
-        #self.db.permissions.t.delete().where(dbo.permissions.username == "bill").execute()
-        # todo: raise a different exception?
-        #self.assertRaises(ValueError, self.table.scheduled_changes.enactChange, 1)
+#    #  how the crap to test for this? should this check even happen at the db level? maybe at the web layer instead?
+#    def testEnactChangeNoPermissions(self):
+#        # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
+#        self.db.permissions.t.delete().where(dbo.permissions.username == "bill").execute()
+#        # todo: raise a different exception?
+#        self.assertRaises(ValueError, self.table.scheduled_changes.enactChange, 1)
 
     def testMergeUpdateNoConflict(self):
         old_row = self.table.t.select().where(self.table.fooid == 2).execute().fetchall()[0]
         new_row = {"fooid": 2, "bar": "bar", "data_version": 2}
-        self.sc_table.mergeUpdate(old_row, new_row, old_data_version=1, "bob")
-        sc_row = self.sc_table.t.select().where(sc_id == 3).execute().fetchall()[0]
+        self.sc_table.mergeUpdate(old_row, new_row, old_data_version=1, changed_by="bob")
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 3).execute().fetchall()[0]
         self.assertEquals(sc_row.base_foo, "dd")
         self.assertEquals(sc_row.base_bar, "bar")
         self.assertEquals(sc_row.base_data_version, 2)
@@ -830,8 +832,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testMergeUpdateNoConflictChangingToNull(self):
         old_row = self.table.t.select().where(self.table.fooid == 2).execute().fetchall()[0]
         new_row = {"fooid": 2, "bar": None, "data_version": 2}
-        self.sc_table.mergeUpdate(old_row, new_row, old_data_version=1, "bob")
-        sc_row = self.sc_table.t.select().where(sc_id == 3).execute().fetchall()[0]
+        self.sc_table.mergeUpdate(old_row, new_row, old_data_version=1, changed_by="bob")
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 3).execute().fetchall()[0]
         self.assertEquals(sc_row.base_foo, "dd")
         self.assertEquals(sc_row.base_bar, None)
         self.assertEquals(sc_row.base_data_version, 2)
@@ -839,7 +841,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testMergeUpdateWithConflict(self):
         old_row = self.table.t.select().where(self.table.fooid == 1).execute().fetchall()[0]
         new_row = {"fooid": 1, "bar": "abc", "data_version": 1}
-        self.assertRaises(UpdateMergeError, self.mergeUpdate, old_row, new_row, old_data_version=1, "bob")
+        self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, new_row, old_data_version=1, changed_by="bob")
 
 
 class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
@@ -1231,10 +1233,10 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
-        self.db = AUSDatabase(self.dburi)
-        self.db.create()
-        self.rules = self.db.rules
-        self.releases = self.db.releases
+        dbo.setDb(self.dburi)
+        dbo.create()
+        self.rules = dbo.rules
+        self.releases = dbo.releases
         self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.releases.t.insert().execute(name='ab', product='a', data=json.dumps(dict(name="ab", schema_version=1, hashFunction="sha512")),
@@ -1243,6 +1245,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                          data_version=1)
         self.releases.t.insert().execute(name='c', product='c', data=json.dumps(dict(name="c", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
+
+    def tearDown(self):
+        dbo.reset()
 
     def testGetReleases(self):
         self.assertEquals(len(self.releases.getReleases()), 4)
