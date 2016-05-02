@@ -90,8 +90,8 @@ class AUSTransaction(object):
         try:
             # If something that executed in the context raised an Exception,
             # rollback and re-raise it.
-            self.log.debug("exc is:", exc_info=True)
             if exc[0]:
+                self.log.debug("exc is:", exc_info=True)
                 self.rollback()
                 raise exc[0], exc[1], exc[2]
             # Also need to check for exceptions during commit!
@@ -426,7 +426,7 @@ class AUSTable(object):
             trans.execute(self.history.forUpdate(new_row, changed_by))
         # TODO: call this for delete() as well
         if self.scheduled_changes:
-            self.scheduled_changes.mergeUpdate(what, orig_row, changed_by, trans)
+            self.scheduled_changes.mergeUpdate(orig_row, what, changed_by, trans)
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
@@ -790,7 +790,7 @@ class ScheduledChangeTable(AUSTable):
     # TODO: do we need to override update and delete as well?
     # todo: rename columns to what
     def update(self, where, columns, changed_by, old_data_version, transaction=None):
-        row = self.select(where=where)[0]
+        row = self.select(where=where, transaction=transaction)[0]
 
         what = self._prefixColumns(columns)
         conditions = {}
@@ -836,7 +836,7 @@ class ScheduledChangeTable(AUSTable):
             self.log.debug("Trying to merge update with scheduled changed '%s'", sc["sc_id"])
 
             for col in what:
-                if sc["base_%s" % col] != getattr(old_row, col) and sc["base_%s" % col] != what.get(col):
+                if sc["base_%s" % col] != old_row.get(col) and sc["base_%s" % col] != what.get(col):
                     raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
 
             # If we get here, the change is safely mergeable
