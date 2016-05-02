@@ -787,25 +787,22 @@ class ScheduledChangeTable(AUSTable):
         ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **what)
         return ret.inserted_primary_key[0]
 
-    # TODO: do we need to override update and delete as well?
-    # todo: rename columns to what
-    def update(self, where, columns, changed_by, old_data_version, transaction=None):
+    def update(self, where, what, changed_by, old_data_version, transaction=None):
         row = self.select(where=where, transaction=transaction)[0]
 
-        what = self._prefixColumns(columns)
+        new_row = self._prefixColumns(what)
         conditions = {}
         for cond in itertools.chain(*self.condition_groups):
-            if cond in what:
-                conditions[cond] = what[cond]
+            if cond in new_row:
+                conditions[cond] = new_row[cond]
             elif row.get(cond):
                 conditions[cond] = row[cond]
 
         self._validateConditions(conditions)
 
-        what["scheduled_by"] = changed_by
-        return super(ScheduledChangeTable, self).update(where, what, changed_by, old_data_version, transaction)
+        new_row["scheduled_by"] = changed_by
+        return super(ScheduledChangeTable, self).update(where, new_row, changed_by, old_data_version, transaction)
 
-    # todo: somehow note in the db that the scheduled change has been fulfilled
     def enactChange(self, sc_id, transaction=None):
         sc = self.select(where=[self.sc_id == sc_id], transaction=transaction)[0]
         what = {}
@@ -848,7 +845,7 @@ class ScheduledChangeTable(AUSTable):
                     raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
 
             # If we get here, the change is safely mergeable
-            self.update(where=[self.sc_id == sc["sc_id"]], columns=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=transaction)
+            self.update(where=[self.sc_id == sc["sc_id"]], what=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=transaction)
             self.log.debug("Merged %s into scheduled change '%s'", what, sc["sc_id"])
 
 
