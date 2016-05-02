@@ -183,4 +183,5 @@ class TestSchema1Blob(unittest.TestCase):
         }
         returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = minidom.parseString(returned)
-        self.assertEqual(returned.getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        self.assertEqual(returned.getElementsByTagName('updates')[0].firstChild.nodeValue,
+                         '\n    ')

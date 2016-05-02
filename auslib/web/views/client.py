@@ -52,7 +52,20 @@ class ClientRequestView(MethodView):
         release, update_type = AUS.evaluateRules(query)
         # passing {},None returns empty xml
         if release:
-            xml = release.createXML(query, update_type, app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"])
+            response_products = release.getResponseProducts()
+            if response_products:
+                xml = response_products[0].getHeaderXML()
+                for product in response_products:
+                    product_query = query.copy()
+                    product_query["product"] = product
+                    response_release, response_update_type = AUS.evaluateRules(product_query)
+                    xml += response_release.getInnerXML(product_query,
+                                                        response_update_type,
+                                                        app.config["WHITELISTED_DOMAINS"],
+                                                        app.config["SPECIAL_FORCE_HOSTS"])
+                xml += response_products[0].getFooterXML()
+            else:
+                xml = release.createXML(query, update_type, app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"])
         else:
             xml = ['<?xml version="1.0"?>']
             xml.append('<updates>')

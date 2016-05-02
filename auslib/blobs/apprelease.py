@@ -1,5 +1,3 @@
-import re
-
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob
@@ -8,6 +6,9 @@ from auslib.util.versions import MozillaVersion
 
 
 class ReleaseBlobBase(Blob):
+
+    def __init__(self, **kwargs):
+        Blob.__init__(self, **kwargs)
 
     def matchesUpdateQuery(self, updateQuery):
         self.log.debug("Trying to match update query to %s" % self["name"])
@@ -99,7 +100,15 @@ class ReleaseBlobBase(Blob):
         return '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
             (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
 
-    def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getHeaderXML(self, updateQuery, update_type):
+        buildTarget = updateQuery["buildTarget"]
+        locale = updateQuery["locale"]
+        return self._getUpdateLineXML(buildTarget, locale, update_type)
+
+    def getFooterXML(self):
+        return '    </update>'
+
+    def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         """This method is the entry point for update XML creation for all Gecko
            app blobs. However, the XML and underlying data has changed over
            time, so there is a lot of indirection and calls factored out to
@@ -136,18 +145,8 @@ class ReleaseBlobBase(Blob):
         locale = updateQuery["locale"]
         localeData = self.getLocaleData(buildTarget, locale)
 
-        updateLine = self._getUpdateLineXML(buildTarget, locale, update_type)
         patches = self._getPatchesXML(localeData, updateQuery, whitelistedDomains, specialForceHosts)
-
-        xml = ['<?xml version="1.0"?>']
-        xml.append('<updates>')
-        if patches:
-            xml.append(updateLine)
-            xml.extend(patches)
-            xml.append('    </update>')
-        xml.append('</updates>')
-        # ensure valid xml by using the right entity for ampersand
-        return re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
+        return patches
 
     def shouldServeUpdate(self, updateQuery):
         buildTarget = updateQuery['buildTarget']

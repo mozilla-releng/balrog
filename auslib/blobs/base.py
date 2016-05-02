@@ -1,5 +1,6 @@
 from os import path
 import simplejson as json
+import re
 
 import jsonschema
 
@@ -27,6 +28,7 @@ def createBlob(data):
     from auslib.blobs.gmp import GMPBlobV1
     from auslib.blobs.settings import SettingsBlob
     from auslib.blobs.whitelist import WhitelistBlobV1
+    from auslib.blobs.superblob import SuperBlob
 
     blob_map = {
         1: ReleaseBlobV1,
@@ -37,7 +39,8 @@ def createBlob(data):
         50: DesupportBlob,
         1000: GMPBlobV1,
         2000: SettingsBlob,
-        3000: WhitelistBlobV1
+        3000: WhitelistBlobV1,
+        4000: SuperBlob,
     }
 
     if isinstance(data, basestring):
@@ -78,6 +81,11 @@ class Blob(dict):
         if errors:
             raise BlobValidationError("Invalid blob! See 'errors' for details.", errors)
 
+    def getResponseProducts(self):
+        # Usually returns None. If the Blob is a SuperBlob, it returns the list
+        # of return products.
+        return None
+
     def getSchema(self):
         def loadSchema():
             return yaml.load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
@@ -107,3 +115,24 @@ class Blob(dict):
             else:
                 url += '?force=1'
         return url
+
+    def getHeaderXML(self, updateQuery, update_type):
+        raise NotImplementedError()
+
+    def getFooterXML(self):
+        raise NotImplementedError()
+
+    def getInnerXML(self):
+        raise NotImplementedError()
+
+    def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        xml = ['<?xml version="1.0"?>']
+        xml.append('<updates>')
+        xml.append(self.getHeaderXML(updateQuery, update_type))
+        xml.extend(self.getInnerXML(updateQuery, update_type,
+                                    whitelistedDomains, specialForceHosts))
+        xml.append(self.getFooterXML())
+        xml.append('</updates>')
+
+        # ensure valid xml by using the right entity for ampersand
+        return re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
