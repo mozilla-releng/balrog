@@ -624,6 +624,9 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testValidateConditionsNone(self):
         self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table._validateConditions, {})
 
+    def testValidateConditionsNoneValue(self):
+        self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table._validateConditions, {"when": None})
+
     def testValdiateConditionsInvalid(self):
         self.assertRaisesRegexp(ValueError, "Invalid condition", self.sc_table._validateConditions, {"blah": "blah"})
 

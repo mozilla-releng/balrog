@@ -726,6 +726,8 @@ class ScheduledChangeTable(AUSTable):
         return ret
 
     def _validateConditions(self, conditions):
+        # Filter out conditions whose values are none before processing.
+        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
         if not conditions:
             raise ValueError("No conditions found")
 
@@ -793,7 +795,7 @@ class ScheduledChangeTable(AUSTable):
         what = self._prefixColumns(columns)
         conditions = {}
         for cond in itertools.chain(*self.condition_groups):
-            if what.get(cond):
+            if cond in what:
                 conditions[cond] = what[cond]
             elif row.get(cond):
                 conditions[cond] = row[cond]
@@ -801,8 +803,6 @@ class ScheduledChangeTable(AUSTable):
         self._validateConditions(conditions)
 
         what["scheduled_by"] = changed_by
-        # TODO: need to validate conditions against combination of what + existing row
-        # TODO: probably need to mergeUpdate? or check base table data_version?
         return super(ScheduledChangeTable, self).update(where, what, changed_by, old_data_version, transaction)
 
     # todo: somehow note in the db that the scheduled change has been fulfilled
