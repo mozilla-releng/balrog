@@ -24,7 +24,7 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret.data), dict(options=None, data_version=1))
 
     def testPermissionGetMissing(self):
-        ret = self.client.get("/users/bill/permissions/rules")
+        ret = self.client.get("/users/bill/permissions/rule")
         self.assertEqual(ret.status_code, 404)
 
     def testPermissionPut(self):
@@ -45,7 +45,7 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(r[0], ('admin', 'bill', None, 2))
 
     def testPermissionsPostMissing(self):
-        ret = self._post("/users/bill/permissions/rules/:id", data=dict(options="", data_version=1))
+        ret = self._post("/users/bill/permissions/rule", data=dict(options="", data_version=1))
         self.assertStatusCode(ret, 404)
 
     def testPermissionsPostBadInput(self):
