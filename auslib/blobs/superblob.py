@@ -9,7 +9,7 @@ class SuperBlob(Blob):
         if "schema_version" not in self:
             self["schema_version"] = 1000
 
-    def getResponseBlobs(self):
+    def getResponseProducts(self):
         return self["products"]
 
     def shouldServeUpdate(self, updateQuery):

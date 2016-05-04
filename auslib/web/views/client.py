@@ -54,16 +54,30 @@ class ClientRequestView(MethodView):
         if release:
             response_products = release.getResponseProducts()
             if response_products:
-                xml = response_products[0].getHeaderXML()
+                headers, bodies, footers = [], [], []
+                # if we have a SuperBlob, we process the response products and
+                # concatenate their inner XMLs
                 for product in response_products:
                     product_query = query.copy()
                     product_query["product"] = product
                     response_release, response_update_type = AUS.evaluateRules(product_query)
-                    xml += response_release.getInnerXML(product_query,
-                                                        response_update_type,
-                                                        app.config["WHITELISTED_DOMAINS"],
-                                                        app.config["SPECIAL_FORCE_HOSTS"])
-                xml += response_products[0].getFooterXML()
+                    if product_query['buildTarget'] not in response_release['platforms'].keys():
+                        continue
+
+                    headers.append(response_release.getHeaderXML(product_query,
+                                                                 response_update_type))
+                    bodies.extend(response_release.getInnerXML(product_query,
+                                                               response_update_type,
+                                                               app.config["WHITELISTED_DOMAINS"],
+                                                               app.config["SPECIAL_FORCE_HOSTS"]))
+                    footers.append(response_release.getFooterXML())
+                xml = ['<?xml version="1.0"?>']
+                xml.append('<updates>')
+                xml.append(headers[0])
+                xml.extend(bodies)
+                xml.append(footers[0])
+                xml.append('</updates>')
+                xml = '\n'.join(xml)
             else:
                 xml = release.createXML(query, update_type, app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"])
         else:
