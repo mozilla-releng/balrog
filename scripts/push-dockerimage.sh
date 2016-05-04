@@ -26,6 +26,10 @@ echo "{
     \"build\": \"https://tools.taskcluster.net/task-inspector/#${TASK_ID}\"
 }" > version.json
 
+# Initialize and update the UI submodule
+git submodule init
+git submodule update
+
 branch_tag="${branch}"
 if [ "$branch" == "master" ]; then
     branch_tag="latest"
