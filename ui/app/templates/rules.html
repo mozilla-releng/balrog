@@ -1,23 +1,5 @@
 <div loader ng-show="loading"></div>
 
-
-<form role="form" class="search-form">
-  <div class="form-group form-group-search">
-    <save-search results="filtered_items.length" input="filters.search"></save-search>
-    <input type="search" class="form-control" placeholder="Search for anything"
-           ng-model="filters.search">
-    <span ng-show="filters.search.length" ng-click="filters.search=''"
-           class="glyphicon glyphicon-remove-circle clear-search"></span>
-  </div>
-  <div class="form-group form-group-ordering" ng-show="ordering_options.length > 1">
-    <label>Order by:</label>
-    <select ng-model="ordering_str" name="ordering_str"
-      ng-options="o.text for o in ordering_options track by o.value">
-    </select>
-  </div>
-</form>
-
-
 <h2>
   <span ng-show="!rule_id">Rules</span>
   <span ng-show="rule_id">Revisions of a Rule</span>
@@ -35,17 +17,32 @@
 
 </h2>
 
-
-<div class="pagination-container" ng-show="filtered_items.length > pageSize">
-  <pagination
-    class="pagination-sm"
-    total-items="filtered_items.length"
-    ng-model="currentPage"
-    items-per-page="pageSize"
-  ></pagination>
+<div class="row">
+  <div class="col-sm-6">
+    <div class="pagination-container" ng-show="filtered_items.length > pageSize">
+      <pagination
+        class="pagination-sm"
+        total-items="filtered_items.length"
+        ng-model="currentPage"
+        items-per-page="pageSize"
+      ></pagination>
+    </div>
+  </div>
+  <div class="col-sm-6 text-right">
+    <div class="row">
+      <label>Product/Channel filter:</label>
+      <select ng-model="pr_ch_filter" name="pr_ch_filter"
+        ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options.sort() track by pr_ch_pair">
+      </select>
+    </div>
+    <div class="row">
+      <label>Order by:</label>
+      <select ng-model="ordering_str" name="ordering_str"
+        ng-options="o.text for o in ordering_options track by o.value">
+      </select>
+    </div>
+  </div>
 </div>
-
-
 <div class="undofilters" ng-show="!filtered_items.length" ng-cloak>
   <p ng-if="filters.search">
     Filtered too much?<br>
@@ -58,9 +55,8 @@
   </p>
 </div>
 
-
 <div class="panel panel-default" style="clear:right"
-     ng-repeat="rule in filtered_items = (rules | filter:filterBySearch) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
+     ng-repeat="rule in filtered_items = (rules | filter: filterBySelect) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
   <div class="panel-heading">
 
     <h3 class="panel-title">

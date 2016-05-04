@@ -5,6 +5,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.failed = false;
 
   $scope.rule_id = parseInt($routeParams.id, 10);
+  $scope.pr_ch_options = ["All rules"];
   if ($scope.rule_id) {
     // history of a specific rule
     Rules.getHistory($scope.rule_id)
@@ -23,6 +24,24 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     Rules.getRules()
     .success(function(response) {
       $scope.rules = response.rules;
+      var pairExists = function(pr, ch) {
+        var _rules = $scope.rules.filter(function(rule) {
+          return rule.product === pr && rule.channel === ch;
+        });
+        return _rules.length !== 0;
+      };
+      Rules.getProducts().success(function(response_prs) {
+        Rules.getChannels().success(function(response_chs) {
+          response_prs.product.forEach(function(pr) {
+            response_chs.channel.forEach(function(ch) {
+              if (ch.indexOf("*") === -1 && pairExists(pr, ch)){
+                var pr_ch_pair = pr.concat(",").concat(ch);
+                $scope.pr_ch_options.push(pr_ch_pair);
+              }
+            });
+          });
+        });
+      });
     })
     .error(function() {
       console.error(arguments);
@@ -36,6 +55,11 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.$watch('ordering_str', function(value) {
     $scope.ordering = value.value.split(',');
   });
+
+  $scope.$watch('pr_ch_filter', function(value) {
+    $scope.pr_ch_selected = value.split(',');
+  });
+
   if ($scope.rule_id) {
     $scope.ordering_options = [
       {
@@ -60,7 +84,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     ];
   }
   $scope.ordering_str = $scope.ordering_options[0];
-
+  $scope.pr_ch_filter = $scope.pr_ch_options[0];
 
   $scope.currentPage = 1;
   $scope.pageSize = 10;  // default
@@ -90,38 +114,14 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.highlightSearch = Search.highlightSearch;
   $scope.removeFilterSearchWord = Search.removeFilterSearchWord;
 
-  $scope.filterBySearch = function(rule) {
-    // basically, look for a reason to NOT include this
-    if (Search.word_regexes.length) {
-      // every word in the word_regexes array needs to have some match
-      var matches = 0;
-      _.each(Search.word_regexes, function(each) {
-        var regex = each[0];
-        var on = each[1];
-        // console.log(regex, on);
-        if ((on === '*' || on === 'product') && rule.product && rule.product.match(regex)) {
-          matches++;
-          return;
-        }
-        if ((on === '*' || on === 'channel') && rule.channel && rule.channel.match(regex)) {
-          matches++;
-          return;
-        }
-        if ((on === '*' || on === 'mapping') && rule.mapping && rule.mapping.match(regex)) {
-          matches++;
-          return;
-        }
-        if ((on === '*' || on === 'comment') && rule.comment && rule.comment.match(regex)) {
-          matches++;
-          return;
-        }
-      });
-      return matches === Search.word_regexes.length;
+  $scope.filterBySelect = function(rule) {
+    if ($scope.pr_ch_selected && $scope.pr_ch_selected.length > 1) {
+      product = rule.product === $scope.pr_ch_selected[0];
+      channel = rule.channel && rule.channel === $scope.pr_ch_selected[1];
+      return (product || !rule.product) && (channel || !rule.channel || (rule.channel && rule.channel.indexOf("*") > -1 && $scope.pr_ch_selected[1].startsWith(rule.channel.split("*")[0])));
     }
-
-    return true;  // include it
+    return true;
   };
-  /* End filtering */
 
   $scope.openUpdateModal = function(rule) {
 

@@ -73,6 +73,10 @@ describe("controller: RulesController", function() {
     it("should return all rules empty", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, '{"rules": [], "count": 0}');
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
       this.$httpBackend.flush();
       expect(this.scope.rules).toEqual([]);
     });
@@ -80,6 +84,10 @@ describe("controller: RulesController", function() {
     it("should return all rules some", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, JSON.stringify(sample_rules));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
       this.$httpBackend.flush();
       expect(this.scope.rules.length).toEqual(2);
       expect(this.scope.rules).toEqual(sample_rules.rules);
@@ -87,59 +95,34 @@ describe("controller: RulesController", function() {
 
   });
 
-  describe("filter by search", function() {
-    it("should return true always if no filters active", function() {
+  describe("filter by select", function() {
+    it("should be possible to change selected filter", function() {
       this.$httpBackend.expectGET('/api/rules')
-      .respond(200, '{"rules": [], "count": 0}');
-      this.$httpBackend.flush();
-
-      var rule_item = {
-        product: "Firefox",
-        channel: "nightly",
-      };
-      expect(this.scope.filterBySearch(rule_item)).toEqual(true);
-    });
-
-    it("should filter when only one search word name", function() {
-      this.$httpBackend.expectGET('/api/rules')
-      .respond(200, '{"rules": [], "count": 0}');
+      .respond(200, JSON.stringify(sample_rules));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
       this.$httpBackend.flush();
 
       var $scope = this.scope;
-      $scope.filters.search = "fire";
-      $scope.$apply();
-      var rule_item = {
-        product: "Firefox",
-        channel: "nightly",
-      };
-      expect($scope.filterBySearch(rule_item)).toEqual(true);
-      rule_item.product = "Seabird";
-      expect($scope.filterBySearch(rule_item)).toEqual(false);
-    });
+      // the default ordering should be an array based on $scope.ordering_options
+      var default_rules = $scope.pr_ch_options[0];
 
-    it("should match ALL search terms", function() {
-      this.$httpBackend.expectGET('/api/rules')
-      .respond(200, '{"rules": [], "count": 0}');
-      this.$httpBackend.flush();
-
-      var $scope = this.scope;
-      $scope.filters.search = "fire night";
+      expect($scope.pr_ch_filter).toEqual(default_rules);
+      expect($scope.pr_ch_selected).toEqual(default_rules.split(','));
+      $scope.pr_ch_filter = "foo,bar"
       $scope.$apply();
-      var rule_item = {
-        product: "Firefox",
-        channel: "nightly",
-      };
-      expect($scope.filterBySearch(rule_item)).toEqual(true);
-      rule_item.product = "Seabird";
-      expect($scope.filterBySearch(rule_item)).toEqual(false);
-      rule_item.product = "Firefox";
-      rule_item.channel = "aurora"
-      expect($scope.filterBySearch(rule_item)).toEqual(false);
+      expect($scope.pr_ch_selected).toEqual(['foo', 'bar']);
     });
 
     it("should be possible to change ordering", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, JSON.stringify(sample_rules));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
       this.$httpBackend.flush();
 
       var $scope = this.scope;
@@ -154,18 +137,6 @@ describe("controller: RulesController", function() {
       $scope.$apply();
       expect($scope.ordering).toEqual(['foo', 'bar']);
     });
-
-    it("should notice if filters are on", function() {
-      this.$httpBackend.expectGET('/api/rules')
-      .respond(200, JSON.stringify(sample_rules));
-      this.$httpBackend.flush();
-
-      var $scope = this.scope;
-      expect($scope.hasFilter()).toEqual(false);
-      $scope.filters.search = 'something';
-      $scope.$apply();
-      expect($scope.hasFilter()).toEqual(true);
-    });
   });
 
   describe('opening modals', function() {
@@ -177,7 +148,7 @@ describe("controller: RulesController", function() {
       this.$httpBackend.expectGET('/api/rules/columns/channel')
       .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
       this.$httpBackend.expectGET('/api/rules/columns/product')
-      .respond(200, JSON.stringify({channel: ['Product1', 'Product2'], count: 2}));
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.scope.openNewRuleModal();
     });
 
@@ -189,7 +160,7 @@ describe("controller: RulesController", function() {
       this.$httpBackend.expectGET('/api/rules/columns/channel')
       .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
       this.$httpBackend.expectGET('/api/rules/columns/product')
-      .respond(200, JSON.stringify({channel: ['Product1', 'Product2'], count: 2}));
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.scope.openUpdateModal();
     });
 
@@ -213,7 +184,7 @@ describe("controller: RulesController", function() {
       this.$httpBackend.expectGET('/api/rules/columns/channel')
       .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
       this.$httpBackend.expectGET('/api/rules/columns/product')
-      .respond(200, JSON.stringify({channel: ['Product1', 'Product2'], count: 2}));
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.scope.openDuplicateModal(sample_rules.rules[0]);
     });
   });
