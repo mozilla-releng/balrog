@@ -401,10 +401,11 @@ class NewStyleVersionsMixin(object):
 
 
 class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
-    """ Client-side changes in
+    """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
+
+        Client-side changes in
           https://bugzilla.mozilla.org/show_bug.cgi?id=530872
-        were introduced at Gecko 1.9.3a3 (which later became Firefox 4.0),
-        requiring this new blob class.
+        renamed or introduced several attributes in update.xml
 
         Changed parameters from ReleaseBlobV1:
          * appv, extv become appVersion, platformVersion, displayVersion
@@ -496,12 +497,14 @@ class MultipleUpdatesXMLMixin(object):
 
 
 class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, SeparatedFileUrlsMixin):
-    """ This is an internal change to add functionality to Balrog.
+    """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
 
-    Changes from ReleaseBlobV2:
-         * support multiple partials
-           * remove "partial" and "complete" from locale level
-           * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
+        This is an internal change to add functionality to Balrog.
+
+        Changes from ReleaseBlobV2:
+             * support multiple partials
+               * remove "partial" and "complete" from locale level
+               * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
     """
     jsonschema = "apprelease-v3.yml"
 
@@ -571,7 +574,9 @@ class UnifiedFileUrlsMixin(object):
 
 
 class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """ This is an internal change to add functionality to Balrog.
+    """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
+
+    This is an internal change to add functionality to Balrog.
 
     Changes from ReleaseBlobV3:
         * Support pushing release builds to the beta channel with bouncer support (bug 1021026)
@@ -587,7 +592,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
 
     def __init__(self, **kwargs):
-        # ensure schema_version is set if we init ReleaseBlobV3 directly
+        # ensure schema_version is set if we init ReleaseBlobV4 directly
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 4
@@ -632,6 +637,31 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
                             v4Blob["fileUrls"][channel][patchKey][from_] = url
 
         return v4Blob
+
+
+class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+    """ Compatible with Gecko 19.0 and above, ie Firefox/Thunderbird 19.0 and above.
+
+    Driven by a client-side change made in
+      https://bugzilla.mozilla.org/show_bug.cgi?id=813322
+
+    Changes from ReleaseBlobV4:
+        * Support optional promptWaitTime attribute
+    """
+    jsonschema = "apprelease-v5.yml"
+
+    # for the benefit of createXML
+    optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
+                 'actions', 'openURL', 'notificationURL', 'alertURL',
+                 'promptWaitTime')
+    # params that can have %LOCALE% interpolated
+    interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
+
+    def __init__(self, **kwargs):
+        # ensure schema_version is set if we init ReleaseBlobV5 directly
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 5
 
 
 class DesupportBlob(Blob):
