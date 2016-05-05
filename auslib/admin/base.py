@@ -45,9 +45,7 @@ Compress(app)
 app.add_url_rule("/csrf_token", view_func=CSRFView.as_view("csrf"))
 app.add_url_rule("/users", view_func=UsersView.as_view("users"))
 app.add_url_rule("/users/<username>/permissions", view_func=PermissionsView.as_view("user_permissions"))
-app.add_url_rule("/users/<username>/permissions/<path:permission>", view_func=SpecificPermissionView.as_view("specific_permission"))
-# Some permissions may start with a slash, and the <path> converter won"t match them, so we need an extra rule to cope.
-app.add_url_rule("/users/<username>/permissions//<path:permission>", view_func=SpecificPermissionView.as_view("specific_permission2"))
+app.add_url_rule("/users/<username>/permissions/<permission>", view_func=SpecificPermissionView.as_view("specific_permission"))
 app.add_url_rule("/rules", view_func=RulesAPIView.as_view("rules"))
 # Normal operations (get/update/delete) on rules can be done by id or alias...
 app.add_url_rule("/rules/<id_or_alias>", view_func=SingleRuleView.as_view("rule"))

@@ -9,19 +9,6 @@ from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 
 
-def setpermission(f):
-    def decorated(*args, **kwargs):
-        if kwargs['permission'] != 'admin' and not kwargs['permission'].startswith('/'):
-            kwargs['permission'] = '/%s' % kwargs['permission']
-        return f(*args, **kwargs)
-    return decorated
-
-
-def permission2selector(permission):
-    """Converts a permission to a valid CSS selector."""
-    return permission.replace('/', '').replace(':', '')
-
-
 class UsersView(AdminView):
     """/users"""
 
@@ -43,7 +30,6 @@ class PermissionsView(AdminView):
 
 class SpecificPermissionView(AdminView):
     """/users/:username/permissions/:permission"""
-    @setpermission
     def get(self, username, permission):
         try:
             perm = dbo.permissions.getUserPermissions(username)[permission]
@@ -51,7 +37,6 @@ class SpecificPermissionView(AdminView):
             return Response(status=404)
         return jsonify(perm)
 
-    @setpermission
     @requirelogin
     def _put(self, username, permission, changed_by, transaction):
         try:
@@ -74,7 +59,6 @@ class SpecificPermissionView(AdminView):
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)
 
-    @setpermission
     @requirelogin
     def _post(self, username, permission, changed_by, transaction):
         if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
@@ -91,7 +75,6 @@ class SpecificPermissionView(AdminView):
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)
 
-    @setpermission
     @requirelogin
     def _delete(self, username, permission, changed_by, transaction):
         if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):

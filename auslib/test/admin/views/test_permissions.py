@@ -11,7 +11,7 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         data['users'] = set(data['users'])
-        self.assertEqual(data, dict(users=set(['bill', 'bob'])))
+        self.assertEqual(data, dict(users=set(['bill', 'bob', 'ashanti'])))
 
     def testPermissionsCollection(self):
         ret = self._get('/users/bill/permissions')
@@ -62,13 +62,13 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(query.execute().fetchone(), ('release', 'cathy', None, 1))
 
     def testPermissionPutWithOption(self):
-        ret = self._put('/users/bob/permissions/rule', data=dict(options=json.dumps(dict(products=['fake']))))
+        ret = self._put('/users/bob/permissions/build', data=dict(options=json.dumps(dict(products=['fake']))))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
         query = dbo.permissions.t.select()
         query = query.where(dbo.permissions.username == 'bob')
-        query = query.where(dbo.permissions.permission == 'rule')
-        self.assertEqual(query.execute().fetchone(), ('rule', 'bob', json.dumps(dict(products=['fake'])), 1))
+        query = query.where(dbo.permissions.permission == 'build')
+        self.assertEqual(query.execute().fetchone(), ('build', 'bob', json.dumps(dict(products=['fake'])), 1))
 
     def testPermissionModify(self):
         ret = self._put('/users/bob/permissions/release',

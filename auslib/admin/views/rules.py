@@ -237,12 +237,6 @@ class RuleHistoryAPIView(HistoryAdminView):
         rule = dbo.rules.getRule(rule_id)
         if rule is None:
             return Response(status=404, response='bad rule_id')
-        # Verify that the user has permission for the existing rule _and_ what the rule would become.
-        for product in (rule['product'], change['product']):
-            if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
-                msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
-                self.log.warning("Unauthorized access attempt: %s", msg)
-                return Response(status=401, response=msg)
         old_data_version = rule['data_version']
 
         # now we're going to make a new insert based on this

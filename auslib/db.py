@@ -1139,16 +1139,12 @@ class Permissions(AUSTable):
        by using the option "method". When specified, the permission with this
        option is only valid for requests through that HTTP method."""
     allPermissions = {
-        'admin': [],
-        '/releases': ['method', 'product'],
-        '/releases/:name': ['method', 'product'],
-        '/releases/:name/revisions': ['product'],
-        '/releases/:name/builds/:platform/:locale': ['method', 'product'],
-        '/releases/:name/read_only': ['method', 'product'],
-        '/rules': ['method', 'product'],
-        '/rules/:id': ['method', 'product'],
-        '/rules/:id/revisions': ['product'],
-        '/users/:id/permissions/:permission': ['method'],
+        "admin": [],
+        "release": ["actions", "products"],
+        "build": ["actions", "products"],
+        "read_only": ["actions", "products"],
+        "rule": ["actions", "products"],
+        "permission": ["actions", "products"],
     }
 
     def __init__(self, metadata, dialect):
@@ -1240,53 +1236,19 @@ class Permissions(AUSTable):
         else:
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
 
-    def hasUrlPermission(self, username, url, method, urlOptions={}, transaction=None):
-        """Check if a user has access to an URL via a specific HTTP method.
-           GETs are always allowed, and admins can always access everything."""
+    def hasPermission(self, username, thing, action, product=None, transaction=None):
         if self.select(where=[self.username == username, self.permission == 'admin'], transaction=transaction):
             return True
         try:
-            options = self.getOptions(username, url, transaction=transaction)
+            options = self.getOptions(username, thing, transaction=transaction)
         except ValueError:
             return False
 
-        # GETs to any URL are always allowed
-        if method == 'GET':
-            return True
-        # Methods are also subject to the same rules other options are,
-        # so we can put them in the same loop
-        allOptions = urlOptions.copy()
-        allOptions['method'] = method
+        if options.get("actions") and action not in options["actions"]:
+            return False
+        if options.get("products") and product not in options["products"]:
+            return False
 
-        for opt in allOptions:
-            allowedOpt = options.get(opt, None)
-            incomingOpt = allOptions[opt]
-
-            # If no option is specified in the request and the user has
-            # restrictions on what they can modify, they are denied.
-            # An example of this could be trying to modify a rule that doesn't
-            # have a product specified. Changing it could affect more products
-            # than the user is allowed to modify.
-            if not incomingOpt and allowedOpt:
-                return False
-
-            # If the request has this option specified, the user has
-            # restrictions for this option, and they don't match - they are denied.
-            # An example of this could be a user who only has permissions for
-            # the "Firefox" product trying to modify a "Thunderbird" release.
-            # Product can be multi-valued so it's treated specially
-            if incomingOpt and allowedOpt:
-                if opt == 'product':
-                    if incomingOpt not in allowedOpt:
-                        return False
-                elif incomingOpt != allowedOpt:
-                    return False
-
-        # Any other combinations of incoming options/user restrictions are acceptable.
-        # Could be any of the following:
-        # * No incoming option nor user restriction.
-        # * Incoming option specified, user has no restrictions.
-        # * Incoming option specified, user has a restriction, and they match.
         return True
 
 

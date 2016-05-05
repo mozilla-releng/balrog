@@ -215,7 +215,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 404)
 
     def testDeleteWithoutPermission(self):
-        ret = self._delete("/releases/a", username="bob")
+        ret = self._delete("/releases/a", username="bob", qs=dict(data_version=1))
         self.assertStatusCode(ret, 401)
 
     def testDeleteReadOnlyRelease(self):
@@ -295,13 +295,13 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 400)
 
     def testLocalePutWithoutPermission(self):
-        data = json.dumps(dict(complete=dict(filesize='435')))
-        ret = self._put('/releases/a/builds/p/l', username='liu', data=dict(data=data, product='a', data_version=1))
+        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
+        ret = self._put('/releases/a/builds/p/l', username='liu', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 401)
 
     def testLocalePutWithoutPermissionForProduct(self):
-        data = json.dumps(dict(complete=dict(filesize='435')))
-        ret = self._put('/releases/a/builds/p/l', username='bob', data=dict(data=data, product='a', data_version=1))
+        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
+        ret = self._put('/releases/a/builds/p/l', username='bob', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 401)
 
     def testLocalePutForNewRelease(self):
@@ -972,7 +972,7 @@ class TestReadOnlyView(ViewTest, JSONTestMixin):
 
     def testReadOnlyUnsetWithoutPermissionForProduct(self):
         dbo.releases.updateRelease('b', changed_by='bob', read_only=True, old_data_version=1)
-        data = dict(name='b', read_only='', product='Firefox', data_version=1)
+        data = dict(name='b', read_only='', product='Firefox', data_version=2)
         ret = self._put('/releases/b/read_only', username='me', data=data)
         self.assertStatusCode(ret, 401)
 

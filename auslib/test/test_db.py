@@ -1746,29 +1746,29 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(self.permissions.getOptions("cathy", "rule"), {})
 
     def testHasPermissionAdmin(self):
-        self.assertTrue(self.permissions.hasUrlPermission("bill", "rule", "delete"))
+        self.assertTrue(self.permissions.hasPermission("bill", "rule", "delete"))
 
     def testHasPermissionGranular(self):
-        self.assertTrue(self.permissions.hasUrlPermission("cathy", "rule", "create"))
+        self.assertTrue(self.permissions.hasPermission("cathy", "rule", "create"))
 
     def testHasPermissionWithDbOption(self):
-        self.assertTrue(self.permissions.hasUrlPermission("bob", "rule", "modify"))
+        self.assertTrue(self.permissions.hasPermission("bob", "rule", "modify"))
 
     def testHasPermissionWithOption(self):
-        self.assertTrue(self.permissions.hasUrlPermission("bob", "release", "create", dict(product="fake")))
+        self.assertTrue(self.permissions.hasPermission("bob", "release", "create", "fake"))
 
     def testHasPermissionWithUrlOptionMulti(self):
-        self.assertTrue(self.permissions.hasUrlPermission("fred", "rule", "modify", dict(product="foo")))
-        self.assertTrue(self.permissions.hasUrlPermission("fred", "rule", "modify", dict(product="bar")))
+        self.assertTrue(self.permissions.hasPermission("fred", "rule", "modify", "foo"))
+        self.assertTrue(self.permissions.hasPermission("fred", "rule", "modify", "bar"))
 
     def testHasPermissionNotAllowed(self):
-        self.assertFalse(self.permissions.hasUrlPermission("cathy", "rule", "modify"))
+        self.assertFalse(self.permissions.hasPermission("cathy", "release", "modify"))
 
     def testHasPermissionNotAllowedWithDbOption(self):
-        self.assertFalse(self.permissions.hasUrlPermission("bob", "rule", "delete"))
+        self.assertFalse(self.permissions.hasPermission("bob", "rule", "delete"))
 
     def testHasPermissionNotAllowedWithUrlOption(self):
-        self.assertFalse(self.permissions.hasUrlPermission("bob", "release", "modify", dict(product="reallyfake")))
+        self.assertFalse(self.permissions.hasPermission("bob", "release", "modify", "reallyfake"))
 
 
 class TestDB(unittest.TestCase):
