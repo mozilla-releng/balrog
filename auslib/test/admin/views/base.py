@@ -32,10 +32,10 @@ class ViewTest(unittest.TestCase):
         dbo.setDomainWhitelist(['good.com'])
         dbo.create()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
-        dbo.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
-        dbo.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
-        dbo.permissions.t.insert().execute(permission='/releases/:name/read_only', username='bob', options=json.dumps(dict(method='PUT')), data_version=1)
-        dbo.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
+        dbo.permissions.t.insert().execute(permission='permission', username='bob', data_version=1)
+        dbo.permissions.t.insert().execute(permission='release', username='bob', options=json.dumps(dict(products=['fake'])), data_version=1)
+        dbo.permissions.t.insert().execute(permission='read_only', username='bob', data_version=1)
+        dbo.permissions.t.insert().execute(permission='rule', username='bob', options=json.dumps(dict(actions=["modify"], products=['fake'])), data_version=1)
         dbo.releases.t.insert().execute(
             name='a', product='a', data=json.dumps(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
