@@ -6,7 +6,7 @@ from flask import Response, make_response, request, jsonify
 
 from auslib.global_state import dbo
 from auslib.admin.views.base import (
-    requirelogin, requirepermission, AdminView, HistoryAdminView,
+    requirelogin, AdminView, HistoryAdminView,
 )
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm
@@ -33,7 +33,6 @@ class RulesAPIView(AdminView):
 
     # changed_by is available via the requirelogin decorator
     @requirelogin
-    @requirepermission('/rules')
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
         form = RuleForm()
@@ -89,17 +88,6 @@ class SingleRuleView(AdminView):
             return Response(status=404)
         form = EditRuleForm()
 
-        # Verify that the user has permission for the existing rule _and_ what the rule would become.
-        toCheck = [rule['product']]
-        # Rules can be partially updated - if product is null/None, we won't update that field, so
-        # we shouldn't check its permission.
-        if form.product.data:
-            toCheck.append(form.product.data)
-        for product in toCheck:
-            if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
-                msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
-                self.log.warning("Unauthorized access attempt: %s", msg)
-                return Response(status=401, response=msg)
         releaseNames = dbo.releases.getReleaseNames()
 
         form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
@@ -155,11 +143,6 @@ class SingleRuleView(AdminView):
         # rule_id and data_version), we still want to create and validate the
         # form to make sure that the CSRF token is checked.
         form = DbEditableForm(request.args)
-
-        if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'DELETE', urlOptions={'product': rule['product']}):
-            msg = "%s is not allowed to alter rules that affect %s" % (changed_by, rule['product'])
-            self.log.warning("Unauthorized access_attempt: %s", msg)
-            return Response(status=401, response=msg)
 
         dbo.rules.deleteRule(changed_by=changed_by, id_or_alias=id_or_alias,
                              old_data_version=form.data_version.data, transaction=transaction)

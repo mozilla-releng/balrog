@@ -20,30 +20,6 @@ def requirelogin(f):
     return decorated
 
 
-def requirepermission(url, options=['product']):
-    def wrap(f):
-        def decorated(*args, **kwargs):
-            username = request.environ.get('REMOTE_USER')
-            method = request.method
-            extra = dict()
-            for opt in options:
-                if opt in request.form:
-                    extra[opt] = request.form[opt]
-                elif request.get_json() and opt in request.json:
-                    extra[opt] = request.json[opt]
-                else:
-                    msg = "Couldn't find required option %s in form" % opt
-                    logging.warning("Bad input: %s", msg)
-                    return Response(status=400, response=msg)
-            if not dbo.permissions.hasUrlPermission(username, url, method, urlOptions=extra):
-                msg = "%s is not allowed to access %s by %s" % (username, url, method)
-                logging.warning("Unauthorized access attempt: %s", msg)
-                return Response(status=401, response=msg)
-            return f(*args, **kwargs)
-        return decorated
-    return wrap
-
-
 def catchOutdatedDataError(messages):
     def wrap(f):
         def decorated(*args, **kwargs):

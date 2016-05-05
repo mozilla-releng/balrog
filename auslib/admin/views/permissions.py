@@ -3,7 +3,7 @@ import simplejson as json
 from flask import request, Response, jsonify, make_response
 
 from auslib.global_state import dbo
-from auslib.admin.views.base import requirelogin, requirepermission, AdminView
+from auslib.admin.views.base import requirelogin, AdminView
 from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
@@ -53,7 +53,6 @@ class SpecificPermissionView(AdminView):
 
     @setpermission
     @requirelogin
-    @requirepermission('/users/:id/permissions/:permission', options=[])
     def _put(self, username, permission, changed_by, transaction):
         try:
             if dbo.permissions.getUserPermissions(username, transaction).get(permission):
@@ -77,7 +76,6 @@ class SpecificPermissionView(AdminView):
 
     @setpermission
     @requirelogin
-    @requirepermission('/users/:id/permissions/:permission', options=[])
     def _post(self, username, permission, changed_by, transaction):
         if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
             return Response(status=404)
@@ -95,7 +93,6 @@ class SpecificPermissionView(AdminView):
 
     @setpermission
     @requirelogin
-    @requirepermission('/users/:id/permissions/:permission', options=[])
     def _delete(self, username, permission, changed_by, transaction):
         if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
             return Response(status=404)
