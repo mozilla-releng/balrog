@@ -256,10 +256,48 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
+    def testLocalePutSpecificPermission(self):
+        data = json.dumps({
+            "complete": {
+                "filesize": 435,
+                "from": "*",
+                "hashValue": "abc",
+            }
+        })
+        ret = self._put('/releases/a/builds/p/l', username="ashanti", data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'a').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret), json.loads("""
+{
+    "name": "a",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 435,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+
     def testLocalePutWithBadHashFunction(self):
         data = json.dumps(dict(complete=dict(filesize='435')))
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 400)
+
+    def testLocalePutWithoutPermission(self):
+        data = json.dumps(dict(complete=dict(filesize='435')))
+        ret = self._put('/releases/a/builds/p/l', username='liu', data=dict(data=data, product='a', data_version=1))
+        self.assertStatusCode(ret, 401)
 
     def testLocalePutWithoutPermissionForProduct(self):
         data = json.dumps(dict(complete=dict(filesize='435')))
