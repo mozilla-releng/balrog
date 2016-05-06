@@ -739,7 +739,7 @@ class Rules(AUSTable):
 
     def addRule(self, changed_by, what, transaction=None):
         if not self.db.hasPermission(changed_by, "rule", "create", what.get("product"), transaction):
-            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+            raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % changed_by, what.get("product"))
         ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
         return ret.inserted_primary_key[0]
 
@@ -854,10 +854,10 @@ class Rules(AUSTable):
         # Old and new product both need to be checked.
         product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "rule", "modify", product, transaction):
-            raise PermissionDeniedError("bad!")
+            raise PermissionDeniedError("%s is not allowed to modify rules for product %s", changed_by, product)
         if "product" in what:
             if not self.db.hasPermission(changed_by, "rule", "modify", what["product"], transaction):
-                raise PermissionDeniedError("bad!")
+                raise PermissionDeniedError("%s is not allowed to modify rules for product %s", changed_by, what["product"])
 
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
@@ -870,7 +870,7 @@ class Rules(AUSTable):
 
         product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "rule", "delete", product, transaction):
-            raise PermissionDeniedError("bad!")
+            raise PermissionDeniedError("%s is not allowed to delete rules for product %s", changed_by, product)
 
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
@@ -1034,7 +1034,7 @@ class Releases(AUSTable):
         blob.validate()
 
         if not self.db.hasPermission(changed_by, "release", "create", product, transaction):
-            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+            raise PermissionDeniedError("%s is not allowed to create releases for product %s", changed_by, product)
         # Generally blobs have names, but there's no requirement that they have to.
         if blob.get("name"):
             # If they do, we should not let the column and the in-blob name be different.
@@ -1058,11 +1058,11 @@ class Releases(AUSTable):
 
         current_product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "release", "modify", current_product, transaction):
-            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+            raise PermissionDeniedError("%s is not allowed to modify releases for product %s", changed_by, current_product)
         if product:
             what['product'] = product
             if not self.db.hasPermission(changed_by, "release", "modify", product, transaction):
-                raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+                raise PermissionDeniedError("%s is not allowed to modify releases for product %s", changed_by, product)
         if read_only is not None:
             what['read_only'] = read_only
             if read_only:
@@ -1070,7 +1070,7 @@ class Releases(AUSTable):
             else:
                 action = "unset"
             if not self.db.hasPermission(changed_by, "read_only", action, product, transaction):
-                raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+                raise PermissionDeniedError("%s is not allowed to mark %s products read_only", changed_by, product)
 
         if blob:
             blob.validate()
@@ -1126,7 +1126,7 @@ class Releases(AUSTable):
 
         product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "build", "modify", product, transaction):
-            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+            raise PermissionDeniedError("%s is not allowed to add builds for product %s", changed_by, product)
 
         self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                     transaction=transaction)
@@ -1153,7 +1153,7 @@ class Releases(AUSTable):
         where = [self.name == name]
         product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "release", "delete", product, transaction):
-            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+            raise PermissionDeniedError("%s is not allowed to delete releases for product %s", changed_by, product)
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
         cache.invalidate("blob", name)
         cache.invalidate("blob_version", name)
@@ -1224,7 +1224,7 @@ class Permissions(AUSTable):
             self.assertOptionsExist(permission, options)
 
         if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
-            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+            raise PermissionDeniedError("%s is not allowed to create permissions", changed_by)
 
         columns = dict(username=username, permission=permission)
         if options:
@@ -1242,14 +1242,14 @@ class Permissions(AUSTable):
             what = dict(options=None)
 
         if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):
-            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+            raise PermissionDeniedError("%s is not allowed to modify permissions", changed_by)
 
         where = [self.username == username, self.permission == permission]
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
     def revokePermission(self, changed_by, username, permission, old_data_version, transaction=None):
         if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
-            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+            raise PermissionDeniedError("%s is not allowed to revoke permissions", changed_by)
 
         where = [self.username == username, self.permission == permission]
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
