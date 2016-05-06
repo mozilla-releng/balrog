@@ -851,10 +851,11 @@ class Rules(AUSTable):
         else:
             where.append(self.rule_id == id_or_alias)
 
-        # Old and new product both need to be checked.
         product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "rule", "modify", product, transaction):
             raise PermissionDeniedError("%s is not allowed to modify rules for product %s", changed_by, product)
+        # If the product is being changed, we also need to make sure the user
+        # permission to modify _that_ product.
         if "product" in what:
             if not self.db.hasPermission(changed_by, "rule", "modify", what["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify rules for product %s", changed_by, what["product"])
@@ -1035,6 +1036,7 @@ class Releases(AUSTable):
 
         if not self.db.hasPermission(changed_by, "release", "create", product, transaction):
             raise PermissionDeniedError("%s is not allowed to create releases for product %s", changed_by, product)
+
         # Generally blobs have names, but there's no requirement that they have to.
         if blob.get("name"):
             # If they do, we should not let the column and the in-blob name be different.
@@ -1059,18 +1061,26 @@ class Releases(AUSTable):
         current_product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "release", "modify", current_product, transaction):
             raise PermissionDeniedError("%s is not allowed to modify releases for product %s", changed_by, current_product)
+
         if product:
             what['product'] = product
+            # If the product is being changed, we need to make sure the user
+            # has permission to modify releases of that product, too.
             if not self.db.hasPermission(changed_by, "release", "modify", product, transaction):
                 raise PermissionDeniedError("%s is not allowed to modify releases for product %s", changed_by, product)
+
         if read_only is not None:
-            what['read_only'] = read_only
-            if read_only:
-                action = "set"
-            else:
-                action = "unset"
-            if not self.db.hasPermission(changed_by, "read_only", action, product, transaction):
-                raise PermissionDeniedError("%s is not allowed to mark %s products read_only", changed_by, product)
+            what["read_only"] = read_only
+            # In addition to being able to modify the release overall, users
+            # need to be granted explicit access to manipulate the read_only
+            # flag. This lets us give out very granular access, which can be
+            # very helpful particularly in automation.
+            if read_only is False:
+                if not self.db.hasPermission(changed_by, "read_only", "unset", product, transaction):
+                    raise PermissionDeniedError("%s is not allowed to mark %s products read write", changed_by, product)
+            elif read_only is True:
+                if not self.db.hasPermission(changed_by, "read_only", "set", product, transaction):
+                    raise PermissionDeniedError("%s is not allowed to mark %s products read only", changed_by, product)
 
         if blob:
             blob.validate()
@@ -1082,6 +1092,7 @@ class Releases(AUSTable):
             if self.containsForbiddenDomain(blob):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
+
         self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
         new_data_version = old_data_version + 1
         cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
@@ -1171,13 +1182,12 @@ class Releases(AUSTable):
 
 class Permissions(AUSTable):
     """allPermissions defines the structure and possible options for all
-       available permissions. Most permissions are identified by an URL,
-       potentially with variables in it. All URL based permissions can be
-       augmented by using the "product" option. When specified, only requests
-       involving the named product will be permitted. Additionally, any URL
-       that supports more than one of: PUT, POST, or DELETE can by augmented
-       by using the option "method". When specified, the permission with this
-       option is only valid for requests through that HTTP method."""
+       available permissions. Permissions can be limited to specific types
+       of actions. Eg: granting the "rule" permission with "actions" set to
+       ["create"] allows rules to be created but not modified or deleted.
+       Permissions that relate to rules or releases can be further limited
+       by product. Eg: granting the "release" permission with "products" set
+       to ["GMP"] allows the user to modify GMP releases, but not Firefox."""
     allPermissions = {
         "admin": [],
         "release": ["actions", "products"],
@@ -1295,8 +1305,12 @@ class Permissions(AUSTable):
         except ValueError:
             return False
 
+        # If a user has a permission that doesn't explicitly limit the type of
+        # actions they can perform, they are allowed to do any type of action.
         if options.get("actions") and action not in options["actions"]:
             return False
+        # Similarly, permissions without products specified grant that
+        # that permission without any limitation on the product.
         if options.get("products") and product not in options["products"]:
             return False
 
