@@ -616,6 +616,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1)
         self.paths.t.insert().execute(
             rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
 
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
@@ -969,6 +970,8 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                          data_version=1)
         self.releases.t.insert().execute(name='c', product='c', data=json.dumps(dict(name="c", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
 
     def testGetReleases(self):
         self.assertEquals(len(self.releases.getReleases()), 4)
@@ -1089,6 +1092,8 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
                                          data_version=1)
         self.releases.t.insert().execute(name='b', product='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         # When we started copying objects that go in or out of the cache we
         # discovered that Blob objects were not copyable at the time, due to
         # deepycopy() trying to copy their instance-level "log" attribute.
@@ -1322,6 +1327,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     "schema_version": 1
 }
 """)
+        self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
 
     def testAddRelease(self):
         blob = ReleaseBlobV1(name="d", hashFunction="sha512")
@@ -1804,6 +1811,7 @@ class TestChangeNotifiers(unittest.TestCase):
         self.db = AUSDatabase('sqlite:///:memory:')
         self.db.create()
         self.db.rules.t.insert().execute(rule_id=2, priority=100, channel='release', backgroundRate=100, update_type='z', data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
 
     def _runTest(self, changer):
         with mock.patch("smtplib.SMTP") as smtp:

@@ -33,10 +33,10 @@ class ViewTest(unittest.TestCase):
         dbo.create()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.permissions.t.insert().execute(permission='permission', username='bob', data_version=1)
-        dbo.permissions.t.insert().execute(permission='release', username='bob', options=json.dumps(dict(products=['fake'])), data_version=1)
-        dbo.permissions.t.insert().execute(permission='read_only', username='bob', data_version=1)
+        dbo.permissions.t.insert().execute(permission='release', username='bob', options=json.dumps(dict(products=['fake', 'b'])), data_version=1)
+        dbo.permissions.t.insert().execute(permission='read_only', username='bob', options=json.dumps(dict(actions=["set"])), data_version=1)
         dbo.permissions.t.insert().execute(permission='rule', username='bob', options=json.dumps(dict(actions=["modify"], products=['fake'])), data_version=1)
-        dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=json.dumps(dict(products=['a'])), data_version=1)
+        dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
         dbo.releases.t.insert().execute(
             name='a', product='a', data=json.dumps(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(

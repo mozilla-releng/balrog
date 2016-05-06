@@ -738,6 +738,8 @@ class Rules(AUSTable):
         return False
 
     def addRule(self, changed_by, what, transaction=None):
+        if not self.db.hasPermission(changed_by, "rule", "create", what.get("product"), transaction):
+            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
         ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
         return ret.inserted_primary_key[0]
 
@@ -849,6 +851,14 @@ class Rules(AUSTable):
         else:
             where.append(self.rule_id == id_or_alias)
 
+        # Old and new product both need to be checked.
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "rule", "modify", product, transaction):
+            raise PermissionDeniedError("bad!")
+        if "product" in what:
+            if not self.db.hasPermission(changed_by, "rule", "modify", what["product"], transaction):
+                raise PermissionDeniedError("bad!")
+
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
     def deleteRule(self, changed_by, id_or_alias, old_data_version, transaction=None):
@@ -857,6 +867,10 @@ class Rules(AUSTable):
             where.append(self.alias == id_or_alias)
         else:
             where.append(self.rule_id == id_or_alias)
+
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "rule", "delete", product, transaction):
+            raise PermissionDeniedError("bad!")
 
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
@@ -1018,6 +1032,9 @@ class Releases(AUSTable):
 
     def addRelease(self, name, product, blob, changed_by, transaction=None):
         blob.validate()
+
+        if not self.db.hasPermission(changed_by, "release", "create", product, transaction):
+            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
         # Generally blobs have names, but there's no requirement that they have to.
         if blob.get("name"):
             # If they do, we should not let the column and the in-blob name be different.
@@ -1036,11 +1053,25 @@ class Releases(AUSTable):
     def updateRelease(self, name, changed_by, old_data_version, product=None, read_only=None, blob=None, transaction=None):
         if product or blob:
             self._proceedIfNotReadOnly(name, transaction=transaction)
+        where = [self.name == name]
         what = {}
-        if read_only is not None:
-            what['read_only'] = read_only
+
+        current_product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "release", "modify", current_product, transaction):
+            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
         if product:
             what['product'] = product
+            if not self.db.hasPermission(changed_by, "release", "modify", product, transaction):
+                raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+        if read_only is not None:
+            what['read_only'] = read_only
+            if read_only:
+                action = "set"
+            else:
+                action = "unset"
+            if not self.db.hasPermission(changed_by, "read_only", action, product, transaction):
+                raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+
         if blob:
             blob.validate()
             # Generally blobs have names, but there's no requirement that they have to.
@@ -1051,7 +1082,7 @@ class Releases(AUSTable):
             if self.containsForbiddenDomain(blob):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
-        self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
         new_data_version = old_data_version + 1
         cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
         cache.put("blob_version", name, new_data_version)
@@ -1092,6 +1123,11 @@ class Releases(AUSTable):
             raise ValueError("Release blob contains forbidden domain.")
         where = [self.name == name]
         what = dict(data=releaseBlob.getJSON())
+
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "build", "modify", product, transaction):
+            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+
         self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                     transaction=transaction)
         new_data_version = old_data_version + 1
@@ -1115,6 +1151,9 @@ class Releases(AUSTable):
     def deleteRelease(self, changed_by, name, old_data_version, transaction=None):
         self._proceedIfNotReadOnly(name, transaction=transaction)
         where = [self.name == name]
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "release", "delete", product, transaction):
+            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
         cache.invalidate("blob", name)
         cache.invalidate("blob_version", name)
@@ -1145,7 +1184,7 @@ class Permissions(AUSTable):
         "build": ["actions", "products"],
         "read_only": ["actions", "products"],
         "rule": ["actions", "products"],
-        "permission": ["actions", "products"],
+        "permission": ["actions"],
     }
 
     def __init__(self, db, metadata, dialect):
@@ -1183,6 +1222,10 @@ class Permissions(AUSTable):
         self.assertPermissionExists(permission)
         if options:
             self.assertOptionsExist(permission, options)
+
+        if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
+            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+
         columns = dict(username=username, permission=permission)
         if options:
             columns['options'] = json.dumps(options)
@@ -1197,10 +1240,17 @@ class Permissions(AUSTable):
             what = dict(options=json.dumps(options))
         else:
             what = dict(options=None)
+
+        if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):
+            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+
         where = [self.username == username, self.permission == permission]
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
     def revokePermission(self, changed_by, username, permission, old_data_version, transaction=None):
+        if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
+            raise PermissionDeniedError("diiiiiiiiiiiiiiiie")
+
         where = [self.username == username, self.permission == permission]
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
