@@ -26,7 +26,6 @@ def createBlob(data):
     from auslib.blobs.apprelease import ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, \
         ReleaseBlobV4, ReleaseBlobV5, DesupportBlob
     from auslib.blobs.gmp import GMPBlobV1
-    from auslib.blobs.settings import SettingsBlob
     from auslib.blobs.whitelist import WhitelistBlobV1
     from auslib.blobs.superblob import SuperBlob
 
@@ -38,7 +37,6 @@ def createBlob(data):
         5: ReleaseBlobV5,
         50: DesupportBlob,
         1000: GMPBlobV1,
-        2000: SettingsBlob,
         3000: WhitelistBlobV1,
         4000: SuperBlob,
     }
@@ -126,6 +124,7 @@ class Blob(dict):
         raise NotImplementedError()
 
     def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        # ONLY USED IN TESTS
         xml = ['<?xml version="1.0"?>']
         xml.append('<updates>')
         xml.append(self.getHeaderXML(updateQuery, update_type))

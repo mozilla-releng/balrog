@@ -320,7 +320,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
 
         return updateLine
 
-    def createXML(self, updateQuery, *args, **kwargs):
+    def getHeaderXML(self, updateQuery, update_type):
         """ In order to update some older versions of Firefox without prompting
         them for add-on compatibility, we need to be able to modify the appVersion
         and extVersion attributes. bug 998721 and bug 1174605 have additional
@@ -329,7 +329,8 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         this method, but that doesn't have access to the updateQuery to lookup
         the version making the request.
         """
-        xml = super(ReleaseBlobV1, self).createXML(updateQuery, *args, **kwargs)
+        xml = super(ReleaseBlobV1, self).getHeaderXML(updateQuery, update_type)
+
         if self.get("oldVersionSpecialCases"):
             query_ver = MozillaVersion(updateQuery["version"])
             real_appv = self.getAppv(updateQuery["buildTarget"], updateQuery["locale"])
@@ -686,12 +687,14 @@ class DesupportBlob(Blob):
         # desupport messages should always be returned
         return True
 
-    def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        xml = ['<?xml version="1.0"?>']
-        xml.append('<updates>')
+    def getHeaderXML(self, updateQuery, update_type):
+        return ''
+
+    def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        xml = []
         xml.append('    <update type="%s" unsupported="true" detailsURL="%s">' % (update_type,
                                                                                   self['detailsUrl']))
-        xml.append('    </update>')
-        xml.append('</updates>')
-        xml = "\n".join(xml)
         return xml
+
+    def getFooterXML(self):
+        return '</update>'

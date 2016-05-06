@@ -1,4 +1,5 @@
 import urllib
+import re
 
 from flask import make_response, request
 from flask.views import MethodView
@@ -53,8 +54,8 @@ class ClientRequestView(MethodView):
         # passing {},None returns empty xml
         if release:
             response_products = release.getResponseProducts()
+            response_blobs = []
             if response_products:
-                headers, bodies, footers = [], [], []
                 # if we have a SuperBlob, we process the response products and
                 # concatenate their inner XMLs
                 for product in response_products:
@@ -64,22 +65,35 @@ class ClientRequestView(MethodView):
                     if product_query['buildTarget'] not in response_release['platforms'].keys():
                         continue
 
-                    headers.append(response_release.getHeaderXML(product_query,
-                                                                 response_update_type))
-                    bodies.extend(response_release.getInnerXML(product_query,
-                                                               response_update_type,
-                                                               app.config["WHITELISTED_DOMAINS"],
-                                                               app.config["SPECIAL_FORCE_HOSTS"]))
-                    footers.append(response_release.getFooterXML())
-                xml = ['<?xml version="1.0"?>']
-                xml.append('<updates>')
-                xml.append(headers[0])
-                xml.extend(bodies)
-                xml.append(footers[0])
-                xml.append('</updates>')
-                xml = '\n'.join(xml)
+                    response_blobs.append({'product_query': product_query,
+                                           'response_release': response_release,
+                                           'response_update_type': response_update_type})
             else:
-                xml = release.createXML(query, update_type, app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"])
+                response_blobs.append({'product_query': query,
+                                       'response_release': release,
+                                       'response_update_type': update_type})
+
+            xml = ['<?xml version="1.0"?>']
+            xml.append('<updates>')
+
+            # We only sample the first blob for the header and footer, since we
+            # assume that all blobs will have similar ones. We might want to
+            # verify that all of them are indeed the same in the future.
+
+            xml.append(response_blobs[0]['response_release']
+                       .getHeaderXML(response_blobs[0]['product_query'],
+                                     response_blobs[0]['response_update_type']))
+            for response_blob in response_blobs:
+                xml.extend(response_blob['response_release']
+                           .getInnerXML(response_blob['product_query'],
+                                        response_blob['response_update_type'],
+                                        app.config["WHITELISTED_DOMAINS"],
+                                        app.config["SPECIAL_FORCE_HOSTS"]))
+            # Sampling the footer from the first blob
+            xml.append(response_blobs[0]['response_release'].getFooterXML())
+            xml.append('</updates>')
+            # ensure valid xml by using the right entity for ampersand
+            xml = re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
         else:
             xml = ['<?xml version="1.0"?>']
             xml.append('<updates>')
