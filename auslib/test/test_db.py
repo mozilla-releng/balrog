@@ -125,20 +125,20 @@ class TestTableMixin(object):
 
         class TestTable(AUSTable):
 
-            def __init__(self, metadata):
+            def __init__(self, db, metadata):
                 self.table = Table('test', metadata, Column('id', Integer, primary_key=True, autoincrement=True),
                                    Column('foo', Integer))
-                AUSTable.__init__(self, 'sqlite')
+                AUSTable.__init__(self, db, 'sqlite')
 
         class TestAutoincrementTable(AUSTable):
 
-            def __init__(self, metadata):
+            def __init__(self, db, metadata):
                 self.table = Table('test-autoincrement', metadata,
                                    Column('id', Integer, primary_key=True, autoincrement=True),
                                    Column('foo', Integer))
-                AUSTable.__init__(self, 'sqlite')
-        self.test = TestTable(self.metadata)
-        self.testAutoincrement = TestAutoincrementTable(self.metadata)
+                AUSTable.__init__(self, db, 'sqlite')
+        self.test = TestTable("fake", self.metadata)
+        self.testAutoincrement = TestAutoincrementTable("fake", self.metadata)
         self.metadata.create_all()
         self.test.t.insert().execute(id=1, foo=33, data_version=1)
         self.test.t.insert().execute(id=2, foo=22, data_version=1)
@@ -153,12 +153,12 @@ class TestMultiplePrimaryTableMixin(object):
 
         class TestTable(AUSTable):
 
-            def __init__(self, metadata):
+            def __init__(self, db, metadata):
                 self.table = Table('test', metadata, Column('id1', Integer, primary_key=True),
                                    Column('id2', Integer, primary_key=True),
                                    Column('foo', Integer))
-                AUSTable.__init__(self, 'sqlite')
-        self.test = TestTable(self.metadata)
+                AUSTable.__init__(self, db, 'sqlite')
+        self.test = TestTable("fake", self.metadata)
         self.metadata.create_all()
         self.test.t.insert().execute(id1=1, id2=1, foo=33, data_version=1)
         self.test.t.insert().execute(id1=1, id2=2, foo=22, data_version=1)

@@ -163,8 +163,9 @@ class AUSTable(object):
        @type onUpdate: callable
     """
 
-    def __init__(self, dialect, history=True, versioned=True, onInsert=None,
+    def __init__(self, db, dialect, history=True, versioned=True, onInsert=None,
                  onUpdate=None, onDelete=None):
+        self.db = db
         self.t = self.table
         # Enable versioning, if required
         if versioned:
@@ -181,7 +182,7 @@ class AUSTable(object):
                 self.primary_key.append(col)
         # Set-up a history table to do logging in, if required
         if history:
-            self.history = History(dialect, self.t.metadata, self)
+            self.history = History(db, dialect, self.t.metadata, self)
         else:
             self.history = None
         self.log = logging.getLogger(self.__class__.__name__)
@@ -453,7 +454,7 @@ class History(AUSTable):
        inputs, and are documented below. History tables are never versioned,
        and cannot have history of their own."""
 
-    def __init__(self, dialect, metadata, baseTable):
+    def __init__(self, db, dialect, metadata, baseTable):
         self.baseTable = baseTable
         self.table = Table('%s_history' % baseTable.t.name, metadata,
                            Column('change_id', Integer, primary_key=True, autoincrement=True),
@@ -479,7 +480,7 @@ class History(AUSTable):
             else:
                 newcol.nullable = True
             self.table.append_column(newcol)
-        AUSTable.__init__(self, dialect, history=False, versioned=False)
+        AUSTable.__init__(self, db, dialect, history=False, versioned=False)
 
     def getTimestamp(self):
         t = int(time.time() * 1000)
@@ -639,7 +640,7 @@ class History(AUSTable):
 
 class Rules(AUSTable):
 
-    def __init__(self, metadata, dialect):
+    def __init__(self, db, metadata, dialect):
         self.table = Table('rules', metadata,
                            Column('rule_id', Integer, primary_key=True, autoincrement=True),
                            Column('alias', String(50), unique=True),
@@ -660,7 +661,7 @@ class Rules(AUSTable):
                            Column('comment', String(500)),
                            Column('whitelist', String(100)),
                            )
-        AUSTable.__init__(self, dialect)
+        AUSTable.__init__(self, db, dialect)
 
     def _matchesRegex(self, foo, bar):
         # Expand wildcards and use ^/$ to make sure we don't succeed on partial
@@ -862,7 +863,7 @@ class Rules(AUSTable):
 
 class Releases(AUSTable):
 
-    def __init__(self, metadata, dialect):
+    def __init__(self, db, metadata, dialect):
         self.domainWhitelist = []
 
         self.table = Table('releases', metadata,
@@ -876,7 +877,7 @@ class Releases(AUSTable):
         else:
             dataType = Text
         self.table.append_column(Column('data', dataType, nullable=False))
-        AUSTable.__init__(self, dialect)
+        AUSTable.__init__(self, db, dialect)
 
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
@@ -1147,13 +1148,13 @@ class Permissions(AUSTable):
         "permission": ["actions", "products"],
     }
 
-    def __init__(self, metadata, dialect):
+    def __init__(self, db, metadata, dialect):
         self.table = Table('permissions', metadata,
                            Column('permission', String(50), primary_key=True),
                            Column('username', String(100), primary_key=True),
                            Column('options', Text)
                            )
-        AUSTable.__init__(self, dialect)
+        AUSTable.__init__(self, db, dialect)
 
     def assertPermissionExists(self, permission):
         if permission not in self.allPermissions.keys():
@@ -1354,9 +1355,9 @@ class AUSDatabase(object):
             listeners.append(SetSqlMode())
         self.engine = create_engine(self.dburi, pool_recycle=60, listeners=listeners)
         dialect = self.engine.name
-        self.rulesTable = Rules(self.metadata, dialect)
-        self.releasesTable = Releases(self.metadata, dialect)
-        self.permissionsTable = Permissions(self.metadata, dialect)
+        self.rulesTable = Rules(self, self.metadata, dialect)
+        self.releasesTable = Releases(self, self.metadata, dialect)
+        self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -1370,6 +1371,9 @@ class AUSDatabase(object):
         self.permissions.onInsert = bleeter
         self.permissions.onUpdate = bleeter
         self.permissions.onDelete = bleeter
+
+    def hasPermission(self, *args, **kwargs):
+        return self.permissions.hasPermission(*args, **kwargs)
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,
