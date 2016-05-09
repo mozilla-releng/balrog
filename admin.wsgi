@@ -33,7 +33,6 @@ for cache_name, cache_cfg in cfg.getCaches().iteritems():
     cache.make_cache(cache_name, *cache_cfg)
 
 dbo.setDb(cfg.getDburi())
-dbo.setupChangeMonitors(cfg.getSystemAccounts())
 dbo.setDomainWhitelist(cfg.getDomainWhitelist())
 application.config['WHITELISTED_DOMAINS'] = cfg.getDomainWhitelist()
 application.config['PAGE_TITLE'] = cfg.getPageTitle()
