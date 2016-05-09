@@ -1083,13 +1083,12 @@ class Rules(AUSTable):
             return None
         return rules[0]
 
-    def updateRule(self, changed_by, id_or_alias, what, old_data_version, transaction=None):
-        """ Update the rule given by rule_id or alias with the parameter what """
-        where = []
-        if self._isAlias(id_or_alias):
-            where.append(self.alias == id_or_alias)
-        else:
-            where.append(self.rule_id == id_or_alias)
+    def update(self, where, what, changed_by, old_data_version, transaction=None):
+        # Rather than forcing callers to figure out whether the identifier
+        # they have is an id or an alias, we handle it here.
+        if "rule_id" in where and self._isAlias(where["rule_id"]):
+            where["alias"] = where["rule_id"]
+            del where["rule_id"]
 
         product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "rule", "modify", product, transaction):
@@ -1100,7 +1099,7 @@ class Rules(AUSTable):
             if not self.db.hasPermission(changed_by, "rule", "modify", what["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, what["product"]))
 
-        self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
+        return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
     def deleteRule(self, changed_by, id_or_alias, old_data_version, transaction=None):
         where = []
