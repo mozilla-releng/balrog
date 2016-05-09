@@ -246,13 +246,21 @@ class AUSTable(object):
         return query
 
     @rowsToDicts
-    def select(self, transaction=None, **kwargs):
+    def select(self, where=None, transaction=None, **kwargs):
         """Perform a SELECT statement on this table.
            See AUSTable._selectStatement for possible arguments.
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        query = self._selectStatement(**kwargs)
+
+        real_where = []
+        if hasattr(where, "keys"):
+            for column, value in where.iteritems():
+                real_where.append(getattr(self, column) == value)
+        else:
+            real_where = where
+
+        query = self._selectStatement(where=real_where, **kwargs)
         if transaction:
             return transaction.execute(query).fetchall()
         else:
@@ -456,16 +464,24 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+
+        real_where = []
+        if hasattr(where, "keys"):
+            for column, value in where.iteritems():
+                real_where.append(getattr(self, column) == value)
+        else:
+            real_where = where
+
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("update: old_data_version must be passed for Tables that are versioned")
 
         if transaction:
-            return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
+            return self._prepareUpdate(transaction, real_where, what, changed_by, old_data_version)
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
+                return self._prepareUpdate(trans, real_where, what, changed_by, old_data_version)
 
     def getRecentChanges(self, limit=10, transaction=None):
         return self.history.select(transaction=transaction,
