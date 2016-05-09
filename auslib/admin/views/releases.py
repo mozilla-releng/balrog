@@ -231,9 +231,8 @@ class SingleReleaseView(AdminView):
         if dbo.releases.getReleases(name=release, limit=1):
             data_version = form.data_version.data
             try:
-                dbo.releases.updateRelease(name=release, blob=blob,
-                                           product=form.product.data, changed_by=changed_by,
-                                           old_data_version=data_version, transaction=transaction)
+                dbo.releases.update({"name": release}, {"data": blob, "product": form.product.data}, changed_by=changed_by,
+                                    old_data_version=data_version, transaction=transaction)
             except BlobValidationError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
@@ -273,9 +272,9 @@ class SingleReleaseView(AdminView):
         def commit(rel, product, newReleaseData, releaseData, old_data_version, extraArgs):
             releaseData.update(newReleaseData)
             blob = createBlob(releaseData)
-            return dbo.releases.updateRelease(name=rel, blob=blob,
-                                              changed_by=changed_by, old_data_version=old_data_version,
-                                              transaction=transaction)
+            return dbo.releases.update(where={"name": rel}, what={"data": blob},
+                                       changed_by=changed_by, old_data_version=old_data_version,
+                                       transaction=transaction)
 
         return changeRelease(release, changed_by, transaction, exists, commit, self.log)
 
@@ -333,10 +332,10 @@ class ReleaseReadOnlyView(AdminView):
 
         if form.read_only.data:
             if not is_release_read_only:
-                dbo.releases.updateRelease(release, changed_by, data_version, read_only=True, transaction=transaction)
+                dbo.releases.update({"name": release}, {"read_only": True}, changed_by, data_version, transaction)
                 data_version += 1
         else:
-            dbo.releases.updateRelease(release, changed_by, data_version, read_only=False, transaction=transaction)
+            dbo.releases.update({"name": release}, {"read_only": False}, changed_by, data_version, transaction)
             data_version += 1
         return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
 
@@ -406,9 +405,8 @@ class ReleaseHistoryView(HistoryAdminView):
         blob = createBlob(change['data'])
 
         try:
-            dbo.releases.updateRelease(changed_by=changed_by, name=change['name'],
-                                       blob=blob,
-                                       old_data_version=old_data_version, transaction=transaction)
+            dbo.releases.update({"name": change["name"]}, {"data": blob}, changed_by=changed_by,
+                                old_data_version=old_data_version, transaction=transaction)
         except BlobValidationError as e:
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=json.dumps({"data": e.errors}))

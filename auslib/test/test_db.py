@@ -1349,7 +1349,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testUpdateReleaseWithNameMismatch(self):
         newBlob = ReleaseBlobV1(name="c", schema_version=1, hashFunction="sha512")
-        self.assertRaises(ValueError, self.releases.update, {"name": "a"}, {"data", newBlob}, "bill", 1)
+        self.assertRaises(ValueError, self.releases.update, {"name": "a"}, {"data": newBlob}, "bill", 1)
 
     def testUpdateReleaseChangeReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()

@@ -1291,51 +1291,48 @@ class Releases(AUSTable):
         cache.put("blob_version", name, 1)
         return ret.inserted_primary_key[0]
 
-    def updateRelease(self, name, changed_by, old_data_version, product=None, read_only=None, blob=None, transaction=None):
-        if product or blob:
-            self._proceedIfNotReadOnly(name, transaction=transaction)
-        where = [self.name == name]
-        what = {}
+    def update(self, where, what, changed_by, old_data_version, transaction=None):
+        blob = what.get("data")
 
-        current_product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
-        if not self.db.hasPermission(changed_by, "release", "modify", current_product, transaction):
-            raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, current_product))
+        for current_release in self.select(where=where, columns=[self.name, self.product, self.read_only], transaction=transaction):
+            name = current_release["name"]
+            if "product" in what or "data" in what:
+                self._proceedIfNotReadOnly(current_release["name"], transaction=transaction)
 
-        if product:
-            what['product'] = product
-            # If the product is being changed, we need to make sure the user
-            # has permission to modify releases of that product, too.
-            if not self.db.hasPermission(changed_by, "release", "modify", product, transaction):
-                raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, product))
+            if not self.db.hasPermission(changed_by, "release", "modify", current_release["product"], transaction):
+                raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, current_release["product"]))
 
-        if read_only is not None:
-            what["read_only"] = read_only
-            # In addition to being able to modify the release overall, users
-            # need to be granted explicit access to manipulate the read_only
-            # flag. This lets us give out very granular access, which can be
-            # very helpful particularly in automation.
-            if read_only is False:
-                if not self.db.hasPermission(changed_by, "read_only", "unset", product, transaction):
-                    raise PermissionDeniedError("%s is not allowed to mark %s products read write" % (changed_by, product))
-            elif read_only is True:
-                if not self.db.hasPermission(changed_by, "read_only", "set", product, transaction):
-                    raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, product))
+            if "product" in what:
+                # If the product is being changed, we need to make sure the user
+                # has permission to modify releases of that product, too.
+                if not self.db.hasPermission(changed_by, "release", "modify", what["product"], transaction):
+                    raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, what["product"]))
 
-        if blob:
-            blob.validate()
-            # Generally blobs have names, but there's no requirement that they have to.
-            if blob.get("name"):
-                # If they do, we should not let the column and the in-blob name be different.
+            if "read_only" in what:
+                # In addition to being able to modify the release overall, users
+                # need to be granted explicit access to manipulate the read_only
+                # flag. This lets us give out very granular access, which can be
+                # very helpful particularly in automation.
+                if what["read_only"] is False:
+                    if not self.db.hasPermission(changed_by, "read_only", "unset", what.get("product"), transaction):
+                        raise PermissionDeniedError("%s is not allowed to mark %s products read write" % (changed_by, what.get("product")))
+                elif what["read_only"] is True:
+                    if not self.db.hasPermission(changed_by, "read_only", "set", what.get("product"), transaction):
+                        raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, what.get("product")))
+
+            if blob:
+                blob.validate()
+                name = what.get("name", name)
                 if name != blob["name"]:
-                    raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-            if self.containsForbiddenDomain(blob):
-                raise ValueError("Release blob contains forbidden domain.")
-            what['data'] = blob.getJSON()
+                    raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob["name"]))
+                if self.containsForbiddenDomain(blob):
+                    raise ValueError("Release blob contains forbidden domain.")
+                what["data"] = blob.getJSON()
 
-        self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
-        new_data_version = old_data_version + 1
-        cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
-        cache.put("blob_version", name, new_data_version)
+            super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+            new_data_version = old_data_version + 1
+            cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
+            cache.put("blob_version", name, new_data_version)
 
     def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
         """Adds or update's the existing data for a specific platform + locale
@@ -1343,7 +1340,6 @@ class Releases(AUSTable):
            validated before commiting it, and a ValueError is raised if it is
            invalid.
         """
-        # TODO: can some of this by ripped out now that this relies on the overridden self.update?
         self._proceedIfNotReadOnly(name, transaction=transaction)
         releaseBlob = self.getReleaseBlob(name, transaction=transaction)
         if 'platforms' not in releaseBlob:
@@ -1379,8 +1375,8 @@ class Releases(AUSTable):
         if not self.db.hasPermission(changed_by, "build", "modify", product, transaction):
             raise PermissionDeniedError("%s is not allowed to add builds for product %s" % (changed_by, product))
 
-        self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
-                    transaction=transaction)
+        super(Releases, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
+                                     transaction=transaction)
         new_data_version = old_data_version + 1
         cache.put("blob", name, {"data_version": new_data_version, "blob": releaseBlob})
         cache.put("blob_version", name, new_data_version)
