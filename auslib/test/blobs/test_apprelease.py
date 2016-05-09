@@ -10,7 +10,7 @@ from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.blobs.base import BlobValidationError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
-    ReleaseBlobV3, ReleaseBlobV4, DesupportBlob
+    ReleaseBlobV3, ReleaseBlobV4, ReleaseBlobV5, DesupportBlob
 
 
 class SimpleBlob(ReleaseBlobBase):
@@ -1333,6 +1333,120 @@ class TestSchema4Blob(unittest.TestCase):
         updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
         self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+
+
+class TestSchema5Blob(unittest.TestCase):
+
+    def setUp(self):
+        self.specialForceHosts = ["http://a.com"]
+        self.whitelistedDomains = {'a.com': ('h',)}
+        dbo.setDb('sqlite:///:memory:')
+        dbo.create()
+        dbo.setDomainWhitelist(self.whitelistedDomains)
+        dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data="""
+{
+    "name": "h1",
+    "schema_version": 5,
+    "platforms": {
+        "p": {
+            "buildID": "10",
+            "locales": {
+                "l": {}
+            }
+        }
+    }
+}
+""")
+        self.blobH2 = ReleaseBlobV5()
+        self.blobH2.loadJSON("""
+{
+    "name": "h2",
+    "schema_version": 5,
+    "hashFunction": "sha512",
+    "appVersion": "31.0",
+    "displayVersion": "31.0",
+    "platformVersion": "31.0",
+    "detailsUrl": "http://example.org/details/%LOCALE%",
+    "licenseUrl": "http://example.org/license/%LOCALE%",
+    "actions": "silent",
+    "billboardURL": "http://example.org/billboard/%LOCALE%",
+    "openURL": "http://example.org/url/%LOCALE%",
+    "notificationURL": "http://example.org/notification/%LOCALE%",
+    "alertURL": "http://example.org/alert/%LOCALE%",
+    "showPrompt": false,
+    "showNeverForVersion": true,
+    "promptWaitTime": 12345,
+    "fileUrls": {
+        "c1": {
+            "partials": {
+                "h1": "http://a.com/h1-partial.mar"
+            },
+            "completes": {
+                "*": "http://a.com/complete.mar"
+            }
+        },
+        "*": {
+            "partials": {
+                "h1": "http://a.com/h1-partial-catchall"
+            },
+            "completes": {
+                "*": "http://a.com/complete-catchall"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 50,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "9"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+
+    def testIsValid(self):
+        # Raises on error
+        self.blobH2.validate()
+
+    def testSchema5OptionalAttributes(self):
+        updateQuery = {
+            "product": "h", "version": "30.0", "buildID": "10",
+            "buildTarget": "p", "locale": "l", "channel": "c1",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50" detailsURL="http://example.org/details/l"
+            licenseURL="http://example.org/license/l" billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true"
+            actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l"
+            alertURL="http://example.org/alert/l" promptWaitTime="12345">
+        <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
+        <patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
 
 
 class TestDesupportBlob(unittest.TestCase):

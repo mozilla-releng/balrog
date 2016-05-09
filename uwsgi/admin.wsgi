@@ -44,8 +44,8 @@ if os.environ.get("NOTIFY_TO_ADDR"):
     dbo.setupChangeMonitors(
         os.environ["SMTP_HOST"],
         os.environ["SMTP_PORT"],
-        os.environ["SMTP_USERNAME"],
-        os.environ["SMTP_PASSWORD"],
+        os.environ.get("SMTP_USERNAME"),
+        os.environ.get("SMTP_PASSWORD"),
         os.environ["NOTIFY_TO_ADDR"],
         os.environ["NOTIFY_FROM_ADDR"]
     )

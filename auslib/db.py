@@ -1568,7 +1568,8 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             table.log.exception("Failed to connect to SMTP server:")
             return
         try:
-            conn.login(username, password)
+            if username and password:
+                conn.login(username, password)
             conn.sendmail(from_addr, to_addr, msg.as_string())
         except:
             table.log.exception("Failed to send change notification:")
