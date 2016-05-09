@@ -176,8 +176,9 @@ class AUSTable(object):
        @type onUpdate: callable
     """
 
-    def __init__(self, dialect, history=True, versioned=True, scheduled_changes=False,
+    def __init__(self, db, dialect, history=True, versioned=True, scheduled_changes=False,
                  onInsert=None, onUpdate=None, onDelete=None):
+        self.db = db
         self.t = self.table
         # Enable versioning, if required
         if versioned:
@@ -194,12 +195,12 @@ class AUSTable(object):
                 self.primary_key.append(col)
         # Set-up a history table to do logging in, if required
         if history:
-            self.history = History(dialect, self.t.metadata, self)
+            self.history = History(db, dialect, self.t.metadata, self)
         else:
             self.history = None
         # Set-up a scheduled changes table if required
         if scheduled_changes:
-            self.scheduled_changes = ScheduledChangeTable(dialect, self.t.metadata, self)
+            self.scheduled_changes = ScheduledChangeTable(db, dialect, self.t.metadata, self)
         else:
             self.scheduled_changes = None
         self.log = logging.getLogger(self.__class__.__name__)
@@ -483,7 +484,7 @@ class History(AUSTable):
        inputs, and are documented below. History tables are never versioned,
        and cannot have history of their own."""
 
-    def __init__(self, dialect, metadata, baseTable):
+    def __init__(self, db, dialect, metadata, baseTable):
         self.baseTable = baseTable
         self.table = Table('%s_history' % baseTable.t.name, metadata,
                            Column('change_id', Integer, primary_key=True, autoincrement=True),
@@ -509,7 +510,7 @@ class History(AUSTable):
             else:
                 newcol.nullable = True
             self.table.append_column(newcol)
-        AUSTable.__init__(self, dialect, history=False, versioned=False)
+        AUSTable.__init__(self, db, dialect, history=False, versioned=False)
 
     def getTimestamp(self):
         t = int(time.time() * 1000)
@@ -677,7 +678,7 @@ class ScheduledChangeTable(AUSTable):
         ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
     )
 
-    def __init__(self, dialect, metadata, baseTable):
+    def __init__(self, db, dialect, metadata, baseTable):
         self.baseTable = baseTable
         self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
                            Column("sc_id", Integer, primary_key=True, autoincrement=True),
@@ -719,7 +720,7 @@ class ScheduledChangeTable(AUSTable):
             # modifying an existing one, those NOT NULL columns are required.
             self.table.append_column(newcol)
 
-        super(ScheduledChangeTable, self).__init__(dialect, history=True, versioned=True)
+        super(ScheduledChangeTable, self).__init__(db, dialect, history=True, versioned=True)
 
     def _prefixColumns(self, columns):
         ret = {}
@@ -863,7 +864,7 @@ class ScheduledChangeTable(AUSTable):
 
 class Rules(AUSTable):
 
-    def __init__(self, metadata, dialect):
+    def __init__(self, db, metadata, dialect):
         self.table = Table('rules', metadata,
                            Column('rule_id', Integer, primary_key=True, autoincrement=True),
                            Column('alias', String(50), unique=True),
@@ -884,7 +885,7 @@ class Rules(AUSTable):
                            Column('comment', String(500)),
                            Column('whitelist', String(100)),
                            )
-        AUSTable.__init__(self, dialect, scheduled_changes=True)
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
     def _matchesRegex(self, foo, bar):
         # Expand wildcards and use ^/$ to make sure we don't succeed on partial
@@ -961,6 +962,8 @@ class Rules(AUSTable):
         return False
 
     def addRule(self, changed_by, what, transaction=None):
+        if not self.db.hasPermission(changed_by, "rule", "create", what.get("product"), transaction):
+            raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, what.get("product")))
         ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
         return ret.inserted_primary_key[0]
 
@@ -1072,6 +1075,15 @@ class Rules(AUSTable):
         else:
             where.append(self.rule_id == id_or_alias)
 
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "rule", "modify", product, transaction):
+            raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, product))
+        # If the product is being changed, we also need to make sure the user
+        # permission to modify _that_ product.
+        if "product" in what:
+            if not self.db.hasPermission(changed_by, "rule", "modify", what["product"], transaction):
+                raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, what["product"]))
+
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
     def deleteRule(self, changed_by, id_or_alias, old_data_version, transaction=None):
@@ -1081,12 +1093,16 @@ class Rules(AUSTable):
         else:
             where.append(self.rule_id == id_or_alias)
 
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "rule", "delete", product, transaction):
+            raise PermissionDeniedError("%s is not allowed to delete rules for product %s" % (changed_by, product))
+
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
 
 class Releases(AUSTable):
 
-    def __init__(self, metadata, dialect):
+    def __init__(self, db, metadata, dialect):
         self.domainWhitelist = []
 
         self.table = Table('releases', metadata,
@@ -1100,7 +1116,7 @@ class Releases(AUSTable):
         else:
             dataType = Text
         self.table.append_column(Column('data', dataType, nullable=False))
-        AUSTable.__init__(self, dialect)
+        AUSTable.__init__(self, db, dialect)
 
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
@@ -1241,6 +1257,10 @@ class Releases(AUSTable):
 
     def addRelease(self, name, product, blob, changed_by, transaction=None):
         blob.validate()
+
+        if not self.db.hasPermission(changed_by, "release", "create", product, transaction):
+            raise PermissionDeniedError("%s is not allowed to create releases for product %s" % (changed_by, product))
+
         # Generally blobs have names, but there's no requirement that they have to.
         if blob.get("name"):
             # If they do, we should not let the column and the in-blob name be different.
@@ -1259,11 +1279,33 @@ class Releases(AUSTable):
     def updateRelease(self, name, changed_by, old_data_version, product=None, read_only=None, blob=None, transaction=None):
         if product or blob:
             self._proceedIfNotReadOnly(name, transaction=transaction)
+        where = [self.name == name]
         what = {}
-        if read_only is not None:
-            what['read_only'] = read_only
+
+        current_product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "release", "modify", current_product, transaction):
+            raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, current_product))
+
         if product:
             what['product'] = product
+            # If the product is being changed, we need to make sure the user
+            # has permission to modify releases of that product, too.
+            if not self.db.hasPermission(changed_by, "release", "modify", product, transaction):
+                raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, product))
+
+        if read_only is not None:
+            what["read_only"] = read_only
+            # In addition to being able to modify the release overall, users
+            # need to be granted explicit access to manipulate the read_only
+            # flag. This lets us give out very granular access, which can be
+            # very helpful particularly in automation.
+            if read_only is False:
+                if not self.db.hasPermission(changed_by, "read_only", "unset", product, transaction):
+                    raise PermissionDeniedError("%s is not allowed to mark %s products read write" % (changed_by, product))
+            elif read_only is True:
+                if not self.db.hasPermission(changed_by, "read_only", "set", product, transaction):
+                    raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, product))
+
         if blob:
             blob.validate()
             # Generally blobs have names, but there's no requirement that they have to.
@@ -1274,7 +1316,8 @@ class Releases(AUSTable):
             if self.containsForbiddenDomain(blob):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
-        self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+
+        self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
         new_data_version = old_data_version + 1
         cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
         cache.put("blob_version", name, new_data_version)
@@ -1315,6 +1358,11 @@ class Releases(AUSTable):
             raise ValueError("Release blob contains forbidden domain.")
         where = [self.name == name]
         what = dict(data=releaseBlob.getJSON())
+
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "build", "modify", product, transaction):
+            raise PermissionDeniedError("%s is not allowed to add builds for product %s" % (changed_by, product))
+
         self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                     transaction=transaction)
         new_data_version = old_data_version + 1
@@ -1338,6 +1386,9 @@ class Releases(AUSTable):
     def deleteRelease(self, changed_by, name, old_data_version, transaction=None):
         self._proceedIfNotReadOnly(name, transaction=transaction)
         where = [self.name == name]
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "release", "delete", product, transaction):
+            raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, product))
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
         cache.invalidate("blob", name)
         cache.invalidate("blob_version", name)
@@ -1355,33 +1406,28 @@ class Releases(AUSTable):
 
 class Permissions(AUSTable):
     """allPermissions defines the structure and possible options for all
-       available permissions. Most permissions are identified by an URL,
-       potentially with variables in it. All URL based permissions can be
-       augmented by using the "product" option. When specified, only requests
-       involving the named product will be permitted. Additionally, any URL
-       that supports more than one of: PUT, POST, or DELETE can by augmented
-       by using the option "method". When specified, the permission with this
-       option is only valid for requests through that HTTP method."""
+       available permissions. Permissions can be limited to specific types
+       of actions. Eg: granting the "rule" permission with "actions" set to
+       ["create"] allows rules to be created but not modified or deleted.
+       Permissions that relate to rules or releases can be further limited
+       by product. Eg: granting the "release" permission with "products" set
+       to ["GMP"] allows the user to modify GMP releases, but not Firefox."""
     allPermissions = {
-        'admin': [],
-        '/releases': ['method', 'product'],
-        '/releases/:name': ['method', 'product'],
-        '/releases/:name/revisions': ['product'],
-        '/releases/:name/builds/:platform/:locale': ['method', 'product'],
-        '/releases/:name/read_only': ['method', 'product'],
-        '/rules': ['method', 'product'],
-        '/rules/:id': ['method', 'product'],
-        '/rules/:id/revisions': ['product'],
-        '/users/:id/permissions/:permission': ['method'],
+        "admin": [],
+        "release": ["actions", "products"],
+        "build": ["actions", "products"],
+        "read_only": ["actions", "products"],
+        "rule": ["actions", "products"],
+        "permission": ["actions"],
     }
 
-    def __init__(self, metadata, dialect):
+    def __init__(self, db, metadata, dialect):
         self.table = Table('permissions', metadata,
                            Column('permission', String(50), primary_key=True),
                            Column('username', String(100), primary_key=True),
                            Column('options', Text)
                            )
-        AUSTable.__init__(self, dialect)
+        AUSTable.__init__(self, db, dialect)
 
     def assertPermissionExists(self, permission):
         if permission not in self.allPermissions.keys():
@@ -1410,6 +1456,10 @@ class Permissions(AUSTable):
         self.assertPermissionExists(permission)
         if options:
             self.assertOptionsExist(permission, options)
+
+        if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
+
         columns = dict(username=username, permission=permission)
         if options:
             columns['options'] = json.dumps(options)
@@ -1424,10 +1474,17 @@ class Permissions(AUSTable):
             what = dict(options=json.dumps(options))
         else:
             what = dict(options=None)
+
+        if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to modify permissions" % changed_by)
+
         where = [self.username == username, self.permission == permission]
         self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
     def revokePermission(self, changed_by, username, permission, old_data_version, transaction=None):
+        if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to revoke permissions" % changed_by)
+
         where = [self.username == username, self.permission == permission]
         self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
@@ -1464,53 +1521,23 @@ class Permissions(AUSTable):
         else:
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
 
-    def hasUrlPermission(self, username, url, method, urlOptions={}, transaction=None):
-        """Check if a user has access to an URL via a specific HTTP method.
-           GETs are always allowed, and admins can always access everything."""
+    def hasPermission(self, username, thing, action, product=None, transaction=None):
         if self.select(where=[self.username == username, self.permission == 'admin'], transaction=transaction):
             return True
         try:
-            options = self.getOptions(username, url, transaction=transaction)
+            options = self.getOptions(username, thing, transaction=transaction)
         except ValueError:
             return False
 
-        # GETs to any URL are always allowed
-        if method == 'GET':
-            return True
-        # Methods are also subject to the same rules other options are,
-        # so we can put them in the same loop
-        allOptions = urlOptions.copy()
-        allOptions['method'] = method
+        # If a user has a permission that doesn't explicitly limit the type of
+        # actions they can perform, they are allowed to do any type of action.
+        if options.get("actions") and action not in options["actions"]:
+            return False
+        # Similarly, permissions without products specified grant that
+        # that permission without any limitation on the product.
+        if options.get("products") and product not in options["products"]:
+            return False
 
-        for opt in allOptions:
-            allowedOpt = options.get(opt, None)
-            incomingOpt = allOptions[opt]
-
-            # If no option is specified in the request and the user has
-            # restrictions on what they can modify, they are denied.
-            # An example of this could be trying to modify a rule that doesn't
-            # have a product specified. Changing it could affect more products
-            # than the user is allowed to modify.
-            if not incomingOpt and allowedOpt:
-                return False
-
-            # If the request has this option specified, the user has
-            # restrictions for this option, and they don't match - they are denied.
-            # An example of this could be a user who only has permissions for
-            # the "Firefox" product trying to modify a "Thunderbird" release.
-            # Product can be multi-valued so it's treated specially
-            if incomingOpt and allowedOpt:
-                if opt == 'product':
-                    if incomingOpt not in allowedOpt:
-                        return False
-                elif incomingOpt != allowedOpt:
-                    return False
-
-        # Any other combinations of incoming options/user restrictions are acceptable.
-        # Could be any of the following:
-        # * No incoming option nor user restriction.
-        # * Incoming option specified, user has no restrictions.
-        # * Incoming option specified, user has a restriction, and they match.
         return True
 
 
@@ -1616,9 +1643,9 @@ class AUSDatabase(object):
             listeners.append(SetSqlMode())
         self.engine = create_engine(self.dburi, pool_recycle=60, listeners=listeners)
         dialect = self.engine.name
-        self.rulesTable = Rules(self.metadata, dialect)
-        self.releasesTable = Releases(self.metadata, dialect)
-        self.permissionsTable = Permissions(self.metadata, dialect)
+        self.rulesTable = Rules(self, self.metadata, dialect)
+        self.releasesTable = Releases(self, self.metadata, dialect)
+        self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -1632,6 +1659,9 @@ class AUSDatabase(object):
         self.permissions.onInsert = bleeter
         self.permissions.onUpdate = bleeter
         self.permissions.onDelete = bleeter
+
+    def hasPermission(self, *args, **kwargs):
+        return self.permissions.hasPermission(*args, **kwargs)
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,

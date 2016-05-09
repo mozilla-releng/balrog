@@ -11,7 +11,7 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         data['users'] = set(data['users'])
-        self.assertEqual(data, dict(users=set(['bill', 'bob'])))
+        self.assertEqual(data, dict(users=set(['bill', 'bob', 'ashanti'])))
 
     def testPermissionsCollection(self):
         ret = self._get('/users/bill/permissions')
@@ -24,7 +24,7 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(json.loads(ret.data), dict(options=None, data_version=1))
 
     def testPermissionGetMissing(self):
-        ret = self.client.get("/users/bill/permissions/rules")
+        ret = self.client.get("/users/bill/permissions/rule")
         self.assertEqual(ret.status_code, 404)
 
     def testPermissionPut(self):
@@ -45,7 +45,7 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(r[0], ('admin', 'bill', None, 2))
 
     def testPermissionsPostMissing(self):
-        ret = self._post("/users/bill/permissions/rules/:id", data=dict(options="", data_version=1))
+        ret = self._post("/users/bill/permissions/rule", data=dict(options="", data_version=1))
         self.assertStatusCode(ret, 404)
 
     def testPermissionsPostBadInput(self):
@@ -53,36 +53,36 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 400)
 
     def testPermissionUrl(self):
-        ret = self._put('/users/cathy/permissions/releases/:name')
+        ret = self._put('/users/cathy/permissions/release')
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
         query = dbo.permissions.t.select()
         query = query.where(dbo.permissions.username == 'cathy')
-        query = query.where(dbo.permissions.permission == '/releases/:name')
-        self.assertEqual(query.execute().fetchone(), ('/releases/:name', 'cathy', None, 1))
+        query = query.where(dbo.permissions.permission == 'release')
+        self.assertEqual(query.execute().fetchone(), ('release', 'cathy', None, 1))
 
     def testPermissionPutWithOption(self):
-        ret = self._put('/users/bob/permissions/rules', data=dict(options=json.dumps(dict(product='fake'))))
+        ret = self._put('/users/bob/permissions/build', data=dict(options=json.dumps(dict(products=['fake']))))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
         query = dbo.permissions.t.select()
         query = query.where(dbo.permissions.username == 'bob')
-        query = query.where(dbo.permissions.permission == '/rules')
-        self.assertEqual(query.execute().fetchone(), ('/rules', 'bob', json.dumps(dict(product='fake')), 1))
+        query = query.where(dbo.permissions.permission == 'build')
+        self.assertEqual(query.execute().fetchone(), ('build', 'bob', json.dumps(dict(products=['fake'])), 1))
 
     def testPermissionModify(self):
-        ret = self._put('/users/bob/permissions/releases/:name',
-                        data=dict(options=json.dumps(dict(product='different')), data_version=1))
+        ret = self._put('/users/bob/permissions/release',
+                        data=dict(options=json.dumps(dict(products=['different'])), data_version=1))
         self.assertStatusCode(ret, 200)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         query = dbo.permissions.t.select()
         query = query.where(dbo.permissions.username == 'bob')
-        query = query.where(dbo.permissions.permission == '/releases/:name')
-        self.assertEqual(query.execute().fetchone(), ('/releases/:name', 'bob', json.dumps(dict(product='different')), 2))
+        query = query.where(dbo.permissions.permission == 'release')
+        self.assertEqual(query.execute().fetchone(), ('release', 'bob', json.dumps(dict(products=['different'])), 2))
 
     def testPermissionModifyWithoutDataVersion(self):
-        ret = self._put("/users/bob/permissions/releases/:name",
-                        data=dict(options=json.dumps(dict(product="different"))))
+        ret = self._put("/users/bob/permissions/release",
+                        data=dict(options=json.dumps(dict(products=["different"]))))
         self.assertStatusCode(ret, 400)
 
     def testPermissionPutBadPermission(self):
@@ -95,19 +95,19 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
 
     # Discovered in https://bugzilla.mozilla.org/show_bug.cgi?id=1237264
     def testPermissionPutBadJSON(self):
-        ret = self._put("/users/bob/permissions/rules", data=dict(options='{"METHOD":'))
+        ret = self._put("/users/bob/permissions/rule", data=dict(options='{"products":'))
         self.assertStatusCode(ret, 400)
 
     def testPermissionDelete(self):
-        ret = self._delete('/users/bob/permissions/users/:id/permissions/:permission', qs=dict(data_version=1))
+        ret = self._delete('/users/bob/permissions/permission', qs=dict(data_version=1))
         self.assertStatusCode(ret, 200)
         query = dbo.permissions.t.select()
         query = query.where(dbo.permissions.username == 'bob')
-        query = query.where(dbo.permissions.permission == '/users/:id/permissions/:permission')
+        query = query.where(dbo.permissions.permission == 'permission')
         self.assertEqual(query.execute().fetchone(), None)
 
     def testPermissionDeleteMissing(self):
-        ret = self._delete("/users/bill/permissions/releases/:name")
+        ret = self._delete("/users/bill/permissions/release")
         self.assertStatusCode(ret, 404)
 
     def testPermissionDeleteBadInput(self):

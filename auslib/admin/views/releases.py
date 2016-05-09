@@ -8,7 +8,7 @@ from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
 from auslib.db import OutdatedDataError, ReadOnlyError
 from auslib.admin.views.base import (
-    requirelogin, requirepermission, AdminView, HistoryAdminView
+    requirelogin, AdminView, HistoryAdminView
 )
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, DbEditableForm, ReadOnlyForm
@@ -182,7 +182,6 @@ class SingleLocaleView(AdminView):
         return Response(response=json.dumps(locale), mimetype='application/json', headers=headers)
 
     @requirelogin
-    @requirepermission('/releases/:name/builds/:platform/:locale')
     def _put(self, release, platform, locale, changed_by, transaction):
         """Something important to note about this method is that using the
            "copyTo" field of the form, updates can be made to more than just
@@ -222,7 +221,6 @@ class SingleReleaseView(AdminView):
         return Response(response=json.dumps(release[0]['data'], indent=indent), mimetype='application/json', headers=headers)
 
     @requirelogin
-    @requirepermission('/releases/:name')
     def _put(self, release, changed_by, transaction):
         form = CompleteReleaseForm()
         if not form.validate():
@@ -266,7 +264,6 @@ class SingleReleaseView(AdminView):
             return Response(status=201)
 
     @requirelogin
-    @requirepermission('/releases/:name')
     def _post(self, release, changed_by, transaction):
         def exists(rel, product):
             if rel == release:
@@ -288,10 +285,6 @@ class SingleReleaseView(AdminView):
         if not releases:
             return Response(status=404, response='bad release')
         release = releases[0]
-        if not dbo.permissions.hasUrlPermission(changed_by, '/releases/:name', 'DELETE', urlOptions={'product': release['product']}):
-            msg = "%s is not allowed to delete %s releases" % (changed_by, release['product'])
-            self.log.warning("Unauthorized access attempt: %s", msg)
-            return Response(status=401, response=msg)
 
         # Bodies are ignored for DELETE requests, so we need to force WTForms
         # to look at the arguments instead.
@@ -329,7 +322,6 @@ class ReleaseReadOnlyView(AdminView):
         })
 
     @requirelogin
-    @requirepermission('/releases/:name/read_only')
     def _put(self, release, changed_by, transaction):
         form = ReadOnlyForm()
         data_version = form.data_version.data
@@ -344,15 +336,8 @@ class ReleaseReadOnlyView(AdminView):
                 dbo.releases.updateRelease(release, changed_by, data_version, read_only=True, transaction=transaction)
                 data_version += 1
         else:
-            if is_release_read_only:
-                # Only an admin user can unset the read_only field once it's set to True
-                if dbo.permissions.hasUrlPermission(changed_by, 'admin', 'PUT'):
-                    dbo.releases.updateRelease(release, changed_by, data_version, read_only=False, transaction=transaction)
-                    data_version += 1
-                else:
-                    msg = "%s is not allowed to set releases as read-write" % changed_by
-                    self.log.warning("Unauthorized attempt to mark release as read-write: %s", msg)
-                    return Response(status=403, response=msg)
+            dbo.releases.updateRelease(release, changed_by, data_version, read_only=False, transaction=transaction)
+            data_version += 1
         return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
 
 
@@ -415,10 +400,6 @@ class ReleaseHistoryView(HistoryAdminView):
         if not releases:
             return Response(status=404, response='bad release')
         release = releases[0]
-        if not dbo.permissions.hasUrlPermission(changed_by, '/releases/:name', 'POST', urlOptions={'product': release['product']}):
-            msg = "%s is not allowed to alter %s releases" % (changed_by, release['product'])
-            self.log.warning("Unauthorized access attempt: %s", msg)
-            return Response(status=401, response=msg)
         old_data_version = release['data_version']
 
         # now we're going to make a new update based on this change
@@ -477,7 +458,6 @@ class ReleasesAPIView(AdminView):
         return Response(response=json.dumps(data), mimetype="application/json")
 
     @requirelogin
-    @requirepermission('/releases')
     def _post(self, changed_by, transaction):
         form = CompleteReleaseForm()
         if not form.validate():

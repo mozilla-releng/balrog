@@ -215,8 +215,8 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 404)
 
     def testDeleteWithoutPermission(self):
-        ret = self._delete("/releases/a", username="bob")
-        self.assertStatusCode(ret, 401)
+        ret = self._delete("/releases/a", username="bob", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 403)
 
     def testDeleteReadOnlyRelease(self):
         dbo.releases.updateRelease('a', changed_by='bill', read_only=True, old_data_version=1)
@@ -256,15 +256,53 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
+    def testLocalePutSpecificPermission(self):
+        data = json.dumps({
+            "complete": {
+                "filesize": 435,
+                "from": "*",
+                "hashValue": "abc",
+            }
+        })
+        ret = self._put('/releases/a/builds/p/l', username="ashanti", data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'a').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret), json.loads("""
+{
+    "name": "a",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 435,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+
     def testLocalePutWithBadHashFunction(self):
         data = json.dumps(dict(complete=dict(filesize='435')))
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 400)
 
+    def testLocalePutWithoutPermission(self):
+        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
+        ret = self._put('/releases/a/builds/p/l', username='liu', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 403)
+
     def testLocalePutWithoutPermissionForProduct(self):
-        data = json.dumps(dict(complete=dict(filesize='435')))
-        ret = self._put('/releases/a/builds/p/l', username='bob', data=dict(data=data, product='a', data_version=1))
-        self.assertStatusCode(ret, 401)
+        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
+        ret = self._put('/releases/a/builds/p/l', username='bob', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 403)
 
     def testLocalePutForNewRelease(self):
         data = json.dumps({
@@ -934,9 +972,9 @@ class TestReadOnlyView(ViewTest, JSONTestMixin):
 
     def testReadOnlyUnsetWithoutPermissionForProduct(self):
         dbo.releases.updateRelease('b', changed_by='bob', read_only=True, old_data_version=1)
-        data = dict(name='b', read_only='', product='Firefox', data_version=1)
+        data = dict(name='b', read_only='', product='Firefox', data_version=2)
         ret = self._put('/releases/b/read_only', username='me', data=data)
-        self.assertStatusCode(ret, 401)
+        self.assertStatusCode(ret, 403)
 
     def testReadOnlyAdminSetAndUnsetFlag(self):
         # Setting flag

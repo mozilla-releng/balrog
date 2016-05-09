@@ -126,20 +126,20 @@ class TestTableMixin(object):
 
         class TestTable(AUSTable):
 
-            def __init__(self, metadata):
+            def __init__(self, db, metadata):
                 self.table = Table('test', metadata, Column('id', Integer, primary_key=True, autoincrement=True),
                                    Column('foo', Integer))
-                AUSTable.__init__(self, 'sqlite')
+                AUSTable.__init__(self, db, 'sqlite')
 
         class TestAutoincrementTable(AUSTable):
 
-            def __init__(self, metadata):
+            def __init__(self, db, metadata):
                 self.table = Table('test-autoincrement', metadata,
                                    Column('id', Integer, primary_key=True, autoincrement=True),
                                    Column('foo', Integer))
-                AUSTable.__init__(self, 'sqlite')
-        self.test = TestTable(self.metadata)
-        self.testAutoincrement = TestAutoincrementTable(self.metadata)
+                AUSTable.__init__(self, db, 'sqlite')
+        self.test = TestTable("fake", self.metadata)
+        self.testAutoincrement = TestAutoincrementTable("fake", self.metadata)
         self.metadata.create_all()
         self.test.t.insert().execute(id=1, foo=33, data_version=1)
         self.test.t.insert().execute(id=2, foo=22, data_version=1)
@@ -154,12 +154,12 @@ class TestMultiplePrimaryTableMixin(object):
 
         class TestTable(AUSTable):
 
-            def __init__(self, metadata):
+            def __init__(self, db, metadata):
                 self.table = Table('test', metadata, Column('id1', Integer, primary_key=True),
                                    Column('id2', Integer, primary_key=True),
                                    Column('foo', Integer))
-                AUSTable.__init__(self, 'sqlite')
-        self.test = TestTable(self.metadata)
+                AUSTable.__init__(self, db, 'sqlite')
+        self.test = TestTable("fake", self.metadata)
         self.metadata.create_all()
         self.test.t.insert().execute(id1=1, id2=1, foo=33, data_version=1)
         self.test.t.insert().execute(id1=1, id2=2, foo=22, data_version=1)
@@ -576,13 +576,13 @@ class ScheduledChangesTableMixin(object):
 
         class TestTable(AUSTable):
 
-            def __init__(self, metadata):
+            def __init__(self, db, metadata):
                 self.table = Table("test_table", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
                                    Column("foo", String(15)),
                                    Column("bar", String(15)))
-                super(TestTable, self).__init__("sqlite", scheduled_changes=True, history=True, versioned=True)
+                super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
-        self.table = TestTable(self.metadata)
+        self.table = TestTable("fake", self.metadata)
         self.sc_table = self.table.scheduled_changes
         self.metadata.create_all()
         self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
@@ -684,13 +684,13 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testInsertMissingRequiredPartOfPK(self):
         class TestTable2(AUSTable):
 
-            def __init__(self, metadata):
+            def __init__(self, db, metadata):
                 self.table = Table("test_table2", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
                                    Column("foo", String(15), primary_key=True),
                                    Column("bar", String(15)))
-                super(TestTable2, self).__init__("sqlite", scheduled_changes=True, history=True, versioned=True)
+                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
-        table = TestTable2(self.metadata)
+        table = TestTable2("fake", self.metadata)
         self.metadata.create_all()
         what = {"fooid": 2, "when": 4532}
         self.assertRaisesRegexp(ValueError, "Missing primary key column", table.scheduled_changes.insert, changed_by="bob", **what)
@@ -901,6 +901,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1)
         self.paths.t.insert().execute(
             rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
 
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
@@ -1253,6 +1254,8 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                          data_version=1)
         self.releases.t.insert().execute(name='c', product='c', data=json.dumps(dict(name="c", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
+        dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+        dbo.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
 
     def tearDown(self):
         dbo.reset()
@@ -1376,6 +1379,8 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
                                          data_version=1)
         self.releases.t.insert().execute(name='b', product='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         # When we started copying objects that go in or out of the cache we
         # discovered that Blob objects were not copyable at the time, due to
         # deepycopy() trying to copy their instance-level "log" attribute.
@@ -1609,6 +1614,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     "schema_version": 1
 }
 """)
+        self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
 
     def testAddRelease(self):
         blob = ReleaseBlobV1(name="d", hashFunction="sha512")
@@ -1961,44 +1968,44 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.db.create()
         self.permissions = self.db.permissions
         self.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
-        self.permissions.t.insert().execute(permission='/users/:id/permissions/:permission', username='bob', data_version=1)
-        self.permissions.t.insert().execute(permission='/releases/:name', username='bob', options=json.dumps(dict(product=['fake'])), data_version=1)
-        self.permissions.t.insert().execute(permission='/rules', username='cathy', data_version=1)
-        self.permissions.t.insert().execute(permission='/rules/:id', username='bob', options=json.dumps(dict(method='POST')), data_version=1)
-        self.permissions.t.insert().execute(
-            permission='/rules/:id', username='fred', options=json.dumps(dict(product=['foo', 'bar'], method='POST')), data_version=1)
+        self.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)
+        self.permissions.t.insert().execute(permission="release", username="bob", options=json.dumps(dict(products=["fake"])), data_version=1)
+        self.permissions.t.insert().execute(permission="rule", username="cathy", data_version=1)
+        self.permissions.t.insert().execute(permission="rule", username="bob", options=json.dumps(dict(actions=["modify"])), data_version=1)
+        self.permissions.t.insert().execute(permission="rule", username="fred", options=json.dumps(dict(products=["foo", "bar"], actions=["modify"])),
+                                            data_version=1)
 
     def testGrantPermissions(self):
-        query = self.permissions.t.select().where(self.permissions.username == 'jess')
+        query = self.permissions.t.select().where(self.permissions.username == "jess")
         self.assertEquals(len(query.execute().fetchall()), 0)
-        self.permissions.grantPermission('bob', 'jess', '/rules/:id')
-        self.assertEquals(query.execute().fetchall(), [('/rules/:id', 'jess', None, 1)])
+        self.permissions.grantPermission("bob", "jess", "rule")
+        self.assertEquals(query.execute().fetchall(), [("rule", "jess", None, 1)])
 
     def testGrantPermissionsWithOptions(self):
-        self.permissions.grantPermission('bob', 'cathy', '/releases/:name', options=dict(product=['SeaMonkey']))
-        query = self.permissions.t.select().where(self.permissions.username == 'cathy')
-        query = query.where(self.permissions.permission == '/releases/:name')
-        self.assertEquals(query.execute().fetchall(), [('/releases/:name', 'cathy', json.dumps(dict(product=['SeaMonkey'])), 1)])
+        self.permissions.grantPermission("bob", "cathy", "release", options=dict(products=["SeaMonkey"]))
+        query = self.permissions.t.select().where(self.permissions.username == "cathy")
+        query = query.where(self.permissions.permission == "release")
+        self.assertEquals(query.execute().fetchall(), [("release", "cathy", json.dumps(dict(products=["SeaMonkey"])), 1)])
 
     def testGrantPermissionsUnknownPermission(self):
         self.assertRaises(ValueError, self.permissions.grantPermission,
-                          'bob', 'bud', 'bad'
+                          "bob", "bud", "bad"
                           )
 
     def testGrantPermissionsUnknownOption(self):
         self.assertRaises(ValueError, self.permissions.grantPermission,
-                          'bob', 'bud', '/rules/:id', dict(foo=1)
+                          "bob", "bud", "rule", dict(foo=1)
                           )
 
     def testRevokePermission(self):
-        self.permissions.revokePermission(changed_by='bill', username='bob', permission='/releases/:name',
+        self.permissions.revokePermission(changed_by="bill", username="bob", permission="release",
                                           old_data_version=1)
-        query = self.permissions.t.select().where(self.permissions.username == 'bob')
-        query = query.where(self.permissions.permission == '/releases/:name')
+        query = self.permissions.t.select().where(self.permissions.username == "bob")
+        query = query.where(self.permissions.permission == "release")
         self.assertEquals(len(query.execute().fetchall()), 0)
 
     def testGetAllUsers(self):
-        self.assertEquals(set(self.permissions.getAllUsers()), set(['bill', 'bob', 'cathy', 'fred']))
+        self.assertEquals(set(self.permissions.getAllUsers()), set(["bill", "bob", "cathy", "fred"]))
 
     def testCountAllUsers(self):
         # bill, bob and cathy
@@ -2006,56 +2013,56 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetPermission(self):
         expected = {
-            'permission': '/releases/:name',
-            'username': 'bob',
-            'options': dict(product=['fake']),
-            'data_version': 1
+            "permission": "release",
+            "username": "bob",
+            "options": dict(products=["fake"]),
+            "data_version": 1
         }
-        self.assertEquals(self.permissions.getPermission('bob', '/releases/:name'), expected)
+        self.assertEquals(self.permissions.getPermission("bob", "release"), expected)
 
     def testGetPermissionNonExistant(self):
-        self.assertEquals(self.permissions.getPermission('bob', '/rules'), {})
+        self.assertEquals(self.permissions.getPermission("cathy", "release"), {})
 
     def testGetUserPermissions(self):
-        expected = {'/users/:id/permissions/:permission': dict(options=None, data_version=1),
-                    '/releases/:name': dict(options=dict(product=['fake']), data_version=1),
-                    '/rules/:id': dict(options=dict(method='POST'), data_version=1)}
-        self.assertEquals(self.permissions.getUserPermissions('bob'), expected)
+        expected = {"permission": dict(options=None, data_version=1),
+                    "release": dict(options=dict(products=["fake"]), data_version=1),
+                    "rule": dict(options=dict(actions=["modify"]), data_version=1)}
+        self.assertEquals(self.permissions.getUserPermissions("bob"), expected)
 
     def testGetOptions(self):
-        expected = dict(product=['fake'])
-        self.assertEquals(self.permissions.getOptions('bob', '/releases/:name'), expected)
+        expected = dict(products=["fake"])
+        self.assertEquals(self.permissions.getOptions("bob", "release"), expected)
 
     def testGetOptionsPermissionDoesntExist(self):
-        self.assertRaises(ValueError, self.permissions.getOptions, 'fake', 'fake')
+        self.assertRaises(ValueError, self.permissions.getOptions, "fake", "fake")
 
     def testGetOptionsNoOptions(self):
-        self.assertEquals(self.permissions.getOptions('cathy', '/rules'), {})
+        self.assertEquals(self.permissions.getOptions("cathy", "rule"), {})
 
-    def testHasUrlPermissionAdmin(self):
-        self.assertTrue(self.permissions.hasUrlPermission('bill', '/rules', 'FOO'))
+    def testHasPermissionAdmin(self):
+        self.assertTrue(self.permissions.hasPermission("bill", "rule", "delete"))
 
-    def testHasUrlPermissionGranular(self):
-        self.assertTrue(self.permissions.hasUrlPermission('cathy', '/rules', 'FOO'))
+    def testHasPermissionGranular(self):
+        self.assertTrue(self.permissions.hasPermission("cathy", "rule", "create"))
 
-    def testHasUrlPermissionWithDbOption(self):
-        self.assertTrue(self.permissions.hasUrlPermission('bob', '/rules/:id', 'POST'))
+    def testHasPermissionWithDbOption(self):
+        self.assertTrue(self.permissions.hasPermission("bob", "rule", "modify"))
 
-    def testHasUrlPermissionWithUrlOption(self):
-        self.assertTrue(self.permissions.hasUrlPermission('bob', '/releases/:name', 'FOO', dict(product='fake')))
+    def testHasPermissionWithOption(self):
+        self.assertTrue(self.permissions.hasPermission("bob", "release", "create", "fake"))
 
-    def testHasUrlPermissionWithUrlOptionMulti(self):
-        self.assertTrue(self.permissions.hasUrlPermission('fred', '/rules/:id', 'POST', dict(product='foo')))
-        self.assertTrue(self.permissions.hasUrlPermission('fred', '/rules/:id', 'POST', dict(product='bar')))
+    def testHasPermissionWithUrlOptionMulti(self):
+        self.assertTrue(self.permissions.hasPermission("fred", "rule", "modify", "foo"))
+        self.assertTrue(self.permissions.hasPermission("fred", "rule", "modify", "bar"))
 
-    def testHasUrlPermissionNotAllowed(self):
-        self.assertFalse(self.permissions.hasUrlPermission('cathy', '/rules/:id', 'FOO'))
+    def testHasPermissionNotAllowed(self):
+        self.assertFalse(self.permissions.hasPermission("cathy", "release", "modify"))
 
-    def testHasUrlPermissionNotAllowedWithDbOption(self):
-        self.assertFalse(self.permissions.hasUrlPermission('bob', '/rules/:id', 'NOTPOST'))
+    def testHasPermissionNotAllowedWithDbOption(self):
+        self.assertFalse(self.permissions.hasPermission("bob", "rule", "delete"))
 
-    def testHasUrlPermissionNotAllowedWithUrlOption(self):
-        self.assertFalse(self.permissions.hasUrlPermission('bob', '/releases/:name', 'FOO', dict(product='reallyfake')))
+    def testHasPermissionNotAllowedWithUrlOption(self):
+        self.assertFalse(self.permissions.hasPermission("bob", "release", "modify", "reallyfake"))
 
 
 class TestDB(unittest.TestCase):
@@ -2091,6 +2098,7 @@ class TestChangeNotifiers(unittest.TestCase):
         self.db = AUSDatabase('sqlite:///:memory:')
         self.db.create()
         self.db.rules.t.insert().execute(rule_id=2, priority=100, channel='release', backgroundRate=100, update_type='z', data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
 
     def _runTest(self, changer):
         with mock.patch("smtplib.SMTP") as smtp:
