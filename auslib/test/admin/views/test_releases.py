@@ -219,7 +219,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 403)
 
     def testDeleteReadOnlyRelease(self):
-        dbo.releases.updateRelease('a', changed_by='bill', read_only=True, old_data_version=1)
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
         ret = self._delete("releases/a", username="bill", qs=dict(data_version=2))
         self.assertStatusCode(ret, 403)
 
@@ -551,7 +551,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 401)
 
     def testLocalePutReadOnlyRelease(self):
-        dbo.releases.updateRelease('a', changed_by='bill', read_only=True, old_data_version=1)
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
         data = json.dumps({
             "complete": {
                 "filesize": 435,
@@ -964,14 +964,14 @@ class TestReadOnlyView(ViewTest, JSONTestMixin):
         self.assertEqual(read_only, True)
 
     def testReadOnlySetFalseAdmin(self):
-        dbo.releases.updateRelease('b', 'bill', 1, read_only=True)
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
         data = dict(name='b', read_only='', product='Firefox', data_version=2)
         self._put('/releases/b/read_only', username='bill', data=data)
         read_only = dbo.releases.isReadOnly(name='b')
         self.assertEqual(read_only, False)
 
     def testReadOnlyUnsetWithoutPermissionForProduct(self):
-        dbo.releases.updateRelease('b', changed_by='bob', read_only=True, old_data_version=1)
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
         data = dict(name='b', read_only='', product='Firefox', data_version=2)
         ret = self._put('/releases/b/read_only', username='me', data=data)
         self.assertStatusCode(ret, 403)

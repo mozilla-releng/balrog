@@ -1328,6 +1328,7 @@ class Releases(AUSTable):
            validated before commiting it, and a ValueError is raised if it is
            invalid.
         """
+        # TODO: can some of this by ripped out now that this relies on the overridden self.update?
         self._proceedIfNotReadOnly(name, transaction=transaction)
         releaseBlob = self.getReleaseBlob(name, transaction=transaction)
         if 'platforms' not in releaseBlob:

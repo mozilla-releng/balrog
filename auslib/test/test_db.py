@@ -1084,7 +1084,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         what = dict(rules[0].items())
 
         what['mapping'] = 'd'
-        self.paths.updateRule(changed_by='bill', id_or_alias=1, what=what, old_data_version=1)
+        self.paths.update(where={"rule_id": 1}, what=what, changed_by="bill", old_data_version=1)
 
         rules = self.paths.t.select().where(self.paths.rule_id == 1).execute().fetchall()
         copy_rule = dict(rules[0].items())
@@ -1098,7 +1098,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         what = dict(rules[0].items())
 
         what['mapping'] = 'd'
-        self.paths.updateRule(changed_by='bill', id_or_alias="gandalf", what=what, old_data_version=1)
+        self.paths.update(where={"rule_id": "gandalf"}, what=what, changed_by="bill", old_data_version=1)
 
         rules = self.paths.t.select().where(self.paths.rule_id == 4).execute().fetchall()
         copy_rule = dict(rules[0].items())
@@ -1340,7 +1340,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(release, [])
 
     def testDeleteReleaseWhenReadOnly(self):
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertRaises(ReadOnlyError, self.releases.deleteRelease, changed_by='me', name='a', old_data_version=2)
 
     def testAddReleaseWithNameMismatch(self):
@@ -1349,18 +1349,18 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testUpdateReleaseWithNameMismatch(self):
         newBlob = ReleaseBlobV1(name="c", schema_version=1, hashFunction="sha512")
-        self.assertRaises(ValueError, self.releases.updateRelease, "a", "bill", 1, blob=newBlob)
+        self.assertRaises(ValueError, self.releases.update, {"name": "a"}, {"data", newBlob}, "bill", 1)
 
     def testUpdateReleaseChangeReadOnly(self):
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertEqual(select([self.releases.read_only]).where(self.releases.name == 'a').execute().fetchone()[0], True)
 
     def testIsReadOnly(self):
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertEqual(self.releases.isReadOnly('a'), True)
 
     def testProceedIfNotReadOnly(self):
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertRaises(ReadOnlyError, self.releases._proceedIfNotReadOnly, 'a')
 
 
@@ -1475,7 +1475,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
 
             # Now change it, which will change data_version.
-            self.releases.updateRelease("b", "bob", 1, blob=newBlob)
+            self.releases.update({"name": "b"}, {"data": newBlob}, "bob", 1)
 
             # Ensure that we have the updated version, not the originally
             # cached one.
@@ -1491,7 +1491,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.getReleaseBlob(name="b")
 
             # The first 3 retrievals here cause a miss and then 2 hits.
-            # updateRelease doesn't affect the stats at all (but it updates
+            # update doesn't affect the stats at all (but it updates
             # the cache with the new version
             # Which means that all 4 subsequent retrievals should be hits.
             self._checkCacheStats(cache.caches["blob"], 7, 6, 1)
@@ -1629,26 +1629,26 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
 
     def testUpdateRelease(self):
         blob = ReleaseBlobV1(name='a', hashFunction="sha512")
-        self.releases.updateRelease(name='a', product='z', blob=blob, changed_by='bill', old_data_version=1)
+        self.releases.update({"name": "a"}, {"product": "z", "data": blob}, "bill", 1)
         expected = [('a', 'z', False, json.dumps(dict(name='a', schema_version=1, hashFunction="sha512")), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'a').execute().fetchall(), expected)
 
     def testUpdateReleaseWhenReadOnly(self):
         blob = ReleaseBlobV1(name='a', hashFunction="sha512")
         # set release 'a' to read-only
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
-        self.assertRaises(ReadOnlyError, self.releases.updateRelease, name='a', product='z', blob=blob, changed_by='me', old_data_version=2)
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
+        self.assertRaises(ReadOnlyError, self.releases.update, {"name": "a"}, {"product": "z", "data": blob}, "me", 2)
 
     def testUpdateReleaseWithBlob(self):
         blob = ReleaseBlobV1(name='b', schema_version=1, hashFunction="sha512")
-        self.releases.updateRelease(name='b', product='z', changed_by='bill', blob=blob, old_data_version=1)
+        self.releases.update({"name": "b"}, {"product": "z", "data": blob}, "bill", 1)
         expected = [('b', 'z', False, json.dumps(dict(name='b', schema_version=1, hashFunction="sha512")), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'b').execute().fetchall(), expected)
 
     def testUpdateReleaseInvalidBlob(self):
         blob = ReleaseBlobV1(name="2", hashFunction="sha512")
         blob['foo'] = 'bar'
-        self.assertRaises(BlobValidationError, self.releases.updateRelease, changed_by='bill', name='b', blob=blob, old_data_version=1)
+        self.assertRaises(BlobValidationError, self.releases.update, where={"name": "b"}, what={"data": blob}, changed_by='bill', old_data_version=1)
 
     def testAddLocaleToRelease(self):
         data = {
@@ -1956,7 +1956,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc",
             }
         }
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertRaises(ReadOnlyError, self.releases.addLocaleToRelease, name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
 
 
@@ -2118,7 +2118,7 @@ class TestChangeNotifiers(unittest.TestCase):
 
     def testOnUpdate(self):
         def doit():
-            self.db.rules.updateRule("bob", 2, {"product": "blah"}, 1)
+            self.db.rules.update({"rule_id": 2}, {"product": "blah"}, "bob", 1)
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
