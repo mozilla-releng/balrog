@@ -45,7 +45,8 @@ class SpecificPermissionView(AdminView):
                 if not form.validate():
                     self.log.warning("Bad input: %s", form.errors)
                     return Response(status=400, response=json.dumps(form.errors))
-                dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
+                dbo.permissions.update(where={"username": username, "permission": permission}, what={"options": form.options.data},
+                                       changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
                 new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
                 return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
             else:
@@ -68,7 +69,8 @@ class SpecificPermissionView(AdminView):
             if not form.validate():
                 self.log.warning("Bad input: %s", form.errors)
                 return Response(status=400, response=json.dumps(form.errors))
-            dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
+            dbo.permissions.update(where={"username": username, "permission": permission}, what={"options": form.options.data},
+                                   changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
             new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
             return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
         except ValueError as e:

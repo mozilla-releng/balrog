@@ -1090,6 +1090,7 @@ class Rules(AUSTable):
             where["alias"] = where["rule_id"]
             del where["rule_id"]
 
+        # TODO: iterate over all rules from where clause and check product
         product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "rule", "modify", product, transaction):
             raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, product))
@@ -1479,19 +1480,23 @@ class Permissions(AUSTable):
         self.insert(changed_by=changed_by, transaction=transaction, **columns)
         self.log.debug("successfully granted %s to %s with options %s" % (permission, username, options))
 
-    def updatePermission(self, changed_by, username, permission, old_data_version, options=None, transaction=None):
-        self.assertPermissionExists(permission)
-        if options:
-            self.assertOptionsExist(permission, options)
-            what = dict(options=json.dumps(options))
-        else:
-            what = dict(options=None)
-
+    def update(self, where, what, changed_by, old_data_version, transaction=None):
         if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to modify permissions" % changed_by)
 
-        where = [self.username == username, self.permission == permission]
-        self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
+        if "permission" in what:
+            self.assertPermissionExists(what["permission"])
+
+        for current_permission in self.select(where=where, transaction=transaction):
+            if what.get("options"):
+                self.assertOptionsExist(what.get("permission", current_permission["permission"]), what["options"])
+
+        if what.get("options"):
+            what["options"] = json.dumps(what["options"])
+        else:
+            what["options"] = None
+
+        super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
     def revokePermission(self, changed_by, username, permission, old_data_version, transaction=None):
         if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
