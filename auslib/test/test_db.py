@@ -1070,7 +1070,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                     mapping='c',
                     update_type='z',
                     priority=60)
-        rule_id = self.paths.addRule(changed_by='bill', what=what)
+        rule_id = self.paths.insert(changed_by='bill', **what)
         rules = self.paths.t.select().where(self.paths.rule_id == rule_id).execute().fetchall()
         copy_rule = dict(rules[0].items())
         rule = self._stripNullColumns([copy_rule])
@@ -1345,7 +1345,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testAddReleaseWithNameMismatch(self):
         blob = ReleaseBlobV1(name="f", schema_version=1, hashFunction="sha512")
-        self.assertRaises(ValueError, self.releases.addRelease, "g", "g", blob, "bill")
+        self.assertRaises(ValueError, self.releases.insert, "bill", name="g", product="g", data=blob)
 
     def testUpdateReleaseWithNameMismatch(self):
         newBlob = ReleaseBlobV1(name="c", schema_version=1, hashFunction="sha512")
@@ -1503,11 +1503,11 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
     def testAddReleaseUpdatesCache(self):
         with mock.patch("time.time") as t:
             t.return_value = 0
-            self.releases.addRelease(
+            self.releases.insert(
+                changed_by="bill",
                 name="abc",
                 product="bbb",
-                blob=ReleaseBlobV1(name="abc", schema_version=1, hashFunction="sha512"),
-                changed_by="bill",
+                data=ReleaseBlobV1(name="abc", schema_version=1, hashFunction="sha512"),
             )
             t.return_value += 1
             self.releases.getReleaseBlob(name="abc")
@@ -1619,13 +1619,13 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
 
     def testAddRelease(self):
         blob = ReleaseBlobV1(name="d", hashFunction="sha512")
-        self.releases.addRelease(name='d', product='d', blob=blob, changed_by='bill')
+        self.releases.insert(changed_by="bill", name='d', product='d', data=blob)
         expected = [('d', 'd', False, json.dumps(dict(name="d", schema_version=1, hashFunction="sha512")), 1)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'd').execute().fetchall(), expected)
 
     def testAddReleaseAlreadyExists(self):
         blob = ReleaseBlobV1(name="a", hashFunction="sha512")
-        self.assertRaises(TransactionError, self.releases.addRelease, name='a', product='a', blob=blob, changed_by='bill')
+        self.assertRaises(TransactionError, self.releases.insert, changed_by="bill", name='a', product='a', data=blob)
 
     def testUpdateRelease(self):
         blob = ReleaseBlobV1(name='a', hashFunction="sha512")
@@ -1978,24 +1978,21 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def testGrantPermissions(self):
         query = self.permissions.t.select().where(self.permissions.username == "jess")
         self.assertEquals(len(query.execute().fetchall()), 0)
-        self.permissions.grantPermission("bob", "jess", "rule")
+        self.permissions.insert("bob", username="jess", permission="rule")
         self.assertEquals(query.execute().fetchall(), [("rule", "jess", None, 1)])
 
     def testGrantPermissionsWithOptions(self):
-        self.permissions.grantPermission("bob", "cathy", "release", options=dict(products=["SeaMonkey"]))
+        self.permissions.insert("bob", username="cathy", permission="release", options=dict(products=["SeaMonkey"]))
         query = self.permissions.t.select().where(self.permissions.username == "cathy")
         query = query.where(self.permissions.permission == "release")
         self.assertEquals(query.execute().fetchall(), [("release", "cathy", json.dumps(dict(products=["SeaMonkey"])), 1)])
 
     def testGrantPermissionsUnknownPermission(self):
-        self.assertRaises(ValueError, self.permissions.grantPermission,
-                          "bob", "bud", "bad"
-                          )
+        self.assertRaises(ValueError, self.permissions.insert, changed_by="bob", username="bud", permission="bad")
 
     def testGrantPermissionsUnknownOption(self):
-        self.assertRaises(ValueError, self.permissions.grantPermission,
-                          "bob", "bud", "rule", dict(foo=1)
-                          )
+        self.assertRaises(ValueError, self.permissions.insert, changed_by="bob", username="bud", permission="rule",
+                          options=dict(foo=1))
 
     def testRevokePermission(self):
         self.permissions.revokePermission(changed_by="bill", username="bob", permission="release",
@@ -2110,7 +2107,7 @@ class TestChangeNotifiers(unittest.TestCase):
 
     def testOnInsert(self):
         def doit():
-            self.db.rules.addRule("bob", {"product": "foo", "channel": "bar", "backgroundRate": 100, "priority": 50, "update_type": "minor"})
+            self.db.rules.insert("bob", product="foo", channel="bar", backgroundRate=100, priority=50, update_type="minor")
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))

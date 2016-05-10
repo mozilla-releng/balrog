@@ -977,10 +977,10 @@ class Rules(AUSTable):
             return True
         return False
 
-    def addRule(self, changed_by, what, transaction=None):
-        if not self.db.hasPermission(changed_by, "rule", "create", what.get("product"), transaction):
-            raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, what.get("product")))
-        ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
+    def insert(self, changed_by, transaction=None, **columns):
+        if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
+            raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
+        ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, **columns)
         return ret.inserted_primary_key[0]
 
     def getOrderedRules(self, transaction=None):
@@ -1271,25 +1271,25 @@ class Releases(AUSTable):
 
         return blob
 
-    def addRelease(self, name, product, blob, changed_by, transaction=None):
+    def insert(self, changed_by, transaction=None, **columns):
+        if "name" not in columns or "product" not in columns or "data" not in columns:
+            raise ValueError("name, product, and data are all required")
+
+        blob = columns["data"]
+
+        if not self.db.hasPermission(changed_by, "release", "create", columns["product"], transaction):
+            raise PermissionDeniedError("%s is not allowed to create releases for product %s" % (changed_by, columns["product"]))
+
         blob.validate()
-
-        if not self.db.hasPermission(changed_by, "release", "create", product, transaction):
-            raise PermissionDeniedError("%s is not allowed to create releases for product %s" % (changed_by, product))
-
-        # Generally blobs have names, but there's no requirement that they have to.
-        if blob.get("name"):
-            # If they do, we should not let the column and the in-blob name be different.
-            if name != blob["name"]:
-                raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
+        if columns["name"] != blob["name"]:
+            raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
         if self.containsForbiddenDomain(blob):
             raise ValueError("Release blob contains forbidden domain.")
+        columns["data"] = blob.getJSON()
 
-        columns = dict(name=name, product=product, data=blob.getJSON())
-        # Raises DuplicateDataError if the release already exists.
-        ret = self.insert(changed_by=changed_by, transaction=transaction, **columns)
-        cache.put("blob", name, {"data_version": 1, "blob": blob})
-        cache.put("blob_version", name, 1)
+        ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, **columns)
+        cache.put("blob", columns["name"], {"data_version": 1, "blob": blob})
+        cache.put("blob_version", columns["name"], 1)
         return ret.inserted_primary_key[0]
 
     def update(self, where, what, changed_by, old_data_version, transaction=None):
@@ -1465,20 +1465,23 @@ class Permissions(AUSTable):
         res = self.select(columns=[self.username], distinct=True, transaction=transaction)
         return len(res)
 
-    def grantPermission(self, changed_by, username, permission, options=None, transaction=None):
-        self.assertPermissionExists(permission)
-        if options:
-            self.assertOptionsExist(permission, options)
+    def insert(self, changed_by, transaction=None, **columns):
+        if "permission" not in columns or "username" not in columns:
+            raise ValueError("permission and username are required")
+
+        self.assertPermissionExists(columns["permission"])
+        if columns.get("options"):
+            self.assertOptionsExist(columns["permission"], columns["options"])
+            columns["options"] = json.dumps(columns["options"])
 
         if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
 
-        columns = dict(username=username, permission=permission)
-        if options:
-            columns['options'] = json.dumps(options)
-        self.log.debug("granting %s to %s with options %s" % (permission, username, options))
-        self.insert(changed_by=changed_by, transaction=transaction, **columns)
-        self.log.debug("successfully granted %s to %s with options %s" % (permission, username, options))
+        self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
+                       columns.get("options"))
+        super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, **columns)
+        self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
+                       columns["username"], columns.get("options"))
 
     def update(self, where, what, changed_by, old_data_version, transaction=None):
         if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):

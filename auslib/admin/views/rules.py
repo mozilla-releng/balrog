@@ -61,8 +61,7 @@ class RulesAPIView(AdminView):
                     comment=form.comment.data,
                     update_type=form.update_type.data,
                     headerArchitecture=form.headerArchitecture.data)
-        rule_id = dbo.rules.addRule(changed_by=changed_by, what=what,
-                                    transaction=transaction)
+        rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
         return Response(status=200, response=str(rule_id))
 
 

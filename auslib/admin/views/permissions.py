@@ -54,7 +54,7 @@ class SpecificPermissionView(AdminView):
                 if not form.validate():
                     self.log.warning("Bad input: %s", form.errors)
                     return Response(status=400, response=json.dumps(form.errors))
-                dbo.permissions.grantPermission(changed_by, username, permission, form.options.data, transaction=transaction)
+                dbo.permissions.insert(changed_by, transaction=transaction, username=username, permission=permission, options=form.options.data)
                 return make_response(json.dumps(dict(new_data_version=1)), 201)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)

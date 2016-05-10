@@ -18,8 +18,8 @@ __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
 def createRelease(release, product, changed_by, transaction, releaseData):
     blob = createBlob(json.dumps(releaseData))
-    dbo.releases.addRelease(name=release, product=product,
-                            blob=blob, changed_by=changed_by, transaction=transaction)
+    dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release,
+                        product=product, data=blob)
     return dbo.releases.getReleases(name=release, transaction=transaction)[0]
 
 
@@ -249,9 +249,8 @@ class SingleReleaseView(AdminView):
             return Response(json.dumps(dict(new_data_version=data_version)), status=200)
         else:
             try:
-                dbo.releases.addRelease(name=release, product=form.product.data,
-                                        blob=blob,
-                                        changed_by=changed_by, transaction=transaction)
+                dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release,
+                                    product=form.product.data, data=blob)
             except BlobValidationError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
@@ -464,11 +463,9 @@ class ReleasesAPIView(AdminView):
 
         try:
             blob = createBlob(form.blob.data)
-            name = dbo.releases.addRelease(
-                name=form.name.data, product=form.product.data,
-                blob=blob,
-                changed_by=changed_by, transaction=transaction
-            )
+            name = dbo.releases.insert(changed_by=changed_by, transaction=transaction,
+                                       name=form.name.data, product=form.product.data,
+                                       data=blob)
         except BlobValidationError as e:
             msg = "Couldn't update release: %s" % e
             self.log.warning("Bad input: %s", msg)
