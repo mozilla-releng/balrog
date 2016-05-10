@@ -1097,15 +1097,15 @@ class Rules(AUSTable):
             where["alias"] = where["rule_id"]
             del where["rule_id"]
 
-        # TODO: iterate over all rules from where clause and check product
-        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
-        if not self.db.hasPermission(changed_by, "rule", "modify", product, transaction):
-            raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, product))
         # If the product is being changed, we also need to make sure the user
         # permission to modify _that_ product.
         if "product" in what:
             if not self.db.hasPermission(changed_by, "rule", "modify", what["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, what["product"]))
+
+        for current_rule in self.select(where=where, columns=[self.product], transaction=transaction):
+            if not self.db.hasPermission(changed_by, "rule", "modify", current_rule["product"], transaction):
+                raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_rule["product"]))
 
         return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
