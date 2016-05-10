@@ -1108,12 +1108,12 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEquals(rule, expected)
 
     def testDeleteRule(self):
-        self.paths.deleteRule(changed_by='bill', id_or_alias=2, old_data_version=1)
+        self.paths.delete({"rule_id": 2}, changed_by="bill", old_data_version=1)
         rule = self.paths.t.select().where(self.paths.rule_id == 2).execute().fetchall()
         self.assertEquals(rule, [])
 
     def testDeleteRuleByAlias(self):
-        self.paths.deleteRule(changed_by='bill', id_or_alias="gandalf", old_data_version=1)
+        self.paths.delete({"rule_id": "gandalf"}, changed_by="bill", old_data_version=1)
         rule = self.paths.t.select().where(self.paths.rule_id == 4).execute().fetchall()
         self.assertEquals(rule, [])
 
@@ -1335,13 +1335,13 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(self.releases.countReleases(), 4)
 
     def testDeleteRelease(self):
-        self.releases.deleteRelease(changed_by='bill', name='a', old_data_version=1)
+        self.releases.delete({"name": "a"}, changed_by="bill", old_data_version=1)
         release = self.releases.t.select().where(self.releases.name == 'a').execute().fetchall()
         self.assertEquals(release, [])
 
     def testDeleteReleaseWhenReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
-        self.assertRaises(ReadOnlyError, self.releases.deleteRelease, changed_by='me', name='a', old_data_version=2)
+        self.assertRaises(ReadOnlyError, self.releases.delete, {"name": "a"}, changed_by='me', old_data_version=2)
 
     def testAddReleaseWithNameMismatch(self):
         blob = ReleaseBlobV1(name="f", schema_version=1, hashFunction="sha512")
@@ -1527,7 +1527,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             t.return_value += 1
             self.releases.getReleaseBlob(name="b")
             t.return_value += 1
-            self.releases.deleteRelease("bob", "b", 1)
+            self.releases.delete({"name": "b"}, changed_by="bob", old_data_version=1)
             t.return_value += 1
 
             # We've just got two lookups here (one hit, one miss).
@@ -1995,8 +1995,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
                           options=dict(foo=1))
 
     def testRevokePermission(self):
-        self.permissions.revokePermission(changed_by="bill", username="bob", permission="release",
-                                          old_data_version=1)
+        self.permissions.delete({"username": "bob", "permission": "release"}, changed_by="bill", old_data_version=1)
         query = self.permissions.t.select().where(self.permissions.username == "bob")
         query = query.where(self.permissions.permission == "release")
         self.assertEquals(len(query.execute().fetchall()), 0)
@@ -2124,7 +2123,7 @@ class TestChangeNotifiers(unittest.TestCase):
 
     def testOnDelete(self):
         def doit():
-            self.db.rules.deleteRule("bob", 2, 1)
+            self.db.rules.delete({"rule_id": 2}, changed_by="bob", old_data_version=1)
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("DELETE"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be removed:"))

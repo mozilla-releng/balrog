@@ -296,8 +296,8 @@ class SingleReleaseView(AdminView):
             return Response(status=400, response=json.dumps(form.errors))
 
         try:
-            dbo.releases.deleteRelease(changed_by=changed_by, name=release['name'],
-                                       old_data_version=form.data_version.data, transaction=transaction)
+            dbo.releases.delete({"name": release["name"]}, changed_by=changed_by, old_data_version=form.data_version.data,
+                                transaction=transaction)
         except ReadOnlyError as e:
                 msg = "Couldn't delete release: %s" % e
                 self.log.warning("Bad input: %s", msg)

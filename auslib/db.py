@@ -387,16 +387,23 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        real_where = []
+        if hasattr(where, "keys"):
+            for column, value in where.iteritems():
+                real_where.append(getattr(self, column) == value)
+        else:
+            real_where = where
+
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("old_data_version must be passed for Tables that are versioned")
 
         if transaction:
-            return self._prepareDelete(transaction, where, changed_by, old_data_version)
+            return self._prepareDelete(transaction, real_where, changed_by, old_data_version)
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return self._prepareDelete(trans, where, changed_by, old_data_version)
+                return self._prepareDelete(trans, real_where, changed_by, old_data_version)
 
     def _updateStatement(self, where, what):
         """Create an UPDATE statement for this table
@@ -1102,18 +1109,16 @@ class Rules(AUSTable):
 
         return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
-    def deleteRule(self, changed_by, id_or_alias, old_data_version, transaction=None):
-        where = []
-        if self._isAlias(id_or_alias):
-            where.append(self.alias == id_or_alias)
-        else:
-            where.append(self.rule_id == id_or_alias)
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
+        if "rule_id" in where and self._isAlias(where["rule_id"]):
+            where["alias"] = where["rule_id"]
+            del where["rule_id"]
 
         product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "rule", "delete", product, transaction):
             raise PermissionDeniedError("%s is not allowed to delete rules for product %s" % (changed_by, product))
 
-        self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+        super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
 
 class Releases(AUSTable):
@@ -1396,15 +1401,18 @@ class Releases(AUSTable):
         except KeyError:
             return False
 
-    def deleteRelease(self, changed_by, name, old_data_version, transaction=None):
-        self._proceedIfNotReadOnly(name, transaction=transaction)
-        where = [self.name == name]
-        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
-        if not self.db.hasPermission(changed_by, "release", "delete", product, transaction):
-            raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, product))
-        self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
-        cache.invalidate("blob", name)
-        cache.invalidate("blob_version", name)
+    def delete(self, where, changed_by, old_data_version, transaction=None):
+        names = []
+        for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):
+            names.append(toDelete["name"])
+            self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
+            if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
+                raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
+
+        super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        for name in names:
+            cache.invalidate("blob", name)
+            cache.invalidate("blob_version", name)
 
     def isReadOnly(self, name, limit=None, transaction=None):
         where = [self.name == name]
@@ -1500,13 +1508,6 @@ class Permissions(AUSTable):
             what["options"] = None
 
         super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
-
-    def revokePermission(self, changed_by, username, permission, old_data_version, transaction=None):
-        if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
-            raise PermissionDeniedError("%s is not allowed to revoke permissions" % changed_by)
-
-        where = [self.username == username, self.permission == permission]
-        self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
     def getPermission(self, username, permission, transaction=None):
         try:

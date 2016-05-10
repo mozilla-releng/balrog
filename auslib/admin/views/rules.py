@@ -143,8 +143,8 @@ class SingleRuleView(AdminView):
         # form to make sure that the CSRF token is checked.
         form = DbEditableForm(request.args)
 
-        dbo.rules.deleteRule(changed_by=changed_by, id_or_alias=id_or_alias,
-                             old_data_version=form.data_version.data, transaction=transaction)
+        dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by, old_data_version=form.data_version.data,
+                         transaction=transaction)
 
         return Response(status=200)
 
