@@ -777,7 +777,7 @@ class ScheduledChangeTable(AUSTable):
             except:
                 raise ValueError("Cannot parse 'when' as a unix timestamp.")
 
-    def insert(self, changed_by, transaction=None, **columns):
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         data_version_where = []
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
@@ -813,13 +813,23 @@ class ScheduledChangeTable(AUSTable):
 
         self._validateConditions(conditions)
 
-        what["scheduled_by"] = changed_by
+        if columns.get("data_version"):
+            self.baseTable.update(data_version_where, columns, changed_by, columns["data_version"], transaction=transaction, dryrun=True)
+        else:
+            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **columns)
 
-        ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **what)
-        return ret.inserted_primary_key[0]
+        if not dryrun:
+            what["scheduled_by"] = changed_by
+            ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **what)
+            return ret.inserted_primary_key[0]
 
-    def update(self, where, what, changed_by, old_data_version, transaction=None):
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         row = self.select(where=where, transaction=transaction)[0]
+
+        if what.get("data_version"):
+            self.baseTable.update(where, what, changed_by, what["data_version"], transaction=transaction, dryrun=True)
+        else:
+            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **what)
 
         new_row = self._prefixColumns(what)
         conditions = {}
@@ -831,8 +841,9 @@ class ScheduledChangeTable(AUSTable):
 
         self._validateConditions(conditions)
 
-        new_row["scheduled_by"] = changed_by
-        return super(ScheduledChangeTable, self).update(where, new_row, changed_by, old_data_version, transaction)
+        if not dryrun:
+            new_row["scheduled_by"] = changed_by
+            return super(ScheduledChangeTable, self).update(where, new_row, changed_by, old_data_version, transaction)
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
         if not self.db.hasPermission(enacted_by, "scheduled_change", "enact", transaction=transaction):
@@ -988,11 +999,12 @@ class Rules(AUSTable):
             return True
         return False
 
-    def insert(self, changed_by, transaction=None, **columns):
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
-        ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, **columns)
-        return ret.inserted_primary_key[0]
+        if not dryrun:
+            ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, **columns)
+            return ret.inserted_primary_key[0]
 
     def getOrderedRules(self, transaction=None):
         """Returns all of the rules, sorted in ascending order"""
@@ -1094,7 +1106,7 @@ class Rules(AUSTable):
             return None
         return rules[0]
 
-    def update(self, where, what, changed_by, old_data_version, transaction=None):
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         # Rather than forcing callers to figure out whether the identifier
         # they have is an id or an alias, we handle it here.
         if "rule_id" in where and self._isAlias(where["rule_id"]):
@@ -1111,7 +1123,8 @@ class Rules(AUSTable):
             if not self.db.hasPermission(changed_by, "rule", "modify", current_rule["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_rule["product"]))
 
-        return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
+        if not dryrun:
+            return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
         if "rule_id" in where and self._isAlias(where["rule_id"]):
@@ -1280,7 +1293,7 @@ class Releases(AUSTable):
 
         return blob
 
-    def insert(self, changed_by, transaction=None, **columns):
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         if "name" not in columns or "product" not in columns or "data" not in columns:
             raise ValueError("name, product, and data are all required")
 
@@ -1296,15 +1309,17 @@ class Releases(AUSTable):
             raise ValueError("Release blob contains forbidden domain.")
         columns["data"] = blob.getJSON()
 
-        ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, **columns)
-        cache.put("blob", columns["name"], {"data_version": 1, "blob": blob})
-        cache.put("blob_version", columns["name"], 1)
-        return ret.inserted_primary_key[0]
+        if not dryrun:
+            ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, **columns)
+            cache.put("blob", columns["name"], {"data_version": 1, "blob": blob})
+            cache.put("blob_version", columns["name"], 1)
+            return ret.inserted_primary_key[0]
 
-    def update(self, where, what, changed_by, old_data_version, transaction=None):
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         blob = what.get("data")
 
-        for current_release in self.select(where=where, columns=[self.name, self.product, self.read_only], transaction=transaction):
+        current_releases = self.select(where=where, columns=[self.name, self.product, self.read_only], transaction=transaction)
+        for current_release in current_releases:
             name = current_release["name"]
             if "product" in what or "data" in what:
                 self._proceedIfNotReadOnly(current_release["name"], transaction=transaction)
@@ -1339,10 +1354,13 @@ class Releases(AUSTable):
                     raise ValueError("Release blob contains forbidden domain.")
                 what["data"] = blob.getJSON()
 
-            super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
-            new_data_version = old_data_version + 1
-            cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
-            cache.put("blob_version", name, new_data_version)
+        if not dryrun:
+            for current_release in current_releases:
+                name = current_release["name"]
+                super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+                new_data_version = old_data_version + 1
+                cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
+                cache.put("blob_version", name, new_data_version)
 
     def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
         """Adds or update's the existing data for a specific platform + locale
@@ -1478,7 +1496,7 @@ class Permissions(AUSTable):
         res = self.select(columns=[self.username], distinct=True, transaction=transaction)
         return len(res)
 
-    def insert(self, changed_by, transaction=None, **columns):
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         if "permission" not in columns or "username" not in columns:
             raise ValueError("permission and username are required")
 
@@ -1490,13 +1508,14 @@ class Permissions(AUSTable):
         if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
 
-        self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
-                       columns.get("options"))
-        super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, **columns)
-        self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
-                       columns["username"], columns.get("options"))
+        if not dryrun:
+            self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
+                        columns.get("options"))
+            super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, **columns)
+            self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
+                        columns["username"], columns.get("options"))
 
-    def update(self, where, what, changed_by, old_data_version, transaction=None):
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to modify permissions" % changed_by)
 
@@ -1512,7 +1531,8 @@ class Permissions(AUSTable):
         else:
             what["options"] = None
 
-        super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        if not dryrun:
+            super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
     def getPermission(self, username, permission, transaction=None):
         try:

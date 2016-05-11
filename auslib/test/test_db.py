@@ -584,15 +584,17 @@ class ScheduledChangesTableMixin(object):
                                    Column("bar", String(15)))
                 super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
-            def insert(self, changed_by, transaction=None, **columns):
+            def insert(self, changed_by, transaction=None, dryrun=False, **columns):
                 if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
                     raise PermissionDeniedError("fail")
-                super(TestTable, self).insert(changed_by, transaction, **columns)
+                if not dryrun:
+                    super(TestTable, self).insert(changed_by, transaction, **columns)
 
-            def update(self, where, what, changed_by, old_data_version, transaction=None):
+            def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
                 if not self.db.hasPermission(changed_by, "test", "modify", transaction=transaction):
                     raise PermissionDeniedError("fail")
-                super(TestTable, self).update(where, what, changed_by, old_data_version, transaction)
+                if not dryrun:
+                    super(TestTable, self).update(where, what, changed_by, old_data_version, transaction)
 
         self.table = TestTable(self.db, self.metadata)
         self.sc_table = self.table.scheduled_changes
@@ -746,6 +748,10 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testInsertWithoutPermissionOnBaseTable(self):
         what = {"fooid": 4, "bar": "blah", "when": 343}
+        self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
+
+    def testInsertWithoutPermissionOnBaseTableForUpdate(self):
+        what = {"fooid": 3, "bar": "blah", "when": 343, "data_version": 1}
         self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
 
     def testUpdateNoChangesSinceCreation(self):
