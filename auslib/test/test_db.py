@@ -571,8 +571,10 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
 class ScheduledChangesTableMixin(object):
 
     def setUp(self):
-        self.engine = create_engine(self.dburi)
-        self.metadata = MetaData(self.engine)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.engine = self.db.engine
+        self.metadata = self.db.metadata
 
         class TestTable(AUSTable):
 
@@ -582,7 +584,17 @@ class ScheduledChangesTableMixin(object):
                                    Column("bar", String(15)))
                 super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
-        self.table = TestTable(mock.Mock(), self.metadata)
+            def insert(self, changed_by, transaction=None, **columns):
+                if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
+                    raise PermissionDeniedError("fail")
+                super(TestTable, self).insert(changed_by, transaction, **columns)
+
+            def update(self, where, what, changed_by, old_data_version, transaction=None):
+                if not self.db.hasPermission(changed_by, "test", "modify", transaction=transaction):
+                    raise PermissionDeniedError("fail")
+                super(TestTable, self).update(where, what, changed_by, old_data_version, transaction)
+
+        self.table = TestTable(self.db, self.metadata)
         self.sc_table = self.table.scheduled_changes
         self.metadata.create_all()
         self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
@@ -594,6 +606,9 @@ class ScheduledChangesTableMixin(object):
         self.sc_table.t.insert().execute(sc_id=3, when=1, scheduled_by="bob", complete=True, base_fooid=2, base_foo="b", base_bar="bb", base_data_version=1,
                                          data_version=1)
         self.sc_table.t.insert().execute(sc_id=4, when=333, scheduled_by="bob", base_fooid=2, base_foo="dd", base_bar="bb", base_data_version=2, data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
+        self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options='{"actions": ["enact"]}', data_version=1)
 
 
 class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, MemoryDatabaseMixin):
@@ -685,7 +700,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
                                    Column("bar", String(15)))
                 super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
-        table = TestTable2("fake", self.metadata)
+        table = TestTable2(self.db, self.metadata)
         self.metadata.create_all()
         what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876}
         table.scheduled_changes.insert(changed_by="mary", **what)
@@ -730,9 +745,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(OutdatedDataError, self.sc_table.insert, changed_by="bob", **what)
 
     def testInsertWithoutPermissionOnBaseTable(self):
-        with mock.patch.object(self.sc_table.db, "hasPermission", return_value=False, create=True):
-            what = {"fooid": 4, "bar": "blah", "when": 343}
-            self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
+        what = {"fooid": 4, "bar": "blah", "when": 343}
+        self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
 
     def testUpdateNoChangesSinceCreation(self):
         where = [self.sc_table.sc_id == 1]
@@ -856,8 +870,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testEnactChangeNoPermissions(self):
         # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
-        with mock.patch.object(self.sc_table.db, "hasPermission", return_value=False, create=True):
-            self.assertRaises(PermissionDeniedError, self.table.scheduled_changes.enactChange, 1, "nancy")
+        self.assertRaises(PermissionDeniedError, self.table.scheduled_changes.enactChange, 1, "jeremy")
 
     def testMergeUpdateNoConflict(self):
         old_row = self.table.select(where=[self.table.fooid == 2])[0]
