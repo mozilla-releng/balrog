@@ -782,7 +782,8 @@ class ScheduledChangeTable(AUSTable):
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
             if pk in columns:
-                data_version_where.append(getattr(self.baseTable, pk) == columns[pk])
+                if "data_version" in columns:
+                    data_version_where.append(getattr(self.baseTable, pk) == columns[pk])
             # Non-Integer columns can have autoincrement set to True for some reason.
             # Any non-integer columns in the primary key are always required (because
             # autoincrement actually isn't a thing for them), and any Integer columns
@@ -791,7 +792,7 @@ class ScheduledChangeTable(AUSTable):
                 raise ValueError("Missing primary key column '%s' which is not autoincrement", pk)
 
         # If anything ended up in data_version_where, it means that a key column
-        # is present in the data, which means that the baseTable should already exist.
+        # is present in the data, which means that the baseTable row should already exist.
         # In these cases, we need to check to make sure that the scheduled change
         # has the same data version as the base table, to ensure that a change
         # is not being scheduled from an out of date version of the base table row.
@@ -833,7 +834,10 @@ class ScheduledChangeTable(AUSTable):
         new_row["scheduled_by"] = changed_by
         return super(ScheduledChangeTable, self).update(where, new_row, changed_by, old_data_version, transaction)
 
-    def enactChange(self, sc_id, transaction=None):
+    def enactChange(self, sc_id, enacted_by, transaction=None):
+        if not self.db.hasPermission(enacted_by, "scheduled_change", "enact", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to enact scheduled changes", enacted_by)
+
         sc = self.select(where=[self.sc_id == sc_id], transaction=transaction)[0]
         what = {}
         for col in sc:
@@ -1440,6 +1444,7 @@ class Permissions(AUSTable):
         "read_only": ["actions", "products"],
         "rule": ["actions", "products"],
         "permission": ["actions"],
+        "scheduled_change": ["actions"],
     }
 
     def __init__(self, db, metadata, dialect):

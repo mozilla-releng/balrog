@@ -15,7 +15,7 @@ import migrate.versioning.api
 from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
-    ReadOnlyError
+    ReadOnlyError, PermissionDeniedError
 from auslib.blobs.base import BlobValidationError
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -582,7 +582,7 @@ class ScheduledChangesTableMixin(object):
                                    Column("bar", String(15)))
                 super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
-        self.table = TestTable("fake", self.metadata)
+        self.table = TestTable(mock.Mock(), self.metadata)
         self.sc_table = self.table.scheduled_changes
         self.metadata.create_all()
         self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
@@ -676,6 +676,28 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.base_bar, None)
         self.assertEquals(row.base_data_version, None)
 
+    def testInsertWithNonAutoincrement(self):
+        class TestTable2(AUSTable):
+
+            def __init__(self, db, metadata):
+                self.table = Table("test_table2", metadata, Column("foo_name", String(15), primary_key=True),
+                                   Column("foo", String(15)),
+                                   Column("bar", String(15)))
+                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
+
+        table = TestTable2("fake", self.metadata)
+        self.metadata.create_all()
+        what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876}
+        table.scheduled_changes.insert(changed_by="mary", **what)
+        row = table.scheduled_changes.t.select().where(table.scheduled_changes.sc_id == 1).execute().fetchall()[0]
+        self.assertEquals(row.scheduled_by, "mary")
+        self.assertEquals(row.when, 876)
+        self.assertEquals(row.data_version, 1)
+        self.assertEquals(row.base_foo_name, "i'm a foo")
+        self.assertEquals(row.base_foo, "123")
+        self.assertEquals(row.base_bar, "456")
+        self.assertEquals(row.base_data_version, None)
+
     def testInsertForExistingNoSuchRow(self):
         what = {"fooid": 10, "foo": "thing", "data_version": 1, "when": 999}
         self.assertRaisesRegexp(ValueError, "Cannot create scheduled change with data_version for non-existent row", self.sc_table.insert, changed_by="bob",
@@ -706,6 +728,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.table.update([self.table.fooid == 3], what={"foo": "bb"}, changed_by="bob", old_data_version=1)
         what = {"fooid": 3, "data_version": 1, "bar": "blah", "when": 456}
         self.assertRaises(OutdatedDataError, self.sc_table.insert, changed_by="bob", **what)
+
+    def testInsertWithoutPermissionOnBaseTable(self):
+        with mock.patch.object(self.sc_table.db, "hasPermission", return_value=False, create=True):
+            what = {"fooid": 4, "bar": "blah", "when": 343}
+            self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
 
     def testUpdateNoChangesSinceCreation(self):
         where = [self.sc_table.sc_id == 1]
@@ -738,6 +765,12 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         where = [self.sc_table.sc_id == 2]
         what = {"when": None}
         self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+
+    def testUpdateWithoutPermissionOnBaseTable(self):
+        with mock.patch.object(self.sc_table.db, "hasPermission", return_value=False, create=True):
+            where = [self.sc_table.sc_id == 2]
+            what = {"when": 777}
+            self.assertRaises(PermissionDeniedError, self.sc_table.update, where, what, changed_by="sue", old_data_version=1)
 
     def testUpdateBaseTableNoConflictWithChanges(self):
         """Tests to make sure a scheduled change is properly updated when an
@@ -787,7 +820,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(UpdateMergeError, self.table.delete, where=[self.table.fooid == 2], changed_by="bill", old_data_version=2)
 
     def testEnactChangeNewRow(self):
-        self.table.scheduled_changes.enactChange(2)
+        self.table.scheduled_changes.enactChange(2, "nancy")
         row = self.table.t.select().where(self.table.fooid == 4).execute().fetchall()[0]
         history_rows = self.table.history.t.select().where(self.table.history.fooid == 4).execute().fetchall()
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
@@ -808,7 +841,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(sc_row.complete, True)
 
     def testEnactChangeExistingRow(self):
-        self.table.scheduled_changes.enactChange(1)
+        self.table.scheduled_changes.enactChange(1, "nancy")
         row = self.table.t.select().where(self.table.fooid == 1).execute().fetchall()[0]
         history_row = self.table.history.t.select().where(self.table.history.fooid == 1).where(self.table.history.data_version == 2).execute().fetchall()[0]
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
@@ -821,12 +854,10 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_row.data_version, 2)
         self.assertEquals(sc_row.complete, True)
 
-# todo
-#    def testEnactChangeNoPermissions(self):
-#        # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
-#        self.db.permissions.t.delete().where(dbo.permissions.username == "bill").execute()
-#        # todo: raise a different exception?
-#        self.assertRaises(ValueError, self.table.scheduled_changes.enactChange, 1)
+    def testEnactChangeNoPermissions(self):
+        # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
+        with mock.patch.object(self.sc_table.db, "hasPermission", return_value=False, create=True):
+            self.assertRaises(PermissionDeniedError, self.table.scheduled_changes.enactChange, 1, "nancy")
 
     def testMergeUpdateNoConflict(self):
         old_row = self.table.select(where=[self.table.fooid == 2])[0]
