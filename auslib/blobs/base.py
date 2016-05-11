@@ -1,6 +1,5 @@
 from os import path
 import simplejson as json
-import re
 
 import jsonschema
 
@@ -122,16 +121,3 @@ class Blob(dict):
 
     def getInnerXML(self):
         raise NotImplementedError()
-
-    def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        # ONLY USED IN TESTS
-        xml = ['<?xml version="1.0"?>']
-        xml.append('<updates>')
-        xml.append(self.getHeaderXML(updateQuery, update_type))
-        xml.extend(self.getInnerXML(updateQuery, update_type,
-                                    whitelistedDomains, specialForceHosts))
-        xml.append(self.getFooterXML())
-        xml.append('</updates>')
-
-        # ensure valid xml by using the right entity for ampersand
-        return re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
