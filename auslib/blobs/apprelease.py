@@ -109,18 +109,18 @@ class ReleaseBlobBase(Blob):
         return '    </update>'
 
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        """This method is the entry point for update XML creation for all Gecko
-           app blobs. However, the XML and underlying data has changed over
-           time, so there is a lot of indirection and calls factored out to
-           subclasses. Below is a brief description of the flow of control that
-           should help in understanding this code. Inner methods that are
-           shared between blob versions live in Mixin classes so that they can
+        """This method, along with getHeaderXML and getFooterXML are the entry point
+           for update XML creation for all Gecko app blobs. However, the XML and
+           underlying data has changed over time, so there is a lot of indirection
+           and calls factored out to subclasses. Below is a brief description of the
+           flow of control that should help in understanding this code. Inner methods
+           that are shared between blob versions live in Mixin classes so that they can
            be easily shared. Inner methods that only apply to a single blob
            version live on concrete blob classes (but should be moved if they
            need to be shared in the future).
-           * createXML() called by web layer, lives on this base class. The V1
-             blob class overrides it to support bug 1113475, but still calls
-             the base class one to do most of the work.
+           * getInnerXML, getFooterXML and getHeaderXML called by web layer,
+             live on this base class. The V1 blob class override them to
+             support bug 1113475, but still calls the base class one to do most of the work.
            ** _getUpdateLineXML() called to get information that is independent
               of specific MARs. Most notably, version information changed
               starting with V2 blobs.
@@ -417,7 +417,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
     """
     jsonschema = "apprelease-v2.yml"
 
-    # for the benefit of createXML and createSnippets
+    # for the benefit of get*XML and createSnippets
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
@@ -508,7 +508,7 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     """
     jsonschema = "apprelease-v3.yml"
 
-    # for the benefit of createXML
+    # for the benefit of get*XML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
@@ -585,7 +585,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     """
     jsonschema = "apprelease-v4.yml"
 
-    # for the benefit of createXML
+    # for the benefit of get*XML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
@@ -650,7 +650,7 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     """
     jsonschema = "apprelease-v5.yml"
 
-    # for the benefit of createXML
+    # for the benefit of get*XML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL',
                  'promptWaitTime')

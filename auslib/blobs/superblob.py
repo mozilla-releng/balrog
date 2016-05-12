@@ -7,7 +7,7 @@ class SuperBlob(Blob):
     def __init__(self, **kwargs):
         Blob.__init__(self, **kwargs)
         if "schema_version" not in self:
-            self["schema_version"] = 1000
+            self["schema_version"] = 4000
 
     def getResponseProducts(self):
         return self["products"]
