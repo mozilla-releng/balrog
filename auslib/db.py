@@ -253,14 +253,13 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
 
-        real_where = []
+        # "where" can be either a list of SQLAlchemy objects, or a key/value
+        # pair of columns and values. If it's the latter, we need to convert it
+        # to the former before proceeding.
         if hasattr(where, "keys"):
-            for column, value in where.iteritems():
-                real_where.append(getattr(self, column) == value)
-        else:
-            real_where = where
+            where = [getattr(self, k) == v for k, v in where.iteritems()]
 
-        query = self._selectStatement(where=real_where, **kwargs)
+        query = self._selectStatement(where=where, **kwargs)
         if transaction:
             return transaction.execute(query).fetchall()
         else:
@@ -387,12 +386,11 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        real_where = []
+        # "where" can be either a list of SQLAlchemy objects, or a key/value
+        # pair of columns and values. If it's the latter, we need to convert it
+        # to the former before proceeding.
         if hasattr(where, "keys"):
-            for column, value in where.iteritems():
-                real_where.append(getattr(self, column) == value)
-        else:
-            real_where = where
+            where = [getattr(self, k) == v for k, v in where.iteritems()]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -400,10 +398,10 @@ class AUSTable(object):
             raise ValueError("old_data_version must be passed for Tables that are versioned")
 
         if transaction:
-            return self._prepareDelete(transaction, real_where, changed_by, old_data_version)
+            return self._prepareDelete(transaction, where, changed_by, old_data_version)
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return self._prepareDelete(trans, real_where, changed_by, old_data_version)
+                return self._prepareDelete(trans, where, changed_by, old_data_version)
 
     def _updateStatement(self, where, what):
         """Create an UPDATE statement for this table
@@ -472,12 +470,11 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
 
-        real_where = []
+        # "where" can be either a list of SQLAlchemy objects, or a key/value
+        # pair of columns and values. If it's the latter, we need to convert it
+        # to the former before proceeding.
         if hasattr(where, "keys"):
-            for column, value in where.iteritems():
-                real_where.append(getattr(self, column) == value)
-        else:
-            real_where = where
+            where = [getattr(self, k) == v for k, v in where.iteritems()]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -485,10 +482,10 @@ class AUSTable(object):
             raise ValueError("update: old_data_version must be passed for Tables that are versioned")
 
         if transaction:
-            return self._prepareUpdate(transaction, real_where, what, changed_by, old_data_version)
+            return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return self._prepareUpdate(trans, real_where, what, changed_by, old_data_version)
+                return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
 
     def getRecentChanges(self, limit=10, transaction=None):
         return self.history.select(transaction=transaction,
@@ -791,11 +788,11 @@ class ScheduledChangeTable(AUSTable):
             elif not isinstance(base_column.type, (sqlalchemy.types.Integer,)) or not base_column.autoincrement:
                 raise ValueError("Missing primary key column '%s' which is not autoincrement", pk)
 
-        # If anything ended up in data_version_where, it means that a key column
-        # is present in the data, which means that the baseTable row should already exist.
-        # In these cases, we need to check to make sure that the scheduled change
-        # has the same data version as the base table, to ensure that a change
-        # is not being scheduled from an out of date version of the base table row.
+        # If anything ended up in data_version_where, it means that the baseTable
+        # row should already exist. In these cases, we need to check to make sure
+        # that the scheduled change has the same data version as the base table,
+        # to ensure that a change is not being scheduled from an out of date version
+        # of the base table row.
         if data_version_where:
             current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=data_version_where, transaction=transaction)
 
@@ -813,6 +810,8 @@ class ScheduledChangeTable(AUSTable):
 
         self._validateConditions(conditions)
 
+        # Use the appropriate base table methods in dry run mode to ensure the
+        # user has permission for the change they want to schedule
         if columns.get("data_version"):
             self.baseTable.update(data_version_where, columns, changed_by, columns["data_version"], transaction=transaction, dryrun=True)
         else:
@@ -1510,10 +1509,10 @@ class Permissions(AUSTable):
 
         if not dryrun:
             self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
-                        columns.get("options"))
+                           columns.get("options"))
             super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, **columns)
             self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
-                        columns["username"], columns.get("options"))
+                           columns["username"], columns.get("options"))
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):

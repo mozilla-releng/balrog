@@ -3,7 +3,6 @@ from sqlalchemy import Table, Column, Integer, String, MetaData, \
 
 metadata = MetaData()
 
-# TODO: double check this against the db.py class before merging!
 rules_scheduled_changes = Table(
     "rules_scheduled_changes", metadata,
     Column("sc_id", Integer, primary_key=True, autoincrement=True),
