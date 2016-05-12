@@ -9,7 +9,10 @@ from auslib.admin.views.base import (
     requirelogin, AdminView, HistoryAdminView,
 )
 from auslib.admin.views.csrf import get_csrf_headers
-from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm
+from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
+    ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm
+from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
+    ScheduledChangeView
 
 
 class RulesAPIView(AdminView):
@@ -284,3 +287,10 @@ class SingleRuleColumnView(AdminView):
             column: column_values,
         }
         return jsonify(ret)
+
+
+class RuleScheduledChangesView(ScheduledChangesView):
+    def __init__(self):
+        forms = (ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm)
+        permissions = ("/rules", "/rules/:id")
+        super(RuleScheduledChangesView, self).__init__("rules", dbo.rules, forms, permissions)

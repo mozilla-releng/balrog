@@ -123,6 +123,13 @@ class DbEditableForm(Form):
     data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 
 
+class ScheduledChangeForm(Form):
+    telemetry_product = NullableStringField("Telemetry Product")
+    telemetry_channel = NullableStringField("Telemetry Channel")
+    telemetry_uptake = NullableStringField("Telemetry Uptake")
+    when = IntegerField("When")
+
+
 class NewPermissionForm(Form):
     options = JSONStringField('Options')
 
@@ -182,6 +189,14 @@ class EditRuleForm(DbEditableForm):
     comment = NullableStringField('Comment', validators=[Optional(), Length(0, 500)])
     update_type = SelectField('Update Type', choices=[('minor', 'minor'), ('major', 'major')], validators=[Optional()], coerce=NoneOrType(unicode))
     headerArchitecture = NullableStringField('Header Architecture', validators=[Optional(), Length(0, 10)])
+
+
+class ScheduledChangeNewRuleForm(ScheduledChangeForm, RuleForm):
+    pass
+
+
+class ScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
+    rule_id = IntegerField('Rule ID', validators=[Required()])
 
 
 class CompleteReleaseForm(Form):

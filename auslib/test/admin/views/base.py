@@ -37,6 +37,7 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.t.insert().execute(permission='read_only', username='bob', options=json.dumps(dict(actions=["set"])), data_version=1)
         dbo.permissions.t.insert().execute(permission='rule', username='bob', options=json.dumps(dict(actions=["modify"], products=['fake'])), data_version=1)
         dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
+        dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=json.dumps(dict(products=["foo"])), data_version=1)
         dbo.releases.t.insert().execute(
             name='a', product='a', data=json.dumps(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
@@ -65,12 +66,22 @@ class ViewTest(unittest.TestCase):
     }
 }
 """)
-        dbo.rules.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='minor', data_version=1)
-        dbo.rules.t.insert().execute(id=2, alias="frodo", priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='minor',
-                                     data_version=1)
-        dbo.rules.t.insert().execute(id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
-        dbo.rules.t.insert().execute(id=4, product='fake', priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
-        dbo.rules.t.insert().execute(id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='minor', data_version=1)
+        dbo.rules.t.insert().execute(
+            rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='minor', data_version=1
+        )
+        dbo.rules.t.insert().execute(
+            rule_id=2, alias="frodo", priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='minor',
+            data_version=1
+        )
+        dbo.rules.t.insert().execute(
+            rule_id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='minor', data_version=1
+        )
+        dbo.rules.t.insert().execute(
+            rule_id=4, product='fake', priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='minor', data_version=1
+        )
+        dbo.rules.t.insert().execute(
+            rule_id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='minor', data_version=1
+        )
         self.client = app.test_client()
 
     def tearDown(self):
