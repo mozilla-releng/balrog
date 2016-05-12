@@ -62,7 +62,7 @@ class ClientRequestView(MethodView):
                     product_query = query.copy()
                     product_query["product"] = product
                     response_release, response_update_type = AUS.evaluateRules(product_query)
-                    if product_query['buildTarget'] not in response_release['platforms'].keys():
+                    if not response_release:
                         continue
 
                     response_blobs.append({'product_query': product_query,

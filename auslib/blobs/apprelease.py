@@ -164,6 +164,8 @@ class ReleaseBlobBase(Blob):
             if updateQuery['buildID'] >= self.getBuildID(updateQuery['buildTarget'], updateQuery['locale']):
                 self.log.debug("Matching rule has older buildid than request, will not serve update.")
                 return False
+        if updateQuery['buildTarget'] not in self['platforms'].keys():
+            return False
 
         return True
 
