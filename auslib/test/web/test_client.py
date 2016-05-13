@@ -218,6 +218,10 @@ class ClientTestBase(unittest.TestCase):
                                      mapping='gmp', update_type='minor',
                                      product='gmp',
                                      data_version=1)
+        dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
+                                     mapping='gmp-with-one-response-product', update_type='minor',
+                                     product='gmp-with-one-response-product',
+                                     data_version=1)
         dbo.rules.t.insert().execute(priority=190, backgroundRate=100,
                                      mapping='response-a', update_type='minor',
                                      product='response-a',
@@ -225,6 +229,14 @@ class ClientTestBase(unittest.TestCase):
         dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
                                      mapping='response-b', update_type='minor',
                                      product='response-b', data_version=1)
+        dbo.releases.t.insert().execute(name='gmp-with-one-response-product',
+                                        product='gmp-with-one-response-product', data_version=1, data="""
+{
+    "name": "superblob",
+    "schema_version": 4000,
+    "products": ["response-a"]
+}
+""")
         dbo.releases.t.insert().execute(name='gmp', product='gmp', data_version=1, data="""
 {
     "name": "superblob",
@@ -556,6 +568,20 @@ class ClientTest(ClientTestBase):
 
     def testGetWithResponseProductsWithAbsentRule(self):
         ret = self.client.get('/update/4/gmp/1.0/1/q/l/a/a/a/a/1/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+        <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testGetWithResponseProductsWithOneRule(self):
+        ret = self.client.get('/update/4/gmp-with-one-response-product/1.0/1/q/l/a/a/a/a/1/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
         returned = minidom.parseString(ret.data)
