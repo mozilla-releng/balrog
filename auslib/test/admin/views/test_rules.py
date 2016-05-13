@@ -112,7 +112,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
             data_version=1,
             rule_id=1,
             alias=None,
-            whitelist=None,
+            base_whitelist=None,
         )
         self.assertEquals(json.loads(ret.data), expected)
 
@@ -137,7 +137,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
             data_version=1,
             rule_id=2,
             alias="frodo",
-            whitelist=None,
+            base_whitelist=None,
         )
         self.assertEquals(json.loads(ret.data), expected)
 
@@ -578,12 +578,12 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
     def setUp(self):
         super(TestRuleScheduledChanges, self).setUp()
         dbo.rules.scheduled_changes.t.insert().execute(
-            sc_id=1, when=1000, scheduled_by="bill", data_version=1, rule_id=1, priority=100, version="3.5", buildTarget="d",
-            backgroundRate=100, mapping="b", update_type="minor", table_data_version=1,
+            sc_id=1, when=1000, scheduled_by="bill", data_version=1, base_rule_id=1, base_priority=100, base_version="3.5", base_buildTarget="d",
+            base_backgroundRate=100, base_mapping="b", base_update_type="minor", base_data_version=1,
         )
         dbo.rules.scheduled_changes.t.insert().execute(
-            sc_id=2, when=1500, scheduled_by="bill", data_version=1, priority=50, backgroundRate=100, product="baz",
-            mapping="ab", update_type="minor",
+            sc_id=2, when=1500, scheduled_by="bill", data_version=1, base_priority=50, base_backgroundRate=100, base_product="baz",
+            base_mapping="ab", base_update_type="minor",
         )
 
     def testGetScheduledChanges(self):
@@ -592,18 +592,18 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
             "count": 2,
             "scheduled_changes": [
                 {
-                    "sc_id": 1, "when": 1000, "scheduled_by": "bill", "data_version": 1, "rule_id": 1, "priority": 100,
-                    "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "update_type": "minor",
-                    "table_data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
-                    "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None,
-                    "whitelist": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                    "sc_id": 1, "when": 1000, "scheduled_by": "bill", "complete": False, "data_version": 1, "base_rule_id": 1, "base_priority": 100,
+                    "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100, "base_mapping": "b", "base_update_type": "minor",
+                    "base_data_version": 1, "base_alias": None, "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None,
+                    "base_osVersion": None, "base_distribution": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None,
+                    "base_whitelist": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
-                    "sc_id": 2, "when": 1500, "scheduled_by": "bill", "data_version": 1, "rule_id": None, "priority": 50,
-                    "backgroundRate": 100, "product": "baz", "mapping": "ab", "update_type": "minor", "version": None,
-                    "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
-                    "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
-                    "table_data_version": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                    "sc_id": 2, "when": 1500, "scheduled_by": "bill", "complete": False, "data_version": 1, "base_rule_id": None, "base_priority": 50,
+                    "base_backgroundRate": 100, "base_product": "baz", "base_mapping": "ab", "base_update_type": "minor", "base_version": None,
+                    "base_buildTarget": None, "base_alias": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None,
+                    "base_distribution": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,
+                    "base_data_version": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
             ],
         }
@@ -623,11 +623,11 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "scheduled_by": "bill", "rule_id": 5,
-            "priority": 80, "buildTarget": "d", "version": "3.3", "backgroundRate": 100, "mapping": "c", "update_type": "minor",
-            "table_data_version": 1, "data_version": 1, "sc_id": 3, "when": None, "alias": None, "product": None, "channel": None, "buildID": None,
-            "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
-            "comment": None, "whitelist": None,
+            "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "scheduled_by": "bill", "base_rule_id": 5,
+            "base_priority": 80, "base_buildTarget": "d", "base_version": "3.3", "base_backgroundRate": 100, "base_mapping": "c", "base_update_type": "minor",
+            "base_data_version": 1, "data_version": 1, "sc_id": 3, "when": None, "complete": False, "base_alias": None, "base_product": None,
+            "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None, "base_distVersion": None,
+            "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,
         }
         self.assertEquals(db_data, expected)
 
@@ -644,11 +644,11 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "when": 1234567, "scheduled_by": "bill", "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah",
-            "update_type": "minor", "mapping": "a", "sc_id": 3, "data_version": 1, "table_data_version": None, "telemetry_product": None,
-            "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None, "buildTarget": None,
-            "version": None, "alias": None, "buildID": None, "locale": None, "osVersion": None, "distribution": None,
-            "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None
+            "when": 1234567, "scheduled_by": "bill", "base_priority": 120, "base_backgroundRate": 100, "base_product": "blah", "base_channel": "blah",
+            "base_update_type": "minor", "base_mapping": "a", "sc_id": 3, "data_version": 1, "complete": False, "base_data_version": None,
+            "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "base_rule_id": None, "base_buildTarget": None,
+            "base_version": None, "base_alias": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None,
+            "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None
         }
         self.assertEquals(db_data, expected)
 
@@ -658,7 +658,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
             "update_type": "minor", "mapping": "a",
         }
         ret = self._post("/scheduled_changes/rules", data=data, username="bob")
-        self.assertEquals(ret.status_code, 401, ret.data)
+        self.assertEquals(ret.status_code, 403, ret.data)
 
     def testAddScheduledChangeNoPermissionsToMakeChange(self):
         data = {
@@ -666,7 +666,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
             "update_type": "minor", "mapping": "a",
         }
         ret = self._post("/scheduled_changes/rules", data=data, username="mary")
-        self.assertEquals(ret.status_code, 401, ret.data)
+        self.assertEquals(ret.status_code, 403, ret.data)
 
     def testAddScheduledChangeMultipleConditions(self):
         data = {
@@ -695,11 +695,11 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 1, "when": 1000, "scheduled_by": "bill", "data_version": 1, "rule_id": 1, "priority": 100,
-            "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "c", "update_type": "minor",
-            "table_data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
-            "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None,
-            "whitelist": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+            "sc_id": 1, "when": 1000, "scheduled_by": "bill", "data_version": 1, "complete": False, "rule_id": 1, "base_priority": 100,
+            "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100, "base_mapping": "c", "base_update_type": "minor",
+            "base_data_version": 1, "base_alias": None, "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None,
+            "base_osVersion": None, "base_distribution": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None,
+            "base_whitelist": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
         }
         self.assertEquals(db_data, expected)
 

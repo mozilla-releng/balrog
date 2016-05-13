@@ -292,5 +292,4 @@ class SingleRuleColumnView(AdminView):
 class RuleScheduledChangesView(ScheduledChangesView):
     def __init__(self):
         forms = (ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm)
-        permissions = ("/rules", "/rules/:id")
-        super(RuleScheduledChangesView, self).__init__("rules", dbo.rules, forms, permissions)
+        super(RuleScheduledChangesView, self).__init__("rules", dbo.rules, forms)
