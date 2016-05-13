@@ -112,7 +112,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
             data_version=1,
             rule_id=1,
             alias=None,
-            base_whitelist=None,
+            whitelist=None,
         )
         self.assertEquals(json.loads(ret.data), expected)
 
@@ -137,7 +137,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
             data_version=1,
             rule_id=2,
             alias="frodo",
-            base_whitelist=None,
+            whitelist=None,
         )
         self.assertEquals(json.loads(ret.data), expected)
 
@@ -689,13 +689,13 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
             "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
         }
         ret = self._post("/scheduled_changes/rules/1", data=data)
-        self.assertEquals(ret.status_code, 201, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.data)
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 1, "when": 1000, "scheduled_by": "bill", "data_version": 1, "complete": False, "rule_id": 1, "base_priority": 100,
+            "sc_id": 1, "when": 2000, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1, "base_priority": 100,
             "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100, "base_mapping": "c", "base_update_type": "minor",
             "base_data_version": 1, "base_alias": None, "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None,
             "base_osVersion": None, "base_distribution": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None,
