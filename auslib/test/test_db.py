@@ -591,8 +591,12 @@ class ScheduledChangesTableMixin(object):
                     super(TestTable, self).insert(changed_by, transaction, **columns)
 
             def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
-                if not self.db.hasPermission(changed_by, "test", "modify", transaction=transaction):
-                    raise PermissionDeniedError("fail")
+                # Although our test table doesn't need it, real tables do some extra permission
+                # checks based on "where". To make sure we catch bugs around the "where" arg
+                # being broken, we use it similarly here.
+                for row in self.select(where=where, transaction=transaction):
+                    if not self.db.hasPermission(changed_by, "test", "modify", transaction=transaction):
+                        raise PermissionDeniedError("fail")
                 if not dryrun:
                     super(TestTable, self).update(where, what, changed_by, old_data_version, transaction)
 
@@ -757,6 +761,28 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testUpdateNoChangesSinceCreation(self):
         where = [self.sc_table.sc_id == 1]
         what = {"when": 888, "foo": "bb"}
+        self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
+        history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
+        self.assertEquals(row.scheduled_by, "bob")
+        self.assertEquals(row.when, 888)
+        self.assertEquals(row.data_version, 2)
+        self.assertEquals(row.base_fooid, 1)
+        self.assertEquals(row.base_foo, "bb")
+        self.assertEquals(row.base_bar, "barbar")
+        self.assertEquals(row.base_data_version, 1)
+        self.assertEquals(history_row.changed_by, "bob")
+        self.assertEquals(history_row.scheduled_by, "bob")
+        self.assertEquals(history_row.when, 888)
+        self.assertEquals(history_row.data_version, 2)
+        self.assertEquals(history_row.base_fooid, 1)
+        self.assertEquals(history_row.base_foo, "bb")
+        self.assertEquals(history_row.base_bar, "barbar")
+        self.assertEquals(history_row.base_data_version, 1)
+
+    def testUpdateNoChangesSinceCreationWithDict(self):
+        where = {"sc_id": 1}
+        what = {"when": 888, "foo": "bb", "data_version": 1, "fooid": 1}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
         row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
         history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]

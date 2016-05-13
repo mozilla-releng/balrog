@@ -775,12 +775,12 @@ class ScheduledChangeTable(AUSTable):
                 raise ValueError("Cannot parse 'when' as a unix timestamp.")
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
-        data_version_where = []
+        base_table_where = []
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
             if pk in columns:
                 if "data_version" in columns:
-                    data_version_where.append(getattr(self.baseTable, pk) == columns[pk])
+                    base_table_where.append(getattr(self.baseTable, pk) == columns[pk])
             # Non-Integer columns can have autoincrement set to True for some reason.
             # Any non-integer columns in the primary key are always required (because
             # autoincrement actually isn't a thing for them), and any Integer columns
@@ -788,13 +788,13 @@ class ScheduledChangeTable(AUSTable):
             elif not isinstance(base_column.type, (sqlalchemy.types.Integer,)) or not base_column.autoincrement:
                 raise ValueError("Missing primary key column '%s' which is not autoincrement", pk)
 
-        # If anything ended up in data_version_where, it means that the baseTable
+        # If anything ended up in base_table_where, it means that the baseTable
         # row should already exist. In these cases, we need to check to make sure
         # that the scheduled change has the same data version as the base table,
         # to ensure that a change is not being scheduled from an out of date version
         # of the base table row.
-        if data_version_where:
-            current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=data_version_where, transaction=transaction)
+        if base_table_where:
+            current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction)
 
             if not current_data_version:
                 raise ValueError("Cannot create scheduled change with data_version for non-existent row")
@@ -813,7 +813,7 @@ class ScheduledChangeTable(AUSTable):
         # Use the appropriate base table methods in dry run mode to ensure the
         # user has permission for the change they want to schedule
         if columns.get("data_version"):
-            self.baseTable.update(data_version_where, columns, changed_by, columns["data_version"], transaction=transaction, dryrun=True)
+            self.baseTable.update(base_table_where, columns, changed_by, columns["data_version"], transaction=transaction, dryrun=True)
         else:
             self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **columns)
 
@@ -823,26 +823,30 @@ class ScheduledChangeTable(AUSTable):
             return ret.inserted_primary_key[0]
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
-        row = self.select(where=where, transaction=transaction)[0]
+        # We need to check each Scheduled Change that would be affected by this
+        # to ensure the new row will be valid.
+        for row in self.select(where=where, transaction=transaction):
+            new_row = row.copy()
+            new_row.update(self._prefixColumns(what))
+            base_table_where = {pk: new_row["base_%s" % pk] for pk in self.base_primary_key}
+            if new_row.get("base_data_version"):
+                self.baseTable.update(base_table_where, new_row, changed_by, new_row["base_data_version"], transaction=transaction, dryrun=True)
+            else:
+                self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
 
-        if what.get("data_version"):
-            self.baseTable.update(where, what, changed_by, what["data_version"], transaction=transaction, dryrun=True)
-        else:
-            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **what)
+            conditions = {}
+            for cond in itertools.chain(*self.condition_groups):
+                if cond in new_row:
+                    conditions[cond] = new_row[cond]
+                elif row.get(cond):
+                    conditions[cond] = row[cond]
 
-        new_row = self._prefixColumns(what)
-        conditions = {}
-        for cond in itertools.chain(*self.condition_groups):
-            if cond in new_row:
-                conditions[cond] = new_row[cond]
-            elif row.get(cond):
-                conditions[cond] = row[cond]
-
-        self._validateConditions(conditions)
+            self._validateConditions(conditions)
 
         if not dryrun:
-            new_row["scheduled_by"] = changed_by
-            return super(ScheduledChangeTable, self).update(where, new_row, changed_by, old_data_version, transaction)
+            renamed_what = self._prefixColumns(what)
+            renamed_what["scheduled_by"] = changed_by
+            return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction)
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
         if not self.db.hasPermission(enacted_by, "scheduled_change", "enact", transaction=transaction):
