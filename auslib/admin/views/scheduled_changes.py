@@ -22,7 +22,7 @@ class ScheduledChangesView(AdminView):
         })
 
     @requirelogin
-    def _post(self, transaction, changed_by, sc_id=None):
+    def _post(self, transaction, changed_by):
         if request.form.get("data_version"):
             form = self.edit_form()
         else:
@@ -47,3 +47,22 @@ class ScheduledChangeView(AdminView):
         self.sc_table = table.scheduled_changes
         self.new_form, self.edit_form = forms
         super(ScheduledChangeView, self).__init__()
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        if request.form.get("data_version"):
+            form = self.edit_form()
+        else:
+            form = self.new_form()
+
+        rule_data = form.data.copy()
+        del rule_data["sc_data_version"]
+        old_data_version = form.data["sc_data_version"]
+
+        try:
+            self.sc_table.update({"sc_id": sc_id}, form.data, changed_by, old_data_version, transaction)
+        except ValueError as e:
+            self.log.warning("Bad input: %s", e)
+            return Response(status=400, response=str(e))
+
+        return Response(status=200)

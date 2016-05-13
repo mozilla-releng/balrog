@@ -10,7 +10,8 @@ from auslib.admin.views.base import (
 )
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
-    ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm
+    ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
+    EditScheduledChangeNewRuleForm, EditScheduledChangeExistingRuleForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView
 
@@ -293,3 +294,9 @@ class RuleScheduledChangesView(ScheduledChangesView):
     def __init__(self):
         forms = (ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm)
         super(RuleScheduledChangesView, self).__init__("rules", dbo.rules, forms)
+
+
+class RuleScheduledChangeView(ScheduledChangeView):
+    def __init__(self):
+        forms = (EditScheduledChangeNewRuleForm, EditScheduledChangeExistingRuleForm)
+        super(RuleScheduledChangeView, self).__init__("rules", dbo.rules, forms)

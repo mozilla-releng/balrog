@@ -199,6 +199,14 @@ class ScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
     rule_id = IntegerField('Rule ID', validators=[Required()])
 
 
+class EditScheduledChangeNewRuleForm(ScheduledChangeNewRuleForm):
+    sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
+
+
+class EditScheduledChangeExistingRuleForm(ScheduledChangeExistingRuleForm):
+    sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
+
+
 class CompleteReleaseForm(Form):
     name = StringField('Name', validators=[Required()])
     product = StringField('Product', validators=[Required()])
