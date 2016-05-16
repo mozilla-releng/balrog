@@ -23,8 +23,3 @@ class WhitelistBlobV1(Blob):
         if requestIMEI is not None:
             return self.isWhitelisted(requestIMEI)
         return False
-
-    def createXML(self, updateQuery, update_type, whitelistedDomains,
-                  specialForceHosts):
-        # Updates aren't actually served by this class
-        raise NotImplementedError()

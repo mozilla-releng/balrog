@@ -855,39 +855,6 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         ret = self._post(url)
         self.assertEquals(ret.status_code, 400)
 
-    def testSettings(self):
-        # let's poke Balrog about a new settings we got
-        blob = {
-            "name": "settings",
-            "schema_version": 2000,
-            "settings": {
-                "preloaded-sts-pkp": {
-                    "version": "1",
-                    "last_modified": 1438097376
-                }
-            }
-        }
-
-        data = {'name': 'settings', 'product': 'settings', 'blob': json.dumps(blob)}
-
-        ret = self._put('/releases/settings', data=data)
-        self.assertEquals(ret.status_code, 201)
-
-        select_rel = dbo.releases.t.select()
-        r = select_rel.where(dbo.releases.name == 'settings')
-        r = r.execute().fetchall()
-        self.assertEquals(len(r), 1)
-        rec = r[0]
-        self.assertEquals(rec['name'], 'settings')
-        self.assertEquals(rec['product'], 'settings')
-        self.assertEquals(byteify(json.loads(rec['data'])),
-                          json.loads(data['blob']))
-
-        # let's get it
-        ret = self._get('/releases/settings')
-        self.assertStatusCode(ret, 200)
-        self.assertEqual(json.loads(ret.data), json.loads(data['blob']))
-
 
 class TestSingleColumn_JSON(ViewTest, JSONTestMixin):
 
