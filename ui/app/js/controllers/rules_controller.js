@@ -33,6 +33,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       Rules.getProducts().success(function(response_prs) {
         Rules.getChannels().success(function(response_chs) {
           response_prs.product.forEach(function(pr) {
+            $scope.pr_ch_options.push(pr);
             response_chs.channel.forEach(function(ch) {
               if (ch.indexOf("*") === -1 && pairExists(pr, ch)){
                 var pr_ch_pair = pr.concat(",").concat(ch);
@@ -115,12 +116,18 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.removeFilterSearchWord = Search.removeFilterSearchWord;
 
   $scope.filterBySelect = function(rule) {
-    if ($scope.pr_ch_selected && $scope.pr_ch_selected.length > 1) {
+    if ($scope.pr_ch_selected[0] === "All rules") {
+      return true;
+    }
+    else if ($scope.pr_ch_selected && $scope.pr_ch_selected.length > 1) {
       product = rule.product === $scope.pr_ch_selected[0];
       channel = rule.channel && rule.channel === $scope.pr_ch_selected[1];
       return (product || !rule.product) && (channel || !rule.channel || (rule.channel && rule.channel.indexOf("*") > -1 && $scope.pr_ch_selected[1].startsWith(rule.channel.split("*")[0])));
     }
-    return true;
+    else {
+      product = rule.product === $scope.pr_ch_selected[0];
+      return (product || !rule.product);
+    }
   };
 
   $scope.openUpdateModal = function(rule) {
