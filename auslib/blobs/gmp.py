@@ -1,5 +1,3 @@
-import re
-
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import Blob
 from auslib.errors import BadDataError
@@ -37,10 +35,16 @@ class GMPBlobV1(Blob):
         # of the client to decide whether or not any action needs to be taken.
         return True
 
+    def getHeaderXML(self, updateQuery, update_type):
+        return '    <addons>'
+
+    def getFooterXML(self):
+        return '    </addons>'
+
     # Because specialForceHosts is only relevant to our own internal servers,
     # and these type of updates are always served externally, we don't process
     # them in GMP blobs.
-    def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         buildTarget = updateQuery["buildTarget"]
 
         vendorXML = []
@@ -55,12 +59,4 @@ class GMPBlobV1(Blob):
                              (vendor, url, self["hashFunction"], platformData["hashValue"],
                               platformData["filesize"], vendorInfo["version"]))
 
-        xml = ['<?xml version="1.0"?>']
-        xml.append('<updates>')
-        if vendorXML:
-            xml.append('    <addons>')
-            xml.extend(vendorXML)
-            xml.append('    </addons>')
-        xml.append('</updates>')
-        # ensure valid xml by using the right entity for ampersand
-        return re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
+        return vendorXML
