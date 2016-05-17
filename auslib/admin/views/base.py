@@ -5,7 +5,7 @@ from flask.views import MethodView
 
 from auslib.global_state import dbo
 from auslib.util.timesince import timesince
-from auslib.db import OutdatedDataError, PermissionDeniedError
+from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError
 import json
 import logging
 
@@ -28,6 +28,10 @@ def handleGeneralExceptions(messages):
                 return f(*args, **kwargs)
             except OutdatedDataError as e:
                 msg = "Couldn't perform the request %s. Outdated Data Version. old_data_version doesn't match current data_version: %s" % (messages, e)
+                logging.warning("Bad input: %s", msg)
+                return Response(status=400, response=json.dumps({"data": e.args}))
+            except UpdateMergeError as e:
+                msg = "Couldn't perform the request %s due to merge error. Is there a scheduled change for what you're trying to update? %s" % (messages, e)
                 logging.warning("Bad input: %s", msg)
                 return Response(status=400, response=json.dumps({"data": e.args}))
             except PermissionDeniedError as e:

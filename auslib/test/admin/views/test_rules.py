@@ -708,8 +708,13 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         ret = self._post("/scheduled_changes/rules/2", username="bob", data=data)
         self.assertEquals(ret.status_code, 403, ret.data)
 
+    def testUpdateRuleWithMergeError(self):
+        data = {"mapping": "a", "data_version": 1}
+        ret = self._post("/rules/1", data=data)
+        self.assertEquals(ret.status_code, 400, ret.data)
+
     def testEnactScheduledChangeExistingRule(self):
-        ret = self._post("/scheduled_changes/rules/1/enact")
+        ret = self._post("/scheduled_changes/rules/1/enact", username="mary")
         self.assertEquals(ret.status_code, 200, ret.data)
 
         sc_row = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()[0]
@@ -725,10 +730,21 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         self.assertEquals(dict(row), expected)
 
     def testEnactScheduledChangeNewRule(self):
-        pass
+        ret = self._post("/scheduled_changes/rules/2/enact", username="mary")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        sc_row = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 2).execute().fetchall()[0]
+        self.assertEquals(sc_row["complete"], True)
+
+        row = dbo.rules.t.select().where(dbo.rules.rule_id == 6).execute().fetchall()[0]
+        expected = {
+            "rule_id": 6, "priority": 50, "version": None, "buildTarget": None, "backgroundRate": 100, "mapping": "ab",
+            "update_type": "minor", "data_version": 1, "alias": None, "product": "baz", "channel": None, "buildID": None,
+            "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
+            "comment": None, "whitelist": None
+        }
+        self.assertEquals(dict(row), expected)
 
     def testEnactScheduledChangeNoPermissions(self):
-        pass
-
-    def testUpdateRuleWithMergeError(self):
-        pass
+        ret = self._post("/scheduled_changes/rules/2/enact", username="bob")
+        self.assertEquals(ret.status_code, 403, ret.data)
