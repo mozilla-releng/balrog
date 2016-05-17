@@ -704,7 +704,9 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         self.assertEquals(db_data, expected)
 
     def testUpdateScheduledChangeCantRemoveProductWithoutPermission(self):
-        pass
+        data = {"data_version": 1, "product": None, "sc_data_version": 1}
+        ret = self._post("/scheduled_changes/rules/2", username="bob", data=data)
+        self.assertEquals(ret.status_code, 403, ret.data)
 
     def testEnactScheduledChangeExistingRule(self):
         pass

@@ -292,11 +292,35 @@ class SingleRuleColumnView(AdminView):
 
 class RuleScheduledChangesView(ScheduledChangesView):
     def __init__(self):
-        forms = (ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm)
-        super(RuleScheduledChangesView, self).__init__("rules", dbo.rules, forms)
+        super(RuleScheduledChangesView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, transaction, changed_by):
+        if request.form.get("data_version"):
+            form = ScheduledChangeExistingRuleForm()
+        else:
+            form = ScheduledChangeNewRuleForm()
+
+        releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+        form.mapping.choices.insert(0, ('', 'NULL'))
+
+        return super(RuleScheduledChangesView, self)._post(form, transaction, changed_by)
 
 
 class RuleScheduledChangeView(ScheduledChangeView):
     def __init__(self):
-        forms = (EditScheduledChangeNewRuleForm, EditScheduledChangeExistingRuleForm)
-        super(RuleScheduledChangeView, self).__init__("rules", dbo.rules, forms)
+        super(RuleScheduledChangeView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        if request.form.get("data_version"):
+            form = EditScheduledChangeExistingRuleForm()
+        else:
+            form = EditScheduledChangeNewRuleForm()
+
+        releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+        form.mapping.choices.insert(0, ('', 'NULL'))
+
+        return super(RuleScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)

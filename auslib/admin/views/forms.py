@@ -203,7 +203,7 @@ class EditScheduledChangeNewRuleForm(ScheduledChangeNewRuleForm):
     sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
 
 
-class EditScheduledChangeExistingRuleForm(ScheduledChangeExistingRuleForm):
+class EditScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
     sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
 
 
