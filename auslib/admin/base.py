@@ -14,7 +14,8 @@ from auslib.admin.views.releases import SingleLocaleView, \
     ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView
 from auslib.admin.views.rules import RulesAPIView, \
     SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView, \
-    RuleScheduledChangesView, RuleScheduledChangeView
+    RuleScheduledChangesView, RuleScheduledChangeView, \
+    EnactRuleScheduledChangeView
 from auslib.admin.views.history import DiffView, FieldView
 from auslib.dockerflow import create_dockerflow_endpoints
 
@@ -63,3 +64,4 @@ app.add_url_rule("/history/diff/<type_>/<change_id>/<field>", view_func=DiffView
 app.add_url_rule("/history/view/<type_>/<change_id>/<field>", view_func=FieldView.as_view("field"))
 app.add_url_rule("/scheduled_changes/rules", view_func=RuleScheduledChangesView.as_view("scheduled_changes_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>", view_func=RuleScheduledChangeView.as_view("scheduled_change_rules"))
+app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/enact", view_func=EnactRuleScheduledChangeView.as_view("ench_scheduled_change_rules"))

@@ -709,7 +709,20 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 403, ret.data)
 
     def testEnactScheduledChangeExistingRule(self):
-        pass
+        ret = self._post("/scheduled_changes/rules/1/enact")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        sc_row = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()[0]
+        self.assertEquals(sc_row["complete"], True)
+
+        row = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()[0]
+        expected = {
+            "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b",
+            "update_type": "minor", "data_version": 2, "alias": None, "product": None, "channel": None, "buildID": None,
+            "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
+            "comment": None, "whitelist": None
+        }
+        self.assertEquals(dict(row), expected)
 
     def testEnactScheduledChangeNewRule(self):
         pass
