@@ -1304,10 +1304,35 @@ class UnquotedStr(str):
         return self.__str__()
 
 
-def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
+def send_email(relayhost, port, username, password, to_addr, from_addr, table, subj,
+               body):
     from email.mime.text import MIMEText
     from smtplib import SMTP
 
+    msg = MIMEText("\n".join(body), "plain")
+    msg["Subject"] = subj
+    msg["from"] = from_addr
+
+    try:
+        conn = SMTP()
+        conn.connect(relayhost, port)
+        conn.ehlo()
+        conn.starttls()
+        conn.ehlo()
+    except:
+        table.log.exception("Failed to connect to SMTP server:")
+        return
+    try:
+        if username and password:
+            conn.login(username, password)
+        conn.sendmail(from_addr, to_addr, msg.as_string())
+    except:
+        table.log.exception("Failed to send change notification:")
+    finally:
+        conn.quit()
+
+
+def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
     def bleet(table, type_, changed_by, query):
         body = ["Changed by: %s" % changed_by]
         if type_ == "UPDATE":
@@ -1329,31 +1354,33 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             body.append("Row to be inserted:")
             body.append(UTF8PrettyPrinter().pformat(query.parameters))
 
-        msg = MIMEText("\n".join(body), "plain")
-        msg["Subject"] = "%s to %s detected" % (type_, table.t.name)
-        msg["from"] = from_addr
-
+        subj = "%s to %s detected" % (type_, table.t.name)
+        send_email(relayhost, port, username, password, to_addr, from_addr,
+                   table, subj, body)
         table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
-        try:
-            conn = SMTP()
-            conn.connect(relayhost, port)
-            conn.ehlo()
-            conn.starttls()
-            conn.ehlo()
-        except:
-            table.log.exception("Failed to connect to SMTP server:")
-            return
-        try:
-            if username and password:
-                conn.login(username, password)
-            conn.sendmail(from_addr, to_addr, msg.as_string())
-        except:
-            table.log.exception("Failed to send change notification:")
-        finally:
-            conn.quit()
-
     return bleet
 
+
+def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr):
+    def bleet(table, type_, changed_by, query):
+        body = ["Changed by: %s" % changed_by]
+        where = [c for c in query._whereclause.get_children()]
+        row = table.select(where=where)[0]
+        if row['read_only'] != query.parameters['read_only']:
+            body.append("Row(s) to be updated as follows:")
+            data = {}
+            data['name'] = UnquotedStr(repr(row['name']))
+            data['product'] = UnquotedStr(repr(row['product']))
+            data['read_only'] = UnquotedStr("%s ---> %s" %
+                                            (repr(row['read_only']),
+                                             repr(query.parameters['read_only'])))
+            body.append(UTF8PrettyPrinter().pformat(data))
+
+        subj = "%s to %s detected" % (type_, table.t.name)
+        send_email(relayhost, port, username, password, to_addr, from_addr,
+                   table, subj, body)
+        table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
+    return bleet
 
 # A helper that sets sql_mode. This should only be used with MySQL, and
 # lets us put the database in a stricter mode that will disallow things like
@@ -1402,12 +1429,18 @@ class AUSDatabase(object):
 
     def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr)
+        read_only_bleeter = make_change_notifier_for_read_only(relayhost, port,
+                                                               username,
+                                                               password,
+                                                               to_addr,
+                                                               from_addr)
         self.rules.onInsert = bleeter
         self.rules.onUpdate = bleeter
         self.rules.onDelete = bleeter
         self.permissions.onInsert = bleeter
         self.permissions.onUpdate = bleeter
         self.permissions.onDelete = bleeter
+        self.releases.onUpdate = read_only_bleeter
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,
