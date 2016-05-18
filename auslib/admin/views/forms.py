@@ -196,13 +196,20 @@ class ScheduledChangeNewRuleForm(ScheduledChangeForm, RuleForm):
 
 
 class ScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
+    # EditRuleForm doesn't have rule_id in it because rules are edited through
+    # URLs that contain them. Scheduled changes, on the other hand, are edited
+    # through URLs that contain scheduled change IDs, so we need to include
+    # the rule_id in the form when editing scheduled changes for rules.
     rule_id = IntegerField('Rule ID', validators=[Required()])
 
 
-class EditScheduledChangeNewRuleForm(ScheduledChangeNewRuleForm):
+class EditScheduledChangeNewRuleForm(ScheduledChangeForm, RuleForm):
     sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
 
 
+# Unlike when scheduling a new change to an existing rule, rule_id is not
+# required (or even allowed) when modifying a scheduled change for an
+# existing rule. Allowing it to be modified would be confusing.
 class EditScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
     sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
 
