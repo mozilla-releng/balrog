@@ -52,9 +52,9 @@ class ScheduledChangeView(AdminView):
             return Response(status=400, response=json.dumps(form.errors))
 
         what = dict()
-        # We need to be able to support changing AND removing parts of a rule,
+        # We need to be able to support changing AND removing things
         # and because of how Flask's request object and WTForm's defaults work
-        # this gets a little hary.
+        # this gets a little hairy.
         for k, v in form.data.iteritems():
             # sc_data_version is a "special" column, in that it's not part of the
             # primary data, and shouldn't be updatable by the user.
