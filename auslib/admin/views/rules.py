@@ -329,3 +329,7 @@ class RuleScheduledChangeView(ScheduledChangeView):
 class EnactRuleScheduledChangeView(EnactScheduledChangeView):
     def __init__(self):
         super(EnactRuleScheduledChangeView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(EnactRuleScheduledChangeView, self)._post(sc_id, transaction, changed_by)

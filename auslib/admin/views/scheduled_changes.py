@@ -2,7 +2,7 @@ import json
 
 from flask import jsonify, request, Response
 
-from auslib.admin.views.base import requirelogin, AdminView
+from auslib.admin.views.base import AdminView
 
 
 class ScheduledChangesView(AdminView):
@@ -10,7 +10,6 @@ class ScheduledChangesView(AdminView):
 
     def __init__(self, namespace, table):
         self.namespace = namespace
-        # TODO: remove this?
         self.path = "/scheduled_changes/%s" % namespace
         self.table = table
         self.sc_table = table.scheduled_changes
@@ -84,7 +83,7 @@ class ScheduledChangeView(AdminView):
 
 class EnactScheduledChangeView(AdminView):
     """/scheduled_changes/:namespace/:sc_id/enact"""
-    # TODO: replace namespace/table with class variables?
+
     def __init__(self, namespace, table):
         self.namespace = namespace
         self.path = "/scheduled_changes/%s/:sc_id/enact" % namespace
@@ -92,7 +91,6 @@ class EnactScheduledChangeView(AdminView):
         self.sc_table = table.scheduled_changes
         super(EnactScheduledChangeView, self).__init__()
 
-    @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         # TODO: what kind of exceptions could be raised?
         self.sc_table.enactChange(sc_id, changed_by, transaction)
