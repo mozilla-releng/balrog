@@ -92,7 +92,5 @@ class EnactScheduledChangeView(AdminView):
         super(EnactScheduledChangeView, self).__init__()
 
     def _post(self, sc_id, transaction, changed_by):
-        # TODO: what kind of exceptions could be raised?
         self.sc_table.enactChange(sc_id, changed_by, transaction)
-
         return Response(status=200)
