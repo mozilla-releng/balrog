@@ -23,7 +23,7 @@ def requirelogin(f):
 def requirepermission(url, options=['product']):
     def wrap(f):
         def decorated(*args, **kwargs):
-            username = request.environ.get('REMOTE_USER')
+            username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
             method = request.method
             extra = dict()
             for opt in options:
