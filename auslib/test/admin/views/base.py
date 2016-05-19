@@ -80,11 +80,17 @@ class ViewTest(unittest.TestCase):
     def _getBadAuth(self):
         return {'REMOTE_USER': 'NotAuth!'}
 
+    def _getHttpRemoteUserAuth(self, username):
+        return {"HTTP_REMOTE_USER": username}
+
     def _getAuth(self, username):
         return {'REMOTE_USER': username}
 
     def _post(self, url, data={}, username='bill', **kwargs):
         return self.client.post(url, data=data, environ_base=self._getAuth(username), **kwargs)
+
+    def _httpRemoteUserPost(self, url, username="bill", data={}):
+        return self.client.post(url, data=data, environ_base=self._getHttpRemoteUserAuth(username))
 
     def _badAuthPost(self, url, data={}):
         return self.client.post(url, data=data, environ_base=self._getBadAuth())

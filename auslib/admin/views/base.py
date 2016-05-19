@@ -12,7 +12,7 @@ import logging
 
 def requirelogin(f):
     def decorated(*args, **kwargs):
-        username = request.environ.get('REMOTE_USER')
+        username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
         if not username:
             logging.warning("Login Required")
             return Response(status=401)
