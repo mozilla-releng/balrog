@@ -36,6 +36,14 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         query = query.where(dbo.permissions.permission == 'admin')
         self.assertEqual(query.execute().fetchone(), ('admin', 'bob', None, 1))
 
+    def testPermissionsPostWithHttpRemoteUser(self):
+        ret = self._httpRemoteUserPost('/users/bill/permissions/admin', username="bob", data=dict(options="", data_version=1))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d" % ret.status_code)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        r = dbo.permissions.t.select().where(dbo.permissions.username == 'bill').execute().fetchall()
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0], ('admin', 'bill', None, 2))
+
     def testPermissionsPost(self):
         ret = self._post('/users/bill/permissions/admin', data=dict(options="", data_version=1))
         self.assertEqual(ret.status_code, 200, "Status Code: %d" % ret.status_code)
