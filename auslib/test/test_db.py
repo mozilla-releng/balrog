@@ -12,7 +12,7 @@ from sqlalchemy.engine.reflection import Inspector
 
 import migrate.versioning.api
 
-from auslib.global_state import cache
+from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, ReadOnlyError
 from auslib.blobs.base import BlobValidationError
@@ -974,10 +974,10 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
-        self.db = AUSDatabase(self.dburi)
-        self.db.create()
-        self.rules = self.db.rules
-        self.releases = self.db.releases
+        dbo.setDb(self.dburi)
+        dbo.create()
+        self.rules = dbo.rules
+        self.releases = dbo.releases
         self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.releases.t.insert().execute(name='ab', product='a', data=json.dumps(dict(name="ab", schema_version=1, hashFunction="sha512")),
@@ -986,6 +986,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                          data_version=1)
         self.releases.t.insert().execute(name='c', product='c', data=json.dumps(dict(name="c", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
+
+    def tearDown(self):
+        dbo.reset()
 
     def testGetReleases(self):
         self.assertEquals(len(self.releases.getReleases()), 4)
