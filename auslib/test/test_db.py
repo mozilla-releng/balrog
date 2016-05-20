@@ -616,6 +616,8 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1)
         self.paths.t.insert().execute(
             rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1)
+        self.paths.t.insert().execute(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z",
+                                      data_version=1)
 
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
@@ -625,6 +627,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(rule_id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z', data_version=1),
             dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1),
             dict(rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1),
+            dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z", data_version=1),
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
             dict(rule_id=3, priority=100, backgroundRate=100, version='3.5', buildTarget='a', mapping='a', update_type='z', data_version=1),
             dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1),
@@ -742,6 +745,21 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         ]
         self.assertEquals(rules, expected)
 
+    def testGetRulesMatchingQuerySystemCapabilities(self):
+        rules = self.paths.getRulesMatchingQuery(
+            dict(product="", version="5.0", channel="", buildTarget="d",
+                 buildID="", locale="", osVersion="", distribution="",
+                 distVersion="", headerArchitecture="", force=False,
+                 queryVersion=3, systemCapabilities="S"
+                 ),
+            fallbackChannel="",
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z", data_version=1)
+        ]
+        self.assertEquals(rules, expected)
+
     def testGetRulesMatchingQueryLocale(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product='', version='', channel='', buildTarget='e',
@@ -833,7 +851,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEquals(rule, [])
 
     def testGetNumberOfRules(self):
-        self.assertEquals(self.paths.countRules(), 8)
+        self.assertEquals(self.paths.countRules(), 9)
 
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):

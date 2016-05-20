@@ -42,7 +42,8 @@ class ClientTestBase(unittest.TestCase):
         dbo.setDomainWhitelist(('a.com', 'boring.com'))
         self.client = app.test_client()
         self.view = ClientRequestView()
-        dbo.rules.t.insert().execute(backgroundRate=100, mapping='b', update_type='minor', product='b', data_version=1)
+        dbo.rules.t.insert().execute(backgroundRate=100, mapping='b', update_type='minor', product='b',
+                                     systemCapabilities="SSE2", data_version=1)
         dbo.releases.t.insert().execute(name='b', product='b', data_version=1, data="""
 {
     "name": "b",
@@ -456,6 +457,27 @@ class ClientTest(ClientTestBase):
 </updates>
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testVersion6GetWithSystemCapabilitiesMatch(self):
+        ret = self.client.get('/update/6/b/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testVersion6GetWithoutSystemCapabilitiesMatch(self):
+        ret = self.client.get('/update/6/b/1.0/1/p/l/a/a/SSE/a/a/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
 
     def testGetURLNotInWhitelist(self):
         ret = self.client.get('/update/3/d/20.0/1/p/l/a/a/a/a/update.xml')
