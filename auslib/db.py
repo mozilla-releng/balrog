@@ -1366,7 +1366,7 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
         body = ["Changed by: %s" % changed_by]
         where = [c for c in query._whereclause.get_children()]
         row = table.select(where=where)[0]
-        if row['read_only'] != query.parameters['read_only']:
+        if not query.parameters['read_only'] and row['read_only']:
             body.append("Row(s) to be updated as follows:")
             data = {}
             data['name'] = UnquotedStr(repr(row['name']))
@@ -1376,10 +1376,10 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
                                              repr(query.parameters['read_only'])))
             body.append(UTF8PrettyPrinter().pformat(data))
 
-        subj = "%s to %s detected" % (type_, table.t.name)
-        send_email(relayhost, port, username, password, to_addr, from_addr,
-                   table, subj, body)
-        table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
+            subj = "Read only release %s changed to modifiable" % data['name']
+            send_email(relayhost, port, username, password, to_addr, from_addr,
+                       table, subj, body)
+            table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
     return bleet
 
 # A helper that sets sql_mode. This should only be used with MySQL, and
