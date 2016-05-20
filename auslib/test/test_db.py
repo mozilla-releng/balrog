@@ -635,7 +635,6 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEquals(rules, expected)
 
     def testGetRulesMatchingQuery(self):
-        print self.paths.t.select().execute().fetchall()
         rules = self.paths.getRulesMatchingQuery(
             dict(product='', version='3.5', channel='',
                  buildTarget='a', buildID='', locale='', osVersion='',
@@ -747,16 +746,16 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def testGetRulesMatchingQuerySystemCapabilities(self):
         rules = self.paths.getRulesMatchingQuery(
-            dict(product="", version="5.0", channel="", buildTarget="d",
+            dict(product="", version="5.0", channel="", buildTarget="f",
                  buildID="", locale="", osVersion="", distribution="",
                  distVersion="", headerArchitecture="", force=False,
-                 queryVersion=3, systemCapabilities="S"
+                 queryVersion=6, systemCapabilities="S"
                  ),
             fallbackChannel="",
         )
         rules = self._stripNullColumns(rules)
         expected = [
-            dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z", data_version=1)
+            dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z", data_version=1),
         ]
         self.assertEquals(rules, expected)
 
