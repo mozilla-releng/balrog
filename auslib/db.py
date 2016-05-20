@@ -798,10 +798,9 @@ class Rules(AUSTable):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
             # Same deal for system capabilities
-            if updateQuery["queryVersion"] == 6:
-                if not self._csvMatchesRule(rule['systemCapabilities'], updateQuery['systemCapabilities']):
-                    self.log.debug("%s doesn't match %s", rule['systemCapabilities'], updateQuery['systemCapabilities'])
-                    continue
+            if not self._csvMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', "")):
+                self.log.debug("%s doesn't match %s", rule['systemCapabilities'], updateQuery.get('systemCapabilities'))
+                continue
             # Locales may be a comma delimited rule too, exact matches only
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
