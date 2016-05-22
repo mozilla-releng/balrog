@@ -11,9 +11,9 @@ DOMAIN_WHITELIST = {
     "archive.mozilla.org": ("Firefox", "Fennec", "Thunderbird"),
     "download.cdn.mozilla.net": ("Firefox", "Fennec"),
     "mozilla-nightly-updates.s3.amazonaws.com": ("Firefox",),
-    "ciscobinary.openh264.org": ("GMP",),
-    "cdmdownload.adobe.com": ("GMP",),
-    "clients2.googleusercontent.com": ("GMP",),
+    "ciscobinary.openh264.org": ("OpenH264",),
+    "cdmdownload.adobe.com": ("CDM",),
+    "clients2.googleusercontent.com": ("Widevine",),
     "ftp.mozilla.org": ("SystemAddons",),
 }
 
