@@ -178,8 +178,31 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
+<<<<<<< HEAD
+        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="2.0.0.20" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+||||||| merged common ancestors
+        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="2.0.0.20" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+=======
         returned_header = self.blob.getHeaderXML(updateQuery, "minor")
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned = self.blob.getInnerXML(updateQuery, "minor", ["boring.com"], None)
         returned_footer = self.blob.getFooterXML()
         returned = [x.strip() for x in returned]
         expected_header = """
@@ -193,6 +216,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         self.assertEqual(returned_header.strip(), expected_header.strip())
         self.assertItemsEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
+>>>>>>> master
 
     def test3_0(self):
         updateQuery = {
@@ -201,8 +225,31 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
+<<<<<<< HEAD
+        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="3.0.9" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+||||||| merged common ancestors
+        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="3.0.9" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+=======
         returned_header = self.blob.getHeaderXML(updateQuery, "minor")
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned = self.blob.getInnerXML(updateQuery, "minor", ["boring.com"], None)
         returned_footer = self.blob.getFooterXML()
         returned = [x.strip() for x in returned]
         expected_header = """
@@ -216,6 +263,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         self.assertEqual(returned_header.strip(), expected_header.strip())
         self.assertItemsEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
+>>>>>>> master
 
     def test3_5(self):
         updateQuery = {
@@ -224,8 +272,31 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
+<<<<<<< HEAD
+        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="12.0" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+||||||| merged common ancestors
+        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="12.0" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+=======
         returned_header = self.blob.getHeaderXML(updateQuery, "minor")
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned = self.blob.getInnerXML(updateQuery, "minor", ["boring.com"], None)
         returned_footer = self.blob.getFooterXML()
         returned = [x.strip() for x in returned]
         expected_header = """
@@ -239,6 +310,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         self.assertEqual(returned_header.strip(), expected_header.strip())
         self.assertItemsEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
+>>>>>>> master
 
     def test3_6(self):
         updateQuery = {
@@ -247,8 +319,31 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
+<<<<<<< HEAD
+        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="12.0" extensionVersion="3.6" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+||||||| merged common ancestors
+        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
+        returned = minidom.parseString(returned)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="12.0" extensionVersion="3.6" buildID="1" detailsURL="http://example.org/details">
+        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+=======
         returned_header = self.blob.getHeaderXML(updateQuery, "minor")
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned = self.blob.getInnerXML(updateQuery, "minor", ["boring.com"], None)
         returned_footer = self.blob.getFooterXML()
         returned = [x.strip() for x in returned]
         expected_header = """
@@ -262,6 +357,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         self.assertEqual(returned_header.strip(), expected_header.strip())
         self.assertItemsEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
+>>>>>>> master
 
 
 class TestNewStyleVersionBlob(unittest.TestCase):
