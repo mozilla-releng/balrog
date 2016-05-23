@@ -193,5 +193,6 @@ class CompleteReleaseForm(Form):
 
 class ReadOnlyForm(Form):
     name = StringField('Name', validators=[Required()])
+    product = StringField('Product', validators=[Required()])
     read_only = BooleanField('read_only')
     data_version = IntegerField('data_version', widget=HiddenInput())
