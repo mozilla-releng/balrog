@@ -36,6 +36,37 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         query = query.where(dbo.permissions.permission == 'admin')
         self.assertEqual(query.execute().fetchone(), ('admin', 'bob', None, 1))
 
+    def testPermissionPutWithEmail(self):
+        ret = self._put('/users/bob@bobsworld.com/permissions/admin')
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username == 'bob@bobsworld.com')
+        query = query.where(dbo.permissions.permission == 'admin')
+        self.assertEqual(query.execute().fetchone(), ('admin', 'bob@bobsworld.com', None, 1))
+
+    # This test is meant to verify that the app properly unquotes URL parts
+    # as part of routing, because it is required when running under uwsgi.
+    # Unfortunately, Werkzeug's test Client will unquote URL parts before
+    # the app sees them, so this test doesn't actually verify that case...
+    def testPermissionPutWithQuotedEmail(self):
+        ret = self._put('/users/bob%40bobsworld.com/permissions/admin')
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username == 'bob@bobsworld.com')
+        query = query.where(dbo.permissions.permission == 'admin')
+        self.assertEqual(query.execute().fetchone(), ('admin', 'bob@bobsworld.com', None, 1))
+
+    def testPermissionPutWithQuotedUrl(self):
+        ret = self._put('/users/bob/permissions/%2frules')
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username == 'bob')
+        query = query.where(dbo.permissions.permission == '/rules')
+        self.assertEqual(query.execute().fetchone(), ('/rules', 'bob', None, 1))
+
     def testPermissionsPostWithHttpRemoteUser(self):
         ret = self._httpRemoteUserPost('/users/bill/permissions/admin', username="bob", data=dict(options="", data_version=1))
         self.assertEqual(ret.status_code, 200, "Status Code: %d" % ret.status_code)

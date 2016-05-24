@@ -1,5 +1,9 @@
+import urllib
+
 from flask import Flask, request
 from flask_compress import Compress
+
+from werkzeug.routing import BaseConverter, PathConverter
 
 import logging
 log = logging.getLogger(__name__)
@@ -37,6 +41,31 @@ def add_security_headers(response):
 
 Compress(app)
 
+
+# When running under uwsgi, paths will not get decoded before hitting the app.
+# We need to handle this ourselves in certain fields, and adding converters
+# for them is the best way to do this.
+class UrlquotingConverter(BaseConverter):
+    def to_python(self, value):
+        return urllib.unquote(value)
+
+    def to_url(self, value):
+        return urllib.quote(value)
+
+
+class UrlquotingPathConverter(PathConverter):
+    def to_python(self, value):
+        value = super(UrlquotingPathConverter, self).to_python(value)
+        return urllib.unquote(value)
+
+    def to_url(self, value):
+        value = super(UrlquotingPathConverter, self).to_url(value)
+        return urllib.quote(value)
+
+
+app.url_map.converters["urlquote"] = UrlquotingConverter
+app.url_map.converters["urlquotepath"] = UrlquotingPathConverter
+
 # Endpoints required for the Balrog 2.0 UI.
 # In the Mozilla deployments of Balrog, both the the admin API (these endpoints)
 # and the static admin UI are hosted on the same domain. This API wsgi app is
@@ -44,10 +73,10 @@ Compress(app)
 # these requests.
 app.add_url_rule("/csrf_token", view_func=CSRFView.as_view("csrf"))
 app.add_url_rule("/users", view_func=UsersView.as_view("users"))
-app.add_url_rule("/users/<username>/permissions", view_func=PermissionsView.as_view("user_permissions"))
-app.add_url_rule("/users/<username>/permissions/<path:permission>", view_func=SpecificPermissionView.as_view("specific_permission"))
+app.add_url_rule("/users/<urlquote:username>/permissions", view_func=PermissionsView.as_view("user_permissions"))
+app.add_url_rule("/users/<urlquote:username>/permissions/<urlquotepath:permission>", view_func=SpecificPermissionView.as_view("specific_permission"))
 # Some permissions may start with a slash, and the <path> converter won"t match them, so we need an extra rule to cope.
-app.add_url_rule("/users/<username>/permissions//<path:permission>", view_func=SpecificPermissionView.as_view("specific_permission2"))
+app.add_url_rule("/users/<urlquote:username>/permissions//<urlquotepath:permission>", view_func=SpecificPermissionView.as_view("specific_permission2"))
 app.add_url_rule("/rules", view_func=RulesAPIView.as_view("rules"))
 # Normal operations (get/update/delete) on rules can be done by id or alias...
 app.add_url_rule("/rules/<id_or_alias>", view_func=SingleRuleView.as_view("rule"))
