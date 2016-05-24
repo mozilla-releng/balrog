@@ -1805,6 +1805,13 @@ class TestChangeNotifiers(unittest.TestCase):
         self.db = AUSDatabase('sqlite:///:memory:')
         self.db.create()
         self.db.rules.t.insert().execute(rule_id=2, priority=100, channel='release', backgroundRate=100, update_type='z', data_version=1)
+        self.db.releases.t.insert().execute(name='a', product='a', read_only=True,
+                                            data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
+                                            data_version=1)
+        self.db.releases.t.insert().execute(name='b', product='b',
+                                            read_only=False,
+                                            data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
+                                            data_version=1)
 
     def _runTest(self, changer):
         with mock.patch("smtplib.SMTP") as smtp:
@@ -1839,6 +1846,27 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be removed:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'rule_id': 2"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': 'release'"))
+
+    def testOnChangeReadOnly(self):
+        def doit():
+            self.db.releases.updateRelease('a', read_only=False, changed_by='me', old_data_version=1)
+        mock_conn = self._runTest(doit)
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
+                                              PartialString("Read only release"
+                                                            " u'a' changed to modifiable"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
+                                              PartialString("'name': u'a'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
+                                              PartialString("'product': u'a'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
+                                              PartialString("'read_only': True"
+                                                            " ---> False"))
+
+    def testOnChangeReadOnlySetUnmodifiable(self):
+        def doit():
+            self.db.releases.updateRelease('b', read_only=False, changed_by='me', old_data_version=1)
+        mock_conn = self._runTest(doit)
+        mock_conn.sendmail.assert_not_called()
 
 
 class TestDBUpgrade(unittest.TestCase, NamedFileDatabaseMixin):
