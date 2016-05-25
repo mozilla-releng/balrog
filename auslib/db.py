@@ -723,8 +723,8 @@ class Rules(AUSTable):
            need to support globbing."""
         if ruleString is None:
             return True
-        for os in ruleString.split(','):
-            if os in queryString:
+        for part in ruleString.split(','):
+            if part in queryString:
                 return True
 
     def _localeMatchesRule(self, ruleLocales, queryLocale):
