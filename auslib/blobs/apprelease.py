@@ -94,7 +94,7 @@ class ReleaseBlobBase(Blob):
         # the update entirely? Right now, another patch type could still
         # return an update. Eg, the partial could contain a forbidden domain
         # but the complete could still return an update from an accepted one.
-        if isForbiddenUrl(url, whitelistedDomains):
+        if isForbiddenUrl(url, updateQuery['product'], whitelistedDomains):
             return None
 
         return '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
@@ -272,7 +272,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
-            if isForbiddenUrl(url, whitelistedDomains):
+            if isForbiddenUrl(url, updateQuery['product'], whitelistedDomains):
                 break
 
             snippet = [
@@ -448,7 +448,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
-            if isForbiddenUrl(url, whitelistedDomains):
+            if isForbiddenUrl(url, updateQuery['product'], whitelistedDomains):
                 break
 
             snippet = [

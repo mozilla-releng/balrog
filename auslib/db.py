@@ -888,7 +888,7 @@ class Releases(AUSTable):
 
     # TODO: This should really be part of the blob class(es) because it depends
     # on a lot of blob schema specific stuff.
-    def containsForbiddenDomain(self, data):
+    def containsForbiddenDomain(self, data, product):
         """Returns True if "data" contains any file URLs that contain a
            domain that we're not allowed to serve updates to."""
         # Check the top level URLs, if the exist.
@@ -897,11 +897,11 @@ class Releases(AUSTable):
             if isinstance(c, dict):
                 for from_ in c.values():
                     for url in from_.values():
-                        if isForbiddenUrl(url, self.domainWhitelist):
+                        if isForbiddenUrl(url, product, self.domainWhitelist):
                             return True
             # Old-style
             else:
-                if isForbiddenUrl(c, self.domainWhitelist):
+                if isForbiddenUrl(c, product, self.domainWhitelist):
                     return True
 
         # And also the locale-level URLs.
@@ -909,12 +909,12 @@ class Releases(AUSTable):
             for locale in platform.get('locales', {}).values():
                 for type_ in ('partial', 'complete'):
                     if type_ in locale and 'fileUrl' in locale[type_]:
-                        if isForbiddenUrl(locale[type_]['fileUrl'], self.domainWhitelist):
+                        if isForbiddenUrl(locale[type_]['fileUrl'], product, self.domainWhitelist):
                             return True
                 for type_ in ('partials', 'completes'):
                     for update in locale.get(type_, {}):
                         if 'fileUrl' in update:
-                            if isForbiddenUrl(update["fileUrl"], self.domainWhitelist):
+                            if isForbiddenUrl(update["fileUrl"], product, self.domainWhitelist):
                                 return True
 
         return False
@@ -1027,7 +1027,7 @@ class Releases(AUSTable):
             # If they do, we should not let the column and the in-blob name be different.
             if name != blob["name"]:
                 raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-        if self.containsForbiddenDomain(blob):
+        if self.containsForbiddenDomain(blob, product):
             raise ValueError("Release blob contains forbidden domain.")
 
         columns = dict(name=name, product=product, data=blob.getJSON())
@@ -1047,12 +1047,12 @@ class Releases(AUSTable):
             what['product'] = product
         if blob:
             blob.validate()
-            # Generally blobs have names, but there's no requirement that they have to.
+            # Blob schemas often require a name property but we can't assume so here
             if blob.get("name"):
                 # If they do, we should not let the column and the in-blob name be different.
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-            if self.containsForbiddenDomain(blob):
+            if self.containsForbiddenDomain(blob, product):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
         self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
@@ -1060,7 +1060,7 @@ class Releases(AUSTable):
         cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
         cache.put("blob_version", name, new_data_version)
 
-    def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
+    def addLocaleToRelease(self, name, product, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
         """Adds or update's the existing data for a specific platform + locale
            combination, in the release identified by 'name'. The data is
            validated before commiting it, and a ValueError is raised if it is
@@ -1092,7 +1092,7 @@ class Releases(AUSTable):
                     releaseBlob['platforms'][a] = {'alias': platform}
 
         releaseBlob.validate()
-        if self.containsForbiddenDomain(releaseBlob):
+        if self.containsForbiddenDomain(releaseBlob, product):
             raise ValueError("Release blob contains forbidden domain.")
         where = [self.name == name]
         what = dict(data=releaseBlob.getJSON())
@@ -1309,10 +1309,35 @@ class UnquotedStr(str):
         return self.__str__()
 
 
-def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
+def send_email(relayhost, port, username, password, to_addr, from_addr, table, subj,
+               body):
     from email.mime.text import MIMEText
     from smtplib import SMTP
 
+    msg = MIMEText("\n".join(body), "plain")
+    msg["Subject"] = subj
+    msg["from"] = from_addr
+
+    try:
+        conn = SMTP()
+        conn.connect(relayhost, port)
+        conn.ehlo()
+        conn.starttls()
+        conn.ehlo()
+    except:
+        table.log.exception("Failed to connect to SMTP server:")
+        return
+    try:
+        if username and password:
+            conn.login(username, password)
+        conn.sendmail(from_addr, to_addr, msg.as_string())
+    except:
+        table.log.exception("Failed to send change notification:")
+    finally:
+        conn.quit()
+
+
+def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
     def bleet(table, type_, changed_by, query):
         body = ["Changed by: %s" % changed_by]
         if type_ == "UPDATE":
@@ -1334,31 +1359,33 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             body.append("Row to be inserted:")
             body.append(UTF8PrettyPrinter().pformat(query.parameters))
 
-        msg = MIMEText("\n".join(body), "plain")
-        msg["Subject"] = "%s to %s detected" % (type_, table.t.name)
-        msg["from"] = from_addr
-
+        subj = "%s to %s detected" % (type_, table.t.name)
+        send_email(relayhost, port, username, password, to_addr, from_addr,
+                   table, subj, body)
         table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
-        try:
-            conn = SMTP()
-            conn.connect(relayhost, port)
-            conn.ehlo()
-            conn.starttls()
-            conn.ehlo()
-        except:
-            table.log.exception("Failed to connect to SMTP server:")
-            return
-        try:
-            if username and password:
-                conn.login(username, password)
-            conn.sendmail(from_addr, to_addr, msg.as_string())
-        except:
-            table.log.exception("Failed to send change notification:")
-        finally:
-            conn.quit()
-
     return bleet
 
+
+def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr):
+    def bleet(table, type_, changed_by, query):
+        body = ["Changed by: %s" % changed_by]
+        where = [c for c in query._whereclause.get_children()]
+        row = table.select(where=where)[0]
+        if not query.parameters['read_only'] and row['read_only']:
+            body.append("Row(s) to be updated as follows:")
+            data = {}
+            data['name'] = UnquotedStr(repr(row['name']))
+            data['product'] = UnquotedStr(repr(row['product']))
+            data['read_only'] = UnquotedStr("%s ---> %s" %
+                                            (repr(row['read_only']),
+                                             repr(query.parameters['read_only'])))
+            body.append(UTF8PrettyPrinter().pformat(data))
+
+            subj = "Read only release %s changed to modifiable" % data['name']
+            send_email(relayhost, port, username, password, to_addr, from_addr,
+                       table, subj, body)
+            table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
+    return bleet
 
 # A helper that sets sql_mode. This should only be used with MySQL, and
 # lets us put the database in a stricter mode that will disallow things like
@@ -1407,12 +1434,18 @@ class AUSDatabase(object):
 
     def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr)
+        read_only_bleeter = make_change_notifier_for_read_only(relayhost, port,
+                                                               username,
+                                                               password,
+                                                               to_addr,
+                                                               from_addr)
         self.rules.onInsert = bleeter
         self.rules.onUpdate = bleeter
         self.rules.onDelete = bleeter
         self.permissions.onInsert = bleeter
         self.permissions.onUpdate = bleeter
         self.permissions.onDelete = bleeter
+        self.releases.onUpdate = read_only_bleeter
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,

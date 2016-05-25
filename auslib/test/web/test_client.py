@@ -27,7 +27,7 @@ class ClientTestBase(unittest.TestCase):
         self.version_fd, self.version_file = mkstemp()
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
-        app.config['WHITELISTED_DOMAINS'] = ('a.com', 'boring.com')
+        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'b2g', 'response-a', 'response-b')}
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
             f.write("""
@@ -39,7 +39,7 @@ class ClientTestBase(unittest.TestCase):
 """)
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(('a.com', 'boring.com'))
+        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e', 'b2g')})
         self.client = app.test_client()
         self.view = ClientRequestView()
         dbo.rules.t.insert().execute(backgroundRate=100, mapping='b', update_type='minor', product='b',
