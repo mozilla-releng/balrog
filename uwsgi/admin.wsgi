@@ -5,15 +5,16 @@ from auslib.log import configure_logging
 
 
 SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "b2gbld", "stage-ffxbld", "stage-tbirdbld", "stage-b2gbld"]
-DOMAIN_WHITELIST = [
-    "download.mozilla.org", "stage.mozilla.org", "ftp.mozilla.org",
-    "ciscobinary.openh264.org", "cdmdownload.adobe.com",
-    "queue.taskcluster.net", "download.cdn.mozilla.net",
-    "mozilla-nightly-updates.s3.amazonaws.com",
-    "archive.mozilla.org",
-    "mozilla-releng-nightly-promotion-mozilla-central.b2gdroid.s3.amazonaws.com",
-    "clients2.googleusercontent.com",
-]
+DOMAIN_WHITELIST = {
+    "download.mozilla.org": ("Firefox", "Fennec", "Thunderbird"),
+    "archive.mozilla.org": ("Firefox", "Fennec", "Thunderbird"),
+    "download.cdn.mozilla.net": ("Firefox", "Fennec"),
+    "mozilla-nightly-updates.s3.amazonaws.com": ("Firefox",),
+    "ciscobinary.openh264.org": ("OpenH264",),
+    "cdmdownload.adobe.com": ("CDM",),
+    "clients2.googleusercontent.com": ("Widevine",),
+    "ftp.mozilla.org": ("SystemAddons",),
+}
 
 # Logging needs to be set-up before importing the application to make sure that
 # logging done from other modules uses our Logger.
