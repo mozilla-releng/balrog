@@ -654,6 +654,7 @@ class Rules(AUSTable):
                            Column('buildID', String(20)),
                            Column('locale', String(200)),
                            Column('osVersion', String(1000)),
+                           Column('systemCapabilities', String(1000)),
                            Column('distribution', String(100)),
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),
@@ -713,17 +714,17 @@ class Rules(AUSTable):
             return True
         return string_compare(queryBuildID, ruleBuildID)
 
-    def _osVersionMatchesRule(self, ruleOsVersion, queryOsVersion):
-        """Decides whether an osVersion from a rule matches an incoming one.
-           osVersion columns in a rule may specify multiple OS versions,
-           delimited by a comma. Once split we do simple substring matching
-           against the query's OS version. Unlike versions and channels, we
-           assume each OS version is a substring of what will be in the query,
-           thus we don't need to support globbing."""
-        if ruleOsVersion is None:
+    def _csvMatchesRule(self, ruleString, queryString):
+        """Decides whether a column from a rule matches an incoming one.
+           Some columns in a rule may specify multiple values delimited by a
+           comma. Once split we do simple substring matching against the query
+           string. Unlike versions and channels, we assume these columns
+           contain a substring of what will be in the query, thus we don't
+           need to support globbing."""
+        if ruleString is None:
             return True
-        for os in ruleOsVersion.split(','):
-            if os in queryOsVersion:
+        for part in ruleString.split(','):
+            if part in queryString:
                 return True
 
     def _localeMatchesRule(self, ruleLocales, queryLocale):
@@ -793,8 +794,12 @@ class Rules(AUSTable):
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to
             # break them out and create clauses for each one.
-            if not self._osVersionMatchesRule(rule['osVersion'], updateQuery['osVersion']):
+            if not self._csvMatchesRule(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
+                continue
+            # Same deal for system capabilities
+            if not self._csvMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', "")):
+                self.log.debug("%s doesn't match %s", rule['systemCapabilities'], updateQuery.get('systemCapabilities'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
