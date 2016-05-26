@@ -759,6 +759,18 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         ]
         self.assertEquals(rules, expected)
 
+    def testGetRulesMatchingQuerySystemCapabilitiesNoSubstringMatch(self):
+        rules = self.paths.getRulesMatchingQuery(
+            dict(product="", version="5.0", channel="", buildTarget="f",
+                 buildID="", locale="", osVersion="", distribution="",
+                 distVersion="", headerArchitecture="", force=False,
+                 queryVersion=6, systemCapabilities="SA"
+                 ),
+            fallbackChannel="",
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, [])
+
     def testGetRulesMatchingQueryLocale(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product='', version='', channel='', buildTarget='e',
