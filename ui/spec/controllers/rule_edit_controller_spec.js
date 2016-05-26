@@ -20,6 +20,7 @@ describe("controller: RuleEditCtrl", function() {
     "buildTarget": null,
     "locale": null,
     "osVersion": null,
+    "systemCapabilities": null,
     "distribution": null,
     "channel": "nightly",
     "alias": null,

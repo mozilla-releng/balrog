@@ -68,6 +68,11 @@
       <input type="text" class="form-control" id="id_osVersion" ng-model="rule.osVersion">
       <p class="help-block" ng-show="errors.osVersion">{{ errors.osVersion.join(', ') }}</p>
     </div>
+    <div class="form-group" ng-class="{'has-error': errors.systemCapabilities}">
+      <label for="id_systemCapabilities">System Capabilities</label>
+      <input type="text" class="form-control" id="id_systemCapabilities" ng-model="rule.systemCapabilities">
+      <p class="help-block" ng-show="errors.systemCapabilities">{{ errors.systemCapabilities.join(', ') }}</p>
+    </div>
     <div class="form-group" ng-class="{'has-error': errors.distVersion}">
       <label for="id_distribution">Dist version</label>
       <input type="text" class="form-control" id="id_distribution" ng-model="rule.distVersion">
