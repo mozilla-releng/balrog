@@ -1081,10 +1081,10 @@ class Releases(AUSTable):
             # flag. This lets us give out very granular access, which can be
             # very helpful particularly in automation.
             if read_only is False:
-                if not self.db.hasPermission(changed_by, "read_only", "unset", product, transaction):
+                if not self.db.hasPermission(changed_by, "release_read_only", "unset", product, transaction):
                     raise PermissionDeniedError("%s is not allowed to mark %s products read write" % (changed_by, product))
             elif read_only is True:
-                if not self.db.hasPermission(changed_by, "read_only", "set", product, transaction):
+                if not self.db.hasPermission(changed_by, "release_read_only", "set", product, transaction):
                     raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, product))
 
         if blob:
@@ -1141,7 +1141,7 @@ class Releases(AUSTable):
         what = dict(data=releaseBlob.getJSON())
 
         product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
-        if not self.db.hasPermission(changed_by, "build", "modify", product, transaction):
+        if not self.db.hasPermission(changed_by, "release_locale", "modify", product, transaction):
             raise PermissionDeniedError("%s is not allowed to add builds for product %s" % (changed_by, product))
 
         self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
@@ -1196,8 +1196,8 @@ class Permissions(AUSTable):
     allPermissions = {
         "admin": [],
         "release": ["actions", "products"],
-        "build": ["actions", "products"],
-        "read_only": ["actions", "products"],
+        "release_locale": ["actions", "products"],
+        "release_read_only": ["actions", "products"],
         "rule": ["actions", "products"],
         "permission": ["actions"],
     }

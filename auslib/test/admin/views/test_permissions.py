@@ -96,13 +96,13 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(query.execute().fetchone(), ('release', 'cathy', None, 1))
 
     def testPermissionPutWithOption(self):
-        ret = self._put('/users/bob/permissions/build', data=dict(options=json.dumps(dict(products=['fake']))))
+        ret = self._put('/users/bob/permissions/release_locale', data=dict(options=json.dumps(dict(products=['fake']))))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
         query = dbo.permissions.t.select()
         query = query.where(dbo.permissions.username == 'bob')
-        query = query.where(dbo.permissions.permission == 'build')
-        self.assertEqual(query.execute().fetchone(), ('build', 'bob', json.dumps(dict(products=['fake'])), 1))
+        query = query.where(dbo.permissions.permission == 'release_locale')
+        self.assertEqual(query.execute().fetchone(), ('release_locale', 'bob', json.dumps(dict(products=['fake'])), 1))
 
     def testPermissionModify(self):
         ret = self._put('/users/bob/permissions/release',
