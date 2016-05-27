@@ -12,6 +12,8 @@ if [ ! -e /app/.cache/mysql/db.done ]; then
     mysql -h balrogdb -u balrogadmin --password=balrogadmin -e "insert into permissions (username, permission, data_version) values (\"balrogadmin\", \"admin\", 1)" balrog
     touch /app/.cache/mysql/db.done
     echo "Done"
+else
+    python scripts/manage-db.py -d mysql://balrogadmin:balrogadmin@balrogdb/balrog upgrade
 fi
 
 # run the command passed from docker

@@ -977,6 +977,8 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1)
         self.paths.t.insert().execute(
             rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1)
+        self.paths.t.insert().execute(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z",
+                                      data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
 
     def testGetOrderedRules(self):
@@ -987,6 +989,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(rule_id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z', data_version=1),
             dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1),
             dict(rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1),
+            dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z", data_version=1),
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
             dict(rule_id=3, priority=100, backgroundRate=100, version='3.5', buildTarget='a', mapping='a', update_type='z', data_version=1),
             dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1),
@@ -1103,6 +1106,21 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         ]
         self.assertEquals(rules, expected)
 
+    def testGetRulesMatchingQuerySystemCapabilities(self):
+        rules = self.paths.getRulesMatchingQuery(
+            dict(product="", version="5.0", channel="", buildTarget="f",
+                 buildID="", locale="", osVersion="", distribution="",
+                 distVersion="", headerArchitecture="", force=False,
+                 queryVersion=6, systemCapabilities="S"
+                 ),
+            fallbackChannel="",
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
     def testGetRulesMatchingQueryLocale(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product='', version='', channel='', buildTarget='e',
@@ -1194,7 +1212,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEquals(rule, [])
 
     def testGetNumberOfRules(self):
-        self.assertEquals(self.paths.countRules(), 8)
+        self.assertEquals(self.paths.countRules(), 9)
 
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
@@ -1322,6 +1340,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         dbo.create()
         self.rules = dbo.rules
         self.releases = dbo.releases
+        self.permissions = dbo.permissions
         self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.releases.t.insert().execute(name='ab', product='a', data=json.dumps(dict(name="ab", schema_version=1, hashFunction="sha512")),
@@ -1330,8 +1349,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                          data_version=1)
         self.releases.t.insert().execute(name='c', product='c', data=json.dumps(dict(name="c", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        dbo.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
+        self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+        self.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
+        self.permissions.t.insert().execute(permission="release", username="bob", options=json.dumps(dict(products=["c"])), data_version=1)
 
     def tearDown(self):
         dbo.reset()
@@ -1423,6 +1443,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         blob = ReleaseBlobV1(name="f", schema_version=1, hashFunction="sha512")
         self.assertRaises(ValueError, self.releases.insert, "bill", name="g", product="g", data=blob)
 
+    def testUpdateReleaseNoPermissionForNewProduct(self):
+        self.assertRaises(PermissionDeniedError, self.releases.update, {"name": "c"}, {"product": "d"}, "bob", 1)
+
     def testUpdateReleaseWithNameMismatch(self):
         newBlob = ReleaseBlobV1(name="c", schema_version=1, hashFunction="sha512")
         self.assertRaises(ValueError, self.releases.update, {"name": "a"}, {"data": newBlob}, "bill", 1)
@@ -1430,6 +1453,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testUpdateReleaseChangeReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertEqual(select([self.releases.read_only]).where(self.releases.name == 'a').execute().fetchone()[0], True)
+
+    def testUpdateReleaseNoPermissionToSetReadOnly(self):
+        self.assertRaises(PermissionDeniedError, self.releases.update, {"name": "c"}, {"read_only": True}, "bob", 1)
 
     def testIsReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
@@ -1619,7 +1645,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             t.return_value = 0
             self.releases.getReleaseBlob(name="b")
             t.return_value += 1
-            self.releases.addLocaleToRelease("b", "win", "zu", dict(buildID=123), 1, "bob")
+            self.releases.addLocaleToRelease("b", "b", "win", "zu", dict(buildID=123), 1, "bob")
             t.return_value += 1
             blob = self.releases.getReleaseBlob(name="b")
 
@@ -1734,7 +1760,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc",
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1778,7 +1804,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc"
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill', alias=['p4'])
+        self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill', alias=['p4'])
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1825,7 +1851,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "789"
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='p', locale='l', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='l', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1862,7 +1888,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc"
             }
         }
-        self.releases.addLocaleToRelease(name='b', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='b', product='b', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'b').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1894,7 +1920,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc",
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='p3', locale='l', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='a', product='a', platform='p3', locale='l', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1940,7 +1966,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc",
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='a', product='a', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -1988,7 +2014,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc",
             }
         }
-        self.releases.addLocaleToRelease(name='a', platform='p2', locale='j', data=data, old_data_version=1, changed_by='bill')
+        self.releases.addLocaleToRelease(name='a', product='a', platform='p2', locale='j', data=data, old_data_version=1, changed_by='bill')
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
         expected = json.loads("""
 {
@@ -2033,7 +2059,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             }
         }
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
-        self.assertRaises(ReadOnlyError, self.releases.addLocaleToRelease, name='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
+        self.assertRaises(ReadOnlyError, self.releases.addLocaleToRelease, name='a', product='a', platform='p', locale='c', data=data, old_data_version=1,
+                          changed_by='bill')
 
 
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
@@ -2171,6 +2198,13 @@ class TestChangeNotifiers(unittest.TestCase):
         self.db.create()
         self.db.rules.t.insert().execute(rule_id=2, priority=100, channel='release', backgroundRate=100, update_type='z', data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
+        self.db.releases.t.insert().execute(name='a', product='a', read_only=True,
+                                            data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
+                                            data_version=1)
+        self.db.releases.t.insert().execute(name='b', product='b',
+                                            read_only=False,
+                                            data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
+                                            data_version=1)
 
     def _runTest(self, changer):
         with mock.patch("smtplib.SMTP") as smtp:
@@ -2205,6 +2239,27 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be removed:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'rule_id': 2"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': 'release'"))
+
+    def testOnChangeReadOnly(self):
+        def doit():
+            self.db.releases.update({"name": "a"}, {"read_only": False}, changed_by='bob', old_data_version=1)
+        mock_conn = self._runTest(doit)
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
+                                              PartialString("Read only release"
+                                                            " u'a' changed to modifiable"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
+                                              PartialString("'name': u'a'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
+                                              PartialString("'product': u'a'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
+                                              PartialString("'read_only': True"
+                                                            " ---> False"))
+
+    def testOnChangeReadOnlySetUnmodifiable(self):
+        def doit():
+            self.db.releases.update({"name": "b"}, {"read_only": False}, changed_by='bob', old_data_version=1)
+        mock_conn = self._runTest(doit)
+        mock_conn.sendmail.assert_not_called()
 
 
 class TestDBUpgrade(unittest.TestCase, NamedFileDatabaseMixin):

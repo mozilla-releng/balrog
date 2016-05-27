@@ -36,6 +36,36 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         query = query.where(dbo.permissions.permission == 'admin')
         self.assertEqual(query.execute().fetchone(), ('admin', 'bob', None, 1))
 
+    def testPermissionPutWithEmail(self):
+        ret = self._put('/users/bob@bobsworld.com/permissions/admin')
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username == 'bob@bobsworld.com')
+        query = query.where(dbo.permissions.permission == 'admin')
+        self.assertEqual(query.execute().fetchone(), ('admin', 'bob@bobsworld.com', None, 1))
+
+    # This test is meant to verify that the app properly unquotes URL parts
+    # as part of routing, because it is required when running under uwsgi.
+    # Unfortunately, Werkzeug's test Client will unquote URL parts before
+    # the app sees them, so this test doesn't actually verify that case...
+    def testPermissionPutWithQuotedEmail(self):
+        ret = self._put('/users/bob%40bobsworld.com/permissions/admin')
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username == 'bob@bobsworld.com')
+        query = query.where(dbo.permissions.permission == 'admin')
+        self.assertEqual(query.execute().fetchone(), ('admin', 'bob@bobsworld.com', None, 1))
+
+    def testPermissionsPostWithHttpRemoteUser(self):
+        ret = self._httpRemoteUserPost('/users/bill/permissions/admin', username="bob", data=dict(options="", data_version=1))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d" % ret.status_code)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        r = dbo.permissions.t.select().where(dbo.permissions.username == 'bill').execute().fetchall()
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0], ('admin', 'bill', None, 2))
+
     def testPermissionsPost(self):
         ret = self._post('/users/bill/permissions/admin', data=dict(options="", data_version=1))
         self.assertEqual(ret.status_code, 200, "Status Code: %d" % ret.status_code)
@@ -52,6 +82,10 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._post("/users/bill/permissions/admin")
         self.assertStatusCode(ret, 400)
 
+    def testPermissionsPostWithoutPermission(self):
+        ret = self._post("/users/bob/permissions/rule", username="shane", data=dict(data_version=1, options=json.dumps(dict(actions=["create"]))))
+        self.assertStatusCode(ret, 403)
+
     def testPermissionUrl(self):
         ret = self._put('/users/cathy/permissions/release')
         self.assertStatusCode(ret, 201)
@@ -62,13 +96,13 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEqual(query.execute().fetchone(), ('release', 'cathy', None, 1))
 
     def testPermissionPutWithOption(self):
-        ret = self._put('/users/bob/permissions/build', data=dict(options=json.dumps(dict(products=['fake']))))
+        ret = self._put('/users/bob/permissions/release_locale', data=dict(options=json.dumps(dict(products=['fake']))))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
         query = dbo.permissions.t.select()
         query = query.where(dbo.permissions.username == 'bob')
-        query = query.where(dbo.permissions.permission == 'build')
-        self.assertEqual(query.execute().fetchone(), ('build', 'bob', json.dumps(dict(products=['fake'])), 1))
+        query = query.where(dbo.permissions.permission == 'release_locale')
+        self.assertEqual(query.execute().fetchone(), ('release_locale', 'bob', json.dumps(dict(products=['fake'])), 1))
 
     def testPermissionModify(self):
         ret = self._put('/users/bob/permissions/release',
@@ -95,8 +129,12 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
 
     # Discovered in https://bugzilla.mozilla.org/show_bug.cgi?id=1237264
     def testPermissionPutBadJSON(self):
-        ret = self._put("/users/bob/permissions/rule", data=dict(options='{"products":'))
+        ret = self._put("/users/ashanti/permissions/rule", data=dict(options='{"products":'))
         self.assertStatusCode(ret, 400)
+
+    def testPermissionPutWithoutPermission(self):
+        ret = self._put('/users/bob/permissions/admin', username="joseph")
+        self.assertStatusCode(ret, 403)
 
     def testPermissionDelete(self):
         ret = self._delete('/users/bob/permissions/permission', qs=dict(data_version=1))
@@ -113,3 +151,7 @@ class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
     def testPermissionDeleteBadInput(self):
         ret = self._delete("/users/bill/permissions/admin")
         self.assertStatusCode(ret, 400)
+
+    def testPermissionDeleteWithoutPermission(self):
+        ret = self._delete("/users/bob/permissions/permission", qs=dict(data_version=1), username="anna")
+        self.assertStatusCode(ret, 403)

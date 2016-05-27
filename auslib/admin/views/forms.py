@@ -157,6 +157,7 @@ class RuleForm(Form):
     distribution = NullableStringField('Distribution', validators=[Length(0, 100)])
     buildTarget = NullableStringField('Build Target', validators=[Length(0, 75)])
     osVersion = NullableStringField('OS Version', validators=[Length(0, 1000)])
+    systemCapabilities = NullableStringField('SystemCapabilities', validators=[Length(0, 1000)])
     distVersion = NullableStringField('Dist Version', validators=[Length(0, 100)])
     whitelist = NullableStringField('Whitelist', validators=[Length(0, 100)])
     comment = NullableStringField('Comment', validators=[Length(0, 500)])
@@ -177,6 +178,7 @@ class EditRuleForm(DbEditableForm):
     distribution = NullableStringField('Distribution', validators=[Optional(), Length(0, 100)])
     buildTarget = NullableStringField('Build Target', validators=[Optional(), Length(0, 75)])
     osVersion = NullableStringField('OS Version', validators=[Optional(), Length(0, 1000)])
+    systemCapabilities = NullableStringField('SystemCapabilities', validators=[Optional(), Length(0, 1000)])
     distVersion = NullableStringField('Dist Version', validators=[Optional(), Length(0, 100)])
     whitelist = NullableStringField('Whitelist', validators=[Optional(), Length(0, 100)])
     comment = NullableStringField('Comment', validators=[Optional(), Length(0, 500)])
@@ -193,5 +195,6 @@ class CompleteReleaseForm(Form):
 
 class ReadOnlyForm(Form):
     name = StringField('Name', validators=[Required()])
+    product = StringField('Product', validators=[Required()])
     read_only = BooleanField('read_only')
     data_version = IntegerField('data_version', widget=HiddenInput())

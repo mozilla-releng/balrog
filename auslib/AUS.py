@@ -15,10 +15,13 @@ def isSpecialURL(url, specialForceHosts):
     return False
 
 
-def isForbiddenUrl(url, whitelistedDomains):
+def isForbiddenUrl(url, product, whitelistedDomains):
     domain = urlparse(url)[1]
     if domain not in whitelistedDomains:
         logging.warning("Forbidden domain: %s", domain)
+        return True
+    if product not in whitelistedDomains[domain]:
+        logging.warning("Forbidden domain for product %s: %s", product, domain)
         return True
     return False
 
