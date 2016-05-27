@@ -75,6 +75,11 @@ app.add_url_rule(
     view_func=ClientRequestView.as_view('clientrequest5'),
     defaults={'queryVersion': 5},
 )
+app.add_url_rule(
+    '/update/6/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<systemCapabilities>/<distribution>/<distVersion>/update.xml',
+    view_func=ClientRequestView.as_view('clientrequest6'),
+    defaults={'queryVersion': 6},
+)
 
 # Routes to deal with edge cases.
 # bug 1133250 - support for old-style nightly ESR versions

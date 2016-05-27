@@ -51,6 +51,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
+    def testReleasePostUpdateExistingWithoutPermission(self):
+        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+        ret = self._post('/releases/d', data=dict(data=data, product='d', data_version=1), username="hannah")
+        self.assertStatusCode(ret, 403)
+
     def testReleasePutUpdateOutdatedData(self):
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
         blob = """
@@ -168,6 +173,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     }
 }
 """))
+
+    def testReleasePostCreatesNewReleaseNOpermission(self):
+        data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
+        ret = self._post('/releases/e', data=dict(data=data, product='e', schema_version=1), username="kate")
+        self.assertStatusCode(ret, 403)
 
     def testReleasePostCreatesNewReleasev2(self):
         data = json.dumps(dict(bouncerProducts=dict(complete='foo'), name='e', hashFunction="sha512"))
