@@ -18,7 +18,7 @@ class ViewTest(unittest.TestCase):
         app.config["SECRET_KEY"] = 'abc123'
         app.config['DEBUG'] = True
         app.config["WTF_CSRF_ENABLED"] = False
-        app.config['WHITELISTED_DOMAINS'] = ['good.com']
+        app.config['WHITELISTED_DOMAINS'] = {'good.com': ('a', 'b', 'c', 'd')}
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
             f.write("""
@@ -29,15 +29,17 @@ class ViewTest(unittest.TestCase):
 }
 """)
         dbo.setDb('sqlite:///:memory:')
-        dbo.setDomainWhitelist(['good.com'])
+        dbo.setDomainWhitelist({'good.com': ('a', 'b', 'c', 'd')})
         dbo.create()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.permissions.t.insert().execute(permission='permission', username='bob', data_version=1)
         dbo.permissions.t.insert().execute(permission='release', username='bob', options=json.dumps(dict(products=['fake', 'b'])), data_version=1)
-        dbo.permissions.t.insert().execute(permission='read_only', username='bob', options=json.dumps(dict(actions=["set"])), data_version=1)
+        dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=json.dumps(dict(actions=["set"])), data_version=1)
         dbo.permissions.t.insert().execute(permission='rule', username='bob', options=json.dumps(dict(actions=["modify"], products=['fake'])), data_version=1)
         dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
         dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", data_version=1)
+        dbo.permissions.t.insert().execute(permission='release_locale', username='ashanti',
+                                           options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
         dbo.releases.t.insert().execute(
             name='a', product='a', data=json.dumps(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
@@ -92,11 +94,17 @@ class ViewTest(unittest.TestCase):
     def _getBadAuth(self):
         return {'REMOTE_USER': 'NotAuth!'}
 
+    def _getHttpRemoteUserAuth(self, username):
+        return {"HTTP_REMOTE_USER": username}
+
     def _getAuth(self, username):
         return {'REMOTE_USER': username}
 
     def _post(self, url, data={}, username='bill', **kwargs):
         return self.client.post(url, data=data, environ_base=self._getAuth(username), **kwargs)
+
+    def _httpRemoteUserPost(self, url, username="bill", data={}):
+        return self.client.post(url, data=data, environ_base=self._getHttpRemoteUserAuth(username))
 
     def _badAuthPost(self, url, data={}):
         return self.client.post(url, data=data, environ_base=self._getBadAuth())

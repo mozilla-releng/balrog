@@ -38,6 +38,14 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['priority'], 33)
         self.assertEquals(r[0]['data_version'], 1)
 
+    def testNewRuleWithoutPermission(self):
+        data = json.dumps(dict(
+            backgroundRate=31, mapping="c", priority=33, product="Firefox",
+            update_type="minor", channel="nightly"
+        ))
+        ret = self._post("/rules", data=data, headers={"Content-Type": "application/json"}, username="jack")
+        self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
     # A POST without the required fields shouldn't be valid
     def testMissingFields(self):
         # But we still need to pass product, because permission checking
@@ -105,6 +113,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
             distribution=None,
             buildTarget="d",
             osVersion=None,
+            systemCapabilities=None,
             distVersion=None,
             comment=None,
             update_type="minor",
@@ -130,6 +139,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
             distribution=None,
             buildTarget="d",
             osVersion=None,
+            systemCapabilities=None,
             distVersion=None,
             comment=None,
             update_type="minor",
@@ -148,7 +158,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
     def testPost(self):
         # Make some changes to a rule
         ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
-                                               product='Firefox', channel='nightly'))
+                                               product='Firefox', channel='nightly', systemCapabilities="SSE"))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -158,6 +168,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'd')
         self.assertEquals(r[0]['backgroundRate'], 71)
+        self.assertEquals(r[0]['systemCapabilities'], "SSE")
         self.assertEquals(r[0]['priority'], 73)
         self.assertEquals(r[0]['data_version'], 2)
         # And that we didn't modify other fields
@@ -326,6 +337,26 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
     def testBadAuthPost(self):
         ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
         self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
+    def testHttpRemoteUserAuth(self):
+        # Make some changes to a rule
+        ret = self._httpRemoteUserPost('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
+                                                             product='Firefox', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], 'd')
+        self.assertEquals(r[0]['backgroundRate'], 71)
+        self.assertEquals(r[0]['priority'], 73)
+        self.assertEquals(r[0]['data_version'], 2)
+        # And that we didn't modify other fields
+        self.assertEquals(r[0]['update_type'], 'minor')
+        self.assertEquals(r[0]['version'], '3.5')
+        self.assertEquals(r[0]['buildTarget'], 'd')
 
     def testNoPermissionToAlterExistingProduct(self):
         ret = self._post('/rules/1', data=dict(backgroundRate=71, data_version=1), username='bob')
@@ -596,14 +627,14 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
                     "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100, "base_mapping": "b", "base_update_type": "minor",
                     "base_data_version": 1, "base_alias": None, "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None,
                     "base_osVersion": None, "base_distribution": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None,
-                    "base_whitelist": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                    "base_whitelist": None, "base_systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
                     "sc_id": 2, "when": 1500, "scheduled_by": "bill", "complete": False, "data_version": 1, "base_rule_id": None, "base_priority": 50,
                     "base_backgroundRate": 100, "base_product": "baz", "base_mapping": "ab", "base_update_type": "minor", "base_version": None,
                     "base_buildTarget": None, "base_alias": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None,
                     "base_distribution": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,
-                    "base_data_version": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                    "base_data_version": None, "base_systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
             ],
         }
@@ -627,7 +658,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
             "base_priority": 80, "base_buildTarget": "d", "base_version": "3.3", "base_backgroundRate": 100, "base_mapping": "c", "base_update_type": "minor",
             "base_data_version": 1, "data_version": 1, "sc_id": 3, "when": None, "complete": False, "base_alias": None, "base_product": None,
             "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None, "base_distVersion": None,
-            "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,
+            "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None, "base_systemCapabilities": None,
         }
         self.assertEquals(db_data, expected)
 
@@ -648,7 +679,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
             "base_update_type": "minor", "base_mapping": "a", "sc_id": 3, "data_version": 1, "complete": False, "base_data_version": None,
             "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "base_rule_id": None, "base_buildTarget": None,
             "base_version": None, "base_alias": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None,
-            "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None
+            "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None, "base_systemCapabilities": None,
         }
         self.assertEquals(db_data, expected)
 
@@ -699,7 +730,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
             "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100, "base_mapping": "c", "base_update_type": "minor",
             "base_data_version": 1, "base_alias": None, "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None,
             "base_osVersion": None, "base_distribution": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None,
-            "base_whitelist": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+            "base_whitelist": None, "base_systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
         }
         self.assertEquals(db_data, expected)
 
@@ -725,7 +756,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
             "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b",
             "update_type": "minor", "data_version": 2, "alias": None, "product": None, "channel": None, "buildID": None,
             "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
-            "comment": None, "whitelist": None
+            "comment": None, "whitelist": None, "systemCapabilities": None,
         }
         self.assertEquals(dict(row), expected)
 
@@ -741,7 +772,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
             "rule_id": 6, "priority": 50, "version": None, "buildTarget": None, "backgroundRate": 100, "mapping": "ab",
             "update_type": "minor", "data_version": 1, "alias": None, "product": "baz", "channel": None, "buildID": None,
             "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
-            "comment": None, "whitelist": None
+            "comment": None, "whitelist": None, "systemCapabilities": None,
         }
         self.assertEquals(dict(row), expected)
 
