@@ -23,6 +23,8 @@ def createRelease(release, product, changed_by, transaction, releaseData):
     return dbo.releases.getReleases(name=release, transaction=transaction)[0]
 
 
+# TODO: certain cases here can return a 400 while still modifying the database
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1246993 has more details
 def changeRelease(release, changed_by, transaction, existsCallback, commitCallback, log):
     """Generic function to change an aspect of a release. It relies on a
        PartialReleaseForm existing and does some upfront work and checks before

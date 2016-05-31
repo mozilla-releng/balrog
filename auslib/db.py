@@ -1110,6 +1110,12 @@ class Releases(AUSTable):
            invalid.
         """
         self._proceedIfNotReadOnly(name, transaction=transaction)
+
+        where = [self.name == name]
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "release_locale", "modify", product, transaction):
+            raise PermissionDeniedError("%s is not allowed to add builds for product %s" % (changed_by, product))
+
         releaseBlob = self.getReleaseBlob(name, transaction=transaction)
         if 'platforms' not in releaseBlob:
             releaseBlob['platforms'] = {}
@@ -1137,12 +1143,7 @@ class Releases(AUSTable):
         releaseBlob.validate()
         if self.containsForbiddenDomain(releaseBlob, product):
             raise ValueError("Release blob contains forbidden domain.")
-        where = [self.name == name]
         what = dict(data=releaseBlob.getJSON())
-
-        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
-        if not self.db.hasPermission(changed_by, "release_locale", "modify", product, transaction):
-            raise PermissionDeniedError("%s is not allowed to add builds for product %s" % (changed_by, product))
 
         self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                     transaction=transaction)
