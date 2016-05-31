@@ -179,22 +179,20 @@ class RuleHistoryAPIView(HistoryAdminView):
 
         table = dbo.rules.history
 
+        try:
+            page = int(request.args.get('page', 1))
+            limit = int(request.args.get('limit', 10))
+            assert page >= 1
+        except (ValueError, AssertionError) as msg:
+            self.log.warning("Bad input: %s", msg)
+            return Response(status=400, response=str(msg))
+        offset = limit * (page - 1)
         total_count = table.t.count()\
             .where(table.rule_id == rule_id)\
             .where(table.data_version != null())\
             .execute()\
             .fetchone()[0]
 
-        try:
-            page = int(request.args.get('page', 1))
-            limit = int(request.args.get('limit', total_count))
-            total_count = limit
-            assert page >= 1
-        except (ValueError, AssertionError) as msg:
-            self.log.warning("Bad input: %s", msg)
-            return Response(status=400, response=str(msg))
-
-        offset = limit * (page - 1)
         revisions = table.select(
             where=[table.rule_id == rule_id,
                    table.data_version != null()],

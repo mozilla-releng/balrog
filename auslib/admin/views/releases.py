@@ -367,22 +367,20 @@ class ReleaseHistoryView(HistoryAdminView):
         release = releases[0]
         table = dbo.releases.history
 
+        try:
+            page = int(request.args.get('page', 1))
+            limit = int(request.args.get('limit', 10))
+            assert page >= 1
+        except (ValueError, AssertionError) as e:
+            self.log.warning("Bad input: %s", json.dumps(e.args))
+            return Response(status=400, response=json.dumps({"data": e.args}))
+        offset = limit * (page - 1)
         total_count = table.t.count()\
             .where(table.name == release['name'])\
             .where(table.data_version != null())\
             .execute()\
             .fetchone()[0]
 
-        try:
-            page = int(request.args.get('page', 1))
-            limit = int(request.args.get('limit', total_count))
-            total_count = limit
-            assert page >= 1
-        except (ValueError, AssertionError) as e:
-            self.log.warning("Bad input: %s", json.dumps(e.args))
-            return Response(status=400, response=json.dumps({"data": e.args}))
-
-        offset = limit * (page - 1)
         revisions = table.select(
             where=[
                 table.name == release['name'],
