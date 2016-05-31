@@ -16,11 +16,18 @@ class ScheduledChangesView(AdminView):
         super(ScheduledChangesView, self).__init__()
 
     def get(self):
+        # TODO: improve this
         rows = self.sc_table.select()
-        return jsonify({
-            "count": len(rows),
-            "scheduled_changes": rows,
-        })
+        ret = {"count": len(rows), "scheduled_changes": []}
+        for row in rows:
+            r = {}
+            for k, v in row.iteritems():
+                if k == "data_version":
+                    r["sc_data_version"] = v
+                else:
+                    r[k.replace("base_", "")] = v
+            ret["scheduled_changes"].append(r)
+        return jsonify(ret)
 
     def _post(self, form, transaction, changed_by):
         if not form.validate():
