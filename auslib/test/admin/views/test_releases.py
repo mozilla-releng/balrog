@@ -174,7 +174,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
-    def testReleasePostCreatesNewReleaseNOpermission(self):
+    def testReleasePostCreatesNewReleaseNopermission(self):
         data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
         ret = self._post('/releases/e', data=dict(data=data, product='e', schema_version=1), username="kate")
         self.assertStatusCode(ret, 403)
@@ -226,6 +226,10 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testDeleteWithoutPermission(self):
         ret = self._delete("/releases/a", username="bob", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 403)
+
+    def testDeleteWithoutPermissionForAction(self):
+        ret = self._delete("/releases/b", username="bob", qs=dict(data_version=1))
         self.assertStatusCode(ret, 403)
 
     def testDeleteReadOnlyRelease(self):
