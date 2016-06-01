@@ -174,7 +174,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
-    def testReleasePostCreatesNewReleaseNOpermission(self):
+    def testReleasePostCreatesNewReleaseNopermission(self):
         data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
         ret = self._post('/releases/e', data=dict(data=data, product='e', schema_version=1), username="kate")
         self.assertStatusCode(ret, 403)
@@ -228,9 +228,13 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._delete("/releases/a", username="bob", qs=dict(data_version=1))
         self.assertStatusCode(ret, 403)
 
+    def testDeleteWithoutPermissionForAction(self):
+        ret = self._delete("/releases/b", username="bob", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 403)
+
     def testDeleteReadOnlyRelease(self):
         dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
-        ret = self._delete("releases/a", username="bill", qs=dict(data_version=2))
+        ret = self._delete("/releases/a", username="bill", qs=dict(data_version=2))
         self.assertStatusCode(ret, 403)
 
     def testLocalePut(self):
