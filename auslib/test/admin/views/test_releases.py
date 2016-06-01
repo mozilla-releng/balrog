@@ -234,7 +234,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 
     def testDeleteReadOnlyRelease(self):
         dbo.releases.updateRelease('a', changed_by='bill', read_only=True, old_data_version=1)
-        ret = self._delete("releases/a", username="bill", qs=dict(data_version=2))
+        ret = self._delete("/releases/a", username="bill", qs=dict(data_version=2))
         self.assertStatusCode(ret, 403)
 
     def testLocalePut(self):
