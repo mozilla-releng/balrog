@@ -1074,6 +1074,12 @@ class Releases(AUSTable):
             if not self.db.hasPermission(changed_by, "release", "modify", product, transaction):
                 raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, product))
 
+        # The way things stand right now we cannot grant access to _only_ modify
+        # the read only flag. When the permissions were still enforced at the
+        # web level we had this because that flag had its own endpoint.
+        # If we want this again we'll need to adjust this code, and perhaps
+        # make a special method on this class that only modifies read_only
+        # (similar to addLocaleToRelease).
         if read_only is not None:
             what["read_only"] = read_only
             # In addition to being able to modify the release overall, users
