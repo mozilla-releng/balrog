@@ -2157,10 +2157,10 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def testHasPermissionNotAllowed(self):
         self.assertFalse(self.permissions.hasPermission("cathy", "release", "modify"))
 
-    def testHasPermissionNotAllowedWithDbOption(self):
+    def testHasPermissionNotAllowedByAction(self):
         self.assertFalse(self.permissions.hasPermission("bob", "rule", "delete"))
 
-    def testHasPermissionNotAllowedWithUrlOption(self):
+    def testHasPermissionNotAllowedByProduct(self):
         self.assertFalse(self.permissions.hasPermission("bob", "release", "modify", "reallyfake"))
 
 

@@ -23,7 +23,6 @@ def requirelogin(f):
 def handleGeneralExceptions(messages):
     def wrap(f):
         def decorated(*args, **kwargs):
-            # FIXME: Need to rollback the transaction if 4xx errors happen.
             try:
                 return f(*args, **kwargs)
             except OutdatedDataError as e:
