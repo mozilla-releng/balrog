@@ -850,6 +850,21 @@ class ScheduledChangeTable(AUSTable):
             renamed_what["scheduled_by"] = changed_by
             return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction)
 
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+        for row in self.select(where=where, transaction=transaction):
+            base_row = {col[5:]: row[col] for col in row if col.startswith("base_")}
+            base_table_where = {pk: row["base_%s" % pk] for pk in self.base_primary_key}
+            # TODO: What permissions *should* be required to delete a scheduled change?
+            # It seems a bit odd to be checking base table update/insert here. Maybe
+            # something broader should be required?
+            if base_row.get("base_data_version"):
+                self.baseTable.update(base_table_where, base_row, changed_by, base_row["base_data_version"], transaction=transaction, dryrun=True)
+            else:
+                self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_row)
+
+        if not dryrun:
+            return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
+
     def enactChange(self, sc_id, enacted_by, transaction=None):
         if not self.db.hasPermission(enacted_by, "scheduled_change", "enact", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to enact scheduled changes", enacted_by)
@@ -1138,7 +1153,7 @@ class Rules(AUSTable):
         if not dryrun:
             return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
 
-    def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         if "rule_id" in where and self._isAlias(where["rule_id"]):
             where["alias"] = where["rule_id"]
             del where["rule_id"]
@@ -1147,7 +1162,8 @@ class Rules(AUSTable):
         if not self.db.hasPermission(changed_by, "rule", "delete", product, transaction):
             raise PermissionDeniedError("%s is not allowed to delete rules for product %s" % (changed_by, product))
 
-        super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+        if not dryrun:
+            super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
 
 class Releases(AUSTable):
@@ -1442,7 +1458,7 @@ class Releases(AUSTable):
         except KeyError:
             return False
 
-    def delete(self, where, changed_by, old_data_version, transaction=None):
+    def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
         names = []
         for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):
             names.append(toDelete["name"])
@@ -1450,10 +1466,11 @@ class Releases(AUSTable):
             if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
 
-        super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
-        for name in names:
-            cache.invalidate("blob", name)
-            cache.invalidate("blob_version", name)
+        if not dryrun:
+            super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+            for name in names:
+                cache.invalidate("blob", name)
+                cache.invalidate("blob_version", name)
 
     def isReadOnly(self, name, limit=None, transaction=None):
         where = [self.name == name]
@@ -1553,11 +1570,12 @@ class Permissions(AUSTable):
         if not dryrun:
             super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
-    def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to revoke permissions", changed_by)
 
-        super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+        if not dryrun:
+            super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
     def getPermission(self, username, permission, transaction=None):
         try:
