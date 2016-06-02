@@ -365,6 +365,8 @@ class AUSTable(object):
             # permission to cancel the scheduled changes. Feeding mergeUpdate
             # an object with all the rows values set to None will cause it to
             # raise an exception if any change is scheduled for it.
+            # We use mergeUpdate instead of doing this ourselves because it
+            # already knows how to rewrite column names.
             new_row = dict.fromkeys([c.name for c in self.table.get_children()])
             self.scheduled_changes.mergeUpdate(row, new_row, changed_by, trans)
         return ret
