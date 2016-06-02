@@ -744,6 +744,22 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         ret = self._post("/rules/1", data=data)
         self.assertEquals(ret.status_code, 400, ret.data)
 
+    def testDeleteScheduledChange(self):
+        ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=1))
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+
+    def testDeleteScheduledChangeWrongDataVersion(self):
+        ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=0))
+        self.assertEquals(ret.status_code, 400, msg=ret.data)
+
+    def testDeleteScheduledChangeWithoutPermission(self):
+        ret = self._delete("/scheduled_changes/rules/1", username="rex", qs=dict(data_version=1))
+        self.assertEquals(ret.status_code, 403, msg=ret.data)
+
+    def testDeleteNonExistentScheduledChange(self):
+        ret = self._delete("/scheduled_changes/rules/4", qs=dict(data_version=1))
+        self.assertEquals(ret.status_code, 404, msg=ret.data)
+
     def testEnactScheduledChangeExistingRule(self):
         ret = self._post("/scheduled_changes/rules/1/enact", username="mary")
         self.assertEquals(ret.status_code, 200, ret.data)

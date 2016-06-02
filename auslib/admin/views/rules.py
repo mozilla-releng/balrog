@@ -328,6 +328,10 @@ class RuleScheduledChangeView(ScheduledChangeView):
 
         return super(RuleScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
 
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(RuleScheduledChangeView, self)._delete(sc_id, transaction, changed_by)
+
 
 class EnactRuleScheduledChangeView(EnactScheduledChangeView):
     def __init__(self):

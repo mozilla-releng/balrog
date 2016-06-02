@@ -3,6 +3,7 @@ import json
 from flask import jsonify, request, Response
 
 from auslib.admin.views.base import AdminView
+from auslib.admin.views.forms import DbEditableForm
 
 
 class ScheduledChangesView(AdminView):
@@ -85,6 +86,17 @@ class ScheduledChangeView(AdminView):
             self.log.warning("Bad input: %s", e)
             return Response(status=400, response=str(e))
 
+        return Response(status=200)
+
+    def _delete(self, sc_id, transaction, changed_by):
+        where = {"sc_id": sc_id}
+        sc = self.sc_table.select(where, transaction, columns=["sc_id"])
+        if not sc:
+            return Response(status=404)
+
+        form = DbEditableForm(request.args)
+
+        self.sc_table.delete(where, changed_by, form.data_version.data, transaction)
         return Response(status=200)
 
 
