@@ -749,7 +749,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 200, msg=ret.data)
 
     def testDeleteScheduledChangeWrongDataVersion(self):
-        ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=0))
+        ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=5))
         self.assertEquals(ret.status_code, 400, msg=ret.data)
 
     def testDeleteScheduledChangeWithoutPermission(self):
