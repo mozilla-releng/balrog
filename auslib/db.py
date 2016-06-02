@@ -526,9 +526,26 @@ class History(AUSTable):
         row['timestamp'] = self.getTimestamp()
         return self._insertStatement(**row)
 
-    def getChange(self, change_id, transaction=None):
-        """ Returns the unique change that matches the give change_id """
-        changes = self.select(where=[self.change_id == change_id], transaction=transaction)
+    def getChange(self, change_id, key=None, value=None, data_version=None, transaction=None):
+        """ Returns the unique change that matches the give change_id or
+            combination of data_version and primary key."""
+
+        if change_id is None:
+            for col in self.table.columns:
+                if col.name == key:
+                    pk = col
+            if pk is None:
+                self.debug.log("Invalid primary key name")
+                return None
+            if self.baseTable.versioned:
+                changes = self.select(where=[self.data_version == data_version,
+                                             pk == value],
+                                      transaction=transaction)
+            else:
+                self.debug.log("data_version queried for non-versioned table")
+                return None
+        else:
+            changes = self.select(where=[self.change_id == change_id], transaction=transaction)
         found = len(changes)
         if found > 1 or found == 0:
             self.log.debug("Found %s changes, should have been 1", found)

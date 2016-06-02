@@ -467,6 +467,29 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             ret = self.test.t.select().execute().fetchall()
             self.assertEquals(len(ret), 4, msg=ret)
 
+    def testHistoryGetChangeWithChangeID(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+
+            self.test.insert(changed_by='george', id=4, foo=0)
+            ret = self.test.history.getChange(1)
+            self.assertEquals(ret, {u'data_version': None,
+                                    u'changed_by': u'george',
+                                    u'foo': None, u'timestamp': 999,
+                                    u'change_id': 1, u'id': 4})
+
+    def testHistoryGetChangeWithDataVersion(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+
+            self.test.insert(changed_by='george', id=4, foo=0)
+            ret = self.test.history.getChange(None, data_version=1,
+                                              key='id', value=4)
+            self.assertEquals(ret, {u'data_version': 1,
+                                    u'changed_by': u'george',
+                                    u'foo': 0, u'timestamp': 1000,
+                                    u'change_id': 2, u'id': 4})
+
 
 class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTableMixin, MemoryDatabaseMixin):
 
