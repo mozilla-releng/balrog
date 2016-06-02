@@ -600,6 +600,13 @@ class ScheduledChangesTableMixin(object):
                 if not dryrun:
                     super(TestTable, self).update(where, what, changed_by, old_data_version, transaction)
 
+            def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
+                if not self.db.hasPermission(changed_by, "test", "delete", transaction=transaction):
+                    raise PermissionDeniedError("fail")
+
+                if not dryrun:
+                    super(TestTable, self).delete(where, changed_by, old_data_version, transaction)
+
         self.table = TestTable(self.db, self.metadata)
         self.sc_table = self.table.scheduled_changes
         self.metadata.create_all()
@@ -862,8 +869,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         ret = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()
         self.assertEquals(len(ret), 0)
 
+    def testDeleteChangeWithoutPermission(self):
+        self.assertRaises(PermissionDeniedError, self.sc_table.delete, where=[self.sc_table.sc_id == 2], changed_by="nicole", old_data_version=1)
+
     def testBaseTableDeletesFailsWithScheduledChange(self):
-        self.assertRaises(UpdateMergeError, self.table.delete, where=[self.table.fooid == 2], changed_by="bill", old_data_version=2)
+        self.assertRaises(UpdateMergeError, self.table.delete, where=[self.table.fooid == 2], changed_by="bob", old_data_version=2)
 
     def testEnactChangeNewRow(self):
         self.table.scheduled_changes.enactChange(2, "nancy")
