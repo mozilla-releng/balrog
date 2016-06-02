@@ -77,7 +77,7 @@ class ClientTestBase(unittest.TestCase):
 }
 """)
         dbo.rules.t.insert().execute(backgroundRate=100, mapping='s', update_type='minor', product='s',
-                                     systemCapabilities="SSE2", data_version=1)
+                                     systemCapabilities="SSE", data_version=1)
         dbo.releases.t.insert().execute(name='s', product='s', data_version=1, data="""
 {
     "name": "s",
@@ -485,7 +485,7 @@ class ClientTest(ClientTestBase):
         self.assertEqual(returned.toxml(), expected.toxml())
 
     def testVersion6GetWithSystemCapabilitiesMatch(self):
-        ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
+        ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
         # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
@@ -500,7 +500,7 @@ class ClientTest(ClientTestBase):
         self.assertEqual(returned.toxml(), expected.toxml())
 
     def testVersion6GetWithoutSystemCapabilitiesMatch(self):
-        ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml')
+        ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
         self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
