@@ -365,6 +365,8 @@ class AUSTable(object):
             # permission to cancel the scheduled changes. Feeding mergeUpdate
             # an object with all the rows values set to None will cause it to
             # raise an exception if any change is scheduled for it.
+            # We use mergeUpdate instead of doing this ourselves because it
+            # already knows how to rewrite column names.
             new_row = dict.fromkeys([c.name for c in self.table.get_children()])
             self.scheduled_changes.mergeUpdate(row, new_row, changed_by, trans)
         return ret
@@ -980,18 +982,20 @@ class Rules(AUSTable):
             return True
         return string_compare(queryBuildID, ruleBuildID)
 
-    def _csvMatchesRule(self, ruleString, queryString):
+    def _csvMatchesRule(self, ruleString, queryString, substring=True):
         """Decides whether a column from a rule matches an incoming one.
            Some columns in a rule may specify multiple values delimited by a
-           comma. Once split we do simple substring matching against the query
-           string. Unlike versions and channels, we assume these columns
-           contain a substring of what will be in the query, thus we don't
-           need to support globbing."""
+           comma. Once split we do a full or substring match against the query
+           string. Because we support substring matches, there's no need
+           to support globbing as well."""
         if ruleString is None:
             return True
         for part in ruleString.split(','):
-            if part in queryString:
+            if substring and part in queryString:
                 return True
+            elif part == queryString:
+                return True
+        return False
 
     def _localeMatchesRule(self, ruleLocales, queryLocale):
         """Decides if a comma seperated list of locales in a rule matches an
@@ -1067,7 +1071,7 @@ class Rules(AUSTable):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
             # Same deal for system capabilities
-            if not self._csvMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', "")):
+            if not self._csvMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', ""), substring=False):
                 self.log.debug("%s doesn't match %s", rule['systemCapabilities'], updateQuery.get('systemCapabilities'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only

@@ -54,3 +54,4 @@ balrogdb:
     - .docker_cache/mysql:/var/lib/mysql
     # Not sure why, but "scripts/run-mysqld.sh" doesn't work here on Mac, but this does.
     - ./scripts/run-mysqld.sh:/run-mysqld.sh
+  entrypoint: /run-mysqld.sh
