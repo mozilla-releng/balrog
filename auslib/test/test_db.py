@@ -472,7 +472,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             t.return_value = 1.0
 
             self.test.insert(changed_by='george', id=4, foo=0)
-            ret = self.test.history.getChange(1)
+            ret = self.test.history.getChange(change_id=1)
             self.assertEquals(ret, {u'data_version': None,
                                     u'changed_by': u'george',
                                     u'foo': None, u'timestamp': 999,
@@ -483,12 +483,20 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             t.return_value = 1.0
 
             self.test.insert(changed_by='george', id=4, foo=0)
-            ret = self.test.history.getChange(None, data_version=1,
-                                              key='id', value=4)
+            ret = self.test.history.getChange(data_version=1,
+                                              column_values={'id': 4})
             self.assertEquals(ret, {u'data_version': 1,
                                     u'changed_by': u'george',
                                     u'foo': 0, u'timestamp': 1000,
                                     u'change_id': 2, u'id': 4})
+
+    def testHistoryGetChangeWithDataVersionWithNonPrimaryKeyColumn(self):
+        with mock.patch('time.time') as t:
+            t.return_value = 1.0
+
+            self.test.insert(changed_by='george', id=4, foo=0)
+            self.assertRaises(ValueError, self.test.history.getChange, data_version=1,
+                              column_values={'foo': 4})
 
 
 class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTableMixin, MemoryDatabaseMixin):
