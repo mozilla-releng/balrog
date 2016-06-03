@@ -533,12 +533,12 @@ class History(AUSTable):
             versioned and their values."""
         if change_id is None:
             where = [self.data_version == data_version]
-            column_names = {col.name: col for col in self.baseTable.primary_key}
-            for col in column_values.keys():
-                if col in column_names.keys():
+            column_names = {col.name: col for col in self.table.columns if col.name in self.base_primary_key}
+            for col in column_names.keys():
+                if col in column_values.keys():
                     where.append(column_names[col] == column_values[col])
                 else:
-                    raise ValueError("Invalid primary key name")
+                    raise ValueError("Entire primary key not present")
             if self.baseTable.versioned:
                 changes = self.select(where=where,
                                       transaction=transaction)
@@ -604,7 +604,7 @@ class History(AUSTable):
         """ Rollback the change given by the change_id,
         Will handle all cases: insert, delete, update """
 
-        change = self.getChange(change_id, transaction)
+        change = self.getChange(change_id=change_id, transaction=transaction)
 
         # Get the values of the primary keys for the given row
         row_primary_keys = [0] * len(self.base_primary_key)
