@@ -530,20 +530,31 @@ class History(AUSTable):
         """ Returns the unique change that matches the give change_id or
             combination of data_version and values for the specified columns.
             column_values is a dict that contains the column names that are
-            versioned and their values."""
-        if change_id is None:
-            where = [self.data_version == data_version]
-            column_names = {col.name: col for col in self.table.columns if col.name in self.base_primary_key}
+            versioned and their values.
+            Ignores non primary key attributes specified in column_values."""
+        # if change_id is not None, we use it to get the change, ignoring
+        # data_version and column_values
+        by_change_id = False if change_id is None else True
+        # column_names lists all primary keys as string keys with the column
+        # objects as values
+        column_names = {col.name: col for col in self.table.columns if col.name in self.base_primary_key}
+
+        if not by_change_id:
+            # we check if the entire primary key is present in column_values,
+            # since there might be multiple rows that match an incomplete
+            # primary key
             for col in column_names.keys():
-                if col in column_values.keys():
-                    where.append(column_names[col] == column_values[col])
-                else:
+                if col not in column_values.keys():
                     raise ValueError("Entire primary key not present")
-            if self.baseTable.versioned:
-                changes = self.select(where=where,
-                                      transaction=transaction)
-            else:
+            # data_version can only be queried for versioned tables
+            if not self.baseTable.versioned:
                 raise ValueError("data_version queried for non-versioned table")
+
+            where = [self.data_version == data_version]
+            for col in column_names.keys():
+                where.append(column_names[col] == column_values[col])
+            changes = self.select(where=where,
+                                  transaction=transaction)
         else:
             changes = self.select(where=[self.change_id == change_id], transaction=transaction)
         found = len(changes)
