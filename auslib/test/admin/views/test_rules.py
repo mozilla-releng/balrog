@@ -574,16 +574,38 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 403)
 
     def testPostRevisionRollbackBadRequests(self):
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                backgroundRate=71,
+                mapping='d',
+                priority=73,
+                data_version=1,
+                product='Firefox',
+                update_type='minor',
+                channel='nightly',
+                buildID='1234',
+                osVersion='10.5',
+                headerArchitecture='INTEL',
+                distVersion='19',
+                buildTarget='MAC',
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
         # when posting you need both the rule_id and the change_id
         wrong_url = '/rules/999/revisions'
         # not found rule_id
         ret = self._post(wrong_url, json.dumps({'change_id': 10}), content_type="application/json")
-        self.assertEquals(ret.status_code, 404)
+        self.assertEquals(ret.status_code, 404, ret.data)
 
         url = '/rules/1/revisions'
         ret = self._post(url, json.dumps({'change_id': 999}), content_type="application/json")
         # not found change_id
-        self.assertEquals(ret.status_code, 404)
+        self.assertEquals(ret.status_code, 400)
 
         url = '/rules/1/revisions'
         ret = self._post(url)  # no change_id posted
@@ -630,6 +652,13 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         dbo.rules.scheduled_changes.history.t.insert().execute(
             change_id=3, changed_by="bill", timestamp=10, sc_id=3, scheduled_by="bill", when=2000, data_version=2, base_priority=150,
             base_backgroundRate=100, base_product="ff", base_mapping="ghi", base_update_type="minor",
+        )
+        dbo.rules.scheduled_changes.history.t.insert().execute(
+            change_id=4, changed_by="bill", timestamp=15, sc_id=2
+        )
+        dbo.rules.scheduled_changes.history.t.insert().execute(
+            change_id=5, changed_by="bill", timestamp=16, sc_id=2, when=1500, scheduled_by="bill", data_version=1, base_priority=50,
+            base_backgroundRate=100, base_product="baz", base_mapping="ab", base_update_type="minor"
         )
 
     def testGetScheduledChanges(self):
@@ -850,7 +879,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         ret = self._post("/scheduled_changes/rules/3/revisions", data, content_type="application/json")
         self.assertEquals(ret.status_code, 200, ret.data)
 
-        self.assertEquals(dbo.rules.scheduled_changes.history.t.count().execute().first()[0], 4)
+        self.assertEquals(dbo.rules.scheduled_changes.history.t.count().execute().first()[0], 6)
         got = dbo.rules.scheduled_changes.select({"sc_id": 3})[0]
         expected = {
             "sc_id": 3, "when": 2000, "scheduled_by": "bill", "complete": False, "data_version": 3, "base_rule_id": None, "base_priority": 150,
@@ -861,5 +890,12 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         }
         self.assertEquals(got, expected)
 
-    #def testRevertScheduledChangeBadChangeId(self):
-    #def testRevertScheduledChangeChangeDoesntMatchScId(self):
+    def testRevertScheduledChangeBadChangeId(self):
+        data = json.dumps({"change_id": 43})
+        ret = self._post("/scheduled_changes/rules/3/revisions", data, content_type="application/json")
+        self.assertEquals(ret.status_code, 400, ret.data)
+
+    def testRevertScheduledChangeChangeIdDoesntMatchScId(self):
+        data = json.dumps({"change_id": 4})
+        ret = self._post("/scheduled_changes/rules/3/revisions", data, content_type="application/json")
+        self.assertEquals(ret.status_code, 400, ret.data)

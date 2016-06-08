@@ -228,6 +228,9 @@ class RuleHistoryAPIView(HistoryAdminView):
 
     @requirelogin
     def _post(self, rule_id, transaction, changed_by):
+        rule = dbo.rules.getRule(rule_id)
+        if rule is None:
+            return Response(status=404, response='bad rule_id')
         change_id = None
         if request.json:
             change_id = request.json.get('change_id')
@@ -236,12 +239,9 @@ class RuleHistoryAPIView(HistoryAdminView):
             return Response(status=400, response='no change_id')
         change = dbo.rules.history.getChange(change_id=change_id)
         if change is None:
-            return Response(status=404, response='bad change_id')
+            return Response(status=400, response='bad change_id')
         if change['rule_id'] != rule_id:
-            return Response(status=404, response='bad rule_id')
-        rule = dbo.rules.getRule(rule_id)
-        if rule is None:
-            return Response(status=404, response='bad rule_id')
+            return Response(status=400, response='bad rule_id')
         old_data_version = rule['data_version']
 
         # now we're going to make a new insert based on this

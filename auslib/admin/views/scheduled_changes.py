@@ -178,9 +178,9 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             return Response(status=400, response='no change_id')
         change = self.table.scheduled_changes.history.getChange(change_id=change_id)
         if change is None:
-            return Response(status=404, response='bad change_id')
+            return Response(status=400, response='bad change_id')
         if change['sc_id'] != sc_id:
-            return Response(status=404, response='bad sc_id')
+            return Response(status=400, response='bad sc_id')
         sc = self.table.scheduled_changes.select({"sc_id": sc_id}, transaction=transaction)[0]
         if sc is None:
             return Response(status=404, response='bad sc_id')

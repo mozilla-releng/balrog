@@ -385,6 +385,9 @@ class ReleaseHistoryView(HistoryAdminView):
 
     @requirelogin
     def _post(self, release, transaction, changed_by):
+        releases = dbo.releases.getReleases(name=release)
+        if not releases:
+            return Response(status=404, response='bad release')
         change_id = None
         if request.json:
             change_id = request.json.get('change_id')
@@ -393,12 +396,9 @@ class ReleaseHistoryView(HistoryAdminView):
             return Response(status=400, response='no change_id')
         change = dbo.releases.history.getChange(change_id=change_id)
         if change is None:
-            return Response(status=404, response='bad change_id')
+            return Response(status=400, response='bad change_id')
         if change['name'] != release:
-            return Response(status=404, response='bad release')
-        releases = dbo.releases.getReleases(name=release)
-        if not releases:
-            return Response(status=404, response='bad release')
+            return Response(status=400, response='bad release')
         release = releases[0]
         old_data_version = release['data_version']
 
