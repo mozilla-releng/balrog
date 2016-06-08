@@ -13,7 +13,7 @@ from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
     ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
     EditScheduledChangeNewRuleForm, EditScheduledChangeExistingRuleForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
-    ScheduledChangeView, EnactScheduledChangeView
+    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView
 
 
 class RulesAPIView(AdminView):
@@ -340,3 +340,12 @@ class EnactRuleScheduledChangeView(EnactScheduledChangeView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         return super(EnactRuleScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+
+
+class RuleScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    def __init__(self):
+        super(RuleScheduledChangeHistoryView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(RuleScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
