@@ -526,9 +526,37 @@ class History(AUSTable):
         row['timestamp'] = self.getTimestamp()
         return self._insertStatement(**row)
 
-    def getChange(self, change_id, transaction=None):
-        """ Returns the unique change that matches the give change_id """
-        changes = self.select(where=[self.change_id == change_id], transaction=transaction)
+    def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
+        """ Returns the unique change that matches the give change_id or
+            combination of data_version and values for the specified columns.
+            column_values is a dict that contains the column names that are
+            versioned and their values.
+            Ignores non primary key attributes specified in column_values."""
+        # if change_id is not None, we use it to get the change, ignoring
+        # data_version and column_values
+        by_change_id = False if change_id is None else True
+        # column_names lists all primary keys as string keys with the column
+        # objects as values
+        column_names = {col.name: col for col in self.table.columns if col.name in self.base_primary_key}
+
+        if not by_change_id:
+            # we check if the entire primary key is present in column_values,
+            # since there might be multiple rows that match an incomplete
+            # primary key
+            for col in column_names.keys():
+                if col not in column_values.keys():
+                    raise ValueError("Entire primary key not present")
+            # data_version can only be queried for versioned tables
+            if not self.baseTable.versioned:
+                raise ValueError("data_version queried for non-versioned table")
+
+            where = [self.data_version == data_version]
+            for col in column_names.keys():
+                where.append(column_names[col] == column_values[col])
+            changes = self.select(where=where,
+                                  transaction=transaction)
+        else:
+            changes = self.select(where=[self.change_id == change_id], transaction=transaction)
         found = len(changes)
         if found > 1 or found == 0:
             self.log.debug("Found %s changes, should have been 1", found)
@@ -587,7 +615,7 @@ class History(AUSTable):
         """ Rollback the change given by the change_id,
         Will handle all cases: insert, delete, update """
 
-        change = self.getChange(change_id, transaction)
+        change = self.getChange(change_id=change_id, transaction=transaction)
 
         # Get the values of the primary keys for the given row
         row_primary_keys = [0] * len(self.base_primary_key)
@@ -654,6 +682,7 @@ class Rules(AUSTable):
                            Column('buildID', String(20)),
                            Column('locale', String(200)),
                            Column('osVersion', String(1000)),
+                           Column('systemCapabilities', String(1000)),
                            Column('distribution', String(100)),
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),
@@ -713,18 +742,20 @@ class Rules(AUSTable):
             return True
         return string_compare(queryBuildID, ruleBuildID)
 
-    def _osVersionMatchesRule(self, ruleOsVersion, queryOsVersion):
-        """Decides whether an osVersion from a rule matches an incoming one.
-           osVersion columns in a rule may specify multiple OS versions,
-           delimited by a comma. Once split we do simple substring matching
-           against the query's OS version. Unlike versions and channels, we
-           assume each OS version is a substring of what will be in the query,
-           thus we don't need to support globbing."""
-        if ruleOsVersion is None:
+    def _csvMatchesRule(self, ruleString, queryString, substring=True):
+        """Decides whether a column from a rule matches an incoming one.
+           Some columns in a rule may specify multiple values delimited by a
+           comma. Once split we do a full or substring match against the query
+           string. Because we support substring matches, there's no need
+           to support globbing as well."""
+        if ruleString is None:
             return True
-        for os in ruleOsVersion.split(','):
-            if os in queryOsVersion:
+        for part in ruleString.split(','):
+            if substring and part in queryString:
                 return True
+            elif part == queryString:
+                return True
+        return False
 
     def _localeMatchesRule(self, ruleLocales, queryLocale):
         """Decides if a comma seperated list of locales in a rule matches an
@@ -793,8 +824,12 @@ class Rules(AUSTable):
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to
             # break them out and create clauses for each one.
-            if not self._osVersionMatchesRule(rule['osVersion'], updateQuery['osVersion']):
+            if not self._csvMatchesRule(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
+                continue
+            # Same deal for system capabilities
+            if not self._csvMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', ""), substring=False):
+                self.log.debug("%s doesn't match %s", rule['systemCapabilities'], updateQuery.get('systemCapabilities'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
@@ -883,7 +918,7 @@ class Releases(AUSTable):
 
     # TODO: This should really be part of the blob class(es) because it depends
     # on a lot of blob schema specific stuff.
-    def containsForbiddenDomain(self, data):
+    def containsForbiddenDomain(self, data, product):
         """Returns True if "data" contains any file URLs that contain a
            domain that we're not allowed to serve updates to."""
         # Check the top level URLs, if the exist.
@@ -892,11 +927,11 @@ class Releases(AUSTable):
             if isinstance(c, dict):
                 for from_ in c.values():
                     for url in from_.values():
-                        if isForbiddenUrl(url, self.domainWhitelist):
+                        if isForbiddenUrl(url, product, self.domainWhitelist):
                             return True
             # Old-style
             else:
-                if isForbiddenUrl(c, self.domainWhitelist):
+                if isForbiddenUrl(c, product, self.domainWhitelist):
                     return True
 
         # And also the locale-level URLs.
@@ -904,12 +939,12 @@ class Releases(AUSTable):
             for locale in platform.get('locales', {}).values():
                 for type_ in ('partial', 'complete'):
                     if type_ in locale and 'fileUrl' in locale[type_]:
-                        if isForbiddenUrl(locale[type_]['fileUrl'], self.domainWhitelist):
+                        if isForbiddenUrl(locale[type_]['fileUrl'], product, self.domainWhitelist):
                             return True
                 for type_ in ('partials', 'completes'):
                     for update in locale.get(type_, {}):
                         if 'fileUrl' in update:
-                            if isForbiddenUrl(update["fileUrl"], self.domainWhitelist):
+                            if isForbiddenUrl(update["fileUrl"], product, self.domainWhitelist):
                                 return True
 
         return False
@@ -1022,7 +1057,7 @@ class Releases(AUSTable):
             # If they do, we should not let the column and the in-blob name be different.
             if name != blob["name"]:
                 raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-        if self.containsForbiddenDomain(blob):
+        if self.containsForbiddenDomain(blob, product):
             raise ValueError("Release blob contains forbidden domain.")
 
         columns = dict(name=name, product=product, data=blob.getJSON())
@@ -1042,12 +1077,12 @@ class Releases(AUSTable):
             what['product'] = product
         if blob:
             blob.validate()
-            # Generally blobs have names, but there's no requirement that they have to.
+            # Blob schemas often require a name property but we can't assume so here
             if blob.get("name"):
                 # If they do, we should not let the column and the in-blob name be different.
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-            if self.containsForbiddenDomain(blob):
+            if self.containsForbiddenDomain(blob, product):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
         self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
@@ -1055,7 +1090,7 @@ class Releases(AUSTable):
         cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
         cache.put("blob_version", name, new_data_version)
 
-    def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
+    def addLocaleToRelease(self, name, product, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
         """Adds or update's the existing data for a specific platform + locale
            combination, in the release identified by 'name'. The data is
            validated before commiting it, and a ValueError is raised if it is
@@ -1087,7 +1122,7 @@ class Releases(AUSTable):
                     releaseBlob['platforms'][a] = {'alias': platform}
 
         releaseBlob.validate()
-        if self.containsForbiddenDomain(releaseBlob):
+        if self.containsForbiddenDomain(releaseBlob, product):
             raise ValueError("Release blob contains forbidden domain.")
         where = [self.name == name]
         what = dict(data=releaseBlob.getJSON())
@@ -1304,10 +1339,35 @@ class UnquotedStr(str):
         return self.__str__()
 
 
-def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
+def send_email(relayhost, port, username, password, to_addr, from_addr, table, subj,
+               body):
     from email.mime.text import MIMEText
     from smtplib import SMTP
 
+    msg = MIMEText("\n".join(body), "plain")
+    msg["Subject"] = subj
+    msg["from"] = from_addr
+
+    try:
+        conn = SMTP()
+        conn.connect(relayhost, port)
+        conn.ehlo()
+        conn.starttls()
+        conn.ehlo()
+    except:
+        table.log.exception("Failed to connect to SMTP server:")
+        return
+    try:
+        if username and password:
+            conn.login(username, password)
+        conn.sendmail(from_addr, to_addr, msg.as_string())
+    except:
+        table.log.exception("Failed to send change notification:")
+    finally:
+        conn.quit()
+
+
+def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
     def bleet(table, type_, changed_by, query):
         body = ["Changed by: %s" % changed_by]
         if type_ == "UPDATE":
@@ -1329,30 +1389,33 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             body.append("Row to be inserted:")
             body.append(UTF8PrettyPrinter().pformat(query.parameters))
 
-        msg = MIMEText("\n".join(body), "plain")
-        msg["Subject"] = "%s to %s detected" % (type_, table.t.name)
-        msg["from"] = from_addr
-
+        subj = "%s to %s detected" % (type_, table.t.name)
+        send_email(relayhost, port, username, password, to_addr, from_addr,
+                   table, subj, body)
         table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
-        try:
-            conn = SMTP()
-            conn.connect(relayhost, port)
-            conn.ehlo()
-            conn.starttls()
-            conn.ehlo()
-        except:
-            table.log.exception("Failed to connect to SMTP server:")
-            return
-        try:
-            conn.login(username, password)
-            conn.sendmail(from_addr, to_addr, msg.as_string())
-        except:
-            table.log.exception("Failed to send change notification:")
-        finally:
-            conn.quit()
-
     return bleet
 
+
+def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr):
+    def bleet(table, type_, changed_by, query):
+        body = ["Changed by: %s" % changed_by]
+        where = [c for c in query._whereclause.get_children()]
+        row = table.select(where=where)[0]
+        if not query.parameters['read_only'] and row['read_only']:
+            body.append("Row(s) to be updated as follows:")
+            data = {}
+            data['name'] = UnquotedStr(repr(row['name']))
+            data['product'] = UnquotedStr(repr(row['product']))
+            data['read_only'] = UnquotedStr("%s ---> %s" %
+                                            (repr(row['read_only']),
+                                             repr(query.parameters['read_only'])))
+            body.append(UTF8PrettyPrinter().pformat(data))
+
+            subj = "Read only release %s changed to modifiable" % data['name']
+            send_email(relayhost, port, username, password, to_addr, from_addr,
+                       table, subj, body)
+            table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
+    return bleet
 
 # A helper that sets sql_mode. This should only be used with MySQL, and
 # lets us put the database in a stricter mode that will disallow things like
@@ -1401,12 +1464,18 @@ class AUSDatabase(object):
 
     def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr)
+        read_only_bleeter = make_change_notifier_for_read_only(relayhost, port,
+                                                               username,
+                                                               password,
+                                                               to_addr,
+                                                               from_addr)
         self.rules.onInsert = bleeter
         self.rules.onUpdate = bleeter
         self.rules.onDelete = bleeter
         self.permissions.onInsert = bleeter
         self.permissions.onUpdate = bleeter
         self.permissions.onDelete = bleeter
+        self.releases.onUpdate = read_only_bleeter
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,

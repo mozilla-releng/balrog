@@ -1,5 +1,4 @@
 import unittest
-from xml.dom import minidom
 
 from auslib.blobs.gmp import GMPBlobV1
 from auslib.errors import BadDataError
@@ -10,7 +9,7 @@ class TestSchema1Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = ["a.com", "boring.com"]
+        self.whitelistedDomains = {"a.com": ('gg',), 'boring.com': ('gg',)}
         self.blob = GMPBlobV1()
         self.blob.loadJSON("""
 {
@@ -106,17 +105,21 @@ class TestSchema1Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <addons>
-        <addon id="c" URL="http://a.com/blah" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
-        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
-    </addons>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = "<addons>"
+        expected = ["""
+<addon id="c" URL="http://a.com/blah" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
+""", """
+<addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</addons>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testGMPUpdateWithAlias(self):
         updateQuery = {
@@ -125,17 +128,21 @@ class TestSchema1Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <addons>
-        <addon id="c" URL="http://boring.com/blah" hashFunction="SHA512" hashValue="5" size="4" version="1"/>
-        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
-    </addons>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = "<addons>"
+        expected = ["""
+<addon id="c" URL="http://boring.com/blah" hashFunction="SHA512" hashValue="5" size="4" version="1"/>
+""", """
+<addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</addons>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testGMPUpdateSingleAddons(self):
         updateQuery = {
@@ -144,16 +151,19 @@ class TestSchema1Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <addons>
-        <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
-    </addons>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = "<addons>"
+        expected = ["""
+<addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</addons>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testGMPUpdateMultipleAddons(self):
         updateQuery = {
@@ -162,17 +172,21 @@ class TestSchema1Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <addons>
-        <addon id="c" URL="http://boring.com/blah" hashFunction="SHA512" hashValue="5" size="4" version="1"/>
-        <addon id="d" URL="http://boring.com/foo" hashFunction="SHA512" hashValue="11" size="10" version="5"/>
-    </addons>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = "<addons>"
+        expected = ["""
+<addon id="c" URL="http://boring.com/blah" hashFunction="SHA512" hashValue="5" size="4" version="1"/>
+""", """
+<addon id="d" URL="http://boring.com/foo" hashFunction="SHA512" hashValue="11" size="10" version="5"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</addons>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testGMPWithForbiddenDomain(self):
         updateQuery = {
@@ -181,6 +195,14 @@ class TestSchema1Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        self.assertEqual(returned.getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = "<addons>"
+        expected = []
+        expected = [x.strip() for x in expected]
+        expected_footer = "</addons>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())

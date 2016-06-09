@@ -4,13 +4,12 @@ except ImportError:
     # so you're in python <2.7
     from ordereddict import OrderedDict
 import unittest
-from xml.dom import minidom
 
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.blobs.base import BlobValidationError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
-    ReleaseBlobV3, ReleaseBlobV4, DesupportBlob
+    ReleaseBlobV3, ReleaseBlobV4, ReleaseBlobV5, DesupportBlob
 
 
 class SimpleBlob(ReleaseBlobBase):
@@ -99,7 +98,7 @@ class TestReleaseBlobV1(unittest.TestCase):
     def setUp(self):
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(["a.com", "boring.com"])
+        dbo.setDomainWhitelist({'a.com': ('a',), 'boring.com': ('b',)})
 
     def testGetAppv(self):
         blob = ReleaseBlobV1(appv=1)
@@ -119,28 +118,28 @@ class TestReleaseBlobV1(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV1(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+        self.assertFalse(dbo.releases.containsForbiddenDomain(blob, "a"))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV1(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, "a"))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, "a"))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = OrderedDict()
         updates["partial"] = dict(fileUrl="http://a.com/a")
         updates["complete"] = dict(fileUrl="http://evil.com/a")
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, "a"))
 
 
 class TestOldVersionSpecialCases(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = ["a.com", "boring.com"]
+        self.whitelistedDomains = {'boring.com': ('h',)}
         self.blob = ReleaseBlobV1()
         self.blob.loadJSON("""
     {
@@ -179,16 +178,21 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="2.0.0.20" buildID="1" detailsURL="http://example.org/details">
-        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" version="2.0.0.20" buildID="1" detailsURL="http://example.org/details">
+"""
+        expected = ["""
+<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def test3_0(self):
         updateQuery = {
@@ -197,16 +201,21 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="3.0.9" buildID="1" detailsURL="http://example.org/details">
-        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" version="3.0.9" buildID="1" detailsURL="http://example.org/details">
+"""
+        expected = ["""
+<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def test3_5(self):
         updateQuery = {
@@ -215,16 +224,21 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="12.0" buildID="1" detailsURL="http://example.org/details">
-        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" version="12.0" buildID="1" detailsURL="http://example.org/details">
+"""
+        expected = ["""
+<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def test3_6(self):
         updateQuery = {
@@ -233,16 +247,21 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", ["boring.com"], None)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="12.0" extensionVersion="3.6" buildID="1" detailsURL="http://example.org/details">
-        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" version="12.0" extensionVersion="3.6" buildID="1" detailsURL="http://example.org/details">
+"""
+        expected = ["""
+<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
 class TestNewStyleVersionBlob(unittest.TestCase):
@@ -274,7 +293,7 @@ class TestSpecialQueryParams(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = ["a.com", "boring.com"]
+        self.whitelistedDomains = {'a.com': ('h',), 'boring.com': ('h',)}
         self.blob = ReleaseBlobV1()
         self.blob.loadJSON("""
 {
@@ -317,16 +336,21 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
-        <patch type="complete" URL="http://a.com/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSpecialQueryParamForced(self):
         updateQuery = {
@@ -335,16 +359,21 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 1
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
-        <patch type="complete" URL="http://a.com/?foo=a&amp;force=1" hashFunction="sha512" hashValue="1" size="1"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/?foo=a&force=1" hashFunction="sha512" hashValue="1" size="1"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testNonSpecialQueryParam(self):
         updateQuery = {
@@ -353,16 +382,21 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
-        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
+"""
+        expected = ["""
+<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testNonSpecialQueryParamForced(self):
         updateQuery = {
@@ -371,16 +405,21 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 1
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
-        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
+"""
+        expected = ["""
+<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testNoSpecialDefined(self):
         updateQuery = {
@@ -389,26 +428,31 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, None)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
-        <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
+"""
+        expected = ["""
+<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
 class TestSchema2Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = ["a.com", "boring.com"]
+        self.whitelistedDomains = {'a.com': ('j', 'k')}
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(["a.com", "boring.com"])
+        dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='j1', product='j', version='39.0', data_version=1, data="""
 {
     "name": "j1",
@@ -525,16 +569,21 @@ class TestSchema2Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobJ2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
-        <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="34" size="38"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobJ2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobJ2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="34" size="38"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema2WithPartial(self):
         updateQuery = {
@@ -543,17 +592,23 @@ class TestSchema2Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobJ2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
-        <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="34" size="38"/>
-        <patch type="partial" URL="http://a.com/j1-partial.mar" hashFunction="sha512" hashValue="5" size="6"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobJ2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobJ2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="34" size="38"/>
+""", """
+<patch type="partial" URL="http://a.com/j1-partial.mar" hashFunction="sha512" hashValue="5" size="6"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema2WithOptionalAttributes(self):
         updateQuery = {
@@ -562,19 +617,23 @@ class TestSchema2Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobK.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" buildID="35" detailsURL="http://example.org/details/l"
-            licenseURL="http://example.org/license/l" billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true"
-            actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l"
-            alertURL="http://example.org/alert/l">
-        <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="35" size="40"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobK.getHeaderXML(updateQuery, "minor")
+        returned = self.blobK.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobK.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = '<update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" ' \
+            'buildID="35" detailsURL="http://example.org/details/l" licenseURL="http://example.org/license/l" ' \
+            'billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true" ' \
+            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
+            'alertURL="http://example.org/alert/l">'
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="35" size="40"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema2WithIsOSUpdate(self):
         updateQuery = {
@@ -583,27 +642,31 @@ class TestSchema2Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobK.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" buildID="35" detailsURL="http://example.org/details/l2"
-            licenseURL="http://example.org/license/l2" billboardURL="http://example.org/billboard/l2" showPrompt="false" showNeverForVersion="true"
-            actions="silent" openURL="http://example.org/url/l2" notificationURL="http://example.org/notification/l2"
-            alertURL="http://example.org/alert/l2" isOSUpdate="true">
-        <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="45" size="50"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobK.getHeaderXML(updateQuery, "minor")
+        returned = self.blobK.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobK.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = '<update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" ' \
+            'buildID="35" detailsURL="http://example.org/details/l2" licenseURL="http://example.org/license/l2" ' \
+            'isOSUpdate="true" billboardURL="http://example.org/billboard/l2" showPrompt="false" ' \
+            'showNeverForVersion="true" actions="silent" openURL="http://example.org/url/l2" ' \
+            'notificationURL="http://example.org/notification/l2" alertURL="http://example.org/alert/l2">'
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="45" size="50"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV2(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+        self.assertFalse(dbo.releases.containsForbiddenDomain(blob, 'j'))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV2(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'j'))
 
 
 class TestSchema2BlobNightlyStyle(unittest.TestCase):
@@ -611,10 +674,10 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = ["a.com", "boring.com"]
+        self.whitelistedDomains = {'a.com': ('j',)}
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(["a.com", "boring.com"])
+        dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='j1', product='j', version='0.5', data_version=1, data="""
 {
     "name": "j1",
@@ -674,16 +737,21 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobJ2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
-        <patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="6" size="5"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobJ2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobJ2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="6" size="5"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testCompleteAndPartial(self):
         updateQuery = {
@@ -692,38 +760,44 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobJ2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
-        <patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="6" size="5"/>
-        <patch type="partial" URL="http://a.com/p" hashFunction="sha512" hashValue="4" size="3"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobJ2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobJ2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="6" size="5"/>
+""", """
+<patch type="partial" URL="http://a.com/p" hashFunction="sha512" hashValue="4" size="3"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'a'))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = OrderedDict()
         updates["partial"] = dict(fileUrl="http://a.com/a")
         updates["complete"] = dict(fileUrl="http://evil.com/a")
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'a'))
 
 
 class TestSchema3Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = ["a.com", "boring.com"]
+        self.whitelistedDomains = {'a.com': ('f', 'g')}
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(["a.com", "boring.com"])
+        dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='f1', product='f', version='22.0', data_version=1, data="""
 {
     "name": "f1",
@@ -893,17 +967,23 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobF3.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
-        <patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="31" size="30"/>
-        <patch type="partial" URL="http://a.com/p1" hashFunction="sha512" hashValue="3" size="2"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobF3.getHeaderXML(updateQuery, "minor")
+        returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobF3.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="31" size="30"/>
+""", """
+<patch type="partial" URL="http://a.com/p1" hashFunction="sha512" hashValue="3" size="2"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
             "product": "f", "version": "23.0", "buildID": "6",
@@ -911,17 +991,23 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobF3.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
-        <patch type="complete" URL="http://a.com/c1" hashFunction="sha512" hashValue="6" size="29"/>
-        <patch type="partial" URL="http://a.com/p2" hashFunction="sha512" hashValue="5" size="4"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobF3.getHeaderXML(updateQuery, "minor")
+        returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobF3.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/c1" hashFunction="sha512" hashValue="6" size="29"/>
+""", """
+<patch type="partial" URL="http://a.com/p2" hashFunction="sha512" hashValue="5" size="4"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3NoPartial(self):
         updateQuery = {
@@ -930,16 +1016,21 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobF3.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
-        <patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="31" size="30"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobF3.getHeaderXML(updateQuery, "minor")
+        returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobF3.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="31" size="30"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3NoPartialBlock(self):
         updateQuery = {
@@ -948,16 +1039,21 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobF3.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
-        <patch type="complete" URL="http://a.com/c2m" hashFunction="sha512" hashValue="33" size="32"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobF3.getHeaderXML(updateQuery, "minor")
+        returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobF3.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/c2m" hashFunction="sha512" hashValue="33" size="32"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3FtpSubstitutions(self):
         updateQuery = {
@@ -966,17 +1062,23 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobG2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
-        <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="35" size="34"/>
-        <patch type="partial" URL="http://a.com/g1-partial.mar" hashFunction="sha512" hashValue="5" size="4"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobG2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobG2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobG2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="35" size="34"/>
+""", """
+<patch type="partial" URL="http://a.com/g1-partial.mar" hashFunction="sha512" hashValue="5" size="4"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3BouncerSubstitutions(self):
         updateQuery = {
@@ -985,44 +1087,50 @@ class TestSchema3Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobG2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
-        <patch type="complete" URL="http://a.com/complete" hashFunction="sha512" hashValue="35" size="34"/>
-        <patch type="partial" URL="http://a.com/g1-partial" hashFunction="sha512" hashValue="5" size="4"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobG2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobG2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobG2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete" hashFunction="sha512" hashValue="35" size="34"/>
+""", """
+<patch type="partial" URL="http://a.com/g1-partial" hashFunction="sha512" hashValue="5" size="4"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV3(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+        self.assertFalse(dbo.releases.containsForbiddenDomain(blob, 'f'))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV3(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'f'))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'f'))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'f'))
 
 
 class TestSchema4Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = ["a.com", "boring.com"]
+        self.whitelistedDomains = {'a.com': ('h',)}
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(["a.com", "boring.com"])
+        dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data="""
 {
     "name": "h1",
@@ -1111,17 +1219,23 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
-        <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
-        <patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobH2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
+""", """
+<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
             "product": "h", "version": "30.0", "buildID": "10",
@@ -1129,17 +1243,23 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
-        <patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="41" size="40"/>
-        <patch type="partial" URL="http://a.com/h1-l-partial" hashFunction="sha512" hashValue="9" size="8"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobH2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="41" size="40"/>
+""", """
+<patch type="partial" URL="http://a.com/h1-l-partial" hashFunction="sha512" hashValue="9" size="8"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
             "product": "h", "version": "30.0", "buildID": "10",
@@ -1147,17 +1267,23 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
-        <patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>
-        <patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobH2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>
+""", """
+<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema4NoPartials(self):
         updateQuery = {
@@ -1166,16 +1292,21 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
-        <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobH2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
             "product": "h", "version": "25.0", "buildID": "2",
@@ -1183,16 +1314,21 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
-        <patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="41" size="40"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobH2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="41" size="40"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
             "product": "h", "version": "25.0", "buildID": "2",
@@ -1200,16 +1336,21 @@ class TestSchema4Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned = self.blobH2.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
-        <patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blobH2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testConvertFromV3(self):
         v3Blob = ReleaseBlobV3()
@@ -1319,30 +1460,153 @@ class TestSchema4Blob(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
-        self.assertFalse(dbo.releases.containsForbiddenDomain(blob))
+        self.assertFalse(dbo.releases.containsForbiddenDomain(blob, 'h'))
+
+    def testAllowedDomainWrongProduct(self):
+        blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'hhh'))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://evil.com/c"))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'h'))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV4(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'h'))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob))
+        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'h'))
+
+
+class TestSchema5Blob(unittest.TestCase):
+
+    def setUp(self):
+        self.specialForceHosts = ["http://a.com"]
+        self.whitelistedDomains = {'a.com': ('h',)}
+        dbo.setDb('sqlite:///:memory:')
+        dbo.create()
+        dbo.setDomainWhitelist(self.whitelistedDomains)
+        dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data="""
+{
+    "name": "h1",
+    "schema_version": 5,
+    "platforms": {
+        "p": {
+            "buildID": "10",
+            "locales": {
+                "l": {}
+            }
+        }
+    }
+}
+""")
+        self.blobH2 = ReleaseBlobV5()
+        self.blobH2.loadJSON("""
+{
+    "name": "h2",
+    "schema_version": 5,
+    "hashFunction": "sha512",
+    "appVersion": "31.0",
+    "displayVersion": "31.0",
+    "platformVersion": "31.0",
+    "detailsUrl": "http://example.org/details/%LOCALE%",
+    "licenseUrl": "http://example.org/license/%LOCALE%",
+    "actions": "silent",
+    "billboardURL": "http://example.org/billboard/%LOCALE%",
+    "openURL": "http://example.org/url/%LOCALE%",
+    "notificationURL": "http://example.org/notification/%LOCALE%",
+    "alertURL": "http://example.org/alert/%LOCALE%",
+    "showPrompt": false,
+    "showNeverForVersion": true,
+    "promptWaitTime": 12345,
+    "fileUrls": {
+        "c1": {
+            "partials": {
+                "h1": "http://a.com/h1-partial.mar"
+            },
+            "completes": {
+                "*": "http://a.com/complete.mar"
+            }
+        },
+        "*": {
+            "partials": {
+                "h1": "http://a.com/h1-partial-catchall"
+            },
+            "completes": {
+                "*": "http://a.com/complete-catchall"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 50,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "9"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+
+    def testIsValid(self):
+        # Raises on error
+        self.blobH2.validate()
+
+    def testSchema5OptionalAttributes(self):
+        updateQuery = {
+            "product": "h", "version": "30.0", "buildID": "10",
+            "buildTarget": "p", "locale": "l", "channel": "c1",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned_header = self.blobH2.getHeaderXML(updateQuery, "minor")
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" ' \
+            'buildID="50" detailsURL="http://example.org/details/l" licenseURL="http://example.org/license/l" ' \
+            'billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true" ' \
+            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
+            'alertURL="http://example.org/alert/l" promptWaitTime="12345">'
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
+""", """
+<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
 class TestDesupportBlob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = ["a.com", "boring.com"]
+        self.whitelistedDomains = {'a.com': ('a',)}
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(["a.com", "boring.com"])
+        dbo.setDomainWhitelist(self.whitelistedDomains)
         self.blob = DesupportBlob()
         self.blob.loadJSON("""
 {
@@ -1354,15 +1618,19 @@ class TestDesupportBlob(unittest.TestCase):
 
     def testDesupport(self):
         updateQuery = []
-        returned = self.blob.createXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = minidom.parseString(returned)
-        expected = minidom.parseString("""<?xml version="1.0"?>
-<updates>
-    <update type="minor" unsupported="true" detailsURL="http://moo.com/cow">
-    </update>
-</updates>
-""")
-        self.assertEqual(returned.toxml(), expected.toxml())
+        returned_header = self.blob.getHeaderXML(updateQuery, "minor")
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = ""
+        expected = ["""
+<update type="minor" unsupported="true" detailsURL="http://moo.com/cow">
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testBrokenDesupport(self):
         blob = DesupportBlob(name="d2", schema_version=50, foo="bar")

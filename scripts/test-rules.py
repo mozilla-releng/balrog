@@ -24,7 +24,12 @@ from auslib.global_state import dbo
 import logging
 log = logging.getLogger(__name__)
 
-WHITELISTED_DOMAINS = ('download.mozilla.org', 'stage-old.mozilla.org', 'ftp.mozilla.org', 'stage.mozilla.org')
+WHITELISTED_DOMAINS = {
+    'download.mozilla.org': ('Firefox',),
+    'stage-old.mozilla.org': ('Firefox',),
+    'ftp.mozilla.org': ('Firefox',),
+    'stage.mozilla.org': ('Firefox',)
+}
 SPECIAL_FORCE_HOSTS = ('download.mozilla.org',)
 
 
