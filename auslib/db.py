@@ -579,9 +579,37 @@ class History(AUSTable):
         row['timestamp'] = self.getTimestamp()
         return self._insertStatement(**row)
 
-    def getChange(self, change_id, transaction=None):
-        """ Returns the unique change that matches the give change_id """
-        changes = self.select(where=[self.change_id == change_id], transaction=transaction)
+    def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
+        """ Returns the unique change that matches the give change_id or
+            combination of data_version and values for the specified columns.
+            column_values is a dict that contains the column names that are
+            versioned and their values.
+            Ignores non primary key attributes specified in column_values."""
+        # if change_id is not None, we use it to get the change, ignoring
+        # data_version and column_values
+        by_change_id = False if change_id is None else True
+        # column_names lists all primary keys as string keys with the column
+        # objects as values
+        column_names = {col.name: col for col in self.table.columns if col.name in self.base_primary_key}
+
+        if not by_change_id:
+            # we check if the entire primary key is present in column_values,
+            # since there might be multiple rows that match an incomplete
+            # primary key
+            for col in column_names.keys():
+                if col not in column_values.keys():
+                    raise ValueError("Entire primary key not present")
+            # data_version can only be queried for versioned tables
+            if not self.baseTable.versioned:
+                raise ValueError("data_version queried for non-versioned table")
+
+            where = [self.data_version == data_version]
+            for col in column_names.keys():
+                where.append(column_names[col] == column_values[col])
+            changes = self.select(where=where,
+                                  transaction=transaction)
+        else:
+            changes = self.select(where=[self.change_id == change_id], transaction=transaction)
         found = len(changes)
         if found > 1 or found == 0:
             self.log.debug("Found %s changes, should have been 1", found)
@@ -640,7 +668,7 @@ class History(AUSTable):
         """ Rollback the change given by the change_id,
         Will handle all cases: insert, delete, update """
 
-        change = self.getChange(change_id, transaction)
+        change = self.getChange(change_id=change_id, transaction=transaction)
 
         # Get the values of the primary keys for the given row
         row_primary_keys = [0] * len(self.base_primary_key)
