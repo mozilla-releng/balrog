@@ -21,7 +21,7 @@ class FieldView(AdminView):
         if type_ not in tables:
             raise KeyError('Bad table')
         table = tables[type_]
-        revision = table.history.getChange(change_id)
+        revision = table.history.getChange(change_id=change_id)
         if not revision:
             raise ValueError('Bad change_id')
         if field not in revision:
