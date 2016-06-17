@@ -809,7 +809,11 @@ class ScheduledChangeTable(AUSTable):
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
             if pk in columns:
-                if "data_version" in columns:
+                # If a non-null data_version was provided it implies that the
+                # base table row should already exist. This will be checked for
+                # after we finish basic checks on the individual parts of the
+                # PK.
+                if "data_version" in columns and columns["data_version"]:
                     base_table_where.append(getattr(self.baseTable, pk) == columns[pk])
             # Non-Integer columns can have autoincrement set to True for some reason.
             # Any non-integer columns in the primary key are always required (because
