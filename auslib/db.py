@@ -15,6 +15,9 @@ from sqlalchemy.sql.expression import null
 import migrate.versioning.schema
 import migrate.versioning.api
 
+from dictdiffer import merge, patch
+from dictdiffer.merge import UnresolvedConflictsException
+
 from auslib.global_state import cache, dbo
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import createBlob
@@ -1085,7 +1088,38 @@ class Releases(AUSTable):
             if self.containsForbiddenDomain(blob, product):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
-        self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        try:
+            self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        except OutdatedDataError as e:
+            if blob is not None and read_only is None:
+                ancestor_blob = createBlob(self.history.getChange(data_version=old_data_version,
+                                                                  column_values={'name': name},
+                                                                  transaction=transaction)
+                                                       .get('data'))
+                # if we have no historical information about the ancestor blob
+                if ancestor_blob is None:
+                    raise
+                tip_release = self.getReleases(name=name,
+                                               transaction=transaction)[0]
+                tip_blob = tip_release.get('data')
+                m = merge.Merger(ancestor_blob, tip_blob, blob, {})
+                try:
+                    m.run()
+                    unified_blob = patch(m.unified_patches, ancestor_blob)
+                    what['data'] = createBlob(unified_blob).getJSON()
+                    # we want the data_version for the merged blob to be one
+                    # more than that of the latest blob
+                    tip_data_version = tip_release['data_version']
+                    self.update(where=[self.name == name], what=what, changed_by=changed_by,
+                                old_data_version=tip_data_version, transaction=transaction)
+                    # cache will have a data_version of one plus the tip
+                    # data_version
+                    new_data_version = tip_data_version + 1
+                    cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
+                    cache.put("blob_version", name, new_data_version)
+                    return
+                except UnresolvedConflictsException:
+                    raise e
         new_data_version = old_data_version + 1
         cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
         cache.put("blob_version", name, new_data_version)
