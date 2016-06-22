@@ -1112,6 +1112,8 @@ class Releases(AUSTable):
                     # but we need dictdiffer.patch to actually apply the patch
                     # to the original blob
                     unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
+                    # converting the resultant dict into a blob and then
+                    # converting it to JSON
                     what['data'] = createBlob(unified_blob).getJSON()
                     # we want the data_version for the dictdiffer.merged blob to be one
                     # more than that of the latest blob
