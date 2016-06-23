@@ -388,7 +388,7 @@ class ReleaseHistoryView(HistoryAdminView):
             ],
             limit=limit,
             offset=offset,
-            order_by=[table.timestamp.asc()],
+            order_by=[table.timestamp.desc()],
         )
 
         self.annotateRevisionDifferences(revisions)
