@@ -61,8 +61,8 @@
 
     <h3 class="panel-title">
       <div style="float: right">
-        <i ng-show="rule_id && $first">Current</i>
-        <button ng-show="rule_id && !$first" class="btn btn-default btn-xs" ng-click="openRevertModal(rule)">Revert to this</button>
+        <i ng-if="rule_id && $first && (currentPage == 1)">Current</i>
+        <button ng-if="rule_id && ((currentPage != 1) || !$first )" class="btn btn-default btn-xs" ng-click="openRevertModal(rule)">Revert to this</button>
         <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">Update</button>
         <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button>
         <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openDuplicateModal(rule)">Duplicate</button>
