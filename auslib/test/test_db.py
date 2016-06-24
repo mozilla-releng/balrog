@@ -1,3 +1,4 @@
+from bz2 import BZ2File
 import logging
 import mock
 import os
@@ -640,7 +641,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
 class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
     """Tests to ensure that the current sample data (used by Docker) is
     compatible with the current schema."""
-    sample_data = path.join(path.dirname(__file__), "..", "..", "scripts", "sample-data.sql")
+    sample_data = path.join(path.dirname(__file__), "..", "..", "scripts", "sample-data.sql.bz2")
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
@@ -649,7 +650,7 @@ class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
 
     def testSampleDataImport(self):
         with self.db.begin() as trans:
-            with open(self.sample_data) as f:
+            with BZ2File(self.sample_data) as f:
                 for q in f:
                     trans.execute(q)
 
