@@ -5,13 +5,17 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
   $scope.failed = false;
 
   $scope.release_name = $routeParams.name;
-  if ($scope.release_name) {
 
-    Releases.getHistory($scope.release_name)
+  $scope.currentPage = 1;
+  $scope.pageSize = 10;
+  $scope.maxSize = 10;
+
+  function loadPage(newPage) {
+    Releases.getHistory($scope.release_name, $scope.pageSize, newPage)
     .success(function(response) {
       // it's the same release, but this works
       $scope.releases = response.revisions;
-      $scope.count = response.count;
+      $scope.releases_count = response.count;
     })
     .error(function() {
       console.error(arguments);
@@ -19,6 +23,12 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
     })
     .finally(function() {
       $scope.loading = false;
+    });
+  }
+
+  if ($scope.release_name) {
+    $scope.$watch("currentPage", function(newPage) {
+      loadPage(newPage);
     });
   } else {
     Releases.getReleases()
@@ -61,9 +71,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
     ];
   }
   $scope.ordering_str = $scope.ordering_options[0];
-
-  $scope.currentPage = 1;
-  $scope.pageSize = 10;  // default
 
   $scope.filters = {
     search: $location.hash(),

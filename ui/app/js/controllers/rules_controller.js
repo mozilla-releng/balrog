@@ -6,12 +6,17 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
 
   $scope.rule_id = parseInt($routeParams.id, 10);
   $scope.pr_ch_options = ["All rules"];
-  if ($scope.rule_id) {
-    // history of a specific rule
-    Rules.getHistory($scope.rule_id)
+
+  $scope.currentPage = 1;
+  $scope.pageSize = 10;
+  $scope.maxSize = 10;
+  $scope.rules = [];
+
+  function loadPage(newPage) {
+    Rules.getHistory($scope.rule_id, $scope.pageSize, newPage)
     .success(function(response) {
-      // it's the same rule, but this works
       $scope.rules = response.rules;
+      $scope.rules_count = response.count;
     })
     .error(function() {
       console.error(arguments);
@@ -19,6 +24,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     })
     .finally(function() {
       $scope.loading = false;
+    });
+  }
+
+  if ($scope.rule_id) {
+    // history of a specific rule
+    $scope.$watch("currentPage", function(newPage) {
+      loadPage(newPage);
     });
   } else {
     Rules.getRules()
@@ -86,9 +98,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   }
   $scope.ordering_str = $scope.ordering_options[0];
   $scope.pr_ch_filter = $scope.pr_ch_options[0];
-
-  $scope.currentPage = 1;
-  $scope.pageSize = 10;  // default
 
   $scope.filters = {
     search: $location.hash(),

@@ -1,11 +1,15 @@
 <div loader ng-show="loading"></div>
 
 <h2>
-  <span ng-show="!rule_id">Rules</span>
-  <span ng-show="rule_id">Revisions of a Rule</span>
+  <span ng-if="!rule_id">Rules</span>
+  <span ng-if="rule_id">Revisions of a Rule</span>
 
-  <span class="count">
+  <span class="count" ng-show="!rule_id">
     ({{ filtered_items.length | number:0 }}
+    <span ng-bind="hasFilter() ? 'found' : 'in total'"></span>)
+  </span>
+  <span class="count" ng-show="rule_id">
+    ({{ rules_count | number:0 }}
     <span ng-bind="hasFilter() ? 'found' : 'in total'"></span>)
   </span>
 
@@ -19,12 +23,14 @@
 
 <div class="row">
   <div class="col-sm-6">
-    <div class="pagination-container" ng-show="filtered_items.length > pageSize">
+    <div class="pagination-container" ng-show="rules_count > pageSize">
       <pagination
         class="pagination-sm"
-        total-items="filtered_items.length"
+        total-items="rules_count"
         ng-model="currentPage"
         items-per-page="pageSize"
+        max-size="maxSize"
+        boundary-links="true"
       ></pagination>
     </div>
   </div>
@@ -56,7 +62,7 @@
 </div>
 
 <div class="panel panel-default" style="clear:right"
-     ng-repeat="rule in filtered_items = (rules | filter: filterBySelect) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
+     ng-repeat="rule in filtered_items = (rules | filter: filterBySelect) | orderBy:ordering | limitTo:pageSize">
   <div class="panel-heading">
 
     <h3 class="panel-title">
@@ -145,12 +151,13 @@
 
 </div>
 
-
-<div class="pagination-container" ng-show="filtered_items.length > pageSize">
+<div class="pagination-container" ng-show="rules_count > pageSize">
   <pagination
     class="pagination-sm"
-    total-items="filtered_items.length"
+    total-items="rules_count"
     ng-model="currentPage"
     items-per-page="pageSize"
+    max-size="maxSize"
+    boundary-links="true"
   ></pagination>
 </div>
