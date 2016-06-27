@@ -12,6 +12,16 @@ elif [ $1 == "upgrade-db" ]; then
         exit 1
     fi
     exec python scripts/manage-db.py -d ${DBURI} upgrade
+elif [ $1 == "cleanup-db" ]; then
+    if [ -z "${DBURI}" ]; then
+        echo "\${DBURI} must be set!"
+        exit 1
+    fi
+    if [ -z "${MAX_AGE}" ]; then
+        echo "\${MAX_AGE} must be set!"
+        exit 1
+    fi
+    exec python scripts/manage-db.py -d ${DBURI} cleanup ${MAX_AGE}
 else
    echo "unknown mode: $1"
    exit 1
