@@ -44,25 +44,23 @@ if __name__ == "__main__":
         if len(args) < 2:
             parser.error("need to pass maximum nightly release age")
         nightly_age = int(args[1])
-        print nightly_age
         with db.begin() as trans:
             trans.execute("""
-SELECT name FROM releases
+DELETE releases FROM releases
+LEFT OUTER JOIN releases_history USING (name)
 LEFT JOIN rules ON (name=mapping)
-WHERE name LIKE '%%nightly%%'
+WHERE name LIKE '%%%%nightly%%%%'
 AND (rules.whitelist <> releases.name OR rules.whitelist IS NULL)
 AND (rules.mapping <> releases.name OR rules.mapping IS NULL)
-AND (timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL %s MONTH));
+AND (timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL %s MONTH) OR change_id is NULL);
 """ % nightly_age)
             trans.execute("""
-SELECT DISTINCT name FROM (
-SELECT change_id
-FROM releases_history
-WHERE name LIKE '%%latest%%'
-AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 14 DAY)
-UNION
-SELECT change_id
-FROM releases_history
-WHERE name NOT LIKE '%%latest%%' AND name LIKE '%%nightly%%'
-AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 7 DAY));
+DELETE releases_history FROM releases_history
+WHERE name LIKE '%%%%latest%%%%'
+AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 14 DAY);
+""")
+            trans.execute("""
+DELETE releases_history FROM releases_history
+WHERE name NOT LIKE '%%%%latest%%%%' AND name LIKE '%%%%nightly%%%%'
+AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 7 DAY);
 """)
