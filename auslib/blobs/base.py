@@ -27,6 +27,7 @@ def createBlob(data):
     from auslib.blobs.gmp import GMPBlobV1
     from auslib.blobs.whitelist import WhitelistBlobV1
     from auslib.blobs.superblob import SuperBlob
+    from auslib.blobs.systemaddons import SystemAddonsBlob
 
     blob_map = {
         1: ReleaseBlobV1,
@@ -38,6 +39,7 @@ def createBlob(data):
         1000: GMPBlobV1,
         3000: WhitelistBlobV1,
         4000: SuperBlob,
+        5000: SystemAddonsBlob
     }
 
     if isinstance(data, basestring):
@@ -121,3 +123,6 @@ class Blob(dict):
 
     def getInnerXML(self):
         raise NotImplementedError()
+
+    def hasHeaderIfInnerXMLIsEmpty(self):
+        return True

@@ -330,6 +330,54 @@ class ClientTestBase(unittest.TestCase):
     }
 }
 """)
+        dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
+                                     mapping='systemaddons-uninstall', update_type='minor',
+                                     product='systemaddons-uninstall', data_version=1)
+        dbo.releases.t.insert().execute(name='systemaddons-uninstall',
+                                        product='systemaddons-uninstall', data_version=1, data="""
+{
+    "name": "fake",
+    "schema_version": 5000,
+    "hashFunction": "SHA512",
+    "uninstall": true,
+    "vendors": {
+        "c": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                    "filesize": 2,
+                    "hashValue": "3",
+                    "fileUrl": "http://a.com/blah"
+                }
+            }
+        }
+    }
+}
+""")
+        dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
+                                     mapping='systemaddons', update_type='minor',
+                                     product='systemaddons', data_version=1)
+        dbo.releases.t.insert().execute(name='systemaddons',
+                                        product='systemaddons', data_version=1, data="""
+{
+    "name": "fake",
+    "schema_version": 5000,
+    "hashFunction": "SHA512",
+    "uninstall": false,
+    "vendors": {
+        "c": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                    "filesize": 2,
+                    "hashValue": "3",
+                    "fileUrl": "http://a.com/blah"
+                }
+            }
+        }
+    }
+}
+""")
 
     def tearDown(self):
         os.close(self.version_fd)
@@ -638,6 +686,30 @@ class ClientTest(ClientTestBase):
     <update type="minor" version="None" extensionVersion="2.5" buildID="25">
         <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
     </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testSystemAddonsBlobWithUninstall(self):
+        ret = self.client.get('/update/4/systemaddons-uninstall/1.0/1/z/p/a/b/c/d/1/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <addons>
+    </addons>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testSystemAddonsBlobWithoutUninstall(self):
+        ret = self.client.get('/update/4/systemaddons/1.0/1/z/p/a/b/c/d/1/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
 </updates>
 """)
         self.assertEqual(returned.toxml(), expected.toxml())

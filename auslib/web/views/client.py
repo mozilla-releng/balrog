@@ -75,22 +75,27 @@ class ClientRequestView(MethodView):
 
             xml = ['<?xml version="1.0"?>']
             xml.append('<updates>')
+            innerXML = []
 
             # We only sample the first blob for the header and footer, since we
             # assume that all blobs will have similar ones. We might want to
             # verify that all of them are indeed the same in the future.
 
-            xml.append(response_blobs[0]['response_release']
-                       .getHeaderXML(response_blobs[0]['product_query'],
-                                     response_blobs[0]['response_update_type']))
+            hasHeaderIfInnerXMLIsEmpty = response_blobs[0]['response_release'].hasHeaderIfInnerXMLIsEmpty()
+
             for response_blob in response_blobs:
-                xml.extend(response_blob['response_release']
-                           .getInnerXML(response_blob['product_query'],
-                                        response_blob['response_update_type'],
-                                        app.config["WHITELISTED_DOMAINS"],
-                                        app.config["SPECIAL_FORCE_HOSTS"]))
-            # Sampling the footer from the first blob
-            xml.append(response_blobs[0]['response_release'].getFooterXML())
+                innerXML.extend(response_blob['response_release']
+                                .getInnerXML(response_blob['product_query'],
+                                             response_blob['response_update_type'],
+                                             app.config["WHITELISTED_DOMAINS"],
+                                             app.config["SPECIAL_FORCE_HOSTS"]))
+            if hasHeaderIfInnerXMLIsEmpty or len(innerXML) != 0:
+                xml.append(response_blobs[0]['response_release']
+                           .getHeaderXML(response_blobs[0]['product_query'],
+                                         response_blobs[0]['response_update_type']))
+                xml.extend(innerXML)
+                # Sampling the footer from the first blob
+                xml.append(response_blobs[0]['response_release'].getFooterXML())
             xml.append('</updates>')
             # ensure valid xml by using the right entity for ampersand
             xml = re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
