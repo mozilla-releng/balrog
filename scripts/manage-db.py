@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import itertools
 import logging
 from os import path
 import sys
@@ -23,10 +24,10 @@ AND (rules.mapping <> releases.name OR rules.mapping IS NULL)
 AND (timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL %s MONTH) OR change_id is NULL);
 """ % nightly_age
     if dryrun:
-        todelete = trans.execute("SELECT name FROM releases" + query).fetchone()
+        todelete = trans.execute("SELECT name FROM releases" + query).fetchall()
         if todelete:
             print "Releases rows to be deleted:"
-            print " ".join(todelete)
+            print " ".join(itertools.chain(*todelete))
     else:
         trans.execute("DELETE releases FROM releases" + query)
 
@@ -37,10 +38,11 @@ WHERE name LIKE '%%%%latest%%%%'
 AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 14 DAY);
 """
     if dryrun:
-        todelete = trans.execute("SELECT name, change_id FROM releases_history" + query).fetchone()
+        todelete = trans.execute("SELECT name, change_id FROM releases_history" + query).fetchall()
         if todelete:
             print "Releases history rows to be deleted:"
-            print " ".join(todelete)
+            for key, group in itertools.groupby(todelete, lambda x: x[0]):
+                print "%s: %s" % (key, [int(x[1]) for x in group])
     else:
         trans.execute("DELETE releases_history FROM releases_history")
 
@@ -49,10 +51,11 @@ WHERE name NOT LIKE '%%%%latest%%%%' AND name LIKE '%%%%nightly%%%%'
 AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 7 DAY);
 """
     if dryrun:
-        todelete = trans.execute("SELECT name, change_id FROM releases_history" + query).fetchone()
+        todelete = trans.execute("SELECT name, change_id FROM releases_history" + query).fetchall()
         if todelete:
             print "Releases history rows to be deleted:"
-            print " ".join(todelete)
+            for key, group in itertools.groupby(todelete, lambda x: x[0]):
+                print "%s: %s" % (key, [int(x[1]) for x in group])
     else:
         trans.execute("DELETE releases_history FROM releases_history")
 
