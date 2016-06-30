@@ -54,11 +54,9 @@ describe("Service: Rules", function() {
       }],
       count: 2
     };
-    var limit = 10;
-    var page = 1;
-    this.$httpBackend.expectGET('/api/rules/1/revisions?limit=' + limit + '&page=' + page)
+    this.$httpBackend.expectGET('/api/rules/1/revisions')
     .respond(200, JSON.stringify(sample_response));
-    Rules.getHistory(1, limit, page).success(function(response) {
+    Rules.getHistory(1).success(function(response) {
       expect(response.count).toEqual(2);
       expect(response.rules).toEqual(sample_response.rules);
     });

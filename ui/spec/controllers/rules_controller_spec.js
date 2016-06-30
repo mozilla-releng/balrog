@@ -280,8 +280,7 @@ describe("controller: RulesController By Id", function() {
       inject(function($route, $location, $rootScope) {
 
         expect($route.current).toBeUndefined();
-        var $scope = this.scope;
-        this.$httpBackend.expectGET('/api/rules/1/revisions?limit=' + $scope.pageSize + '&page=' + $scope.currentPage)
+        this.$httpBackend.expectGET('/api/rules/1/revisions')
         .respond(200, JSON.stringify(sample_revisions));
 
         $location.path('/rules/1');
@@ -289,6 +288,7 @@ describe("controller: RulesController By Id", function() {
         expect($route.current.controller).toEqual('RulesController');
 
         this.$httpBackend.flush();
+        var $scope = this.scope;
         expect($scope.rules.length).toEqual(2);
         expect($scope.rules).toEqual(sample_revisions.rules);
 

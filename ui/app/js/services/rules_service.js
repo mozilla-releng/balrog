@@ -11,8 +11,8 @@ angular.module("app").factory('Rules', function($http) {
       return $http.get('/api/rules/columns/product');
     },
 
-    getHistory: function(id, limit, page) {
-      return $http.get('/api/rules/' + id + '/revisions?limit=' + limit + '&page=' + page);
+    getHistory: function(id) {
+      return $http.get('/api/rules/' + id + '/revisions');
     },
     getRule: function(id) {
       return $http.get('/api/rules/' + id);

@@ -55,11 +55,9 @@ describe("Service: Releases", function() {
       }],
       count: 2
     };
-    var limit = 10;
-    var page = 1;
-    this.$httpBackend.expectGET('/api/releases/1/revisions?limit=' + limit + '&page=' + page)
+    this.$httpBackend.expectGET('/api/releases/1/revisions?limit=100')
     .respond(200, JSON.stringify(sample_response));
-    Releases.getHistory(1, limit, page).success(function(response) {
+    Releases.getHistory(1).success(function(response) {
       expect(response.count).toEqual(2);
       expect(response.revisions).toEqual(sample_response.revisions);
     });

@@ -278,7 +278,7 @@ describe("controller: ReleasesController By Id", function() {
         expect($route.current).toBeUndefined();
         this.$httpBackend.expectGET(
           '/api/releases/' + sample_releases.releases[0].name +
-          '/revisions?limit=10&page=1')
+          '/revisions?limit=100')
         .respond(200, JSON.stringify(sample_revisions));
 
         $location.path('/releases/firefox-11-build1');

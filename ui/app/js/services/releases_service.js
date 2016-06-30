@@ -18,9 +18,9 @@ angular.module("app").factory('Releases', function($http, $q) {
     getProducts: function(){
       return $http.get('/api/releases/columns/product');
     },
-    getHistory: function(name, limit, page) {
+    getHistory: function(name) {
       url = '/api/releases/' + encodeURIComponent(name) + '/revisions';
-      url += '?limit=' + limit + '&page=' + page;
+      url += '?limit=100';
       return $http.get(url);
     },
     getRelease: function(name) {
