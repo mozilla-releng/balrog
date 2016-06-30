@@ -123,6 +123,3 @@ class Blob(dict):
 
     def getInnerXML(self):
         raise NotImplementedError()
-
-    def hasHeaderIfInnerXMLIsEmpty(self):
-        return True

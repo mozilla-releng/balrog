@@ -1,0 +1,111 @@
+import unittest
+
+from auslib.blobs.systemaddons import SystemAddonsBlob
+
+
+class TestSchema1Blob(unittest.TestCase):
+    maxDiff = 2000
+
+    def setUp(self):
+        self.specialForceHosts = ["http://a.com"]
+        self.whitelistedDomains = {"a.com": ('gg',), 'boring.com': ('gg',)}
+        self.blob1 = SystemAddonsBlob()
+        self.blob1.loadJSON("""
+{
+    "name": "fake",
+    "schema_version": 5000,
+    "hashFunction": "SHA512",
+    "addons": {
+        "c": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                    "filesize": 2,
+                    "hashValue": "3",
+                    "fileUrl": "http://a.com/blah"
+                },
+                "q": {
+                    "filesize": 4,
+                    "hashValue": "5",
+                    "fileUrl": "http://boring.com/blah"
+                },
+                "q2": {
+                    "alias": "q"
+                }
+            }
+        },
+        "d": {
+            "version": "5",
+            "platforms": {
+                "q": {
+                    "filesize": 10,
+                    "hashValue": "11",
+                    "fileUrl": "http://boring.com/foo"
+                },
+                "r": {
+                    "filesize": 666,
+                    "hashValue": "666",
+                    "fileUrl": "http://evil.com/fire"
+                },
+                "default": {
+                    "filesize": 20,
+                    "hashValue": "50",
+                    "fileUrl": "http://boring.com/bar"
+                }
+            }
+        }
+    }
+}
+""")
+        self.blob2 = SystemAddonsBlob()
+        self.blob2.loadJSON("""
+{
+    "name": "fake",
+    "schema_version": 5000,
+    "hashFunction": "SHA512",
+    "uninstall": true
+}
+""")
+
+    def testXMLWhenNotUninstall(self):
+        updateQuery = {
+            "product": "gg", "version": "3", "buildID": "1",
+            "buildTarget": "p", "locale": "l", "channel": "a",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned_header = self.blob1.getHeaderXML(updateQuery, "minor")
+        returned = self.blob1.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob1.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = None
+        expected = ["""
+<addon id="c" URL="http://a.com/blah" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
+""", """
+<addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = None
+        self.assertEqual(returned_header, expected_header)
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer, expected_footer)
+
+    def testXMLWhenUninstall(self):
+        updateQuery = {
+            "product": "gg", "version": "3", "buildID": "1",
+            "buildTarget": "p", "locale": "l", "channel": "a",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned_header = self.blob2.getHeaderXML(updateQuery, "minor")
+        returned = self.blob2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob2.getFooterXML()
+        returned = [x.strip() for x in returned]
+        expected_header = "    <addons>"
+        expected = []
+        expected = [x.strip() for x in expected]
+        expected_footer = "    </addons>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
+        self.assertEqual(returned_footer, expected_footer)
