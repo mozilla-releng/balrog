@@ -72,6 +72,7 @@ if __name__ == "__main__":
     usage += "  upgrade: Upgrade an existing balrog table to a newer version.\n"
     usage += "  downgrade: Downgrade an existing balrog table to an older version.\n"
     usage += "  cleanup: Cleanup old data from a database. Requires an extra arg of maximum age (in months) of releases. Anything older than this will be deleted."
+    usage += "  cleanup-dryrun: Show what would be removed if 'cleanup' is run."
     parser = OptionParser(usage=usage)
     parser.add_option("-d", "--db", dest="db", default=None, help="database to manage, in URI format")
     parser.add_option("--version", dest="version", default=None, type="int", help="Create/upgrade to this specific schema version rather than the latest.")
