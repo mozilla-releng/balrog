@@ -20,12 +20,13 @@ def cleanup_releases(trans, nightly_age, dryrun=True):
     # and the second happens at a low level of SQLAlchemy when the transaction
     # is being executed.
     query = """
-LEFT OUTER JOIN releases_history USING (name)
-LEFT JOIN rules ON (name=mapping)
+LEFT JOIN rules rules_mapping ON (name=rules_mapping.mapping)
+LEFT JOIN rules rules_whitelist ON (name=rules_whitelist.whitelist)
 WHERE name LIKE '%%%%nightly%%%%'
-AND (rules.whitelist <> releases.name OR rules.whitelist IS NULL)
-AND (rules.mapping <> releases.name OR rules.mapping IS NULL)
-AND (timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL %s MONTH) OR change_id is NULL);
+AND (rules_whitelist.whitelist <> releases.name OR rules_whitelist.whitelist IS NULL)
+AND (rules_mapping.mapping <> releases.name OR rules_mapping.mapping IS NULL)
+AND ((SELECT timestamp FROM releases_history WHERE name=name ORDER BY change_id DESC LIMIT 1) IS NULL);
+AND (timestamp < (1000 * UNIX_TIMESTAMP(NOW() - INTERVAL %s MONTH)) OR change_id is NULL);
 """ % nightly_age
     if dryrun:
         todelete = trans.execute("SELECT name FROM releases" + query).fetchall()
@@ -71,7 +72,8 @@ if __name__ == "__main__":
     usage += "  create: Create all the tables required for a new Balrog database\n"
     usage += "  upgrade: Upgrade an existing balrog table to a newer version.\n"
     usage += "  downgrade: Downgrade an existing balrog table to an older version.\n"
-    usage += "  cleanup: Cleanup old data from a database. Requires an extra arg of maximum age (in months) of releases. Anything older than this will be deleted."
+    usage += "  cleanup: Cleanup old data from a database. Requires an extra arg of maximum age (in months) of nightly releases. " \
+                        "Anything older than this will be deleted.\n"
     usage += "  cleanup-dryrun: Show what would be removed if 'cleanup' is run."
     parser = OptionParser(usage=usage)
     parser.add_option("-d", "--db", dest="db", default=None, help="database to manage, in URI format")
