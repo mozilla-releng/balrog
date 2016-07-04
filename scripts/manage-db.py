@@ -14,6 +14,7 @@ sys.path.append(path.join(path.dirname(__file__), path.join("..", "vendor", "lib
 
 from auslib.db import AUSDatabase
 
+
 def cleanup_releases(trans, nightly_age, dryrun=True):
     # This and the subsequent queries use "%%%%%" because we end up going
     # through two levels of Python string formatting. The first is here,
@@ -73,7 +74,7 @@ if __name__ == "__main__":
     usage += "  upgrade: Upgrade an existing balrog table to a newer version.\n"
     usage += "  downgrade: Downgrade an existing balrog table to an older version.\n"
     usage += "  cleanup: Cleanup old data from a database. Requires an extra arg of maximum age (in months) of nightly releases. " \
-                        "Anything older than this will be deleted.\n"
+             "Anything older than this will be deleted.\n"
     usage += "  cleanup-dryrun: Show what would be removed if 'cleanup' is run."
     parser = OptionParser(usage=usage)
     parser.add_option("-d", "--db", dest="db", default=None, help="database to manage, in URI format")
