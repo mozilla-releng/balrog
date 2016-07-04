@@ -25,7 +25,6 @@
         uninstall:
           type: boolean
           description: If this is set true, all system addons are disabled
-          default: false
         addons:
           type: object
           properties:
