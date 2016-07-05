@@ -247,7 +247,9 @@ class SingleReleaseView(AdminView):
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
                 return Response(status=400, response=json.dumps({"data": e.args}))
-            data_version += 1
+            # the data_version might jump by more than 1 if outdated blobs are
+            # merged
+            data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]['data_version']
             return Response(json.dumps(dict(new_data_version=data_version)), status=200)
         else:
             try:
@@ -373,7 +375,7 @@ class ReleaseHistoryView(HistoryAdminView):
             ],
             limit=limit,
             offset=offset,
-            order_by=[table.timestamp.asc()],
+            order_by=[table.timestamp.desc()],
         )
 
         self.annotateRevisionDifferences(revisions)

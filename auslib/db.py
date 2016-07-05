@@ -17,6 +17,9 @@ import sqlalchemy.types
 import migrate.versioning.schema
 import migrate.versioning.api
 
+import dictdiffer
+import dictdiffer.merge
+
 from auslib.global_state import cache, dbo
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import createBlob
@@ -1415,16 +1418,51 @@ class Releases(AUSTable):
                 blob.validate()
                 name = what.get("name", name)
                 if name != blob["name"]:
-                    raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob["name"]))
+                    raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
                 if self.containsForbiddenDomain(blob, what.get("product", current_release["product"])):
                     raise ValueError("Release blob contains forbidden domain.")
-                what["data"] = blob.getJSON()
-
+                what['data'] = blob.getJSON()
         if not dryrun:
-            for current_release in current_releases:
+            for release in current_releases:
                 name = current_release["name"]
-                super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
                 new_data_version = old_data_version + 1
+                try:
+                    super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version,
+                                                 transaction=transaction)
+                except OutdatedDataError as e:
+                    self.log.debug("trying to update older data_version %s for release %s" % (old_data_version, name))
+                    if blob is not None:
+                        ancestor_change = self.history.getChange(data_version=old_data_version,
+                                                                 column_values={'name': name},
+                                                                 transaction=transaction)
+                        # if we have no historical information about the ancestor blob
+                        if ancestor_change is None:
+                            self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
+                            raise
+                        ancestor_blob = createBlob(ancestor_change.get('data'))
+                        tip_release = self.getReleases(name=name, transaction=transaction)[0]
+                        tip_blob = tip_release.get('data')
+                        m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
+                        try:
+                            m.run()
+                            # Merger merges the patches into a single unified patch,
+                            # but we need dictdiffer.patch to actually apply the patch
+                            # to the original blob
+                            unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
+                            # converting the resultant dict into a blob and then
+                            # converting it to JSON
+                            what['data'] = createBlob(unified_blob).getJSON()
+                            # we want the data_version for the dictdiffer.merged blob to be one
+                            # more than that of the latest blob
+                            tip_data_version = tip_release['data_version']
+                            super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
+                                                         transaction=transaction)
+                            # cache will have a data_version of one plus the tip
+                            # data_version
+                            new_data_version = tip_data_version + 1
+                        except dictdiffer.merge.UnresolvedConflictsException:
+                            self.log.debug("latest version of release %s cannot be merged with new blob" % name)
+                            raise e
                 cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
                 cache.put("blob_version", name, new_data_version)
 
