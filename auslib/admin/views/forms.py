@@ -123,6 +123,13 @@ class DbEditableForm(Form):
     data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 
 
+class ScheduledChangeForm(Form):
+    telemetry_product = NullableStringField("Telemetry Product")
+    telemetry_channel = NullableStringField("Telemetry Channel")
+    telemetry_uptake = NullableStringField("Telemetry Uptake")
+    when = IntegerField("When")
+
+
 class NewPermissionForm(Form):
     options = JSONStringField('Options')
 
@@ -157,6 +164,7 @@ class RuleForm(Form):
     distribution = NullableStringField('Distribution', validators=[Length(0, 100)])
     buildTarget = NullableStringField('Build Target', validators=[Length(0, 75)])
     osVersion = NullableStringField('OS Version', validators=[Length(0, 1000)])
+    systemCapabilities = NullableStringField('SystemCapabilities', validators=[Length(0, 1000)])
     distVersion = NullableStringField('Dist Version', validators=[Length(0, 100)])
     whitelist = NullableStringField('Whitelist', validators=[Length(0, 100)])
     comment = NullableStringField('Comment', validators=[Length(0, 500)])
@@ -177,11 +185,35 @@ class EditRuleForm(DbEditableForm):
     distribution = NullableStringField('Distribution', validators=[Optional(), Length(0, 100)])
     buildTarget = NullableStringField('Build Target', validators=[Optional(), Length(0, 75)])
     osVersion = NullableStringField('OS Version', validators=[Optional(), Length(0, 1000)])
+    systemCapabilities = NullableStringField('SystemCapabilities', validators=[Optional(), Length(0, 1000)])
     distVersion = NullableStringField('Dist Version', validators=[Optional(), Length(0, 100)])
     whitelist = NullableStringField('Whitelist', validators=[Optional(), Length(0, 100)])
     comment = NullableStringField('Comment', validators=[Optional(), Length(0, 500)])
     update_type = SelectField('Update Type', choices=[('minor', 'minor'), ('major', 'major')], validators=[Optional()], coerce=NoneOrType(unicode))
     headerArchitecture = NullableStringField('Header Architecture', validators=[Optional(), Length(0, 10)])
+
+
+class ScheduledChangeNewRuleForm(ScheduledChangeForm, RuleForm):
+    pass
+
+
+class ScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
+    # EditRuleForm doesn't have rule_id in it because rules are edited through
+    # URLs that contain them. Scheduled changes, on the other hand, are edited
+    # through URLs that contain scheduled change IDs, so we need to include
+    # the rule_id in the form when editing scheduled changes for rules.
+    rule_id = IntegerField('Rule ID', validators=[Required()])
+
+
+class EditScheduledChangeNewRuleForm(ScheduledChangeForm, RuleForm):
+    sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
+
+
+# Unlike when scheduling a new change to an existing rule, rule_id is not
+# required (or even allowed) when modifying a scheduled change for an
+# existing rule. Allowing it to be modified would be confusing.
+class EditScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
+    sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
 
 
 class CompleteReleaseForm(Form):
@@ -193,5 +225,6 @@ class CompleteReleaseForm(Form):
 
 class ReadOnlyForm(Form):
     name = StringField('Name', validators=[Required()])
+    product = StringField('Product', validators=[Required()])
     read_only = BooleanField('read_only')
     data_version = IntegerField('data_version', widget=HiddenInput())

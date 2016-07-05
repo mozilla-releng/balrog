@@ -27,7 +27,7 @@ class ClientTestBase(unittest.TestCase):
         self.version_fd, self.version_file = mkstemp()
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
-        app.config['WHITELISTED_DOMAINS'] = ('a.com', 'boring.com')
+        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'b2g', 'response-a', 'response-b', 's')}
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
             f.write("""
@@ -39,10 +39,11 @@ class ClientTestBase(unittest.TestCase):
 """)
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(('a.com', 'boring.com'))
+        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e', 'b2g')})
         self.client = app.test_client()
         self.view = ClientRequestView()
-        dbo.rules.t.insert().execute(backgroundRate=100, mapping='b', update_type='minor', product='b', data_version=1)
+        dbo.rules.t.insert().execute(backgroundRate=100, mapping='b', update_type='minor', product='b',
+                                     data_version=1)
         dbo.releases.t.insert().execute(name='b', product='b', data_version=1, data="""
 {
     "name": "b",
@@ -68,6 +69,32 @@ class ClientTestBase(unittest.TestCase):
                         "from": "*",
                         "hashValue": "6",
                         "fileUrl": "http://a.com/x"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+        dbo.rules.t.insert().execute(backgroundRate=100, mapping='s', update_type='minor', product='s',
+                                     systemCapabilities="SSE", data_version=1)
+        dbo.releases.t.insert().execute(name='s', product='s', data_version=1, data="""
+{
+    "name": "s",
+    "schema_version": 1,
+    "appv": "1.0",
+    "extv": "1.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "5",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "5",
+                        "from": "*",
+                        "hashValue": "5",
+                        "fileUrl": "http://a.com/s"
                     }
                 }
             }
@@ -207,6 +234,95 @@ class ClientTestBase(unittest.TestCase):
                         "from": "*",
                         "hashValue": "23",
                         "fileUrl": "http://a.com/public"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+        dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
+                                     mapping='gmp', update_type='minor',
+                                     product='gmp',
+                                     data_version=1)
+        dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
+                                     mapping='gmp-with-one-response-product', update_type='minor',
+                                     product='gmp-with-one-response-product',
+                                     data_version=1)
+        dbo.rules.t.insert().execute(priority=190, backgroundRate=100,
+                                     mapping='response-a', update_type='minor',
+                                     product='response-a',
+                                     data_version=1)
+        dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
+                                     mapping='response-b', update_type='minor',
+                                     product='response-b', data_version=1)
+        dbo.releases.t.insert().execute(name='gmp-with-one-response-product',
+                                        product='gmp-with-one-response-product', data_version=1, data="""
+{
+    "name": "superblob",
+    "schema_version": 4000,
+    "products": ["response-a"]
+}
+""")
+        dbo.releases.t.insert().execute(name='gmp', product='gmp', data_version=1, data="""
+{
+    "name": "superblob",
+    "schema_version": 4000,
+    "products": ["response-a", "response-b"]
+}
+""")
+        dbo.releases.t.insert().execute(name='response-a', product='response-a', data_version=1, data="""
+{
+    "name": "response-a",
+    "schema_version": 1,
+    "extv": "2.5",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "25",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 22,
+                        "from": "*",
+                        "hashValue": "23",
+                        "fileUrl": "http://a.com/public"
+                    }
+                }
+            }
+        },
+        "q": {
+            "buildID": "25",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 22,
+                        "from": "*",
+                        "hashValue": "23",
+                        "fileUrl": "http://a.com/public-q"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+        dbo.releases.t.insert().execute(name='response-b', product='response-b', data_version=1, data="""
+{
+    "name": "response-b",
+    "schema_version": 1,
+    "extv": "2.5",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "25",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 27777777,
+                        "from": "*",
+                        "hashValue": "23",
+                        "fileUrl": "http://a.com/b"
                     }
                 }
             }
@@ -368,11 +484,33 @@ class ClientTest(ClientTestBase):
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
 
+    def testVersion6GetWithSystemCapabilitiesMatch(self):
+        ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="5">
+        <patch type="complete" URL="http://a.com/s" hashFunction="sha512" hashValue="5" size="5"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testVersion6GetWithoutSystemCapabilitiesMatch(self):
+        ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+
     def testGetURLNotInWhitelist(self):
         ret = self.client.get('/update/3/d/20.0/1/p/l/a/a/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue,
+                         '\n    ')
 
     def testEmptySnippetMissingExtv(self):
         ret = self.client.get('/update/3/e/20.0/1/p/l/a/a/a/a/update.xml')
@@ -456,6 +594,49 @@ class ClientTest(ClientTestBase):
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testGetWithResponseProducts(self):
+        ret = self.client.get('/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+        <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
+        <patch type="complete" URL="http://a.com/b" hashFunction="sha512" hashValue="23" size="27777777"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testGetWithResponseProductsWithAbsentRule(self):
+        ret = self.client.get('/update/4/gmp/1.0/1/q/l/a/a/a/a/1/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+        <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
+    </update>
+</updates>
+""")
+        self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testGetWithResponseProductsWithOneRule(self):
+        ret = self.client.get('/update/4/gmp-with-one-response-product/1.0/1/q/l/a/a/a/a/1/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        returned = minidom.parseString(ret.data)
+        expected = minidom.parseString("""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+        <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
     </update>
 </updates>
 """)

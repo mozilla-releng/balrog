@@ -3,23 +3,10 @@ import simplejson as json
 from flask import request, Response, jsonify, make_response
 
 from auslib.global_state import dbo
-from auslib.admin.views.base import requirelogin, requirepermission, AdminView
+from auslib.admin.views.base import requirelogin, AdminView
 from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
-
-
-def setpermission(f):
-    def decorated(*args, **kwargs):
-        if kwargs['permission'] != 'admin' and not kwargs['permission'].startswith('/'):
-            kwargs['permission'] = '/%s' % kwargs['permission']
-        return f(*args, **kwargs)
-    return decorated
-
-
-def permission2selector(permission):
-    """Converts a permission to a valid CSS selector."""
-    return permission.replace('/', '').replace(':', '')
 
 
 class UsersView(AdminView):
@@ -43,7 +30,6 @@ class PermissionsView(AdminView):
 
 class SpecificPermissionView(AdminView):
     """/users/:username/permissions/:permission"""
-    @setpermission
     def get(self, username, permission):
         try:
             perm = dbo.permissions.getUserPermissions(username)[permission]
@@ -51,9 +37,7 @@ class SpecificPermissionView(AdminView):
             return Response(status=404)
         return jsonify(perm)
 
-    @setpermission
     @requirelogin
-    @requirepermission('/users/:id/permissions/:permission', options=[])
     def _put(self, username, permission, changed_by, transaction):
         try:
             if dbo.permissions.getUserPermissions(username, transaction).get(permission):
@@ -61,7 +45,8 @@ class SpecificPermissionView(AdminView):
                 if not form.validate():
                     self.log.warning("Bad input: %s", form.errors)
                     return Response(status=400, response=json.dumps(form.errors))
-                dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
+                dbo.permissions.update(where={"username": username, "permission": permission}, what={"options": form.options.data},
+                                       changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
                 new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
                 return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
             else:
@@ -69,15 +54,13 @@ class SpecificPermissionView(AdminView):
                 if not form.validate():
                     self.log.warning("Bad input: %s", form.errors)
                     return Response(status=400, response=json.dumps(form.errors))
-                dbo.permissions.grantPermission(changed_by, username, permission, form.options.data, transaction=transaction)
+                dbo.permissions.insert(changed_by, transaction=transaction, username=username, permission=permission, options=form.options.data)
                 return make_response(json.dumps(dict(new_data_version=1)), 201)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)
 
-    @setpermission
     @requirelogin
-    @requirepermission('/users/:id/permissions/:permission', options=[])
     def _post(self, username, permission, changed_by, transaction):
         if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
             return Response(status=404)
@@ -86,16 +69,15 @@ class SpecificPermissionView(AdminView):
             if not form.validate():
                 self.log.warning("Bad input: %s", form.errors)
                 return Response(status=400, response=json.dumps(form.errors))
-            dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
+            dbo.permissions.update(where={"username": username, "permission": permission}, what={"options": form.options.data},
+                                   changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
             new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
             return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)
 
-    @setpermission
     @requirelogin
-    @requirepermission('/users/:id/permissions/:permission', options=[])
     def _delete(self, username, permission, changed_by, transaction):
         if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
             return Response(status=404)
@@ -107,7 +89,8 @@ class SpecificPermissionView(AdminView):
             if not form.validate():
                 self.log.warning("Bad input: %s", form.errors)
                 return Response(status=400, response=json.dumps(form.errors))
-            dbo.permissions.revokePermission(changed_by, username, permission, form.data_version.data, transaction=transaction)
+            dbo.permissions.delete({"username": username, "permission": permission}, changed_by=changed_by,
+                                   old_data_version=form.data_version.data, transaction=transaction)
             return Response(status=200)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)

@@ -8,7 +8,7 @@ from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
 from auslib.db import OutdatedDataError, ReadOnlyError
 from auslib.admin.views.base import (
-    requirelogin, requirepermission, AdminView, HistoryAdminView
+    requirelogin, AdminView, HistoryAdminView
 )
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, DbEditableForm, ReadOnlyForm
@@ -18,11 +18,13 @@ __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
 def createRelease(release, product, changed_by, transaction, releaseData):
     blob = createBlob(json.dumps(releaseData))
-    dbo.releases.addRelease(name=release, product=product,
-                            blob=blob, changed_by=changed_by, transaction=transaction)
+    dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release,
+                        product=product, data=blob)
     return dbo.releases.getReleases(name=release, transaction=transaction)[0]
 
 
+# TODO: certain cases here can return a 400 while still modifying the database
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1246993 has more details
 def changeRelease(release, changed_by, transaction, existsCallback, commitCallback, log):
     """Generic function to change an aspect of a release. It relies on a
        PartialReleaseForm existing and does some upfront work and checks before
@@ -182,7 +184,6 @@ class SingleLocaleView(AdminView):
         return Response(response=json.dumps(locale), mimetype='application/json', headers=headers)
 
     @requirelogin
-    @requirepermission('/releases/:name/builds/:platform/:locale')
     def _put(self, release, platform, locale, changed_by, transaction):
         """Something important to note about this method is that using the
            "copyTo" field of the form, updates can be made to more than just
@@ -198,7 +199,7 @@ class SingleLocaleView(AdminView):
             return False
 
         def commit(rel, product, localeData, releaseData, old_data_version, extraArgs):
-            return dbo.releases.addLocaleToRelease(name=rel, platform=platform,
+            return dbo.releases.addLocaleToRelease(name=rel, product=product, platform=platform,
                                                    locale=locale, data=localeData, alias=extraArgs.get('alias'),
                                                    old_data_version=old_data_version,
                                                    changed_by=changed_by, transaction=transaction)
@@ -222,7 +223,6 @@ class SingleReleaseView(AdminView):
         return Response(response=json.dumps(release[0]['data'], indent=indent), mimetype='application/json', headers=headers)
 
     @requirelogin
-    @requirepermission('/releases/:name')
     def _put(self, release, changed_by, transaction):
         form = CompleteReleaseForm()
         if not form.validate():
@@ -233,9 +233,8 @@ class SingleReleaseView(AdminView):
         if dbo.releases.getReleases(name=release, limit=1):
             data_version = form.data_version.data
             try:
-                dbo.releases.updateRelease(name=release, blob=blob,
-                                           product=form.product.data, changed_by=changed_by,
-                                           old_data_version=data_version, transaction=transaction)
+                dbo.releases.update({"name": release}, {"data": blob, "product": form.product.data}, changed_by=changed_by,
+                                    old_data_version=data_version, transaction=transaction)
             except BlobValidationError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
@@ -248,13 +247,14 @@ class SingleReleaseView(AdminView):
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
                 return Response(status=400, response=json.dumps({"data": e.args}))
-            data_version += 1
+            # the data_version might jump by more than 1 if outdated blobs are
+            # merged
+            data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]['data_version']
             return Response(json.dumps(dict(new_data_version=data_version)), status=200)
         else:
             try:
-                dbo.releases.addRelease(name=release, product=form.product.data,
-                                        blob=blob,
-                                        changed_by=changed_by, transaction=transaction)
+                dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release,
+                                    product=form.product.data, data=blob)
             except BlobValidationError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
@@ -266,7 +266,6 @@ class SingleReleaseView(AdminView):
             return Response(status=201)
 
     @requirelogin
-    @requirepermission('/releases/:name')
     def _post(self, release, changed_by, transaction):
         def exists(rel, product):
             if rel == release:
@@ -276,9 +275,9 @@ class SingleReleaseView(AdminView):
         def commit(rel, product, newReleaseData, releaseData, old_data_version, extraArgs):
             releaseData.update(newReleaseData)
             blob = createBlob(releaseData)
-            return dbo.releases.updateRelease(name=rel, blob=blob,
-                                              changed_by=changed_by, old_data_version=old_data_version,
-                                              transaction=transaction)
+            return dbo.releases.update(where={"name": rel}, what={"data": blob, "product": product},
+                                       changed_by=changed_by, old_data_version=old_data_version,
+                                       transaction=transaction)
 
         return changeRelease(release, changed_by, transaction, exists, commit, self.log)
 
@@ -288,10 +287,6 @@ class SingleReleaseView(AdminView):
         if not releases:
             return Response(status=404, response='bad release')
         release = releases[0]
-        if not dbo.permissions.hasUrlPermission(changed_by, '/releases/:name', 'DELETE', urlOptions={'product': release['product']}):
-            msg = "%s is not allowed to delete %s releases" % (changed_by, release['product'])
-            self.log.warning("Unauthorized access attempt: %s", msg)
-            return Response(status=401, response=msg)
 
         # Bodies are ignored for DELETE requests, so we need to force WTForms
         # to look at the arguments instead.
@@ -305,8 +300,8 @@ class SingleReleaseView(AdminView):
             return Response(status=400, response=json.dumps(form.errors))
 
         try:
-            dbo.releases.deleteRelease(changed_by=changed_by, name=release['name'],
-                                       old_data_version=form.data_version.data, transaction=transaction)
+            dbo.releases.delete({"name": release["name"]}, changed_by=changed_by, old_data_version=form.data_version.data,
+                                transaction=transaction)
         except ReadOnlyError as e:
                 msg = "Couldn't delete release: %s" % e
                 self.log.warning("Bad input: %s", msg)
@@ -329,7 +324,6 @@ class ReleaseReadOnlyView(AdminView):
         })
 
     @requirelogin
-    @requirepermission('/releases/:name/read_only')
     def _put(self, release, changed_by, transaction):
         form = ReadOnlyForm()
         data_version = form.data_version.data
@@ -341,18 +335,11 @@ class ReleaseReadOnlyView(AdminView):
 
         if form.read_only.data:
             if not is_release_read_only:
-                dbo.releases.updateRelease(release, changed_by, data_version, read_only=True, transaction=transaction)
+                dbo.releases.update({"name": release}, {"read_only": True}, changed_by, data_version, transaction)
                 data_version += 1
         else:
-            if is_release_read_only:
-                # Only an admin user can unset the read_only field once it's set to True
-                if dbo.permissions.hasUrlPermission(changed_by, 'admin', 'PUT'):
-                    dbo.releases.updateRelease(release, changed_by, data_version, read_only=False, transaction=transaction)
-                    data_version += 1
-                else:
-                    msg = "%s is not allowed to set releases as read-write" % changed_by
-                    self.log.warning("Unauthorized attempt to mark release as read-write: %s", msg)
-                    return Response(status=403, response=msg)
+            dbo.releases.update({"name": release}, {"read_only": False}, changed_by, data_version, transaction)
+            data_version += 1
         return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
 
 
@@ -388,7 +375,7 @@ class ReleaseHistoryView(HistoryAdminView):
             ],
             limit=limit,
             offset=offset,
-            order_by=[table.timestamp.asc()],
+            order_by=[table.timestamp.desc()],
         )
 
         self.annotateRevisionDifferences(revisions)
@@ -400,6 +387,9 @@ class ReleaseHistoryView(HistoryAdminView):
 
     @requirelogin
     def _post(self, release, transaction, changed_by):
+        releases = dbo.releases.getReleases(name=release)
+        if not releases:
+            return Response(status=404, response='bad release')
         change_id = None
         if request.json:
             change_id = request.json.get('change_id')
@@ -408,26 +398,18 @@ class ReleaseHistoryView(HistoryAdminView):
             return Response(status=400, response='no change_id')
         change = dbo.releases.history.getChange(change_id=change_id)
         if change is None:
-            return Response(status=404, response='bad change_id')
+            return Response(status=400, response='bad change_id')
         if change['name'] != release:
-            return Response(status=404, response='bad release')
-        releases = dbo.releases.getReleases(name=release)
-        if not releases:
-            return Response(status=404, response='bad release')
+            return Response(status=400, response='bad release')
         release = releases[0]
-        if not dbo.permissions.hasUrlPermission(changed_by, '/releases/:name', 'POST', urlOptions={'product': release['product']}):
-            msg = "%s is not allowed to alter %s releases" % (changed_by, release['product'])
-            self.log.warning("Unauthorized access attempt: %s", msg)
-            return Response(status=401, response=msg)
         old_data_version = release['data_version']
 
         # now we're going to make a new update based on this change
         blob = createBlob(change['data'])
 
         try:
-            dbo.releases.updateRelease(changed_by=changed_by, name=change['name'],
-                                       blob=blob,
-                                       old_data_version=old_data_version, transaction=transaction)
+            dbo.releases.update({"name": change["name"]}, {"data": blob, "product": change["product"]}, changed_by=changed_by,
+                                old_data_version=old_data_version, transaction=transaction)
         except BlobValidationError as e:
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=json.dumps({"data": e.errors}))
@@ -477,7 +459,6 @@ class ReleasesAPIView(AdminView):
         return Response(response=json.dumps(data), mimetype="application/json")
 
     @requirelogin
-    @requirepermission('/releases')
     def _post(self, changed_by, transaction):
         form = CompleteReleaseForm()
         if not form.validate():
@@ -486,11 +467,9 @@ class ReleasesAPIView(AdminView):
 
         try:
             blob = createBlob(form.blob.data)
-            name = dbo.releases.addRelease(
-                name=form.name.data, product=form.product.data,
-                blob=blob,
-                changed_by=changed_by, transaction=transaction
-            )
+            name = dbo.releases.insert(changed_by=changed_by, transaction=transaction,
+                                       name=form.name.data, product=form.product.data,
+                                       data=blob)
         except BlobValidationError as e:
             msg = "Couldn't update release: %s" % e
             self.log.warning("Bad input: %s", msg)

@@ -51,9 +51,13 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
-    def testReleasePutUpdateOutdatedData(self):
+    def testReleasePostUpdateExistingWithoutPermission(self):
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
-        blob = """
+        ret = self._post('/releases/d', data=dict(data=data, product='d', data_version=1), username="hannah")
+        self.assertStatusCode(ret, 403)
+
+    def testReleasePutUpdateMergeableOutdatedData(self):
+        ancestor_blob = """
         {
             "name": "dd",
             "schema_version": 1,
@@ -74,26 +78,211 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
                 }
             }
         }"""
-        # Testing Put request to add new release
-        ret = self._put('/releases/dd', data=dict(data=data, name='dd', blob=blob, product='dd', data_version=1))
-        self.assertStatusCode(ret, 201)
+        blob1 = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        },
+                        "dd2": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                     }
+                }
+            }
+        }"""
+        blob2 = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        },
+                        "dd1": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+        result_blob = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd2": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        },
+                        "dd": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        },
+                        "dd1": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
 
+        # Testing Put request to add new release
+        ret = self._put('/releases/dd', data=dict(blob=ancestor_blob, name='dd',
+                                                  product='dd', data_version=1))
+        self.assertStatusCode(ret, 201)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads(blob))
+        self.assertEqual(json.loads(ret), json.loads(ancestor_blob))
 
         # Updating same release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
-        ret = self._put('/releases/dd', data=dict(data=data, name='dd', product='dd', blob=blob, data_version=1))
+        ret = self._put('/releases/dd', data=dict(blob=blob1, name='dd',
+                                                  product='dd', data_version=1))
         self.assertStatusCode(ret, 200)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
 
-        # Outdated Data Error on same release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
-        ret = self._put('/releases/dd', data=dict(data=data, name='dd', product='dd', blob=blob, data_version=1))
+        # Updating release with outdated data, testing if merged correctly
+        ret = self._put('/releases/dd', data=dict(blob=blob2, name='dd',
+                                                  product='dd', data_version=1))
+        self.assertStatusCode(ret, 200)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=3)),
+                         "Data: %s" % ret.data)
+
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret), json.loads(result_blob))
+
+    def testReleasePutUpdateConflictingOutdatedData(self):
+        ancestor_blob = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+        blob1 = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd1": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+        blob2 = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd": {
+                            "complete": {
+                                "filesize": 12345,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        },
+                        "dd1": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc1"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+        # Testing Put request to add new release
+        ret = self._put('/releases/dd', data=dict(blob=ancestor_blob, name='dd', product='dd', data_version=1))
+        self.assertStatusCode(ret, 201)
+
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret), json.loads(ancestor_blob))
+
+        # Updating same release
+        ret = self._put('/releases/dd', data=dict(blob=blob1, name='dd',
+                                                  product='dd', data_version=1))
+        self.assertStatusCode(ret, 200)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+
+        # Updating same release with conflicting data
+        ret = self._put('/releases/dd', data=dict(blob=blob2, name='dd',
+                                                  product='dd', data_version=1))
         self.assertStatusCode(ret, 400)
 
-    def testReleasePostUpdateOutdatedData(self):
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+    def testReleasePostUpdateOutdatedDataNotBlob(self):
         blob = """
         {
             "name": "ee",
@@ -115,20 +304,21 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
                 }
             }
         }"""
-        # Testing Post request to add new release
-        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', blob=blob, product='ee', data_version=1))
+        ret = self._post('/releases/ee', data=dict(data=blob, hashFunction="sha512", name='ee', product='ee', data_version=1))
         self.assertStatusCode(ret, 201)
 
         # Updating same release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', product='ee', blob=blob, data_version=2))
+        ret = self._post('/releases/ee', data=dict(data=blob,
+                                                   hashFunction="sha512",
+                                                   name='ee', product='ee', data_version=2))
         self.assertStatusCode(ret, 200)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=3)), "Data: %s" % ret.data)
 
         # Outdated Data Error on same release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
-        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', product='ee', blob=blob, data_version=1))
+        ret = self._post('/releases/ee', data=dict(hashFunction="sha512",
+                                                   read_only=True,
+                                                   name='ee', product='ee', data_version=1))
         self.assertStatusCode(ret, 400)
 
     def testReleasePostMismatchedName(self):
@@ -168,6 +358,11 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
     }
 }
 """))
+
+    def testReleasePostCreatesNewReleaseNopermission(self):
+        data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
+        ret = self._post('/releases/e', data=dict(data=data, product='e', schema_version=1), username="kate")
+        self.assertStatusCode(ret, 403)
 
     def testReleasePostCreatesNewReleasev2(self):
         data = json.dumps(dict(bouncerProducts=dict(complete='foo'), name='e', hashFunction="sha512"))
@@ -215,12 +410,16 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 404)
 
     def testDeleteWithoutPermission(self):
-        ret = self._delete("/releases/a", username="bob")
-        self.assertStatusCode(ret, 401)
+        ret = self._delete("/releases/a", username="bob", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 403)
+
+    def testDeleteWithoutPermissionForAction(self):
+        ret = self._delete("/releases/b", username="bob", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 403)
 
     def testDeleteReadOnlyRelease(self):
-        dbo.releases.updateRelease('a', changed_by='bill', read_only=True, old_data_version=1)
-        ret = self._delete("releases/a", username="bill", qs=dict(data_version=2))
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
+        ret = self._delete("/releases/a", username="bill", qs=dict(data_version=2))
         self.assertStatusCode(ret, 403)
 
     def testLocalePut(self):
@@ -256,15 +455,53 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
 }
 """))
 
+    def testLocalePutSpecificPermission(self):
+        data = json.dumps({
+            "complete": {
+                "filesize": 435,
+                "from": "*",
+                "hashValue": "abc",
+            }
+        })
+        ret = self._put('/releases/a/builds/p/l', username="ashanti", data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'a').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret), json.loads("""
+{
+    "name": "a",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 435,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+
     def testLocalePutWithBadHashFunction(self):
         data = json.dumps(dict(complete=dict(filesize='435')))
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 400)
 
+    def testLocalePutWithoutPermission(self):
+        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
+        ret = self._put('/releases/a/builds/p/l', username='liu', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 403)
+
     def testLocalePutWithoutPermissionForProduct(self):
-        data = json.dumps(dict(complete=dict(filesize='435')))
-        ret = self._put('/releases/a/builds/p/l', username='bob', data=dict(data=data, product='a', data_version=1))
-        self.assertStatusCode(ret, 401)
+        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
+        ret = self._put('/releases/a/builds/p/l', username='bob', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 403)
 
     def testLocalePutForNewRelease(self):
         data = json.dumps({
@@ -513,7 +750,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 401)
 
     def testLocalePutReadOnlyRelease(self):
-        dbo.releases.updateRelease('a', changed_by='bill', read_only=True, old_data_version=1)
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
         data = json.dumps({
             "complete": {
                 "filesize": 435,
@@ -844,49 +1081,26 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         self.assertEqual(data['detailsUrl'], 'beep')
 
     def testPostRevisionRollbackBadRequests(self):
+        data = json.dumps(dict(detailsUrl='beep', fakePartials=True, schema_version=1))
+        ret = self._post(
+            '/releases/d',
+            data=dict(
+                data=data,
+                product='d',
+                data_version=1,
+            )
+        )
+        self.assertStatusCode(ret, 200)
         # when posting you need both the release name and the change_id
         ret = self._post('/releases/CRAZYNAME/revisions', json.dumps({'change_id': 1}), content_type="application/json")
-        self.assertEquals(ret.status_code, 404)
+        self.assertEquals(ret.status_code, 404, ret.data)
 
         url = '/releases/d/revisions'
         ret = self._post(url, json.dumps({'change_id': 999}), content_type="application/json")
-        self.assertEquals(ret.status_code, 404)
+        self.assertEquals(ret.status_code, 400)
 
         ret = self._post(url)
         self.assertEquals(ret.status_code, 400)
-
-    def testSettings(self):
-        # let's poke Balrog about a new settings we got
-        blob = {
-            "name": "settings",
-            "schema_version": 2000,
-            "settings": {
-                "preloaded-sts-pkp": {
-                    "version": "1",
-                    "last_modified": 1438097376
-                }
-            }
-        }
-
-        data = {'name': 'settings', 'product': 'settings', 'blob': json.dumps(blob)}
-
-        ret = self._put('/releases/settings', data=data)
-        self.assertEquals(ret.status_code, 201)
-
-        select_rel = dbo.releases.t.select()
-        r = select_rel.where(dbo.releases.name == 'settings')
-        r = r.execute().fetchall()
-        self.assertEquals(len(r), 1)
-        rec = r[0]
-        self.assertEquals(rec['name'], 'settings')
-        self.assertEquals(rec['product'], 'settings')
-        self.assertEquals(byteify(json.loads(rec['data'])),
-                          json.loads(data['blob']))
-
-        # let's get it
-        ret = self._get('/releases/settings')
-        self.assertStatusCode(ret, 200)
-        self.assertEqual(json.loads(ret.data), json.loads(data['blob']))
 
 
 class TestSingleColumn_JSON(ViewTest, JSONTestMixin):
@@ -926,17 +1140,17 @@ class TestReadOnlyView(ViewTest, JSONTestMixin):
         self.assertEqual(read_only, True)
 
     def testReadOnlySetFalseAdmin(self):
-        dbo.releases.updateRelease('b', 'bill', 1, read_only=True)
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
         data = dict(name='b', read_only='', product='Firefox', data_version=2)
         self._put('/releases/b/read_only', username='bill', data=data)
         read_only = dbo.releases.isReadOnly(name='b')
         self.assertEqual(read_only, False)
 
     def testReadOnlyUnsetWithoutPermissionForProduct(self):
-        dbo.releases.updateRelease('b', changed_by='bob', read_only=True, old_data_version=1)
-        data = dict(name='b', read_only='', product='Firefox', data_version=1)
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
+        data = dict(name='b', read_only='', product='Firefox', data_version=2)
         ret = self._put('/releases/b/read_only', username='me', data=data)
-        self.assertStatusCode(ret, 401)
+        self.assertStatusCode(ret, 403)
 
     def testReadOnlyAdminSetAndUnsetFlag(self):
         # Setting flag

@@ -6,10 +6,14 @@ from flask import Response, make_response, request, jsonify
 
 from auslib.global_state import dbo
 from auslib.admin.views.base import (
-    requirelogin, requirepermission, AdminView, HistoryAdminView,
+    requirelogin, AdminView, HistoryAdminView,
 )
 from auslib.admin.views.csrf import get_csrf_headers
-from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm
+from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
+    ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
+    EditScheduledChangeNewRuleForm, EditScheduledChangeExistingRuleForm
+from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
+    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView
 
 
 class RulesAPIView(AdminView):
@@ -33,7 +37,6 @@ class RulesAPIView(AdminView):
 
     # changed_by is available via the requirelogin decorator
     @requirelogin
-    @requirepermission('/rules')
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
         form = RuleForm()
@@ -57,13 +60,13 @@ class RulesAPIView(AdminView):
                     distribution=form.distribution.data,
                     buildTarget=form.buildTarget.data,
                     osVersion=form.osVersion.data,
+                    systemCapabilities=form.systemCapabilities.data,
                     distVersion=form.distVersion.data,
                     whitelist=form.whitelist.data,
                     comment=form.comment.data,
                     update_type=form.update_type.data,
                     headerArchitecture=form.headerArchitecture.data)
-        rule_id = dbo.rules.addRule(changed_by=changed_by, what=what,
-                                    transaction=transaction)
+        rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
         return Response(status=200, response=str(rule_id))
 
 
@@ -89,17 +92,6 @@ class SingleRuleView(AdminView):
             return Response(status=404)
         form = EditRuleForm()
 
-        # Verify that the user has permission for the existing rule _and_ what the rule would become.
-        toCheck = [rule['product']]
-        # Rules can be partially updated - if product is null/None, we won't update that field, so
-        # we shouldn't check its permission.
-        if form.product.data:
-            toCheck.append(form.product.data)
-        for product in toCheck:
-            if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
-                msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
-                self.log.warning("Unauthorized access attempt: %s", msg)
-                return Response(status=401, response=msg)
         releaseNames = dbo.releases.getReleaseNames()
 
         form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
@@ -130,8 +122,8 @@ class SingleRuleView(AdminView):
             if (request.json and k in request.json) or k in request.form:
                 what[k] = v
 
-        dbo.rules.updateRule(changed_by=changed_by, id_or_alias=id_or_alias, what=what,
-                             old_data_version=form.data_version.data, transaction=transaction)
+        dbo.rules.update(changed_by=changed_by, where={"rule_id": id_or_alias}, what=what,
+                         old_data_version=form.data_version.data, transaction=transaction)
 
         # find out what the next data version is
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
@@ -156,13 +148,8 @@ class SingleRuleView(AdminView):
         # form to make sure that the CSRF token is checked.
         form = DbEditableForm(request.args)
 
-        if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'DELETE', urlOptions={'product': rule['product']}):
-            msg = "%s is not allowed to alter rules that affect %s" % (changed_by, rule['product'])
-            self.log.warning("Unauthorized access_attempt: %s", msg)
-            return Response(status=401, response=msg)
-
-        dbo.rules.deleteRule(changed_by=changed_by, id_or_alias=id_or_alias,
-                             old_data_version=form.data_version.data, transaction=transaction)
+        dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by, old_data_version=form.data_version.data,
+                         transaction=transaction)
 
         return Response(status=200)
 
@@ -197,7 +184,7 @@ class RuleHistoryAPIView(HistoryAdminView):
                    table.data_version != null()],
             limit=limit,
             offset=offset,
-            order_by=[table.timestamp.asc()],
+            order_by=[table.timestamp.desc()],
         )
         _rules = []
         _mapping = {
@@ -215,6 +202,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             'distribution': 'distribution',
             'buildTarget': 'buildTarget',
             'osVersion': 'osVersion',
+            'systemCapabilities': 'systemCapabilities',
             'distVersion': 'distVersion',
             'whitelist': 'whitelist',
             'comment': 'comment',
@@ -240,6 +228,9 @@ class RuleHistoryAPIView(HistoryAdminView):
 
     @requirelogin
     def _post(self, rule_id, transaction, changed_by):
+        rule = dbo.rules.getRule(rule_id)
+        if rule is None:
+            return Response(status=404, response='bad rule_id')
         change_id = None
         if request.json:
             change_id = request.json.get('change_id')
@@ -248,18 +239,9 @@ class RuleHistoryAPIView(HistoryAdminView):
             return Response(status=400, response='no change_id')
         change = dbo.rules.history.getChange(change_id=change_id)
         if change is None:
-            return Response(status=404, response='bad change_id')
+            return Response(status=400, response='bad change_id')
         if change['rule_id'] != rule_id:
-            return Response(status=404, response='bad rule_id')
-        rule = dbo.rules.getRule(rule_id)
-        if rule is None:
-            return Response(status=404, response='bad rule_id')
-        # Verify that the user has permission for the existing rule _and_ what the rule would become.
-        for product in (rule['product'], change['product']):
-            if not dbo.permissions.hasUrlPermission(changed_by, '/rules/:id', 'POST', urlOptions={'product': product}):
-                msg = "%s is not allowed to alter rules that affect %s" % (changed_by, product)
-                self.log.warning("Unauthorized access attempt: %s", msg)
-                return Response(status=401, response=msg)
+            return Response(status=400, response='bad rule_id')
         old_data_version = rule['data_version']
 
         # now we're going to make a new insert based on this
@@ -276,6 +258,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             distribution=change['distribution'],
             buildTarget=change['buildTarget'],
             osVersion=change['osVersion'],
+            systemCapabilities=change['systemCapabilities'],
             distVersion=change['distVersion'],
             whitelist=change['whitelist'],
             comment=change['comment'],
@@ -283,8 +266,8 @@ class RuleHistoryAPIView(HistoryAdminView):
             headerArchitecture=change['headerArchitecture'],
         )
 
-        dbo.rules.updateRule(changed_by=changed_by, id_or_alias=rule_id, what=what,
-                             old_data_version=old_data_version, transaction=transaction)
+        dbo.rules.update(changed_by=changed_by, where={"rule_id": rule_id}, what=what,
+                         old_data_version=old_data_version, transaction=transaction)
 
         return Response("Excellent!")
 
@@ -308,3 +291,61 @@ class SingleRuleColumnView(AdminView):
             column: column_values,
         }
         return jsonify(ret)
+
+
+class RuleScheduledChangesView(ScheduledChangesView):
+    def __init__(self):
+        super(RuleScheduledChangesView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, transaction, changed_by):
+        if request.form.get("data_version"):
+            form = ScheduledChangeExistingRuleForm()
+        else:
+            form = ScheduledChangeNewRuleForm()
+
+        releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+        form.mapping.choices.insert(0, ('', 'NULL'))
+
+        return super(RuleScheduledChangesView, self)._post(form, transaction, changed_by)
+
+
+class RuleScheduledChangeView(ScheduledChangeView):
+    def __init__(self):
+        super(RuleScheduledChangeView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        if request.form.get("data_version"):
+            form = EditScheduledChangeExistingRuleForm()
+        else:
+            form = EditScheduledChangeNewRuleForm()
+
+        releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+        form.mapping.choices.insert(0, ('', 'NULL'))
+
+        return super(RuleScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(RuleScheduledChangeView, self)._delete(sc_id, transaction, changed_by)
+
+
+class EnactRuleScheduledChangeView(EnactScheduledChangeView):
+    def __init__(self):
+        super(EnactRuleScheduledChangeView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(EnactRuleScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+
+
+class RuleScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    def __init__(self):
+        super(RuleScheduledChangeHistoryView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(RuleScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)

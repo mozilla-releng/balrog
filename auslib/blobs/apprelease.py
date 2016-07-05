@@ -1,5 +1,3 @@
-import re
-
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob
@@ -8,6 +6,9 @@ from auslib.util.versions import MozillaVersion
 
 
 class ReleaseBlobBase(Blob):
+
+    def __init__(self, **kwargs):
+        Blob.__init__(self, **kwargs)
 
     def matchesUpdateQuery(self, updateQuery):
         self.log.debug("Trying to match update query to %s" % self["name"])
@@ -93,25 +94,33 @@ class ReleaseBlobBase(Blob):
         # the update entirely? Right now, another patch type could still
         # return an update. Eg, the partial could contain a forbidden domain
         # but the complete could still return an update from an accepted one.
-        if isForbiddenUrl(url, whitelistedDomains):
+        if isForbiddenUrl(url, updateQuery['product'], whitelistedDomains):
             return None
 
         return '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
             (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
 
-    def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        """This method is the entry point for update XML creation for all Gecko
-           app blobs. However, the XML and underlying data has changed over
-           time, so there is a lot of indirection and calls factored out to
-           subclasses. Below is a brief description of the flow of control that
-           should help in understanding this code. Inner methods that are
-           shared between blob versions live in Mixin classes so that they can
+    def getHeaderXML(self, updateQuery, update_type):
+        buildTarget = updateQuery["buildTarget"]
+        locale = updateQuery["locale"]
+        return self._getUpdateLineXML(buildTarget, locale, update_type)
+
+    def getFooterXML(self):
+        return '    </update>'
+
+    def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        """This method, along with getHeaderXML and getFooterXML are the entry point
+           for update XML creation for all Gecko app blobs. However, the XML and
+           underlying data has changed over time, so there is a lot of indirection
+           and calls factored out to subclasses. Below is a brief description of the
+           flow of control that should help in understanding this code. Inner methods
+           that are shared between blob versions live in Mixin classes so that they can
            be easily shared. Inner methods that only apply to a single blob
            version live on concrete blob classes (but should be moved if they
            need to be shared in the future).
-           * createXML() called by web layer, lives on this base class. The V1
-             blob class overrides it to support bug 1113475, but still calls
-             the base class one to do most of the work.
+           * getInnerXML, getFooterXML and getHeaderXML called by web layer,
+             live on this base class. The V1 blob class override them to
+             support bug 1113475, but still calls the base class one to do most of the work.
            ** _getUpdateLineXML() called to get information that is independent
               of specific MARs. Most notably, version information changed
               starting with V2 blobs.
@@ -136,18 +145,8 @@ class ReleaseBlobBase(Blob):
         locale = updateQuery["locale"]
         localeData = self.getLocaleData(buildTarget, locale)
 
-        updateLine = self._getUpdateLineXML(buildTarget, locale, update_type)
         patches = self._getPatchesXML(localeData, updateQuery, whitelistedDomains, specialForceHosts)
-
-        xml = ['<?xml version="1.0"?>']
-        xml.append('<updates>')
-        if patches:
-            xml.append(updateLine)
-            xml.extend(patches)
-            xml.append('    </update>')
-        xml.append('</updates>')
-        # ensure valid xml by using the right entity for ampersand
-        return re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
+        return patches
 
     def shouldServeUpdate(self, updateQuery):
         buildTarget = updateQuery['buildTarget']
@@ -165,6 +164,8 @@ class ReleaseBlobBase(Blob):
             if updateQuery['buildID'] >= self.getBuildID(updateQuery['buildTarget'], updateQuery['locale']):
                 self.log.debug("Matching rule has older buildid than request, will not serve update.")
                 return False
+        if updateQuery['buildTarget'] not in self['platforms'].keys():
+            return False
 
         return True
 
@@ -271,7 +272,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
-            if isForbiddenUrl(url, whitelistedDomains):
+            if isForbiddenUrl(url, updateQuery['product'], whitelistedDomains):
                 break
 
             snippet = [
@@ -321,7 +322,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
 
         return updateLine
 
-    def createXML(self, updateQuery, *args, **kwargs):
+    def getHeaderXML(self, updateQuery, update_type):
         """ In order to update some older versions of Firefox without prompting
         them for add-on compatibility, we need to be able to modify the appVersion
         and extVersion attributes. bug 998721 and bug 1174605 have additional
@@ -330,7 +331,8 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         this method, but that doesn't have access to the updateQuery to lookup
         the version making the request.
         """
-        xml = super(ReleaseBlobV1, self).createXML(updateQuery, *args, **kwargs)
+        xml = super(ReleaseBlobV1, self).getHeaderXML(updateQuery, update_type)
+
         if self.get("oldVersionSpecialCases"):
             query_ver = MozillaVersion(updateQuery["version"])
             real_appv = self.getAppv(updateQuery["buildTarget"], updateQuery["locale"])
@@ -401,10 +403,11 @@ class NewStyleVersionsMixin(object):
 
 
 class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
-    """ Client-side changes in
+    """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
+
+        Client-side changes in
           https://bugzilla.mozilla.org/show_bug.cgi?id=530872
-        were introduced at Gecko 1.9.3a3 (which later became Firefox 4.0),
-        requiring this new blob class.
+        renamed or introduced several attributes in update.xml
 
         Changed parameters from ReleaseBlobV1:
          * appv, extv become appVersion, platformVersion, displayVersion
@@ -416,7 +419,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
     """
     jsonschema = "apprelease-v2.yml"
 
-    # for the benefit of createXML and createSnippets
+    # for the benefit of get*XML and createSnippets
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
@@ -445,7 +448,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
-            if isForbiddenUrl(url, whitelistedDomains):
+            if isForbiddenUrl(url, updateQuery['product'], whitelistedDomains):
                 break
 
             snippet = [
@@ -496,16 +499,18 @@ class MultipleUpdatesXMLMixin(object):
 
 
 class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, SeparatedFileUrlsMixin):
-    """ This is an internal change to add functionality to Balrog.
+    """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
 
-    Changes from ReleaseBlobV2:
-         * support multiple partials
-           * remove "partial" and "complete" from locale level
-           * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
+        This is an internal change to add functionality to Balrog.
+
+        Changes from ReleaseBlobV2:
+             * support multiple partials
+               * remove "partial" and "complete" from locale level
+               * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
     """
     jsonschema = "apprelease-v3.yml"
 
-    # for the benefit of createXML
+    # for the benefit of get*XML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
@@ -571,7 +576,9 @@ class UnifiedFileUrlsMixin(object):
 
 
 class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """ This is an internal change to add functionality to Balrog.
+    """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
+
+    This is an internal change to add functionality to Balrog.
 
     Changes from ReleaseBlobV3:
         * Support pushing release builds to the beta channel with bouncer support (bug 1021026)
@@ -580,14 +587,14 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     """
     jsonschema = "apprelease-v4.yml"
 
-    # for the benefit of createXML
+    # for the benefit of get*XML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
 
     def __init__(self, **kwargs):
-        # ensure schema_version is set if we init ReleaseBlobV3 directly
+        # ensure schema_version is set if we init ReleaseBlobV4 directly
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 4
@@ -634,6 +641,31 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         return v4Blob
 
 
+class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+    """ Compatible with Gecko 19.0 and above, ie Firefox/Thunderbird 19.0 and above.
+
+    Driven by a client-side change made in
+      https://bugzilla.mozilla.org/show_bug.cgi?id=813322
+
+    Changes from ReleaseBlobV4:
+        * Support optional promptWaitTime attribute
+    """
+    jsonschema = "apprelease-v5.yml"
+
+    # for the benefit of get*XML
+    optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
+                 'actions', 'openURL', 'notificationURL', 'alertURL',
+                 'promptWaitTime')
+    # params that can have %LOCALE% interpolated
+    interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
+
+    def __init__(self, **kwargs):
+        # ensure schema_version is set if we init ReleaseBlobV5 directly
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 5
+
+
 class DesupportBlob(Blob):
     """ This blob is used to inform users that their OS is no longer supported. This is available
     on the client side since Firefox 24 (bug 843497).
@@ -657,12 +689,14 @@ class DesupportBlob(Blob):
         # desupport messages should always be returned
         return True
 
-    def createXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        xml = ['<?xml version="1.0"?>']
-        xml.append('<updates>')
+    def getHeaderXML(self, updateQuery, update_type):
+        return ''
+
+    def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        xml = []
         xml.append('    <update type="%s" unsupported="true" detailsURL="%s">' % (update_type,
                                                                                   self['detailsUrl']))
-        xml.append('    </update>')
-        xml.append('</updates>')
-        xml = "\n".join(xml)
         return xml
+
+    def getFooterXML(self):
+        return '</update>'

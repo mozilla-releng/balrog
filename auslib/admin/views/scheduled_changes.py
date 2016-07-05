@@ -1,0 +1,207 @@
+import json
+
+from sqlalchemy.sql.expression import null
+
+from flask import jsonify, request, Response
+
+from auslib.admin.views.base import AdminView, HistoryAdminView
+from auslib.admin.views.forms import DbEditableForm
+
+
+class ScheduledChangesView(AdminView):
+    """/scheduled_changes/:namespace"""
+
+    def __init__(self, namespace, table):
+        self.namespace = namespace
+        self.path = "/scheduled_changes/%s" % namespace
+        self.table = table
+        self.sc_table = table.scheduled_changes
+        super(ScheduledChangesView, self).__init__()
+
+    def get(self):
+        # TODO: improve this
+        rows = self.sc_table.select()
+        ret = {"count": len(rows), "scheduled_changes": []}
+        for row in rows:
+            r = {}
+            for k, v in row.iteritems():
+                if k == "data_version":
+                    r["sc_data_version"] = v
+                else:
+                    r[k.replace("base_", "")] = v
+            ret["scheduled_changes"].append(r)
+        return jsonify(ret)
+
+    def _post(self, form, transaction, changed_by):
+        if not form.validate():
+            self.log.warning("Bad input: %s", form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
+
+        try:
+            sc_id = self.sc_table.insert(changed_by, transaction, **form.data)
+        except ValueError as e:
+            self.log.warning("Bad input: %s", e)
+            return Response(status=400, response=str(e))
+
+        return jsonify({"sc_id": sc_id})
+
+
+class ScheduledChangeView(AdminView):
+    """/scheduled_changes/:namespace/:sc_id"""
+
+    def __init__(self, namespace, table):
+        self.namespace = namespace
+        self.path = "/scheduled_changes/%s/:sc_id" % namespace
+        self.table = table
+        self.sc_table = table.scheduled_changes
+        super(ScheduledChangeView, self).__init__()
+
+    def _post(self, sc_id, form, transaction, changed_by):
+        if not form.validate():
+            self.log.warning("Bad input: %s", form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
+
+        what = dict()
+        # We need to be able to support changing AND removing things
+        # and because of how Flask's request object and WTForm's defaults work
+        # this gets a little hairy.
+        for k, v in form.data.iteritems():
+            # sc_data_version is a "special" column, in that it's not part of the
+            # primary data, and shouldn't be updatable by the user.
+            if k == "sc_data_version":
+                continue
+            # We need to check for each column in both the JSON style post
+            # and the regular multipart form data. If the key is not present in
+            # either of these data structures. We treat this cases as no-op
+            # and shouldn't modify the data for that key.
+            # If the key is present we should modify the data as requested.
+            # If a value is an empty string, we should remove that restriction
+            # from the rule (aka, set as NULL in the db). The underlying Form
+            # will have already converted it to None, so we can treat it the
+            # same as a modification here.
+            if (request.json and k in request.json) or k in request.form:
+                what[k] = v
+
+        try:
+            self.sc_table.update({"sc_id": sc_id}, what, changed_by, form.sc_data_version.data, transaction)
+        except ValueError as e:
+            self.log.warning("Bad input: %s", e)
+            return Response(status=400, response=str(e))
+
+        return Response(status=200)
+
+    def _delete(self, sc_id, transaction, changed_by):
+        where = {"sc_id": sc_id}
+        sc = self.sc_table.select(where, transaction, columns=["sc_id"])
+        if not sc:
+            return Response(status=404)
+
+        form = DbEditableForm(request.args)
+
+        self.sc_table.delete(where, changed_by, form.data_version.data, transaction)
+        return Response(status=200)
+
+
+class EnactScheduledChangeView(AdminView):
+    """/scheduled_changes/:namespace/:sc_id/enact"""
+
+    def __init__(self, namespace, table):
+        self.namespace = namespace
+        self.path = "/scheduled_changes/%s/:sc_id/enact" % namespace
+        self.table = table
+        self.sc_table = table.scheduled_changes
+        super(EnactScheduledChangeView, self).__init__()
+
+    def _post(self, sc_id, transaction, changed_by):
+        self.sc_table.enactChange(sc_id, changed_by, transaction)
+        return Response(status=200)
+
+
+class ScheduledChangeHistoryView(HistoryAdminView):
+    """/scheduled_changes/:namespace/revisions"""
+
+    def __init__(self, namespace, table, *args, **kwargs):
+        self.namespace = namespace
+        self.path = "/scheduled_changes/%s/revisions" % namespace
+        self.table = table
+        super(ScheduledChangeHistoryView, self).__init__(*args, **kwargs)
+
+    def get(self, sc_id):
+        if not self.table.scheduled_changes.select({"sc_id": sc_id}):
+            return Response(status=404, response="Scheduled change does not exist")
+
+        try:
+            page = int(request.args.get('page', 1))
+            limit = int(request.args.get('limit', 100))
+            assert page >= 1
+        except (ValueError, AssertionError) as msg:
+            self.log.warning("Bad input: %s", msg)
+            return Response(status=400, response=str(msg))
+
+        offset = limit * (page - 1)
+        total_count = self.table.scheduled_changes.history.t.count()\
+            .where(self.table.scheduled_changes.history.sc_id == sc_id)\
+            .where(self.table.scheduled_changes.history.data_version != null())\
+            .execute()\
+            .fetchone()[0]
+
+        revisions = self.table.scheduled_changes.history.select(
+            where=[self.table.scheduled_changes.history.sc_id == sc_id,
+                   self.table.scheduled_changes.history.data_version != null()],
+            limit=limit,
+            offset=offset,
+            order_by=[self.table.scheduled_changes.history.timestamp.asc()],
+        )
+
+        ret = {
+            "count": total_count,
+            "revisions": [],
+        }
+
+        for rev in revisions:
+            r = {}
+            for k, v in rev.iteritems():
+                if k == "data_version":
+                    r["sc_data_version"] = v
+                else:
+                    r[k.replace("base_", "")] = v
+            ret["revisions"].append(r)
+
+        return jsonify(ret)
+
+    def _post(self, sc_id, transaction, changed_by):
+        change_id = None
+        if request.json:
+            change_id = request.json.get('change_id')
+        if not change_id:
+            self.log.warning("Bad input: %s", "no change_id")
+            return Response(status=400, response='no change_id')
+        change = self.table.scheduled_changes.history.getChange(change_id=change_id)
+        if change is None:
+            return Response(status=400, response='bad change_id')
+        if change['sc_id'] != sc_id:
+            return Response(status=400, response='bad sc_id')
+        sc = self.table.scheduled_changes.select({"sc_id": sc_id}, transaction=transaction)[0]
+        if sc is None:
+            return Response(status=404, response='bad sc_id')
+        old_data_version = sc['data_version']
+
+        what = dict(
+            # One could argue that we should restore scheduled_by to its value from the change,
+            # but since the person who is reverting could be different, it's probably best to
+            # use that instead.
+            scheduled_by=changed_by,
+            complete=change["complete"],
+            when=change["when"],
+            telemetry_product=change["telemetry_product"],
+            telemetry_channel=change["telemetry_channel"],
+            telemetry_uptake=change["telemetry_uptake"],
+        )
+        # Copy in all the base table columns, too.
+        for col in self.table.scheduled_changes.t.get_children():
+            if col.name.startswith("base_"):
+                what[col.name] = change[col.name]
+
+        self.table.scheduled_changes.update(changed_by=changed_by, where={"sc_id": sc_id}, what=what,
+                                            old_data_version=old_data_version, transaction=transaction)
+        return Response("Success")

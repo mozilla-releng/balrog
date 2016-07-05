@@ -1,5 +1,6 @@
 from collections import defaultdict
 from copy import copy
+import itertools
 from os import path
 import pprint
 import re
@@ -11,9 +12,13 @@ from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
     create_engine, select, BigInteger, Boolean, join
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
+import sqlalchemy.types
 
 import migrate.versioning.schema
 import migrate.versioning.api
+
+import dictdiffer
+import dictdiffer.merge
 
 from auslib.global_state import cache, dbo
 from auslib.AUS import isForbiddenUrl
@@ -60,6 +65,10 @@ class WrongNumberOfRowsError(SQLAlchemyError):
     """Raised when an update or delete fails because the clause matches more than one row."""
 
 
+class UpdateMergeError(SQLAlchemyError):
+    pass
+
+
 class ReadOnlyError(SQLAlchemyError):
     """Raised when a release marked as read-only is attempted to be changed."""
 
@@ -84,8 +93,8 @@ class AUSTransaction(object):
         try:
             # If something that executed in the context raised an Exception,
             # rollback and re-raise it.
-            self.log.debug("exc is:", exc_info=True)
             if exc[0]:
+                self.log.debug("exc is:", exc_info=True)
                 self.rollback()
                 raise exc[0], exc[1], exc[2]
             # Also need to check for exceptions during commit!
@@ -147,6 +156,13 @@ class AUSTable(object):
                          update. This is useful for detecting colliding
                          updates.
        @type versioned: bool
+       @param scheduled_changes: Whether or not this table should allow changes
+                                 to be scheduled. When True, two additional tables
+                                 will be created: a $name_scheduled_changes, which
+                                 will contain data needed to schedule changes to
+                                 $name, and $name_scheduled_changes_history, which
+                                 tracks the history of a scheduled change.
+       @type scheduled_changes: bool
        @param onInsert: A callback that will be called whenever an insert is
                         made to the table. It must accept the following 4
                         parameters:
@@ -163,8 +179,9 @@ class AUSTable(object):
        @type onUpdate: callable
     """
 
-    def __init__(self, dialect, history=True, versioned=True, onInsert=None,
-                 onUpdate=None, onDelete=None):
+    def __init__(self, db, dialect, history=True, versioned=True, scheduled_changes=False,
+                 onInsert=None, onUpdate=None, onDelete=None):
+        self.db = db
         self.t = self.table
         # Enable versioning, if required
         if versioned:
@@ -181,9 +198,14 @@ class AUSTable(object):
                 self.primary_key.append(col)
         # Set-up a history table to do logging in, if required
         if history:
-            self.history = History(dialect, self.t.metadata, self)
+            self.history = History(db, dialect, self.t.metadata, self)
         else:
             self.history = None
+        # Set-up a scheduled changes table if required
+        if scheduled_changes:
+            self.scheduled_changes = ScheduledChangeTable(db, dialect, self.t.metadata, self)
+        else:
+            self.scheduled_changes = None
         self.log = logging.getLogger(self.__class__.__name__)
 
     # Can't do this in the constructor, because the engine is always
@@ -227,13 +249,20 @@ class AUSTable(object):
         return query
 
     @rowsToDicts
-    def select(self, transaction=None, **kwargs):
+    def select(self, where=None, transaction=None, **kwargs):
         """Perform a SELECT statement on this table.
            See AUSTable._selectStatement for possible arguments.
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        query = self._selectStatement(**kwargs)
+
+        # "where" can be either a list of SQLAlchemy objects, or a key/value
+        # pair of columns and values. If it's the latter, we need to convert it
+        # to the former before proceeding.
+        if hasattr(where, "keys"):
+            where = [getattr(self, k) == v for k, v in where.iteritems()]
+
+        query = self._selectStatement(where=where, **kwargs)
         if transaction:
             return transaction.execute(query).fetchall()
         else:
@@ -333,6 +362,16 @@ class AUSTable(object):
             raise OutdatedDataError("Failed to delete row, old_data_version doesn't match current data_version")
         if self.history:
             trans.execute(self.history.forDelete(row, changed_by))
+        if self.scheduled_changes:
+            # We don't allow rows that have changes scheduled to them to be
+            # deleted because we don't know if the user deleting the row has
+            # permission to cancel the scheduled changes. Feeding mergeUpdate
+            # an object with all the rows values set to None will cause it to
+            # raise an exception if any change is scheduled for it.
+            # We use mergeUpdate instead of doing this ourselves because it
+            # already knows how to rewrite column names.
+            new_row = dict.fromkeys([c.name for c in self.table.get_children()])
+            self.scheduled_changes.mergeUpdate(row, new_row, changed_by, trans)
         return ret
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
@@ -352,6 +391,12 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        # "where" can be either a list of SQLAlchemy objects, or a key/value
+        # pair of columns and values. If it's the latter, we need to convert it
+        # to the former before proceeding.
+        if hasattr(where, "keys"):
+            where = [getattr(self, k) == v for k, v in where.iteritems()]
+
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
@@ -386,24 +431,28 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        row = self._returnRowOrRaise(where=where, transaction=trans)
+        orig_row = self._returnRowOrRaise(where=where, transaction=trans)
+        new_row = orig_row.copy()
         if self.versioned:
             where = copy(where)
             where.append(self.data_version == old_data_version)
-            row['data_version'] += 1
+            new_row['data_version'] += 1
+            what["data_version"] = new_row["data_version"]
 
         # Copy the new data into the row
         for col in what:
-            row[col] = what[col]
+            new_row[col] = what[col]
 
-        query = self._updateStatement(where, row)
+        query = self._updateStatement(where, new_row)
 
         if self.onUpdate:
             self.onUpdate(self, "UPDATE", changed_by, query)
 
         ret = trans.execute(query)
         if self.history:
-            trans.execute(self.history.forUpdate(row, changed_by))
+            trans.execute(self.history.forUpdate(new_row, changed_by))
+        if self.scheduled_changes:
+            self.scheduled_changes.mergeUpdate(orig_row, what, changed_by, trans)
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
@@ -425,6 +474,13 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+
+        # "where" can be either a list of SQLAlchemy objects, or a key/value
+        # pair of columns and values. If it's the latter, we need to convert it
+        # to the former before proceeding.
+        if hasattr(where, "keys"):
+            where = [getattr(self, k) == v for k, v in where.iteritems()]
+
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
@@ -453,7 +509,7 @@ class History(AUSTable):
        inputs, and are documented below. History tables are never versioned,
        and cannot have history of their own."""
 
-    def __init__(self, dialect, metadata, baseTable):
+    def __init__(self, db, dialect, metadata, baseTable):
         self.baseTable = baseTable
         self.table = Table('%s_history' % baseTable.t.name, metadata,
                            Column('change_id', Integer, primary_key=True, autoincrement=True),
@@ -479,7 +535,7 @@ class History(AUSTable):
             else:
                 newcol.nullable = True
             self.table.append_column(newcol)
-        AUSTable.__init__(self, dialect, history=False, versioned=False)
+        AUSTable.__init__(self, db, dialect, history=False, versioned=False)
 
     def getTimestamp(self):
         t = int(time.time() * 1000)
@@ -526,9 +582,37 @@ class History(AUSTable):
         row['timestamp'] = self.getTimestamp()
         return self._insertStatement(**row)
 
-    def getChange(self, change_id, transaction=None):
-        """ Returns the unique change that matches the give change_id """
-        changes = self.select(where=[self.change_id == change_id], transaction=transaction)
+    def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
+        """ Returns the unique change that matches the give change_id or
+            combination of data_version and values for the specified columns.
+            column_values is a dict that contains the column names that are
+            versioned and their values.
+            Ignores non primary key attributes specified in column_values."""
+        # if change_id is not None, we use it to get the change, ignoring
+        # data_version and column_values
+        by_change_id = False if change_id is None else True
+        # column_names lists all primary keys as string keys with the column
+        # objects as values
+        column_names = {col.name: col for col in self.table.columns if col.name in self.base_primary_key}
+
+        if not by_change_id:
+            # we check if the entire primary key is present in column_values,
+            # since there might be multiple rows that match an incomplete
+            # primary key
+            for col in column_names.keys():
+                if col not in column_values.keys():
+                    raise ValueError("Entire primary key not present")
+            # data_version can only be queried for versioned tables
+            if not self.baseTable.versioned:
+                raise ValueError("data_version queried for non-versioned table")
+
+            where = [self.data_version == data_version]
+            for col in column_names.keys():
+                where.append(column_names[col] == column_values[col])
+            changes = self.select(where=where,
+                                  transaction=transaction)
+        else:
+            changes = self.select(where=[self.change_id == change_id], transaction=transaction)
         found = len(changes)
         if found > 1 or found == 0:
             self.log.debug("Found %s changes, should have been 1", found)
@@ -587,7 +671,7 @@ class History(AUSTable):
         """ Rollback the change given by the change_id,
         Will handle all cases: insert, delete, update """
 
-        change = self.getChange(change_id, transaction)
+        change = self.getChange(change_id=change_id, transaction=transaction)
 
         # Get the values of the primary keys for the given row
         row_primary_keys = [0] * len(self.base_primary_key)
@@ -637,9 +721,243 @@ class History(AUSTable):
             self.log.debug("ERROR, change doesn't correspond to any known operation")
 
 
+class ScheduledChangeTable(AUSTable):
+    """A Table that stores the necessary information to schedule changes
+    to the baseTable provided. A ScheduledChangeTable ends up mirroring the
+    columns of its base, and adding the necessary ones to provide the schedule.
+    By default, ScheduledChangeTables enable History on themselves."""
+    condition_groups = (
+        ("when",),
+        ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
+    )
+
+    def __init__(self, db, dialect, metadata, baseTable):
+        self.baseTable = baseTable
+        self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
+                           Column("sc_id", Integer, primary_key=True, autoincrement=True),
+                           Column("scheduled_by", String(100), nullable=False),
+                           Column("complete", Boolean, default=False),
+                           Column("telemetry_product", String(15)),
+                           Column("telemetry_channel", String(75)),
+                           Column("telemetry_uptake", Integer),
+                           )
+        if dialect == 'sqlite':
+            self.table.append_column(Column('when', Integer))
+        else:
+            self.table.append_column(Column('when', BigInteger))
+
+        # The primary key column(s) are used in construct "where" clauses for
+        # existing rows.
+        self.base_primary_key = []
+        # A ScheduledChangesTable requires all of the columns from its base
+        # table, with a few tweaks:
+        for col in baseTable.t.get_children():
+            if col.primary_key:
+                self.base_primary_key.append(col.name)
+            newcol = col.copy()
+            # 1) Columns are prefixed with "base_", to make them easy to
+            # identify and avoid conflicts.
+            # Renaming a column requires to change both the key and the name
+            # See https://github.com/zzzeek/sqlalchemy/blob/rel_0_7/lib/sqlalchemy/schema.py#L781
+            # for background.
+            newcol.key = newcol.name = "base_%s" % col.name
+            # 2) Primary keys on the base table are normal columns here,
+            # and are allowed to be null (because we support adding new rows
+            # to tables with autoincrementing keys via scheduled changes).
+            # The base table's data version may also be null for the same reason.
+            if col.primary_key or newcol.name == "base_data_version":
+                newcol.primary_key = False
+                newcol.nullable = True
+            # Notable because of its abscence, other columns retain their
+            # nullability because whether or not we're adding a new row or
+            # modifying an existing one, those NOT NULL columns are required.
+            self.table.append_column(newcol)
+
+        super(ScheduledChangeTable, self).__init__(db, dialect, history=True, versioned=True)
+
+    def _prefixColumns(self, columns):
+        ret = {}
+        base_columns = [c.name for c in self.baseTable.t.get_children()]
+        for k, v in columns.iteritems():
+            if k in base_columns:
+                ret["base_%s" % k] = v
+            else:
+                ret[k] = v
+        return ret
+
+    def _validateConditions(self, conditions):
+        # Filter out conditions whose values are none before processing.
+        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
+        if not conditions:
+            raise ValueError("No conditions found")
+
+        for c in conditions:
+            if c not in itertools.chain(*self.condition_groups):
+                raise ValueError("Invalid condition: %s", c)
+
+        for group in self.condition_groups:
+            if set(group) == set(conditions.keys()):
+                break
+        else:
+            raise ValueError("Invalid combination of conditions: %s", conditions.keys())
+
+        if "when" in conditions:
+            try:
+                time.gmtime(conditions["when"])
+            except:
+                raise ValueError("Cannot parse 'when' as a unix timestamp.")
+
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        base_table_where = []
+        for pk in self.base_primary_key:
+            base_column = getattr(self.baseTable, pk)
+            if pk in columns:
+                # If a non-null data_version was provided it implies that the
+                # base table row should already exist. This will be checked for
+                # after we finish basic checks on the individual parts of the
+                # PK.
+                if "data_version" in columns and columns["data_version"]:
+                    base_table_where.append(getattr(self.baseTable, pk) == columns[pk])
+            # Non-Integer columns can have autoincrement set to True for some reason.
+            # Any non-integer columns in the primary key are always required (because
+            # autoincrement actually isn't a thing for them), and any Integer columns
+            # that _aren't_ autoincrement are required as well.
+            elif not isinstance(base_column.type, (sqlalchemy.types.Integer,)) or not base_column.autoincrement:
+                raise ValueError("Missing primary key column '%s' which is not autoincrement", pk)
+
+        # If anything ended up in base_table_where, it means that the baseTable
+        # row should already exist. In these cases, we need to check to make sure
+        # that the scheduled change has the same data version as the base table,
+        # to ensure that a change is not being scheduled from an out of date version
+        # of the base table row.
+        if base_table_where:
+            current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction)
+
+            if not current_data_version:
+                raise ValueError("Cannot create scheduled change with data_version for non-existent row")
+
+            if current_data_version and current_data_version[0]["data_version"] != columns.get("data_version"):
+                raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
+
+        what = self._prefixColumns(columns)
+        conditions = {}
+        for col in what:
+            if not col.startswith("base_"):
+                conditions[col] = what[col]
+
+        self._validateConditions(conditions)
+
+        # Use the appropriate base table methods in dry run mode to ensure the
+        # user has permission for the change they want to schedule
+        if columns.get("data_version"):
+            self.baseTable.update(base_table_where, columns, changed_by, columns["data_version"], transaction=transaction, dryrun=True)
+        else:
+            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **columns)
+
+        if not dryrun:
+            what["scheduled_by"] = changed_by
+            ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **what)
+            return ret.inserted_primary_key[0]
+
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+        # We need to check each Scheduled Change that would be affected by this
+        # to ensure the new row will be valid.
+        for row in self.select(where=where, transaction=transaction):
+            new_row = row.copy()
+            new_row.update(self._prefixColumns(what))
+            base_table_where = {pk: new_row["base_%s" % pk] for pk in self.base_primary_key}
+            if new_row.get("base_data_version"):
+                self.baseTable.update(base_table_where, new_row, changed_by, new_row["base_data_version"], transaction=transaction, dryrun=True)
+            else:
+                self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
+
+            conditions = {}
+            for cond in itertools.chain(*self.condition_groups):
+                if cond in new_row:
+                    conditions[cond] = new_row[cond]
+                elif row.get(cond):
+                    conditions[cond] = row[cond]
+
+            self._validateConditions(conditions)
+
+        if not dryrun:
+            renamed_what = self._prefixColumns(what)
+            renamed_what["scheduled_by"] = changed_by
+            return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction)
+
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+        for row in self.select(where=where, transaction=transaction):
+            base_row = {col[5:]: row[col] for col in row if col.startswith("base_")}
+            base_table_where = {pk: row["base_%s" % pk] for pk in self.base_primary_key}
+            # TODO: What permissions *should* be required to delete a scheduled change?
+            # It seems a bit odd to be checking base table update/insert here. Maybe
+            # something broader should be required?
+            if base_row.get("base_data_version"):
+                self.baseTable.update(base_table_where, base_row, changed_by, base_row["base_data_version"], transaction=transaction, dryrun=True)
+            else:
+                self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_row)
+
+        if not dryrun:
+            return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
+
+    def enactChange(self, sc_id, enacted_by, transaction=None):
+        if not self.db.hasPermission(enacted_by, "scheduled_change", "enact", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to enact scheduled changes", enacted_by)
+
+        sc = self.select(where=[self.sc_id == sc_id], transaction=transaction)[0]
+        what = {}
+        for col in sc:
+            if col.startswith("base_"):
+                what[col[5:]] = sc[col]
+
+        # The scheduled change is marked as complete first to avoid it being
+        # updated unnecessarily when the base table's update method calls
+        # mergeUpdate. If the base table update fails, this will get reverted
+        # when the transaction is rolled back.
+        self.update([self.sc_id == sc_id], {"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"], transaction=transaction)
+
+        # If the scheduled change had a data version, it means the row already
+        # exists, and we need to use update() to enact it.
+        if what["data_version"]:
+            where = []
+            for col in self.base_primary_key:
+                where.append((getattr(self.baseTable, col) == sc["base_%s" % col]))
+            self.baseTable.update(where, what, sc["scheduled_by"], sc["base_data_version"], transaction=transaction)
+        else:
+            self.baseTable.insert(sc["scheduled_by"], transaction=transaction, **what)
+
+    def mergeUpdate(self, old_row, what, changed_by, transaction=None):
+        where = []
+        for col in self.base_primary_key:
+            where.append((getattr(self, "base_%s" % col) == old_row[col]))
+
+        scheduled_changes = self.select(where=where, transaction=transaction)
+        if not scheduled_changes:
+            self.log.debug("No scheduled changes found for update; nothing to do")
+            return
+        for sc in scheduled_changes:
+            if sc["complete"]:
+                self.log.debug("Scheduled change %s is complete, nothing to do", sc["sc_id"])
+                continue
+
+            self.log.debug("Trying to merge update with scheduled change '%s'", sc["sc_id"])
+
+            for col in what:
+                # If the scheduled change is different than the old row it will
+                # be modifying the row when enacted. If the update to the row
+                # ("what") is also modifying the same column, this is a conflict
+                # that the server cannot resolve.
+                if sc["base_%s" % col] != old_row.get(col) and sc["base_%s" % col] != what.get(col):
+                    raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
+
+            # If we get here, the change is safely mergeable
+            self.update(where=[self.sc_id == sc["sc_id"]], what=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=transaction)
+            self.log.debug("Merged %s into scheduled change '%s'", what, sc["sc_id"])
+
+
 class Rules(AUSTable):
 
-    def __init__(self, metadata, dialect):
+    def __init__(self, db, metadata, dialect):
         self.table = Table('rules', metadata,
                            Column('rule_id', Integer, primary_key=True, autoincrement=True),
                            Column('alias', String(50), unique=True),
@@ -654,13 +972,14 @@ class Rules(AUSTable):
                            Column('buildID', String(20)),
                            Column('locale', String(200)),
                            Column('osVersion', String(1000)),
+                           Column('systemCapabilities', String(1000)),
                            Column('distribution', String(100)),
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),
                            Column('comment', String(500)),
                            Column('whitelist', String(100)),
                            )
-        AUSTable.__init__(self, dialect)
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
     def _matchesRegex(self, foo, bar):
         # Expand wildcards and use ^/$ to make sure we don't succeed on partial
@@ -713,18 +1032,20 @@ class Rules(AUSTable):
             return True
         return string_compare(queryBuildID, ruleBuildID)
 
-    def _osVersionMatchesRule(self, ruleOsVersion, queryOsVersion):
-        """Decides whether an osVersion from a rule matches an incoming one.
-           osVersion columns in a rule may specify multiple OS versions,
-           delimited by a comma. Once split we do simple substring matching
-           against the query's OS version. Unlike versions and channels, we
-           assume each OS version is a substring of what will be in the query,
-           thus we don't need to support globbing."""
-        if ruleOsVersion is None:
+    def _csvMatchesRule(self, ruleString, queryString, substring=True):
+        """Decides whether a column from a rule matches an incoming one.
+           Some columns in a rule may specify multiple values delimited by a
+           comma. Once split we do a full or substring match against the query
+           string. Because we support substring matches, there's no need
+           to support globbing as well."""
+        if ruleString is None:
             return True
-        for os in ruleOsVersion.split(','):
-            if os in queryOsVersion:
+        for part in ruleString.split(','):
+            if substring and part in queryString:
                 return True
+            elif part == queryString:
+                return True
+        return False
 
     def _localeMatchesRule(self, ruleLocales, queryLocale):
         """Decides if a comma seperated list of locales in a rule matches an
@@ -736,9 +1057,12 @@ class Rules(AUSTable):
             return True
         return False
 
-    def addRule(self, changed_by, what, transaction=None):
-        ret = self.insert(changed_by=changed_by, transaction=transaction, **what)
-        return ret.inserted_primary_key[0]
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
+            raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
+        if not dryrun:
+            ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, **columns)
+            return ret.inserted_primary_key[0]
 
     def getOrderedRules(self, transaction=None):
         """Returns all of the rules, sorted in ascending order"""
@@ -793,8 +1117,12 @@ class Rules(AUSTable):
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to
             # break them out and create clauses for each one.
-            if not self._osVersionMatchesRule(rule['osVersion'], updateQuery['osVersion']):
+            if not self._csvMatchesRule(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
+                continue
+            # Same deal for system capabilities
+            if not self._csvMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', ""), substring=False):
+                self.log.debug("%s doesn't match %s", rule['systemCapabilities'], updateQuery.get('systemCapabilities'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
@@ -840,29 +1168,42 @@ class Rules(AUSTable):
             return None
         return rules[0]
 
-    def updateRule(self, changed_by, id_or_alias, what, old_data_version, transaction=None):
-        """ Update the rule given by rule_id or alias with the parameter what """
-        where = []
-        if self._isAlias(id_or_alias):
-            where.append(self.alias == id_or_alias)
-        else:
-            where.append(self.rule_id == id_or_alias)
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+        # Rather than forcing callers to figure out whether the identifier
+        # they have is an id or an alias, we handle it here.
+        if "rule_id" in where and self._isAlias(where["rule_id"]):
+            where["alias"] = where["rule_id"]
+            del where["rule_id"]
 
-        self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
+        # If the product is being changed, we also need to make sure the user
+        # permission to modify _that_ product.
+        if "product" in what:
+            if not self.db.hasPermission(changed_by, "rule", "modify", what["product"], transaction):
+                raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, what["product"]))
 
-    def deleteRule(self, changed_by, id_or_alias, old_data_version, transaction=None):
-        where = []
-        if self._isAlias(id_or_alias):
-            where.append(self.alias == id_or_alias)
-        else:
-            where.append(self.rule_id == id_or_alias)
+        for current_rule in self.select(where=where, columns=[self.product], transaction=transaction):
+            if not self.db.hasPermission(changed_by, "rule", "modify", current_rule["product"], transaction):
+                raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_rule["product"]))
 
-        self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+        if not dryrun:
+            return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
+
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+        if "rule_id" in where and self._isAlias(where["rule_id"]):
+            where["alias"] = where["rule_id"]
+            del where["rule_id"]
+
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "rule", "delete", product, transaction):
+            raise PermissionDeniedError("%s is not allowed to delete rules for product %s" % (changed_by, product))
+
+        if not dryrun:
+            super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
 
 class Releases(AUSTable):
 
-    def __init__(self, metadata, dialect):
+    def __init__(self, db, metadata, dialect):
         self.domainWhitelist = []
 
         self.table = Table('releases', metadata,
@@ -876,14 +1217,14 @@ class Releases(AUSTable):
         else:
             dataType = Text
         self.table.append_column(Column('data', dataType, nullable=False))
-        AUSTable.__init__(self, dialect)
+        AUSTable.__init__(self, db, dialect)
 
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
 
     # TODO: This should really be part of the blob class(es) because it depends
     # on a lot of blob schema specific stuff.
-    def containsForbiddenDomain(self, data):
+    def containsForbiddenDomain(self, data, product):
         """Returns True if "data" contains any file URLs that contain a
            domain that we're not allowed to serve updates to."""
         # Check the top level URLs, if the exist.
@@ -892,11 +1233,11 @@ class Releases(AUSTable):
             if isinstance(c, dict):
                 for from_ in c.values():
                     for url in from_.values():
-                        if isForbiddenUrl(url, self.domainWhitelist):
+                        if isForbiddenUrl(url, product, self.domainWhitelist):
                             return True
             # Old-style
             else:
-                if isForbiddenUrl(c, self.domainWhitelist):
+                if isForbiddenUrl(c, product, self.domainWhitelist):
                     return True
 
         # And also the locale-level URLs.
@@ -904,12 +1245,12 @@ class Releases(AUSTable):
             for locale in platform.get('locales', {}).values():
                 for type_ in ('partial', 'complete'):
                     if type_ in locale and 'fileUrl' in locale[type_]:
-                        if isForbiddenUrl(locale[type_]['fileUrl'], self.domainWhitelist):
+                        if isForbiddenUrl(locale[type_]['fileUrl'], product, self.domainWhitelist):
                             return True
                 for type_ in ('partials', 'completes'):
                     for update in locale.get(type_, {}):
                         if 'fileUrl' in update:
-                            if isForbiddenUrl(update["fileUrl"], self.domainWhitelist):
+                            if isForbiddenUrl(update["fileUrl"], product, self.domainWhitelist):
                                 return True
 
         return False
@@ -1015,53 +1356,129 @@ class Releases(AUSTable):
 
         return blob
 
-    def addRelease(self, name, product, blob, changed_by, transaction=None):
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        if "name" not in columns or "product" not in columns or "data" not in columns:
+            raise ValueError("name, product, and data are all required")
+
+        blob = columns["data"]
+
+        if not self.db.hasPermission(changed_by, "release", "create", columns["product"], transaction):
+            raise PermissionDeniedError("%s is not allowed to create releases for product %s" % (changed_by, columns["product"]))
+
         blob.validate()
-        # Generally blobs have names, but there's no requirement that they have to.
-        if blob.get("name"):
-            # If they do, we should not let the column and the in-blob name be different.
-            if name != blob["name"]:
-                raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-        if self.containsForbiddenDomain(blob):
+        if columns["name"] != blob["name"]:
+            raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
+        if self.containsForbiddenDomain(blob, columns["product"]):
             raise ValueError("Release blob contains forbidden domain.")
+        columns["data"] = blob.getJSON()
 
-        columns = dict(name=name, product=product, data=blob.getJSON())
-        # Raises DuplicateDataError if the release already exists.
-        ret = self.insert(changed_by=changed_by, transaction=transaction, **columns)
-        cache.put("blob", name, {"data_version": 1, "blob": blob})
-        cache.put("blob_version", name, 1)
-        return ret.inserted_primary_key[0]
+        if not dryrun:
+            ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, **columns)
+            cache.put("blob", columns["name"], {"data_version": 1, "blob": blob})
+            cache.put("blob_version", columns["name"], 1)
+            return ret.inserted_primary_key[0]
 
-    def updateRelease(self, name, changed_by, old_data_version, product=None, read_only=None, blob=None, transaction=None):
-        if product or blob:
-            self._proceedIfNotReadOnly(name, transaction=transaction)
-        what = {}
-        if read_only is not None:
-            what['read_only'] = read_only
-        if product:
-            what['product'] = product
-        if blob:
-            blob.validate()
-            # Generally blobs have names, but there's no requirement that they have to.
-            if blob.get("name"):
-                # If they do, we should not let the column and the in-blob name be different.
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+        blob = what.get("data")
+
+        current_releases = self.select(where=where, columns=[self.name, self.product, self.read_only], transaction=transaction)
+        for current_release in current_releases:
+            name = current_release["name"]
+            if "product" in what or "data" in what:
+                self._proceedIfNotReadOnly(current_release["name"], transaction=transaction)
+
+            if not self.db.hasPermission(changed_by, "release", "modify", current_release["product"], transaction):
+                raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, current_release["product"]))
+
+            if "product" in what:
+                # If the product is being changed, we need to make sure the user
+                # has permission to modify releases of that product, too.
+                if not self.db.hasPermission(changed_by, "release", "modify", what["product"], transaction):
+                    raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, what["product"]))
+
+            # The way things stand right now we cannot grant access to _only_ modify
+            # the read only flag. When the permissions were still enforced at the
+            # web level we had this because that flag had its own endpoint.
+            # If we want this again we'll need to adjust this code, and perhaps
+            # make a special method on this class that only modifies read_only
+            # (similar to addLocaleToRelease).
+            if "read_only" in what:
+                # In addition to being able to modify the release overall, users
+                # need to be granted explicit access to manipulate the read_only
+                # flag. This lets us give out very granular access, which can be
+                # very helpful particularly in automation.
+                if what["read_only"] is False:
+                    if not self.db.hasPermission(changed_by, "release_read_only", "unset", what.get("product"), transaction):
+                        raise PermissionDeniedError("%s is not allowed to mark %s products read write" % (changed_by, what.get("product")))
+                elif what["read_only"] is True:
+                    if not self.db.hasPermission(changed_by, "release_read_only", "set", what.get("product"), transaction):
+                        raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, what.get("product")))
+
+            if blob:
+                blob.validate()
+                name = what.get("name", name)
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-            if self.containsForbiddenDomain(blob):
-                raise ValueError("Release blob contains forbidden domain.")
-            what['data'] = blob.getJSON()
-        self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
-        new_data_version = old_data_version + 1
-        cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
-        cache.put("blob_version", name, new_data_version)
+                if self.containsForbiddenDomain(blob, what.get("product", current_release["product"])):
+                    raise ValueError("Release blob contains forbidden domain.")
+                what['data'] = blob.getJSON()
+        if not dryrun:
+            for release in current_releases:
+                name = current_release["name"]
+                new_data_version = old_data_version + 1
+                try:
+                    super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version,
+                                                 transaction=transaction)
+                except OutdatedDataError as e:
+                    self.log.debug("trying to update older data_version %s for release %s" % (old_data_version, name))
+                    if blob is not None:
+                        ancestor_change = self.history.getChange(data_version=old_data_version,
+                                                                 column_values={'name': name},
+                                                                 transaction=transaction)
+                        # if we have no historical information about the ancestor blob
+                        if ancestor_change is None:
+                            self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
+                            raise
+                        ancestor_blob = createBlob(ancestor_change.get('data'))
+                        tip_release = self.getReleases(name=name, transaction=transaction)[0]
+                        tip_blob = tip_release.get('data')
+                        m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
+                        try:
+                            m.run()
+                            # Merger merges the patches into a single unified patch,
+                            # but we need dictdiffer.patch to actually apply the patch
+                            # to the original blob
+                            unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
+                            # converting the resultant dict into a blob and then
+                            # converting it to JSON
+                            what['data'] = createBlob(unified_blob).getJSON()
+                            # we want the data_version for the dictdiffer.merged blob to be one
+                            # more than that of the latest blob
+                            tip_data_version = tip_release['data_version']
+                            super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
+                                                         transaction=transaction)
+                            # cache will have a data_version of one plus the tip
+                            # data_version
+                            new_data_version = tip_data_version + 1
+                        except dictdiffer.merge.UnresolvedConflictsException:
+                            self.log.debug("latest version of release %s cannot be merged with new blob" % name)
+                            raise e
+                cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
+                cache.put("blob_version", name, new_data_version)
 
-    def addLocaleToRelease(self, name, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
+    def addLocaleToRelease(self, name, product, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
         """Adds or update's the existing data for a specific platform + locale
            combination, in the release identified by 'name'. The data is
            validated before commiting it, and a ValueError is raised if it is
            invalid.
         """
         self._proceedIfNotReadOnly(name, transaction=transaction)
+
+        where = [self.name == name]
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "release_locale", "modify", product, transaction):
+            raise PermissionDeniedError("%s is not allowed to add builds for product %s" % (changed_by, product))
+
         releaseBlob = self.getReleaseBlob(name, transaction=transaction)
         if 'platforms' not in releaseBlob:
             releaseBlob['platforms'] = {}
@@ -1087,12 +1504,12 @@ class Releases(AUSTable):
                     releaseBlob['platforms'][a] = {'alias': platform}
 
         releaseBlob.validate()
-        if self.containsForbiddenDomain(releaseBlob):
+        if self.containsForbiddenDomain(releaseBlob, product):
             raise ValueError("Release blob contains forbidden domain.")
-        where = [self.name == name]
         what = dict(data=releaseBlob.getJSON())
-        self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
-                    transaction=transaction)
+
+        super(Releases, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
+                                     transaction=transaction)
         new_data_version = old_data_version + 1
         cache.put("blob", name, {"data_version": new_data_version, "blob": releaseBlob})
         cache.put("blob_version", name, new_data_version)
@@ -1111,12 +1528,19 @@ class Releases(AUSTable):
         except KeyError:
             return False
 
-    def deleteRelease(self, changed_by, name, old_data_version, transaction=None):
-        self._proceedIfNotReadOnly(name, transaction=transaction)
-        where = [self.name == name]
-        self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
-        cache.invalidate("blob", name)
-        cache.invalidate("blob_version", name)
+    def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
+        names = []
+        for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):
+            names.append(toDelete["name"])
+            self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
+            if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
+                raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
+
+        if not dryrun:
+            super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+            for name in names:
+                cache.invalidate("blob", name)
+                cache.invalidate("blob_version", name)
 
     def isReadOnly(self, name, limit=None, transaction=None):
         where = [self.name == name]
@@ -1131,33 +1555,29 @@ class Releases(AUSTable):
 
 class Permissions(AUSTable):
     """allPermissions defines the structure and possible options for all
-       available permissions. Most permissions are identified by an URL,
-       potentially with variables in it. All URL based permissions can be
-       augmented by using the "product" option. When specified, only requests
-       involving the named product will be permitted. Additionally, any URL
-       that supports more than one of: PUT, POST, or DELETE can by augmented
-       by using the option "method". When specified, the permission with this
-       option is only valid for requests through that HTTP method."""
+       available permissions. Permissions can be limited to specific types
+       of actions. Eg: granting the "rule" permission with "actions" set to
+       ["create"] allows rules to be created but not modified or deleted.
+       Permissions that relate to rules or releases can be further limited
+       by product. Eg: granting the "release" permission with "products" set
+       to ["GMP"] allows the user to modify GMP releases, but not Firefox."""
     allPermissions = {
-        'admin': [],
-        '/releases': ['method', 'product'],
-        '/releases/:name': ['method', 'product'],
-        '/releases/:name/revisions': ['product'],
-        '/releases/:name/builds/:platform/:locale': ['method', 'product'],
-        '/releases/:name/read_only': ['method', 'product'],
-        '/rules': ['method', 'product'],
-        '/rules/:id': ['method', 'product'],
-        '/rules/:id/revisions': ['product'],
-        '/users/:id/permissions/:permission': ['method'],
+        "admin": [],
+        "release": ["actions", "products"],
+        "release_locale": ["actions", "products"],
+        "release_read_only": ["actions", "products"],
+        "rule": ["actions", "products"],
+        "permission": ["actions"],
+        "scheduled_change": ["actions"],
     }
 
-    def __init__(self, metadata, dialect):
+    def __init__(self, db, metadata, dialect):
         self.table = Table('permissions', metadata,
                            Column('permission', String(50), primary_key=True),
                            Column('username', String(100), primary_key=True),
                            Column('options', Text)
                            )
-        AUSTable.__init__(self, dialect)
+        AUSTable.__init__(self, db, dialect)
 
     def assertPermissionExists(self, permission):
         if permission not in self.allPermissions.keys():
@@ -1182,30 +1602,50 @@ class Permissions(AUSTable):
         res = self.select(columns=[self.username], distinct=True, transaction=transaction)
         return len(res)
 
-    def grantPermission(self, changed_by, username, permission, options=None, transaction=None):
-        self.assertPermissionExists(permission)
-        if options:
-            self.assertOptionsExist(permission, options)
-        columns = dict(username=username, permission=permission)
-        if options:
-            columns['options'] = json.dumps(options)
-        self.log.debug("granting %s to %s with options %s" % (permission, username, options))
-        self.insert(changed_by=changed_by, transaction=transaction, **columns)
-        self.log.debug("successfully granted %s to %s with options %s" % (permission, username, options))
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        if "permission" not in columns or "username" not in columns:
+            raise ValueError("permission and username are required")
 
-    def updatePermission(self, changed_by, username, permission, old_data_version, options=None, transaction=None):
-        self.assertPermissionExists(permission)
-        if options:
-            self.assertOptionsExist(permission, options)
-            what = dict(options=json.dumps(options))
+        self.assertPermissionExists(columns["permission"])
+        if columns.get("options"):
+            self.assertOptionsExist(columns["permission"], columns["options"])
+            columns["options"] = json.dumps(columns["options"])
+
+        if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
+
+        if not dryrun:
+            self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
+                           columns.get("options"))
+            super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, **columns)
+            self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
+                           columns["username"], columns.get("options"))
+
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+        if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to modify permissions" % changed_by)
+
+        if "permission" in what:
+            self.assertPermissionExists(what["permission"])
+
+        for current_permission in self.select(where=where, transaction=transaction):
+            if what.get("options"):
+                self.assertOptionsExist(what.get("permission", current_permission["permission"]), what["options"])
+
+        if what.get("options"):
+            what["options"] = json.dumps(what["options"])
         else:
-            what = dict(options=None)
-        where = [self.username == username, self.permission == permission]
-        self.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
+            what["options"] = None
 
-    def revokePermission(self, changed_by, username, permission, old_data_version, transaction=None):
-        where = [self.username == username, self.permission == permission]
-        self.delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+        if not dryrun:
+            super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+        if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to revoke permissions", changed_by)
+
+        if not dryrun:
+            super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
     def getPermission(self, username, permission, transaction=None):
         try:
@@ -1240,53 +1680,23 @@ class Permissions(AUSTable):
         else:
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
 
-    def hasUrlPermission(self, username, url, method, urlOptions={}, transaction=None):
-        """Check if a user has access to an URL via a specific HTTP method.
-           GETs are always allowed, and admins can always access everything."""
+    def hasPermission(self, username, thing, action, product=None, transaction=None):
         if self.select(where=[self.username == username, self.permission == 'admin'], transaction=transaction):
             return True
         try:
-            options = self.getOptions(username, url, transaction=transaction)
+            options = self.getOptions(username, thing, transaction=transaction)
         except ValueError:
             return False
 
-        # GETs to any URL are always allowed
-        if method == 'GET':
-            return True
-        # Methods are also subject to the same rules other options are,
-        # so we can put them in the same loop
-        allOptions = urlOptions.copy()
-        allOptions['method'] = method
+        # If a user has a permission that doesn't explicitly limit the type of
+        # actions they can perform, they are allowed to do any type of action.
+        if options.get("actions") and action not in options["actions"]:
+            return False
+        # Similarly, permissions without products specified grant that
+        # that permission without any limitation on the product.
+        if options.get("products") and product not in options["products"]:
+            return False
 
-        for opt in allOptions:
-            allowedOpt = options.get(opt, None)
-            incomingOpt = allOptions[opt]
-
-            # If no option is specified in the request and the user has
-            # restrictions on what they can modify, they are denied.
-            # An example of this could be trying to modify a rule that doesn't
-            # have a product specified. Changing it could affect more products
-            # than the user is allowed to modify.
-            if not incomingOpt and allowedOpt:
-                return False
-
-            # If the request has this option specified, the user has
-            # restrictions for this option, and they don't match - they are denied.
-            # An example of this could be a user who only has permissions for
-            # the "Firefox" product trying to modify a "Thunderbird" release.
-            # Product can be multi-valued so it's treated specially
-            if incomingOpt and allowedOpt:
-                if opt == 'product':
-                    if incomingOpt not in allowedOpt:
-                        return False
-                elif incomingOpt != allowedOpt:
-                    return False
-
-        # Any other combinations of incoming options/user restrictions are acceptable.
-        # Could be any of the following:
-        # * No incoming option nor user restriction.
-        # * Incoming option specified, user has no restrictions.
-        # * Incoming option specified, user has a restriction, and they match.
         return True
 
 
@@ -1304,10 +1714,35 @@ class UnquotedStr(str):
         return self.__str__()
 
 
-def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
+def send_email(relayhost, port, username, password, to_addr, from_addr, table, subj,
+               body):
     from email.mime.text import MIMEText
     from smtplib import SMTP
 
+    msg = MIMEText("\n".join(body), "plain")
+    msg["Subject"] = subj
+    msg["from"] = from_addr
+
+    try:
+        conn = SMTP()
+        conn.connect(relayhost, port)
+        conn.ehlo()
+        conn.starttls()
+        conn.ehlo()
+    except:
+        table.log.exception("Failed to connect to SMTP server:")
+        return
+    try:
+        if username and password:
+            conn.login(username, password)
+        conn.sendmail(from_addr, to_addr, msg.as_string())
+    except:
+        table.log.exception("Failed to send change notification:")
+    finally:
+        conn.quit()
+
+
+def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
     def bleet(table, type_, changed_by, query):
         body = ["Changed by: %s" % changed_by]
         if type_ == "UPDATE":
@@ -1329,30 +1764,33 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             body.append("Row to be inserted:")
             body.append(UTF8PrettyPrinter().pformat(query.parameters))
 
-        msg = MIMEText("\n".join(body), "plain")
-        msg["Subject"] = "%s to %s detected" % (type_, table.t.name)
-        msg["from"] = from_addr
-
+        subj = "%s to %s detected" % (type_, table.t.name)
+        send_email(relayhost, port, username, password, to_addr, from_addr,
+                   table, subj, body)
         table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
-        try:
-            conn = SMTP()
-            conn.connect(relayhost, port)
-            conn.ehlo()
-            conn.starttls()
-            conn.ehlo()
-        except:
-            table.log.exception("Failed to connect to SMTP server:")
-            return
-        try:
-            conn.login(username, password)
-            conn.sendmail(from_addr, to_addr, msg.as_string())
-        except:
-            table.log.exception("Failed to send change notification:")
-        finally:
-            conn.quit()
-
     return bleet
 
+
+def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr):
+    def bleet(table, type_, changed_by, query):
+        body = ["Changed by: %s" % changed_by]
+        where = [c for c in query._whereclause.get_children()]
+        row = table.select(where=where)[0]
+        if not query.parameters['read_only'] and row['read_only']:
+            body.append("Row(s) to be updated as follows:")
+            data = {}
+            data['name'] = UnquotedStr(repr(row['name']))
+            data['product'] = UnquotedStr(repr(row['product']))
+            data['read_only'] = UnquotedStr("%s ---> %s" %
+                                            (repr(row['read_only']),
+                                             repr(query.parameters['read_only'])))
+            body.append(UTF8PrettyPrinter().pformat(data))
+
+            subj = "Read only release %s changed to modifiable" % data['name']
+            send_email(relayhost, port, username, password, to_addr, from_addr,
+                       table, subj, body)
+            table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
+    return bleet
 
 # A helper that sets sql_mode. This should only be used with MySQL, and
 # lets us put the database in a stricter mode that will disallow things like
@@ -1391,9 +1829,9 @@ class AUSDatabase(object):
             listeners.append(SetSqlMode())
         self.engine = create_engine(self.dburi, pool_recycle=60, listeners=listeners)
         dialect = self.engine.name
-        self.rulesTable = Rules(self.metadata, dialect)
-        self.releasesTable = Releases(self.metadata, dialect)
-        self.permissionsTable = Permissions(self.metadata, dialect)
+        self.rulesTable = Rules(self, self.metadata, dialect)
+        self.releasesTable = Releases(self, self.metadata, dialect)
+        self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -1401,12 +1839,21 @@ class AUSDatabase(object):
 
     def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr)
+        read_only_bleeter = make_change_notifier_for_read_only(relayhost, port,
+                                                               username,
+                                                               password,
+                                                               to_addr,
+                                                               from_addr)
         self.rules.onInsert = bleeter
         self.rules.onUpdate = bleeter
         self.rules.onDelete = bleeter
         self.permissions.onInsert = bleeter
         self.permissions.onUpdate = bleeter
         self.permissions.onDelete = bleeter
+        self.releases.onUpdate = read_only_bleeter
+
+    def hasPermission(self, *args, **kwargs):
+        return self.permissions.hasPermission(*args, **kwargs)
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,
