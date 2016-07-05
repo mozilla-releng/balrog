@@ -21,19 +21,19 @@ def cleanup_releases(trans, nightly_age, dryrun=True):
     # and the second happens at a low level of SQLAlchemy when the transaction
     # is being executed.
     query = """
+LEFT JOIN releases_history USING (name)
 LEFT JOIN rules rules_mapping ON (name=rules_mapping.mapping)
 LEFT JOIN rules rules_whitelist ON (name=rules_whitelist.whitelist)
 WHERE name LIKE '%%%%nightly%%%%'
 AND (rules_whitelist.whitelist <> releases.name OR rules_whitelist.whitelist IS NULL)
 AND (rules_mapping.mapping <> releases.name OR rules_mapping.mapping IS NULL)
-AND ((SELECT timestamp FROM releases_history WHERE name=name ORDER BY change_id DESC LIMIT 1) IS NULL);
 AND (timestamp < (1000 * UNIX_TIMESTAMP(NOW() - INTERVAL %s MONTH)) OR change_id is NULL);
 """ % nightly_age
     if dryrun:
         todelete = trans.execute("SELECT name FROM releases" + query).fetchall()
         if todelete:
             print "Releases rows to be deleted:"
-            print " ".join(itertools.chain(*todelete))
+            print "\n".join(itertools.chain(*todelete))
     else:
         trans.execute("DELETE releases FROM releases" + query)
 
