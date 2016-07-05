@@ -1,3 +1,4 @@
+from bz2 import BZ2File
 import logging
 import mock
 import os
@@ -16,7 +17,7 @@ from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, ReadOnlyError, \
     PermissionDeniedError
-from auslib.blobs.base import BlobValidationError
+from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
 
@@ -641,7 +642,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
 class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
     """Tests to ensure that the current sample data (used by Docker) is
     compatible with the current schema."""
-    sample_data = path.join(path.dirname(__file__), "..", "..", "scripts", "sample-data.sql")
+    sample_data = path.join(path.dirname(__file__), "..", "..", "scripts", "sample-data.sql.bz2")
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
@@ -650,7 +651,7 @@ class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
 
     def testSampleDataImport(self):
         with self.db.begin() as trans:
-            with open(self.sample_data) as f:
+            with BZ2File(self.sample_data) as f:
                 for q in f:
                     trans.execute(q)
 
@@ -1783,6 +1784,238 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
         self.assertRaises(ReadOnlyError, self.releases.addLocaleToRelease, name='a', product='a', platform='p',
                           locale='c', data=data, old_data_version=1, changed_by='bill')
+
+    def testAddMergeableOutdatedData(self):
+        ancestor_blob = createBlob("""
+{
+    "name": "p",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "def"
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
+        },
+        "p3": {
+        }
+    }
+}
+""")
+        blob1 = createBlob("""
+{
+    "name": "p",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "c": {
+                    "complete": {
+                        "filesize": 1,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                },
+                "l": {
+                    "complete": {
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "def"
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
+        },
+        "p3": {
+        }
+    }
+}
+""")
+        blob2 = createBlob("""
+{
+    "name": "p",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "c1": {
+                    "complete": {
+                        "filesize": 1,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                },
+                "l": {
+                    "complete": {
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "def"
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
+        },
+        "p3": {
+        }
+    }
+}
+""")
+        result_blob = json.loads("""
+{
+    "name": "p",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "c": {
+                    "complete": {
+                        "filesize": 1,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                },
+                "l": {
+                    "complete": {
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "def"
+                    }
+                },
+                "c1": {
+                    "complete": {
+                        "filesize": 1,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
+        },
+        "p3": {
+        }
+    }
+}
+""")
+        self.releases.addRelease(name='p', product='z', blob=ancestor_blob,
+                                 changed_by='bill')
+        self.releases.updateRelease(name='p', product='z', blob=blob1, changed_by='bill', old_data_version=1)
+        self.releases.updateRelease(name='p', product='z', blob=blob2, changed_by='bill', old_data_version=1)
+        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'p').execute().fetchone()[0])
+        self.assertEqual(result_blob, ret)
+
+    def testAddConflictingOutdatedData(self):
+        ancestor_blob = createBlob("""
+{
+    "name": "p",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "def"
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
+        },
+        "p3": {
+        }
+    }
+}
+""")
+        blob1 = createBlob("""
+{
+    "name": "p",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "c": {
+                    "complete": {
+                        "filesize": 1,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                },
+                "l": {
+                    "complete": {
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "def"
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
+        },
+        "p3": {
+        }
+    }
+}
+""")
+        blob2 = createBlob("""
+{
+    "name": "p",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "c": {
+                    "complete": {
+                        "filesize": 12,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                },
+                "l": {
+                    "complete": {
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "def"
+                    }
+                }
+            }
+        },
+        "p2": {
+            "alias": "p"
+        },
+        "p3": {
+        }
+    }
+}
+""")
+        self.releases.addRelease(name='p', product='z', blob=ancestor_blob,
+                                 changed_by='bill')
+        self.releases.updateRelease(name='p', product='z', blob=blob1, changed_by='bill', old_data_version=1)
+        self.assertRaises(OutdatedDataError, self.releases.updateRelease,
+                          name='p', product='z', blob=blob2, changed_by='bill', old_data_version=1)
 
 
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):

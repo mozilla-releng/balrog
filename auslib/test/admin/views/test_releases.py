@@ -56,9 +56,8 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._post('/releases/d', data=dict(data=data, product='d', data_version=1), username="hannah")
         self.assertStatusCode(ret, 403)
 
-    def testReleasePutUpdateOutdatedData(self):
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
-        blob = """
+    def testReleasePutUpdateMergeableOutdatedData(self):
+        ancestor_blob = """
         {
             "name": "dd",
             "schema_version": 1,
@@ -79,26 +78,211 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
                 }
             }
         }"""
-        # Testing Put request to add new release
-        ret = self._put('/releases/dd', data=dict(data=data, name='dd', blob=blob, product='dd', data_version=1))
-        self.assertStatusCode(ret, 201)
+        blob1 = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        },
+                        "dd2": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                     }
+                }
+            }
+        }"""
+        blob2 = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        },
+                        "dd1": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+        result_blob = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd2": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        },
+                        "dd": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        },
+                        "dd1": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
 
+        # Testing Put request to add new release
+        ret = self._put('/releases/dd', data=dict(blob=ancestor_blob, name='dd',
+                                                  product='dd', data_version=1))
+        self.assertStatusCode(ret, 201)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads(blob))
+        self.assertEqual(json.loads(ret), json.loads(ancestor_blob))
 
         # Updating same release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
-        ret = self._put('/releases/dd', data=dict(data=data, name='dd', product='dd', blob=blob, data_version=1))
+        ret = self._put('/releases/dd', data=dict(blob=blob1, name='dd',
+                                                  product='dd', data_version=1))
         self.assertStatusCode(ret, 200)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
 
-        # Outdated Data Error on same release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
-        ret = self._put('/releases/dd', data=dict(data=data, name='dd', product='dd', blob=blob, data_version=1))
+        # Updating release with outdated data, testing if merged correctly
+        ret = self._put('/releases/dd', data=dict(blob=blob2, name='dd',
+                                                  product='dd', data_version=1))
+        self.assertStatusCode(ret, 200)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=3)),
+                         "Data: %s" % ret.data)
+
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret), json.loads(result_blob))
+
+    def testReleasePutUpdateConflictingOutdatedData(self):
+        ancestor_blob = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+        blob1 = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd1": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+        blob2 = """
+        {
+            "name": "dd",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd": {
+                            "complete": {
+                                "filesize": 12345,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        },
+                        "dd1": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc1"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+        # Testing Put request to add new release
+        ret = self._put('/releases/dd', data=dict(blob=ancestor_blob, name='dd', product='dd', data_version=1))
+        self.assertStatusCode(ret, 201)
+
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
+        self.assertEqual(json.loads(ret), json.loads(ancestor_blob))
+
+        # Updating same release
+        ret = self._put('/releases/dd', data=dict(blob=blob1, name='dd',
+                                                  product='dd', data_version=1))
+        self.assertStatusCode(ret, 200)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+
+        # Updating same release with conflicting data
+        ret = self._put('/releases/dd', data=dict(blob=blob2, name='dd',
+                                                  product='dd', data_version=1))
         self.assertStatusCode(ret, 400)
 
-    def testReleasePostUpdateOutdatedData(self):
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
+    def testReleasePostUpdateOutdatedDataNotBlob(self):
         blob = """
         {
             "name": "ee",
@@ -120,20 +304,21 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
                 }
             }
         }"""
-        # Testing Post request to add new release
-        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', blob=blob, product='ee', data_version=1))
+        ret = self._post('/releases/ee', data=dict(data=blob, hashFunction="sha512", name='ee', product='ee', data_version=1))
         self.assertStatusCode(ret, 201)
 
         # Updating same release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', product='ee', blob=blob, data_version=2))
+        ret = self._post('/releases/ee', data=dict(data=blob,
+                                                   hashFunction="sha512",
+                                                   name='ee', product='ee', data_version=2))
         self.assertStatusCode(ret, 200)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=3)), "Data: %s" % ret.data)
 
         # Outdated Data Error on same release
-        data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
-        ret = self._post('/releases/ee', data=dict(data=data, hashFunction="sha512", name='ee', product='ee', blob=blob, data_version=1))
+        ret = self._post('/releases/ee', data=dict(hashFunction="sha512",
+                                                   read_only=True,
+                                                   name='ee', product='ee', data_version=1))
         self.assertStatusCode(ret, 400)
 
     def testReleasePostMismatchedName(self):
