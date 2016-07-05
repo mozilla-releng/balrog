@@ -184,7 +184,7 @@ class RuleHistoryAPIView(HistoryAdminView):
                    table.data_version != null()],
             limit=limit,
             offset=offset,
-            order_by=[table.timestamp.asc()],
+            order_by=[table.timestamp.desc()],
         )
         _rules = []
         _mapping = {
