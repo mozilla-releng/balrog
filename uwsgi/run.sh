@@ -21,7 +21,7 @@ elif [ $1 == "cleanup-db" ]; then
         echo "\${MAX_AGE} must be set!"
         exit 1
     fi
-    exec python scripts/manage-db.py -d ${DBURI} cleanup ${MAX_AGE}
+    exec python scripts/manage-db.py -d ${DBURI} cleanup-dryrun ${MAX_AGE}
 else
    echo "unknown mode: $1"
    exit 1

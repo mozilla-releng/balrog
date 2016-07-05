@@ -48,7 +48,7 @@ AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 14 DAY);
         if todelete:
             print "Releases history rows to be deleted:"
             for key, group in itertools.groupby(todelete, lambda x: x[0]):
-                print "%s: %s" % (key, [int(x[1]) for x in group])
+                print "%s: %s history rows" % (key, len(list(group)))
     else:
         trans.execute("DELETE releases_history FROM releases_history")
 
@@ -61,7 +61,7 @@ AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 7 DAY);
         if todelete:
             print "Releases history rows to be deleted:"
             for key, group in itertools.groupby(todelete, lambda x: x[0]):
-                print "%s: %s" % (key, [int(x[1]) for x in group])
+                print "%s: %s history rows" % (key, len(list(group)))
     else:
         trans.execute("DELETE releases_history FROM releases_history")
 
