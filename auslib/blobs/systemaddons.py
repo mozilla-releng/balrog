@@ -38,6 +38,24 @@ class SystemAddonsBlob(Blob):
         # similar to GMP
         return True
 
+    # If there are are no updates, we have a special response for SystemAddons
+    # blobs. We return <updates></updates>, without the addons tags.
+    def noUpdates(self, updateQuery, whitelistedDomains):
+        buildTarget = updateQuery["buildTarget"]
+        n_updates = 0
+        for addon in sorted(self.getAddonsForPlatform(buildTarget)):
+            # Checking if the addon update is to be served
+            platformData = self.getPlatformData(addon, buildTarget)
+            url = platformData["fileUrl"]
+            if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
+                continue
+            n_updates = n_updates + 1
+
+        if n_updates != 0:
+            return False
+        else:
+            return True
+
     # Because specialForceHosts is only relevant to our own internal servers,
     # and these type of updates are always served externally, we don't process
     # them in SystemAddon blobs, similar to GMP.
@@ -61,12 +79,14 @@ class SystemAddonsBlob(Blob):
 
         return addonXML
 
-    def getHeaderXML(self, updateQuery, update_type):
-        if self.get("uninstall", False):
+    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        if self.get("uninstall", False) or not self.noUpdates(updateQuery, whitelistedDomains):
             return '    <addons>'
-        return None
+        else:
+            return None
 
-    def getFooterXML(self):
-        if self.get("uninstall", False):
+    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        if self.get("uninstall", False) or not self.noUpdates(updateQuery, whitelistedDomains):
             return '    </addons>'
-        return None
+        else:
+            return None

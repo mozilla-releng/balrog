@@ -339,19 +339,7 @@ class ClientTestBase(unittest.TestCase):
     "name": "fake",
     "schema_version": 5000,
     "hashFunction": "SHA512",
-    "uninstall": true,
-    "vendors": {
-        "c": {
-            "version": "1",
-            "platforms": {
-                "p": {
-                    "filesize": 2,
-                    "hashValue": "3",
-                    "fileUrl": "http://a.com/blah"
-                }
-            }
-        }
-    }
+    "uninstall": true
 }
 """)
         dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
@@ -364,7 +352,7 @@ class ClientTestBase(unittest.TestCase):
     "schema_version": 5000,
     "hashFunction": "SHA512",
     "uninstall": false,
-    "vendors": {
+    "addons": {
         "c": {
             "version": "1",
             "platforms": {

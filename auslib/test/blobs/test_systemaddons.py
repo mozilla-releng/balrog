@@ -66,24 +66,56 @@ class TestSchema1Blob(unittest.TestCase):
     "uninstall": true
 }
 """)
+        self.empty_blob = SystemAddonsBlob()
+        self.empty_blob.loadJSON("""
+{
+    "name": "fake",
+    "schema_version": 5000,
+    "hashFunction": "SHA512",
+    "addons": {}
+}
+""")
 
-    def testXMLWhenNotUninstall(self):
+    def testXML(self):
         updateQuery = {
             "product": "gg", "version": "3", "buildID": "1",
             "buildTarget": "p", "locale": "l", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned_header = self.blob1.getHeaderXML(updateQuery, "minor")
+        returned_header = self.blob1.getHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob1.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob1.getFooterXML()
+        returned_footer = self.blob1.getFooterXML(updateQuery, "minor",
+                                                  self.whitelistedDomains,
+                                                  self.specialForceHosts)
         returned = [x.strip() for x in returned]
-        expected_header = None
+        expected_header = '    <addons>'
         expected = ["""
 <addon id="c" URL="http://a.com/blah" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
 """, """
 <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
 """]
+        expected = [x.strip() for x in expected]
+        expected_footer = '    </addons>'
+        self.assertEqual(returned_header, expected_header)
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer, expected_footer)
+
+    def testXMLWhenEmptyAndNotUninstall(self):
+        updateQuery = {
+            "product": "gg", "version": "3", "buildID": "1",
+            "buildTarget": "t", "locale": "l", "channel": "a",
+            "osVersion": "z", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned_header = self.empty_blob.getHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.empty_blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.empty_blob.getFooterXML(updateQuery, "minor",
+                                                       self.whitelistedDomains,
+                                                       self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected_header = None
+        expected = []
         expected = [x.strip() for x in expected]
         expected_footer = None
         self.assertEqual(returned_header, expected_header)
@@ -97,9 +129,11 @@ class TestSchema1Blob(unittest.TestCase):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        returned_header = self.blob2.getHeaderXML(updateQuery, "minor")
+        returned_header = self.blob2.getHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob2.getFooterXML()
+        returned_footer = self.blob2.getFooterXML(updateQuery, "minor",
+                                                  self.whitelistedDomains,
+                                                  self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = "    <addons>"
         expected = []

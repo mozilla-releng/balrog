@@ -35,10 +35,10 @@ class GMPBlobV1(Blob):
         # of the client to decide whether or not any action needs to be taken.
         return True
 
-    def getHeaderXML(self, updateQuery, update_type):
+    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return '    <addons>'
 
-    def getFooterXML(self):
+    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return '    </addons>'
 
     # Because specialForceHosts is only relevant to our own internal servers,

@@ -115,11 +115,11 @@ class Blob(dict):
                 url += '?force=1'
         return url
 
-    def getHeaderXML(self, updateQuery, update_type):
+    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         raise NotImplementedError()
 
-    def getFooterXML(self):
+    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         raise NotImplementedError()
 
-    def getInnerXML(self):
+    def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         raise NotImplementedError()

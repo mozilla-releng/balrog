@@ -82,9 +82,14 @@ class ClientRequestView(MethodView):
 
             # Sampling the footer from the first blob
             headerXML = response_blobs[0]['response_release'].getHeaderXML(response_blobs[0]['product_query'],
-                                                                           response_blobs[0]['response_update_type'])
+                                                                           response_blobs[0]['response_update_type'],
+                                                                           app.config["WHITELISTED_DOMAINS"],
+                                                                           app.config["SPECIAL_FORCE_HOSTS"])
             # Sampling the footer from the first blob
-            footerXML = response_blobs[0]['response_release'].getFooterXML()
+            footerXML = response_blobs[0]['response_release'].getFooterXML(response_blobs[0]['product_query'],
+                                                                           response_blobs[0]['response_update_type'],
+                                                                           app.config["WHITELISTED_DOMAINS"],
+                                                                           app.config["SPECIAL_FORCE_HOSTS"])
             if headerXML:
                 xml.append(headerXML)
             for response_blob in response_blobs:
