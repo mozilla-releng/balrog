@@ -812,6 +812,11 @@ class Rules(AUSTable):
             self.log.debug("where: %s" % where)
             return self.select(where=where, transaction=transaction)
 
+        # This cache key is constructed from all parts of the updateQuery that
+        # are used in the select() to get the "raw" rule matches. For the most
+        # part, product and buildTarget will be the only applicable ones which
+        # means we should get very high cache hit rates, as there's not a ton
+        # of variability of possible combinations for those.
         cache_key = "%s:%s:%s:%s:%s:%s" % \
             (updateQuery["product"], updateQuery["buildTarget"], updateQuery["headerArchitecture"],
              updateQuery.get("distribution"), updateQuery.get("distVersion"), updateQuery["force"])
