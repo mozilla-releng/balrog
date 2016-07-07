@@ -812,7 +812,7 @@ class Rules(AUSTable):
             self.log.debug("where: %s" % where)
             return self.select(where=where, transaction=transaction)
 
-        cache_key = "%s-%s-%s-%s-%s-%s" % \
+        cache_key = "%s:%s:%s:%s:%s:%s" % \
             (updateQuery["product"], updateQuery["buildTarget"], updateQuery["headerArchitecture"],
              updateQuery.get("distribution"), updateQuery.get("distVersion"), updateQuery["force"])
         rules = cache.get("rules", cache_key, getRawMatches)

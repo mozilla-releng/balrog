@@ -1199,6 +1199,35 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
         self.assertEquals(cache.hits, hits)
         self.assertEquals(cache.misses, misses)
 
+    def testGetRulesMatchingQueryCacheKeysAreCorrect(self):
+        self.rules.getRulesMatchingQuery(
+            dict(product='', version='3.5', channel='',
+                 buildTarget='a', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3),
+            fallbackChannel=''
+        )
+        self.rules.getRulesMatchingQuery(
+            dict(product='c', version='3.5', channel='',
+                 buildTarget='a', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3),
+            fallbackChannel=''
+        )
+        self.rules.getRulesMatchingQuery(
+            dict(product='b', version='3.5', channel='',
+                 buildTarget='e', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=True, queryVersion=3),
+            fallbackChannel=''
+        )
+        expected = set([
+            ":a::::False",
+            "c:a::::False",
+            "b:e::::True",
+        ])
+        self.assertEquals(set(cache.caches["rules"].data.keys()), expected)
+
     def testGetRulesMatchingQueryUsesCachedRules(self):
         with mock.patch("time.time") as t:
             t.return_value = 0
@@ -1214,6 +1243,61 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
                 rules = self._stripNullColumns(rules)
                 expected = [dict(rule_id=3, priority=100, backgroundRate=100, version='3.5', buildTarget='a', mapping='a', update_type='z', data_version=1)]
                 self.assertEquals(rules, expected)
+
+                t.return_value += 1
+
+            self._checkCacheStats(cache.caches["rules"], 5, 3, 2)
+
+    def testGetRulesMatchingQueryRefreshesAfterExpiry(self):
+        with mock.patch("time.time") as t:
+            t.return_value = 0
+            for i in range(4):
+                rules = self.rules.getRulesMatchingQuery(
+                    dict(product='', version='3.5', channel='',
+                         buildTarget='a', buildID='', locale='', osVersion='',
+                         distribution='', distVersion='', headerArchitecture='',
+                         force=False, queryVersion=3,
+                         ),
+                    fallbackChannel=''
+                )
+                rules = self._stripNullColumns(rules)
+                expected = [dict(rule_id=3, priority=100, backgroundRate=100, version='3.5', buildTarget='a', mapping='a', update_type='z', data_version=1)]
+                self.assertEquals(rules, expected)
+
+                t.return_value += 1
+
+            self.rules.t.update(values=dict(mapping="b")).where(self.rules.rule_id == 3).execute()
+
+            for i in range(2):
+                rules = self.rules.getRulesMatchingQuery(
+                    dict(product='', version='3.5', channel='',
+                         buildTarget='a', buildID='', locale='', osVersion='',
+                         distribution='', distVersion='', headerArchitecture='',
+                         force=False, queryVersion=3,
+                         ),
+                    fallbackChannel=''
+                )
+                rules = self._stripNullColumns(rules)
+                expected = [dict(rule_id=3, priority=100, backgroundRate=100, version='3.5', buildTarget='a', mapping='b', update_type='z', data_version=1)]
+                self.assertEquals(rules, expected)
+
+                t.return_value += 1
+
+            self._checkCacheStats(cache.caches["rules"], 6, 4, 2)
+
+    def testGetRulesMatchingQueryWithFunkyQuery(self):
+        with mock.patch("time.time") as t:
+            t.return_value = 0
+            for i in range(5):
+                rules = self.rules.getRulesMatchingQuery(
+                    dict(product="%PRODUCT%", version="%VERSION%", channel="%CHANNEL%", buildTarget="%BUILD_TARGET%",
+                         buildID="%BUILDID%", locale="%LOCALE%", osVersion="%OS_VERSION%",
+                         distribution="%DISTRIBUTION%", distVersion="%DIST_VERSION%", headerArchitecture="",
+                         force=False, queryVersion=3),
+                    fallbackChannel=''
+                )
+                rules = self._stripNullColumns(rules)
+                self.assertEquals(rules, [])
 
                 t.return_value += 1
 
