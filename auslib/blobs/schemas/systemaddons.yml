@@ -5,7 +5,7 @@
     - name
     - schema_version
     - addons
-  additionalProperties: true
+  additionalProperties: false
   properties:
     name:
       type: string
