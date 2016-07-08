@@ -37,6 +37,10 @@ cache.make_cache("blob", 500, 3600)
 cache.make_cache("blob_schema", 50, 24 * 60 * 60)
 cache.make_cache("blob_version", 500, 60)
 
+# 500 is probably a bit oversized for the rules cache, but the items are so
+# small there sholudn't be any negative effect.
+cache.make_cache("rules", 500, 30)
+
 dbo.setDb(os.environ["DBURI"])
 dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
