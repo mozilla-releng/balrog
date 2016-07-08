@@ -816,7 +816,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         what = {"fooid": 2, "when": 4532}
         self.assertRaisesRegexp(ValueError, "Missing primary key column", table.scheduled_changes.insert, changed_by="bob", **what)
 
-    def testInsertWithIncompatibleConditions(self):
+    def testInsertWithMalformedTimestamp(self):
         what = {"foo": "blah", "when": "abc"}
         self.assertRaisesRegexp(ValueError, "Cannot parse", self.sc_table.insert, changed_by="bob", **what)
 

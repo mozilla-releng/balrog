@@ -914,7 +914,8 @@ class ScheduledChangeTable(AUSTable):
         # updated unnecessarily when the base table's update method calls
         # mergeUpdate. If the base table update fails, this will get reverted
         # when the transaction is rolled back.
-        self.update([self.sc_id == sc_id], {"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"], transaction=transaction)
+        self.update(where=[self.sc_id == sc_id], what={"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"],
+                    transaction=transaction)
 
         # If the scheduled change had a data version, it means the row already
         # exists, and we need to use update() to enact it.
@@ -927,7 +928,10 @@ class ScheduledChangeTable(AUSTable):
             self.baseTable.insert(sc["scheduled_by"], transaction=transaction, **what)
 
     def mergeUpdate(self, old_row, what, changed_by, transaction=None):
-        where = []
+        # pyflakes this should be "is False", but that's not how SQLAlchemy
+        # works, so we need to shut it up.
+        # http://stackoverflow.com/questions/18998010/flake8-complains-on-boolean-comparison-in-filter-clause
+        where = [self.complete == False]  # noqa
         for col in self.base_primary_key:
             where.append((getattr(self, "base_%s" % col) == old_row[col]))
 
@@ -936,10 +940,6 @@ class ScheduledChangeTable(AUSTable):
             self.log.debug("No scheduled changes found for update; nothing to do")
             return
         for sc in scheduled_changes:
-            if sc["complete"]:
-                self.log.debug("Scheduled change %s is complete, nothing to do", sc["sc_id"])
-                continue
-
             self.log.debug("Trying to merge update with scheduled change '%s'", sc["sc_id"])
 
             for col in what:
