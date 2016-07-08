@@ -16,7 +16,7 @@ import migrate.versioning.api
 from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
-    ReadOnlyError, PermissionDeniedError
+    ReadOnlyError, PermissionDeniedError, ChangeScheduledError
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -944,7 +944,10 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(PermissionDeniedError, self.sc_table.delete, where=[self.sc_table.sc_id == 2], changed_by="nicole", old_data_version=1)
 
     def testBaseTableDeletesFailsWithScheduledChange(self):
-        self.assertRaises(UpdateMergeError, self.table.delete, where=[self.table.fooid == 2], changed_by="bob", old_data_version=2)
+        self.assertRaises(ChangeScheduledError, self.table.delete, where=[self.table.fooid == 2], changed_by="bob", old_data_version=2)
+
+    def testBaseTableDeleteSucceedsWithoutScheduledChange(self):
+        self.table.delete(where=[self.table.fooid == 3], changed_by="bob", old_data_version=1)
 
     def testEnactChangeNewRow(self):
         self.table.scheduled_changes.enactChange(2, "nancy")

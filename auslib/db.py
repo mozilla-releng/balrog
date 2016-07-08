@@ -73,6 +73,10 @@ class ReadOnlyError(SQLAlchemyError):
     """Raised when a release marked as read-only is attempted to be changed."""
 
 
+class ChangeScheduledError(SQLAlchemyError):
+    """Raised when a row cannot be deleted because there's a scheduled change for it."""
+
+
 class AUSTransaction(object):
     """Manages a single transaction. Requires a connection object.
 
@@ -349,6 +353,7 @@ class AUSTable(object):
         row = self._returnRowOrRaise(where=where, columns=self.primary_key, transaction=trans)
 
         if self.versioned:
+            # TODO: use an ew name for the new where
             where = copy(where)
             where.append(self.data_version == old_data_version)
 
@@ -363,15 +368,12 @@ class AUSTable(object):
         if self.history:
             trans.execute(self.history.forDelete(row, changed_by))
         if self.scheduled_changes:
-            # We don't allow rows that have changes scheduled to them to be
-            # deleted because we don't know if the user deleting the row has
-            # permission to cancel the scheduled changes. Feeding mergeUpdate
-            # an object with all the rows values set to None will cause it to
-            # raise an exception if any change is scheduled for it.
-            # We use mergeUpdate instead of doing this ourselves because it
-            # already knows how to rewrite column names.
-            new_row = dict.fromkeys([c.name for c in self.table.get_children()])
-            self.scheduled_changes.mergeUpdate(row, new_row, changed_by, trans)
+            sc_where = [self.scheduled_changes.complete == False]  # noqa
+            for pk in self.primary_key:
+                sc_where.append(getattr(self.scheduled_changes, "base_%s" % pk.name) == row[pk.name])
+            if self.scheduled_changes.select(where=sc_where, transaction=trans):
+                raise ChangeScheduledError("Cannot delete rows that have changes scheduled.")
+
         return ret
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
