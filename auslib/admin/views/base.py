@@ -5,7 +5,7 @@ from flask.views import MethodView
 
 from auslib.global_state import dbo
 from auslib.util.timesince import timesince
-from auslib.db import OutdatedDataError, PermissionDeniedError, ChangeScheduledError
+from auslib.db import OutdatedDataError, PermissionDeniedError
 import json
 import logging
 
@@ -55,7 +55,6 @@ class AdminView(MethodView):
         with dbo.begin() as trans:
             return self._put(*args, transaction=trans, **kwargs)
 
-    # TODO: need to handle ChangeScheduledErrors around here...probably should write a test for this first
     @handleGeneralExceptions("DELETE")
     def delete(self, *args, **kwargs):
         self.log.debug("processing DELETE request to %s" % request.path)
