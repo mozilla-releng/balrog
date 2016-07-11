@@ -16,7 +16,7 @@ import migrate.versioning.api
 from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
-    ReadOnlyError, PermissionDeniedError
+    ReadOnlyError, PermissionDeniedError, ChangeScheduledError
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -651,7 +651,7 @@ class ScheduledChangesTableMixin(object):
 
             def __init__(self, db, metadata):
                 self.table = Table("test_table", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
-                                   Column("foo", String(15)),
+                                   Column("foo", String(15), nullable=False),
                                    Column("bar", String(15)))
                 super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
@@ -797,6 +797,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.base_bar, "456")
         self.assertEquals(row.base_data_version, None)
 
+    def testInsertWithNullableColumn(self):
+        what = {"bar": "abc", "when": 34567}
+        # TODO: we should really be checking directly for IntegrityError, but AUSTransaction eats it.
+        self.assertRaisesRegexp(TransactionError, "IntegrityError", self.sc_table.insert, changed_by="bob", **what)
+
     def testInsertForExistingNoSuchRow(self):
         what = {"fooid": 10, "foo": "thing", "data_version": 1, "when": 999}
         self.assertRaisesRegexp(ValueError, "Cannot create scheduled change with data_version for non-existent row", self.sc_table.insert, changed_by="bob",
@@ -816,7 +821,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         what = {"fooid": 2, "when": 4532}
         self.assertRaisesRegexp(ValueError, "Missing primary key column", table.scheduled_changes.insert, changed_by="bob", **what)
 
-    def testInsertWithIncompatibleConditions(self):
+    def testInsertWithMalformedTimestamp(self):
         what = {"foo": "blah", "when": "abc"}
         self.assertRaisesRegexp(ValueError, "Cannot parse", self.sc_table.insert, changed_by="bob", **what)
 
@@ -944,7 +949,10 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(PermissionDeniedError, self.sc_table.delete, where=[self.sc_table.sc_id == 2], changed_by="nicole", old_data_version=1)
 
     def testBaseTableDeletesFailsWithScheduledChange(self):
-        self.assertRaises(UpdateMergeError, self.table.delete, where=[self.table.fooid == 2], changed_by="bob", old_data_version=2)
+        self.assertRaises(ChangeScheduledError, self.table.delete, where=[self.table.fooid == 2], changed_by="bob", old_data_version=2)
+
+    def testBaseTableDeleteSucceedsWithoutScheduledChange(self):
+        self.table.delete(where=[self.table.fooid == 3], changed_by="bob", old_data_version=1)
 
     def testEnactChangeNewRow(self):
         self.table.scheduled_changes.enactChange(2, "nancy")
