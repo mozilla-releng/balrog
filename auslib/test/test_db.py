@@ -651,7 +651,7 @@ class ScheduledChangesTableMixin(object):
 
             def __init__(self, db, metadata):
                 self.table = Table("test_table", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
-                                   Column("foo", String(15)),
+                                   Column("foo", String(15), nullable=False),
                                    Column("bar", String(15)))
                 super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
@@ -796,6 +796,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.base_foo, "123")
         self.assertEquals(row.base_bar, "456")
         self.assertEquals(row.base_data_version, None)
+
+    def testInsertWithNullableColumn(self):
+        what = {"bar": "abc", "when": 34567}
+        # TODO: we should really be checking directly for IntegrityError, but AUSTransaction eats it.
+        self.assertRaisesRegexp(TransactionError, "IntegrityError", self.sc_table.insert, changed_by="bob", **what)
 
     def testInsertForExistingNoSuchRow(self):
         what = {"fooid": 10, "foo": "thing", "data_version": 1, "when": 999}
