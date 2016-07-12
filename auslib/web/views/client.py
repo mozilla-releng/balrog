@@ -10,6 +10,9 @@ import logging
 
 
 class ClientRequestView(MethodView):
+    responseHeaders = {
+        "Cache-Control": "public,max-age=60",
+    }
 
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(self.__class__.__name__)
@@ -101,5 +104,6 @@ class ClientRequestView(MethodView):
             xml = "\n".join(xml)
         self.log.debug("Sending XML: %s", xml)
         response = make_response(xml)
+        response.headers = self.responseHeaders
         response.mimetype = "text/xml"
         return response
