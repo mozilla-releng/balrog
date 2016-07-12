@@ -794,6 +794,12 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         data = {"mapping": "a", "data_version": 1}
         ret = self._post("/rules/1", data=data)
         self.assertEquals(ret.status_code, 400, ret.data)
+        self.assertIn("Is there a scheduled change", ret.data)
+
+    def testDeleteRuleWithScheduledChange(self):
+        ret = self._delete("/rules/1", qs=dict(data_version=1))
+        self.assertEquals(ret.status_code, 400, ret.data)
+        self.assertIn("Are you trying to delete", ret.data)
 
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=1))
@@ -802,6 +808,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
     def testDeleteScheduledChangeWrongDataVersion(self):
         ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=5))
         self.assertEquals(ret.status_code, 400, msg=ret.data)
+        self.assertIn("Outdated Data Version", ret.data)
 
     def testDeleteScheduledChangeWithoutPermission(self):
         ret = self._delete("/scheduled_changes/rules/1", username="rex", qs=dict(data_version=1))

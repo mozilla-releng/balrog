@@ -5,8 +5,7 @@ from flask.views import MethodView
 
 from auslib.global_state import dbo
 from auslib.util.timesince import timesince
-from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError
-import json
+from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError
 import logging
 
 
@@ -26,17 +25,26 @@ def handleGeneralExceptions(messages):
             try:
                 return f(*args, **kwargs)
             except OutdatedDataError as e:
-                msg = "Couldn't perform the request %s. Outdated Data Version. old_data_version doesn't match current data_version: %s" % (messages, e)
+                msg = "Couldn't perform the request %s. Outdated Data Version. old_data_version doesn't match current data_version" % messages
                 logging.warning("Bad input: %s", msg)
-                return Response(status=400, response=json.dumps({"data": e.args}))
+                logging.warning(e)
+                return Response(status=400, response=msg)
             except UpdateMergeError as e:
-                msg = "Couldn't perform the request %s due to merge error. Is there a scheduled change for what you're trying to update? %s" % (messages, e)
+                msg = "Couldn't perform the request %s due to merge error. Is there a scheduled change that conflicts with yours?" % messages
                 logging.warning("Bad input: %s", msg)
-                return Response(status=400, response=json.dumps({"data": e.args}))
+                logging.warning(e)
+                return Response(status=400, response=msg)
+            except ChangeScheduledError as e:
+                msg = "Couldn't perform the request %s due a conflict with a scheduled change." % messages
+                msg += "Are you trying to delete something with a change scheduled?"
+                logging.warning("Bad input: %s", msg)
+                logging.warning(e)
+                return Response(status=400, response=msg)
             except PermissionDeniedError as e:
-                msg = "Permission denied to perform the request %s" % e
+                msg = "Permission denied to perform the request"
                 logging.warning(msg)
-                return Response(status=403, response=json.dumps({"data": e.args}))
+                logging.warning(e)
+                return Response(status=403, response=msg)
         return decorated
     return wrap
 
