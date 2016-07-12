@@ -797,7 +797,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.base_bar, "456")
         self.assertEquals(row.base_data_version, None)
 
-    def testInsertWithNullableColumn(self):
+    def testInsertWithNonNullableColumn(self):
         what = {"bar": "abc", "when": 34567}
         # TODO: we should really be checking directly for IntegrityError, but AUSTransaction eats it.
         self.assertRaisesRegexp(TransactionError, "IntegrityError", self.sc_table.insert, changed_by="bob", **what)
