@@ -10,11 +10,10 @@ import logging
 
 
 class ClientRequestView(MethodView):
-    responseHeaders = {
-        "Cache-Control": "public,max-age=60",
-    }
-
     def __init__(self, *args, **kwargs):
+        # By default, we want a cache that can be shared across requests from different users ("public")
+        # and a maximum age of 60 seconds, to keep our TTL low.
+        self.cacheControl = app.config.get("CACHE_CONTROL", "public,max-age=60")
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)
 
@@ -104,6 +103,6 @@ class ClientRequestView(MethodView):
             xml = "\n".join(xml)
         self.log.debug("Sending XML: %s", xml)
         response = make_response(xml)
-        response.headers = self.responseHeaders
+        response.headers["Cache-Control"] = self.cacheControl
         response.mimetype = "text/xml"
         return response
