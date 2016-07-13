@@ -787,32 +787,47 @@ class Rules(AUSTable):
         """Returns all of the rules that match the given update query.
            For cases where a particular updateQuery channel has no
            fallback, fallbackChannel should match the channel from the query."""
-        where = [
-            ((self.product == updateQuery['product']) | (self.product == null())) &
-            ((self.buildTarget == updateQuery['buildTarget']) | (self.buildTarget == null())) &
-            ((self.headerArchitecture == updateQuery['headerArchitecture']) | (self.headerArchitecture == null()))
-        ]
-        # Query version 2 doesn't have distribution information, and to keep
-        # us maximally flexible, we won't match any rules that have
-        # distribution update set.
-        if updateQuery['queryVersion'] == 2:
-            where.extend([(self.distribution == null()) & (self.distVersion == null())])
-        # Only query versions 3 and 4 have distribution information, so we
-        # need to consider it.
-        if updateQuery['queryVersion'] in (3, 4):
-            where.extend([
-                ((self.distribution == updateQuery['distribution']) | (self.distribution == null())) &
-                ((self.distVersion == updateQuery['distVersion']) | (self.distVersion == null()))
-            ])
-        if not updateQuery['force']:
-            where.append(self.backgroundRate > 0)
-        rules = self.select(where=where, transaction=transaction)
-        self.log.debug("where: %s" % where)
+
+        def getRawMatches():
+            where = [
+                ((self.product == updateQuery['product']) | (self.product == null())) &
+                ((self.buildTarget == updateQuery['buildTarget']) | (self.buildTarget == null())) &
+                ((self.headerArchitecture == updateQuery['headerArchitecture']) | (self.headerArchitecture == null()))
+            ]
+            # Query version 2 doesn't have distribution information, and to keep
+            # us maximally flexible, we won't match any rules that have
+            # distribution update set.
+            if updateQuery['queryVersion'] == 2:
+                where.extend([(self.distribution == null()) & (self.distVersion == null())])
+            # Only query versions 3 and 4 have distribution information, so we
+            # need to consider it.
+            if updateQuery['queryVersion'] in (3, 4):
+                where.extend([
+                    ((self.distribution == updateQuery['distribution']) | (self.distribution == null())) &
+                    ((self.distVersion == updateQuery['distVersion']) | (self.distVersion == null()))
+                ])
+            if not updateQuery['force']:
+                where.append(self.backgroundRate > 0)
+
+            self.log.debug("where: %s" % where)
+            return self.select(where=where, transaction=transaction)
+
+        # This cache key is constructed from all parts of the updateQuery that
+        # are used in the select() to get the "raw" rule matches. For the most
+        # part, product and buildTarget will be the only applicable ones which
+        # means we should get very high cache hit rates, as there's not a ton
+        # of variability of possible combinations for those.
+        cache_key = "%s:%s:%s:%s:%s:%s" % \
+            (updateQuery["product"], updateQuery["buildTarget"], updateQuery["headerArchitecture"],
+             updateQuery.get("distribution"), updateQuery.get("distVersion"), updateQuery["force"])
+        rules = cache.get("rules", cache_key, getRawMatches)
+
         self.log.debug("Raw matches:")
 
         matchingRules = []
         for rule in rules:
             self.log.debug(rule)
+
             # Resolve special means for channel, version, and buildID - dropping
             # rules that don't match after resolution.
             if not self._channelMatchesRule(rule['channel'], updateQuery['channel'], fallbackChannel):
