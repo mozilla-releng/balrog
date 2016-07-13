@@ -20,7 +20,7 @@ class TestDockerflowEndpoints(ClientTestBase):
             ret = self.client.get("/__heartbeat__")
             self.assertEqual(ret.status_code, 200)
             self.assertEqual(cr.call_count, 1)
-            self.assertTrue("Cache-Control" in ret.headers)
+            self.assertEqual(ret.headers["Cache-Control"], "no-cache")
 
     def testHeartbeatWithException(self):
         with mock.patch("auslib.global_state.dbo.rules.countRules") as cr:
@@ -33,3 +33,4 @@ class TestDockerflowEndpoints(ClientTestBase):
     def testLbHeartbeat(self):
         ret = self.client.get("/__lbheartbeat__")
         self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.headers["Cache-Control"], "no-cache")
