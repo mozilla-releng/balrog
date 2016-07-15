@@ -393,10 +393,28 @@ class ReleaseHistoryView(HistoryAdminView):
             order_by=[table.timestamp.desc()],
         )
 
+        _mapping = [
+            'data_version',
+            'name',
+            'product',
+            'read_only',
+            '_different',
+            '_time_ago',
+            'change_id',
+            'changed_by',
+        ]
+
         self.annotateRevisionDifferences(revisions)
 
+        _revisions = []
+        for r in revisions:
+            _revisions.append(dict(
+                (item, r[item])
+                for item in _mapping
+            ))
+
         return jsonify({
-            'revisions': revisions,
+            'revisions': _revisions,
             'count': total_count,
         })
 
