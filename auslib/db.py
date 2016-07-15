@@ -951,7 +951,7 @@ class ScheduledChangeTable(AUSTable):
         (meaning: the scheduled change and the new version of the row modify
         the same columns), an UpdateMergeError is raised."""
 
-        # pyflakes this should be "is False", but that's not how SQLAlchemy
+        # pyflakes thinks this should be "is False", but that's not how SQLAlchemy
         # works, so we need to shut it up.
         # http://stackoverflow.com/questions/18998010/flake8-complains-on-boolean-comparison-in-filter-clause
         where = [self.complete == False]  # noqa

@@ -49,3 +49,6 @@ application.config["SPECIAL_FORCE_HOSTS"] = SPECIAL_FORCE_HOSTS
 # about the current code (version number, commit hash), but doesn't exist in
 # the repo itself
 application.config["VERSION_FILE"] = "/app/version.json"
+
+if os.environ.get("CACHE_CONTROL"):
+    application.config["CACHE_CONTROL"] = os.environ["CACHE_CONTROL"]
