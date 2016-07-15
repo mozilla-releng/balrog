@@ -27,6 +27,7 @@ def createBlob(data):
     from auslib.blobs.gmp import GMPBlobV1
     from auslib.blobs.whitelist import WhitelistBlobV1
     from auslib.blobs.superblob import SuperBlob
+    from auslib.blobs.systemaddons import SystemAddonsBlob
 
     blob_map = {
         1: ReleaseBlobV1,
@@ -38,6 +39,7 @@ def createBlob(data):
         1000: GMPBlobV1,
         3000: WhitelistBlobV1,
         4000: SuperBlob,
+        5000: SystemAddonsBlob
     }
 
     if isinstance(data, basestring):
@@ -113,11 +115,11 @@ class Blob(dict):
                 url += '?force=1'
         return url
 
-    def getHeaderXML(self, updateQuery, update_type):
+    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         raise NotImplementedError()
 
-    def getFooterXML(self):
+    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         raise NotImplementedError()
 
-    def getInnerXML(self):
+    def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         raise NotImplementedError()
