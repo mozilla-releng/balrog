@@ -54,7 +54,10 @@ class MaybeCacher(object):
                 return None
 
         value = self.caches[name].get(key)
-        if not value and callable(value_getter):
+        # "if value is None" is important here (instead of "if not value")
+        # because it allows us to cache results of potentially expensive
+        # calls that may end up returning nothing.
+        if value is None and callable(value_getter):
             value = value_getter()
             self.put(name, key, value)
 

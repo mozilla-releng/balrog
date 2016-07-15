@@ -15,6 +15,9 @@ from sqlalchemy.sql.expression import null
 import migrate.versioning.schema
 import migrate.versioning.api
 
+import dictdiffer
+import dictdiffer.merge
+
 from auslib.global_state import cache, dbo
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import createBlob
@@ -784,32 +787,47 @@ class Rules(AUSTable):
         """Returns all of the rules that match the given update query.
            For cases where a particular updateQuery channel has no
            fallback, fallbackChannel should match the channel from the query."""
-        where = [
-            ((self.product == updateQuery['product']) | (self.product == null())) &
-            ((self.buildTarget == updateQuery['buildTarget']) | (self.buildTarget == null())) &
-            ((self.headerArchitecture == updateQuery['headerArchitecture']) | (self.headerArchitecture == null()))
-        ]
-        # Query version 2 doesn't have distribution information, and to keep
-        # us maximally flexible, we won't match any rules that have
-        # distribution update set.
-        if updateQuery['queryVersion'] == 2:
-            where.extend([(self.distribution == null()) & (self.distVersion == null())])
-        # Only query versions 3 and 4 have distribution information, so we
-        # need to consider it.
-        if updateQuery['queryVersion'] in (3, 4):
-            where.extend([
-                ((self.distribution == updateQuery['distribution']) | (self.distribution == null())) &
-                ((self.distVersion == updateQuery['distVersion']) | (self.distVersion == null()))
-            ])
-        if not updateQuery['force']:
-            where.append(self.backgroundRate > 0)
-        rules = self.select(where=where, transaction=transaction)
-        self.log.debug("where: %s" % where)
+
+        def getRawMatches():
+            where = [
+                ((self.product == updateQuery['product']) | (self.product == null())) &
+                ((self.buildTarget == updateQuery['buildTarget']) | (self.buildTarget == null())) &
+                ((self.headerArchitecture == updateQuery['headerArchitecture']) | (self.headerArchitecture == null()))
+            ]
+            # Query version 2 doesn't have distribution information, and to keep
+            # us maximally flexible, we won't match any rules that have
+            # distribution update set.
+            if updateQuery['queryVersion'] == 2:
+                where.extend([(self.distribution == null()) & (self.distVersion == null())])
+            # Only query versions 3 and 4 have distribution information, so we
+            # need to consider it.
+            if updateQuery['queryVersion'] in (3, 4):
+                where.extend([
+                    ((self.distribution == updateQuery['distribution']) | (self.distribution == null())) &
+                    ((self.distVersion == updateQuery['distVersion']) | (self.distVersion == null()))
+                ])
+            if not updateQuery['force']:
+                where.append(self.backgroundRate > 0)
+
+            self.log.debug("where: %s" % where)
+            return self.select(where=where, transaction=transaction)
+
+        # This cache key is constructed from all parts of the updateQuery that
+        # are used in the select() to get the "raw" rule matches. For the most
+        # part, product and buildTarget will be the only applicable ones which
+        # means we should get very high cache hit rates, as there's not a ton
+        # of variability of possible combinations for those.
+        cache_key = "%s:%s:%s:%s:%s:%s" % \
+            (updateQuery["product"], updateQuery["buildTarget"], updateQuery["headerArchitecture"],
+             updateQuery.get("distribution"), updateQuery.get("distVersion"), updateQuery["force"])
+        rules = cache.get("rules", cache_key, getRawMatches)
+
         self.log.debug("Raw matches:")
 
         matchingRules = []
         for rule in rules:
             self.log.debug(rule)
+
             # Resolve special means for channel, version, and buildID - dropping
             # rules that don't match after resolution.
             if not self._channelMatchesRule(rule['channel'], updateQuery['channel'], fallbackChannel):
@@ -1085,8 +1103,44 @@ class Releases(AUSTable):
             if self.containsForbiddenDomain(blob, product):
                 raise ValueError("Release blob contains forbidden domain.")
             what['data'] = blob.getJSON()
-        self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
         new_data_version = old_data_version + 1
+        try:
+            self.update(where=[self.name == name], what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        except OutdatedDataError as e:
+            self.log.debug("trying to update older data_version %s for release %s" % (name, old_data_version))
+            if blob is not None and read_only is None:
+                ancestor_change = self.history.getChange(data_version=old_data_version,
+                                                         column_values={'name': name},
+                                                         transaction=transaction)
+                # if we have no historical information about the ancestor blob
+                if ancestor_change is None:
+                    self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
+                    raise
+                ancestor_blob = createBlob(ancestor_change.get('data'))
+                tip_release = self.getReleases(name=name,
+                                               transaction=transaction)[0]
+                tip_blob = tip_release.get('data')
+                m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
+                try:
+                    m.run()
+                    # Merger merges the patches into a single unified patch,
+                    # but we need dictdiffer.patch to actually apply the patch
+                    # to the original blob
+                    unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
+                    # converting the resultant dict into a blob and then
+                    # converting it to JSON
+                    what['data'] = createBlob(unified_blob).getJSON()
+                    # we want the data_version for the dictdiffer.merged blob to be one
+                    # more than that of the latest blob
+                    tip_data_version = tip_release['data_version']
+                    self.update(where=[self.name == name], what=what, changed_by=changed_by,
+                                old_data_version=tip_data_version, transaction=transaction)
+                    # cache will have a data_version of one plus the tip
+                    # data_version
+                    new_data_version = tip_data_version + 1
+                except dictdiffer.merge.UnresolvedConflictsException:
+                    self.log.debug("latest version of release %s cannot be merged with new blob" % name)
+                    raise e
         cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
         cache.put("blob_version", name, new_data_version)
 

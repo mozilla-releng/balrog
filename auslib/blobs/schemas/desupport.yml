@@ -5,6 +5,7 @@
     - name
     - schema_version
     - detailsUrl
+    - displayVersion
   additionalProperties: false
   properties:
     name:
@@ -21,3 +22,6 @@
       type: string
       description: URL that shows more information about why users getting this release are desupported
       format: uri
+    displayVersion:
+      type: string
+      description: The displayVersion to return with the update. Generally, the client will show this in the UI. For desupport responses, this is generally set to the last supported version.
