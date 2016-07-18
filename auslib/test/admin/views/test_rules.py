@@ -38,6 +38,14 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['priority'], 33)
         self.assertEquals(r[0]['data_version'], 1)
 
+    def testNewRuleWithoutPermission(self):
+        data = json.dumps(dict(
+            backgroundRate=31, mapping="c", priority=33, product="Firefox",
+            update_type="minor", channel="nightly"
+        ))
+        ret = self._post("/rules", data=data, headers={"Content-Type": "application/json"}, username="jack")
+        self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
     # A POST without the required fields shouldn't be valid
     def testMissingFields(self):
         # But we still need to pass product, because permission checking
@@ -328,8 +336,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
 
     def testBadAuthPost(self):
         ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
-        self.assertEquals(ret.status_code, 401, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        self.assertTrue("not allowed to alter" in ret.data, msg=ret.data)
+        self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
     def testHttpRemoteUserAuth(self):
         # Make some changes to a rule
@@ -353,12 +360,12 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
 
     def testNoPermissionToAlterExistingProduct(self):
         ret = self._post('/rules/1', data=dict(backgroundRate=71, data_version=1), username='bob')
-        self.assertEquals(ret.status_code, 401)
+        self.assertEquals(ret.status_code, 403)
 
     def testNoPermissionToAlterNewProduct(self):
         ret = self._post(
             '/rules/4', data=dict(product='protected', mapping='a', backgroundRate=71, priority=50, update_type='minor', data_version=1), username='bob')
-        self.assertEquals(ret.status_code, 401)
+        self.assertEquals(ret.status_code, 403)
 
     def testGetSingleRule(self):
         ret = self._get('/rules/1')
@@ -387,7 +394,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
 
     def testDeleteWithoutPermission(self):
         ret = self._delete("/rules/2", username="tony", qs=dict(data_version=1))
-        self.assertEquals(ret.status_code, 401)
+        self.assertEquals(ret.status_code, 403)
 
 
 class TestRuleHistoryView(ViewTest, JSONTestMixin):
@@ -564,7 +571,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
 
         url = '/rules/1/revisions'
         ret = self._post(url, json.dumps({'change_id': change_id}), content_type="application/json", username='bob')
-        self.assertEquals(ret.status_code, 401)
+        self.assertEquals(ret.status_code, 403)
 
     def testPostRevisionRollbackBadRequests(self):
         # when posting you need both the rule_id and the change_id

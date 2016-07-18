@@ -4,17 +4,6 @@ from auslib.log import configure_logging, JsonLogFormatter
 from auslib.test.admin.views.base import ViewTest
 
 
-class TestRequirepermission(ViewTest):
-
-    def testAdmin(self):
-        ret = self._put('/users/foo/permissions/admin')
-        self.assertStatusCode(ret, 201)
-
-    def testGranular(self):
-        ret = self._put('/users/foo/permissions/admin', username='bob')
-        self.assertStatusCode(ret, 201)
-
-
 class TestJsonLogFormatter(ViewTest):
 
     def setUp(self):
