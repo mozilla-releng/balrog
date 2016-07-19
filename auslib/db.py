@@ -462,6 +462,7 @@ class History(AUSTable):
         self.table = Table('%s_history' % baseTable.t.name, metadata,
                            Column('change_id', Integer, primary_key=True, autoincrement=True),
                            Column('changed_by', String(100), nullable=False),
+                           mysql_row_format='COMPRESSED',
                            )
         # Timestamps are stored as an integer, but actually contain
         # precision down to the millisecond, achieved through
