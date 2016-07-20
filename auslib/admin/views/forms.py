@@ -127,7 +127,7 @@ class ScheduledChangeForm(Form):
     telemetry_product = NullableStringField("Telemetry Product")
     telemetry_channel = NullableStringField("Telemetry Channel")
     telemetry_uptake = NullableStringField("Telemetry Uptake")
-    when = IntegerField("When")
+    when = IntegerField("When", validators=[Optional()])
 
 
 class NewPermissionForm(Form):
