@@ -73,6 +73,10 @@ class ReadOnlyError(SQLAlchemyError):
     """Raised when a release marked as read-only is attempted to be changed."""
 
 
+class ChangeScheduledError(SQLAlchemyError):
+    """Raised when a row cannot be deleted because there's a scheduled change for it."""
+
+
 class AUSTransaction(object):
     """Manages a single transaction. Requires a connection object.
 
@@ -228,8 +232,6 @@ class AUSTable(object):
 
            @param columns: Column objects to select. Defaults to None, meaning select all columns
            @type columns: A sequence of sqlalchemy.schema.Column objects or column names as strings
-           @param where: Conditions to apply on this select. Defaults to None, meaning no conditions
-           @type where: A sequence of sqlalchemy.sql.expression.ClauseElement objects
            @param order_by: Columns to sort the rows by. Defaults to None, meaning no ORDER BY clause
            @type order_by: A sequence of sqlalchemy.schema.Column objects
            @param limit: Limit results to this many. Defaults to None, meaning no limit
@@ -253,12 +255,14 @@ class AUSTable(object):
         """Perform a SELECT statement on this table.
            See AUSTable._selectStatement for possible arguments.
 
+           @param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
+           @type where: list of clauses or key/value pairs.
+
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
 
-        # "where" can be either a list of SQLAlchemy objects, or a key/value
-        # pair of columns and values. If it's the latter, we need to convert it
-        # to the former before proceeding.
+        # If "where" is key/value pairs, we need to convert it to SQLAlchemy
+        # clauses before porceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
@@ -363,15 +367,13 @@ class AUSTable(object):
         if self.history:
             trans.execute(self.history.forDelete(row, changed_by))
         if self.scheduled_changes:
-            # We don't allow rows that have changes scheduled to them to be
-            # deleted because we don't know if the user deleting the row has
-            # permission to cancel the scheduled changes. Feeding mergeUpdate
-            # an object with all the rows values set to None will cause it to
-            # raise an exception if any change is scheduled for it.
-            # We use mergeUpdate instead of doing this ourselves because it
-            # already knows how to rewrite column names.
-            new_row = dict.fromkeys([c.name for c in self.table.get_children()])
-            self.scheduled_changes.mergeUpdate(row, new_row, changed_by, trans)
+            # If this table has active scheduled changes we cannot allow it to be deleted
+            sc_where = [self.scheduled_changes.complete == False]  # noqa
+            for pk in self.primary_key:
+                sc_where.append(getattr(self.scheduled_changes, "base_%s" % pk.name) == row[pk.name])
+            if self.scheduled_changes.select(where=sc_where, transaction=trans):
+                raise ChangeScheduledError("Cannot delete rows that have changes scheduled.")
+
         return ret
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
@@ -380,6 +382,8 @@ class AUSTable(object):
            delete a single row per invocation. If the where clause given would delete
            zero or multiple rows, a WrongNumberOfRowsError is raised.
 
+           @param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
+           @type where: list of clauses or key/value pairs.
            @param changed_by: The username of the person deleting the row(s). Required when
                               history is enabled. Unused otherwise. No authorization checks are done
                               at this level.
@@ -391,9 +395,8 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        # "where" can be either a list of SQLAlchemy objects, or a key/value
-        # pair of columns and values. If it's the latter, we need to convert it
-        # to the former before proceeding.
+        # If "where" is key/value pairs, we need to convert it to SQLAlchemy
+        # clauses before porceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
@@ -431,6 +434,9 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        # To do merge detection for tables with scheduled changes we need a
+        # copy of the original row, and what will be changed. To record
+        # history, we need a copy of the entire new row.
         orig_row = self._returnRowOrRaise(where=where, transaction=trans)
         new_row = orig_row.copy()
         if self.versioned:
@@ -463,6 +469,8 @@ class AUSTable(object):
            per invocation. If the where clause given would update zero or multiple rows, a
            WrongNumberOfRowsError is raised.
 
+           @param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
+           @type where: list of clauses or key/value pairs.
            @param changed_by: The username of the person inserting the row. Required when
                               history is enabled. Unused otherwise. No authorization checks are done
                               at this level.
@@ -475,9 +483,8 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
 
-        # "where" can be either a list of SQLAlchemy objects, or a key/value
-        # pair of columns and values. If it's the latter, we need to convert it
-        # to the former before proceeding.
+        # If "where" is key/value pairs, we need to convert it to SQLAlchemy
+        # clauses before porceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
@@ -726,12 +733,17 @@ class ScheduledChangeTable(AUSTable):
     to the baseTable provided. A ScheduledChangeTable ends up mirroring the
     columns of its base, and adding the necessary ones to provide the schedule.
     By default, ScheduledChangeTables enable History on themselves."""
+
+    # Scheduled changes may only have a single type of condition, but some
+    # conditions require mulitple arguments. This data structure defines
+    # each type of condition, and groups their args together for easier
+    # processing.
     condition_groups = (
         ("when",),
         ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
     )
 
-    def __init__(self, db, dialect, metadata, baseTable):
+    def __init__(self, db, dialect, metadata, baseTable, history=True):
         self.baseTable = baseTable
         self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
                            Column("sc_id", Integer, primary_key=True, autoincrement=True),
@@ -741,10 +753,10 @@ class ScheduledChangeTable(AUSTable):
                            Column("telemetry_channel", String(75)),
                            Column("telemetry_uptake", Integer),
                            )
-        if dialect == 'sqlite':
-            self.table.append_column(Column('when', Integer))
+        if dialect == "sqlite":
+            self.table.append_column(Column("when", Integer))
         else:
-            self.table.append_column(Column('when', BigInteger))
+            self.table.append_column(Column("when", BigInteger))
 
         # The primary key column(s) are used in construct "where" clauses for
         # existing rows.
@@ -773,9 +785,13 @@ class ScheduledChangeTable(AUSTable):
             # modifying an existing one, those NOT NULL columns are required.
             self.table.append_column(newcol)
 
-        super(ScheduledChangeTable, self).__init__(db, dialect, history=True, versioned=True)
+        super(ScheduledChangeTable, self).__init__(db, dialect, history=history, versioned=True)
 
     def _prefixColumns(self, columns):
+        """Helper function which takes key/value pairs of columns for this
+        scheduled changes table - which could contain some unprefixed base
+        table columns - and returns key/values pairs of the same columns
+        with the base table ones prefixed."""
         ret = {}
         base_columns = [c.name for c in self.baseTable.t.get_children()]
         for k, v in columns.iteritems():
@@ -901,6 +917,8 @@ class ScheduledChangeTable(AUSTable):
             return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
+        """Enacts a previously scheduled change by running update or insert on
+        the base table."""
         if not self.db.hasPermission(enacted_by, "scheduled_change", "enact", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to enact scheduled changes", enacted_by)
 
@@ -914,7 +932,8 @@ class ScheduledChangeTable(AUSTable):
         # updated unnecessarily when the base table's update method calls
         # mergeUpdate. If the base table update fails, this will get reverted
         # when the transaction is rolled back.
-        self.update([self.sc_id == sc_id], {"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"], transaction=transaction)
+        self.update(where=[self.sc_id == sc_id], what={"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"],
+                    transaction=transaction)
 
         # If the scheduled change had a data version, it means the row already
         # exists, and we need to use update() to enact it.
@@ -927,7 +946,15 @@ class ScheduledChangeTable(AUSTable):
             self.baseTable.insert(sc["scheduled_by"], transaction=transaction, **what)
 
     def mergeUpdate(self, old_row, what, changed_by, transaction=None):
-        where = []
+        """Merges an update to the base table into any changes that may be
+        scheduled for the affected row. If the changes are unmergable
+        (meaning: the scheduled change and the new version of the row modify
+        the same columns), an UpdateMergeError is raised."""
+
+        # pyflakes thinks this should be "is False", but that's not how SQLAlchemy
+        # works, so we need to shut it up.
+        # http://stackoverflow.com/questions/18998010/flake8-complains-on-boolean-comparison-in-filter-clause
+        where = [self.complete == False]  # noqa
         for col in self.base_primary_key:
             where.append((getattr(self, "base_%s" % col) == old_row[col]))
 
@@ -936,10 +963,6 @@ class ScheduledChangeTable(AUSTable):
             self.log.debug("No scheduled changes found for update; nothing to do")
             return
         for sc in scheduled_changes:
-            if sc["complete"]:
-                self.log.debug("Scheduled change %s is complete, nothing to do", sc["sc_id"])
-                continue
-
             self.log.debug("Trying to merge update with scheduled change '%s'", sc["sc_id"])
 
             for col in what:

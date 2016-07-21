@@ -656,6 +656,20 @@ class ClientTestWithErrorHandlers(unittest.TestCase):
         self.client = app.test_client()
         self.view = ClientRequestView()
 
+    def testCacheControlIsSet(self):
+        ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
+        self.assertEqual(ret.headers.get("Cache-Control"), "public,max-age=60")
+
+    def testCacheControlIsNotSetFor404(self):
+        ret = self.client.get('/whizzybang')
+        self.assertEqual(ret.headers.get("Cache-Control"), None)
+
+    def testCacheControlIsNotSetFor500(self):
+        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+            m.side_effect = Exception('I break!')
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.headers.get("Cache-Control"), None)
+
     def testEmptySnippetOn404(self):
         ret = self.client.get('/whizzybang')
         self.assertEqual(ret.status_code, 200)

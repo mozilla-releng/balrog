@@ -299,7 +299,7 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        if request.form.get("data_version"):
+        if request.form.get("data_version") or (request.json and request.json.get("data_version")):
             form = ScheduledChangeExistingRuleForm()
         else:
             form = ScheduledChangeNewRuleForm()
@@ -317,7 +317,7 @@ class RuleScheduledChangeView(ScheduledChangeView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if request.form.get("data_version"):
+        if request.form.get("data_version") or (request.json and request.json.get("data_version")):
             form = EditScheduledChangeExistingRuleForm()
         else:
             form = EditScheduledChangeNewRuleForm()

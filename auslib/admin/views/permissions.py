@@ -89,7 +89,7 @@ class SpecificPermissionView(AdminView):
             if not form.validate():
                 self.log.warning("Bad input: %s", form.errors)
                 return Response(status=400, response=json.dumps(form.errors))
-            dbo.permissions.delete({"username": username, "permission": permission}, changed_by=changed_by,
+            dbo.permissions.delete(where={"username": username, "permission": permission}, changed_by=changed_by,
                                    old_data_version=form.data_version.data, transaction=transaction)
             return Response(status=200)
         except ValueError as e:

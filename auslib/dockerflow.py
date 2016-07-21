@@ -14,7 +14,7 @@ def create_dockerflow_endpoints(app):
         if version_file and path.exists(version_file):
             with open(app.config["VERSION_FILE"]) as f:
                 version_json = f.read()
-            return Response(version_json, mimetype="application/json")
+            return Response(version_json, mimetype="application/json", headers={"Cache-Control": "no-cache"})
         else:
             return jsonify({
                 "source": "https://github.com/mozilla/balrog",
@@ -30,11 +30,11 @@ def create_dockerflow_endpoints(app):
         # Counting the rules should be a trivial enough operation that it won't
         # cause notable load, but will verify that the database works.
         dbo.rules.countRules()
-        return Response("OK!", headers={"Cache-Control": "max-age: 20"})
+        return Response("OK!", headers={"Cache-Control": "no-cache"})
 
     @app.route("/__lbheartbeat__")
     def lbheartbeat():
         """Per the Dockerflow spec:
         Respond to /__lbheartbeat__ with an HTTP 200. This is for load balancer
         checks and should not check any dependent services."""
-        return "OK!"
+        return Response("OK!", headers={"Cache-Control": "no-cache"})

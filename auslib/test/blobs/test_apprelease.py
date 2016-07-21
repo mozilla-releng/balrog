@@ -1612,7 +1612,8 @@ class TestDesupportBlob(unittest.TestCase):
 {
     "name": "d1",
     "schema_version": 50,
-    "detailsUrl": "http://moo.com/cow"
+    "detailsUrl": "http://moo.com/cow",
+    "displayVersion": "50.0"
 }
 """)
 
@@ -1624,7 +1625,7 @@ class TestDesupportBlob(unittest.TestCase):
         returned = [x.strip() for x in returned]
         expected_header = ""
         expected = ["""
-<update type="minor" unsupported="true" detailsURL="http://moo.com/cow">
+<update type="minor" unsupported="true" detailsURL="http://moo.com/cow" displayVersion="50.0">
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
