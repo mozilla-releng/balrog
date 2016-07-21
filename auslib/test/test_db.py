@@ -298,6 +298,31 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         # to the id condition above.
         self.assertEquals(len(shared[3]._whereclause.get_children()), 2)
 
+    def testInitCompress(self):
+
+        class TestTable(AUSTable):
+
+            def __init__(self, metadata):
+                self.table = Table('test_two', metadata, Column('id', Integer, primary_key=True))
+                AUSTable.__init__(self, 'sqlite')
+
+        class TestCompressedHistoryTable(AUSTable):
+
+            def __init__(self, metadata):
+                self.table = Table('test_three', metadata, Column('id', Integer, primary_key=True))
+                AUSTable.__init__(self, 'sqlite', compressHistory=True)
+
+        # Patching Table so that we can check if setting the flag results in
+        # the correct arguments being set during its instantiation.
+        with mock.patch('sqlalchemy.Table.__init__') as mock_history_table:
+            mock_history_table.return_value = None
+            TestTable(self.metadata)
+            _, kwargs = mock_history_table.call_args
+            self.assertEquals(kwargs['mysql_row_format'], 'DEFAULT')
+            TestCompressedHistoryTable(self.metadata)
+            _, kwargs = mock_history_table.call_args
+            self.assertEquals(kwargs['mysql_row_format'], 'COMPRESSED')
+
 
 class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileDatabaseMixin):
 
