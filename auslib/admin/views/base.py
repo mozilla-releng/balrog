@@ -28,23 +28,23 @@ def handleGeneralExceptions(messages):
                 msg = "Couldn't perform the request %s. Outdated Data Version. old_data_version doesn't match current data_version" % messages
                 logging.warning("Bad input: %s", msg)
                 logging.warning(e)
-                return Response(status=400, response=msg)
+                return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
             except UpdateMergeError as e:
                 msg = "Couldn't perform the request %s due to merge error. Is there a scheduled change that conflicts with yours?" % messages
                 logging.warning("Bad input: %s", msg)
                 logging.warning(e)
-                return Response(status=400, response=msg)
+                return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
             except ChangeScheduledError as e:
                 msg = "Couldn't perform the request %s due a conflict with a scheduled change." % messages
                 msg += "Are you trying to delete something with a change scheduled?"
                 logging.warning("Bad input: %s", msg)
                 logging.warning(e)
-                return Response(status=400, response=msg)
+                return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
             except PermissionDeniedError as e:
                 msg = "Permission denied to perform the request"
                 logging.warning(msg)
                 logging.warning(e)
-                return Response(status=403, response=msg)
+                return Response(status=403, response=json.dumps({"exception": msg}), mimetype="application/json")
         return decorated
     return wrap
 
