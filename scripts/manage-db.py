@@ -40,7 +40,7 @@ AND (STR_TO_DATE(RIGHT(name, 14), "%%%%Y%%%%m%%%%d%%%%H%%%%i%%%%S") < NOW() - IN
 
 def cleanup_releases_history(trans, dryrun=True):
     query = """
-WHERE name LIKE '%%%%latest%%%%'
+WHERE name LIKE '%%%%latest'
 AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 14 DAY);
 """
     if dryrun:
@@ -53,7 +53,7 @@ AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 14 DAY);
         trans.execute("DELETE releases_history FROM releases_history")
 
     query = """
-WHERE name NOT LIKE '%%%%latest%%%%' AND name LIKE '%%%%nightly%%%%'
+WHERE name NOT LIKE '%%%%latest' AND name LIKE '%%%%nightly%%%%'
 AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 7 DAY);
 """
     if dryrun:
