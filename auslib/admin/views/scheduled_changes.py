@@ -44,7 +44,7 @@ class ScheduledChangesView(AdminView):
             sc_id = self.sc_table.insert(changed_by, transaction, **form.data)
         except ValueError as e:
             self.log.warning("Bad input: %s", e)
-            return Response(status=400, response=str(e))
+            return Response(status=400, response=json.dumps({"exception": e.args}))
 
         return jsonify({"sc_id": sc_id})
 
@@ -89,7 +89,7 @@ class ScheduledChangeView(AdminView):
             self.sc_table.update({"sc_id": sc_id}, what, changed_by, form.sc_data_version.data, transaction)
         except ValueError as e:
             self.log.warning("Bad input: %s", e)
-            return Response(status=400, response=str(e))
+            return Response(status=400, response=json.dumps({"exception": e.args}))
 
         sc = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["data_version"])[0]
         new_data_version = sc['data_version']
@@ -143,7 +143,7 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             assert page >= 1
         except (ValueError, AssertionError) as msg:
             self.log.warning("Bad input: %s", msg)
-            return Response(status=400, response=str(msg))
+            return Response(status=400, response=json.dumps({"exception": msg}))
 
         offset = limit * (page - 1)
         total_count = self.table.scheduled_changes.history.t.count()\
@@ -182,15 +182,15 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             change_id = request.json.get('change_id')
         if not change_id:
             self.log.warning("Bad input: %s", "no change_id")
-            return Response(status=400, response='no change_id')
+            return Response(status=400, response=json.dumps({"exception": "no change_id"}))
         change = self.table.scheduled_changes.history.getChange(change_id=change_id)
         if change is None:
-            return Response(status=400, response='bad change_id')
+            return Response(status=400, response=json.dumps({"exception": "bad change_id"}))
         if change['sc_id'] != sc_id:
-            return Response(status=400, response='bad sc_id')
+            return Response(status=400, response=json.dumps({"exception": "bad sc_id"}))
         sc = self.table.scheduled_changes.select({"sc_id": sc_id}, transaction=transaction)[0]
         if sc is None:
-            return Response(status=404, response='bad sc_id')
+            return Response(status=400, response=json.dumps({"exception": "bad sc_id"}))
         old_data_version = sc['data_version']
 
         what = dict(
