@@ -15,13 +15,20 @@ async def get_telemetry_uptake(*args):
 
 
 def is_ready(change, current_uptake=None):
-    if change.get("telemetry_uptake") and current_uptake >= change["telemetry_uptake"]:
-        return True
-    elif change.get("when") and time.time() >= change["when"]:
-        return True
+    if change.get("telemetry_uptake"):
+        logging.debug("Comparing uptake for change %s (current: %s, required: %s", change["sc_id"], current_uptake, change["telemetry_uptake"])
+        if current_uptake >= change["telemetry_uptake"]:
+            return True
+    elif change.get("when"):
+        now = time.time()
+        scheduled_time = change["when"] / 1000
+        logging.debug("Comparing time for change %s (now: %s, scheduled time: %s", change["sc_id"], now, scheduled_time)
+        if time.time() >= scheduled_time:
+            return True
     else:
         logging.warning("Unknown change type!")
 
+    logging.debug("Change %s is not ready", change["sc_id"])
     return False
 
 
@@ -31,15 +38,18 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
     while True:
         try:
             # TODO: switch this to a HEAD after https://github.com/KeepSafe/aiohttp/issues/852 is released
-            csrf_token = await client.request(balrog_api_root, "/csrf_token", method="GET", auth=auth, loop=loop)["csrf_token"]
-            for change in await client.request(balrog_api_root, "/scheduled_changes/rules", auth=auth, loop=loop):
+            resp = await client.request(balrog_api_root, "/csrf_token", method="GET", auth=auth, loop=loop)
+            csrf_token = resp["csrf_token"]
+            for change in (await client.request(balrog_api_root, "/scheduled_changes/rules", auth=auth, loop=loop))["scheduled_changes"]:
+                logging.debug("Processing change %s", change["sc_id"])
                 current_uptake = None
-                if change["type"] == "uptake":
+                if change["telemetry_uptake"]:
                     # TODO: probably replace this with a simple client.request()...
                     current_uptake = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"], loop=loop)
                 if is_ready(change, current_uptake):
+                    logging.debug("Change %s is ready, enacting", change["sc_id"])
                     data = {"csrf_token": csrf_token}
-                    await client.request(balrog_api_root, "/scheduled_changes/rules/{}".format(change["sc_id"]), method="POST", data=data, auth=auth, loop=loop)
+                    await client.request(balrog_api_root, "/scheduled_changes/rules/{}/enact".format(change["sc_id"]), method="POST", data=data, auth=auth, loop=loop)
 
             await asyncio.sleep(sleeptime)
         except:
