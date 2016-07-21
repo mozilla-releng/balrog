@@ -11,7 +11,8 @@ __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 
 def setpermission(f):
     def decorated(*args, **kwargs):
-        if kwargs['permission'] != 'admin' and not kwargs['permission'].startswith('/'):
+        if kwargs['permission'] not in ('admin', 'release', 'release_locale', 'release_read_only', 'rule', 'permission') \
+           and not kwargs['permission'].startswith('/'):
             kwargs['permission'] = '/%s' % kwargs['permission']
         return f(*args, **kwargs)
     return decorated

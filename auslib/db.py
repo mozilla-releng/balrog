@@ -1220,13 +1220,12 @@ class Releases(AUSTable):
 
 class Permissions(AUSTable):
     """allPermissions defines the structure and possible options for all
-       available permissions. Most permissions are identified by an URL,
-       potentially with variables in it. All URL based permissions can be
-       augmented by using the "product" option. When specified, only requests
-       involving the named product will be permitted. Additionally, any URL
-       that supports more than one of: PUT, POST, or DELETE can by augmented
-       by using the option "method". When specified, the permission with this
-       option is only valid for requests through that HTTP method."""
+       available permissions. Permissions can be limited to specific types
+       of actions. Eg: granting the "rule" permission with "actions" set to
+       ["create"] allows rules to be created but not modified or deleted.
+       Permissions that relate to rules or releases can be further limited
+       by product. Eg: granting the "release" permission with "products" set
+       to ["GMP"] allows the user to modify GMP releases, but not Firefox."""
     allPermissions = {
         'admin': [],
         '/releases': ['method', 'product'],
@@ -1238,6 +1237,11 @@ class Permissions(AUSTable):
         '/rules/:id': ['method', 'product'],
         '/rules/:id/revisions': ['product'],
         '/users/:id/permissions/:permission': ['method'],
+        "release": ["actions", "products"],
+        "release_locale": ["actions", "products"],
+        "release_read_only": ["actions", "products"],
+        "rule": ["actions", "products"],
+        "permission": ["actions"],
     }
 
     def __init__(self, metadata, dialect):
