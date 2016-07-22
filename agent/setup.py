@@ -17,7 +17,7 @@ with open(path.join(here, "requirements.txt")) as f:
 setup(
     name="balrogagent",
     description="Balrog Agent",
-    version=balrogagent.__version__,
+    version="0.1",
     url="https://github.com/mozilla/balrog",
     license="MPL",
     author="Ben Hearsum",

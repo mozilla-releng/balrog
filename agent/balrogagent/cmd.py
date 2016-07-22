@@ -7,9 +7,6 @@ import traceback
 from . import client
 
 
-__version__ = 0.1
-
-
 async def get_telemetry_uptake(*args):
     pass
 
@@ -21,9 +18,8 @@ def is_ready(change, current_uptake=None):
             return True
     elif change.get("when"):
         now = time.time()
-        scheduled_time = change["when"] / 1000
-        logging.debug("Comparing time for change %s (now: %s, scheduled time: %s", change["sc_id"], now, scheduled_time)
-        if time.time() >= scheduled_time:
+        logging.debug("Comparing time for change %s (now: %s, scheduled time: %s", change["sc_id"], now, change["when"])
+        if time.time() >= change["when"]:
             return True
     else:
         logging.warning("Unknown change type!")
@@ -46,10 +42,13 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                 if change["telemetry_uptake"]:
                     # TODO: probably replace this with a simple client.request()...
                     current_uptake = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"], loop=loop)
+                if change["when"]:
+                    change["when"] = change["when"] / 1000
                 if is_ready(change, current_uptake):
                     logging.debug("Change %s is ready, enacting", change["sc_id"])
                     data = {"csrf_token": csrf_token}
-                    await client.request(balrog_api_root, "/scheduled_changes/rules/{}/enact".format(change["sc_id"]), method="POST", data=data, auth=auth, loop=loop)
+                    endpoint = "/scheduled_changes/rules/{}/enact".format(change["sc_id"])
+                    await client.request(balrog_api_root, endpoint, method="POST", data=data, auth=auth, loop=loop)
 
             await asyncio.sleep(sleeptime)
         except:
