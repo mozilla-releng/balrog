@@ -10,6 +10,7 @@ class TestIsReady(unittest.TestCase):
         change = {
             "telemetry_uptake": 5000,
             "when": None,
+            "sc_id": 1,
         }
         self.assertTrue(cmd.is_ready(change, 6000))
 
@@ -17,6 +18,7 @@ class TestIsReady(unittest.TestCase):
         change = {
             "telemetry_uptake": 5000,
             "when": None,
+            "sc_id": 1,
         }
         self.assertTrue(cmd.is_ready(change, 5000))
 
@@ -24,6 +26,7 @@ class TestIsReady(unittest.TestCase):
         change = {
             "telemetry_uptake": 5000,
             "when": None,
+            "sc_id": 1,
         }
         self.assertFalse(cmd.is_ready(change, 4999))
 
@@ -31,6 +34,7 @@ class TestIsReady(unittest.TestCase):
         change = {
             "telemetry_uptake": 5000,
             "when": None,
+            "sc_id": 1,
         }
         self.assertFalse(cmd.is_ready(change, 0))
 
@@ -38,6 +42,7 @@ class TestIsReady(unittest.TestCase):
         change = {
             "telemetry_uptake": None,
             "when": 300,
+            "sc_id": 1,
         }
         with mock.patch("time.time") as t:
             t.return_value = 500
@@ -47,6 +52,7 @@ class TestIsReady(unittest.TestCase):
         change = {
             "telemetry_uptake": None,
             "when": 300,
+            "sc_id": 1,
         }
         with mock.patch("time.time") as t:
             t.return_value = 300
@@ -56,6 +62,7 @@ class TestIsReady(unittest.TestCase):
         change = {
             "telemetry_uptake": None,
             "when": 300,
+            "sc_id": 1,
         }
         with mock.patch("time.time") as t:
             t.return_value = 200
@@ -65,6 +72,7 @@ class TestIsReady(unittest.TestCase):
         change = {
             "telemetry_uptake": None,
             "when": 499,
+            "sc_id": 1,
         }
         with mock.patch("time.time") as t:
             t.return_value = 498
