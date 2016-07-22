@@ -101,29 +101,6 @@ class ViewTest(unittest.TestCase):
     def _getAuth(self, username):
         return {'REMOTE_USER': username}
 
-    def _post(self, url, data={}, username='bill', **kwargs):
-        return self.client.post(url, data=data, environ_base=self._getAuth(username), **kwargs)
-
-    def _httpRemoteUserPost(self, url, username="bill", data={}):
-        return self.client.post(url, data=data, environ_base=self._getHttpRemoteUserAuth(username))
-
-    def _badAuthPost(self, url, data={}):
-        return self.client.post(url, data=data, environ_base=self._getBadAuth())
-
-    def _put(self, url, data={}, username='bill'):
-        return self.client.put(url, data=data, environ_base=self._getAuth(username))
-
-    def _delete(self, url, qs={}, username='bill'):
-        return self.client.delete(url, query_string=qs, environ_base=self._getAuth(username))
-
-    def assertStatusCode(self, response, expected):
-        self.assertEquals(response.status_code, expected, '%d - %s' % (response.status_code, response.data))
-
-
-class JSONTestMixin(object):
-    """Provides a _get method that always asks for format='json', and checks
-       the returned MIME type."""
-
     def _get(self, url, qs={}):
         headers = {
             "Accept-Encoding": "application/json",
@@ -133,3 +110,21 @@ class JSONTestMixin(object):
             qs["format"] = "json"
         ret = self.client.get(url, query_string=qs, headers=headers)
         return ret
+
+    def _post(self, url, data={}, username='bill', **kwargs):
+        return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getAuth(username), **kwargs)
+
+    def _httpRemoteUserPost(self, url, username="bill", data={}):
+        return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getHttpRemoteUserAuth(username))
+
+    def _badAuthPost(self, url, data={}):
+        return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getBadAuth())
+
+    def _put(self, url, data={}, username='bill'):
+        return self.client.put(url, data=json.dumps(data), content_type="application/json", environ_base=self._getAuth(username))
+
+    def _delete(self, url, qs={}, username='bill'):
+        return self.client.delete(url, query_string=qs, environ_base=self._getAuth(username))
+
+    def assertStatusCode(self, response, expected):
+        self.assertEquals(response.status_code, expected, '%d - %s' % (response.status_code, response.data))

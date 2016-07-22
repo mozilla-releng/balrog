@@ -75,16 +75,14 @@ class ScheduledChangeView(AdminView):
             # primary data, and shouldn't be updatable by the user.
             if k == "sc_data_version":
                 continue
-            # We need to check for each column in both the JSON style post
-            # and the regular multipart form data. If the key is not present in
-            # either of these data structures. We treat this cases as no-op
+            # If the key is not present in the request we treat it as a no-op
             # and shouldn't modify the data for that key.
             # If the key is present we should modify the data as requested.
             # If a value is an empty string, we should remove that restriction
             # from the rule (aka, set as NULL in the db). The underlying Form
             # will have already converted it to None, so we can treat it the
             # same as a modification here.
-            if (request.json and k in request.json) or k in request.form:
+            if (request.json and k in request.json):
                 what[k] = v
 
         try:

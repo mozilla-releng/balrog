@@ -1,10 +1,10 @@
 import simplejson as json
 
 from auslib.global_state import dbo
-from auslib.test.admin.views.base import ViewTest, JSONTestMixin
+from auslib.test.admin.views.base import ViewTest
 
 
-class TestPermissionsAPI_JSON(ViewTest, JSONTestMixin):
+class TestPermissionsAPI_JSON(ViewTest):
 
     def testUsers(self):
         ret = self._get('/users')
