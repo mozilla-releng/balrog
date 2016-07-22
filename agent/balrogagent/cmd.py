@@ -33,10 +33,13 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
 
     while True:
         try:
-            # TODO: switch this to a HEAD after https://github.com/KeepSafe/aiohttp/issues/852 is released
-            resp = await client.request(balrog_api_root, "/csrf_token", method="GET", auth=auth, loop=loop)
-            csrf_token = resp["csrf_token"]
-            for change in (await client.request(balrog_api_root, "/scheduled_changes/rules", auth=auth, loop=loop))["scheduled_changes"]:
+            resp = await client.request(balrog_api_root, "/csrf_token", method="HEAD", auth=auth, loop=loop)
+            csrf_token = resp.headers["X-CSRF-Token"]
+            resp = await client.request(balrog_api_root, "/scheduled_changes/rules", auth=auth, loop=loop)
+            logging.debug("foo: %s", str(resp))
+            logging.debug("bar: %s", dir(resp))
+            logging.debug("Got scheduled changes: %s", await resp.json())
+            for change in (await resp.json())["scheduled_changes"]:
                 logging.debug("Processing change %s", change["sc_id"])
                 current_uptake = None
                 if change["telemetry_uptake"]:
