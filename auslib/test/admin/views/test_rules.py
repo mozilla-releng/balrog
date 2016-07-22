@@ -1,11 +1,11 @@
 import json
 
 from auslib.global_state import dbo
-from auslib.test.admin.views.base import ViewTest, JSONTestMixin
+from auslib.test.admin.views.base import ViewTest
 from auslib.util.comparison import operators
 
 
-class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
+class TestRulesAPI_JSON(ViewTest):
     maxDiff = 1000
 
     def testGetRules(self):
@@ -25,11 +25,11 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['data_version'], 1)
 
     def testNewRulePostJSON(self):
-        data = json.dumps(dict(
+        data = dict(
             backgroundRate=31, mapping="c", priority=33, product="Firefox",
             update_type="minor", channel="nightly"
-        ))
-        ret = self._post("/rules", data=data, headers={"Content-Type": "application/json"})
+        )
+        ret = self._post("/rules", data=data)
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -39,11 +39,11 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['data_version'], 1)
 
     def testNewRuleWithoutPermission(self):
-        data = json.dumps(dict(
+        data = dict(
             backgroundRate=31, mapping="c", priority=33, product="Firefox",
             update_type="minor", channel="nightly"
-        ))
-        ret = self._post("/rules", data=data, headers={"Content-Type": "application/json"}, username="jack")
+        )
+        ret = self._post("/rules", data=data, username="jack")
         self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
     # A POST without the required fields shouldn't be valid
@@ -97,7 +97,7 @@ class TestRulesAPI_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['version'], None)
 
 
-class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
+class TestSingleRuleView_JSON(ViewTest):
 
     def testGetRule(self):
         ret = self._get("/rules/1")
@@ -225,11 +225,11 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(r[0]['buildTarget'], 'd')
 
     def testPostJSON(self):
-        data = json.dumps(dict(
+        data = dict(
             backgroundRate=71, mapping="d", priority=73, data_version=1,
             product="Firefox", channel="nightly"
-        ))
-        ret = self._post("/rules/1", data=data, headers={"Content-Type": "application/json"})
+        )
+        ret = self._post("/rules/1", data=data)
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -397,7 +397,7 @@ class TestSingleRuleView_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 403)
 
 
-class TestRuleHistoryView(ViewTest, JSONTestMixin):
+class TestRuleHistoryView(ViewTest):
 
     def testGetNoRevisions(self):
         url = '/rules/1/revisions'
@@ -516,7 +516,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         assert row['rule_id'] == 1  # one of the fixtures
 
         url = '/rules/1/revisions'
-        ret = self._post(url, json.dumps({'change_id': change_id}), content_type="application/json")
+        ret = self._post(url, {'change_id': change_id})
         self.assertEquals(ret.status_code, 200, ret.data)
 
         query = table.history.t.count()
@@ -570,7 +570,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         change_id = row['change_id']
 
         url = '/rules/1/revisions'
-        ret = self._post(url, json.dumps({'change_id': change_id}), content_type="application/json", username='bob')
+        ret = self._post(url, {'change_id': change_id}, username='bob')
         self.assertEquals(ret.status_code, 403)
 
     def testPostRevisionRollbackBadRequests(self):
@@ -599,11 +599,11 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         # when posting you need both the rule_id and the change_id
         wrong_url = '/rules/999/revisions'
         # not found rule_id
-        ret = self._post(wrong_url, json.dumps({'change_id': 10}), content_type="application/json")
+        ret = self._post(wrong_url, {'change_id': 10})
         self.assertEquals(ret.status_code, 404, ret.data)
 
         url = '/rules/1/revisions'
-        ret = self._post(url, json.dumps({'change_id': 999}), content_type="application/json")
+        ret = self._post(url, {'change_id': 999})
         # not found change_id
         self.assertEquals(ret.status_code, 400)
 
@@ -612,7 +612,7 @@ class TestRuleHistoryView(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 400)
 
 
-class TestSingleColumn_JSON(ViewTest, JSONTestMixin):
+class TestSingleColumn_JSON(ViewTest):
 
     def testGetRules(self):
         expected_product = ["fake"]
@@ -625,7 +625,7 @@ class TestSingleColumn_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 404)
 
 
-class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
+class TestRuleScheduledChanges(ViewTest):
     maxDiff = 15000
 
     def setUp(self):
@@ -934,8 +934,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         self.assertEquals(json.loads(ret.data), expected)
 
     def testRevertScheduledChange(self):
-        data = json.dumps({"change_id": 2})
-        ret = self._post("/scheduled_changes/rules/3/revisions", data, content_type="application/json")
+        ret = self._post("/scheduled_changes/rules/3/revisions", data={"change_id": 2})
         self.assertEquals(ret.status_code, 200, ret.data)
 
         self.assertEquals(dbo.rules.scheduled_changes.history.t.count().execute().first()[0], 9)
@@ -950,11 +949,9 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         self.assertEquals(got, expected)
 
     def testRevertScheduledChangeBadChangeId(self):
-        data = json.dumps({"change_id": 43})
-        ret = self._post("/scheduled_changes/rules/3/revisions", data, content_type="application/json")
+        ret = self._post("/scheduled_changes/rules/3/revisions", data={"change_id": 43})
         self.assertEquals(ret.status_code, 400, ret.data)
 
     def testRevertScheduledChangeChangeIdDoesntMatchScId(self):
-        data = json.dumps({"change_id": 4})
-        ret = self._post("/scheduled_changes/rules/3/revisions", data, content_type="application/json")
+        ret = self._post("/scheduled_changes/rules/3/revisions", data={"change_id": 4})
         self.assertEquals(ret.status_code, 400, ret.data)
