@@ -19,8 +19,10 @@ class ScheduledChangesView(AdminView):
         super(ScheduledChangesView, self).__init__()
 
     def get(self):
-        # TODO: improve this
-        rows = self.sc_table.select()
+        if request.args.get("all"):
+            rows = self.sc_table.select()
+        else:
+            rows = self.sc_table.select(where={"complete": False})
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
             r = {}
