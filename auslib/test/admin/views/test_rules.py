@@ -626,7 +626,7 @@ class TestSingleColumn_JSON(ViewTest, JSONTestMixin):
 
 
 class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
-    maxDiff = 10000
+    maxDiff = 15000
 
     def setUp(self):
         super(TestRuleScheduledChanges, self).setUp()
@@ -641,6 +641,10 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         dbo.rules.scheduled_changes.t.insert().execute(
             sc_id=3, when=2000, scheduled_by="bill", data_version=2, base_priority=150, base_backgroundRate=100, base_product="ff",
             base_mapping="ghi", base_update_type="minor",
+        )
+        dbo.rules.scheduled_changes.t.insert().execute(
+            sc_id=4, when=500, scheduled_by="bill", data_version=2, complete=True, base_rule_id=5, base_priority=80, base_version="3.3",
+            base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1,
         )
         dbo.rules.scheduled_changes.history.t.insert().execute(
             change_id=1, changed_by="bill", timestamp=5, sc_id=3
@@ -659,6 +663,17 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         dbo.rules.scheduled_changes.history.t.insert().execute(
             change_id=5, changed_by="bill", timestamp=16, sc_id=2, when=1500, scheduled_by="bill", data_version=1, base_priority=50,
             base_backgroundRate=100, base_product="baz", base_mapping="ab", base_update_type="minor"
+        )
+        dbo.rules.scheduled_changes.history.t.insert().execute(
+            change_id=6, changed_by="bill", timestamp=5, sc_id=4
+        )
+        dbo.rules.scheduled_changes.history.t.insert().execute(
+            change_id=7, changed_by="bill", timestamp=6, sc_id=4, scheduled_by="bill", when=500, data_version=1, base_priority=80,
+            base_version="3.3", base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1
+        )
+        dbo.rules.scheduled_changes.history.t.insert().execute(
+            change_id=8, changed_by="bill", timestamp=6, sc_id=4, scheduled_by="bill", when=500, data_version=2, complete=True, base_rule_id=5,
+            base_priority=80, base_version="3.3", base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1
         )
 
     def testGetScheduledChanges(self):
@@ -691,6 +706,43 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
+    def testGetScheduledChangesWithCompleted(self):
+        ret = self._get("/scheduled_changes/rules", qs={"all": 1})
+        expected = {
+            "count": 4,
+            "scheduled_changes": [
+                {
+                    "sc_id": 1, "when": 1000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 1, "priority": 100,
+                    "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "update_type": "minor",
+                    "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
+                    "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None,
+                    "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                },
+                {
+                    "sc_id": 2, "when": 1500, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
+                    "backgroundRate": 100, "product": "baz", "mapping": "ab", "update_type": "minor", "version": None,
+                    "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
+                    "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
+                    "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                },
+                {
+                    "sc_id": 3, "when": 2000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
+                    "backgroundRate": 100, "product": "ff", "mapping": "ghi", "update_type": "minor", "version": None,
+                    "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
+                    "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
+                    "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                },
+                {
+                    "sc_id": 4, "when": 500, "scheduled_by": "bill", "complete": True, "sc_data_version": 2, "rule_id": 5, "priority": 80,
+                    "version": "3.3", "buildTarget": "d", "backgroundRate": 0, "mapping": "c", "update_type": "minor",
+                    "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
+                    "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None,
+                    "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                },
+            ],
+        }
+        self.assertEquals(json.loads(ret.data), expected)
+
     def testAddScheduledChangeExistingRule(self):
         data = {
             "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "rule_id": 5,
@@ -699,15 +751,15 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 4})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
 
-        r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 4).execute().fetchall()
+        r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
             "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "scheduled_by": "bill", "base_rule_id": 5,
             "base_priority": 80, "base_buildTarget": "d", "base_version": "3.3", "base_backgroundRate": 100, "base_mapping": "c", "base_update_type": "minor",
-            "base_data_version": 1, "data_version": 1, "sc_id": 4, "when": None, "complete": False, "base_alias": None, "base_product": None,
+            "base_data_version": 1, "data_version": 1, "sc_id": 5, "when": None, "complete": False, "base_alias": None, "base_product": None,
             "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None, "base_distVersion": None,
             "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None, "base_systemCapabilities": None,
         }
@@ -720,14 +772,14 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 4})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
 
-        r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 4).execute().fetchall()
+        r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
             "when": 1234567, "scheduled_by": "bill", "base_priority": 120, "base_backgroundRate": 100, "base_product": "blah", "base_channel": "blah",
-            "base_update_type": "minor", "base_mapping": "a", "sc_id": 4, "data_version": 1, "complete": False, "base_data_version": None,
+            "base_update_type": "minor", "base_mapping": "a", "sc_id": 5, "data_version": 1, "complete": False, "base_data_version": None,
             "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "base_rule_id": None, "base_buildTarget": None,
             "base_version": None, "base_alias": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None,
             "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None, "base_systemCapabilities": None,
@@ -815,7 +867,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 403, msg=ret.data)
 
     def testDeleteNonExistentScheduledChange(self):
-        ret = self._delete("/scheduled_changes/rules/4", qs=dict(data_version=1))
+        ret = self._delete("/scheduled_changes/rules/5", qs=dict(data_version=1))
         self.assertEquals(ret.status_code, 404, msg=ret.data)
 
     def testEnactScheduledChangeExistingRule(self):
@@ -886,7 +938,7 @@ class TestRuleScheduledChanges(ViewTest, JSONTestMixin):
         ret = self._post("/scheduled_changes/rules/3/revisions", data, content_type="application/json")
         self.assertEquals(ret.status_code, 200, ret.data)
 
-        self.assertEquals(dbo.rules.scheduled_changes.history.t.count().execute().first()[0], 6)
+        self.assertEquals(dbo.rules.scheduled_changes.history.t.count().execute().first()[0], 9)
         got = dbo.rules.scheduled_changes.select({"sc_id": 3})[0]
         expected = {
             "sc_id": 3, "when": 2000, "scheduled_by": "bill", "complete": False, "data_version": 3, "base_rule_id": None, "base_priority": 150,
