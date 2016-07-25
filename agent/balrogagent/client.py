@@ -20,8 +20,8 @@ async def request(api_root, path, method="GET", data=None, auth=None, loop=None)
     if data:
         data = data.copy()
 
-    async with aiohttp.request(method, url, data=json.dumps(data), headers=headers, auth=auth, loop=loop) as resp:
-        if resp.status in range(200, 300):
-            return resp
-        else:
-            raise Exception(resp.reason)
+    resp = await aiohttp.request(method, url, data=json.dumps(data), headers=headers, auth=auth, loop=loop)
+    if resp.status in range(200, 300):
+        return resp
+    else:
+        raise Exception(resp.reason)
