@@ -302,24 +302,24 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
         class TestTable(AUSTable):
 
-            def __init__(self, metadata):
+            def __init__(self, db, metadata):
                 self.table = Table('test_two', metadata, Column('id', Integer, primary_key=True))
-                AUSTable.__init__(self, 'sqlite')
+                AUSTable.__init__(self, db, 'sqlite')
 
         class TestCompressedHistoryTable(AUSTable):
 
-            def __init__(self, metadata):
+            def __init__(self, db, metadata):
                 self.table = Table('test_three', metadata, Column('id', Integer, primary_key=True))
-                AUSTable.__init__(self, 'sqlite', compressHistory=True)
+                AUSTable.__init__(self, db, 'sqlite', compressHistory=True)
 
         # Patching Table so that we can check if setting the flag results in
         # the correct arguments being set during its instantiation.
         with mock.patch('sqlalchemy.Table.__init__') as mock_history_table:
             mock_history_table.return_value = None
-            TestTable(self.metadata)
+            TestTable("fake", self.metadata)
             _, kwargs = mock_history_table.call_args
             self.assertEquals(kwargs['mysql_row_format'], 'DEFAULT')
-            TestCompressedHistoryTable(self.metadata)
+            TestCompressedHistoryTable("fake", self.metadata)
             _, kwargs = mock_history_table.call_args
             self.assertEquals(kwargs['mysql_row_format'], 'COMPRESSED')
 
