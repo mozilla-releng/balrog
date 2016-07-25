@@ -35,8 +35,10 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
         try:
             resp = await client.request(balrog_api_root, "/csrf_token", method="HEAD", auth=auth, loop=loop)
             csrf_token = resp.headers["X-CSRF-Token"]
+            resp.close()
             resp = await client.request(balrog_api_root, "/scheduled_changes/rules", auth=auth, loop=loop)
             sc = await resp.json()
+            resp.close()
             for change in (await resp.json())["scheduled_changes"]:
                 logging.debug("Processing change %s", change["sc_id"])
                 current_uptake = None
