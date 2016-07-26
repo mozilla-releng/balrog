@@ -5,6 +5,7 @@ import time
 import traceback
 
 from . import client
+from .log import configure_logging
 
 
 async def get_telemetry_uptake(*args):
@@ -33,13 +34,15 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
 
     while True:
         try:
+            logging.debug("Looking for active scheduled changes...")
             resp = await client.request(balrog_api_root, "/csrf_token", method="HEAD", auth=auth, loop=loop)
             csrf_token = resp.headers["X-CSRF-Token"]
             resp.close()
             resp = await client.request(balrog_api_root, "/scheduled_changes/rules", auth=auth, loop=loop)
-            sc = await resp.json()
+            sc = (await resp.json())["scheduled_changes"]
+            logging.debug("Found %s", len(sc))
             resp.close()
-            for change in (await resp.json())["scheduled_changes"]:
+            for change in sc:
                 logging.debug("Processing change %s", change["sc_id"])
                 current_uptake = None
                 if change["telemetry_uptake"]:
@@ -62,7 +65,12 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
 def main():
     import os
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging_kwargs = {
+        "level": os.environ.get("LOG_LEVEL", logging.INFO)
+    }
+    if os.environ.get("LOG_FORMAT") == "plain":
+        logging_kwargs["formatter"] = logging.Formatter
+    configure_logging(**logging_kwargs)
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(

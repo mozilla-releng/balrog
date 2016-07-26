@@ -53,6 +53,8 @@ balrogagent:
     - BALROG_USERNAME=balrogadmin
     - BALROG_PASSWORD=balrogadmin
     - TELEMETRY_API_ROOT=abc
+    - LOG_FORMAT=plain
+    - LOG_LEVEL=DEBUG
 
 balrogdb:
   image: mysql:5.7
