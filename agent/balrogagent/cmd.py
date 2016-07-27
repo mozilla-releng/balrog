@@ -14,31 +14,30 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
 
     while True:
         try:
-            logging.debug("Looking for active scheduled changes...")
-            resp = await client.request(balrog_api_root, "/csrf_token", method="HEAD", auth=auth, loop=loop)
-            csrf_token = resp.headers["X-CSRF-Token"]
-            resp.close()
-            resp = await client.request(balrog_api_root, "/scheduled_changes/rules", auth=auth, loop=loop)
-            sc = (await resp.json())["scheduled_changes"]
-            logging.debug("Found %s", len(sc))
-            resp.close()
-            for change in sc:
-                logging.debug("Processing change %s", change["sc_id"])
-                ready_kwargs = {}
-                if change["telemetry_uptake"]:
-                    # TODO: maybe replace this with a simple client.request()...
-                    ready_kwargs["current_uptake"] = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"], loop=loop)
-                if change["when"]:
-                    # "when" is to-the-millisecond timestamp that gets stored as an int.
-                    # It needs to be converted back to a float before it can be compared
-                    # against other timestamps.
-                    change["when"] = change["when"] / 1000
-                    ready_kwargs["now"] = time.time()
-                if is_ready(change, **ready_kwargs):
-                    logging.debug("Change %s is ready, enacting", change["sc_id"])
-                    data = {"csrf_token": csrf_token}
-                    endpoint = "/scheduled_changes/rules/{}/enact".format(change["sc_id"])
-                    await client.request(balrog_api_root, endpoint, method="POST", data=data, auth=auth, loop=loop)
+            async with aiohttp.ClientSession(auth=auth, loop=loop) as session:
+                logging.debug("Looking for active scheduled changes...")
+                resp = await client.request(session, balrog_api_root, "/csrf_token", method="HEAD")
+                csrf_token = resp.headers["X-CSRF-Token"]
+                resp = await client.request(session, balrog_api_root, "/scheduled_changes/rules")
+                sc = (await resp.json())["scheduled_changes"]
+                logging.debug("Found %s", len(sc))
+                for change in sc:
+                    logging.debug("Processing change %s", change["sc_id"])
+                    ready_kwargs = {}
+                    if change["telemetry_uptake"]:
+                        # TODO: maybe replace this with a simple client.request()...
+                        ready_kwargs["current_uptake"] = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"], loop=loop)
+                    if change["when"]:
+                        # "when" is to-the-millisecond timestamp that gets stored as an int.
+                        # It needs to be converted back to a float before it can be compared
+                        # against other timestamps.
+                        change["when"] = change["when"] / 1000
+                        ready_kwargs["now"] = time.time()
+                    if is_ready(change, **ready_kwargs):
+                        logging.debug("Change %s is ready, enacting", change["sc_id"])
+                        data = {"csrf_token": csrf_token}
+                        endpoint = "/scheduled_changes/rules/{}/enact".format(change["sc_id"])
+                        await client.request(session, balrog_api_root, endpoint, method="POST", data=data)
 
             await asyncio.sleep(sleeptime)
         except:
