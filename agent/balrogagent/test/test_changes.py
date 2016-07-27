@@ -1,8 +1,7 @@
 import unittest
-from unittest import mock
 
 
-from .. import cmd
+from .. import changes
 
 
 class TestIsReady(unittest.TestCase):
@@ -12,7 +11,7 @@ class TestIsReady(unittest.TestCase):
             "when": None,
             "sc_id": 1,
         }
-        self.assertTrue(cmd.is_ready(change, 6000))
+        self.assertTrue(changes.is_ready(change, current_uptake=6000))
 
     def testUptakeReadyExact(self):
         change = {
@@ -20,7 +19,7 @@ class TestIsReady(unittest.TestCase):
             "when": None,
             "sc_id": 1,
         }
-        self.assertTrue(cmd.is_ready(change, 5000))
+        self.assertTrue(changes.is_ready(change, current_uptake=5000))
 
     def testUptakeAlmostReady(self):
         change = {
@@ -28,7 +27,7 @@ class TestIsReady(unittest.TestCase):
             "when": None,
             "sc_id": 1,
         }
-        self.assertFalse(cmd.is_ready(change, 4999))
+        self.assertFalse(changes.is_ready(change, current_uptake=4999))
 
     def testUptakeNotReady(self):
         change = {
@@ -36,7 +35,7 @@ class TestIsReady(unittest.TestCase):
             "when": None,
             "sc_id": 1,
         }
-        self.assertFalse(cmd.is_ready(change, 0))
+        self.assertFalse(changes.is_ready(change, current_uptake=0))
 
     def testTimeBasedReady(self):
         change = {
@@ -44,9 +43,7 @@ class TestIsReady(unittest.TestCase):
             "when": 300,
             "sc_id": 1,
         }
-        with mock.patch("time.time") as t:
-            t.return_value = 500
-            self.assertTrue(cmd.is_ready(change))
+        self.assertTrue(changes.is_ready(change, now=500))
 
     def testTimeBasedReadyExact(self):
         change = {
@@ -54,9 +51,7 @@ class TestIsReady(unittest.TestCase):
             "when": 300,
             "sc_id": 1,
         }
-        with mock.patch("time.time") as t:
-            t.return_value = 300
-            self.assertTrue(cmd.is_ready(change))
+        self.assertTrue(changes.is_ready(change, now=300))
 
     def testTimeBasedNotReady(self):
         change = {
@@ -64,9 +59,7 @@ class TestIsReady(unittest.TestCase):
             "when": 300,
             "sc_id": 1,
         }
-        with mock.patch("time.time") as t:
-            t.return_value = 200
-            self.assertFalse(cmd.is_ready(change))
+        self.assertFalse(changes.is_ready(change, now=200))
 
     def testTimeBasedAlmostReady(self):
         change = {
@@ -74,9 +67,7 @@ class TestIsReady(unittest.TestCase):
             "when": 499,
             "sc_id": 1,
         }
-        with mock.patch("time.time") as t:
-            t.return_value = 498
-            self.assertFalse(cmd.is_ready(change))
+        self.assertFalse(changes.is_ready(change, now=498))
 
 #    def testUnknownChangeType(self):
 #    def testCantDetectType(self):

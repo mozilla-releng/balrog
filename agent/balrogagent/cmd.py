@@ -5,28 +5,8 @@ import time
 import traceback
 
 from . import client
+from .changes import get_telemetry_uptake, is_ready
 from .log import configure_logging
-
-
-async def get_telemetry_uptake(*args):
-    pass
-
-
-def is_ready(change, current_uptake=None):
-    if change.get("telemetry_uptake"):
-        logging.debug("Comparing uptake for change %s (current: %s, required: %s", change["sc_id"], current_uptake, change["telemetry_uptake"])
-        if current_uptake >= change["telemetry_uptake"]:
-            return True
-    elif change.get("when"):
-        now = time.time()
-        logging.debug("Comparing time for change %s (now: %s, scheduled time: %s", change["sc_id"], now, change["when"])
-        if time.time() >= change["when"]:
-            return True
-    else:
-        logging.warning("Unknown change type!")
-
-    logging.debug("Change %s is not ready", change["sc_id"])
-    return False
 
 
 async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, telemetry_api_root, sleeptime=30):
@@ -44,13 +24,17 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
             resp.close()
             for change in sc:
                 logging.debug("Processing change %s", change["sc_id"])
-                current_uptake = None
+                ready_kwargs = {}
                 if change["telemetry_uptake"]:
-                    # TODO: probably replace this with a simple client.request()...
-                    current_uptake = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"], loop=loop)
+                    # TODO: maybe replace this with a simple client.request()...
+                    ready_kwargs["current_uptake"] = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"], loop=loop)
                 if change["when"]:
+                    # "when" is to-the-millisecond timestamp that gets stored as an int.
+                    # It needs to be converted back to a float before it can be compared
+                    # against other timestamps.
                     change["when"] = change["when"] / 1000
-                if is_ready(change, current_uptake):
+                    ready_kwargs["now"] = time.time()
+                if is_ready(change, **ready_kwargs):
                     logging.debug("Change %s is ready, enacting", change["sc_id"])
                     data = {"csrf_token": csrf_token}
                     endpoint = "/scheduled_changes/rules/{}/enact".format(change["sc_id"])
