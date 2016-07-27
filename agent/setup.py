@@ -14,10 +14,13 @@ with open(path.join(here, "requirements.txt")) as f:
         if "hash" not in line:
             requirements.append(line.split()[0])
 
+with open(path.join(here, "version.txt")) as f:
+    version = f.read()
+
 setup(
     name="balrogagent",
     description="Balrog Agent",
-    version="0.1",
+    version=version,
     url="https://github.com/mozilla/balrog",
     license="MPL",
     author="Ben Hearsum",
