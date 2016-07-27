@@ -4,6 +4,10 @@ MAINTAINER bhearsum@mozilla.com
 
 WORKDIR /app
 
+# TODO: Remove me when https://github.com/docker-library/python/issues/132 is fixed.
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get -q update && apt-get -q --yes install libpcre3 libpcre3-dev && apt-get clean && apt-get purge -y --auto-remove
+
 # install the requirements into the container first
 # these rarely change and is more cache friendly
 # ... really speeds up building new containers
