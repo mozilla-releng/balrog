@@ -3,7 +3,7 @@ import logging
 
 async def get_telemetry_uptake(*args):
     # TODO: implement this when https://bugzilla.mozilla.org/show_bug.cgi?id=1240522 is fixed
-    pass
+    return -1
 
 
 def is_ready(change, now=None, current_uptake=None):
