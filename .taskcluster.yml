@@ -62,7 +62,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog/agent && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh"
+        - "git clone $GITHUB_HEAD_REPO_URL && git checkout $GITHUB_HEAD_BRANCH && cd balrog/agent && bash run-tests.sh"
       features:
         dind: true
     extra:
