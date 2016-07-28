@@ -16,6 +16,7 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
         try:
             async with aiohttp.ClientSession(auth=auth, loop=loop) as session:
                 logging.debug("Looking for active scheduled changes...")
+                # TODO: sometimes getting "unclosed response" and "unclosed connection" errors.
                 resp = await client.request(session, balrog_api_root, "/csrf_token", method="HEAD")
                 csrf_token = resp.headers["X-CSRF-Token"]
                 resp = await client.request(session, balrog_api_root, "/scheduled_changes/rules")
