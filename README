@@ -4,9 +4,9 @@ which map update requests to releases. Documentation is available at
 https://wiki.mozilla.org/Balrog.
 
 To run a development environment you must have Docker and docker-compose
-installed (if you're on Windows or Mac you probably want Docker Machine as
-well). Once these prerequisites are installed, run the following command to
-create  and run the necessary images:
+installed (if you're on Windows or Mac you need "Docker for Windows" or "Docker
+for Mac" at least v1.12.0). Once these prerequisites are installed, run the
+following command to create and run the necessary images:
 
   docker-compose up
 
@@ -18,6 +18,3 @@ http://127.0.0.1:8080
 
 And you can access the public interface with URLs such as:
 http://127.0.0.1:9090/update/3/Firefox/33.0/20141202185629/Darwin_x86_64-gcc3-u-i386-x86_64/en-US/release/default/default/default/update.xml?force=1
-
-If you're on Mac, Windows, or running Docker in a VM for another reason, you'll need to replace 127.0.0.1 with the IP of your VM. eg with 'docker-machine ip'
-
