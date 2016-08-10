@@ -50,7 +50,7 @@ AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 14 DAY);
             for key, group in itertools.groupby(todelete, lambda x: x[0]):
                 print "%s: %s history rows" % (key, len(list(group)))
     else:
-        trans.execute("DELETE releases_history FROM releases_history")
+        trans.execute("DELETE releases_history FROM releases_history" + query)
 
     query = """
 WHERE name NOT LIKE '%%%%latest' AND name LIKE '%%%%nightly%%%%'
@@ -63,7 +63,7 @@ AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 7 DAY);
             for key, group in itertools.groupby(todelete, lambda x: x[0]):
                 print "%s: %s history rows" % (key, len(list(group)))
     else:
-        trans.execute("DELETE releases_history FROM releases_history")
+        trans.execute("DELETE releases_history FROM releases_history" + query)
 
 
 if __name__ == "__main__":
