@@ -9,6 +9,15 @@ from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 
 
+def setpermission(f):
+    def decorated(*args, **kwargs):
+        if kwargs['permission'] not in ('admin', 'release', 'release_locale', 'release_read_only', 'rule', 'permission') \
+           and not kwargs['permission'].startswith('/'):
+            kwargs['permission'] = '/%s' % kwargs['permission']
+        return f(*args, **kwargs)
+    return decorated
+
+
 class UsersView(AdminView):
     """/users"""
 
@@ -75,6 +84,7 @@ class SpecificPermissionView(AdminView):
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)
 
+    @setpermission
     @requirelogin
     def _delete(self, username, permission, changed_by, transaction):
         if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
