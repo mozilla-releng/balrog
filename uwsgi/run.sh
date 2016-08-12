@@ -21,17 +21,12 @@ elif [ $1 == "cleanup-db" ]; then
         echo "\${MAX_AGE} must be set!"
         exit 1
     fi
-    exec python scripts/manage-db.py -d ${DBURI} cleanup ${MAX_AGE}
-elif [ $1 == "cleanup-db-dryrun" ]; then
-    if [ -z "${DBURI}" ]; then
-        echo "\${DBURI} must be set!"
+    if [ -z "${DELETE_RUN_TIME}" ]; then
+        echo "\${DELETE_RUN_TIME} must be set!"
         exit 1
     fi
-    if [ -z "${MAX_AGE}" ]; then
-        echo "\${MAX_AGE} must be set!"
-        exit 1
-    fi
-    exec python scripts/manage-db.py -d ${DBURI} cleanup-dryrun ${MAX_AGE}
+
+    exec scripts/run-batch-deletes.sh $DBURI $MAX_AGE $DELETE_RUN_TIME
 else
    echo "unknown mode: $1"
    exit 1
