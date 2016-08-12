@@ -61,7 +61,7 @@ class TestPermissionsAPI_JSON(ViewTest):
     def testPermissionsPostWithHttpRemoteUser(self):
         ret = self._httpRemoteUserPost('/users/bill/permissions/admin', username="bob", data=dict(options="", data_version=1))
         self.assertEqual(ret.status_code, 200, "Status Code: %d" % ret.status_code)
-        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        self.assertEqual(json.loads(ret.data), dict(new_data_version=2))
         r = dbo.permissions.t.select().where(dbo.permissions.username == 'bill').execute().fetchall()
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0], ('admin', 'bill', None, 2))
@@ -69,7 +69,7 @@ class TestPermissionsAPI_JSON(ViewTest):
     def testPermissionsPost(self):
         ret = self._post('/users/bill/permissions/admin', data=dict(options="", data_version=1))
         self.assertEqual(ret.status_code, 200, "Status Code: %d" % ret.status_code)
-        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        self.assertEqual(json.loads(ret.data), dict(new_data_version=2))
         r = dbo.permissions.t.select().where(dbo.permissions.username == 'bill').execute().fetchall()
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0], ('admin', 'bill', None, 2))
@@ -108,7 +108,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         ret = self._put('/users/bob/permissions/release',
                         data=dict(options=json.dumps(dict(products=['different'])), data_version=1))
         self.assertStatusCode(ret, 200)
-        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        self.assertEqual(json.loads(ret.data), dict(new_data_version=2))
         query = dbo.permissions.t.select()
         query = query.where(dbo.permissions.username == 'bob')
         query = query.where(dbo.permissions.permission == 'release')

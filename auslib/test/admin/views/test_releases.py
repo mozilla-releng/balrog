@@ -181,14 +181,13 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put('/releases/dd', data=dict(blob=blob1, name='dd',
                                                   product='dd', data_version=1))
         self.assertStatusCode(ret, 200)
-        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        self.assertEqual(json.loads(ret.data), dict(new_data_version=2))
 
         # Updating release with outdated data, testing if merged correctly
         ret = self._put('/releases/dd', data=dict(blob=blob2, name='dd',
                                                   product='dd', data_version=1))
         self.assertStatusCode(ret, 200)
-        self.assertEqual(ret.data, json.dumps(dict(new_data_version=3)),
-                         "Data: %s" % ret.data)
+        self.assertEqual(json.loads(ret.data), dict(new_data_version=3))
 
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads(result_blob))
@@ -275,7 +274,7 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put('/releases/dd', data=dict(blob=blob1, name='dd',
                                                   product='dd', data_version=1))
         self.assertStatusCode(ret, 200)
-        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        self.assertEqual(json.loads(ret.data), dict(new_data_version=2))
 
         # Updating same release with conflicting data
         ret = self._put('/releases/dd', data=dict(blob=blob2, name='dd',
