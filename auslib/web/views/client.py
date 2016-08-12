@@ -13,7 +13,7 @@ class ClientRequestView(MethodView):
     def __init__(self, *args, **kwargs):
         # By default, we want a cache that can be shared across requests from different users ("public")
         # and a maximum age of 60 seconds, to keep our TTL low.
-        self.cacheControl = app.config.get("CACHE_CONTROL", "public,max-age=60")
+        self.cacheControl = app.config.get("CACHE_CONTROL", "public, max-age=60")
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)
 
@@ -82,9 +82,18 @@ class ClientRequestView(MethodView):
             # assume that all blobs will have similar ones. We might want to
             # verify that all of them are indeed the same in the future.
 
-            xml.append(response_blobs[0]['response_release']
-                       .getHeaderXML(response_blobs[0]['product_query'],
-                                     response_blobs[0]['response_update_type']))
+            # Sampling the footer from the first blob
+            headerXML = response_blobs[0]['response_release'].getHeaderXML(response_blobs[0]['product_query'],
+                                                                           response_blobs[0]['response_update_type'],
+                                                                           app.config["WHITELISTED_DOMAINS"],
+                                                                           app.config["SPECIAL_FORCE_HOSTS"])
+            # Sampling the footer from the first blob
+            footerXML = response_blobs[0]['response_release'].getFooterXML(response_blobs[0]['product_query'],
+                                                                           response_blobs[0]['response_update_type'],
+                                                                           app.config["WHITELISTED_DOMAINS"],
+                                                                           app.config["SPECIAL_FORCE_HOSTS"])
+            if headerXML:
+                xml.append(headerXML)
             for response_blob in response_blobs:
                 xml.extend(response_blob['response_release']
                            .getInnerXML(response_blob['product_query'],
@@ -92,7 +101,8 @@ class ClientRequestView(MethodView):
                                         app.config["WHITELISTED_DOMAINS"],
                                         app.config["SPECIAL_FORCE_HOSTS"]))
             # Sampling the footer from the first blob
-            xml.append(response_blobs[0]['response_release'].getFooterXML())
+            if footerXML:
+                xml.append(footerXML)
             xml.append('</updates>')
             # ensure valid xml by using the right entity for ampersand
             xml = re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
