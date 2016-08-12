@@ -38,7 +38,7 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=json.dumps(dict(actions=["set"])), data_version=1)
         dbo.permissions.t.insert().execute(permission='rule', username='bob', options=json.dumps(dict(actions=["modify"], products=['fake'])), data_version=1)
         dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
-        dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", data_version=1)
+        dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=json.dumps(dict(actions=["enact"])), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_locale', username='ashanti',
                                            options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
         dbo.releases.t.insert().execute(

@@ -672,7 +672,7 @@ class TestRuleScheduledChanges(ViewTest):
             base_version="3.3", base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1
         )
         dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=8, changed_by="bill", timestamp=6, sc_id=4, scheduled_by="bill", when=500, data_version=2, complete=True, base_rule_id=5,
+            change_id=8, changed_by="bill", timestamp=7, sc_id=4, scheduled_by="bill", when=500, data_version=2, complete=True, base_rule_id=5,
             base_priority=80, base_version="3.3", base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1
         )
 
@@ -911,7 +911,6 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(ret.status_code, 200)
         expected = {
             "count": 2,
-            # TODO: should these have base_ on them ?
             "revisions": [
                 {
                     "change_id": 2, "changed_by": "bill", "timestamp": 6, "sc_id": 3, "scheduled_by": "bill", "when": 2000, "sc_data_version": 1,

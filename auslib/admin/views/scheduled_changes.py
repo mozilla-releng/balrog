@@ -98,7 +98,7 @@ class ScheduledChangeView(AdminView):
         where = {"sc_id": sc_id}
         sc = self.sc_table.select(where, transaction, columns=["sc_id"])
         if not sc:
-            return Response(status=404)
+            return Response(status=404, response="Scheduled change does not exist")
 
         form = DbEditableForm(request.args)
 
