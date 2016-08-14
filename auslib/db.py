@@ -167,9 +167,12 @@ class AUSTable(object):
     """
 
     def __init__(self, db, dialect, history=True, versioned=True, onInsert=None,
-                 onUpdate=None, onDelete=None):
+                 onUpdate=None, onDelete=None, compressHistory=False):
         self.db = db
-        self.t = self.table
+        if hasattr(self, 'table'):
+            self.t = self.table
+        else:
+            raise NotImplementedError
         # Enable versioning, if required
         if versioned:
             self.t.append_column(Column('data_version', Integer, nullable=False))
@@ -185,7 +188,8 @@ class AUSTable(object):
                 self.primary_key.append(col)
         # Set-up a history table to do logging in, if required
         if history:
-            self.history = History(db, dialect, self.t.metadata, self)
+            self.history = History(db, dialect, self.t.metadata, self,
+                                   compress=compressHistory)
         else:
             self.history = None
         self.log = logging.getLogger(self.__class__.__name__)
@@ -457,11 +461,13 @@ class History(AUSTable):
        inputs, and are documented below. History tables are never versioned,
        and cannot have history of their own."""
 
-    def __init__(self, db, dialect, metadata, baseTable):
+    def __init__(self, db, dialect, metadata, baseTable, compress=False):
         self.baseTable = baseTable
+        row_format = 'COMPRESSED' if compress else 'DEFAULT'
         self.table = Table('%s_history' % baseTable.t.name, metadata,
                            Column('change_id', Integer, primary_key=True, autoincrement=True),
                            Column('changed_by', String(100), nullable=False),
+                           mysql_row_format=row_format,
                            )
         # Timestamps are stored as an integer, but actually contain
         # precision down to the millisecond, achieved through
@@ -945,7 +951,7 @@ class Releases(AUSTable):
         else:
             dataType = Text
         self.table.append_column(Column('data', dataType, nullable=False))
-        AUSTable.__init__(self, db, dialect)
+        AUSTable.__init__(self, db, dialect, compressHistory=True)
 
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
