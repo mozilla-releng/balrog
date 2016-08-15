@@ -9,15 +9,6 @@ from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 
 
-def setpermission(f):
-    def decorated(*args, **kwargs):
-        if kwargs['permission'] not in ('admin', 'release', 'release_locale', 'release_read_only', 'rule', 'permission') \
-           and not kwargs['permission'].startswith('/'):
-            kwargs['permission'] = '/%s' % kwargs['permission']
-        return f(*args, **kwargs)
-    return decorated
-
-
 class UsersView(AdminView):
     """/users"""
 
@@ -54,7 +45,8 @@ class SpecificPermissionView(AdminView):
                 if not form.validate():
                     self.log.warning("Bad input: %s", form.errors)
                     return Response(status=400, response=json.dumps(form.errors))
-                dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
+                dbo.permissions.update(where={"username": username, "permission": permission}, what={"options": form.options.data},
+                                       changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
                 new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
                 return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
             else:
@@ -62,7 +54,7 @@ class SpecificPermissionView(AdminView):
                 if not form.validate():
                     self.log.warning("Bad input: %s", form.errors)
                     return Response(status=400, response=json.dumps(form.errors))
-                dbo.permissions.grantPermission(changed_by, username, permission, form.options.data, transaction=transaction)
+                dbo.permissions.insert(changed_by, transaction=transaction, username=username, permission=permission, options=form.options.data)
                 return make_response(json.dumps(dict(new_data_version=1)), 201)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
@@ -77,14 +69,14 @@ class SpecificPermissionView(AdminView):
             if not form.validate():
                 self.log.warning("Bad input: %s", form.errors)
                 return Response(status=400, response=json.dumps(form.errors))
-            dbo.permissions.updatePermission(changed_by, username, permission, form.data_version.data, form.options.data, transaction=transaction)
+            dbo.permissions.update(where={"username": username, "permission": permission}, what={"options": form.options.data},
+                                   changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
             new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
             return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)
 
-    @setpermission
     @requirelogin
     def _delete(self, username, permission, changed_by, transaction):
         if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
@@ -97,7 +89,8 @@ class SpecificPermissionView(AdminView):
             if not form.validate():
                 self.log.warning("Bad input: %s", form.errors)
                 return Response(status=400, response=json.dumps(form.errors))
-            dbo.permissions.revokePermission(changed_by, username, permission, form.data_version.data, transaction=transaction)
+            dbo.permissions.delete(where={"username": username, "permission": permission}, changed_by=changed_by,
+                                   old_data_version=form.data_version.data, transaction=transaction)
             return Response(status=200)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)

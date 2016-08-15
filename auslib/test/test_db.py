@@ -8,15 +8,15 @@ import sys
 from tempfile import mkstemp
 import unittest
 
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
 
 import migrate.versioning.api
 
 from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
-    AUSTransaction, TransactionError, OutdatedDataError, ReadOnlyError, \
-    PermissionDeniedError
+    AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
+    ReadOnlyError, PermissionDeniedError, ChangeScheduledError
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -639,6 +639,384 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
                               column_values={'id1': 4, 'foo': 4})
 
 
+class ScheduledChangesTableMixin(object):
+
+    def setUp(self):
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.engine = self.db.engine
+        self.metadata = self.db.metadata
+
+        class TestTable(AUSTable):
+
+            def __init__(self, db, metadata):
+                self.table = Table("test_table", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
+                                   Column("foo", String(15), nullable=False),
+                                   Column("bar", String(15)))
+                super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
+
+            def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+                if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
+                    raise PermissionDeniedError("fail")
+                if not dryrun:
+                    super(TestTable, self).insert(changed_by, transaction, **columns)
+
+            def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+                # Although our test table doesn't need it, real tables do some extra permission
+                # checks based on "where". To make sure we catch bugs around the "where" arg
+                # being broken, we use it similarly here.
+                for row in self.select(where=where, transaction=transaction):
+                    if not self.db.hasPermission(changed_by, "test", "modify", transaction=transaction):
+                        raise PermissionDeniedError("fail")
+                if not dryrun:
+                    super(TestTable, self).update(where, what, changed_by, old_data_version, transaction)
+
+            def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
+                if not self.db.hasPermission(changed_by, "test", "delete", transaction=transaction):
+                    raise PermissionDeniedError("fail")
+
+                if not dryrun:
+                    super(TestTable, self).delete(where, changed_by, old_data_version, transaction)
+
+        self.table = TestTable(self.db, self.metadata)
+        self.sc_table = self.table.scheduled_changes
+        self.metadata.create_all()
+        self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
+        self.table.t.insert().execute(fooid=2, foo="b", bar="bb", data_version=2)
+        self.table.t.insert().execute(fooid=3, foo="c", data_version=1)
+        self.sc_table.t.insert().execute(sc_id=1, when=234, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1,
+                                         data_version=1)
+        self.sc_table.t.insert().execute(sc_id=2, when=567, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1)
+        self.sc_table.t.insert().execute(sc_id=3, when=1, scheduled_by="bob", complete=True, base_fooid=2, base_foo="b", base_bar="bb", base_data_version=1,
+                                         data_version=1)
+        self.sc_table.t.insert().execute(sc_id=4, when=333, scheduled_by="bob", base_fooid=2, base_foo="dd", base_bar="bb", base_data_version=2, data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
+        self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options='{"actions": ["enact"]}', data_version=1)
+
+
+class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, MemoryDatabaseMixin):
+
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        ScheduledChangesTableMixin.setUp(self)
+
+    def testAllTablesCreated(self):
+        self.assertTrue(self.table)
+        self.assertTrue(self.table.history)
+        self.assertTrue(self.table.scheduled_changes)
+        self.assertTrue(self.table.scheduled_changes.history)
+
+    def testSCTableHasAllColumns(self):
+        columns = [c.name for c in self.table.scheduled_changes.t.get_children()]
+        self.assertTrue("sc_id" in columns)
+        self.assertTrue("scheduled_by" in columns)
+        self.assertTrue("complete" in columns)
+        self.assertTrue("telemetry_product" in columns)
+        self.assertTrue("telemetry_channel" in columns)
+        self.assertTrue("telemetry_uptake" in columns)
+        self.assertTrue("when" in columns)
+        self.assertTrue("data_version" in columns)
+        self.assertTrue("base_fooid" in columns)
+        self.assertTrue("base_foo" in columns)
+        self.assertTrue("base_bar" in columns)
+        self.assertTrue("base_data_version" in columns)
+
+    def testValidateConditionsNone(self):
+        self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table._validateConditions, {})
+
+    def testValidateConditionsNoneValue(self):
+        self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table._validateConditions, {"when": None})
+
+    def testValdiateConditionsInvalid(self):
+        self.assertRaisesRegexp(ValueError, "Invalid condition", self.sc_table._validateConditions, {"blah": "blah"})
+
+    def testValidateConditionsJustWhen(self):
+        self.sc_table._validateConditions({"when": 12345678})
+
+    def testValidateConditionsBadWhen(self):
+        self.assertRaisesRegexp(ValueError, "Cannot parse", self.sc_table._validateConditions, {"when": "abc"})
+
+    def testValidateConditionsJustTelemetry(self):
+        self.sc_table._validateConditions({
+            "telemetry_product": "Firefox",
+            "telemetry_channel": "nightly",
+            "telemetry_uptake": "200000",
+        })
+
+    def testValidateConditionsNotAllowedWhenAndOther(self):
+        self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table._validateConditions,
+                                {"when": "12345", "telemetry_product": "foo"})
+
+    def testValidateConditionsMissingTelemetryValue(self):
+        self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table._validateConditions, {"telemetry_product": "foo"})
+
+    def testInsertForExistingRow(self):
+        what = {"fooid": 2, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999}
+        self.sc_table.insert(changed_by="bob", **what)
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 5).execute().fetchall()[0]
+        self.assertEquals(row.scheduled_by, "bob")
+        self.assertEquals(row.when, 999)
+        self.assertEquals(row.data_version, 1)
+        self.assertEquals(row.base_fooid, 2)
+        self.assertEquals(row.base_foo, "thing")
+        self.assertEquals(row.base_bar, "thing2")
+        self.assertEquals(row.base_data_version, 2)
+
+    def testInsertForNewRow(self):
+        what = {"foo": "newthing1", "when": 888}
+        self.sc_table.insert(changed_by="bob", **what)
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 5).execute().fetchall()[0]
+        self.assertEquals(row.scheduled_by, "bob")
+        self.assertEquals(row.when, 888)
+        self.assertEquals(row.data_version, 1)
+        self.assertEquals(row.base_fooid, None)
+        self.assertEquals(row.base_foo, "newthing1")
+        self.assertEquals(row.base_bar, None)
+        self.assertEquals(row.base_data_version, None)
+
+    def testInsertWithNonAutoincrement(self):
+        class TestTable2(AUSTable):
+
+            def __init__(self, db, metadata):
+                self.table = Table("test_table2", metadata, Column("foo_name", String(15), primary_key=True),
+                                   Column("foo", String(15)),
+                                   Column("bar", String(15)))
+                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
+
+        table = TestTable2(self.db, self.metadata)
+        self.metadata.create_all()
+        what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876}
+        table.scheduled_changes.insert(changed_by="mary", **what)
+        row = table.scheduled_changes.t.select().where(table.scheduled_changes.sc_id == 1).execute().fetchall()[0]
+        self.assertEquals(row.scheduled_by, "mary")
+        self.assertEquals(row.when, 876)
+        self.assertEquals(row.data_version, 1)
+        self.assertEquals(row.base_foo_name, "i'm a foo")
+        self.assertEquals(row.base_foo, "123")
+        self.assertEquals(row.base_bar, "456")
+        self.assertEquals(row.base_data_version, None)
+
+    def testInsertWithNonNullableColumn(self):
+        what = {"bar": "abc", "when": 34567}
+        # TODO: we should really be checking directly for IntegrityError, but AUSTransaction eats it.
+        self.assertRaisesRegexp(TransactionError, "IntegrityError", self.sc_table.insert, changed_by="bob", **what)
+
+    def testInsertForExistingNoSuchRow(self):
+        what = {"fooid": 10, "foo": "thing", "data_version": 1, "when": 999}
+        self.assertRaisesRegexp(ValueError, "Cannot create scheduled change with data_version for non-existent row", self.sc_table.insert, changed_by="bob",
+                                **what)
+
+    def testInsertMissingRequiredPartOfPK(self):
+        class TestTable2(AUSTable):
+
+            def __init__(self, db, metadata):
+                self.table = Table("test_table2", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
+                                   Column("foo", String(15), primary_key=True),
+                                   Column("bar", String(15)))
+                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
+
+        table = TestTable2("fake", self.metadata)
+        self.metadata.create_all()
+        what = {"fooid": 2, "when": 4532}
+        self.assertRaisesRegexp(ValueError, "Missing primary key column", table.scheduled_changes.insert, changed_by="bob", **what)
+
+    def testInsertWithMalformedTimestamp(self):
+        what = {"foo": "blah", "when": "abc"}
+        self.assertRaisesRegexp(ValueError, "Cannot parse", self.sc_table.insert, changed_by="bob", **what)
+
+    def testInsertDataVersionChanged(self):
+        """Tests to make sure a scheduled change update is rejected if data
+        version changes between grabbing the row to create a change, and
+        submitting the scheduled change."""
+        self.table.update([self.table.fooid == 3], what={"foo": "bb"}, changed_by="bob", old_data_version=1)
+        what = {"fooid": 3, "data_version": 1, "bar": "blah", "when": 456}
+        self.assertRaises(OutdatedDataError, self.sc_table.insert, changed_by="bob", **what)
+
+    def testInsertWithoutPermissionOnBaseTable(self):
+        what = {"fooid": 4, "bar": "blah", "when": 343}
+        self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
+
+    def testInsertWithoutPermissionOnBaseTableForUpdate(self):
+        what = {"fooid": 3, "bar": "blah", "when": 343, "data_version": 1}
+        self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
+
+    def testUpdateNoChangesSinceCreation(self):
+        where = [self.sc_table.sc_id == 1]
+        what = {"when": 888, "foo": "bb"}
+        self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
+        history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
+        self.assertEquals(row.scheduled_by, "bob")
+        self.assertEquals(row.when, 888)
+        self.assertEquals(row.data_version, 2)
+        self.assertEquals(row.base_fooid, 1)
+        self.assertEquals(row.base_foo, "bb")
+        self.assertEquals(row.base_bar, "barbar")
+        self.assertEquals(row.base_data_version, 1)
+        self.assertEquals(history_row.changed_by, "bob")
+        self.assertEquals(history_row.scheduled_by, "bob")
+        self.assertEquals(history_row.when, 888)
+        self.assertEquals(history_row.data_version, 2)
+        self.assertEquals(history_row.base_fooid, 1)
+        self.assertEquals(history_row.base_foo, "bb")
+        self.assertEquals(history_row.base_bar, "barbar")
+        self.assertEquals(history_row.base_data_version, 1)
+
+    def testUpdateNoChangesSinceCreationWithDict(self):
+        where = {"sc_id": 1}
+        what = {"when": 888, "foo": "bb", "data_version": 1, "fooid": 1}
+        self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
+        history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
+        self.assertEquals(row.scheduled_by, "bob")
+        self.assertEquals(row.when, 888)
+        self.assertEquals(row.data_version, 2)
+        self.assertEquals(row.base_fooid, 1)
+        self.assertEquals(row.base_foo, "bb")
+        self.assertEquals(row.base_bar, "barbar")
+        self.assertEquals(row.base_data_version, 1)
+        self.assertEquals(history_row.changed_by, "bob")
+        self.assertEquals(history_row.scheduled_by, "bob")
+        self.assertEquals(history_row.when, 888)
+        self.assertEquals(history_row.data_version, 2)
+        self.assertEquals(history_row.base_fooid, 1)
+        self.assertEquals(history_row.base_foo, "bb")
+        self.assertEquals(history_row.base_bar, "barbar")
+        self.assertEquals(history_row.base_data_version, 1)
+
+    def testUpdateWithBadConditions(self):
+        where = [self.sc_table.sc_id == 1]
+        what = {"telemetry_product": "boop", "telemetry_channel": "boop", "telemetry_uptake": 99}
+        self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+
+    def testUpdateRemoveConditions(self):
+        where = [self.sc_table.sc_id == 2]
+        what = {"when": None}
+        self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+
+    def testUpdateWithoutPermissionOnBaseTable(self):
+        with mock.patch.object(self.sc_table.db, "hasPermission", return_value=False, create=True):
+            where = [self.sc_table.sc_id == 2]
+            what = {"when": 777}
+            self.assertRaises(PermissionDeniedError, self.sc_table.update, where, what, changed_by="sue", old_data_version=1)
+
+    def testUpdateBaseTableNoConflictWithChanges(self):
+        """Tests to make sure a scheduled change is properly updated when an
+        UPDATE is made to the row the scheduled change is for."""
+        # fooid 2 has a change scheduled that would update its "foo" column
+        # we'll change "bar" underneath it. This doesn't conflict with the
+        # scheduled change, so it should simply be updated with the new "bar"
+        # value.
+        self.table.update([self.table.fooid == 2], what={"bar": "bar"}, changed_by="bob", old_data_version=2)
+        row = self.table.t.select().where(self.table.fooid == 2).execute().fetchall()[0]
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
+        history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 4).execute().fetchall()[0]
+        self.assertEquals(row.fooid, 2)
+        self.assertEquals(row.foo, "b")
+        self.assertEquals(row.bar, "bar")
+        self.assertEquals(row.data_version, 3)
+        # This should end up with the scheduled changed incorporating our new
+        # value for "foo" as well as the new "bar" value.
+        self.assertEquals(sc_row.scheduled_by, "bob")
+        self.assertEquals(sc_row.when, 333)
+        self.assertEquals(sc_row.data_version, 2)
+        self.assertEquals(sc_row.base_fooid, 2)
+        self.assertEquals(sc_row.base_foo, "dd")
+        self.assertEquals(sc_row.base_bar, "bar")
+        self.assertEquals(sc_row.base_data_version, 3)
+        # ...As well as a new history table entry.
+        self.assertEquals(history_row.changed_by, "bob")
+        self.assertEquals(history_row.scheduled_by, "bob")
+        self.assertEquals(history_row.when, 333)
+        self.assertEquals(history_row.data_version, 2)
+        self.assertEquals(history_row.base_fooid, 2)
+        self.assertEquals(history_row.base_foo, "dd")
+        self.assertEquals(history_row.base_bar, "bar")
+        self.assertEquals(history_row.base_data_version, 3)
+
+    def testUpdateBaseTableConflictWithRecentChanges(self):
+        where = [self.table.fooid == 1]
+        what = {"bar": "bar"}
+        self.assertRaises(UpdateMergeError, self.table.update, where=where, what=what, changed_by="bob", old_data_version=1)
+
+    def testDeleteChange(self):
+        self.sc_table.delete(where=[self.sc_table.sc_id == 2], changed_by="bob", old_data_version=1)
+        ret = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(ret), 0)
+
+    def testDeleteChangeWithoutPermission(self):
+        self.assertRaises(PermissionDeniedError, self.sc_table.delete, where=[self.sc_table.sc_id == 2], changed_by="nicole", old_data_version=1)
+
+    def testBaseTableDeletesFailsWithScheduledChange(self):
+        self.assertRaises(ChangeScheduledError, self.table.delete, where=[self.table.fooid == 2], changed_by="bob", old_data_version=2)
+
+    def testBaseTableDeleteSucceedsWithoutScheduledChange(self):
+        self.table.delete(where=[self.table.fooid == 3], changed_by="bob", old_data_version=1)
+
+    def testEnactChangeNewRow(self):
+        self.table.scheduled_changes.enactChange(2, "nancy")
+        row = self.table.t.select().where(self.table.fooid == 4).execute().fetchall()[0]
+        history_rows = self.table.history.t.select().where(self.table.history.fooid == 4).execute().fetchall()
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
+        self.assertEquals(row.fooid, 4)
+        self.assertEquals(row.foo, "cc")
+        self.assertEquals(row.bar, "ceecee")
+        self.assertEquals(row.data_version, 1)
+        self.assertEquals(history_rows[0].fooid, 4)
+        self.assertEquals(history_rows[0].foo, None)
+        self.assertEquals(history_rows[0].bar, None)
+        self.assertEquals(history_rows[0].changed_by, "bob")
+        self.assertEquals(history_rows[0].data_version, None)
+        self.assertEquals(history_rows[1].fooid, 4)
+        self.assertEquals(history_rows[1].foo, "cc")
+        self.assertEquals(history_rows[1].bar, "ceecee")
+        self.assertEquals(history_rows[1].changed_by, "bob")
+        self.assertEquals(history_rows[1].data_version, 1)
+        self.assertEquals(sc_row.complete, True)
+
+    def testEnactChangeExistingRow(self):
+        self.table.scheduled_changes.enactChange(1, "nancy")
+        row = self.table.t.select().where(self.table.fooid == 1).execute().fetchall()[0]
+        history_row = self.table.history.t.select().where(self.table.history.fooid == 1).where(self.table.history.data_version == 2).execute().fetchall()[0]
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
+        self.assertEquals(row.foo, "aa")
+        self.assertEquals(row.bar, "barbar")
+        self.assertEquals(row.data_version, 2)
+        self.assertEquals(history_row.foo, "aa")
+        self.assertEquals(history_row.bar, "barbar")
+        self.assertEquals(history_row.changed_by, "bob")
+        self.assertEquals(history_row.data_version, 2)
+        self.assertEquals(sc_row.complete, True)
+
+    def testEnactChangeNoPermissions(self):
+        # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
+        self.assertRaises(PermissionDeniedError, self.table.scheduled_changes.enactChange, 1, "jeremy")
+
+    def testMergeUpdateNoConflict(self):
+        old_row = self.table.select(where=[self.table.fooid == 2])[0]
+        what = {"fooid": 2, "bar": "bar", "data_version": 3}
+        self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
+        self.assertEquals(sc_row.base_foo, "dd")
+        self.assertEquals(sc_row.base_bar, "bar")
+        self.assertEquals(sc_row.base_data_version, 3)
+
+    def testMergeUpdateNoConflictChangingToNull(self):
+        old_row = self.table.select(where=[self.table.fooid == 2])[0]
+        what = {"fooid": 2, "bar": None, "data_version": 3}
+        self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
+        self.assertEquals(sc_row.base_foo, "dd")
+        self.assertEquals(sc_row.base_bar, None)
+        self.assertEquals(sc_row.base_data_version, 3)
+
+    def testMergeUpdateWithConflict(self):
+        old_row = self.table.select(where=[self.table.fooid == 1])[0]
+        what = {"fooid": 1, "bar": "abc", "data_version": 1}
+        self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, what, changed_by="bob")
+
+
 class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
     """Tests to ensure that the current sample data (used by Docker) is
     compatible with the current schema."""
@@ -887,7 +1265,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                     mapping='c',
                     update_type='z',
                     priority=60)
-        rule_id = self.paths.addRule(changed_by='bill', what=what)
+        rule_id = self.paths.insert(changed_by='bill', **what)
         rules = self.paths.t.select().where(self.paths.rule_id == rule_id).execute().fetchall()
         copy_rule = dict(rules[0].items())
         rule = self._stripNullColumns([copy_rule])
@@ -901,13 +1279,13 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         what = dict(rules[0].items())
 
         what['mapping'] = 'd'
-        self.paths.updateRule(changed_by='bill', id_or_alias=1, what=what, old_data_version=1)
+        self.paths.update(where={"rule_id": 1}, what=what, changed_by="bill", old_data_version=1)
 
         rules = self.paths.t.select().where(self.paths.rule_id == 1).execute().fetchall()
         copy_rule = dict(rules[0].items())
         rule = self._stripNullColumns([copy_rule])
 
-        expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='d', update_type='z', data_version=1)]
+        expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='d', update_type='z', data_version=2)]
         self.assertEquals(rule, expected)
 
     def testUpdateRuleByAlias(self):
@@ -915,22 +1293,22 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         what = dict(rules[0].items())
 
         what['mapping'] = 'd'
-        self.paths.updateRule(changed_by='bill', id_or_alias="gandalf", what=what, old_data_version=1)
+        self.paths.update(where={"rule_id": "gandalf"}, what=what, changed_by="bill", old_data_version=1)
 
         rules = self.paths.t.select().where(self.paths.rule_id == 4).execute().fetchall()
         copy_rule = dict(rules[0].items())
         rule = self._stripNullColumns([copy_rule])
 
-        expected = [dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='d', update_type='z', data_version=1)]
+        expected = [dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='d', update_type='z', data_version=2)]
         self.assertEquals(rule, expected)
 
     def testDeleteRule(self):
-        self.paths.deleteRule(changed_by='bill', id_or_alias=2, old_data_version=1)
+        self.paths.delete({"rule_id": 2}, changed_by="bill", old_data_version=1)
         rule = self.paths.t.select().where(self.paths.rule_id == 2).execute().fetchall()
         self.assertEquals(rule, [])
 
     def testDeleteRuleByAlias(self):
-        self.paths.deleteRule(changed_by='bill', id_or_alias="gandalf", old_data_version=1)
+        self.paths.delete({"rule_id": "gandalf"}, changed_by="bill", old_data_version=1)
         rule = self.paths.t.select().where(self.paths.rule_id == 4).execute().fetchall()
         self.assertEquals(rule, [])
 
@@ -1154,38 +1532,38 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(self.releases.countReleases(), 4)
 
     def testDeleteRelease(self):
-        self.releases.deleteRelease(changed_by='bill', name='a', old_data_version=1)
+        self.releases.delete({"name": "a"}, changed_by="bill", old_data_version=1)
         release = self.releases.t.select().where(self.releases.name == 'a').execute().fetchall()
         self.assertEquals(release, [])
 
     def testDeleteReleaseWhenReadOnly(self):
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
-        self.assertRaises(ReadOnlyError, self.releases.deleteRelease, changed_by='me', name='a', old_data_version=2)
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
+        self.assertRaises(ReadOnlyError, self.releases.delete, {"name": "a"}, changed_by='me', old_data_version=2)
 
     def testAddReleaseWithNameMismatch(self):
         blob = ReleaseBlobV1(name="f", schema_version=1, hashFunction="sha512")
-        self.assertRaises(ValueError, self.releases.addRelease, "g", "g", blob, "bill")
+        self.assertRaises(ValueError, self.releases.insert, "bill", name="g", product="g", data=blob)
 
     def testUpdateReleaseNoPermissionForNewProduct(self):
-        self.assertRaises(PermissionDeniedError, self.releases.updateRelease, "c", "bob", 1, product="d")
+        self.assertRaises(PermissionDeniedError, self.releases.update, {"name": "c"}, {"product": "d"}, "bob", 1)
 
     def testUpdateReleaseWithNameMismatch(self):
         newBlob = ReleaseBlobV1(name="c", schema_version=1, hashFunction="sha512")
-        self.assertRaises(ValueError, self.releases.updateRelease, "a", "bill", 1, blob=newBlob)
+        self.assertRaises(ValueError, self.releases.update, {"name": "a"}, {"data": newBlob}, "bill", 1)
 
     def testUpdateReleaseChangeReadOnly(self):
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertEqual(select([self.releases.read_only]).where(self.releases.name == 'a').execute().fetchone()[0], True)
 
     def testUpdateReleaseNoPermissionToSetReadOnly(self):
-        self.assertRaises(PermissionDeniedError, self.releases.updateRelease, "c", "bob", 1, read_only=True)
+        self.assertRaises(PermissionDeniedError, self.releases.update, {"name": "c"}, {"read_only": True}, "bob", 1)
 
     def testIsReadOnly(self):
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertEqual(self.releases.isReadOnly('a'), True)
 
     def testProceedIfNotReadOnly(self):
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertRaises(ReadOnlyError, self.releases._proceedIfNotReadOnly, 'a')
 
 
@@ -1442,7 +1820,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
 
             # Now change it, which will change data_version.
-            self.releases.updateRelease("b", "bob", 1, blob=newBlob)
+            self.releases.update({"name": "b"}, {"data": newBlob}, "bob", 1)
 
             # Ensure that we have the updated version, not the originally
             # cached one.
@@ -1458,7 +1836,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.getReleaseBlob(name="b")
 
             # The first 3 retrievals here cause a miss and then 2 hits.
-            # updateRelease doesn't affect the stats at all (but it updates
+            # update doesn't affect the stats at all (but it updates
             # the cache with the new version
             # Which means that all 4 subsequent retrievals should be hits.
             self._checkCacheStats(cache.caches["blob"], 7, 6, 1)
@@ -1470,11 +1848,11 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
     def testAddReleaseUpdatesCache(self):
         with mock.patch("time.time") as t:
             t.return_value = 0
-            self.releases.addRelease(
+            self.releases.insert(
+                changed_by="bill",
                 name="abc",
                 product="bbb",
-                blob=ReleaseBlobV1(name="abc", schema_version=1, hashFunction="sha512"),
-                changed_by="bill",
+                data=ReleaseBlobV1(name="abc", schema_version=1, hashFunction="sha512"),
             )
             t.return_value += 1
             self.releases.getReleaseBlob(name="abc")
@@ -1494,7 +1872,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             t.return_value += 1
             self.releases.getReleaseBlob(name="b")
             t.return_value += 1
-            self.releases.deleteRelease("bob", "b", 1)
+            self.releases.delete({"name": "b"}, changed_by="bob", old_data_version=1)
             t.return_value += 1
 
             # We've just got two lookups here (one hit, one miss).
@@ -1542,7 +1920,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
 class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     """Tests for the Releases class that depend on version 1 of the blob schema."""
 
-    maxDiff = 1000
+    maxDiff = 2000
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
@@ -1586,36 +1964,36 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
 
     def testAddRelease(self):
         blob = ReleaseBlobV1(name="d", hashFunction="sha512")
-        self.releases.addRelease(name='d', product='d', blob=blob, changed_by='bill')
+        self.releases.insert(changed_by="bill", name='d', product='d', data=blob)
         expected = [('d', 'd', False, json.dumps(dict(name="d", schema_version=1, hashFunction="sha512")), 1)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'd').execute().fetchall(), expected)
 
     def testAddReleaseAlreadyExists(self):
         blob = ReleaseBlobV1(name="a", hashFunction="sha512")
-        self.assertRaises(TransactionError, self.releases.addRelease, name='a', product='a', blob=blob, changed_by='bill')
+        self.assertRaises(TransactionError, self.releases.insert, changed_by="bill", name='a', product='a', data=blob)
 
     def testUpdateRelease(self):
         blob = ReleaseBlobV1(name='a', hashFunction="sha512")
-        self.releases.updateRelease(name='a', product='z', blob=blob, changed_by='bill', old_data_version=1)
+        self.releases.update({"name": "a"}, {"product": "z", "data": blob}, "bill", 1)
         expected = [('a', 'z', False, json.dumps(dict(name='a', schema_version=1, hashFunction="sha512")), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'a').execute().fetchall(), expected)
 
     def testUpdateReleaseWhenReadOnly(self):
         blob = ReleaseBlobV1(name='a', hashFunction="sha512")
         # set release 'a' to read-only
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
-        self.assertRaises(ReadOnlyError, self.releases.updateRelease, name='a', product='z', blob=blob, changed_by='me', old_data_version=2)
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
+        self.assertRaises(ReadOnlyError, self.releases.update, {"name": "a"}, {"product": "z", "data": blob}, "me", 2)
 
     def testUpdateReleaseWithBlob(self):
         blob = ReleaseBlobV1(name='b', schema_version=1, hashFunction="sha512")
-        self.releases.updateRelease(name='b', product='z', changed_by='bill', blob=blob, old_data_version=1)
+        self.releases.update({"name": "b"}, {"product": "z", "data": blob}, "bill", 1)
         expected = [('b', 'z', False, json.dumps(dict(name='b', schema_version=1, hashFunction="sha512")), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'b').execute().fetchall(), expected)
 
     def testUpdateReleaseInvalidBlob(self):
         blob = ReleaseBlobV1(name="2", hashFunction="sha512")
         blob['foo'] = 'bar'
-        self.assertRaises(BlobValidationError, self.releases.updateRelease, changed_by='bill', name='b', blob=blob, old_data_version=1)
+        self.assertRaises(BlobValidationError, self.releases.update, where={"name": "b"}, what={"data": blob}, changed_by='bill', old_data_version=1)
 
     def testAddLocaleToRelease(self):
         data = {
@@ -1923,9 +2301,9 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                 "hashValue": "abc",
             }
         }
-        self.releases.updateRelease('a', read_only=True, changed_by='me', old_data_version=1)
-        self.assertRaises(ReadOnlyError, self.releases.addLocaleToRelease, name='a', product='a', platform='p',
-                          locale='c', data=data, old_data_version=1, changed_by='bill')
+        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
+        self.assertRaises(ReadOnlyError, self.releases.addLocaleToRelease, name='a', product='a', platform='p', locale='c', data=data, old_data_version=1,
+                          changed_by='bill')
 
     def testAddMergeableOutdatedData(self):
         ancestor_blob = createBlob("""
@@ -2056,10 +2434,9 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        self.releases.addRelease(name='p', product='z', blob=ancestor_blob,
-                                 changed_by='bill')
-        self.releases.updateRelease(name='p', product='z', blob=blob1, changed_by='bill', old_data_version=1)
-        self.releases.updateRelease(name='p', product='z', blob=blob2, changed_by='bill', old_data_version=1)
+        self.releases.insert(changed_by="bill", name='p', product='z', data=ancestor_blob)
+        self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by='bill', old_data_version=1)
+        self.releases.update({"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1)
         ret = json.loads(select([self.releases.data]).where(self.releases.name == 'p').execute().fetchone()[0])
         self.assertEqual(result_blob, ret)
 
@@ -2153,11 +2530,10 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        self.releases.addRelease(name='p', product='z', blob=ancestor_blob,
-                                 changed_by='bill')
-        self.releases.updateRelease(name='p', product='z', blob=blob1, changed_by='bill', old_data_version=1)
-        self.assertRaises(OutdatedDataError, self.releases.updateRelease,
-                          name='p', product='z', blob=blob2, changed_by='bill', old_data_version=1)
+        self.releases.insert(changed_by="bill", name="p", product="z", data=ancestor_blob)
+        self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by="bill", old_data_version=1)
+        self.assertRaises(OutdatedDataError, self.releases.update,
+                          {"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1)
 
 
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
@@ -2178,28 +2554,24 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def testGrantPermissions(self):
         query = self.permissions.t.select().where(self.permissions.username == "jess")
         self.assertEquals(len(query.execute().fetchall()), 0)
-        self.permissions.grantPermission("bob", "jess", "rule")
+        self.permissions.insert("bob", username="jess", permission="rule")
         self.assertEquals(query.execute().fetchall(), [("rule", "jess", None, 1)])
 
     def testGrantPermissionsWithOptions(self):
-        self.permissions.grantPermission("bob", "cathy", "release", options=dict(products=["SeaMonkey"]))
+        self.permissions.insert("bob", username="cathy", permission="release", options=dict(products=["SeaMonkey"]))
         query = self.permissions.t.select().where(self.permissions.username == "cathy")
         query = query.where(self.permissions.permission == "release")
         self.assertEquals(query.execute().fetchall(), [("release", "cathy", json.dumps(dict(products=["SeaMonkey"])), 1)])
 
     def testGrantPermissionsUnknownPermission(self):
-        self.assertRaises(ValueError, self.permissions.grantPermission,
-                          "bob", "bud", "bad"
-                          )
+        self.assertRaises(ValueError, self.permissions.insert, changed_by="bob", username="bud", permission="bad")
 
     def testGrantPermissionsUnknownOption(self):
-        self.assertRaises(ValueError, self.permissions.grantPermission,
-                          "bob", "bud", "rule", dict(foo=1)
-                          )
+        self.assertRaises(ValueError, self.permissions.insert, changed_by="bob", username="bud", permission="rule",
+                          options=dict(foo=1))
 
     def testRevokePermission(self):
-        self.permissions.revokePermission(changed_by="bill", username="bob", permission="release",
-                                          old_data_version=1)
+        self.permissions.delete({"username": "bob", "permission": "release"}, changed_by="bill", old_data_version=1)
         query = self.permissions.t.select().where(self.permissions.username == "bob")
         query = query.where(self.permissions.permission == "release")
         self.assertEquals(len(query.execute().fetchall()), 0)
@@ -2317,7 +2689,7 @@ class TestChangeNotifiers(unittest.TestCase):
 
     def testOnInsert(self):
         def doit():
-            self.db.rules.addRule("bob", {"product": "foo", "channel": "bar", "backgroundRate": 100, "priority": 50, "update_type": "minor"})
+            self.db.rules.insert("bob", product="foo", channel="bar", backgroundRate=100, priority=50, update_type="minor")
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
@@ -2325,7 +2697,7 @@ class TestChangeNotifiers(unittest.TestCase):
 
     def testOnUpdate(self):
         def doit():
-            self.db.rules.updateRule("bob", 2, {"product": "blah"}, 1)
+            self.db.rules.update({"rule_id": 2}, {"product": "blah"}, "bob", 1)
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
@@ -2334,7 +2706,7 @@ class TestChangeNotifiers(unittest.TestCase):
 
     def testOnDelete(self):
         def doit():
-            self.db.rules.deleteRule("bob", 2, 1)
+            self.db.rules.delete({"rule_id": 2}, changed_by="bob", old_data_version=1)
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("DELETE"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be removed:"))
@@ -2343,7 +2715,7 @@ class TestChangeNotifiers(unittest.TestCase):
 
     def testOnChangeReadOnly(self):
         def doit():
-            self.db.releases.updateRelease('a', read_only=False, changed_by='bob', old_data_version=1)
+            self.db.releases.update({"name": "a"}, {"read_only": False}, changed_by='bob', old_data_version=1)
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
                                               PartialString("Read only release"
@@ -2358,7 +2730,7 @@ class TestChangeNotifiers(unittest.TestCase):
 
     def testOnChangeReadOnlySetUnmodifiable(self):
         def doit():
-            self.db.releases.updateRelease('b', read_only=False, changed_by='bob', old_data_version=1)
+            self.db.releases.update({"name": "b"}, {"read_only": False}, changed_by='bob', old_data_version=1)
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_not_called()
 

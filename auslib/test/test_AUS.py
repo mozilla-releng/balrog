@@ -43,6 +43,9 @@ class TestAUSThrottling(unittest.TestCase):
             name='b', product='b', data_version=1,
             data='{"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
 
+    def tearDown(self):
+        dbo.reset()
+
     def testThrottling100(self):
         (served, tested) = RandomAUSTest(self.AUS, backgroundRate=100, force=False, mapping='b')
         self.assertEqual(served, 1)

@@ -62,8 +62,7 @@ class RulesAPIView(AdminView):
                     comment=form.comment.data,
                     update_type=form.update_type.data,
                     headerArchitecture=form.headerArchitecture.data)
-        rule_id = dbo.rules.addRule(changed_by=changed_by, what=what,
-                                    transaction=transaction)
+        rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
         return Response(status=200, response=str(rule_id))
 
 
@@ -119,8 +118,8 @@ class SingleRuleView(AdminView):
             if (request.json and k in request.json) or k in request.form:
                 what[k] = v
 
-        dbo.rules.updateRule(changed_by=changed_by, id_or_alias=id_or_alias, what=what,
-                             old_data_version=form.data_version.data, transaction=transaction)
+        dbo.rules.update(changed_by=changed_by, where={"rule_id": id_or_alias}, what=what,
+                         old_data_version=form.data_version.data, transaction=transaction)
 
         # find out what the next data version is
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
@@ -145,8 +144,8 @@ class SingleRuleView(AdminView):
         # form to make sure that the CSRF token is checked.
         form = DbEditableForm(request.args)
 
-        dbo.rules.deleteRule(changed_by=changed_by, id_or_alias=id_or_alias,
-                             old_data_version=form.data_version.data, transaction=transaction)
+        dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by, old_data_version=form.data_version.data,
+                         transaction=transaction)
 
         return Response(status=200)
 
@@ -263,8 +262,8 @@ class RuleHistoryAPIView(HistoryAdminView):
             headerArchitecture=change['headerArchitecture'],
         )
 
-        dbo.rules.updateRule(changed_by=changed_by, id_or_alias=rule_id, what=what,
-                             old_data_version=old_data_version, transaction=transaction)
+        dbo.rules.update(changed_by=changed_by, where={"rule_id": rule_id}, what=what,
+                         old_data_version=old_data_version, transaction=transaction)
 
         return Response("Excellent!")
 
