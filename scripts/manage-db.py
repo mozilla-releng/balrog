@@ -31,40 +31,58 @@ AND (STR_TO_DATE(RIGHT(name, 14), "%%%%Y%%%%m%%%%d%%%%H%%%%i%%%%S") < NOW() - IN
 """ % nightly_age
     if dryrun:
         todelete = trans.execute("SELECT name FROM releases" + query).fetchall()
+        print "Releases rows to be deleted:"
         if todelete:
-            print "Releases rows to be deleted:"
             print "\n".join(itertools.chain(*todelete))
+        else:
+            print "  - None"
     else:
         trans.execute("DELETE releases FROM releases" + query)
 
 
 def cleanup_releases_history(trans, dryrun=True):
-    query = """
-WHERE name LIKE '%%%%latest'
-AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 14 DAY);
-"""
-    if dryrun:
-        todelete = trans.execute("SELECT name, change_id FROM releases_history" + query).fetchall()
-        if todelete:
-            print "Releases history rows to be deleted:"
-            for key, group in itertools.groupby(todelete, lambda x: x[0]):
-                print "%s: %s history rows" % (key, len(list(group)))
-    else:
-        trans.execute("DELETE releases_history FROM releases_history" + query)
+    num_to_delete = 100
+    queries = dict(
+        dated="""
+            SELECT name, change_id
+            FROM releases_history
+            WHERE name LIKE '%%%%latest'
+              AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 14 DAY)
+            ORDER BY change_id
+            LIMIT %d """ % num_to_delete,
+        nightly="""
+            SELECT name, change_id
+            FROM releases_history
+            WHERE name LIKE '%%%%nightly%%%%'
+              AND name NOT LIKE '%%%%latest'
+              AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 7 DAY)
+            ORDER BY change_id
+            LIMIT %d """ % num_to_delete
+    )
 
-    query = """
-WHERE name NOT LIKE '%%%%latest' AND name LIKE '%%%%nightly%%%%'
-AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 7 DAY);
-"""
-    if dryrun:
-        todelete = trans.execute("SELECT name, change_id FROM releases_history" + query).fetchall()
-        if todelete:
-            print "Releases history rows to be deleted:"
-            for key, group in itertools.groupby(todelete, lambda x: x[0]):
-                print "%s: %s history rows" % (key, len(list(group)))
-    else:
-        trans.execute("DELETE releases_history FROM releases_history" + query)
+    total_deleted = 0
 
+    for name, query in queries.items():
+        if dryrun:
+            todelete = trans.execute(query).fetchall()
+            if todelete:
+                print "releases_history (%s) rows to be deleted:" % name
+                for key, group in itertools.groupby(todelete, lambda x: x[0]):
+                    print "  - %s: %s history rows" % (key, len(list(group)))
+        else:
+            del_query = """
+                DELETE R.*
+                FROM releases_history R
+                WHERE R.change_id IN (   -- use a subquery to work around mysql limitation
+                    SELECT X.change_id   -- of select'ing from the same table as a DML
+                    FROM ( """ + query + ") X)"
+
+            results = trans.execute(del_query)
+            if results:
+                print "Deleted %s '%s' records" % (results.rowcount, name)
+                total_deleted += results.rowcount
+
+    print "Total Deleted: %d" % total_deleted
 
 if __name__ == "__main__":
     from optparse import OptionParser
@@ -100,8 +118,9 @@ if __name__ == "__main__":
             parser.error("need to pass maximum nightly release age")
         nightly_age = int(args[1])
         with db.begin() as trans:
-            cleanup_releases(trans, nightly_age, dryrun=True)
-            cleanup_releases_history(trans, dryrun=True)
             if action == "cleanup":
                 cleanup_releases(trans, nightly_age, dryrun=False)
                 cleanup_releases_history(trans, dryrun=False)
+            else:
+                cleanup_releases(trans, nightly_age, dryrun=True)
+                cleanup_releases_history(trans, dryrun=True)
