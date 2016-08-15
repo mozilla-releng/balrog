@@ -2,7 +2,7 @@ import simplejson as json
 
 from sqlalchemy.sql.expression import null
 
-from flask import Response, jsonify, make_response, request
+from flask import Response, jsonify, request
 
 from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
@@ -167,7 +167,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         status = 201
     else:
         status = 200
-    return make_response(json.dumps(dict(new_data_version=new_data_version)), status)
+    return Response(status=status, response=json.dumps(dict(new_data_version=new_data_version)))
 
 
 class SingleLocaleView(AdminView):
@@ -250,7 +250,7 @@ class SingleReleaseView(AdminView):
             # the data_version might jump by more than 1 if outdated blobs are
             # merged
             data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]['data_version']
-            return Response(json.dumps(dict(new_data_version=data_version)), status=200)
+            return jsonify(new_data_version=data_version)
         else:
             try:
                 dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release,
@@ -319,9 +319,7 @@ class ReleaseReadOnlyView(AdminView):
         except KeyError as e:
             return Response(status=404, response=json.dumps(e.args), mimetype="application/json")
 
-        return jsonify({
-            'read_only': is_release_read_only
-        })
+        return jsonify(read_only=is_release_read_only)
 
     @requirelogin
     def _put(self, release, changed_by, transaction):
@@ -382,13 +380,13 @@ class ReleaseHistoryView(HistoryAdminView):
 
         self.annotateRevisionDifferences(revisions)
 
-        return jsonify({
-            'revisions': revisions,
-            'count': total_count,
-        })
+        return jsonify(revisions=revisions, count=total_count)
 
     @requirelogin
     def _post(self, release, transaction, changed_by):
+        releases = dbo.releases.getReleases(name=release)
+        if not releases:
+            return Response(status=404, response='bad release')
         change_id = None
         if request.json:
             change_id = request.json.get('change_id')
@@ -397,12 +395,9 @@ class ReleaseHistoryView(HistoryAdminView):
             return Response(status=400, response='no change_id')
         change = dbo.releases.history.getChange(change_id=change_id)
         if change is None:
-            return Response(status=404, response='bad change_id')
+            return Response(status=400, response='bad change_id')
         if change['name'] != release:
-            return Response(status=404, response='bad release')
-        releases = dbo.releases.getReleases(name=release)
-        if not releases:
-            return Response(status=404, response='bad release')
+            return Response(status=400, response='bad release')
         release = releases[0]
         old_data_version = release['data_version']
 
@@ -458,7 +453,7 @@ class ReleasesAPIView(AdminView):
                 'releases': _releases,
             }
 
-        return Response(response=json.dumps(data), mimetype="application/json")
+        return jsonify(data)
 
     @requirelogin
     def _post(self, changed_by, transaction):
@@ -484,13 +479,7 @@ class ReleasesAPIView(AdminView):
         release = dbo.releases.getReleases(
             name=name, transaction=transaction, limit=1
         )[0]
-        new_data_version = release['data_version']
-        response = make_response(
-            json.dumps(dict(new_data_version=new_data_version)),
-            201
-        )
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return Response(status=201, response=json.dumps(dict(new_data_version=release["data_version"])))
 
 
 class SingleReleaseColumnView(AdminView):

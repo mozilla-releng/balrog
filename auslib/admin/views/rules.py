@@ -2,14 +2,18 @@ import json
 
 from sqlalchemy.sql.expression import null
 
-from flask import Response, make_response, request, jsonify
+from flask import Response, request, jsonify
 
 from auslib.global_state import dbo
 from auslib.admin.views.base import (
     requirelogin, AdminView, HistoryAdminView,
 )
 from auslib.admin.views.csrf import get_csrf_headers
-from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm
+from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
+    ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
+    EditScheduledChangeNewRuleForm, EditScheduledChangeExistingRuleForm
+from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
+    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView
 
 
 class RulesAPIView(AdminView):
@@ -25,11 +29,7 @@ class RulesAPIView(AdminView):
                 for key, value in rule.items()
             ))
             count += 1
-        ret = {
-            "count": count,
-            "rules": _rules,
-        }
-        return jsonify(ret)
+        return jsonify(count=count, rules=_rules)
 
     # changed_by is available via the requirelogin decorator
     @requirelogin
@@ -123,10 +123,7 @@ class SingleRuleView(AdminView):
 
         # find out what the next data version is
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
-        new_data_version = rule['data_version']
-        response = make_response(json.dumps(dict(new_data_version=new_data_version)))
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return jsonify(new_data_version=rule["data_version"])
 
     _put = _post
 
@@ -216,14 +213,13 @@ class RuleHistoryAPIView(HistoryAdminView):
                 for key, db_key in _mapping.items()
             ))
 
-        ret = {
-            'count': total_count,
-            'rules': _rules,
-        }
-        return Response(response=json.dumps(ret), mimetype="application/json")
+        return jsonify(count=total_count, rules=_rules)
 
     @requirelogin
     def _post(self, rule_id, transaction, changed_by):
+        rule = dbo.rules.getRule(rule_id)
+        if rule is None:
+            return Response(status=404, response='bad rule_id')
         change_id = None
         if request.json:
             change_id = request.json.get('change_id')
@@ -232,12 +228,9 @@ class RuleHistoryAPIView(HistoryAdminView):
             return Response(status=400, response='no change_id')
         change = dbo.rules.history.getChange(change_id=change_id)
         if change is None:
-            return Response(status=404, response='bad change_id')
+            return Response(status=400, response='bad change_id')
         if change['rule_id'] != rule_id:
-            return Response(status=404, response='bad rule_id')
-        rule = dbo.rules.getRule(rule_id)
-        if rule is None:
-            return Response(status=404, response='bad rule_id')
+            return Response(status=400, response='bad rule_id')
         old_data_version = rule['data_version']
 
         # now we're going to make a new insert based on this
@@ -287,3 +280,61 @@ class SingleRuleColumnView(AdminView):
             column: column_values,
         }
         return jsonify(ret)
+
+
+class RuleScheduledChangesView(ScheduledChangesView):
+    def __init__(self):
+        super(RuleScheduledChangesView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, transaction, changed_by):
+        if request.json and request.json.get("data_version"):
+            form = ScheduledChangeExistingRuleForm()
+        else:
+            form = ScheduledChangeNewRuleForm()
+
+        releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+        form.mapping.choices.insert(0, ('', 'NULL'))
+
+        return super(RuleScheduledChangesView, self)._post(form, transaction, changed_by)
+
+
+class RuleScheduledChangeView(ScheduledChangeView):
+    def __init__(self):
+        super(RuleScheduledChangeView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        if request.json and request.json.get("data_version"):
+            form = EditScheduledChangeExistingRuleForm()
+        else:
+            form = EditScheduledChangeNewRuleForm()
+
+        releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+        form.mapping.choices.insert(0, ('', 'NULL'))
+
+        return super(RuleScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(RuleScheduledChangeView, self)._delete(sc_id, transaction, changed_by)
+
+
+class EnactRuleScheduledChangeView(EnactScheduledChangeView):
+    def __init__(self):
+        super(EnactRuleScheduledChangeView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(EnactRuleScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+
+
+class RuleScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    def __init__(self):
+        super(RuleScheduledChangeHistoryView, self).__init__("rules", dbo.rules)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(RuleScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)

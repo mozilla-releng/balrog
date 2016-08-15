@@ -1,6 +1,6 @@
 import simplejson as json
 
-from flask import request, Response, jsonify, make_response
+from flask import request, Response, jsonify
 
 from auslib.global_state import dbo
 from auslib.admin.views.base import requirelogin, AdminView
@@ -48,14 +48,14 @@ class SpecificPermissionView(AdminView):
                 dbo.permissions.update(where={"username": username, "permission": permission}, what={"options": form.options.data},
                                        changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
                 new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
-                return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
+                return jsonify(new_data_version=new_data_version)
             else:
                 form = NewPermissionForm()
                 if not form.validate():
                     self.log.warning("Bad input: %s", form.errors)
                     return Response(status=400, response=json.dumps(form.errors))
                 dbo.permissions.insert(changed_by, transaction=transaction, username=username, permission=permission, options=form.options.data)
-                return make_response(json.dumps(dict(new_data_version=1)), 201)
+                return Response(status=201, response=json.dumps(dict(new_data_version=1)))
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)
@@ -72,7 +72,7 @@ class SpecificPermissionView(AdminView):
             dbo.permissions.update(where={"username": username, "permission": permission}, what={"options": form.options.data},
                                    changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
             new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
-            return make_response(json.dumps(dict(new_data_version=new_data_version)), 200)
+            return jsonify(new_data_version=new_data_version)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)

@@ -37,6 +37,8 @@ class ViewTest(unittest.TestCase):
                                            options=json.dumps(dict(products=['fake', 'b'], actions=["create", "modify"])), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=json.dumps(dict(actions=["set"])), data_version=1)
         dbo.permissions.t.insert().execute(permission='rule', username='bob', options=json.dumps(dict(actions=["modify"], products=['fake'])), data_version=1)
+        dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
+        dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=json.dumps(dict(actions=["enact"])), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_locale', username='ashanti',
                                            options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
         dbo.releases.t.insert().execute(
@@ -67,12 +69,22 @@ class ViewTest(unittest.TestCase):
     }
 }
 """)
-        dbo.rules.t.insert().execute(id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='minor', data_version=1)
-        dbo.rules.t.insert().execute(id=2, alias="frodo", priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='minor',
-                                     data_version=1)
-        dbo.rules.t.insert().execute(id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
-        dbo.rules.t.insert().execute(id=4, product='fake', priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='minor', data_version=1)
-        dbo.rules.t.insert().execute(id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='minor', data_version=1)
+        dbo.rules.t.insert().execute(
+            rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='minor', data_version=1
+        )
+        dbo.rules.t.insert().execute(
+            rule_id=2, alias="frodo", priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='minor',
+            data_version=1
+        )
+        dbo.rules.t.insert().execute(
+            rule_id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='minor', data_version=1
+        )
+        dbo.rules.t.insert().execute(
+            rule_id=4, product='fake', priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='minor', data_version=1
+        )
+        dbo.rules.t.insert().execute(
+            rule_id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='minor', data_version=1
+        )
         self.client = app.test_client()
 
     def tearDown(self):
@@ -89,29 +101,6 @@ class ViewTest(unittest.TestCase):
     def _getAuth(self, username):
         return {'REMOTE_USER': username}
 
-    def _post(self, url, data={}, username='bill', **kwargs):
-        return self.client.post(url, data=data, environ_base=self._getAuth(username), **kwargs)
-
-    def _httpRemoteUserPost(self, url, username="bill", data={}):
-        return self.client.post(url, data=data, environ_base=self._getHttpRemoteUserAuth(username))
-
-    def _badAuthPost(self, url, data={}):
-        return self.client.post(url, data=data, environ_base=self._getBadAuth())
-
-    def _put(self, url, data={}, username='bill'):
-        return self.client.put(url, data=data, environ_base=self._getAuth(username))
-
-    def _delete(self, url, qs={}, username='bill'):
-        return self.client.delete(url, query_string=qs, environ_base=self._getAuth(username))
-
-    def assertStatusCode(self, response, expected):
-        self.assertEquals(response.status_code, expected, '%d - %s' % (response.status_code, response.data))
-
-
-class JSONTestMixin(object):
-    """Provides a _get method that always asks for format='json', and checks
-       the returned MIME type."""
-
     def _get(self, url, qs={}):
         headers = {
             "Accept-Encoding": "application/json",
@@ -121,3 +110,21 @@ class JSONTestMixin(object):
             qs["format"] = "json"
         ret = self.client.get(url, query_string=qs, headers=headers)
         return ret
+
+    def _post(self, url, data={}, username='bill', **kwargs):
+        return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getAuth(username), **kwargs)
+
+    def _httpRemoteUserPost(self, url, username="bill", data={}):
+        return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getHttpRemoteUserAuth(username))
+
+    def _badAuthPost(self, url, data={}):
+        return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getBadAuth())
+
+    def _put(self, url, data={}, username='bill'):
+        return self.client.put(url, data=json.dumps(data), content_type="application/json", environ_base=self._getAuth(username))
+
+    def _delete(self, url, qs={}, username='bill'):
+        return self.client.delete(url, query_string=qs, environ_base=self._getAuth(username))
+
+    def assertStatusCode(self, response, expected):
+        self.assertEquals(response.status_code, expected, '%d - %s' % (response.status_code, response.data))

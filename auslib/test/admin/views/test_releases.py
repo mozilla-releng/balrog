@@ -3,10 +3,10 @@ import simplejson as json
 from sqlalchemy import select
 
 from auslib.global_state import dbo
-from auslib.test.admin.views.base import ViewTest, JSONTestMixin
+from auslib.test.admin.views.base import ViewTest
 
 
-class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
+class TestReleasesAPI_JSON(ViewTest):
 
     def testGetRelease(self):
         ret = self._get("/releases/b")
@@ -181,14 +181,13 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/dd', data=dict(blob=blob1, name='dd',
                                                   product='dd', data_version=1))
         self.assertStatusCode(ret, 200)
-        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        self.assertEqual(json.loads(ret.data), dict(new_data_version=2))
 
         # Updating release with outdated data, testing if merged correctly
         ret = self._put('/releases/dd', data=dict(blob=blob2, name='dd',
                                                   product='dd', data_version=1))
         self.assertStatusCode(ret, 200)
-        self.assertEqual(ret.data, json.dumps(dict(new_data_version=3)),
-                         "Data: %s" % ret.data)
+        self.assertEqual(json.loads(ret.data), dict(new_data_version=3))
 
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
         self.assertEqual(json.loads(ret), json.loads(result_blob))
@@ -275,7 +274,7 @@ class TestReleasesAPI_JSON(ViewTest, JSONTestMixin):
         ret = self._put('/releases/dd', data=dict(blob=blob1, name='dd',
                                                   product='dd', data_version=1))
         self.assertStatusCode(ret, 200)
-        self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
+        self.assertEqual(json.loads(ret.data), dict(new_data_version=2))
 
         # Updating same release with conflicting data
         ret = self._put('/releases/dd', data=dict(blob=blob2, name='dd',
@@ -992,7 +991,7 @@ def byteify(input):
         return input
 
 
-class TestReleaseHistoryView(ViewTest, JSONTestMixin):
+class TestReleaseHistoryView(ViewTest):
 
     def testGetRevisions(self):
         # Make some changes to a release
@@ -1067,7 +1066,7 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         assert row['name'] == 'd'  # one of the fixtures
 
         url = '/releases/d/revisions'
-        ret = self._post(url, json.dumps({'change_id': change_id}), content_type="application/json")
+        ret = self._post(url, {'change_id': change_id})
         self.assertEquals(ret.status_code, 200, ret.data)
 
         query = table.history.t.count()
@@ -1081,19 +1080,29 @@ class TestReleaseHistoryView(ViewTest, JSONTestMixin):
         self.assertEqual(data['detailsUrl'], 'beep')
 
     def testPostRevisionRollbackBadRequests(self):
+        data = json.dumps(dict(detailsUrl='beep', fakePartials=True, schema_version=1))
+        ret = self._post(
+            '/releases/d',
+            data=dict(
+                data=data,
+                product='d',
+                data_version=1,
+            )
+        )
+        self.assertStatusCode(ret, 200)
         # when posting you need both the release name and the change_id
-        ret = self._post('/releases/CRAZYNAME/revisions', json.dumps({'change_id': 1}), content_type="application/json")
-        self.assertEquals(ret.status_code, 404)
+        ret = self._post('/releases/CRAZYNAME/revisions', json.dumps({'change_id': 1}))
+        self.assertEquals(ret.status_code, 404, ret.data)
 
         url = '/releases/d/revisions'
-        ret = self._post(url, json.dumps({'change_id': 999}), content_type="application/json")
-        self.assertEquals(ret.status_code, 404)
+        ret = self._post(url, {'change_id': 999})
+        self.assertEquals(ret.status_code, 400)
 
         ret = self._post(url)
         self.assertEquals(ret.status_code, 400)
 
 
-class TestSingleColumn_JSON(ViewTest, JSONTestMixin):
+class TestSingleColumn_JSON(ViewTest):
 
     def testGetReleasesSingleColumn(self):
         expected_product = ["a", "c", "b", "d"]
@@ -1108,7 +1117,7 @@ class TestSingleColumn_JSON(ViewTest, JSONTestMixin):
         self.assertEquals(ret.status_code, 404)
 
 
-class TestReadOnlyView(ViewTest, JSONTestMixin):
+class TestReadOnlyView(ViewTest):
 
     def testReadOnlyGet(self):
         ret = self._get('/releases/b/read_only')
@@ -1173,7 +1182,7 @@ class TestReadOnlyView(ViewTest, JSONTestMixin):
         self.assertStatusCode(ret, 403)
 
 
-class TestRuleIdsReturned(ViewTest, JSONTestMixin):
+class TestRuleIdsReturned(ViewTest):
 
     def testPresentRuleIdField(self):
         releases = self._get("/releases")
