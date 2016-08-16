@@ -939,7 +939,13 @@ class TestReleasesAPI_JSON(ViewTest):
     def testGetReleasesNamePrefix(self):
         ret = self._get("/releases", qs=dict(name_prefix='a'))
         self.assertStatusCode(ret, 200)
-        self.assertEquals(json.loads(ret.data), json.loads("""
+
+        ret_data = json.loads(ret.data)
+
+        with self.assertRaises(KeyError):
+            ret_data['data']
+
+        self.assertEquals(ret_data, json.loads("""
 {
     "releases": [
         {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4]},
@@ -1022,6 +1028,9 @@ class TestReleaseHistoryView(ViewTest):
         data = json.loads(ret.data)
         self.assertEquals(data["count"], 2)
         self.assertEquals(len(data["revisions"]), 2)
+
+        with self.assertRaises(KeyError):
+            data['data']
 
     def testPostRevisionRollback(self):
         # Make some changes to a release
