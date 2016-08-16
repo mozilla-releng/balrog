@@ -387,6 +387,7 @@ class ReleaseHistoryView(HistoryAdminView):
             '_time_ago',
             'change_id',
             'changed_by',
+            "timestamp",
         ]
 
         self.annotateRevisionDifferences(revisions)
