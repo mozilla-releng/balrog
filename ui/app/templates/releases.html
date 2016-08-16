@@ -20,7 +20,7 @@
   <span ng-show="release_name">Revisions of a Release</span>
 
   <span class="count" ng-show="!loading && !failed">
-    ({{ filtered_items.length | number:0 }}
+    ({{ release_name ? releases_count : filtered_items.length | number:0 }}
     <span ng-bind="hasFilter() ? 'found' : 'in total'"></span>)
   </span>
 
@@ -37,13 +37,14 @@
 </h2>
 
 
-<div class="pagination-container" ng-show="filtered_items.length > pageSize">
+<div class="pagination-container" ng-show="releases_count > pageSize">
   <pagination
     class="pagination-sm"
-    total-items="filtered_items.length"
+    total-items="release_name ? releases_count : filtered_items.length"
     ng-model="currentPage"
     items-per-page="pageSize"
-    max-size="20"
+    max-size="maxSize"
+    boundary-links="true"
   ></pagination>
 </div>
 
@@ -65,7 +66,7 @@
 
 
 <div class="panel panel-default"
-     ng-repeat="release in filtered_items = (releases | filter:filterBySearch) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
+     ng-repeat="release in filtered_items = (releases | filter:filterBySearch) | startFrom:(disableFilter || !release_name) && ((currentPage - 1)*pageSize) | orderBy:ordering | limitTo:pageSize">
   <div class="panel-heading">
     <h3 class="panel-title">
       <div style="float:right">
@@ -116,13 +117,13 @@
   </div>
 </div>
 
-
-<div class="pagination-container" ng-show="filtered_items.length > pageSize">
+<div class="pagination-container" ng-show="releases_count > pageSize">
   <pagination
     class="pagination-sm"
-    total-items="filtered_items.length"
+    total-items="release_name ? releases_count : filtered_items.length"
     ng-model="currentPage"
     items-per-page="pageSize"
-    max-size="20"
+    max-size="maxSize"
+    boundary-links="true"
   ></pagination>
 </div>
