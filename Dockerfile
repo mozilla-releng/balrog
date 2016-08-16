@@ -2,6 +2,12 @@ FROM python:2.7
 
 MAINTAINER bhearsum@mozilla.com
 
+# Some versions of the python:2.7 Docker image remove this library, which
+# uwsgi needs for routing support to be enabled.
+# We may be able to remove this after https://github.com/docker-library/python/pull/137
+# is fixed.
+RUN apt-get -q update && apt-get -q --yes install libpcre3 libpcre3-dev && apt-get clean
+
 WORKDIR /app
 
 # install the requirements into the container first

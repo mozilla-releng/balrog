@@ -2,7 +2,7 @@ import json
 
 from sqlalchemy.sql.expression import null
 
-from flask import Response, make_response, request, jsonify
+from flask import Response, request, jsonify
 
 from auslib.global_state import dbo
 from auslib.admin.views.base import (
@@ -29,11 +29,7 @@ class RulesAPIView(AdminView):
                 for key, value in rule.items()
             ))
             count += 1
-        ret = {
-            "count": count,
-            "rules": _rules,
-        }
-        return jsonify(ret)
+        return jsonify(count=count, rules=_rules)
 
     # changed_by is available via the requirelogin decorator
     @requirelogin
@@ -127,10 +123,7 @@ class SingleRuleView(AdminView):
 
         # find out what the next data version is
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
-        new_data_version = rule['data_version']
-        response = make_response(json.dumps(dict(new_data_version=new_data_version)))
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return jsonify(new_data_version=rule["data_version"])
 
     _put = _post
 
@@ -220,11 +213,7 @@ class RuleHistoryAPIView(HistoryAdminView):
                 for key, db_key in _mapping.items()
             ))
 
-        ret = {
-            'count': total_count,
-            'rules': _rules,
-        }
-        return Response(response=json.dumps(ret), mimetype="application/json")
+        return jsonify(count=total_count, rules=_rules)
 
     @requirelogin
     def _post(self, rule_id, transaction, changed_by):

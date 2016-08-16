@@ -100,12 +100,12 @@ class ReleaseBlobBase(Blob):
         return '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
             (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
 
-    def getHeaderXML(self, updateQuery, update_type):
+    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         buildTarget = updateQuery["buildTarget"]
         locale = updateQuery["locale"]
         return self._getUpdateLineXML(buildTarget, locale, update_type)
 
-    def getFooterXML(self):
+    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return '    </update>'
 
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
@@ -322,7 +322,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
 
         return updateLine
 
-    def getHeaderXML(self, updateQuery, update_type):
+    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         """ In order to update some older versions of Firefox without prompting
         them for add-on compatibility, we need to be able to modify the appVersion
         and extVersion attributes. bug 998721 and bug 1174605 have additional
@@ -331,7 +331,9 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         this method, but that doesn't have access to the updateQuery to lookup
         the version making the request.
         """
-        xml = super(ReleaseBlobV1, self).getHeaderXML(updateQuery, update_type)
+        xml = super(ReleaseBlobV1, self).getHeaderXML(updateQuery, update_type,
+                                                      whitelistedDomains,
+                                                      specialForceHosts)
 
         if self.get("oldVersionSpecialCases"):
             query_ver = MozillaVersion(updateQuery["version"])
@@ -689,7 +691,7 @@ class DesupportBlob(Blob):
         # desupport messages should always be returned
         return True
 
-    def getHeaderXML(self, updateQuery, update_type):
+    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return ''
 
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
@@ -697,5 +699,5 @@ class DesupportBlob(Blob):
         xml.append('    <update type="%s" unsupported="true" detailsURL="%s" displayVersion="%s">' % (update_type, self['detailsUrl'], self["displayVersion"]))
         return xml
 
-    def getFooterXML(self):
+    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return '</update>'

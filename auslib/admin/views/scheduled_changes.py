@@ -2,7 +2,7 @@ import json
 
 from sqlalchemy.sql.expression import null
 
-from flask import jsonify, request, Response, make_response
+from flask import jsonify, request, Response
 
 from auslib.admin.views.base import AdminView, HistoryAdminView
 from auslib.admin.views.forms import DbEditableForm
@@ -48,7 +48,7 @@ class ScheduledChangesView(AdminView):
             self.log.warning("Bad input: %s", e)
             return Response(status=400, response=json.dumps({"exception": e.args}))
 
-        return jsonify({"sc_id": sc_id})
+        return jsonify(sc_id=sc_id)
 
 
 class ScheduledChangeView(AdminView):
@@ -92,16 +92,13 @@ class ScheduledChangeView(AdminView):
             return Response(status=400, response=json.dumps({"exception": e.args}))
 
         sc = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["data_version"])[0]
-        new_data_version = sc['data_version']
-        response = make_response(json.dumps(dict(new_data_version=new_data_version)))
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return jsonify(new_data_version=sc["data_version"])
 
     def _delete(self, sc_id, transaction, changed_by):
         where = {"sc_id": sc_id}
         sc = self.sc_table.select(where, transaction, columns=["sc_id"])
         if not sc:
-            return Response(status=404)
+            return Response(status=404, response="Scheduled change does not exist")
 
         form = DbEditableForm(request.args)
 
