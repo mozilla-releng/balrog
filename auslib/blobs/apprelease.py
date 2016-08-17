@@ -86,7 +86,11 @@ class ReleaseBlobBase(Blob):
 
     def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
         fromRelease = self._getFromRelease(patch)
+        # don't return an update if we don't match the from restriction
         if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
+            return None
+        # don't return an update if an older release isn't in the DB for some reason
+        if patch['from'] != '*' and fromRelease is None:
             return None
 
         url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
