@@ -36,9 +36,9 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                         endpoint = "/scheduled_changes/rules/{}/enact".format(change["sc_id"])
                         await client.request(session, balrog_api_root, endpoint, method="POST")
 
-            await asyncio.sleep(sleeptime)
         except:
             logging.error(traceback.format_exc())
+        finally:
             await asyncio.sleep(sleeptime)
 
 
