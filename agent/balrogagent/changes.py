@@ -6,17 +6,17 @@ async def get_telemetry_uptake(*args):
     return -1
 
 
-def is_ready(change, now=None, current_uptake=None):
-    if change.get("telemetry_uptake"):
-        logging.debug("Comparing uptake for change %s (current: %s, required: %s", change["sc_id"], current_uptake, change["telemetry_uptake"])
-        if current_uptake >= change["telemetry_uptake"]:
-            return True
-    elif change.get("when"):
-        logging.debug("Comparing time for change %s (now: %s, scheduled time: %s", change["sc_id"], now, change["when"])
-        if now >= change["when"]:
-            return True
+def telemetry_is_ready(change, current_uptake):
+    logging.debug("Comparing uptake for change %s (current: %s, required: %s", change["sc_id"], current_uptake, change["telemetry_uptake"])
+    if current_uptake >= change["telemetry_uptake"]:
+        return True
     else:
-        logging.warning("Unknown change type!")
+        return False
 
-    logging.debug("Change %s is not ready", change["sc_id"])
-    return False
+
+def time_is_ready(change, now):
+    logging.debug("Comparing time for change %s (now: %s, scheduled time: %s", change["sc_id"], now, change["when"])
+    if now >= change["when"]:
+        return True
+    else:
+        return False

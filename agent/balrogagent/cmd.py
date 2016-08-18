@@ -5,7 +5,7 @@ import time
 import traceback
 
 from . import client
-from .changes import get_telemetry_uptake, is_ready
+from .changes import get_telemetry_uptake, telemetry_is_ready, time_is_ready
 from .log import configure_logging
 
 
@@ -21,20 +21,26 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                 logging.debug("Found %s", len(sc))
                 for change in sc:
                     logging.debug("Processing change %s", change["sc_id"])
-                    ready_kwargs = {}
+                    ready = False
+
                     if change["telemetry_uptake"]:
                         # TODO: maybe replace this with a simple client.request()...
-                        ready_kwargs["current_uptake"] = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"], loop=loop)
-                    if change["when"]:
+                        current_uptake = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"], loop=loop)
+                        ready = telemetry_is_ready(change, current_uptake)
+                    elif change["when"]:
                         # "when" is to-the-millisecond timestamp that gets stored as an int.
                         # It needs to be converted back to a float before it can be compared
                         # against other timestamps.
-                        change["when"] = change["when"] / 1000
-                        ready_kwargs["now"] = time.time()
-                    if is_ready(change, **ready_kwargs):
+                        ready = time_is_ready(change, time.time())
+                    else:
+                        logging.debug("Unknown change type!")
+
+                    if ready:
                         logging.debug("Change %s is ready, enacting", change["sc_id"])
                         endpoint = "/scheduled_changes/rules/{}/enact".format(change["sc_id"])
                         await client.request(session, balrog_api_root, endpoint, method="POST")
+                    else:
+                        logging.debug("Change %s is not ready", change["sc_id"])
 
         except:
             logging.error(traceback.format_exc())
