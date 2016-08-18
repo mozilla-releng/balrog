@@ -23,6 +23,7 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     logging.debug("Processing change %s", change["sc_id"])
                     ready = False
 
+                    # Figure out if the change is ready, which is type-specific.
                     if change["telemetry_uptake"]:
                         # TODO: maybe replace this with a simple client.request()...
                         current_uptake = await get_telemetry_uptake(change["telemetry_product"], change["telemetry_channel"], loop=loop)
@@ -35,6 +36,7 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     else:
                         logging.debug("Unknown change type!")
 
+                    # If it *is* ready, enact it!
                     if ready:
                         logging.debug("Change %s is ready, enacting", change["sc_id"])
                         endpoint = "/scheduled_changes/rules/{}/enact".format(change["sc_id"])

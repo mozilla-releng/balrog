@@ -68,6 +68,3 @@ class TestIsReady(unittest.TestCase):
             "sc_id": 1,
         }
         self.assertFalse(changes.time_is_ready(change, 498))
-
-#    def testUnknownChangeType(self):
-#    def testCantDetectType(self):
