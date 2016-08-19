@@ -40,7 +40,8 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     if ready:
                         logging.debug("Change %s is ready, enacting", change["sc_id"])
                         endpoint = "/scheduled_changes/rules/{}/enact".format(change["sc_id"])
-                        await client.request(session, balrog_api_root, endpoint, method="POST")
+                        resp = await client.request(session, balrog_api_root, endpoint, method="POST")
+                        resp.close()
                     else:
                         logging.debug("Change %s is not ready", change["sc_id"])
 

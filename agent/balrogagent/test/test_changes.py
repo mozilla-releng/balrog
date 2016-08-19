@@ -38,9 +38,12 @@ class TestIsReady(unittest.TestCase):
         self.assertFalse(changes.telemetry_is_ready(change, 0))
 
     def testTimeBasedReady(self):
+        # Time based changes store a very precise timestamp as an int which clients need to
+        # convert back to a float for it to be accurate. We need to simulate this in our tests
+        # as well
         change = {
             "telemetry_uptake": None,
-            "when": 300,
+            "when": 300000,
             "sc_id": 1,
         }
         self.assertTrue(changes.time_is_ready(change, 500))
@@ -48,7 +51,7 @@ class TestIsReady(unittest.TestCase):
     def testTimeBasedReadyExact(self):
         change = {
             "telemetry_uptake": None,
-            "when": 300,
+            "when": 300000,
             "sc_id": 1,
         }
         self.assertTrue(changes.time_is_ready(change, 300))
@@ -56,7 +59,7 @@ class TestIsReady(unittest.TestCase):
     def testTimeBasedNotReady(self):
         change = {
             "telemetry_uptake": None,
-            "when": 300,
+            "when": 300000,
             "sc_id": 1,
         }
         self.assertFalse(changes.time_is_ready(change, 200))
@@ -64,7 +67,7 @@ class TestIsReady(unittest.TestCase):
     def testTimeBasedAlmostReady(self):
         change = {
             "telemetry_uptake": None,
-            "when": 499,
+            "when": 499000,
             "sc_id": 1,
         }
         self.assertFalse(changes.time_is_ready(change, 498))

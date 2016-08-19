@@ -15,8 +15,12 @@ def telemetry_is_ready(change, current_uptake):
 
 
 def time_is_ready(change, now):
-    logging.debug("Comparing time for change %s (now: %s, scheduled time: %s", change["sc_id"], now, change["when"])
-    if now >= change["when"]:
+    # "when" is to-the-millisecond timestamp that gets stored as an int.
+    # It needs to be converted back to a float before it can be compared
+    # against other timestamps.
+    scheduled_time = change["when"] / 1000
+    logging.debug("Comparing time for change %s (now: %s, scheduled time: %s", change["sc_id"], now, scheduled_time)
+    if now >= scheduled_time:
         return True
     else:
         return False
