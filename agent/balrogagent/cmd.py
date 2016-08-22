@@ -17,6 +17,7 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
             logging.debug("Looking for active scheduled changes...")
             resp = await client.request(balrog_api_root, "/scheduled_changes/rules", auth=auth, loop=loop)
             sc = (await resp.json())["scheduled_changes"]
+            resp.close()
             logging.debug("Found %s", len(sc))
             for change in sc:
                 logging.debug("Processing change %s", change["sc_id"])

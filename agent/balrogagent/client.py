@@ -21,11 +21,12 @@ async def request(api_root, path, method="GET", data={}, headers=default_headers
     data = data.copy()
 
     # TODO: sometimes getting "unclosed response" and "unclosed connection" errors.
-    logging.debug("Sending %s request to %s", "HEAD", csrf_url)
-    resp = await aiohttp.request("HEAD", csrf_url, auth=auth, loop=loop)
-    resp.raise_for_status()
-    data["csrf_token"] = resp.headers["X-CSRF-Token"]
-    resp.close()
+    if method not in ("HEAD", "GET"):
+        logging.debug("Sending %s request to %s", "HEAD", csrf_url)
+        resp = await aiohttp.request("HEAD", csrf_url, auth=auth, loop=loop)
+        resp.raise_for_status()
+        data["csrf_token"] = resp.headers["X-CSRF-Token"]
+        resp.close()
 
     logging.debug("Sending %s request to %s", method, url)
     resp = await aiohttp.request(method, url, data=json.dumps(data), headers=headers, auth=auth, loop=loop)
