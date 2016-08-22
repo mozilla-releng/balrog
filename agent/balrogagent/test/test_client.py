@@ -48,7 +48,7 @@ class TestBalrogClient(asynctest.TestCase):
             resp = await client.request("http://balrog.fake", "/api/scheduled_changes")
             # GET requests shouldn't retrieve a CSRF token
             self.assertEquals(r.csrf_resp, None)
-            self.assertEquals(r.request_data, json.dumps({}))
+            self.assertEquals(json.loads(r.request_data), {})
             self.assertEquals(mocked_resp, await resp.json())
 
     async def testPOST(self):
@@ -56,16 +56,5 @@ class TestBalrogClient(asynctest.TestCase):
         with asynctest.patch("aiohttp.request", fake_request(mocked_resp, 200)) as r:
             resp = await client.request("http://balrog.fake", "/api/scheduled_changes/1", method="POST", data={"when": 987654321})
             self.assertEquals(r.csrf_resp.headers, {"X-CSRF-Token": "foo"})
-            self.assertEquals(r.request_data, json.dumps({"csrf_token": "foo", "when": 987654321}))
+            self.assertEquals(json.loads(r.request_data), {"csrf_token": "foo", "when": 987654321})
             self.assertEquals(mocked_resp, await resp.json())
-
-#    async def testPOST(self):
-#        mocked_resp = {
-#            "new_data_version": 2,
-#        }
-#        with mock.patch("aiohttp.request", fake_request(mocked_resp)):
-#            resp = await client.request(
-#                "http://balrog.fake", "/api/scheduled_changes/1", method="POST",
-#                data={"when": 987654321}
-#            )
-#            self.assertEquals(mocked_resp, await resp.json())

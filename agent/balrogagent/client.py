@@ -20,7 +20,7 @@ async def request(api_root, path, method="GET", data={}, headers=default_headers
     csrf_url = get_url(api_root, "/csrf_token")
     data = data.copy()
 
-    # TODO: sometimes getting "unclosed response" and "unclosed connection" errors.
+    # CSRF tokens are only required for POST/PUT/DELETE.
     if method not in ("HEAD", "GET"):
         logging.debug("Sending %s request to %s", "HEAD", csrf_url)
         resp = await aiohttp.request("HEAD", csrf_url, auth=auth, loop=loop)
