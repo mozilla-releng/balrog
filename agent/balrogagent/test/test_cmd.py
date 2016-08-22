@@ -49,3 +49,23 @@ class TestRunAgent(asynctest.TestCase):
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 1)
         self.assertEquals(request.call_count, 2)
+
+    @asynctest.patch("balrogagent.cmd.get_telemetry_uptake")
+    async def testTelemetryBasedNotReady(self, request, telemetry_is_ready, time_is_ready, get_telemetry_uptake):
+        telemetry_is_ready.return_value = False
+        get_telemetry_uptake.return_value = 0
+        sc = [{"sc_id": 4, "when": None, "telemetry_uptake": 1000, "telemetry_product": "foo", "telemetry_channel": "bar"}]
+        await self._runAgent(sc, request)
+        self.assertEquals(telemetry_is_ready.call_count, 1)
+        self.assertEquals(time_is_ready.call_count, 0)
+        self.assertEquals(request.call_count, 1)
+
+    @asynctest.patch("balrogagent.cmd.get_telemetry_uptake")
+    async def testTelemetryBasedIsReady(self, request, telemetry_is_ready, time_is_ready, get_telemetry_uptake):
+        telemetry_is_ready.return_value = True
+        get_telemetry_uptake.return_value = 20000
+        sc = [{"sc_id": 4, "when": None, "telemetry_uptake": 1000, "telemetry_product": "foo", "telemetry_channel": "bar"}]
+        await self._runAgent(sc, request)
+        self.assertEquals(telemetry_is_ready.call_count, 1)
+        self.assertEquals(time_is_ready.call_count, 0)
+        self.assertEquals(request.call_count, 2)
