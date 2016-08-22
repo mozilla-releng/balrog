@@ -9,7 +9,8 @@ from .changes import get_telemetry_uptake, telemetry_is_ready, time_is_ready
 from .log import configure_logging
 
 
-async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, telemetry_api_root, sleeptime=30):
+async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, telemetry_api_root, sleeptime=30,
+                    once=False, raise_exceptions=False):
     auth = aiohttp.BasicAuth(balrog_username, balrog_password)
 
     while True:
@@ -47,8 +48,14 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
 
         except:
             logging.error(traceback.format_exc())
+            if raise_exceptions:
+                raise
         finally:
-            await asyncio.sleep(sleeptime)
+            if not once:
+                await asyncio.sleep(sleeptime)
+
+        if once:
+            return
 
 
 def main():

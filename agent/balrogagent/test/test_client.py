@@ -1,8 +1,8 @@
-import aiohttp.web
+import aiohttp
 import asynctest
 import json
 
-from balrogagent import client
+from .. import client
 
 
 class fake_request:
