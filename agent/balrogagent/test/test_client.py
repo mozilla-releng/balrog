@@ -10,6 +10,7 @@ class fake_request:
         self.response_body = response_body
         self.response_code = response_code
         self.csrf_resp = None
+        self.request_data = None
 
     async def __call__(self, method, url, data={}, **kwargs):
         if url.endswith("csrf_token"):
@@ -18,6 +19,7 @@ class fake_request:
             self.csrf_resp.status = 200
             return self.csrf_resp
         else:
+            self.request_data = data
             resp = aiohttp.client.ClientResponse(method, url)
             resp.headers = {"Content-Type": "application/json"}
             resp._content = bytes(json.dumps(self.response_body), "utf-8")
@@ -46,6 +48,15 @@ class TestBalrogClient(asynctest.TestCase):
             resp = await client.request("http://balrog.fake", "/api/scheduled_changes")
             # GET requests shouldn't retrieve a CSRF token
             self.assertEquals(r.csrf_resp, None)
+            self.assertEquals(r.request_data, json.dumps({}))
+            self.assertEquals(mocked_resp, await resp.json())
+
+    async def testPOST(self):
+        mocked_resp = {"new_data_version": 2}
+        with asynctest.patch("aiohttp.request", fake_request(mocked_resp, 200)) as r:
+            resp = await client.request("http://balrog.fake", "/api/scheduled_changes/1", method="POST", data={"when": 987654321})
+            self.assertEquals(r.csrf_resp.headers, {"X-CSRF-Token": "foo"})
+            self.assertEquals(r.request_data, json.dumps({"csrf_token": "foo", "when": 987654321}))
             self.assertEquals(mocked_resp, await resp.json())
 
 #    async def testPOST(self):
