@@ -1600,7 +1600,7 @@ class Permissions(AUSTable):
        by product. Eg: granting the "release" permission with "products" set
        to ["GMP"] allows the user to modify GMP releases, but not Firefox."""
     allPermissions = {
-        "admin": [],
+        "admin": ["products"],
         "release": ["actions", "products"],
         "release_locale": ["actions", "products"],
         "release_read_only": ["actions", "products"],
@@ -1716,11 +1716,19 @@ class Permissions(AUSTable):
             else:
                 return {}
         else:
+            print permission
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
 
     def hasPermission(self, username, thing, action, product=None, transaction=None):
+        # Supporting product-wise admin permissions. If there are no options
+        # with admin, we assume that the user has admin access over all
+        # products.
         if self.select(where=[self.username == username, self.permission == 'admin'], transaction=transaction):
+            options = self.getOptions(username, 'admin', transaction=transaction)
+            if options.get("products") and product not in options["products"]:
+                return False
             return True
+
         try:
             options = self.getOptions(username, thing, transaction=transaction)
         except ValueError:

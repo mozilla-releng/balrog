@@ -2550,6 +2550,10 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.t.insert().execute(permission="rule", username="bob", options=json.dumps(dict(actions=["modify"])), data_version=1)
         self.permissions.t.insert().execute(permission="rule", username="fred", options=json.dumps(dict(products=["foo", "bar"], actions=["modify"])),
                                             data_version=1)
+        self.permissions.t.insert().execute(permission='admin',
+                                            username='george',
+                                            options=json.dumps(dict(products=["foo"])),
+                                            data_version=1)
 
     def testGrantPermissions(self):
         query = self.permissions.t.select().where(self.permissions.username == "jess")
@@ -2577,11 +2581,15 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(len(query.execute().fetchall()), 0)
 
     def testGetAllUsers(self):
-        self.assertEquals(set(self.permissions.getAllUsers()), set(["bill", "bob", "cathy", "fred"]))
+        self.assertEquals(set(self.permissions.getAllUsers()), set(["bill",
+                                                                    "bob",
+                                                                    "cathy",
+                                                                    "fred",
+                                                                    "george"]))
 
     def testCountAllUsers(self):
         # bill, bob and cathy
-        self.assertEquals(self.permissions.countAllUsers(), 4)
+        self.assertEquals(self.permissions.countAllUsers(), 5)
 
     def testGetPermission(self):
         expected = {
@@ -2613,6 +2621,13 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testHasPermissionAdmin(self):
         self.assertTrue(self.permissions.hasPermission("bill", "rule", "delete"))
+
+    def testHasPermissionProductAdmin(self):
+        self.assertFalse(self.permissions.hasPermission("george", "rule", "delete"))
+        self.assertTrue(self.permissions.hasPermission("george", "rule",
+                                                       "delete", "foo"))
+        self.assertFalse(self.permissions.hasPermission("george", "rule",
+                                                        "delete", "bar"))
 
     def testHasPermissionGranular(self):
         self.assertTrue(self.permissions.hasPermission("cathy", "rule", "create"))
