@@ -1716,7 +1716,6 @@ class Permissions(AUSTable):
             else:
                 return {}
         else:
-            print permission
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
 
     def hasPermission(self, username, thing, action, product=None, transaction=None):

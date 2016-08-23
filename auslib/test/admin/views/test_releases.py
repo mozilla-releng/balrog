@@ -416,6 +416,14 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._delete("/releases/b", username="bob", qs=dict(data_version=1))
         self.assertStatusCode(ret, 403)
 
+    def testDeleteWithProductAdminPermission(self):
+        ret = self._delete("/releases/a", username="billy", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 200)
+
+    def testDeleteWithoutProductAdminPermission(self):
+        ret = self._delete("/releases/b", username="billy", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 403)
+
     def testDeleteReadOnlyRelease(self):
         dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
         ret = self._delete("/releases/a", username="bill", qs=dict(data_version=2))
@@ -758,6 +766,30 @@ class TestReleasesAPI_JSON(ViewTest):
             }
         })
         ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 403)
+
+    def testLocalePutWithProductAdmin(self):
+        data = json.dumps({
+            "complete": {
+                "filesize": 435,
+                "from": "*",
+                "hashValue": "abc",
+            }
+        })
+        ret = self._put('/releases/a/builds/p/l', username='billy',
+                        data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 201)
+
+    def testLocalePutWithoutProductAdmin(self):
+        data = json.dumps({
+            "complete": {
+                "filesize": 435,
+                "from": "*",
+                "hashValue": "abc",
+            }
+        })
+        ret = self._put('/releases/d/builds/p/d', username='billy',
+                        data=dict(data=data, product='d', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 403)
 
     def testLocalePutCantChangeProduct(self):

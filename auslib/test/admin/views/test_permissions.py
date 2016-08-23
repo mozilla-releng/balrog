@@ -11,7 +11,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         data['users'] = set(data['users'])
-        self.assertEqual(data, dict(users=set(['bill', 'bob', 'ashanti', 'mary'])))
+        self.assertEqual(data, dict(users=set(['bill', 'billy', 'bob', 'ashanti', 'mary'])))
 
     def testPermissionsCollection(self):
         ret = self._get('/users/bill/permissions')

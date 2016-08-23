@@ -41,6 +41,8 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=json.dumps(dict(actions=["enact"])), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_locale', username='ashanti',
                                            options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
+        dbo.permissions.t.insert().execute(permission='admin', username='billy',
+                                           options=json.dumps(dict(products=['a'])), data_version=1)
         dbo.releases.t.insert().execute(
             name='a', product='a', data=json.dumps(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
@@ -77,7 +79,7 @@ class ViewTest(unittest.TestCase):
             data_version=1
         )
         dbo.rules.t.insert().execute(
-            rule_id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='minor', data_version=1
+            rule_id=3, product='a', priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='minor', data_version=1
         )
         dbo.rules.t.insert().execute(
             rule_id=4, product='fake', priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='minor', data_version=1
