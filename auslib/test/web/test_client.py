@@ -42,7 +42,7 @@ class ClientTestBase(unittest.TestCase):
         dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e', 'b2g')})
         self.client = app.test_client()
         self.view = ClientRequestView()
-        dbo.rules.t.insert().execute(backgroundRate=100, mapping='b', update_type='minor', product='b',
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='b',
                                      data_version=1)
         dbo.releases.t.insert().execute(name='b', product='b', data_version=1, data="""
 {
@@ -76,7 +76,8 @@ class ClientTestBase(unittest.TestCase):
     }
 }
 """)
-        dbo.rules.t.insert().execute(backgroundRate=100, mapping='s', update_type='minor', product='s',
+
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='s', update_type='minor', product='s',
                                      systemCapabilities="SSE", data_version=1)
         dbo.releases.t.insert().execute(name='s', product='s', data_version=1, data="""
 {
@@ -102,7 +103,7 @@ class ClientTestBase(unittest.TestCase):
     }
 }
 """)
-        dbo.rules.t.insert().execute(backgroundRate=100, mapping='c', update_type='minor', product='c',
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='c', update_type='minor', product='c',
                                      distribution='default', data_version=1)
         dbo.releases.t.insert().execute(name='c', product='c', data_version=1, data="""
 {
@@ -128,7 +129,7 @@ class ClientTestBase(unittest.TestCase):
     }
 }
 """)
-        dbo.rules.t.insert().execute(backgroundRate=100, mapping='d', update_type='minor', product='d', data_version=1)
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='d', update_type='minor', product='d', data_version=1)
         dbo.releases.t.insert().execute(name='d', product='d', data_version=1, data="""
 {
     "name": "d",
@@ -154,7 +155,7 @@ class ClientTestBase(unittest.TestCase):
 }
 """)
 
-        dbo.rules.t.insert().execute(backgroundRate=100, mapping='e', update_type='minor', product='e', data_version=1)
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping='e', update_type='minor', product='e', data_version=1)
         dbo.releases.t.insert().execute(name='e', product='e', data_version=1, data="""
 {
     "name": "e",
