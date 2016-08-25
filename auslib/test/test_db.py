@@ -1114,7 +1114,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         ]
         self.assertEquals(rules, expected)
 
-    def testGetRulesMatchingQueryDontReturnBackgroundThrottled(self):
+    def testGetRulesMatchingQueryReturnBackgroundThrottledEvenIfNotForced(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product='', version='3.3', channel='',
                  buildTarget='d', buildID='', locale='', osVersion='',
@@ -1127,6 +1127,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         expected = [
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z', data_version=1),
         ]
         self.assertEquals(rules, expected)
 
