@@ -428,6 +428,10 @@ class ClientTestBase(unittest.TestCase):
         os.close(self.version_fd)
         os.remove(self.version_file)
 
+    def assertUpdatesAreEmpty(self, xml_string):
+        # An empty update contains an <updates> tag with a newline, which is what we're expecting here
+        self.assertEqual(minidom.parseString(xml_string).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+
 
 class ClientTest(ClientTestBase):
 
@@ -444,19 +448,19 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/3/b/1.0/2/p/l/a/a/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        self.assertUpdatesAreEmpty(ret.data)
 
     def testDontUpdateBackwards(self):
         ret = self.client.get('/update/3/b/1.0/5/p/l/a/a/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        self.assertUpdatesAreEmpty(ret.data)
 
     def testDontDecreaseVersion(self):
         ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        self.assertUpdatesAreEmpty(ret.data)
 
     def testVersion1Get(self):
         ret = self.client.get("/update/1/b/1.0/1/p/l/a/update.xml")
@@ -492,15 +496,13 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/2/c/10.0/1/p/l/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
-        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        self.assertUpdatesAreEmpty(ret.data)
 
     def testVersion3Get(self):
         ret = self.client.get('/update/3/a/1.0/1/a/a/a/a/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
-        # An empty update contains an <updates> tag with a newline, which is what we're expecting here
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        self.assertUpdatesAreEmpty(ret.data)
 
     def testVersion3GetWithUpdate(self):
         ret = self.client.get('/update/3/b/1.0/1/p/l/a/a/a/a/update.xml')
@@ -596,7 +598,7 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        self.assertUpdatesAreEmpty(ret.data)
 
     def testGetURLNotInWhitelist(self):
         ret = self.client.get('/update/3/d/20.0/1/p/l/a/a/a/a/update.xml')
@@ -609,7 +611,7 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/3/e/20.0/1/p/l/a/a/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        self.assertUpdatesAreEmpty(ret.data)
 
     def testRobotsExists(self):
         ret = self.client.get('/robots.txt')
@@ -763,7 +765,7 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/3/product_that_should_not_be_updated/1.0/1/p/l/a/a/a/a/update.xml')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n', ret.data)
+        self.assertUpdatesAreEmpty(ret.data)
 
 
 class ClientTestWithErrorHandlers(unittest.TestCase):
@@ -797,7 +799,7 @@ class ClientTestWithErrorHandlers(unittest.TestCase):
         ret = self.client.get('/whizzybang')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+        self.assertUpdatesAreEmpty(ret.data)
 
     def testEmptySnippetOn500(self):
         with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
@@ -805,4 +807,4 @@ class ClientTestWithErrorHandlers(unittest.TestCase):
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.status_code, 200)
             self.assertEqual(ret.mimetype, 'text/xml')
-            self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
+            self.assertUpdatesAreEmpty(ret.data)
