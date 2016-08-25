@@ -368,6 +368,62 @@ class ClientTestBase(unittest.TestCase):
 }
 """)
 
+        dbo.rules.t.insert().execute(priority=1000, backgroundRate=0, mapping='product_that_should_not_be_updated-1.1',
+                                     update_type='minor', product='product_that_should_not_be_updated',
+                                     data_version=1)
+        dbo.releases.t.insert().execute(name='product_that_should_not_be_updated-1.1', product='product_that_should_not_be_updated', data_version=1, data="""
+{
+    "name": "product_that_should_not_be_updated-1.1",
+    "schema_version": 1,
+    "appv": "1.1",
+    "extv": "1.1",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "2",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/z"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='product_that_should_not_be_updated-2.0',
+                                     update_type='minor', product='product_that_should_not_be_updated',
+                                     data_version=1)
+        dbo.releases.t.insert().execute(name='product_that_should_not_be_updated-2.0', product='product_that_should_not_be_updated', data_version=1, data="""
+{
+    "name": "product_that_should_not_be_updated-2.0",
+    "schema_version": 1,
+    "appv": "2.0",
+    "extv": "2.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "2",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/z"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+
     def tearDown(self):
         os.close(self.version_fd)
         os.remove(self.version_file)
@@ -702,6 +758,12 @@ class ClientTest(ClientTestBase):
 </updates>
 """)
         self.assertEqual(returned.toxml(), expected.toxml())
+
+    def testUpdateBackgroundRateSetTo0(self):
+        ret = self.client.get('/update/3/product_that_should_not_be_updated/1.0/1/p/l/a/a/a/a/update.xml')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n', ret.data)
 
 
 class ClientTestWithErrorHandlers(unittest.TestCase):
