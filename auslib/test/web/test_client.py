@@ -9,7 +9,20 @@ from auslib.web.base import app
 from auslib.web.views.client import ClientRequestView
 
 
-class ClientTestBase(unittest.TestCase):
+class ClientTestCommon(unittest.TestCase):
+    def assertHttpResponse(self, http_reponse):
+        self.assertEqual(http_reponse.status_code, 200)
+        self.assertEqual(http_reponse.mimetype, 'text/xml')
+
+    def assertUpdatesAreEmpty(self, http_reponse):
+        self.assertHttpResponse(http_reponse)
+        # An empty update contains an <updates> tag with a newline, which is what we're expecting here
+        self.assertEqual(
+            minidom.parseString(http_reponse.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n'
+        )
+
+
+class ClientTestBase(ClientTestCommon):
     maxDiff = 2000
 
     @classmethod
@@ -428,10 +441,6 @@ class ClientTestBase(unittest.TestCase):
         os.close(self.version_fd)
         os.remove(self.version_file)
 
-    def assertUpdatesAreEmpty(self, xml_string):
-        # An empty update contains an <updates> tag with a newline, which is what we're expecting here
-        self.assertEqual(minidom.parseString(xml_string).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n')
-
 
 class ClientTest(ClientTestBase):
 
@@ -446,26 +455,19 @@ class ClientTest(ClientTestBase):
 
     def testDontUpdateToYourself(self):
         ret = self.client.get('/update/3/b/1.0/2/p/l/a/a/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertUpdatesAreEmpty(ret.data)
+        self.assertUpdatesAreEmpty(ret)
 
     def testDontUpdateBackwards(self):
         ret = self.client.get('/update/3/b/1.0/5/p/l/a/a/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertUpdatesAreEmpty(ret.data)
+        self.assertUpdatesAreEmpty(ret)
 
     def testDontDecreaseVersion(self):
         ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertUpdatesAreEmpty(ret.data)
+        self.assertUpdatesAreEmpty(ret)
 
     def testVersion1Get(self):
         ret = self.client.get("/update/1/b/1.0/1/p/l/a/update.xml")
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
@@ -479,8 +481,7 @@ class ClientTest(ClientTestBase):
 
     def testVersion2Get(self):
         ret = self.client.get('/update/2/b/1.0/0/p/l/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
@@ -494,20 +495,15 @@ class ClientTest(ClientTestBase):
 
     def testVersion2GetIgnoresRuleWithDistribution(self):
         ret = self.client.get('/update/2/c/10.0/1/p/l/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertUpdatesAreEmpty(ret.data)
+        self.assertUpdatesAreEmpty(ret)
 
     def testVersion3Get(self):
         ret = self.client.get('/update/3/a/1.0/1/a/a/a/a/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertUpdatesAreEmpty(ret.data)
+        self.assertUpdatesAreEmpty(ret)
 
     def testVersion3GetWithUpdate(self):
         ret = self.client.get('/update/3/b/1.0/1/p/l/a/a/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
@@ -521,8 +517,7 @@ class ClientTest(ClientTestBase):
 
     def testVersion4Get(self):
         ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
@@ -536,8 +531,7 @@ class ClientTest(ClientTestBase):
 
     def testVersion5GetWhitelistedOneLevel(self):
         ret = self.client.get('/update/5/b2g/1.0/1/p/l/foxfood/a/a/a/000000000000001/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
@@ -551,8 +545,7 @@ class ClientTest(ClientTestBase):
 
     def testVersion5GetNotWhitelistedOneLevel(self):
         ret = self.client.get('/update/5/b2g/1.0/1/p/l/a/a/a/a/000000000000009/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
@@ -566,8 +559,7 @@ class ClientTest(ClientTestBase):
 
     def testVersion5GetNotWhitelistedMultiLevel(self):
         ret = self.client.get('/update/5/b2g/1.0/1/p/l/foxfood/a/a/a/000000000000009/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
@@ -581,8 +573,7 @@ class ClientTest(ClientTestBase):
 
     def testVersion6GetWithSystemCapabilitiesMatch(self):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
@@ -596,22 +587,17 @@ class ClientTest(ClientTestBase):
 
     def testVersion6GetWithoutSystemCapabilitiesMatch(self):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertUpdatesAreEmpty(ret.data)
+        self.assertUpdatesAreEmpty(ret)
 
     def testGetURLNotInWhitelist(self):
         ret = self.client.get('/update/3/d/20.0/1/p/l/a/a/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue,
                          '\n    ')
 
     def testEmptySnippetMissingExtv(self):
         ret = self.client.get('/update/3/e/20.0/1/p/l/a/a/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertUpdatesAreEmpty(ret.data)
+        self.assertUpdatesAreEmpty(ret)
 
     def testRobotsExists(self):
         ret = self.client.get('/robots.txt')
@@ -624,19 +610,16 @@ class ClientTest(ClientTestBase):
         # to the locale. We need to make sure we handle this case correctly
         # so that these people can keep up to date.
         ret = self.client.get('/update/4/b/1.0/1/p/x86 l/a/a/a/a/1/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         # Compare the Avast-style URL to the non-messed up equivalent. They
         # should get the same update XML.
         ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
-        self.assertEqual(ret2.status_code, 200)
-        self.assertEqual(ret2.mimetype, 'text/xml')
+        self.assertHttpResponse(ret2)
         self.assertEqual(ret.data, ret2.data)
 
     def testFixForBug1125231DoesntBreakXhLocale(self):
         ret = self.client.get('/update/4/b/1.0/1/p/xh/a/a/a/a/1/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -649,26 +632,21 @@ class ClientTest(ClientTestBase):
 
     def testAvastURLsWithBadQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1%3Favast=1")
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1')
-        self.assertEqual(ret2.status_code, 200)
-        self.assertEqual(ret2.mimetype, 'text/xml')
+        self.assertHttpResponse(ret2)
         self.assertEqual(ret.data, ret2.data)
 
     def testAvastURLsWithUnescapedBadQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1?avast=1")
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1')
-        self.assertEqual(ret2.status_code, 200)
-        self.assertEqual(ret2.mimetype, 'text/xml')
+        self.assertHttpResponse(ret2)
         self.assertEqual(ret.data, ret2.data)
 
     def testAvastURLsWithGoodQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1&avast=1")
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -681,8 +659,7 @@ class ClientTest(ClientTestBase):
 
     def testDeprecatedEsrVersionStyleGetsUpdates(self):
         ret = self.client.get('/update/3/b/1.0esrpre/1/p/l/a/a/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
@@ -696,8 +673,7 @@ class ClientTest(ClientTestBase):
 
     def testGetWithResponseProducts(self):
         ret = self.client.get('/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -711,8 +687,7 @@ class ClientTest(ClientTestBase):
 
     def testGetWithResponseProductsWithAbsentRule(self):
         ret = self.client.get('/update/4/gmp/1.0/1/q/l/a/a/a/a/1/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -725,8 +700,7 @@ class ClientTest(ClientTestBase):
 
     def testGetWithResponseProductsWithOneRule(self):
         ret = self.client.get('/update/4/gmp-with-one-response-product/1.0/1/q/l/a/a/a/a/1/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -739,8 +713,7 @@ class ClientTest(ClientTestBase):
 
     def testSystemAddonsBlobWithUninstall(self):
         ret = self.client.get('/update/4/systemaddons-uninstall/1.0/1/z/p/a/b/c/d/1/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -752,8 +725,7 @@ class ClientTest(ClientTestBase):
 
     def testSystemAddonsBlobWithoutUninstall(self):
         ret = self.client.get('/update/4/systemaddons/1.0/1/z/p/a/b/c/d/1/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
+        self.assertHttpResponse(ret)
         returned = minidom.parseString(ret.data)
         expected = minidom.parseString("""<?xml version="1.0"?>
 <updates>
@@ -763,12 +735,10 @@ class ClientTest(ClientTestBase):
 
     def testUpdateBackgroundRateSetTo0(self):
         ret = self.client.get('/update/3/product_that_should_not_be_updated/1.0/1/p/l/a/a/a/a/update.xml')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertUpdatesAreEmpty(ret.data)
+        self.assertUpdatesAreEmpty(ret)
 
 
-class ClientTestWithErrorHandlers(unittest.TestCase):
+class ClientTestWithErrorHandlers(ClientTestCommon):
     """Most of the tests are run without the error handler because it gives more
        useful output when things break. However, we still need to test that our
        error handlers works!"""
@@ -797,14 +767,10 @@ class ClientTestWithErrorHandlers(unittest.TestCase):
 
     def testEmptySnippetOn404(self):
         ret = self.client.get('/whizzybang')
-        self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/xml')
-        self.assertUpdatesAreEmpty(ret.data)
+        self.assertUpdatesAreEmpty(ret)
 
     def testEmptySnippetOn500(self):
         with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
             m.side_effect = Exception('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
-            self.assertEqual(ret.status_code, 200)
-            self.assertEqual(ret.mimetype, 'text/xml')
-            self.assertUpdatesAreEmpty(ret.data)
+            self.assertUpdatesAreEmpty(ret)
