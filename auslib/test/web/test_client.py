@@ -21,6 +21,12 @@ class ClientTestCommon(unittest.TestCase):
             minidom.parseString(http_reponse.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n'
         )
 
+    def assertUpdateEqual(self, http_reponse, expected_xml_string):
+        self.assertHttpResponse(http_reponse)
+        returned = minidom.parseString(http_reponse.data)
+        expected = minidom.parseString(expected_xml_string)
+        self.assertEqual(returned.toxml(), expected.toxml())
+
 
 class ClientTestBase(ClientTestCommon):
     maxDiff = 2000
@@ -467,31 +473,23 @@ class ClientTest(ClientTestBase):
 
     def testVersion1Get(self):
         ret = self.client.get("/update/1/b/1.0/1/p/l/a/update.xml")
-        self.assertHttpResponse(ret)
-        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testVersion2Get(self):
         ret = self.client.get('/update/2/b/1.0/0/p/l/a/a/update.xml')
-        self.assertHttpResponse(ret)
-        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testVersion2GetIgnoresRuleWithDistribution(self):
         ret = self.client.get('/update/2/c/10.0/1/p/l/a/a/update.xml')
@@ -503,87 +501,63 @@ class ClientTest(ClientTestBase):
 
     def testVersion3GetWithUpdate(self):
         ret = self.client.get('/update/3/b/1.0/1/p/l/a/a/a/a/update.xml')
-        self.assertHttpResponse(ret)
-        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testVersion4Get(self):
         ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
-        self.assertHttpResponse(ret)
-        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testVersion5GetWhitelistedOneLevel(self):
         ret = self.client.get('/update/5/b2g/1.0/1/p/l/foxfood/a/a/a/000000000000001/update.xml')
-        self.assertHttpResponse(ret)
-        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="None" extensionVersion="2.5" buildID="25">
         <patch type="complete" URL="http://a.com/secrets" hashFunction="sha512" hashValue="23" size="22"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testVersion5GetNotWhitelistedOneLevel(self):
         ret = self.client.get('/update/5/b2g/1.0/1/p/l/a/a/a/a/000000000000009/update.xml')
-        self.assertHttpResponse(ret)
-        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="None" extensionVersion="2.5" buildID="25">
         <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testVersion5GetNotWhitelistedMultiLevel(self):
         ret = self.client.get('/update/5/b2g/1.0/1/p/l/foxfood/a/a/a/000000000000009/update.xml')
-        self.assertHttpResponse(ret)
-        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="None" extensionVersion="2.5" buildID="25">
         <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testVersion6GetWithSystemCapabilitiesMatch(self):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml')
-        self.assertHttpResponse(ret)
-        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="5">
         <patch type="complete" URL="http://a.com/s" hashFunction="sha512" hashValue="5" size="5"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testVersion6GetWithoutSystemCapabilitiesMatch(self):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
@@ -619,16 +593,13 @@ class ClientTest(ClientTestBase):
 
     def testFixForBug1125231DoesntBreakXhLocale(self):
         ret = self.client.get('/update/4/b/1.0/1/p/xh/a/a/a/a/1/update.xml')
-        self.assertHttpResponse(ret)
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/x" hashFunction="sha512" hashValue="6" size="5"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testAvastURLsWithBadQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1%3Favast=1")
@@ -646,36 +617,27 @@ class ClientTest(ClientTestBase):
 
     def testAvastURLsWithGoodQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1&avast=1")
-        self.assertHttpResponse(ret)
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z?force=1" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testDeprecatedEsrVersionStyleGetsUpdates(self):
         ret = self.client.get('/update/3/b/1.0esrpre/1/p/l/a/a/a/a/update.xml')
-        self.assertHttpResponse(ret)
-        # We need to load and re-xmlify these to make sure we don't get failures due to whitespace differences.
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testGetWithResponseProducts(self):
         ret = self.client.get('/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml')
-        self.assertHttpResponse(ret)
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="None" extensionVersion="2.5" buildID="25">
         <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
@@ -683,55 +645,42 @@ class ClientTest(ClientTestBase):
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testGetWithResponseProductsWithAbsentRule(self):
         ret = self.client.get('/update/4/gmp/1.0/1/q/l/a/a/a/a/1/update.xml')
-        self.assertHttpResponse(ret)
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="None" extensionVersion="2.5" buildID="25">
         <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testGetWithResponseProductsWithOneRule(self):
         ret = self.client.get('/update/4/gmp-with-one-response-product/1.0/1/q/l/a/a/a/a/1/update.xml')
-        self.assertHttpResponse(ret)
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="None" extensionVersion="2.5" buildID="25">
         <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
     </update>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testSystemAddonsBlobWithUninstall(self):
         ret = self.client.get('/update/4/systemaddons-uninstall/1.0/1/z/p/a/b/c/d/1/update.xml')
-        self.assertHttpResponse(ret)
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <addons>
     </addons>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testSystemAddonsBlobWithoutUninstall(self):
         ret = self.client.get('/update/4/systemaddons/1.0/1/z/p/a/b/c/d/1/update.xml')
-        self.assertHttpResponse(ret)
-        returned = minidom.parseString(ret.data)
-        expected = minidom.parseString("""<?xml version="1.0"?>
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
 </updates>
 """)
-        self.assertEqual(returned.toxml(), expected.toxml())
 
     def testUpdateBackgroundRateSetTo0(self):
         ret = self.client.get('/update/3/product_that_should_not_be_updated/1.0/1/p/l/a/a/a/a/update.xml')
