@@ -1119,8 +1119,6 @@ class Rules(AUSTable):
                     ((self.distribution == updateQuery['distribution']) | (self.distribution == null())) &
                     ((self.distVersion == updateQuery['distVersion']) | (self.distVersion == null()))
                 ])
-            if not updateQuery['force']:
-                where.append(self.backgroundRate > 0)
 
             self.log.debug("where: %s" % where)
             return self.select(where=where, transaction=transaction)
