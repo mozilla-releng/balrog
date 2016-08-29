@@ -5,9 +5,6 @@ from flask import Response, jsonify
 from auslib.global_state import dbo
 
 
-DOCKERFLOW_DB_USER = 'dockerflow'
-
-
 # Wrapper that creates the endpoints required by CloudOps' Dockerflow spec: https://github.com/mozilla-services/Dockerflow
 # This gets used by both the admin and public apps.
 def create_dockerflow_endpoints(app):
@@ -32,7 +29,7 @@ def create_dockerflow_endpoints(app):
         depend on services like the database to also ensure they are healthy."""
         # Counting the rules should be a trivial enough operation that it won't
         # cause notable load, but will verify that the database works.
-        dbo.dockerflow.incrementWatchdogValue(changed_by=DOCKERFLOW_DB_USER)
+        dbo.dockerflow.incrementWatchdogValue(changed_by='dockerflow')
         return Response("OK!", headers={"Cache-Control": "no-cache"})
 
     @app.route("/__lbheartbeat__")

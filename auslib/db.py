@@ -1772,7 +1772,7 @@ class Dockerflow(AUSTable):
             what['watchdog'] += 1
 
             if not dryrun:
-                super(Dockerflow, self).update(where=where, what=what, changed_by=changed_by,   old_data_version=old_data_version, transaction=transaction)
+                super(Dockerflow, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
         except IndexError:
             super(Dockerflow, self).insert(changed_by=changed_by, transaction=transaction, watchdog=1)
 
