@@ -1114,7 +1114,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         ]
         self.assertEquals(rules, expected)
 
-    def testGetRulesMatchingQueryDontReturnBackgroundThrottled(self):
+    def testGetRulesMatchingQueryReturnBackgroundThrottledEvenIfNotForced(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product='', version='3.3', channel='',
                  buildTarget='d', buildID='', locale='', osVersion='',
@@ -1127,6 +1127,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         expected = [
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z', data_version=1),
+            dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z', data_version=1),
         ]
         self.assertEquals(rules, expected)
 
@@ -2550,6 +2551,10 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.t.insert().execute(permission="rule", username="bob", options=json.dumps(dict(actions=["modify"])), data_version=1)
         self.permissions.t.insert().execute(permission="rule", username="fred", options=json.dumps(dict(products=["foo", "bar"], actions=["modify"])),
                                             data_version=1)
+        self.permissions.t.insert().execute(permission='admin',
+                                            username='george',
+                                            options=json.dumps(dict(products=["foo"])),
+                                            data_version=1)
 
     def testGrantPermissions(self):
         query = self.permissions.t.select().where(self.permissions.username == "jess")
@@ -2577,11 +2582,15 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(len(query.execute().fetchall()), 0)
 
     def testGetAllUsers(self):
-        self.assertEquals(set(self.permissions.getAllUsers()), set(["bill", "bob", "cathy", "fred"]))
+        self.assertEquals(set(self.permissions.getAllUsers()), set(["bill",
+                                                                    "bob",
+                                                                    "cathy",
+                                                                    "fred",
+                                                                    "george"]))
 
     def testCountAllUsers(self):
         # bill, bob and cathy
-        self.assertEquals(self.permissions.countAllUsers(), 4)
+        self.assertEquals(self.permissions.countAllUsers(), 5)
 
     def testGetPermission(self):
         expected = {
@@ -2613,6 +2622,13 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testHasPermissionAdmin(self):
         self.assertTrue(self.permissions.hasPermission("bill", "rule", "delete"))
+
+    def testHasPermissionProductAdmin(self):
+        self.assertFalse(self.permissions.hasPermission("george", "rule", "delete"))
+        self.assertTrue(self.permissions.hasPermission("george", "rule",
+                                                       "delete", "foo"))
+        self.assertFalse(self.permissions.hasPermission("george", "rule",
+                                                        "delete", "bar"))
 
     def testHasPermissionGranular(self):
         self.assertTrue(self.permissions.hasPermission("cathy", "rule", "create"))

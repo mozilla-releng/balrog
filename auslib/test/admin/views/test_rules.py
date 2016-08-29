@@ -38,6 +38,22 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(r[0]['priority'], 33)
         self.assertEquals(r[0]['data_version'], 1)
 
+    def testNewRuleWithoutProductAdminPermission(self):
+        data = dict(
+            backgroundRate=31, mapping="a", priority=33, product="Firefox",
+            update_type="minor", channel="nightly"
+        )
+        ret = self._post("/rules", data=data, username="billy")
+        self.assertStatusCode(ret, 403)
+
+    def testNewRuleWithProductAdminPermission(self):
+        data = dict(
+            backgroundRate=31, mapping="a", priority=33, product="a",
+            update_type="minor", channel="nightly"
+        )
+        ret = self._post("/rules", data=data, username="billy")
+        self.assertStatusCode(ret, 200)
+
     def testNewRuleWithoutPermission(self):
         data = dict(
             backgroundRate=31, mapping="c", priority=33, product="Firefox",
@@ -392,6 +408,16 @@ class TestSingleRuleView_JSON(ViewTest):
         ret = self._delete("/rules/112")
         self.assertEquals(ret.status_code, 404)
 
+    def testDeleteWithProductAdminPermission(self):
+        ret = self._delete("/rules/3", username="billy",
+                           qs=dict(data_version=1))
+        self.assertEquals(ret.status_code, 200)
+
+    def testDeleteWithoutProductAdminPermission(self):
+        ret = self._delete("/rules/4", username="billy",
+                           qs=dict(data_version=1))
+        self.assertEquals(ret.status_code, 403)
+
     def testDeleteWithoutPermission(self):
         ret = self._delete("/rules/2", username="tony", qs=dict(data_version=1))
         self.assertEquals(ret.status_code, 403)
@@ -615,10 +641,12 @@ class TestRuleHistoryView(ViewTest):
 class TestSingleColumn_JSON(ViewTest):
 
     def testGetRules(self):
-        expected_product = ["fake"]
-        expected = dict(count=1, product=expected_product)
+        expected_product = ["fake", "a"]
+        expected = dict(count=2, product=expected_product)
         ret = self._get("/rules/columns/product")
-        self.assertEquals(json.loads(ret.data), expected)
+        returned_data = json.loads(ret.data)
+        self.assertEquals(returned_data['count'], expected['count'])
+        self.assertItemsEqual(returned_data['product'], expected['product'])
 
     def testGetRuleColumn404(self):
         ret = self.client.get("/rules/columns/blah")
