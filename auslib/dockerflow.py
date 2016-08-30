@@ -5,9 +5,37 @@ from flask import Response, jsonify
 from auslib.global_state import dbo
 
 
-# Wrapper that creates the endpoints required by CloudOps' Dockerflow spec: https://github.com/mozilla-services/Dockerflow
-# This gets used by both the admin and public apps.
-def create_dockerflow_endpoints(app):
+def create_dockerflow_endpoints(app, heartbeat_database_fn=None):
+    """ Wrapper that creates the endpoints required by CloudOps' Dockerflow spec:
+    https://github.com/mozilla-services/Dockerflow. This gets used by both the admin and public apps.
+    :param heartbeat_database_fn: Function that calls the database when reponding to /__heartbeat__.
+    A database object is passed to this function.
+
+    If heartbeat_database_fn is None, a default function is be set. The default function writes in a
+    dummy table. Even though we respond to GET, we do insert/update something in the database. This
+    allows us to see if the connection to the database exists, is active, and if the credentials given
+    are the correct ones. For more context see bug 1289178.
+    """
+
+    if heartbeat_database_fn is None:
+        def heartbeat_database_fn(dbo):
+            dbo.dockerflow.incrementWatchdogValue(changed_by='dockerflow')
+
+    @app.route("/__heartbeat__")
+    def heartbeat():
+        """Per the Dockerflow spec:
+        Respond to /__heartbeat__ with a HTTP 200 or 5xx on error. This should
+        depend on services like the database to also ensure they are healthy."""
+        heartbeat_database_fn(dbo)
+        return Response("OK!", headers={"Cache-Control": "no-cache"})
+
+    @app.route("/__lbheartbeat__")
+    def lbheartbeat():
+        """Per the Dockerflow spec:
+        Respond to /__lbheartbeat__ with an HTTP 200. This is for load balancer
+        checks and should not check any dependent services."""
+        return Response("OK!", headers={"Cache-Control": "no-cache"})
+
     @app.route("/__version__")
     def version():
         version_file = app.config.get("VERSION_FILE")
@@ -21,20 +49,3 @@ def create_dockerflow_endpoints(app):
                 "version": "unknown",
                 "commit": "unknown",
             })
-
-    @app.route("/__heartbeat__")
-    def heartbeat():
-        """Per the Dockerflow spec:
-        Respond to /__heartbeat__ with a HTTP 200 or 5xx on error. This should
-        depend on services like the database to also ensure they are healthy."""
-        # Counting the rules should be a trivial enough operation that it won't
-        # cause notable load, but will verify that the database works.
-        dbo.rules.countRules()
-        return Response("OK!", headers={"Cache-Control": "no-cache"})
-
-    @app.route("/__lbheartbeat__")
-    def lbheartbeat():
-        """Per the Dockerflow spec:
-        Respond to /__lbheartbeat__ with an HTTP 200. This is for load balancer
-        checks and should not check any dependent services."""
-        return Response("OK!", headers={"Cache-Control": "no-cache"})

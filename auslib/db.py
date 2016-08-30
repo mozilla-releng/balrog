@@ -1743,6 +1743,26 @@ class Permissions(AUSTable):
         return True
 
 
+class Dockerflow(AUSTable):
+    def __init__(self, db, metadata, dialect):
+        self.table = Table('dockerflow', metadata, Column('watchdog', Integer))
+        AUSTable.__init__(self, db, dialect, history=False, versioned=False)
+
+    def getDockerflowEntry(self, transaction=None):
+        return self.select(transaction=transaction)[0]
+
+    def incrementWatchdogValue(self, changed_by, transaction=None, dryrun=False):
+        try:
+            what = self.getDockerflowEntry()
+            where = [(self.watchdog == what['watchdog'])]
+            what['watchdog'] += 1
+
+            if not dryrun:
+                super(Dockerflow, self).update(where=where, what=what, changed_by=changed_by, transaction=transaction)
+        except IndexError:
+            super(Dockerflow, self).insert(changed_by=changed_by, transaction=transaction, watchdog=1)
+
+
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
@@ -1875,6 +1895,7 @@ class AUSDatabase(object):
         self.rulesTable = Rules(self, self.metadata, dialect)
         self.releasesTable = Releases(self, self.metadata, dialect)
         self.permissionsTable = Permissions(self, self.metadata, dialect)
+        self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -1945,3 +1966,7 @@ class AUSDatabase(object):
     @property
     def permissions(self):
         return self.permissionsTable
+
+    @property
+    def dockerflow(self):
+        return self.dockerflowTable
