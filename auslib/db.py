@@ -1707,52 +1707,39 @@ class Permissions(AUSTable):
         return ret
 
     def getOptions(self, username, permission, transaction=None):
-        self.log.debug('init %s %s %s', username, permission, transaction)
-        ret = self.select(columns=[self.options], transaction=transaction)
-        self.log.debug('ret %s', ret)
+        ret = self.select(columns=[self.options], where=[self.username == username, self.permission == permission], transaction=transaction)
         if ret:
             if ret[0]['options']:
                 return json.loads(ret[0]['options'])
             else:
                 return {}
         else:
-            self.log.debug('raise bitch!')
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
 
     def hasPermission(self, username, thing, action, product=None, transaction=None):
         # Supporting product-wise admin permissions. If there are no options
         # with admin, we assume that the user has admin access over all
         # products.
-        self.log.debug('init %s %s %s %s %s', username, thing, action, product, transaction)
         if self.select(where=[self.username == username, self.permission == 'admin'], transaction=transaction):
-            self.log.debug('in first if')
             options = self.getOptions(username, 'admin', transaction=transaction)
-            self.log.debug('options %o', options)
             if options.get("products") and product not in options["products"]:
-                self.log.debug('in second if')
                 return False
             return True
 
         try:
-            self.log.debug('in try')
             options = self.getOptions(username, thing, transaction=transaction)
-            self.log.debug('options %o', options)
         except ValueError:
-            self.log.debug('except')
             return False
 
         # If a user has a permission that doesn't explicitly limit the type of
         # actions they can perform, they are allowed to do any type of action.
         if options.get("actions") and action not in options["actions"]:
-            self.log.debug('in 3rd if')
             return False
         # Similarly, permissions without products specified grant that
         # that permission without any limitation on the product.
         if options.get("products") and product not in options["products"]:
-            self.log.debug('in 4th if')
             return False
 
-        self.log.debug('return True')
         return True
 
 
