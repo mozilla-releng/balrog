@@ -11,7 +11,15 @@ AUS = AUS()
 
 from auslib.web.views.client import ClientRequestView
 
-create_dockerflow_endpoints(app)
+
+def heartbeat_database_function(dbo):
+    # web has only a read access to the database. That's why we don't use
+    # the default database function.
+    # Counting the rules should be a trivial enough operation that it won't
+    # cause notable load, but will verify that the database works.
+    dbo.rules.countRules()
+
+create_dockerflow_endpoints(app, heartbeat_database_function)
 
 
 @app.errorhandler(404)

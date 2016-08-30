@@ -21,6 +21,7 @@ from auslib.admin.views.rules import RulesAPIView, \
 from auslib.admin.views.history import DiffView, FieldView
 from auslib.dockerflow import create_dockerflow_endpoints
 
+
 create_dockerflow_endpoints(app)
 
 

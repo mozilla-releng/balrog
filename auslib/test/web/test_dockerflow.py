@@ -25,7 +25,7 @@ class TestDockerflowEndpoints(ClientTestBase):
     def testHeartbeatWithException(self):
         with mock.patch("auslib.global_state.dbo.rules.countRules") as cr:
             cr.side_effect = Exception("kabom!")
-            # Because there's no web server between us and the endpoint, we recieve
+            # Because there's no web server between us and the endpoint, we receive
             # the Exception directly instead of a 500 error
             self.assertRaises(Exception, self.client.get, "/__heartbeat__")
             self.assertEqual(cr.call_count, 1)

@@ -2653,6 +2653,28 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertFalse(self.permissions.hasPermission("bob", "release", "modify", "reallyfake"))
 
 
+class TestDockerflow(unittest.TestCase, MemoryDatabaseMixin):
+
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.dockerflow = self.db.dockerflow
+
+    def testInitAndIncrementValue(self):
+        user = 'dockerflow_test'
+
+        with self.assertRaises(IndexError):
+            self.dockerflow.getDockerflowEntry()
+        self.dockerflow.incrementWatchdogValue(changed_by=user)
+        entry = self.dockerflow.getDockerflowEntry()
+        self.assertEqual(entry['watchdog'], 1)
+
+        self.dockerflow.incrementWatchdogValue(changed_by=user)
+        entry = self.dockerflow.getDockerflowEntry()
+        self.assertEqual(entry['watchdog'], 2)
+
+
 class TestDB(unittest.TestCase):
 
     def testSetDburiAlreadySetup(self):
