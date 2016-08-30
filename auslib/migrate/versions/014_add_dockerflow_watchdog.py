@@ -13,9 +13,9 @@ dockerflow = Table(DOCKERFLOW_TABLE_NAME, metadata,
 
 def upgrade(migrate_engine):
     metadata.bind = migrate_engine
-    dockerflow.create()
+    metadata.create_all()
 
 
 def downgrade(migrate_engine):
     metadata.bind = migrate_engine
-    dockerflow.drop()
+    metadata.create_all()
