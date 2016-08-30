@@ -1746,7 +1746,7 @@ class Permissions(AUSTable):
 class Dockerflow(AUSTable):
     def __init__(self, db, metadata, dialect):
         self.table = Table('dockerflow', metadata, Column('watchdog', Integer))
-        AUSTable.__init__(self, db, dialect, history=False)
+        AUSTable.__init__(self, db, dialect, history=False, versioned=False)
 
     def getDockerflowEntry(self, transaction=None):
         return self.select(transaction=transaction)[0]
@@ -1754,12 +1754,11 @@ class Dockerflow(AUSTable):
     def incrementWatchdogValue(self, changed_by, transaction=None, dryrun=False):
         try:
             what = self.getDockerflowEntry()
-            old_data_version = what['data_version']
             where = [(self.watchdog == what['watchdog'])]
             what['watchdog'] += 1
 
             if not dryrun:
-                super(Dockerflow, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+                super(Dockerflow, self).update(where=where, what=what, changed_by=changed_by, transaction=transaction)
         except IndexError:
             super(Dockerflow, self).insert(changed_by=changed_by, transaction=transaction, watchdog=1)
 
