@@ -1,7 +1,0 @@
-SQLAlchemy >= 0.6
-decorator
-Tempita >= 0.4
-setuptools
-
-[docs]
-sphinx >= 0.5
