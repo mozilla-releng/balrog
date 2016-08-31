@@ -1,0 +1,4 @@
+aiohttp==0.22.5 \
+# --hash=sha256:9c51af030c866f91e18a219614e39d345db4483ed9860389d0536d74d04b0d3b
+chardet==2.3.0 \
+# --hash=sha256:e53e38b3a4afe6d1132de62b7400a4ac363452dc5dfcf8d88e8e0cce663c68aa

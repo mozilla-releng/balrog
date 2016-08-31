@@ -1,0 +1,6 @@
+[run]
+branch = True
+include = balrogagent/*
+
+[report]
+show_missing = True

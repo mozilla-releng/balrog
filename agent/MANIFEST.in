@@ -1,0 +1,4 @@
+include requirements.txt
+include version.txt
+
+recursive-exclude * *.py[co]

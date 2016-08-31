@@ -1,5 +1,7 @@
 from os import path
-from setuptools import find_packages, setup
+from setuptools import setup, find_packages
+
+import balrogagent
 
 here = path.abspath(path.dirname(__file__))
 # We're using a pip8 style requirements file, which allows us to embed hashes
@@ -17,13 +19,20 @@ with open(path.join(here, "version.txt")) as f:
     version = f.read()
 
 setup(
-    name="balrog",
+    name="balrogagent",
+    description="Balrog Agent",
     version=version,
-    description="Mozilla's Update Server",
-    author="Ben Hearsum",
-    author_email="ben@hearsum.ca",
-    packages=find_packages(exclude=["vendor"]),
-    include_package_data=True,
-    install_requires=requirements,
     url="https://github.com/mozilla/balrog",
+    license="MPL",
+    author="Ben Hearsum",
+    author_email="bhearsum@mozilla.com",
+    tests_require=["pytest"],
+    install_requires=requirements,
+    packages=find_packages(),
+    entry_points = {
+        "console_scripts": [
+            "balrogagent = balrogagent.cmd:main",
+        ],
+    },
+    include_package_data=True,
 )

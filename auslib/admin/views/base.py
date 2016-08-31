@@ -36,7 +36,7 @@ def handleGeneralExceptions(messages):
                 logging.warning(e)
                 return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
             except ChangeScheduledError as e:
-                msg = "Couldn't perform the request %s due a conflict with a scheduled change." % messages
+                msg = "Couldn't perform the request %s due a conflict with a scheduled change. " % messages
                 msg += "Are you trying to delete something with a change scheduled?"
                 logging.warning("Bad input: %s", msg)
                 logging.warning(e)
