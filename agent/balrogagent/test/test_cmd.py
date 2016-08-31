@@ -7,8 +7,6 @@ from ..cmd import run_agent
 
 
 @asynctest.patch("balrogagent.client.request")
-# TODO: why do we have to mock the versions of these imported into cmd isntead
-# of mocking balrogagent.changes.*?
 @asynctest.patch("balrogagent.cmd.telemetry_is_ready")
 @asynctest.patch("balrogagent.cmd.time_is_ready")
 class TestRunAgent(asynctest.TestCase):
@@ -44,7 +42,7 @@ class TestRunAgent(asynctest.TestCase):
     async def testTimeBasedIsReady(self, request, telemetry_is_ready, time_is_ready, time):
         time.return_value = 999999999
         time_is_ready.return_value = True
-        sc = [{"sc_id": 4, "when": 23456789, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}]
+        sc = [{"sc_id": 4, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}]
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 1)

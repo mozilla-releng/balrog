@@ -2,7 +2,6 @@ import aiohttp
 import asyncio
 import logging
 import time
-import traceback
 
 from . import client
 from .changes import get_telemetry_uptake, telemetry_is_ready, time_is_ready
@@ -47,7 +46,7 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     logging.debug("Change %s is not ready", change["sc_id"])
 
         except:
-            logging.error(traceback.format_exc())
+            logging.error("Encountered exception:", exc_info=True)
             if raise_exceptions:
                 raise
         finally:
