@@ -819,11 +819,11 @@ class ScheduledChangeTable(AUSTable):
 
         if "when" in conditions:
             try:
-                time.gmtime(conditions["when"])
+                time.gmtime(conditions["when"] / 1000)
             except:
                 raise ValueError("Cannot parse 'when' as a unix timestamp.")
 
-            if conditions["when"] < time.time():
+            if (conditions["when"] / 1000) < time.time():
                 raise ValueError("Cannot schedule changes in the past")
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
