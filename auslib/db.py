@@ -1753,14 +1753,23 @@ class Dockerflow(AUSTable):
 
     def incrementWatchdogValue(self, changed_by, transaction=None, dryrun=False):
         try:
-            what = self.getDockerflowEntry()
-            where = [(self.watchdog == what['watchdog'])]
-            what['watchdog'] += 1
-
-            if not dryrun:
-                super(Dockerflow, self).update(where=where, what=what, changed_by=changed_by, transaction=transaction)
+            value = self.getDockerflowEntry()
+            where = [(self.watchdog == value['watchdog'])]
+            value['watchdog'] += 1
         except IndexError:
-            super(Dockerflow, self).insert(changed_by=changed_by, transaction=transaction, watchdog=1)
+            value = {'watchdog': 1}
+            where = None
+
+        if not dryrun:
+            self._putWatchdogValue(changed_by=changed_by, value=value, where=where, transaction=transaction)
+
+        return value['watchdog']
+
+    def _putWatchdogValue(self, changed_by, value, where=None, transaction=None):
+        if where is None:
+            super(Dockerflow, self).insert(changed_by=changed_by, transaction=transaction, watchdog=value['watchdog'])
+        else:
+            super(Dockerflow, self).update(where=where, what=value, changed_by=changed_by, transaction=transaction)
 
 
 class UTF8PrettyPrinter(pprint.PrettyPrinter):

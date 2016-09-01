@@ -19,15 +19,15 @@ def create_dockerflow_endpoints(app, heartbeat_database_fn=None):
 
     if heartbeat_database_fn is None:
         def heartbeat_database_fn(dbo):
-            dbo.dockerflow.incrementWatchdogValue(changed_by='dockerflow')
+            return dbo.dockerflow.incrementWatchdogValue(changed_by='dockerflow')
 
     @app.route("/__heartbeat__")
     def heartbeat():
         """Per the Dockerflow spec:
         Respond to /__heartbeat__ with a HTTP 200 or 5xx on error. This should
         depend on services like the database to also ensure they are healthy."""
-        heartbeat_database_fn(dbo)
-        return Response("OK!", headers={"Cache-Control": "no-cache"})
+        database_entry_value = heartbeat_database_fn(dbo)
+        return Response(str(database_entry_value), headers={"Cache-Control": "no-cache"})
 
     @app.route("/__lbheartbeat__")
     def lbheartbeat():
