@@ -17,7 +17,7 @@ def heartbeat_database_function(dbo):
     # the default database function.
     # Counting the rules should be a trivial enough operation that it won't
     # cause notable load, but will verify that the database works.
-    dbo.rules.countRules()
+    return dbo.rules.countRules()
 
 create_dockerflow_endpoints(app, heartbeat_database_function)
 

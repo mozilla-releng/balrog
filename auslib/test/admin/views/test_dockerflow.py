@@ -17,10 +17,14 @@ class TestDockerflowEndpoints(ViewTest):
 
     def testHeartbeat(self):
         with mock.patch("auslib.global_state.dbo.dockerflow.incrementWatchdogValue") as cr:
-            ret = self.client.get("/__heartbeat__")
-            self.assertEqual(ret.status_code, 200)
-            self.assertEqual(cr.call_count, 1)
-            self.assertEqual(ret.headers["Cache-Control"], "no-cache")
+            cr.side_effect = (1, 2, 3)
+            for i in range(1, 3):
+                ret = self.client.get("/__heartbeat__")
+                self.assertEqual(ret.status_code, 200)
+                self.assertEqual(cr.call_count, i)
+                self.assertEqual(ret.headers["Cache-Control"], "no-cache")
+                returned_digit = int(ret.data)
+                self.assertEqual(returned_digit, i)
 
     def testHeartbeatWithException(self):
         with mock.patch("auslib.global_state.dbo.dockerflow.incrementWatchdogValue") as cr:
