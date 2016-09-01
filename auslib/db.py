@@ -823,6 +823,9 @@ class ScheduledChangeTable(AUSTable):
             except:
                 raise ValueError("Cannot parse 'when' as a unix timestamp.")
 
+            if conditions["when"] < time.time():
+                raise ValueError("Cannot schedule changes in the past")
+
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         base_table_where = []
         for pk in self.base_primary_key:
