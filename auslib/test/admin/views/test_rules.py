@@ -1,4 +1,5 @@
 import json
+import mock
 
 from auslib.global_state import dbo
 from auslib.test.admin.views.base import ViewTest
@@ -793,7 +794,9 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEquals(db_data, expected)
 
-    def testAddScheduledChangeNewRule(self):
+    @mock.patch("time.time")
+    def testAddScheduledChangeNewRule(self, time):
+        time.return_value = 300
         data = {
             "when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah",
             "update_type": "minor", "mapping": "a",
@@ -814,7 +817,9 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEquals(db_data, expected)
 
-    def testAddScheduledChangeNoPermissionsToSchedule(self):
+    @mock.patch("time.time")
+    def testAddScheduledChangeNoPermissionsToSchedule(self, time):
+        time.return_value = 300
         data = {
             "when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah",
             "update_type": "minor", "mapping": "a",
@@ -822,7 +827,9 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/rules", data=data, username="bob")
         self.assertEquals(ret.status_code, 403, ret.data)
 
-    def testAddScheduledChangeNoPermissionsToMakeChange(self):
+    @mock.patch("time.time")
+    def testAddScheduledChangeNoPermissionsToMakeChange(self, time):
+        time.return_value = 300
         data = {
             "when": 1234567, "priority": 120, "backgroundRate": 100, "product": "foo", "channel": "blah",
             "update_type": "minor", "mapping": "a",
@@ -830,7 +837,9 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/rules", data=data, username="mary")
         self.assertEquals(ret.status_code, 403, ret.data)
 
-    def testAddScheduledChangeMultipleConditions(self):
+    @mock.patch("time.time")
+    def testAddScheduledChangeMultipleConditions(self, time):
+        time.return_value = 300
         data = {
             "when": 23893254, "telemetry_product": "foo", "telemetry_channel": "foo", "telemetry_uptake": 5,
             "priority": 120, "backgroundRate": 100, "update_type": "minor",
@@ -845,7 +854,9 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 400)
 
-    def testUpdateScheduledChange(self):
+    @mock.patch("time.time")
+    def testUpdateScheduledChange(self, time):
+        time.return_value = 300
         data = {
             "when": 2000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d",
             "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
@@ -865,12 +876,16 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEquals(db_data, expected)
 
-    def testUpdateScheduledChangeCantRemoveProductWithoutPermission(self):
+    @mock.patch("time.time")
+    def testUpdateScheduledChangeCantRemoveProductWithoutPermission(self, time):
+        time.return_value = 300
         data = {"data_version": 1, "product": None, "sc_data_version": 1}
         ret = self._post("/scheduled_changes/rules/2", username="bob", data=data)
         self.assertEquals(ret.status_code, 403, ret.data)
 
-    def testUpdateRuleWithMergeError(self):
+    @mock.patch("time.time")
+    def testUpdateRuleWithMergeError(self, time):
+        time.return_value = 300
         data = {"mapping": "a", "data_version": 1}
         ret = self._post("/rules/1", data=data)
         self.assertEquals(ret.status_code, 400, ret.data)
@@ -960,7 +975,9 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
-    def testRevertScheduledChange(self):
+    @mock.patch("time.time")
+    def testRevertScheduledChange(self, time):
+        time.return_value = 300
         ret = self._post("/scheduled_changes/rules/3/revisions", data={"change_id": 2})
         self.assertEquals(ret.status_code, 200, ret.data)
 
