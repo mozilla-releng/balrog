@@ -36,6 +36,15 @@ class TestPermissionsAPI_JSON(ViewTest):
         query = query.where(dbo.permissions.permission == 'admin')
         self.assertEqual(query.execute().fetchone(), ('admin', 'bob', None, 1))
 
+    def testPermissionPutWithEmptyOptions(self):
+        ret = self._put('/users/bob/permissions/admin', data=dict(options=""))
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username == 'bob')
+        query = query.where(dbo.permissions.permission == 'admin')
+        self.assertEqual(query.execute().fetchone(), ('admin', 'bob', None, 1))
+
     def testPermissionPutWithEmail(self):
         ret = self._put('/users/bob@bobsworld.com/permissions/admin')
         self.assertStatusCode(ret, 201)

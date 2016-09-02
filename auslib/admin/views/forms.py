@@ -31,6 +31,10 @@ class DisableableTextInput(TextInput):
 class JSONStringField(StringField):
     """StringField that parses incoming data as JSON."""
 
+    def __init__(self, default_value, *args, **kwargs):
+        self.default_value = default_value
+        super(JSONStringField, self).__init__(*args, **kwargs)
+
     def process_formdata(self, valuelist):
         if valuelist and valuelist[0]:
             try:
@@ -47,7 +51,7 @@ class JSONStringField(StringField):
             self._set_default()
 
     def _set_default(self):
-        self.data = {}
+        self.data = self.default_value
 
     def _value(self):
         return json.dumps(self.data) if self.data is not None else u''
@@ -131,11 +135,11 @@ class ScheduledChangeForm(Form):
 
 
 class NewPermissionForm(Form):
-    options = JSONStringField('Options')
+    options = JSONStringField(None, 'Options')
 
 
 class ExistingPermissionForm(DbEditableForm):
-    options = JSONStringField('Options')
+    options = JSONStringField(None, 'Options')
 
 
 class PartialReleaseForm(Form):
@@ -145,10 +149,10 @@ class PartialReleaseForm(Form):
     data_version = IntegerField('data_version', widget=HiddenInput())
     product = StringField('Product', validators=[Required()])
     hashFunction = StringField('Hash Function')
-    data = JSONStringField('Data', validators=[Required()])
+    data = JSONStringField({}, 'Data', validators=[Required()])
     schema_version = IntegerField('Schema Version')
-    copyTo = JSONStringField('Copy To', default=list)
-    alias = JSONStringField('Alias', default=list)
+    copyTo = JSONStringField({}, 'Copy To', default=list)
+    alias = JSONStringField({}, 'Alias', default=list)
 
 
 class RuleForm(Form):
@@ -219,7 +223,7 @@ class EditScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
 class CompleteReleaseForm(Form):
     name = StringField('Name', validators=[Required()])
     product = StringField('Product', validators=[Required()])
-    blob = JSONStringField('Data', validators=[Required()], widget=FileInput())
+    blob = JSONStringField({}, 'Data', validators=[Required()], widget=FileInput())
     data_version = IntegerField('data_version', widget=HiddenInput())
 
 
