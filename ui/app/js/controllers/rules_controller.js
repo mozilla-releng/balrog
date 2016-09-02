@@ -145,7 +145,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     var modalInstance = $modal.open({
       templateUrl: 'rule_modal.html',
       controller: 'RuleEditCtrl',
-      // size: size,  // can be lg or sm
+      size: 'lg',  // can be lg or sm
       resolve: {
         // items: function () {
         //   return $scope.items;
@@ -181,7 +181,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     var modalInstance = $modal.open({
       templateUrl: 'rule_modal.html',
       controller: 'NewRuleCtrl',
-      // size: 'sm',
+      size: 'lg',
       resolve: {
         rules: function() {
           return $scope.rules;
