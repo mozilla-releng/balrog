@@ -660,48 +660,48 @@ class TestRuleScheduledChanges(ViewTest):
     def setUp(self):
         super(TestRuleScheduledChanges, self).setUp()
         dbo.rules.scheduled_changes.t.insert().execute(
-            sc_id=1, when=1000, scheduled_by="bill", data_version=1, base_rule_id=1, base_priority=100, base_version="3.5", base_buildTarget="d",
+            sc_id=1, when=1000000, scheduled_by="bill", data_version=1, base_rule_id=1, base_priority=100, base_version="3.5", base_buildTarget="d",
             base_backgroundRate=100, base_mapping="b", base_update_type="minor", base_data_version=1,
         )
         dbo.rules.scheduled_changes.t.insert().execute(
-            sc_id=2, when=1500, scheduled_by="bill", data_version=1, base_priority=50, base_backgroundRate=100, base_product="baz",
+            sc_id=2, when=1500000, scheduled_by="bill", data_version=1, base_priority=50, base_backgroundRate=100, base_product="baz",
             base_mapping="ab", base_update_type="minor",
         )
         dbo.rules.scheduled_changes.t.insert().execute(
-            sc_id=3, when=2000, scheduled_by="bill", data_version=2, base_priority=150, base_backgroundRate=100, base_product="ff",
+            sc_id=3, when=2000000, scheduled_by="bill", data_version=2, base_priority=150, base_backgroundRate=100, base_product="ff",
             base_mapping="ghi", base_update_type="minor",
         )
         dbo.rules.scheduled_changes.t.insert().execute(
-            sc_id=4, when=500, scheduled_by="bill", data_version=2, complete=True, base_rule_id=5, base_priority=80, base_version="3.3",
+            sc_id=4, when=500000, scheduled_by="bill", data_version=2, complete=True, base_rule_id=5, base_priority=80, base_version="3.3",
             base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1,
         )
         dbo.rules.scheduled_changes.history.t.insert().execute(
             change_id=1, changed_by="bill", timestamp=5, sc_id=3
         )
         dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=6, sc_id=3, scheduled_by="bill", when=2000, data_version=1, base_priority=150,
+            change_id=2, changed_by="bill", timestamp=6, sc_id=3, scheduled_by="bill", when=2000000, data_version=1, base_priority=150,
             base_backgroundRate=100, base_product="ff", base_mapping="def", base_update_type="minor",
         )
         dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=3, changed_by="bill", timestamp=10, sc_id=3, scheduled_by="bill", when=2000, data_version=2, base_priority=150,
+            change_id=3, changed_by="bill", timestamp=10, sc_id=3, scheduled_by="bill", when=2000000, data_version=2, base_priority=150,
             base_backgroundRate=100, base_product="ff", base_mapping="ghi", base_update_type="minor",
         )
         dbo.rules.scheduled_changes.history.t.insert().execute(
             change_id=4, changed_by="bill", timestamp=15, sc_id=2
         )
         dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=5, changed_by="bill", timestamp=16, sc_id=2, when=1500, scheduled_by="bill", data_version=1, base_priority=50,
+            change_id=5, changed_by="bill", timestamp=16, sc_id=2, when=1500000, scheduled_by="bill", data_version=1, base_priority=50,
             base_backgroundRate=100, base_product="baz", base_mapping="ab", base_update_type="minor"
         )
         dbo.rules.scheduled_changes.history.t.insert().execute(
             change_id=6, changed_by="bill", timestamp=5, sc_id=4
         )
         dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=7, changed_by="bill", timestamp=6, sc_id=4, scheduled_by="bill", when=500, data_version=1, base_priority=80,
+            change_id=7, changed_by="bill", timestamp=6, sc_id=4, scheduled_by="bill", when=500000, data_version=1, base_priority=80,
             base_version="3.3", base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1
         )
         dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=8, changed_by="bill", timestamp=7, sc_id=4, scheduled_by="bill", when=500, data_version=2, complete=True, base_rule_id=5,
+            change_id=8, changed_by="bill", timestamp=7, sc_id=4, scheduled_by="bill", when=500000, data_version=2, complete=True, base_rule_id=5,
             base_priority=80, base_version="3.3", base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1
         )
 
@@ -711,21 +711,21 @@ class TestRuleScheduledChanges(ViewTest):
             "count": 3,
             "scheduled_changes": [
                 {
-                    "sc_id": 1, "when": 1000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 1, "priority": 100,
+                    "sc_id": 1, "when": 1000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 1, "priority": 100,
                     "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "update_type": "minor",
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
-                    "sc_id": 2, "when": 1500, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
+                    "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
                     "backgroundRate": 100, "product": "baz", "mapping": "ab", "update_type": "minor", "version": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
-                    "sc_id": 3, "when": 2000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
+                    "sc_id": 3, "when": 2000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
                     "backgroundRate": 100, "product": "ff", "mapping": "ghi", "update_type": "minor", "version": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
@@ -741,28 +741,28 @@ class TestRuleScheduledChanges(ViewTest):
             "count": 4,
             "scheduled_changes": [
                 {
-                    "sc_id": 1, "when": 1000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 1, "priority": 100,
+                    "sc_id": 1, "when": 1000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 1, "priority": 100,
                     "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "update_type": "minor",
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
-                    "sc_id": 2, "when": 1500, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
+                    "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
                     "backgroundRate": 100, "product": "baz", "mapping": "ab", "update_type": "minor", "version": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
-                    "sc_id": 3, "when": 2000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
+                    "sc_id": 3, "when": 2000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
                     "backgroundRate": 100, "product": "ff", "mapping": "ghi", "update_type": "minor", "version": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
-                    "sc_id": 4, "when": 500, "scheduled_by": "bill", "complete": True, "sc_data_version": 2, "rule_id": 5, "priority": 80,
+                    "sc_id": 4, "when": 500000, "scheduled_by": "bill", "complete": True, "sc_data_version": 2, "rule_id": 5, "priority": 80,
                     "version": "3.3", "buildTarget": "d", "backgroundRate": 0, "mapping": "c", "update_type": "minor",
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None,
@@ -818,6 +818,16 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(db_data, expected)
 
     @mock.patch("time.time")
+    def testAddScheduledChangeInThePast(self, time):
+        time.return_value = 300
+        data = {
+            "when": 67, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah",
+            "update_type": "minor", "mapping": "a",
+        }
+        ret = self._post("/scheduled_changes/rules", data=data)
+        self.assertEquals(ret.status_code, 400, ret.data)
+
+    @mock.patch("time.time")
     def testAddScheduledChangeNoPermissionsToSchedule(self, time):
         time.return_value = 300
         data = {
@@ -858,7 +868,7 @@ class TestRuleScheduledChanges(ViewTest):
     def testUpdateScheduledChange(self, time):
         time.return_value = 300
         data = {
-            "when": 2000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d",
+            "when": 2000000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d",
             "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
         }
         ret = self._post("/scheduled_changes/rules/1", data=data)
@@ -868,7 +878,7 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 1, "when": 2000, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1, "base_priority": 100,
+            "sc_id": 1, "when": 2000000, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1, "base_priority": 100,
             "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100, "base_mapping": "c", "base_update_type": "minor",
             "base_data_version": 1, "base_alias": None, "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None,
             "base_osVersion": None, "base_distribution": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None,
@@ -956,7 +966,7 @@ class TestRuleScheduledChanges(ViewTest):
             "count": 2,
             "revisions": [
                 {
-                    "change_id": 2, "changed_by": "bill", "timestamp": 6, "sc_id": 3, "scheduled_by": "bill", "when": 2000, "sc_data_version": 1,
+                    "change_id": 2, "changed_by": "bill", "timestamp": 6, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 1,
                     "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "def", "update_type": "minor",
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
                     "version": None, "channel": None, "buildTarget": None, "buildID": None, "locale": None,
@@ -964,7 +974,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "headerArchitecture": None, "comment": None, "whitelist": None, "alias": None, "data_version": None,
                 },
                 {
-                    "change_id": 3, "changed_by": "bill", "timestamp": 10, "sc_id": 3, "scheduled_by": "bill", "when": 2000, "sc_data_version": 2,
+                    "change_id": 3, "changed_by": "bill", "timestamp": 10, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 2,
                     "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "ghi", "update_type": "minor",
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
                     "version": None, "channel": None, "buildTarget": None, "buildID": None, "locale": None,
@@ -984,7 +994,7 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(dbo.rules.scheduled_changes.history.t.count().execute().first()[0], 9)
         got = dbo.rules.scheduled_changes.select({"sc_id": 3})[0]
         expected = {
-            "sc_id": 3, "when": 2000, "scheduled_by": "bill", "complete": False, "data_version": 3, "base_rule_id": None, "base_priority": 150,
+            "sc_id": 3, "when": 2000000, "scheduled_by": "bill", "complete": False, "data_version": 3, "base_rule_id": None, "base_priority": 150,
             "base_backgroundRate": 100, "base_product": "ff", "base_mapping": "def", "base_update_type": "minor", "base_version": None,
             "base_buildTarget": None, "base_alias": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None,
             "base_distribution": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,

@@ -1,3 +1,4 @@
+import time
 import simplejson as json
 
 from flask_wtf import Form
@@ -119,6 +120,16 @@ def version_validator():
     return _validator
 
 
+def not_in_the_past():
+    def _validator(form, field):
+        if field.data is None:
+            return
+
+        if (field.data / 1000) < time.time():
+            raise ValidationError("Changes may not be scheduled in the past")
+
+    return _validator
+
 class DbEditableForm(Form):
     data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 
@@ -127,7 +138,7 @@ class ScheduledChangeForm(Form):
     telemetry_product = NullableStringField("Telemetry Product")
     telemetry_channel = NullableStringField("Telemetry Channel")
     telemetry_uptake = NullableStringField("Telemetry Uptake")
-    when = IntegerField("When", validators=[Optional()])
+    when = IntegerField("When", validators=[Optional(), not_in_the_past()])
 
 
 class NewPermissionForm(Form):
