@@ -205,7 +205,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     var modalInstance = $modal.open({
       templateUrl: 'rule_modal.html',
       controller: 'NewRuleCtrl',
-      // size: 'sm',
+      size: 'lg',
       resolve: {
         rules: function() {
           return $scope.rules;
