@@ -182,13 +182,13 @@ class RuleHistoryAPIView(HistoryAdminView):
         _rules = []
         _mapping = {
             # return : db name
-            'id': 'rule_id',
+            'rule_id': 'rule_id',
             'mapping': 'mapping',
             'priority': 'priority',
             'alias': 'alias',
             'product': 'product',
             'version': 'version',
-            'background_rate': 'backgroundRate',
+            'backgroundRate': 'backgroundRate',
             'buildID': 'buildID',
             'channel': 'channel',
             'locale': 'locale',
