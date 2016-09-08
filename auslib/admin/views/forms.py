@@ -1,4 +1,3 @@
-import time
 import simplejson as json
 
 from flask_wtf import Form
@@ -6,6 +5,7 @@ from wtforms import StringField, IntegerField, SelectField, BooleanField
 from wtforms.widgets import TextInput, FileInput, HiddenInput
 from wtforms.validators import Required, Optional, NumberRange, Length, Regexp, ValidationError
 from auslib.util.comparison import get_op
+from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.util.versions import MozillaVersion
 
 import logging
@@ -129,7 +129,7 @@ def not_in_the_past():
         if field.data is None:
             return
 
-        if (field.data / 1000) < time.time():
+        if field.data < getMillisecondTimestamp():
             raise ValidationError("Changes may not be scheduled in the past")
 
     return _validator
