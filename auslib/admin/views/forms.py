@@ -134,6 +134,7 @@ def not_in_the_past():
 
     return _validator
 
+
 class DbEditableForm(Form):
     data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 

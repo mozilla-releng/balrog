@@ -684,12 +684,13 @@ class ScheduledChangesTableMixin(object):
         self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
         self.table.t.insert().execute(fooid=2, foo="b", bar="bb", data_version=2)
         self.table.t.insert().execute(fooid=3, foo="c", data_version=1)
-        self.sc_table.t.insert().execute(sc_id=1, when=234, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1,
+        self.sc_table.t.insert().execute(sc_id=1, when=234000, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1,
                                          data_version=1)
-        self.sc_table.t.insert().execute(sc_id=2, when=567, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1)
-        self.sc_table.t.insert().execute(sc_id=3, when=1, scheduled_by="bob", complete=True, base_fooid=2, base_foo="b", base_bar="bb", base_data_version=1,
+        self.sc_table.t.insert().execute(sc_id=2, when=567000, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1)
+        self.sc_table.t.insert().execute(sc_id=3, when=1000, scheduled_by="bob", complete=True, base_fooid=2, base_foo="b", base_bar="bb", base_data_version=1,
                                          data_version=1)
-        self.sc_table.t.insert().execute(sc_id=4, when=333, scheduled_by="bob", base_fooid=2, base_foo="dd", base_bar="bb", base_data_version=2, data_version=1)
+        self.sc_table.t.insert().execute(sc_id=4, when=333000, scheduled_by="bob", base_fooid=2, base_foo="dd", base_bar="bb", base_data_version=2,
+                                         data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
         self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options='{"actions": ["enact"]}', data_version=1)
@@ -759,11 +760,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     @mock.patch("time.time")
     def testInsertForExistingRow(self, time):
         time.return_value = 200
-        what = {"fooid": 2, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999}
+        what = {"fooid": 2, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000}
         self.sc_table.insert(changed_by="bob", **what)
         row = self.sc_table.t.select().where(self.sc_table.sc_id == 5).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
-        self.assertEquals(row.when, 999)
+        self.assertEquals(row.when, 999000)
         self.assertEquals(row.data_version, 1)
         self.assertEquals(row.base_fooid, 2)
         self.assertEquals(row.base_foo, "thing")
@@ -773,11 +774,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     @mock.patch("time.time")
     def testInsertForNewRow(self, time):
         time.return_value = 200
-        what = {"foo": "newthing1", "when": 888}
+        what = {"foo": "newthing1", "when": 888000}
         self.sc_table.insert(changed_by="bob", **what)
         row = self.sc_table.t.select().where(self.sc_table.sc_id == 5).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
-        self.assertEquals(row.when, 888)
+        self.assertEquals(row.when, 888000)
         self.assertEquals(row.data_version, 1)
         self.assertEquals(row.base_fooid, None)
         self.assertEquals(row.base_foo, "newthing1")
@@ -798,11 +799,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
         table = TestTable2(self.db, self.metadata)
         self.metadata.create_all()
-        what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876}
+        what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876000}
         table.scheduled_changes.insert(changed_by="mary", **what)
         row = table.scheduled_changes.t.select().where(table.scheduled_changes.sc_id == 1).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "mary")
-        self.assertEquals(row.when, 876)
+        self.assertEquals(row.when, 876000)
         self.assertEquals(row.data_version, 1)
         self.assertEquals(row.base_foo_name, "i'm a foo")
         self.assertEquals(row.base_foo, "123")
@@ -812,14 +813,14 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     @mock.patch("time.time")
     def testInsertWithNonNullableColumn(self, time):
         time.return_value = 200
-        what = {"bar": "abc", "when": 34567}
+        what = {"bar": "abc", "when": 34567000}
         # TODO: we should really be checking directly for IntegrityError, but AUSTransaction eats it.
         self.assertRaisesRegexp(TransactionError, "IntegrityError", self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time")
     def testInsertForExistingNoSuchRow(self, time):
         time.return_value = 200
-        what = {"fooid": 10, "foo": "thing", "data_version": 1, "when": 999}
+        what = {"fooid": 10, "foo": "thing", "data_version": 1, "when": 999000}
         self.assertRaisesRegexp(ValueError, "Cannot create scheduled change with data_version for non-existent row", self.sc_table.insert, changed_by="bob",
                                 **what)
 
@@ -837,7 +838,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
         table = TestTable2("fake", self.metadata)
         self.metadata.create_all()
-        what = {"fooid": 2, "when": 4532}
+        what = {"fooid": 2, "when": 4532000}
         self.assertRaisesRegexp(ValueError, "Missing primary key column", table.scheduled_changes.insert, changed_by="bob", **what)
 
     def testInsertWithMalformedTimestamp(self):
@@ -851,31 +852,31 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         submitting the scheduled change."""
         time.return_value = 200
         self.table.update([self.table.fooid == 3], what={"foo": "bb"}, changed_by="bob", old_data_version=1)
-        what = {"fooid": 3, "data_version": 1, "bar": "blah", "when": 456}
+        what = {"fooid": 3, "data_version": 1, "bar": "blah", "when": 456000}
         self.assertRaises(OutdatedDataError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time")
     def testInsertWithoutPermissionOnBaseTable(self, time):
         time.return_value = 200
-        what = {"fooid": 4, "bar": "blah", "when": 343}
+        what = {"fooid": 4, "bar": "blah", "when": 343000}
         self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
 
     @mock.patch("time.time")
     def testInsertWithoutPermissionOnBaseTableForUpdate(self, time):
         time.return_value = 200
-        what = {"fooid": 3, "bar": "blah", "when": 343, "data_version": 1}
+        what = {"fooid": 3, "bar": "blah", "when": 343000, "data_version": 1}
         self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
 
     @mock.patch("time.time")
     def testUpdateNoChangesSinceCreation(self, time):
         time.return_value = 200
         where = [self.sc_table.sc_id == 1]
-        what = {"when": 888, "foo": "bb"}
+        what = {"when": 888000, "foo": "bb"}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
         row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
         history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
-        self.assertEquals(row.when, 888)
+        self.assertEquals(row.when, 888000)
         self.assertEquals(row.data_version, 2)
         self.assertEquals(row.base_fooid, 1)
         self.assertEquals(row.base_foo, "bb")
@@ -883,7 +884,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.base_data_version, 1)
         self.assertEquals(history_row.changed_by, "bob")
         self.assertEquals(history_row.scheduled_by, "bob")
-        self.assertEquals(history_row.when, 888)
+        self.assertEquals(history_row.when, 888000)
         self.assertEquals(history_row.data_version, 2)
         self.assertEquals(history_row.base_fooid, 1)
         self.assertEquals(history_row.base_foo, "bb")
@@ -894,12 +895,12 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testUpdateNoChangesSinceCreationWithDict(self, time):
         time.return_value = 200
         where = {"sc_id": 1}
-        what = {"when": 888, "foo": "bb", "data_version": 1, "fooid": 1}
+        what = {"when": 888000, "foo": "bb", "data_version": 1, "fooid": 1}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
         row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
         history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
-        self.assertEquals(row.when, 888)
+        self.assertEquals(row.when, 888000)
         self.assertEquals(row.data_version, 2)
         self.assertEquals(row.base_fooid, 1)
         self.assertEquals(row.base_foo, "bb")
@@ -907,7 +908,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.base_data_version, 1)
         self.assertEquals(history_row.changed_by, "bob")
         self.assertEquals(history_row.scheduled_by, "bob")
-        self.assertEquals(history_row.when, 888)
+        self.assertEquals(history_row.when, 888000)
         self.assertEquals(history_row.data_version, 2)
         self.assertEquals(history_row.base_fooid, 1)
         self.assertEquals(history_row.base_foo, "bb")
@@ -933,7 +934,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         time.return_value = 200
         with mock.patch.object(self.sc_table.db, "hasPermission", return_value=False, create=True):
             where = [self.sc_table.sc_id == 2]
-            what = {"when": 777}
+            what = {"when": 777000}
             self.assertRaises(PermissionDeniedError, self.sc_table.update, where, what, changed_by="sue", old_data_version=1)
 
     @mock.patch("time.time")
@@ -956,7 +957,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         # This should end up with the scheduled changed incorporating our new
         # value for "foo" as well as the new "bar" value.
         self.assertEquals(sc_row.scheduled_by, "bob")
-        self.assertEquals(sc_row.when, 333)
+        self.assertEquals(sc_row.when, 333000)
         self.assertEquals(sc_row.data_version, 2)
         self.assertEquals(sc_row.base_fooid, 2)
         self.assertEquals(sc_row.base_foo, "dd")
@@ -965,7 +966,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         # ...As well as a new history table entry.
         self.assertEquals(history_row.changed_by, "bob")
         self.assertEquals(history_row.scheduled_by, "bob")
-        self.assertEquals(history_row.when, 333)
+        self.assertEquals(history_row.when, 333000)
         self.assertEquals(history_row.data_version, 2)
         self.assertEquals(history_row.base_fooid, 2)
         self.assertEquals(history_row.base_foo, "dd")
