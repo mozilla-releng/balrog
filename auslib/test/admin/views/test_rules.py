@@ -480,6 +480,8 @@ class TestRuleHistoryView(ViewTest):
         got = json.loads(ret.data)
         self.assertEquals(ret.status_code, 200, msg=ret.data)
         self.assertEquals(got["count"], 2)
+        self.assertTrue(u"rule_id" in got["rules"][0])
+        self.assertTrue(u"backgroundRate" in got["rules"][0])
 
     def testPostRevisionRollback(self):
         # Make some changes to a rule
