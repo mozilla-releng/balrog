@@ -36,7 +36,7 @@ module.exports = function(lineman) {
         prefix: 'api',
         enabled: true,
         host: 'localhost',
-        port: 9000
+        port: 8080
       }
     },
 
