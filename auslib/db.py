@@ -932,6 +932,10 @@ class ScheduledChangeTable(AUSTable):
         # updated unnecessarily when the base table's update method calls
         # mergeUpdate. If the base table update fails, this will get reverted
         # when the transaction is rolled back.
+        # We explicitly avoid using ScheduledChangeTable's update() method here
+        # because we don't want to trigger its validation of conditions. Doing so
+        # would raise any exception for any timestamp based changes, because
+        # they are already in the past when we're ready to enact them.
         super(ScheduledChangeTable, self).update(
             where=[self.sc_id == sc_id], what={"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"],
             transaction=transaction
