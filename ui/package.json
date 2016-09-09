@@ -1,0 +1,26 @@
+{
+  "name": "balrog-ui",
+  "title": "Balrog 2.0 Admin interface",
+  "version": "0.0.1",
+  "private": true,
+  "author": {
+    "name": "Peter Bengtsson",
+    "company": "Mozilla"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.6.3",
+    "jasmine-given": "^2.6.2",
+    "lineman": "^0.34.0",
+    "lineman-angular": "^0.3.0",
+    "lineman-less": "0.0.1",
+    "protractor": "^1.2.0-beta1",
+    "grunt": "^0.4.5",
+    "grunt-webfont": "^0.4.8",
+    "grunt-contrib-copy": "^0.7.0",
+    "grunt-contrib-jasmine": "^0.8.1"
+  },
+  "scripts": {
+    "start": "lineman run",
+    "test": "lineman spec-ci"
+  }
+}

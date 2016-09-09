@@ -1,0 +1,161 @@
+<div loader ng-show="loading"></div>
+
+<h2>
+  <span ng-if="!rule_id">Rules</span>
+  <span ng-if="rule_id">Revisions of a Rule</span>
+
+  <span class="count">
+    ({{ rule_id ? rules_count : filtered_items.length | number:0 }}
+    <span ng-bind="hasFilter() ? 'found' : 'in total'"></span>)
+  </span>
+
+  <button class="btn btn-primary btn-xs"
+          ng-show="!rule_id" ng-click="openNewRuleModal()">
+    Add a new Rule
+    <i class="glyphicon glyphicon-plus"></i>
+  </button>
+
+</h2>
+
+<div class="row">
+  <div class="col-sm-7">
+    <div class="pagination-container" ng-show="rules_count > pageSize">
+      <pagination
+        class="pagination-sm"
+        total-items="rule_id ? rules_count : filtered_items.length"
+        ng-model="currentPage"
+        items-per-page="pageSize"
+        max-size="maxSize"
+        boundary-links="true"
+      ></pagination>
+    </div>
+  </div>
+  <div class="col-sm-5 text-right">
+    <div class="row">
+      <label>Product/Channel filter:</label>
+      <select ng-model="pr_ch_filter" name="pr_ch_filter"
+        ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options.sort() track by pr_ch_pair">
+      </select>
+    </div>
+    <div class="row">
+      <label>Order by:</label>
+      <select ng-model="ordering_str" name="ordering_str"
+        ng-options="o.text for o in ordering_options track by o.value">
+      </select>
+    </div>
+  </div>
+</div>
+<div class="undofilters" ng-show="!filtered_items.length" ng-cloak>
+  <p ng-if="filters.search">
+    Filtered too much?<br>
+    Remove
+    <ul>
+      <li ng-repeat="word_regex in getWordRegexes()">
+        <a href="#" ng-click="filters.search = removeFilterSearchWord(word_regex[2], filters.search)">{{ word_regex[2] }}</a>
+      </li>
+    </ul>
+  </p>
+</div>
+
+<div class="panel panel-default" style="clear:right"
+     ng-repeat="rule in filtered_items = (rules | filter: filterBySelect) | orderBy:ordering | startFrom:(disableFilter || !rule_id) && ((currentPage - 1)*pageSize) | limitTo:pageSize">
+  <div class="panel-heading">
+
+    <h3 class="panel-title">
+      <div style="float: right">
+        <i ng-if="rule_id && $first && (currentPage == 1)">Current</i>
+        <button ng-if="rule_id && ((currentPage != 1) || !$first )" class="btn btn-default btn-xs" ng-click="openRevertModal(rule)">Revert to this</button>
+        <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">Update</button>
+        <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openNewScheduledRuleChangeModal(rule)">Schedule a Change</button>
+        <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button>
+        <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openDuplicateModal(rule)">Duplicate</button>
+        <a ng-show="!rule_id" class="btn btn-default btn-xs" ng-href="/rules/{{ rule.rule_id }}">History</a>
+      </div>
+
+      <i title="Product" ng-show="!rule.product">no product</i>
+      <b title="Product" ng-show="rule.product" ng-bind-html="highlightSearch(rule.product, 'product')"></b>
+      :
+      <i title="Channel" ng-show="!rule.channel">no channel</i>
+      <b title="Channel" ng-show="rule.channel" ng-bind-html="highlightSearch(rule.channel, 'channel')"></b>
+    </h3>
+  </div>
+  <div class="panel-body">
+    <div class="left" style="float: left">
+
+      <h5 title="Mapping">
+        Mapping: <span ng-show="rule.mapping">
+            <b ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></b>
+            <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.mapping)">
+                <i class="glyphicon glyphicon-eye-open"></i>
+                View
+            </a>
+            <a class="btn btn-default btn-xs" href="/releases/#{{ rule.mapping }}">
+                <i class="glyphicon glyphicon-pencil"></i>
+                Edit
+            </a>
+        </span>
+      </h5>
+      <h5 title="Data version">
+        Data version: <b>{{ rule.data_version }}</b>
+      </h5>
+      <h5 title="Rule ID">
+        Rule ID: <b>{{ rule.rule_id }}</b>
+      </h5>
+
+      <p ng-if="rule.comment">
+        <b>Comment:</b>
+        <span ng-bind-html="highlightSearch(rule.comment, 'comment')"></span>
+      </p>
+
+    </div>
+
+    <dl class="dl-horizontal" style="float:right">
+      <dt ng-show="rule.alias" title="Can be used in place of rule_id in REST operations">Alias:</dt>
+      <dd>{{ rule.alias }}</dd>
+      <dt ng-show="rule.backgroundRate !== null">Rate:</dt>
+      <dd>{{ rule.backgroundRate }}</dd>
+      <dt ng-show="rule.priority !== null">Priority:</dt>
+      <dd>{{ rule.priority }}</dd>
+      <dt ng-show="rule.version">Version:</dt>
+      <dd>{{ rule.version }}</dd>
+      <dt ng-show="rule.buildID">Build ID:</dt>
+      <dd>{{ rule.buildID }}</dd>
+      <dt ng-show="rule.locale">Locale:</dt>
+      <dd>{{ rule.locale }}</dd>
+      <dt ng-show="rule.distribution">Distribution:</dt>
+      <dd>{{ rule.distribution }}</dd>
+      <dt ng-show="rule.buildTarget">Build Target:</dt>
+      <dd>{{ rule.buildTarget }}</dd>
+      <dt ng-show="rule.osVersion">OS Version:</dt>
+      <dd>{{ rule.osVersion }}</dd>
+      <dt ng-show="rule.systemCapabilities">System Capabilities:</dt>
+      <dd>{{ rule.systemCapabilities }}</dd>
+      <dt ng-show="rule.distVersion">Dist Version:</dt>
+      <dd>{{ rule.distVersion }}</dd>
+      <dt ng-show="rule.whitelist">Whitelist:</dt>
+      <dd>{{ rule.whitelist }}</dd>
+      <dt ng-show="rule.update_type">Update type:</dt>
+      <dd>{{ rule.update_type }}</dd>
+      <dt ng-show="rule.headerArchitecture">Header Architecture:</dt>
+      <dd>{{ rule.headerArchitecture }}</dd>
+    </dl>
+
+  </div>
+  <div class="panel-footer" ng-show="rule_id">
+    Changed by <code>{{ rule.changed_by }}</code>
+    <span moment="rule.timestamp"></span>
+  </div>
+
+</div>
+
+
+<div class="pagination-container" ng-show="rules_count > pageSize">
+  <pagination
+    class="pagination-sm"
+    total-items="rule_id ? rules_count : filtered_items.length"
+    ng-model="currentPage"
+    items-per-page="pageSize"
+    max-size="maxSize"
+    boundary-links="true"
+  ></pagination>
+</div>
