@@ -6,7 +6,8 @@ MAINTAINER bhearsum@mozilla.com
 # uwsgi needs for routing support to be enabled.
 # We may be able to remove this after https://github.com/docker-library/python/pull/137
 # is fixed.
-RUN apt-get -q update && apt-get -q --yes install libpcre3 libpcre3-dev && apt-get clean
+# However, node and npm are to build the frontend. nodejs-legacy is needed by this version of npm.
+RUN apt-get -q update && apt-get -q --yes install libpcre3 libpcre3-dev nodejs nodejs-legacy npm && apt-get clean
 
 WORKDIR /app
 
@@ -28,6 +29,12 @@ COPY MANIFEST.in setup.py version.json /app/
 # well just include them here to avoid forking the Dockerfile.
 COPY .coveragerc requirements-test.txt run-tests.sh tox.ini version.txt /app/
 COPY aus-data-snapshots/ /app/aus-data-snapshots/
+
+WORKDIR /app/ui
+RUN npm install
+RUN npm run build
+
+WORKDIR /app
 
 ENTRYPOINT ["/app/uwsgi/run.sh"]
 CMD ["public"]
