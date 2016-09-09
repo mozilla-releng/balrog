@@ -5,6 +5,7 @@ from wtforms import StringField, IntegerField, SelectField, BooleanField
 from wtforms.widgets import TextInput, FileInput, HiddenInput
 from wtforms.validators import Required, Optional, NumberRange, Length, Regexp, ValidationError
 from auslib.util.comparison import get_op
+from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.util.versions import MozillaVersion
 
 import logging
@@ -123,6 +124,17 @@ def version_validator():
     return _validator
 
 
+def not_in_the_past():
+    def _validator(form, field):
+        if field.data is None:
+            return
+
+        if field.data < getMillisecondTimestamp():
+            raise ValidationError("Changes may not be scheduled in the past")
+
+    return _validator
+
+
 class DbEditableForm(Form):
     data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 
@@ -131,7 +143,7 @@ class ScheduledChangeForm(Form):
     telemetry_product = NullableStringField("Telemetry Product")
     telemetry_channel = NullableStringField("Telemetry Channel")
     telemetry_uptake = NullableStringField("Telemetry Uptake")
-    when = IntegerField("When", validators=[Optional()])
+    when = IntegerField("When", validators=[Optional(), not_in_the_past()])
 
 
 class NewPermissionForm(Form):

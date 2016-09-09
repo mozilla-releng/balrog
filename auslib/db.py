@@ -24,6 +24,7 @@ from auslib.global_state import cache, dbo
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import createBlob
 from auslib.util.comparison import string_compare, version_compare
+from auslib.util.timestamp import getMillisecondTimestamp
 
 import logging
 
@@ -544,10 +545,6 @@ class History(AUSTable):
             self.table.append_column(newcol)
         AUSTable.__init__(self, db, dialect, history=False, versioned=False)
 
-    def getTimestamp(self):
-        t = int(time.time() * 1000)
-        return t
-
     def forInsert(self, insertedKeys, columns, changed_by):
         """Inserts cause two rows in the History table to be created. The first
            one records the primary key data and NULLs for other row data. This
@@ -563,7 +560,7 @@ class History(AUSTable):
             # Make sure the primary keys are included in the second row as well
             columns[name] = insertedKeys[i]
 
-        ts = self.getTimestamp()
+        ts = getMillisecondTimestamp()
         queries.append(self._insertStatement(changed_by=changed_by, timestamp=ts - 1, **primary_key_data))
         queries.append(self._insertStatement(changed_by=changed_by, timestamp=ts, **columns))
         return queries
@@ -576,7 +573,7 @@ class History(AUSTable):
             row[str(k)] = rowData[k]
         # Tack on history table information to the row
         row['changed_by'] = changed_by
-        row['timestamp'] = self.getTimestamp()
+        row['timestamp'] = getMillisecondTimestamp()
         return self._insertStatement(**row)
 
     def forUpdate(self, rowData, changed_by):
@@ -586,7 +583,7 @@ class History(AUSTable):
         for k in rowData:
             row[str(k)] = rowData[k]
         row['changed_by'] = changed_by
-        row['timestamp'] = self.getTimestamp()
+        row['timestamp'] = getMillisecondTimestamp()
         return self._insertStatement(**row)
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
@@ -819,9 +816,12 @@ class ScheduledChangeTable(AUSTable):
 
         if "when" in conditions:
             try:
-                time.gmtime(conditions["when"])
+                time.gmtime(conditions["when"] / 1000)
             except:
                 raise ValueError("Cannot parse 'when' as a unix timestamp.")
+
+            if conditions["when"] < getMillisecondTimestamp():
+                raise ValueError("Cannot schedule changes in the past")
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         base_table_where = []
@@ -932,8 +932,14 @@ class ScheduledChangeTable(AUSTable):
         # updated unnecessarily when the base table's update method calls
         # mergeUpdate. If the base table update fails, this will get reverted
         # when the transaction is rolled back.
-        self.update(where=[self.sc_id == sc_id], what={"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"],
-                    transaction=transaction)
+        # We explicitly avoid using ScheduledChangeTable's update() method here
+        # because we don't want to trigger its validation of conditions. Doing so
+        # would raise any exception for any timestamp based changes, because
+        # they are already in the past when we're ready to enact them.
+        super(ScheduledChangeTable, self).update(
+            where=[self.sc_id == sc_id], what={"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"],
+            transaction=transaction
+        )
 
         # If the scheduled change had a data version, it means the row already
         # exists, and we need to use update() to enact it.
