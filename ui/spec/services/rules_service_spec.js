@@ -126,4 +126,75 @@ describe("Service: Rules", function() {
     this.$httpBackend.flush();
   }));
 
+  it("should return all scheduled rule changes", inject(function(Rules) {
+    var sample_sc = {
+      "sc_id": 1,
+      "scheduled_by": "jess",
+      "complete": false,
+      "when": new Date(123456789),
+      "base_rule_id": 2,
+      "base_product": "Firefox",
+      "base_channel": "release",
+      "base_data_version": 1
+    };
+    var sample_response = {
+      count: 1,
+      scheduled_changes: [sample_sc]
+    };
+    this.$httpBackend.expectGET("/api/scheduled_changes/rules?all=1")
+    .respond(200, JSON.stringify(sample_response));
+    Rules.getScheduledChanges().success(function(response) {
+      expect(response.count).toEqual(1);
+      expect(response.scheduled_changes[0]).toEqual(sample_sc);
+    });
+  }));
+
+  it("should return a single scheduled rule change", inject(function(Rules) {
+    var sample_response = {
+      "sc_id": 1,
+      "scheduled_by": "jess",
+      "complete": false,
+      "when": new Date(123456789),
+      "base_rule_id": 2,
+      "base_product": "Firefox",
+      "base_channel": "release",
+      "base_data_version": 1
+    };
+    this.$httpBackend.expectGET("/api/scheduled_changes/rules/1")
+    .respond(200, JSON.stringify(sample_response));
+    Rules.getScheduledChange(1).success(function(response) {
+      expect(response).toEqual(sample_response);
+    });
+  }));
+
+  it("should be able to create a scheduled change", inject(function(Rules) {
+    var sample_response = {
+      sc_id: 1
+    };
+    this.$httpBackend.expectPOST("/api/scheduled_changes/rules")
+    .respond(200, JSON.stringify(sample_response));
+    Rules.addScheduledChange({"when": new Date(123456789), "base_product": "Foo"}, "csrf").success(function(response) {
+      expect(response.sc_id).toEqual(1);
+    });
+  }));
+
+  it("should be able to update a scheduled change", inject(function(Rules) {
+    var sample_response = {
+      new_data_version: 2
+    };
+    this.$httpBackend.expectPOST("/api/scheduled_changes/rules/2")
+    .respond(200, JSON.stringify(sample_response));
+    Rules.updateScheduledChange(2, {"when": new Date(123456789), "base_mapping": "abc", "data_version": 1}, "csrf")
+    .success(function(response) {
+      expect(response).toEqual(sample_response);
+    });
+  }));
+
+  it("should be able to delete a scheduled change", inject(function(Rules) {
+    this.$httpBackend.expectDELETE("/api/scheduled_changes/rules/3?data_version=2&csrf_token=csrf")
+    .respond(200);
+    Rules.deleteScheduledChange(3, {sc_data_version: 2}, "csrf");
+  }));
+
+  // todo: add sc history methods
 });

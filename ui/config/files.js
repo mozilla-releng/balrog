@@ -23,8 +23,7 @@ module.exports = function(lineman) {
         "vendor/js/localforage.min.js",
         "vendor/js/angular-localForage.min.js",
 
-        // "vendor/js/**/*.js"
-        // "vendor/js/**/*.js"
+        "vendor/js/datetimepicker.js",
       ],
       app: [
         "app/js/app.js",
@@ -47,8 +46,6 @@ module.exports = function(lineman) {
       compile: {
         options: {
           paths: [
-            // "vendor/bootstrap/css/bootstrap.min.css",
-            // "vendor/bootstrap/fart.css",
             "vendor/css/**/*.css",
             "app/css/**/*.less"
           ]

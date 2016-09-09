@@ -23,7 +23,12 @@
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav navbar-right" ng-controller="NavController">
             <li ng-class="{active: isOn('/')}"><a href="/">Home</a></li>
-            <li ng-class="{active: isOn('/rules')}"><a href="/rules">Rules</a></li>
+            <li class="dropdown nav" ng-class="{active: isOn('/rules')}">
+                <a href="/rules">Rules <span class="caret"></span></a>
+                <ul class="dropdown-menu dropdown-menu-left">
+                    <li><a href="/rules/scheduled_changes">Scheduled Changes</a></li>
+                </ul>
+            </li>
             <li ng-class="{active: isOn('/releases')}"><a href="/releases">Releases</a></li>
             <li ng-class="{active: isOn('/permissions')}"><a href="/permissions">Permissions</a></li>
           </ul>

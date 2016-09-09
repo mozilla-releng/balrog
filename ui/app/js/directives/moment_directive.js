@@ -5,7 +5,7 @@ angular.module("app").directive('moment', function() {
     scope: {
       moment: '='
     },
-    template: '<time title="{{ date.format(\'LLLL\') }}">{{ date.fromNow() }}</time>',
+    template: '<time title="{{ date.format(\'dddd, MMMM D, YYYY HH:mm:ss \') + \'GMT\' + date.format(\'ZZ\') }}">{{ date.fromNow() }}</time>',
     controller: function($scope) {
       $scope.date = moment($scope.moment);
     }

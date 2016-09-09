@@ -3,5 +3,6 @@ angular.module("app", [
   "ui.bootstrap",
   "ngSanitize",
   "angular.css.injector",
-  "LocalForageModule"
+  "LocalForageModule",
+  "ui.bootstrap.datetimepicker",
 ]);

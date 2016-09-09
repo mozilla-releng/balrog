@@ -14,8 +14,11 @@ function ($scope, $modalInstance, CSRF, Rules, rule, rules) {
         $scope.rules.splice($scope.rules.indexOf($scope.rule), 1);
         $modalInstance.close();
       })
-      .error(function() {
-        console.error(arguments);
+      .error(function(response) {
+        if (typeof response === 'object') {
+          sweetAlert(response.exception);
+        }
+        console.error(response);
       })
       .finally(function() {
         $scope.saving = false;
