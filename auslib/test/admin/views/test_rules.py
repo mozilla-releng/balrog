@@ -796,9 +796,8 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEquals(db_data, expected)
 
-    @mock.patch("time.time")
-    def testAddScheduledChangeNewRule(self, time):
-        time.return_value = 300
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeNewRule(self):
         data = {
             "when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah",
             "update_type": "minor", "mapping": "a",
@@ -819,9 +818,8 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEquals(db_data, expected)
 
-    @mock.patch("time.time")
-    def testAddScheduledChangeInThePast(self, time):
-        time.return_value = 300
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeInThePast(self):
         data = {
             "when": 67, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah",
             "update_type": "minor", "mapping": "a",
@@ -829,9 +827,8 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 400, ret.data)
 
-    @mock.patch("time.time")
-    def testAddScheduledChangeNoPermissionsToSchedule(self, time):
-        time.return_value = 300
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeNoPermissionsToSchedule(self):
         data = {
             "when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah",
             "update_type": "minor", "mapping": "a",
@@ -839,9 +836,8 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/rules", data=data, username="bob")
         self.assertEquals(ret.status_code, 403, ret.data)
 
-    @mock.patch("time.time")
-    def testAddScheduledChangeNoPermissionsToMakeChange(self, time):
-        time.return_value = 300
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeNoPermissionsToMakeChange(self):
         data = {
             "when": 1234567, "priority": 120, "backgroundRate": 100, "product": "foo", "channel": "blah",
             "update_type": "minor", "mapping": "a",
@@ -849,9 +845,8 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/rules", data=data, username="mary")
         self.assertEquals(ret.status_code, 403, ret.data)
 
-    @mock.patch("time.time")
-    def testAddScheduledChangeMultipleConditions(self, time):
-        time.return_value = 300
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeMultipleConditions(self):
         data = {
             "when": 23893254, "telemetry_product": "foo", "telemetry_channel": "foo", "telemetry_uptake": 5,
             "priority": 120, "backgroundRate": 100, "update_type": "minor",
@@ -866,9 +861,8 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 400)
 
-    @mock.patch("time.time")
-    def testUpdateScheduledChange(self, time):
-        time.return_value = 300
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChange(self):
         data = {
             "when": 2000000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d",
             "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
@@ -888,16 +882,13 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEquals(db_data, expected)
 
-    @mock.patch("time.time")
-    def testUpdateScheduledChangeCantRemoveProductWithoutPermission(self, time):
-        time.return_value = 300
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeCantRemoveProductWithoutPermission(self):
         data = {"data_version": 1, "product": None, "sc_data_version": 1}
         ret = self._post("/scheduled_changes/rules/2", username="bob", data=data)
         self.assertEquals(ret.status_code, 403, ret.data)
 
-    @mock.patch("time.time")
-    def testUpdateRuleWithMergeError(self, time):
-        time.return_value = 300
+    def testUpdateRuleWithMergeError(self):
         data = {"mapping": "a", "data_version": 1}
         ret = self._post("/rules/1", data=data)
         self.assertEquals(ret.status_code, 400, ret.data)
@@ -987,9 +978,8 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
-    @mock.patch("time.time")
-    def testRevertScheduledChange(self, time):
-        time.return_value = 300
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testRevertScheduledChange(self):
         ret = self._post("/scheduled_changes/rules/3/revisions", data={"change_id": 2})
         self.assertEquals(ret.status_code, 200, ret.data)
 
