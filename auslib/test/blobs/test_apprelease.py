@@ -7,7 +7,7 @@ import unittest
 
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
-from auslib.blobs.base import BlobValidationError
+from auslib.blobs.base import BlobValidationError, app
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4, ReleaseBlobV5, DesupportBlob
 
@@ -96,9 +96,10 @@ class TestReleaseBlobBase(unittest.TestCase):
 class TestReleaseBlobV1(unittest.TestCase):
 
     def setUp(self):
+        app.config['DEBUG'] = True
+        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('a',), 'boring.com': ('b',)}
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist({'a.com': ('a',), 'boring.com': ('b',)})
 
     def testGetAppv(self):
         blob = ReleaseBlobV1(appv=1)
@@ -118,22 +119,22 @@ class TestReleaseBlobV1(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV1(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(dbo.releases.containsForbiddenDomain(blob, "a"))
+        self.assertFalse(blob.containsForbiddenDomain("a"))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV1(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, "a"))
+        self.assertTrue(blob.containsForbiddenDomain("a"))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, "a"))
+        self.assertTrue(blob.containsForbiddenDomain("a"))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = OrderedDict()
         updates["partial"] = dict(fileUrl="http://a.com/a")
         updates["complete"] = dict(fileUrl="http://evil.com/a")
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, "a"))
+        self.assertTrue(blob.containsForbiddenDomain("a"))
 
 
 class TestOldVersionSpecialCases(unittest.TestCase):
@@ -450,9 +451,11 @@ class TestSchema2Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {'a.com': ('j', 'k')}
+        app.config['DEBUG'] = True
+        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
+        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='j1', product='j', version='39.0', data_version=1, data="""
 {
     "name": "j1",
@@ -662,11 +665,11 @@ class TestSchema2Blob(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV2(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(dbo.releases.containsForbiddenDomain(blob, 'j'))
+        self.assertFalse(blob.containsForbiddenDomain('j'))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV2(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'j'))
+        self.assertTrue(blob.containsForbiddenDomain('j'))
 
 
 class TestSchema2BlobNightlyStyle(unittest.TestCase):
@@ -675,9 +678,11 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {'a.com': ('j',)}
+        app.config['DEBUG'] = True
+        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
+        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='j1', product='j', version='0.5', data_version=1, data="""
 {
     "name": "j1",
@@ -780,14 +785,14 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'a'))
+        self.assertTrue(blob.containsForbiddenDomain('a'))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = OrderedDict()
         updates["partial"] = dict(fileUrl="http://a.com/a")
         updates["complete"] = dict(fileUrl="http://evil.com/a")
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'a'))
+        self.assertTrue(blob.containsForbiddenDomain('a'))
 
 
 class TestSchema3Blob(unittest.TestCase):
@@ -795,9 +800,11 @@ class TestSchema3Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {'a.com': ('f', 'g')}
+        app.config['DEBUG'] = True
+        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
+        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='f1', product='f', version='22.0', data_version=1, data="""
 {
     "name": "f1",
@@ -1107,20 +1114,20 @@ class TestSchema3Blob(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV3(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(dbo.releases.containsForbiddenDomain(blob, 'f'))
+        self.assertFalse(blob.containsForbiddenDomain('f'))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV3(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'f'))
+        self.assertTrue(blob.containsForbiddenDomain('f'))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'f'))
+        self.assertTrue(blob.containsForbiddenDomain('f'))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'f'))
+        self.assertTrue(blob.containsForbiddenDomain('f'))
 
 
 class TestSchema4Blob(unittest.TestCase):
@@ -1128,9 +1135,11 @@ class TestSchema4Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {'a.com': ('h',)}
+        app.config['DEBUG'] = True
+        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
+        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data="""
 {
     "name": "h1",
@@ -1468,24 +1477,24 @@ class TestSchema4Blob(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
-        self.assertFalse(dbo.releases.containsForbiddenDomain(blob, 'h'))
+        self.assertFalse(blob.containsForbiddenDomain('h'))
 
     def testAllowedDomainWrongProduct(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'hhh'))
+        self.assertTrue(blob.containsForbiddenDomain('hhh'))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://evil.com/c"))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'h'))
+        self.assertTrue(blob.containsForbiddenDomain('h'))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV4(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'h'))
+        self.assertTrue(blob.containsForbiddenDomain('h'))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(dbo.releases.containsForbiddenDomain(blob, 'h'))
+        self.assertTrue(blob.containsForbiddenDomain('h'))
 
 
 class TestSchema5Blob(unittest.TestCase):
@@ -1493,9 +1502,11 @@ class TestSchema5Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {'a.com': ('h',)}
+        app.config['DEBUG'] = True
+        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
+        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data="""
 {
     "name": "h1",
@@ -1612,9 +1623,11 @@ class TestDesupportBlob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {'a.com': ('a',)}
+        app.config['DEBUG'] = True
+        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
+        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist(self.whitelistedDomains)
         self.blob = DesupportBlob()
         self.blob.loadJSON("""
 {

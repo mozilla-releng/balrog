@@ -43,7 +43,6 @@ cache.make_cache("blob_version", 500, 60)
 cache.make_cache("rules", 500, 30)
 
 dbo.setDb(os.environ["DBURI"])
-dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["SPECIAL_FORCE_HOSTS"] = SPECIAL_FORCE_HOSTS
 # version.json is created when the Docker image is built, and contains details
