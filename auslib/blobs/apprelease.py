@@ -700,7 +700,7 @@ class DesupportBlob(Blob):
 
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         xml = []
-        xml.append('    <update type="%s" unsupported="true" detailsURL="%s" displayVersion="%s">' % (update_type, self['detailsUrl'], self["displayVersion"]))
+        xml.append('    <update type="%s" unsupported="true" detailsURL="%s" displayVersion="%s">' % (update_type, self['detailsUrl'].replace("%LOCALE%", updateQuery['locale']).replace("%VERSION%", updateQuery['version']), self["displayVersion"]))
         return xml
 
     def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
