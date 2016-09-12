@@ -1626,7 +1626,7 @@ class TestDesupportBlob(unittest.TestCase):
 """)
 
     def testDesupport(self):
-        updateQuery = []
+        updateQuery = {}
         returned_header = self.blob.getHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned_footer = self.blob.getFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
