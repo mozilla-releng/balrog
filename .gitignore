@@ -9,4 +9,3 @@ cef.log
 .tox
 *.egg-info
 build
-dist

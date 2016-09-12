@@ -1,0 +1,145 @@
+<div loader ng-show="loading"></div>
+
+<h2>
+  <span>Scheduled Rule Changes</span>
+
+  <span class="count">
+    ({{ filtered_items.length | number:0 }}
+    <span>found)</span>
+  </span>
+
+  <button class="btn btn-primary btn-xs" ng-click="openNewScheduledRuleChangeModal()">
+    Add a new Scheduled Rule Change
+    <i class="glyphicon glyphicon-plus"></i>
+  </button>
+
+</h2>
+
+<div class="row">
+  <div class="col-sm-6">
+    <div class="pagination-container" ng-show="filtered_items.length > pageSize">
+      <pagination
+        class="pagination-sm"
+        total-items="filtered_items.length"
+        ng-model="currentPage"
+        items-per-page="pageSize"
+      ></pagination>
+    </div>
+  </div>
+  <div class="col-sm-6 text-right">
+    <div class="row">
+      <label>State:</label>
+      <select ng-model="state_str" name="state_filter" ng-options="o.text for o in state_filter track by o.value">
+      </select>
+    </div>
+    <div class="row">
+      <label>Order by:</label>
+      <select ng-model="ordering_str" name="ordering_str"
+        ng-options="o.text for o in ordering_options track by o.value">
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default" style="clear:right"
+     ng-repeat="sc in filtered_items = (scheduled_changes | filter: filterBySelect) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
+  <div class="panel-heading">
+
+    <h3 class="panel-title">
+      <div style="float: right">
+        <button class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
+        <button class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
+        <a class="btn btn-default btn-xs" ng-href="/scheduled_changes/rules/{{ sc.sc_id }}">History</a>
+      </div>
+
+      <i title="Product" ng-show="!sc.product">no product</i>
+      <b title="Product" ng-show="sc.product">{{ sc.product }}</b>
+      :
+      <i title="Channel" ng-show="!sc.channel">no channel</i>
+      <b title="Channel" ng-show="sc.channel">{{ sc.channel }}</b>
+    </h3>
+  </div>
+  <div class="panel-body">
+    <div class="left" style="float: left">
+      <h5 title="Scheduled By">
+        Scheduled By: <b>{{ sc.scheduled_by }}</b>
+      </h5>
+      <h5 ng-show="sc.when" title="When">
+        When: <b><span ng-bind-html="formatMoment(sc.when)"></span></b>
+      </h5>
+      <h5 ng-show="sc.telemetry_product" title="Telemetry Product">
+        Telemetry Product: <b>{{ sc.telemetry_product }}</b>
+      </h5>
+      <h5 ng-show="sc.telemetry_channel" title="Telemetry Channel">
+        Telemetry Channel: <b>{{ sc.telemetry_channel }}</b>
+      </h5>
+      <h5 ng-show="sc.telemetry_uptake" title="Telemetry Uptake">
+        Telemetry Uptake: <b>{{ sc.telemetry_uptake }}</b>
+      </h5>
+      <h5 title="Scheduled Change ID">
+        Scheduled Change ID: <b>{{ sc.sc_id }}</b>
+      </h5>
+      <h5 title="Data Version">
+        Data version: <b>{{ sc.sc_data_version }}</b>
+      </h5>
+    </div>
+
+    <dl class="dl-horizontal" style="float:right">
+      <dt>Rule ID:</dt>
+      <dd ng-show="sc.rule_id">{{ sc.rule_id }}</dd>
+      <dd ng-show="!sc.rule_id">New!</dd>
+      <dt ng-show="sc.data_version">Data Version:</dt>
+      <dd>{{ sc.data_version }}</dd>
+      <dt ng-show="sc.mapping">Mapping:</dt>
+      <dd>
+        <span>{{ sc.mapping }}</span>
+        <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(sc.mapping)">
+          <i class="glyphicon glyphicon-eye-open"></i>
+            View
+        </a>
+      </dd>
+      <dt ng-show="sc.alias" title="Can be used in place of rule_id in REST operations">Alias:</dt>
+      <dd>{{ sc.alias }}</dd>
+      <dt ng-show="sc.backgroundRate !== null">Rate:</dt>
+      <dd>{{ sc.backgroundRate }}</dd>
+      <dt ng-show="sc.priority !== null">Priority:</dt>
+      <dd>{{ sc.priority }}</dd>
+      <dt ng-show="sc.version">Version:</dt>
+      <dd>{{ sc.version }}</dd>
+      <dt ng-show="sc.buildID">Build ID:</dt>
+      <dd>{{ sc.buildID }}</dd>
+      <dt ng-show="sc.locale">Locale:</dt>
+      <dd>{{ sc.locale }}</dd>
+      <dt ng-show="sc.distribution">Distribution:</dt>
+      <dd>{{ sc.distribution }}</dd>
+      <dt ng-show="sc.buildTarget">Build Target:</dt>
+      <dd>{{ sc.buildTarget }}</dd>
+      <dt ng-show="sc.osVersion">OS Version:</dt>
+      <dd>{{ sc.osVersion }}</dd>
+      <dt ng-show="sc.systemCapabilities">System Capabilities:</dt>
+      <dd>{{ sc.systemCapabilities }}</dd>
+      <dt ng-show="sc.distVersion">Dist Version:</dt>
+      <dd>{{ sc.distVersion }}</dd>
+      <dt ng-show="sc.whitelist">Whitelist:</dt>
+      <dd>{{ sc.whitelist }}</dd>
+      <dt ng-show="sc.update_type">Update type:</dt>
+      <dd>{{ sc.update_type }}</dd>
+      <dt ng-show="sc.headerArchitecture">Header Architecture:</dt>
+      <dd>{{ sc.headerArchitecture }}</dd>
+      <dt ng-show="sc.comment">Comment:</dt>
+      <dd>{{ sc.comment }}</dd>
+    </dl>
+
+  </div>
+
+</div>
+
+
+<div class="pagination-container" ng-show="filtered_items.length > pageSize">
+  <pagination
+    class="pagination-sm"
+    total-items="filtered_items.length"
+    ng-model="currentPage"
+    items-per-page="pageSize"
+  ></pagination>
+</div>
