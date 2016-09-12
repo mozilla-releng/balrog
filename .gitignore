@@ -8,4 +8,11 @@ cef.log
 .cache
 .tox
 *.egg-info
+
 build
+generated
+dist
+
+ui/node_modules
+
+.DS_Store
