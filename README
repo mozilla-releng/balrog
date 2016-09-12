@@ -18,3 +18,12 @@ http://127.0.0.1:8080
 
 And you can access the public interface with URLs such as:
 http://127.0.0.1:9090/update/3/Firefox/33.0/20141202185629/Darwin_x86_64-gcc3-u-i386-x86_64/en-US/release/default/default/default/update.xml?force=1
+
+You may also want to run all tests available:
+
+  ./run-tests.sh
+
+If you prefer to run only tests for the front-end or the back-end, you can use:
+
+  ./run-tests.sh frontend
+  ./run-tests.sh backend

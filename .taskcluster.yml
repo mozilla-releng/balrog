@@ -13,7 +13,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh backend"
       features:
         dind: true
     extra:
@@ -23,10 +23,34 @@ tasks:
           - pull_request.*
           - push
     metadata:
-      name: Balrog Tests
-      description: Balrog Tests
+      name: Balrog back-end tests
+      description: Balrog Python tests
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
+
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    payload:
+      maxRunTime: 1200
+      image: "rail/python-test-runner"
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh frontend"
+      features:
+        dind: true
+    extra:
+      github:
+        env: true
+        events:
+          - pull_request.*
+          - push
+    metadata:
+      name: Balrog front-end tests
+      description: Balrog JavaScript tests
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+
 # TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
@@ -54,6 +78,7 @@ tasks:
       description: Balrog Docker Image Creation
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
+
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     payload:
@@ -76,6 +101,7 @@ tasks:
       description: Balrog Agent Tests
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
+
 # TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
