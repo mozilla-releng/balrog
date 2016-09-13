@@ -18,6 +18,26 @@ class TestHistoryView(ViewTest):
         self.assertStatusCode(ret, 404)
         self.assertTrue('Bad change_id' in ret.data)
 
+    def testFieldViewCheckIntegerValue(self):
+        data = json.dumps(dict(detailsUrl='InbhalInt', fakePartials=True, schema_version=1, name="d", hashFunction="sha512"))
+        ret = self._post(
+            '/releases/d',
+            data=dict(data=data, product='d', data_version=1)
+        )
+        self.assertStatusCode(ret, 200)
+
+        table = dbo.releases.history
+        query = table.t.count()
+        count, = query.execute().first()
+        self.assertEqual(count, 1)
+
+        row, = table.select()
+        change_id = row['change_id']
+
+        url = '/history/view/release/%d/data_version' % change_id
+        ret = self.client.get(url)
+        self.assertStatusCode(ret, 200)
+
     def testFieldViewBadValuesBadField(self):
         ret = self._put('/users/bob/permissions/admin')
         self.assertStatusCode(ret, 201)
