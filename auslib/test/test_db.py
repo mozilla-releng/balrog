@@ -816,8 +816,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertRejectedWithAlreadyScheduledChange(self):
         what = {"fooid": 2, "foo": "b", "bar": "thing2", "data_version": 2, "when": 929000}
-        # TODO: what exception should this raise?
-        self.assertRaises(Exception, self.sc_table.insert, changed_by="bob", **what)
+        self.assertRaises(ChangeScheduledError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateNoChangesSinceCreation(self):
