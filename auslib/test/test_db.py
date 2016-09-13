@@ -639,13 +639,15 @@ class ScheduledChangesTableMixin(object):
         self.metadata.create_all()
         self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
         self.table.t.insert().execute(fooid=2, foo="b", bar="bb", data_version=2)
-        self.table.t.insert().execute(fooid=3, foo="c", data_version=1)
+        self.table.t.insert().execute(fooid=3, foo="c", data_version=2)
         self.sc_table.t.insert().execute(sc_id=1, when=234000, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1,
                                          data_version=1)
         self.sc_table.t.insert().execute(sc_id=2, when=567000, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1)
         self.sc_table.t.insert().execute(sc_id=3, when=1000, scheduled_by="bob", complete=True, base_fooid=2, base_foo="b", base_bar="bb", base_data_version=1,
                                          data_version=1)
         self.sc_table.t.insert().execute(sc_id=4, when=333000, scheduled_by="bob", base_fooid=2, base_foo="dd", base_bar="bb", base_data_version=2,
+                                         data_version=1)
+        self.sc_table.t.insert().execute(sc_id=5, when=39000, scheduled_by="bob", complete=True, base_fooid=3, base_foo="c", base_bar=None, base_data_version=1,
                                          data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
@@ -714,22 +716,22 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertForExistingRow(self):
-        what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 1, "when": 999000}
+        what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000}
         self.sc_table.insert(changed_by="bob", **what)
-        row = self.sc_table.t.select().where(self.sc_table.sc_id == 5).execute().fetchall()[0]
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 6).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
         self.assertEquals(row.when, 999000)
         self.assertEquals(row.data_version, 1)
         self.assertEquals(row.base_fooid, 3)
         self.assertEquals(row.base_foo, "thing")
         self.assertEquals(row.base_bar, "thing2")
-        self.assertEquals(row.base_data_version, 1)
+        self.assertEquals(row.base_data_version, 2)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertForNewRow(self):
         what = {"foo": "newthing1", "when": 888000}
         self.sc_table.insert(changed_by="bob", **what)
-        row = self.sc_table.t.select().where(self.sc_table.sc_id == 5).execute().fetchall()[0]
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 6).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
         self.assertEquals(row.when, 888000)
         self.assertEquals(row.data_version, 1)
@@ -797,8 +799,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         """Tests to make sure a scheduled change update is rejected if data
         version changes between grabbing the row to create a change, and
         submitting the scheduled change."""
-        self.table.update([self.table.fooid == 3], what={"foo": "bb"}, changed_by="bob", old_data_version=1)
-        what = {"fooid": 3, "data_version": 1, "bar": "blah", "when": 456000}
+        self.table.update([self.table.fooid == 3], what={"foo": "bb"}, changed_by="bob", old_data_version=2)
+        what = {"fooid": 3, "data_version": 2, "bar": "blah", "when": 456000}
         self.assertRaises(OutdatedDataError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
@@ -808,8 +810,14 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithoutPermissionOnBaseTableForUpdate(self):
-        what = {"fooid": 3, "bar": "blah", "when": 343000, "data_version": 1}
+        what = {"fooid": 3, "bar": "blah", "when": 343000, "data_version": 2}
         self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertRejectedWithAlreadyScheduledChange(self):
+        what = {"fooid": 2, "foo": "b", "bar": "thing2", "data_version": 2, "when": 929000}
+        # TODO: what exception should this raise?
+        self.assertRaises(Exception, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateNoChangesSinceCreation(self):
@@ -929,7 +937,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(ChangeScheduledError, self.table.delete, where=[self.table.fooid == 2], changed_by="bob", old_data_version=2)
 
     def testBaseTableDeleteSucceedsWithoutScheduledChange(self):
-        self.table.delete(where=[self.table.fooid == 3], changed_by="bob", old_data_version=1)
+        self.table.delete(where=[self.table.fooid == 3], changed_by="bob", old_data_version=2)
 
     def testEnactChangeNewRow(self):
         self.table.scheduled_changes.enactChange(2, "nancy")
