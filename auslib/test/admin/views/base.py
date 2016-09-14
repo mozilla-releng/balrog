@@ -87,7 +87,6 @@ class ViewTest(unittest.TestCase):
             rule_id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='minor', data_version=1
         )
         self.client = app.test_client()
-        self.client.application.config['WHITELISTED_DOMAINS'] = {'good.com': ('a', 'b', 'c', 'd')}
 
     def tearDown(self):
         dbo.reset()

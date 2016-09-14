@@ -25,6 +25,7 @@ from auslib.global_state import cache, dbo
 from auslib.blobs.base import createBlob
 from auslib.util.comparison import string_compare, version_compare
 from auslib.util.timestamp import getMillisecondTimestamp
+from auslib.web.base import app
 
 import logging
 
@@ -1386,7 +1387,8 @@ class Releases(AUSTable):
         blob.validate()
         if columns["name"] != blob["name"]:
             raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
-        if blob.containsForbiddenDomain(columns["product"]):
+        if blob.containsForbiddenDomain(columns["product"],
+                                        app.config.get("WHITELISTED_DOMAINS")):
             raise ValueError("Release blob contains forbidden domain.")
         columns["data"] = blob.getJSON()
 
@@ -1437,7 +1439,9 @@ class Releases(AUSTable):
                 name = what.get("name", name)
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-                if blob.containsForbiddenDomain(what.get("product", current_release["product"])):
+                if blob.containsForbiddenDomain(what.get("product",
+                                                         current_release["product"]),
+                                                app.config.get("WHITELISTED_DOMAINS")):
                     raise ValueError("Release blob contains forbidden domain.")
                 what['data'] = blob.getJSON()
         if not dryrun:
@@ -1522,7 +1526,8 @@ class Releases(AUSTable):
                     releaseBlob['platforms'][a] = {'alias': platform}
 
         releaseBlob.validate()
-        if releaseBlob.containsForbiddenDomain(product):
+        if releaseBlob.containsForbiddenDomain(product,
+                                               app.config.get("WHITELISTED_DOMAINS")):
             raise ValueError("Release blob contains forbidden domain.")
         what = dict(data=releaseBlob.getJSON())
 

@@ -7,7 +7,8 @@ import unittest
 
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
-from auslib.blobs.base import BlobValidationError, app
+from auslib.web.base import app
+from auslib.blobs.base import BlobValidationError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4, ReleaseBlobV5, DesupportBlob
 
@@ -119,22 +120,26 @@ class TestReleaseBlobV1(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV1(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(blob.containsForbiddenDomain("a"))
+        self.assertFalse(blob.containsForbiddenDomain("a",
+                                                      app.config["WHITELISTED_DOMAINS"]))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV1(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(blob.containsForbiddenDomain("a"))
+        self.assertTrue(blob.containsForbiddenDomain("a",
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
-        self.assertTrue(blob.containsForbiddenDomain("a"))
+        self.assertTrue(blob.containsForbiddenDomain("a",
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = OrderedDict()
         updates["partial"] = dict(fileUrl="http://a.com/a")
         updates["complete"] = dict(fileUrl="http://evil.com/a")
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(blob.containsForbiddenDomain("a"))
+        self.assertTrue(blob.containsForbiddenDomain("a",
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
 
 class TestOldVersionSpecialCases(unittest.TestCase):
@@ -665,11 +670,13 @@ class TestSchema2Blob(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV2(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(blob.containsForbiddenDomain('j'))
+        self.assertFalse(blob.containsForbiddenDomain('j',
+                                                      app.config["WHITELISTED_DOMAINS"]))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV2(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(blob.containsForbiddenDomain('j'))
+        self.assertTrue(blob.containsForbiddenDomain('j',
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
 
 class TestSchema2BlobNightlyStyle(unittest.TestCase):
@@ -785,14 +792,16 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
-        self.assertTrue(blob.containsForbiddenDomain('a'))
+        self.assertTrue(blob.containsForbiddenDomain('a',
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = OrderedDict()
         updates["partial"] = dict(fileUrl="http://a.com/a")
         updates["complete"] = dict(fileUrl="http://evil.com/a")
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(blob.containsForbiddenDomain('a'))
+        self.assertTrue(blob.containsForbiddenDomain('a',
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
 
 class TestSchema3Blob(unittest.TestCase):
@@ -1114,20 +1123,24 @@ class TestSchema3Blob(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV3(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(blob.containsForbiddenDomain('f'))
+        self.assertFalse(blob.containsForbiddenDomain('f',
+                                                      app.config["WHITELISTED_DOMAINS"]))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV3(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(blob.containsForbiddenDomain('f'))
+        self.assertTrue(blob.containsForbiddenDomain('f',
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
-        self.assertTrue(blob.containsForbiddenDomain('f'))
+        self.assertTrue(blob.containsForbiddenDomain('f',
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(blob.containsForbiddenDomain('f'))
+        self.assertTrue(blob.containsForbiddenDomain('f',
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
 
 class TestSchema4Blob(unittest.TestCase):
@@ -1477,24 +1490,29 @@ class TestSchema4Blob(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
-        self.assertFalse(blob.containsForbiddenDomain('h'))
+        self.assertFalse(blob.containsForbiddenDomain('h',
+                                                      app.config["WHITELISTED_DOMAINS"]))
 
     def testAllowedDomainWrongProduct(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
-        self.assertTrue(blob.containsForbiddenDomain('hhh'))
+        self.assertTrue(blob.containsForbiddenDomain('hhh',
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://evil.com/c"))))
-        self.assertTrue(blob.containsForbiddenDomain('h'))
+        self.assertTrue(blob.containsForbiddenDomain('h',
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV4(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
-        self.assertTrue(blob.containsForbiddenDomain('h'))
+        self.assertTrue(blob.containsForbiddenDomain('h',
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(blob.containsForbiddenDomain('h'))
+        self.assertTrue(blob.containsForbiddenDomain('h',
+                                                     app.config["WHITELISTED_DOMAINS"]))
 
 
 class TestSchema5Blob(unittest.TestCase):
