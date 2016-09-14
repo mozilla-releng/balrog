@@ -29,6 +29,7 @@ class ViewTest(unittest.TestCase):
 }
 """)
         dbo.setDb('sqlite:///:memory:')
+        dbo.setDomainWhitelist({'good.com': ('a', 'b', 'c', 'd')})
         dbo.create()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.permissions.t.insert().execute(permission='permission', username='bob', data_version=1)

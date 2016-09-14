@@ -125,4 +125,9 @@ class Blob(dict):
         raise NotImplementedError()
 
     def containsForbiddenDomain(self, product, whitelistedDomains):
-        return False
+        raise NotImplementedError()
+
+    def validateAndCheckForbiddenDomain(self, product, whitelistedDomains):
+        self.validate()
+        if self.containsForbiddenDomain(product, whitelistedDomains):
+            raise ValueError("Blob contains forbidden domain(s)")

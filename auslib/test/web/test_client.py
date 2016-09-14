@@ -58,6 +58,7 @@ class ClientTestBase(ClientTestCommon):
 """)
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
+        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e', 'b2g')})
         self.client = app.test_client()
         self.view = ClientRequestView()
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='b',

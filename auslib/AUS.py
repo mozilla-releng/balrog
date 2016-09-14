@@ -20,7 +20,6 @@ def isForbiddenUrl(url, product, whitelistedDomains):
         whitelistedDomains = []
     domain = urlparse(url)[1]
     if domain not in whitelistedDomains:
-        print whitelistedDomains
         logging.warning("Forbidden domain: %s", domain)
         return True
     if product not in whitelistedDomains[domain]:

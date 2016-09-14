@@ -51,6 +51,7 @@ if os.environ.get("NOTIFY_TO_ADDR"):
         os.environ["NOTIFY_TO_ADDR"],
         os.environ["NOTIFY_FROM_ADDR"]
     )
+dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["PAGE_TITLE"] = "Balrog Administration"
 application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]

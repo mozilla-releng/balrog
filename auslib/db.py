@@ -21,11 +21,9 @@ import dictdiffer
 import dictdiffer.merge
 
 from auslib.global_state import cache, dbo
-
 from auslib.blobs.base import createBlob
 from auslib.util.comparison import string_compare, version_compare
 from auslib.util.timestamp import getMillisecondTimestamp
-from auslib.web.base import app
 
 import logging
 
@@ -1261,6 +1259,8 @@ class Rules(AUSTable):
 class Releases(AUSTable):
 
     def __init__(self, db, metadata, dialect):
+        self.domainWhitelist = []
+
         self.table = Table('releases', metadata,
                            Column('name', String(100), primary_key=True),
                            Column('product', String(15), nullable=False),
@@ -1273,6 +1273,9 @@ class Releases(AUSTable):
             dataType = Text
         self.table.append_column(Column('data', dataType, nullable=False))
         AUSTable.__init__(self, db, dialect)
+
+    def setDomainWhitelist(self, domainWhitelist):
+        self.domainWhitelist = domainWhitelist
 
     def getReleases(self, name=None, product=None, limit=None, transaction=None):
         self.log.debug("Looking for releases with:")
@@ -1384,12 +1387,9 @@ class Releases(AUSTable):
         if not self.db.hasPermission(changed_by, "release", "create", columns["product"], transaction):
             raise PermissionDeniedError("%s is not allowed to create releases for product %s" % (changed_by, columns["product"]))
 
-        blob.validate()
+        blob.validateAndCheckForbiddenDomain(columns["product"], self.domainWhitelist)
         if columns["name"] != blob["name"]:
             raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
-        if blob.containsForbiddenDomain(columns["product"],
-                                        app.config.get("WHITELISTED_DOMAINS")):
-            raise ValueError("Release blob contains forbidden domain.")
         columns["data"] = blob.getJSON()
 
         if not dryrun:
@@ -1435,14 +1435,11 @@ class Releases(AUSTable):
                         raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, what.get("product")))
 
             if blob:
-                blob.validate()
+                blob.validateAndCheckForbiddenDomain(what.get("product", current_release["product"]),
+                                                     self.domainWhitelist)
                 name = what.get("name", name)
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-                if blob.containsForbiddenDomain(what.get("product",
-                                                         current_release["product"]),
-                                                app.config.get("WHITELISTED_DOMAINS")):
-                    raise ValueError("Release blob contains forbidden domain.")
                 what['data'] = blob.getJSON()
         if not dryrun:
             for release in current_releases:
@@ -1525,10 +1522,7 @@ class Releases(AUSTable):
                 if a not in releaseBlob['platforms']:
                     releaseBlob['platforms'][a] = {'alias': platform}
 
-        releaseBlob.validate()
-        if releaseBlob.containsForbiddenDomain(product,
-                                               app.config.get("WHITELISTED_DOMAINS")):
-            raise ValueError("Release blob contains forbidden domain.")
+        releaseBlob.validateAndCheckForbiddenDomain(product, self.domainWhitelist)
         what = dict(data=releaseBlob.getJSON())
 
         super(Releases, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
@@ -1893,6 +1887,9 @@ class AUSDatabase(object):
         self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.metadata.bind = self.engine
+
+    def setDomainWhitelist(self, domainWhitelist):
+        self.releasesTable.setDomainWhitelist(domainWhitelist)
 
     def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr)
