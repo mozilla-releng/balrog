@@ -105,8 +105,10 @@ class HistoryAdminView(AdminView):
                 # prep the value for being shown in revision_row.html
                 if value is None:
                     value = 'NULL'
+                elif isinstance(value, int):
+                    value = unicode(str(value), 'utf8')
                 elif not isinstance(value, basestring):
-                    value = unicode(value)
+                    value = unicode(value, 'utf8')
                 rev[key] = value
 
             rev['_different'] = different

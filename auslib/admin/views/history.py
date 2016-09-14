@@ -37,6 +37,8 @@ class FieldView(AdminView):
                 pass
         elif value is None:
             value = 'NULL'
+        elif isinstance(value, int):
+            value = unicode(str(value), 'utf8')
         else:
             value = unicode(value, 'utf8')
         return value
