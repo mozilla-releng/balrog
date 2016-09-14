@@ -75,7 +75,8 @@ class ReadOnlyError(SQLAlchemyError):
 
 
 class ChangeScheduledError(SQLAlchemyError):
-    """Raised when a row cannot be deleted because there's a scheduled change for it."""
+    """Raised when a Scheduled Change cannot be created, modified, or deleted
+    for data consistency reasons."""
 
 
 class AUSTransaction(object):
@@ -824,10 +825,16 @@ class ScheduledChangeTable(AUSTable):
                 raise ValueError("Cannot schedule changes in the past")
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        # We need to do additional checks for any changes that are modifying an
+        # existing row. These lists will have PK clauses in them at the end of
+        # the following loop, but only if the change contains a PK. This makes
+        # it easy to do the extra checks conditionally afterwards.
         base_table_where = []
+        sc_table_where = []
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
             if pk in columns:
+                sc_table_where.append(getattr(self, "base_%s" % pk) == columns[pk])
                 # If a non-null data_version was provided it implies that the
                 # base table row should already exist. This will be checked for
                 # after we finish basic checks on the individual parts of the
@@ -854,6 +861,13 @@ class ScheduledChangeTable(AUSTable):
 
             if current_data_version and current_data_version[0]["data_version"] != columns.get("data_version"):
                 raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
+
+        # If the change has a PK in it, we must ensure that no existing change
+        # with that PK is active before allowing it.
+        if sc_table_where:
+            sc_table_where.append(self.complete == False) # noqa because we need to use == for sqlalchemy operator overloading to work
+            if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
+                raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
 
         what = self._prefixColumns(columns)
         conditions = {}

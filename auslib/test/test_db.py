@@ -364,150 +364,126 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertTrue('changed_by' in columns)
         self.assertTrue('timestamp' in columns)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponInsert(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
-            self.test.insert(changed_by='george', id=4, foo=0)
-            ret = self.test.history.t.select().execute().fetchall()
-            self.assertEquals(ret, [(1, 'george', 999, 4, None, None),
-                                    (2, 'george', 1000, 4, 0, 1)])
+        self.test.insert(changed_by='george', id=4, foo=0)
+        ret = self.test.history.t.select().execute().fetchall()
+        self.assertEquals(ret, [(1, 'george', 999, 4, None, None),
+                                (2, 'george', 1000, 4, 0, 1)])
 
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponAutoincrementInsert(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
-            self.test.insert(changed_by='george', foo=0)
-            ret = self.test.history.t.select().execute().fetchall()
-            self.assertEquals(ret, [(1, 'george', 999, 4, None, None),
-                                    (2, 'george', 1000, 4, 0, 1)])
+        self.test.insert(changed_by='george', foo=0)
+        ret = self.test.history.t.select().execute().fetchall()
+        self.assertEquals(ret, [(1, 'george', 999, 4, None, None),
+                                (2, 'george', 1000, 4, 0, 1)])
 
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponDelete(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
-            self.test.delete(changed_by='bobby', where=[self.test.id == 1],
-                             old_data_version=1)
-            ret = self.test.history.t.select().execute().fetchone()
-            self.assertEquals(ret, (1, 'bobby', 1000, 1, None, None))
+        self.test.delete(changed_by='bobby', where=[self.test.id == 1], old_data_version=1)
+        ret = self.test.history.t.select().execute().fetchone()
+        self.assertEquals(ret, (1, 'bobby', 1000, 1, None, None))
 
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponUpdate(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
-            self.test.update(changed_by='heather', where=[self.test.id == 2], what=dict(foo=99),
-                             old_data_version=1)
-            ret = self.test.history.t.select().execute().fetchone()
-            self.assertEquals(ret, (1, 'heather', 1000, 2, 99, 2))
+        self.test.update(changed_by='heather', where=[self.test.id == 2], what=dict(foo=99), old_data_version=1)
+        ret = self.test.history.t.select().execute().fetchone()
+        self.assertEquals(ret, (1, 'heather', 1000, 2, 99, 2))
 
+    @mock.patch("time.time", mock.MagicMock(return_value=1234567890.123456))
     def testHistoryTimestampMaintainsPrecision(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1234567890.123456
-            self.test.insert(changed_by='bob', id=4)
-            ret = select([self.test.history.timestamp]).where(self.test.history.id == 4).execute().fetchone()[0]
-            # Insert decrements the timestamp
-            self.assertEquals(ret, 1234567890122)
+        self.test.insert(changed_by='bob', id=4)
+        ret = select([self.test.history.timestamp]).where(self.test.history.id == 4).execute().fetchone()[0]
+        # Insert decrements the timestamp
+        self.assertEquals(ret, 1234567890122)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUpdateRollback(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
+        # Update one of the rows
+        self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id == 2).execute()
+        self.test.history.t.insert(values=dict(changed_by='heather', change_id=1, timestamp=1000, id=2, data_version=2, foo=99)).execute()
 
-            # Update one of the rows
-            self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id == 2).execute()
-            self.test.history.t.insert(values=dict(changed_by='heather', change_id=1, timestamp=1000, id=2, data_version=2, foo=99)).execute()
+        # Update it again (this is the update we will rollback)
+        self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id == 2).execute()
+        self.test.history.t.insert(values=dict(changed_by='heather', change_id=2, timestamp=1000, id=2, data_version=3, foo=100)).execute()
 
-            # Update it again (this is the update we will rollback)
-            self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id == 2).execute()
-            self.test.history.t.insert(values=dict(changed_by='heather', change_id=2, timestamp=1000, id=2, data_version=3, foo=100)).execute()
+        # Rollback the second update
+        self.test.history.rollbackChange(2, 'heather')
 
-            # Rollback the second update
-            self.test.history.rollbackChange(2, 'heather')
+        ret = self.test.history.t.select().execute().fetchall()
+        self.assertEquals(ret[-1], (3, 'heather', 1000, 2, 99, 4))
 
-            ret = self.test.history.t.select().execute().fetchall()
-            self.assertEquals(ret[-1], (3, 'heather', 1000, 2, 99, 4))
+        ret = self.test.t.select().where(self.test.id == 2).execute().fetchall()
+        self.assertEquals(ret, [(2, 99, 4)])
 
-            ret = self.test.t.select().where(self.test.id == 2).execute().fetchall()
-            self.assertEquals(ret, [(2, 99, 4)])
-
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryInsertRollback(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
+        ret = self.test.t.select().execute().fetchall()
 
-            ret = self.test.t.select().execute().fetchall()
+        # Insert the item
+        self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
+        self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
+        self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id=4, data_version=1, foo=271)).execute()
 
-            # Insert the item
-            self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
-            self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
-            self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id=4, data_version=1, foo=271)).execute()
+        # Rollback the 'insert'
+        self.test.history.rollbackChange(2, 'george')
 
-            # Rollback the 'insert'
-            self.test.history.rollbackChange(2, 'george')
+        ret = self.test.history.t.select().execute().fetchall()
+        self.assertEquals(ret[-1], (3, 'george', 1000, 4, None, None))
 
-            ret = self.test.history.t.select().execute().fetchall()
-            self.assertEquals(ret[-1], (3, 'george', 1000, 4, None, None))
+        ret = self.test.t.select().execute().fetchall()
+        self.assertEquals(len(ret), 3, msg=ret)
 
-            ret = self.test.t.select().execute().fetchall()
-            self.assertEquals(len(ret), 3, msg=ret)
-
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryDeleteRollback(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
+        ret = self.test.t.select().execute().fetchall()
 
-            ret = self.test.t.select().execute().fetchall()
+        # Insert the thing we are going to delete
+        self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
+        self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
+        self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id=4, data_version=1, foo=271)).execute()
 
-            # Insert the thing we are going to delete
-            self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
-            self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
-            self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id=4, data_version=1, foo=271)).execute()
+        # Delete it
+        self.test.t.delete().where(self.test.id == 4).execute()
+        self.test.history.t.insert(values=dict(changed_by='bobby', change_id=3, timestamp=1000, id=4, data_version=None, foo=None)).execute()
 
-            # Delete it
-            self.test.t.delete().where(self.test.id == 4).execute()
-            self.test.history.t.insert(values=dict(changed_by='bobby', change_id=3, timestamp=1000, id=4, data_version=None, foo=None)).execute()
+        # Rollback the 'delete'
+        self.test.history.rollbackChange(3, 'george')
 
-            # Rollback the 'delete'
-            self.test.history.rollbackChange(3, 'george')
+        ret = self.test.history.t.select().execute().fetchall()
+        self.assertEquals(ret[-1], (5, 'george', 1000, 4, 271, 1))
 
-            ret = self.test.history.t.select().execute().fetchall()
-            self.assertEquals(ret[-1], (5, 'george', 1000, 4, 271, 1))
+        ret = self.test.t.select().execute().fetchall()
+        self.assertEquals(len(ret), 4, msg=ret)
 
-            ret = self.test.t.select().execute().fetchall()
-            self.assertEquals(len(ret), 4, msg=ret)
-
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithChangeID(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
+        self.test.insert(changed_by='george', id=4, foo=0)
+        ret = self.test.history.getChange(change_id=1)
+        self.assertEquals(ret, {u'data_version': None,
+                                u'changed_by': u'george',
+                                u'foo': None, u'timestamp': 999,
+                                u'change_id': 1, u'id': 4})
 
-            self.test.insert(changed_by='george', id=4, foo=0)
-            ret = self.test.history.getChange(change_id=1)
-            self.assertEquals(ret, {u'data_version': None,
-                                    u'changed_by': u'george',
-                                    u'foo': None, u'timestamp': 999,
-                                    u'change_id': 1, u'id': 4})
-
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithDataVersion(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
+        self.test.insert(changed_by='george', id=4, foo=0)
+        ret = self.test.history.getChange(data_version=1, column_values={'id': 4})
+        self.assertEquals(ret, {u'data_version': 1,
+                                u'changed_by': u'george',
+                                u'foo': 0, u'timestamp': 1000,
+                                u'change_id': 2, u'id': 4})
 
-            self.test.insert(changed_by='george', id=4, foo=0)
-            ret = self.test.history.getChange(data_version=1,
-                                              column_values={'id': 4})
-            self.assertEquals(ret, {u'data_version': 1,
-                                    u'changed_by': u'george',
-                                    u'foo': 0, u'timestamp': 1000,
-                                    u'change_id': 2, u'id': 4})
-
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithDataVersionReturnNone(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
+        self.test.insert(changed_by='george', id=4, foo=0)
+        ret = self.test.history.getChange(data_version=1, column_values={'id': 5})
+        self.assertEquals(ret, None)
 
-            self.test.insert(changed_by='george', id=4, foo=0)
-            ret = self.test.history.getChange(data_version=1,
-                                              column_values={'id': 5})
-            self.assertEquals(ret, None)
-
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithDataVersionWithNonPrimaryKeyColumn(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
-
-            self.test.insert(changed_by='george', id=4, foo=0)
-            self.assertRaises(ValueError, self.test.history.getChange, data_version=1,
-                              column_values={'foo': 4})
+        self.test.insert(changed_by='george', id=4, foo=0)
+        self.assertRaises(ValueError, self.test.history.getChange, data_version=1, column_values={'foo': 4})
 
 
 class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTableMixin, MemoryDatabaseMixin):
@@ -528,115 +504,95 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
         self.assertTrue('changed_by' in columns)
         self.assertTrue('timestamp' in columns)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryHistoryUponInsert(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
-            self.test.insert(changed_by='george', id1=4, id2=5, foo=0)
-            ret = self.test.history.t.select().execute().fetchall()
-            self.assertEquals(ret, [(1, 'george', 999, 4, 5, None, None),
-                                    (2, 'george', 1000, 4, 5, 0, 1)])
+        self.test.insert(changed_by='george', id1=4, id2=5, foo=0)
+        ret = self.test.history.t.select().execute().fetchall()
+        self.assertEquals(ret, [(1, 'george', 999, 4, 5, None, None),
+                                (2, 'george', 1000, 4, 5, 0, 1)])
 
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryHistoryUponDelete(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
-            self.test.delete(changed_by='bobby', where=[self.test.id1 == 1, self.test.id2 == 2],
-                             old_data_version=1)
-            ret = self.test.history.t.select().execute().fetchone()
-            self.assertEquals(ret, (1, 'bobby', 1000, 1, 2, None, None))
+        self.test.delete(changed_by='bobby', where=[self.test.id1 == 1, self.test.id2 == 2], old_data_version=1)
+        ret = self.test.history.t.select().execute().fetchone()
+        self.assertEquals(ret, (1, 'bobby', 1000, 1, 2, None, None))
 
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryHistoryUponUpdate(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
-            self.test.update(changed_by='heather', where=[self.test.id1 == 2, self.test.id2 == 1], what=dict(foo=99),
-                             old_data_version=1)
-            ret = self.test.history.t.select().execute().fetchone()
-            self.assertEquals(ret, (1, 'heather', 1000, 2, 1, 99, 2))
+        self.test.update(changed_by='heather', where=[self.test.id1 == 2, self.test.id2 == 1], what=dict(foo=99), old_data_version=1)
+        ret = self.test.history.t.select().execute().fetchone()
+        self.assertEquals(ret, (1, 'heather', 1000, 2, 1, 99, 2))
 
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryHistoryUpdateRollback(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
-            self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id1 == 2).where(self.test.id2 == 1).execute()
-            self.test.history.t.insert(values=dict(changed_by='heather', change_id=1, timestamp=1000, id1=2, id2=1, data_version=2, foo=99)).execute()
+        self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id1 == 2).where(self.test.id2 == 1).execute()
+        self.test.history.t.insert(values=dict(changed_by='heather', change_id=1, timestamp=1000, id1=2, id2=1, data_version=2, foo=99)).execute()
 
-            self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id1 == 2).where(self.test.id2 == 1).execute()
-            self.test.history.t.insert(values=dict(changed_by='heather', change_id=2, timestamp=1000, id1=2, id2=1, data_version=3, foo=100)).execute()
+        self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id1 == 2).where(self.test.id2 == 1).execute()
+        self.test.history.t.insert(values=dict(changed_by='heather', change_id=2, timestamp=1000, id1=2, id2=1, data_version=3, foo=100)).execute()
 
-            self.test.history.rollbackChange(2, 'heather')
+        self.test.history.rollbackChange(2, 'heather')
 
-            ret = self.test.history.t.select().execute().fetchall()
-            self.assertEquals(ret[-1], (3, 'heather', 1000, 2, 1, 99, 4))
+        ret = self.test.history.t.select().execute().fetchall()
+        self.assertEquals(ret[-1], (3, 'heather', 1000, 2, 1, 99, 4))
 
-            ret = self.test.t.select().where(self.test.id1 == 2).where(self.test.id2 == 1).execute().fetchall()
-            self.assertEquals(ret, [(2, 1, 99, 4)])
+        ret = self.test.t.select().where(self.test.id1 == 2).where(self.test.id2 == 1).execute().fetchall()
+        self.assertEquals(ret, [(2, 1, 99, 4)])
 
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryHistoryInsertRollback(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
+        ret = self.test.t.select().execute().fetchall()
 
-            ret = self.test.t.select().execute().fetchall()
+        self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=31)).execute()
+        self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id1=4, id2=31, data_version=None, foo=None)).execute()
+        self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id1=4, id2=31, data_version=1, foo=271)).execute()
 
-            self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=31)).execute()
-            self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id1=4, id2=31, data_version=None, foo=None)).execute()
-            self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id1=4, id2=31, data_version=1, foo=271)).execute()
+        self.test.history.rollbackChange(2, 'george')
 
-            self.test.history.rollbackChange(2, 'george')
+        ret = self.test.history.t.select().execute().fetchall()
+        self.assertEquals(ret[-1], (3, 'george', 1000, 4, 31, None, None))
 
-            ret = self.test.history.t.select().execute().fetchall()
-            self.assertEquals(ret[-1], (3, 'george', 1000, 4, 31, None, None))
+        ret = self.test.t.select().execute().fetchall()
+        self.assertEquals(len(ret), 4, msg=ret)
 
-            ret = self.test.t.select().execute().fetchall()
-            self.assertEquals(len(ret), 4, msg=ret)
-
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryHistoryDeleteRollback(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
+        ret = self.test.t.select().execute().fetchall()
 
-            ret = self.test.t.select().execute().fetchall()
+        self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=3)).execute()
+        self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id1=4, id2=3, data_version=None, foo=None)).execute()
+        self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id1=4, id2=3, data_version=1, foo=271)).execute()
 
-            self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=3)).execute()
-            self.test.history.t.insert(values=dict(changed_by='george', change_id=1, timestamp=999, id1=4, id2=3, data_version=None, foo=None)).execute()
-            self.test.history.t.insert(values=dict(changed_by='george', change_id=2, timestamp=1000, id1=4, id2=3, data_version=1, foo=271)).execute()
+        self.test.t.delete().where(self.test.id1 == 4).where(self.test.id2 == 3).execute()
+        self.test.history.t.insert(values=dict(changed_by='bobby', change_id=3, timestamp=1000, id1=4, id2=3, data_version=None, foo=None)).execute()
 
-            self.test.t.delete().where(self.test.id1 == 4).where(self.test.id2 == 3).execute()
-            self.test.history.t.insert(values=dict(changed_by='bobby', change_id=3, timestamp=1000, id1=4, id2=3, data_version=None, foo=None)).execute()
+        self.test.history.rollbackChange(3, 'george')
 
-            self.test.history.rollbackChange(3, 'george')
+        ret = self.test.history.t.select().execute().fetchall()
+        self.assertEquals(ret[-1], (5, 'george', 1000, 4, 3, 271, 1))
 
-            ret = self.test.history.t.select().execute().fetchall()
-            self.assertEquals(ret[-1], (5, 'george', 1000, 4, 3, 271, 1))
+        ret = self.test.t.select().execute().fetchall()
+        self.assertEquals(len(ret), 5, msg=ret)
 
-            ret = self.test.t.select().execute().fetchall()
-            self.assertEquals(len(ret), 5, msg=ret)
-
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryKeyHistoryGetChangeWithDataVersion(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
+        self.test.insert(changed_by='george', id1=4, id2=5, foo=0)
+        ret = self.test.history.getChange(data_version=1, column_values={'id1': 4, 'id2': 5})
+        self.assertEquals(ret, {u'data_version': 1,
+                                u'changed_by': u'george',
+                                u'foo': 0, u'timestamp': 1000,
+                                u'change_id': 2, u'id1': 4, u'id2': 5})
 
-            self.test.insert(changed_by='george', id1=4, id2=5, foo=0)
-            ret = self.test.history.getChange(data_version=1,
-                                              column_values={'id1': 4, 'id2': 5})
-            self.assertEquals(ret, {u'data_version': 1,
-                                    u'changed_by': u'george',
-                                    u'foo': 0, u'timestamp': 1000,
-                                    u'change_id': 2, u'id1': 4, u'id2': 5})
-
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryKeyHistoryGetChangeWithDataVersionReturnNone(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
+        self.test.insert(changed_by='george', id1=4, id2=5, foo=0)
+        ret = self.test.history.getChange(data_version=1, column_values={'id1': 4, 'id2': 55})
+        self.assertEquals(ret, None)
 
-            self.test.insert(changed_by='george', id1=4, id2=5, foo=0)
-            ret = self.test.history.getChange(data_version=1,
-                                              column_values={'id1': 4,
-                                                             'id2': 55})
-            self.assertEquals(ret, None)
-
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithDataVersionWithNonPrimaryKeyColumn(self):
-        with mock.patch('time.time') as t:
-            t.return_value = 1.0
-
-            self.test.insert(changed_by='george', id1=4, id2=5, foo=0)
-            self.assertRaises(ValueError, self.test.history.getChange, data_version=1,
-                              column_values={'id1': 4, 'foo': 4})
+        self.test.insert(changed_by='george', id1=4, id2=5, foo=0)
+        self.assertRaises(ValueError, self.test.history.getChange, data_version=1, column_values={'id1': 4, 'foo': 4})
 
 
 class ScheduledChangesTableMixin(object):
@@ -683,13 +639,15 @@ class ScheduledChangesTableMixin(object):
         self.metadata.create_all()
         self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
         self.table.t.insert().execute(fooid=2, foo="b", bar="bb", data_version=2)
-        self.table.t.insert().execute(fooid=3, foo="c", data_version=1)
+        self.table.t.insert().execute(fooid=3, foo="c", data_version=2)
         self.sc_table.t.insert().execute(sc_id=1, when=234000, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1,
                                          data_version=1)
         self.sc_table.t.insert().execute(sc_id=2, when=567000, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1)
         self.sc_table.t.insert().execute(sc_id=3, when=1000, scheduled_by="bob", complete=True, base_fooid=2, base_foo="b", base_bar="bb", base_data_version=1,
                                          data_version=1)
         self.sc_table.t.insert().execute(sc_id=4, when=333000, scheduled_by="bob", base_fooid=2, base_foo="dd", base_bar="bb", base_data_version=2,
+                                         data_version=1)
+        self.sc_table.t.insert().execute(sc_id=5, when=39000, scheduled_by="bob", complete=True, base_fooid=3, base_foo="c", base_bar=None, base_data_version=1,
                                          data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
@@ -732,9 +690,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testValdiateConditionsInvalid(self):
         self.assertRaisesRegexp(ValueError, "Invalid condition", self.sc_table._validateConditions, {"blah": "blah"})
 
-    @mock.patch("time.time")
-    def testValidateConditionsJustWhen(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testValidateConditionsJustWhen(self):
         self.sc_table._validateConditions({"when": 12345678})
 
     def testValidateConditionsBadWhen(self):
@@ -757,26 +714,24 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testValidateConditionsMissingTelemetryValue(self):
         self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table._validateConditions, {"telemetry_product": "foo"})
 
-    @mock.patch("time.time")
-    def testInsertForExistingRow(self, time):
-        time.return_value = 200
-        what = {"fooid": 2, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000}
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertForExistingRow(self):
+        what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000}
         self.sc_table.insert(changed_by="bob", **what)
-        row = self.sc_table.t.select().where(self.sc_table.sc_id == 5).execute().fetchall()[0]
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 6).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
         self.assertEquals(row.when, 999000)
         self.assertEquals(row.data_version, 1)
-        self.assertEquals(row.base_fooid, 2)
+        self.assertEquals(row.base_fooid, 3)
         self.assertEquals(row.base_foo, "thing")
         self.assertEquals(row.base_bar, "thing2")
         self.assertEquals(row.base_data_version, 2)
 
-    @mock.patch("time.time")
-    def testInsertForNewRow(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertForNewRow(self):
         what = {"foo": "newthing1", "when": 888000}
         self.sc_table.insert(changed_by="bob", **what)
-        row = self.sc_table.t.select().where(self.sc_table.sc_id == 5).execute().fetchall()[0]
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 6).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
         self.assertEquals(row.when, 888000)
         self.assertEquals(row.data_version, 1)
@@ -785,10 +740,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.base_bar, None)
         self.assertEquals(row.base_data_version, None)
 
-    @mock.patch("time.time")
-    def testInsertWithNonAutoincrement(self, time):
-        time.return_value = 200
-
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertWithNonAutoincrement(self):
         class TestTable2(AUSTable):
 
             def __init__(self, db, metadata):
@@ -810,24 +763,20 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(row.base_bar, "456")
         self.assertEquals(row.base_data_version, None)
 
-    @mock.patch("time.time")
-    def testInsertWithNonNullableColumn(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertWithNonNullableColumn(self):
         what = {"bar": "abc", "when": 34567000}
         # TODO: we should really be checking directly for IntegrityError, but AUSTransaction eats it.
         self.assertRaisesRegexp(TransactionError, "IntegrityError", self.sc_table.insert, changed_by="bob", **what)
 
-    @mock.patch("time.time")
-    def testInsertForExistingNoSuchRow(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertForExistingNoSuchRow(self):
         what = {"fooid": 10, "foo": "thing", "data_version": 1, "when": 999000}
         self.assertRaisesRegexp(ValueError, "Cannot create scheduled change with data_version for non-existent row", self.sc_table.insert, changed_by="bob",
                                 **what)
 
-    @mock.patch("time.time")
-    def testInsertMissingRequiredPartOfPK(self, time):
-        time.return_value = 200
-
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertMissingRequiredPartOfPK(self):
         class TestTable2(AUSTable):
 
             def __init__(self, db, metadata):
@@ -845,31 +794,32 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         what = {"foo": "blah", "when": "abc"}
         self.assertRaisesRegexp(ValueError, "Cannot parse", self.sc_table.insert, changed_by="bob", **what)
 
-    @mock.patch("time.time")
-    def testInsertDataVersionChanged(self, time):
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertDataVersionChanged(self):
         """Tests to make sure a scheduled change update is rejected if data
         version changes between grabbing the row to create a change, and
         submitting the scheduled change."""
-        time.return_value = 200
-        self.table.update([self.table.fooid == 3], what={"foo": "bb"}, changed_by="bob", old_data_version=1)
-        what = {"fooid": 3, "data_version": 1, "bar": "blah", "when": 456000}
+        self.table.update([self.table.fooid == 3], what={"foo": "bb"}, changed_by="bob", old_data_version=2)
+        what = {"fooid": 3, "data_version": 2, "bar": "blah", "when": 456000}
         self.assertRaises(OutdatedDataError, self.sc_table.insert, changed_by="bob", **what)
 
-    @mock.patch("time.time")
-    def testInsertWithoutPermissionOnBaseTable(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertWithoutPermissionOnBaseTable(self):
         what = {"fooid": 4, "bar": "blah", "when": 343000}
         self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
 
-    @mock.patch("time.time")
-    def testInsertWithoutPermissionOnBaseTableForUpdate(self, time):
-        time.return_value = 200
-        what = {"fooid": 3, "bar": "blah", "when": 343000, "data_version": 1}
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertWithoutPermissionOnBaseTableForUpdate(self):
+        what = {"fooid": 3, "bar": "blah", "when": 343000, "data_version": 2}
         self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
 
-    @mock.patch("time.time")
-    def testUpdateNoChangesSinceCreation(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertRejectedWithAlreadyScheduledChange(self):
+        what = {"fooid": 2, "foo": "b", "bar": "thing2", "data_version": 2, "when": 929000}
+        self.assertRaises(ChangeScheduledError, self.sc_table.insert, changed_by="bob", **what)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateNoChangesSinceCreation(self):
         where = [self.sc_table.sc_id == 1]
         what = {"when": 888000, "foo": "bb"}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
@@ -891,9 +841,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_row.base_bar, "barbar")
         self.assertEquals(history_row.base_data_version, 1)
 
-    @mock.patch("time.time")
-    def testUpdateNoChangesSinceCreationWithDict(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateNoChangesSinceCreationWithDict(self):
         where = {"sc_id": 1}
         what = {"when": 888000, "foo": "bb", "data_version": 1, "fooid": 1}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
@@ -915,33 +864,29 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_row.base_bar, "barbar")
         self.assertEquals(history_row.base_data_version, 1)
 
-    @mock.patch("time.time")
-    def testUpdateWithBadConditions(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateWithBadConditions(self):
         where = [self.sc_table.sc_id == 1]
         what = {"telemetry_product": "boop", "telemetry_channel": "boop", "telemetry_uptake": 99}
         self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
-    @mock.patch("time.time")
-    def testUpdateRemoveConditions(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateRemoveConditions(self):
         where = [self.sc_table.sc_id == 2]
         what = {"when": None}
         self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
-    @mock.patch("time.time")
-    def testUpdateWithoutPermissionOnBaseTable(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateWithoutPermissionOnBaseTable(self):
         with mock.patch.object(self.sc_table.db, "hasPermission", return_value=False, create=True):
             where = [self.sc_table.sc_id == 2]
             what = {"when": 777000}
             self.assertRaises(PermissionDeniedError, self.sc_table.update, where, what, changed_by="sue", old_data_version=1)
 
-    @mock.patch("time.time")
-    def testUpdateBaseTableNoConflictWithChanges(self, time):
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateBaseTableNoConflictWithChanges(self):
         """Tests to make sure a scheduled change is properly updated when an
         UPDATE is made to the row the scheduled change is for."""
-        time.return_value = 200
         # fooid 2 has a change scheduled that would update its "foo" column
         # we'll change "bar" underneath it. This doesn't conflict with the
         # scheduled change, so it should simply be updated with the new "bar"
@@ -973,9 +918,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_row.base_bar, "bar")
         self.assertEquals(history_row.base_data_version, 3)
 
-    @mock.patch("time.time")
-    def testUpdateBaseTableConflictWithRecentChanges(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateBaseTableConflictWithRecentChanges(self):
         where = [self.table.fooid == 1]
         what = {"bar": "bar"}
         self.assertRaises(UpdateMergeError, self.table.update, where=where, what=what, changed_by="bob", old_data_version=1)
@@ -992,7 +936,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(ChangeScheduledError, self.table.delete, where=[self.table.fooid == 2], changed_by="bob", old_data_version=2)
 
     def testBaseTableDeleteSucceedsWithoutScheduledChange(self):
-        self.table.delete(where=[self.table.fooid == 3], changed_by="bob", old_data_version=1)
+        self.table.delete(where=[self.table.fooid == 3], changed_by="bob", old_data_version=2)
 
     def testEnactChangeNewRow(self):
         self.table.scheduled_changes.enactChange(2, "nancy")
@@ -1033,9 +977,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
         self.assertRaises(PermissionDeniedError, self.table.scheduled_changes.enactChange, 1, "jeremy")
 
-    @mock.patch("time.time")
-    def testMergeUpdateNoConflict(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testMergeUpdateNoConflict(self):
         old_row = self.table.select(where=[self.table.fooid == 2])[0]
         what = {"fooid": 2, "bar": "bar", "data_version": 3}
         self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
@@ -1044,9 +987,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(sc_row.base_bar, "bar")
         self.assertEquals(sc_row.base_data_version, 3)
 
-    @mock.patch("time.time")
-    def testMergeUpdateNoConflictChangingToNull(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testMergeUpdateNoConflictChangingToNull(self):
         old_row = self.table.select(where=[self.table.fooid == 2])[0]
         what = {"fooid": 2, "bar": None, "data_version": 3}
         self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
@@ -1055,9 +997,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(sc_row.base_bar, None)
         self.assertEquals(sc_row.base_data_version, 3)
 
-    @mock.patch("time.time")
-    def testMergeUpdateWithConflict(self, time):
-        time.return_value = 200
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testMergeUpdateWithConflict(self):
         old_row = self.table.select(where=[self.table.fooid == 1])[0]
         what = {"fooid": 1, "bar": "abc", "data_version": 1}
         self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, what, changed_by="bob")
