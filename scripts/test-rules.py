@@ -195,6 +195,7 @@ if __name__ == "__main__":
         AUS = AUS_Class()
         dbo.setDb(dbPath)
         dbo.create()
+        dbo.setDomainWhitelist(WHITELISTED_DOMAINS)
         populateDB(td)
         if options.dumprules:
             log.info(
