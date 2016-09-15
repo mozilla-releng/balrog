@@ -739,3 +739,8 @@ class DesupportBlob(Blob):
 
     def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return '</update>'
+
+    def containsForbiddenDomain(self, product, whitelistedDomains):
+        if isForbiddenUrl(self.get('detailsUrl', None), product, whitelistedDomains):
+            return True
+        return False

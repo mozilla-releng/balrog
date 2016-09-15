@@ -67,7 +67,7 @@ class Blob(dict):
         logger_name = "{0}.{1}".format(self.__class__.__module__, self.__class__.__name__)
         self.__class__.log = logging.getLogger(logger_name)
 
-    def validate(self):
+    def validate(self, product, whitelistedDomains):
         """Raises a BlobValidationError if the blob is invalid."""
         self.log.debug('Validating blob %s' % self)
         validator = jsonschema.Draft4Validator(self.getSchema())
@@ -79,6 +79,9 @@ class Blob(dict):
         errors = [e.message for e in validator.iter_errors(self)]
         if errors:
             raise BlobValidationError("Invalid blob! See 'errors' for details.", errors)
+
+        if self.containsForbiddenDomain(product, whitelistedDomains):
+            raise ValueError("Blob contains forbidden domain(s)")
 
     def getResponseProducts(self):
         # Usually returns None. If the Blob is a SuperBlob, it returns the list
@@ -126,8 +129,3 @@ class Blob(dict):
 
     def containsForbiddenDomain(self, product, whitelistedDomains):
         raise NotImplementedError()
-
-    def validateAndCheckForbiddenDomain(self, product, whitelistedDomains):
-        self.validate()
-        if self.containsForbiddenDomain(product, whitelistedDomains):
-            raise ValueError("Blob contains forbidden domain(s)")

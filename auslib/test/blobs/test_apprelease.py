@@ -176,7 +176,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
 
     def testIsValid(self):
         # Raises on error
-        self.blob.validate()
+        self.blob.validate('h', self.whitelistedDomains)
 
     def test2_0(self):
         updateQuery = {
@@ -566,8 +566,8 @@ class TestSchema2Blob(unittest.TestCase):
 
     def testIsValid(self):
         # Raises on error
-        self.blobJ2.validate()
-        self.blobK.validate()
+        self.blobJ2.validate('j', self.whitelistedDomains)
+        self.blobK.validate('k', self.whitelistedDomains)
 
     def testSchema2CompleteOnly(self):
         updateQuery = {
@@ -737,7 +737,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 
     def testIsValid(self):
         # Raises on error
-        self.blobJ2.validate()
+        self.blobJ2.validate('j', self.whitelistedDomains)
 
     def testCompleteOnly(self):
         updateQuery = {
@@ -968,8 +968,8 @@ class TestSchema3Blob(unittest.TestCase):
 
     def testIsValid(self):
         # Raises on error
-        self.blobF3.validate()
-        self.blobG2.validate()
+        self.blobF3.validate('f', self.whitelistedDomains)
+        self.blobG2.validate('g', self.whitelistedDomains)
 
     def testSchema3MultipleUpdates(self):
         updateQuery = {
@@ -1142,7 +1142,7 @@ class TestSchema4Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('h',)}
+        self.whitelistedDomains = {'a.com': ('h', 'g',)}
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         dbo.setDomainWhitelist(self.whitelistedDomains)
@@ -1233,7 +1233,7 @@ class TestSchema4Blob(unittest.TestCase):
 
     def testIsValid(self):
         # Raises on error
-        self.blobH2.validate()
+        self.blobH2.validate('h', self.whitelistedDomains)
 
     def testSchema4WithPartials(self):
         updateQuery = {
@@ -1407,7 +1407,7 @@ class TestSchema4Blob(unittest.TestCase):
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
         # Raises on error
-        v4Blob.validate()
+        v4Blob.validate('g', self.whitelistedDomains)
 
         expected = {
             "name": "g2",
@@ -1474,7 +1474,7 @@ class TestSchema4Blob(unittest.TestCase):
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
         # Raises on error
-        v4Blob.validate()
+        v4Blob.validate('g', self.whitelistedDomains)
 
         expected = v3Blob.copy()
         expected["schema_version"] = 4
@@ -1599,7 +1599,7 @@ class TestSchema5Blob(unittest.TestCase):
 
     def testIsValid(self):
         # Raises on error
-        self.blobH2.validate()
+        self.blobH2.validate('h', self.whitelistedDomains)
 
     def testSchema5OptionalAttributes(self):
         updateQuery = {
@@ -1633,7 +1633,7 @@ class TestDesupportBlob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('a',)}
+        self.whitelistedDomains = {'a.com': ('a',), 'moo.com': ('d',)}
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
         app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
@@ -1667,4 +1667,31 @@ class TestDesupportBlob(unittest.TestCase):
 
     def testBrokenDesupport(self):
         blob = DesupportBlob(name="d2", schema_version=50, foo="bar")
-        self.assertRaises(BlobValidationError, blob.validate)
+        self.assertRaises(BlobValidationError, blob.validate, 'd',
+                          self.whitelistedDomains)
+
+    def testDesupportDoesntContainForbiddenDomain(self):
+        blob = DesupportBlob()
+        blob.loadJSON("""
+{
+    "name": "d1",
+    "schema_version": 50,
+    "detailsUrl": "http://moo.com/%LOCALE%/cow/%VERSION%/",
+    "displayVersion": "50.0"
+}
+""")
+        self.assertFalse(blob.containsForbiddenDomain('d',
+                                                      self.whitelistedDomains))
+
+    def testDesupportContainsForbiddenDomain(self):
+        blob = DesupportBlob()
+        blob.loadJSON("""
+{
+    "name": "d1",
+    "schema_version": 50,
+    "detailsUrl": "http://boo.com/%LOCALE%/cow/%VERSION%/",
+    "displayVersion": "50.0"
+}
+""")
+        self.assertTrue(blob.containsForbiddenDomain('d',
+                                                     self.whitelistedDomains))

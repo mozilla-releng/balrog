@@ -64,11 +64,9 @@ class GMPBlobV1(Blob):
     def containsForbiddenDomain(self, product, whitelistedDomains):
         """Returns True if the blob contains any file URLs that contain a
            domain that we're not allowed to serve updates to."""
-        print whitelistedDomains
         for vendor in self.get('vendors', {}).values():
             for platform in vendor.get('platforms', {}).values():
                 if 'fileUrl' in platform:
-                    print platform
                     if isForbiddenUrl(platform["fileUrl"], product, whitelistedDomains):
                         return True
         return False

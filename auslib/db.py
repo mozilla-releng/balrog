@@ -1387,7 +1387,7 @@ class Releases(AUSTable):
         if not self.db.hasPermission(changed_by, "release", "create", columns["product"], transaction):
             raise PermissionDeniedError("%s is not allowed to create releases for product %s" % (changed_by, columns["product"]))
 
-        blob.validateAndCheckForbiddenDomain(columns["product"], self.domainWhitelist)
+        blob.validate(columns["product"], self.domainWhitelist)
         if columns["name"] != blob["name"]:
             raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
         columns["data"] = blob.getJSON()
@@ -1435,8 +1435,8 @@ class Releases(AUSTable):
                         raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, what.get("product")))
 
             if blob:
-                blob.validateAndCheckForbiddenDomain(what.get("product", current_release["product"]),
-                                                     self.domainWhitelist)
+                blob.validate(what.get("product", current_release["product"]),
+                              self.domainWhitelist)
                 name = what.get("name", name)
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
@@ -1522,7 +1522,7 @@ class Releases(AUSTable):
                 if a not in releaseBlob['platforms']:
                     releaseBlob['platforms'][a] = {'alias': platform}
 
-        releaseBlob.validateAndCheckForbiddenDomain(product, self.domainWhitelist)
+        releaseBlob.validate(product, self.domainWhitelist)
         what = dict(data=releaseBlob.getJSON())
 
         super(Releases, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
