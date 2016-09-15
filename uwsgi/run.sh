@@ -2,6 +2,7 @@
 
 build_front_end() {
     cd /app/ui
+    npm install
     npm run build
     cd -
 }
