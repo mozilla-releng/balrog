@@ -23,3 +23,7 @@ class WhitelistBlobV1(Blob):
         if requestIMEI is not None:
             return self.isWhitelisted(requestIMEI)
         return False
+
+    def containsForbiddenDomain(self, product, whitelistedDomains):
+        # Since WhitelistBlobs have no URLs
+        return False

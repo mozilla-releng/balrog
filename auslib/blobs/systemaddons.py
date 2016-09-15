@@ -87,3 +87,15 @@ class SystemAddonsBlob(Blob):
             return '    </addons>'
         else:
             return None
+
+    def containsForbiddenDomain(self, product, whitelistedDomains):
+        """Returns True if the blob contains any file URLs that contain a
+           domain that we're not allowed to serve updates to."""
+
+        for addon in self.get('addons', {}).values():
+            for platform in addon.get('platforms', {}).values():
+                if 'fileUrl' in platform:
+                    if isForbiddenUrl(platform["fileUrl"], product, whitelistedDomains):
+                        return True
+
+        return False

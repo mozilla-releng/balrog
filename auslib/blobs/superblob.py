@@ -15,3 +15,7 @@ class SuperBlob(Blob):
     def shouldServeUpdate(self, updateQuery):
         # Since a superblob update will always be returned.
         return True
+
+    def containsForbiddenDomain(self, product, whitelistedDomains):
+        # Since SuperBlobs don't have any URLs
+        return False

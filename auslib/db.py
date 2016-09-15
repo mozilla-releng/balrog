@@ -21,7 +21,6 @@ import dictdiffer
 import dictdiffer.merge
 
 from auslib.global_state import cache, dbo
-from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import createBlob
 from auslib.util.comparison import string_compare, version_compare
 from auslib.util.timestamp import getMillisecondTimestamp
@@ -1278,39 +1277,6 @@ class Releases(AUSTable):
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
 
-    # TODO: This should really be part of the blob class(es) because it depends
-    # on a lot of blob schema specific stuff.
-    def containsForbiddenDomain(self, data, product):
-        """Returns True if "data" contains any file URLs that contain a
-           domain that we're not allowed to serve updates to."""
-        # Check the top level URLs, if the exist.
-        for c in data.get('fileUrls', {}).values():
-            # New-style
-            if isinstance(c, dict):
-                for from_ in c.values():
-                    for url in from_.values():
-                        if isForbiddenUrl(url, product, self.domainWhitelist):
-                            return True
-            # Old-style
-            else:
-                if isForbiddenUrl(c, product, self.domainWhitelist):
-                    return True
-
-        # And also the locale-level URLs.
-        for platform in data.get('platforms', {}).values():
-            for locale in platform.get('locales', {}).values():
-                for type_ in ('partial', 'complete'):
-                    if type_ in locale and 'fileUrl' in locale[type_]:
-                        if isForbiddenUrl(locale[type_]['fileUrl'], product, self.domainWhitelist):
-                            return True
-                for type_ in ('partials', 'completes'):
-                    for update in locale.get(type_, {}):
-                        if 'fileUrl' in update:
-                            if isForbiddenUrl(update["fileUrl"], product, self.domainWhitelist):
-                                return True
-
-        return False
-
     def getReleases(self, name=None, product=None, limit=None, transaction=None):
         self.log.debug("Looking for releases with:")
         self.log.debug("name: %s", name)
@@ -1421,11 +1387,9 @@ class Releases(AUSTable):
         if not self.db.hasPermission(changed_by, "release", "create", columns["product"], transaction):
             raise PermissionDeniedError("%s is not allowed to create releases for product %s" % (changed_by, columns["product"]))
 
-        blob.validate()
+        blob.validate(columns["product"], self.domainWhitelist)
         if columns["name"] != blob["name"]:
             raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
-        if self.containsForbiddenDomain(blob, columns["product"]):
-            raise ValueError("Release blob contains forbidden domain.")
         columns["data"] = blob.getJSON()
 
         if not dryrun:
@@ -1471,12 +1435,11 @@ class Releases(AUSTable):
                         raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, what.get("product")))
 
             if blob:
-                blob.validate()
+                blob.validate(what.get("product", current_release["product"]),
+                              self.domainWhitelist)
                 name = what.get("name", name)
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-                if self.containsForbiddenDomain(blob, what.get("product", current_release["product"])):
-                    raise ValueError("Release blob contains forbidden domain.")
                 what['data'] = blob.getJSON()
         if not dryrun:
             for release in current_releases:
@@ -1559,9 +1522,7 @@ class Releases(AUSTable):
                 if a not in releaseBlob['platforms']:
                     releaseBlob['platforms'][a] = {'alias': platform}
 
-        releaseBlob.validate()
-        if self.containsForbiddenDomain(releaseBlob, product):
-            raise ValueError("Release blob contains forbidden domain.")
+        releaseBlob.validate(product, self.domainWhitelist)
         what = dict(data=releaseBlob.getJSON())
 
         super(Releases, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,

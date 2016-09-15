@@ -899,7 +899,7 @@ class TestReleasesAPI_JSON(ViewTest):
 
     def testGMPReleasePut(self):
 
-        ret = self._put('/releases/gmprel', data=dict(name='gmprel', product='GMP',
+        ret = self._put('/releases/gmprel', data=dict(name='gmprel', product='a',
                                                       blob="""
 {
     "name": "gmprel",
@@ -927,7 +927,7 @@ class TestReleasesAPI_JSON(ViewTest):
         r = dbo.releases.t.select().where(dbo.releases.name == 'gmprel').execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['name'], 'gmprel')
-        self.assertEquals(r[0]['product'], 'GMP')
+        self.assertEquals(r[0]['product'], 'a')
         self.assertEquals(json.loads(r[0]['data']), json.loads("""
 {
     "name": "gmprel",

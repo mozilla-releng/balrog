@@ -206,3 +206,51 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertEqual(returned_header.strip(), expected_header.strip())
         self.assertItemsEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+    def testContainsForbiddenDomain(self):
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+{
+    "name": "fake",
+    "schema_version": 1000,
+    "hashFunction": "SHA512",
+    "vendors": {
+        "c": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                    "filesize": 2,
+                    "hashValue": "3",
+                    "fileUrl": "http://evil.com/blah"
+                }
+            }
+        }
+    }
+}
+""")
+        self.assertTrue(blob.containsForbiddenDomain('gg',
+                                                     self.whitelistedDomains))
+
+    def testDoesNotContainForbiddenDomain(self):
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+{
+    "name": "fake",
+    "schema_version": 1000,
+    "hashFunction": "SHA512",
+    "vendors": {
+        "c": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                    "filesize": 2,
+                    "hashValue": "3",
+                    "fileUrl": "http://a.com/blah"
+                }
+            }
+        }
+    }
+}
+""")
+        self.assertFalse(blob.containsForbiddenDomain('gg',
+                                                      self.whitelistedDomains))

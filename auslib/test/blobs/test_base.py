@@ -55,11 +55,11 @@ class TestCreateBlob(unittest.TestCase):
                 schema_version=1,
                 name="foo",
             ))
-            blob.validate()
+            blob.validate('fake', [])
             blob = createBlob(dict(
                 schema_version=1,
                 name="foo",
             ))
-            blob.validate()
+            blob.validate('fake', [])
 
             self.assertEquals(yaml_load.call_count, 1)
