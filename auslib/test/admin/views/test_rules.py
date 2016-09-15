@@ -897,7 +897,7 @@ class TestRuleScheduledChanges(ViewTest):
     def testDeleteRuleWithScheduledChange(self):
         ret = self._delete("/rules/1", qs=dict(data_version=1))
         self.assertEquals(ret.status_code, 400, ret.data)
-        self.assertIn("Are you trying to delete", ret.data)
+        self.assertIn("Cannot delete rows that have", ret.data)
 
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=1))
