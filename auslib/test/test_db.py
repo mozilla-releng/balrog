@@ -1528,9 +1528,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.t.insert().execute(name='d', product='d', data=json.dumps(dict(name="d", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='d', update_type='z', data_version=1)
-        self.releases.delete({"name": "d"}, changed_by="bill", old_data_version=1)
-        release = self.releases.t.select().where(self.releases.name == 'd').execute().fetchall()
-        self.assertEquals(release, [])
+        self.assertRaises(ValueError, self.releases.delete, {"name": "d"}, changed_by='me', old_data_version=1)
 
     def testDeleteReleaseWhenReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()

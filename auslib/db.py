@@ -1548,12 +1548,9 @@ class Releases(AUSTable):
 
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
         names = []
-        engine = super(Releases, self).getEngine()
-        connection = engine.connect()
-        connection.execute("PRAGMA foreign_keys=ON")
-        connection.close()
         for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):
             names.append(toDelete["name"])
+
             self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
             if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
@@ -1920,6 +1917,9 @@ class AUSDatabase(object):
         # tell create that we're creating at version 0 of the database, otherwise
         # uprgade will do nothing!
         migrate.versioning.schema.ControlledSchema.create(self.engine, self.migrate_repo, 0)
+        connection = self.engine.connect()
+        connection.execute("PRAGMA foreign_keys=ON")
+        connection.close()
         self.upgrade(version)
 
     def upgrade(self, version=None):
