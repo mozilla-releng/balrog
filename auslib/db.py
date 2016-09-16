@@ -9,7 +9,7 @@ import sys
 import time
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger, Boolean, join
+    create_engine, select, BigInteger, Boolean, join, ForeignKey
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 import sqlalchemy.types
@@ -1005,7 +1005,7 @@ class Rules(AUSTable):
                            Column('rule_id', Integer, primary_key=True, autoincrement=True),
                            Column('alias', String(50), unique=True),
                            Column('priority', Integer),
-                           Column('mapping', String(100)),
+                           Column('mapping', String(100), ForeignKey('releases.name', ondelete="SET NULL"), nullable=False),
                            Column('backgroundRate', Integer),
                            Column('update_type', String(15), nullable=False),
                            Column('product', String(15)),
@@ -1021,6 +1021,7 @@ class Rules(AUSTable):
                            Column('headerArchitecture', String(10)),
                            Column('comment', String(500)),
                            Column('whitelist', String(100)),
+
                            )
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
@@ -1591,7 +1592,6 @@ class Releases(AUSTable):
             self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
             if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
-
         if not dryrun:
             super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
             for name in names:
