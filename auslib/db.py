@@ -1548,6 +1548,10 @@ class Releases(AUSTable):
 
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
         names = []
+        engine = super(Releases, self).getEngine()
+        connection = engine.connect()
+        connection.execute("PRAGMA foreign_keys=ON")
+        connection.close()
         for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):
             names.append(toDelete["name"])
             self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
