@@ -1527,8 +1527,16 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testDeleteWithRuleMapping(self):
         self.releases.t.insert().execute(name='d', product='d', data=json.dumps(dict(name="d", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='d', update_type='z', data_version=1)
+        self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='d', update_type='z',
+                                      data_version=1)
         self.assertRaises(ValueError, self.releases.delete, {"name": "d"}, changed_by='me', old_data_version=1)
+
+    def testDeleteWithRuleWhitelist(self):
+        self.releases.t.insert().execute(name='e', product='e', data=json.dumps(dict(name="e", schema_version=1, hashFunction="sha512")),
+                                         data_version=1)
+        self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='e', backgroundRate=100, whitelist='e', update_type='z',
+                                      data_version=1)
+        self.assertRaises(ValueError, self.releases.delete, {"name": "e"}, changed_by='me', old_data_version=1)
 
     def testDeleteReleaseWhenReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()

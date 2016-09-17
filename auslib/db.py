@@ -9,7 +9,7 @@ import sys
 import time
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger, Boolean, join, ForeignKey
+    create_engine, select, BigInteger, Boolean, join
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 import sqlalchemy.types
@@ -1004,7 +1004,7 @@ class Rules(AUSTable):
                            Column('rule_id', Integer, primary_key=True, autoincrement=True),
                            Column('alias', String(50), unique=True),
                            Column('priority', Integer),
-                           Column('mapping', String(100), ForeignKey('releases.name', ondelete="SET NULL"), nullable=False),
+                           Column('mapping', String(100), nullable=True),
                            Column('backgroundRate', Integer),
                            Column('update_type', String(15), nullable=False),
                            Column('product', String(15)),
@@ -1020,8 +1020,8 @@ class Rules(AUSTable):
                            Column('headerArchitecture', String(10)),
                            Column('comment', String(500)),
                            Column('whitelist', String(100)),
-
                            )
+
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
     def _matchesRegex(self, foo, bar):
@@ -1548,9 +1548,15 @@ class Releases(AUSTable):
 
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
         names = []
+        mapping_count = dbo.rules.t.count().where(dbo.rules.mapping == self.name).execute().fetchone()[0]
+
+        whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == self.name).execute().fetchone()[0]
+
+        if mapping_count > 0 or whitelist_count > 0:
+            msg = "%s has rules pointing to it. Hence it cannot be deleted." % (self.name)
+            raise ValueError(msg)
         for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):
             names.append(toDelete["name"])
-
             self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
             if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
@@ -1917,9 +1923,6 @@ class AUSDatabase(object):
         # tell create that we're creating at version 0 of the database, otherwise
         # uprgade will do nothing!
         migrate.versioning.schema.ControlledSchema.create(self.engine, self.migrate_repo, 0)
-        connection = self.engine.connect()
-        connection.execute("PRAGMA foreign_keys=ON")
-        connection.close()
         self.upgrade(version)
 
     def upgrade(self, version=None):
