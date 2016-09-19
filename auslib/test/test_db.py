@@ -1715,6 +1715,8 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
+        dbo.setDb(self.dburi)
+        dbo.create()
         cache.reset()
         cache.make_copies = True
         cache.make_cache("blob", 10, 10)
@@ -1728,6 +1730,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
                                          data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
+        self.rules = dbo.rules
         # When we started copying objects that go in or out of the cache we
         # discovered that Blob objects were not copyable at the time, due to
         # deepycopy() trying to copy their instance-level "log" attribute.
