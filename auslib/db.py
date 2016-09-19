@@ -1004,7 +1004,7 @@ class Rules(AUSTable):
                            Column('rule_id', Integer, primary_key=True, autoincrement=True),
                            Column('alias', String(50), unique=True),
                            Column('priority', Integer),
-                           Column('mapping', String(100), nullable=True),
+                           Column('mapping', String(100)),
                            Column('backgroundRate', Integer),
                            Column('update_type', String(15), nullable=False),
                            Column('product', String(15)),
