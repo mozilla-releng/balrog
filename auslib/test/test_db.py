@@ -1524,6 +1524,20 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         release = self.releases.t.select().where(self.releases.name == 'a').execute().fetchall()
         self.assertEquals(release, [])
 
+    def testDeleteWithRuleMapping(self):
+        self.releases.t.insert().execute(name='d', product='d', data=json.dumps(dict(name="d", schema_version=1, hashFunction="sha512")),
+                                         data_version=1)
+        self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='d', update_type='z',
+                                      data_version=1)
+        self.assertRaises(ValueError, self.releases.delete, {"name": "d"}, changed_by='me', old_data_version=1)
+
+    def testDeleteWithRuleWhitelist(self):
+        self.releases.t.insert().execute(name='e', product='e', data=json.dumps(dict(name="e", schema_version=1, hashFunction="sha512")),
+                                         data_version=1)
+        self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='e', backgroundRate=100, whitelist='e', update_type='z',
+                                      data_version=1)
+        self.assertRaises(ValueError, self.releases.delete, {"name": "e"}, changed_by='me', old_data_version=1)
+
     def testDeleteReleaseWhenReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertRaises(ReadOnlyError, self.releases.delete, {"name": "a"}, changed_by='me', old_data_version=2)
@@ -1701,19 +1715,21 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
+        dbo.setDb(self.dburi)
+        dbo.create()
         cache.reset()
         cache.make_copies = True
         cache.make_cache("blob", 10, 10)
         cache.make_cache("blob_version", 10, 4)
-        self.db = AUSDatabase(self.dburi)
-        self.db.create()
-        self.releases = self.db.releases
+        self.rules = dbo.rules
+        self.releases = dbo.releases
+        self.permissions = dbo.permissions
         self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.releases.t.insert().execute(name='b', product='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
+        self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+        self.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         # When we started copying objects that go in or out of the cache we
         # discovered that Blob objects were not copyable at the time, due to
         # deepycopy() trying to copy their instance-level "log" attribute.

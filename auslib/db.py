@@ -1021,6 +1021,7 @@ class Rules(AUSTable):
                            Column('comment', String(500)),
                            Column('whitelist', String(100)),
                            )
+
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
     def _matchesRegex(self, foo, bar):
@@ -1547,12 +1548,18 @@ class Releases(AUSTable):
 
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
         names = []
+        mapping_count = dbo.rules.t.count().where(dbo.rules.mapping == where["name"]).execute().fetchone()[0]
+
+        whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == where["name"]).execute().fetchone()[0]
+
+        if mapping_count > 0 or whitelist_count > 0:
+            msg = "%s has rules pointing to it. Hence it cannot be deleted." % (self.name)
+            raise ValueError(msg)
         for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):
             names.append(toDelete["name"])
             self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
             if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
-
         if not dryrun:
             super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
             for name in names:
