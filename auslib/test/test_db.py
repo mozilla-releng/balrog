@@ -1721,16 +1721,15 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
         cache.make_copies = True
         cache.make_cache("blob", 10, 10)
         cache.make_cache("blob_version", 10, 4)
-        self.db = AUSDatabase(self.dburi)
-        self.db.create()
-        self.releases = self.db.releases
+        self.rules = dbo.rules
+        self.releases = dbo.releases
+        self.permissions = dbo.permissions
         self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.releases.t.insert().execute(name='b', product='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
-        self.rules = dbo.rules
+        self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+        self.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         # When we started copying objects that go in or out of the cache we
         # discovered that Blob objects were not copyable at the time, due to
         # deepycopy() trying to copy their instance-level "log" attribute.
