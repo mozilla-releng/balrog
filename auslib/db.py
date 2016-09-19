@@ -1548,9 +1548,9 @@ class Releases(AUSTable):
 
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
         names = []
-        mapping_count = dbo.rules.t.count().where(dbo.rules.mapping == self.name).execute().fetchone()[0]
+        mapping_count = dbo.rules.t.count().where(dbo.rules.mapping == where["name"]).execute().fetchone()[0]
 
-        whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == self.name).execute().fetchone()[0]
+        whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == where["name"]).execute().fetchone()[0]
 
         if mapping_count > 0 or whitelist_count > 0:
             msg = "%s has rules pointing to it. Hence it cannot be deleted." % (self.name)
