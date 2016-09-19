@@ -413,11 +413,11 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 403)
 
     def testDeleteWithoutPermissionForAction(self):
-        ret = self._delete("/releases/b", username="bob", qs=dict(data_version=1))
+        ret = self._delete("/releases/d", username="bob", qs=dict(data_version=1))
         self.assertStatusCode(ret, 403)
 
     def testDeleteWithProductAdminPermission(self):
-        ret = self._delete("/releases/d", username="bob", qs=dict(data_version=1))
+        ret = self._delete("/releases/d", username="bill", qs=dict(data_version=1))
         self.assertStatusCode(ret, 200)
 
     def testDeleteWithoutProductAdminPermission(self):
