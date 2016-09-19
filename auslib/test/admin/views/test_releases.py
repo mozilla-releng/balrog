@@ -409,7 +409,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 404)
 
     def testDeleteWithoutPermission(self):
-        ret = self._delete("/releases/a", username="bob", qs=dict(data_version=1))
+        ret = self._delete("/releases/d", username="bob", qs=dict(data_version=1))
         self.assertStatusCode(ret, 403)
 
     def testDeleteWithoutPermissionForAction(self):
@@ -417,16 +417,16 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 403)
 
     def testDeleteWithProductAdminPermission(self):
-        ret = self._delete("/releases/a", username="billy", qs=dict(data_version=1))
+        ret = self._delete("/releases/d", username="bob", qs=dict(data_version=1))
         self.assertStatusCode(ret, 200)
 
     def testDeleteWithoutProductAdminPermission(self):
-        ret = self._delete("/releases/b", username="billy", qs=dict(data_version=1))
+        ret = self._delete("/releases/d", username="billy", qs=dict(data_version=1))
         self.assertStatusCode(ret, 403)
 
     def testDeleteReadOnlyRelease(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
-        ret = self._delete("/releases/a", username="bill", qs=dict(data_version=2))
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "d").execute()
+        ret = self._delete("/releases/d", username="bill", qs=dict(data_version=2))
         self.assertStatusCode(ret, 403)
 
     def testLocalePut(self):
