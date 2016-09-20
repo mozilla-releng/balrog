@@ -1639,7 +1639,7 @@ class TestSchema6Blob(unittest.TestCase):
         app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data="""
 {
     "name": "h1",
     "schema_version": 6,
@@ -1721,7 +1721,7 @@ class TestSchema6Blob(unittest.TestCase):
 
     def testSchema5OptionalAttributes(self):
         updateQuery = {
-            "product": "h", "version": "30.0", "buildID": "10",
+            "product": "h", "buildID": "10",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0

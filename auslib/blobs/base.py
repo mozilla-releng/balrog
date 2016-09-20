@@ -23,7 +23,7 @@ def createBlob(data):
     # These imports need to be done here to avoid errors due to circular
     # between this module and specific blob modules like apprelease.
     from auslib.blobs.apprelease import ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, \
-        ReleaseBlobV4, ReleaseBlobV5, DesupportBlob
+        ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, DesupportBlob
     from auslib.blobs.gmp import GMPBlobV1
     from auslib.blobs.whitelist import WhitelistBlobV1
     from auslib.blobs.superblob import SuperBlob
@@ -35,6 +35,7 @@ def createBlob(data):
         3: ReleaseBlobV3,
         4: ReleaseBlobV4,
         5: ReleaseBlobV5,
+        6: ReleaseBlobV6,
         50: DesupportBlob,
         1000: GMPBlobV1,
         3000: WhitelistBlobV1,
