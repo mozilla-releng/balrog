@@ -1650,14 +1650,14 @@ class TestDesupportBlob(unittest.TestCase):
 """)
 
     def testDesupport(self):
-        updateQuery = {"locale": "<locale>", "version": "<version>", "buildTarget": "<OS_Something>"}
+        updateQuery = {"locale": "<locale>", "version": "<version>", "buildTarget": "Darwin_x86_64-gcc3-u-i386-x86_64"}
         returned_header = self.blob.getHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned_footer = self.blob.getFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = ""
         expected = ["""
-<update type="minor" unsupported="true" detailsURL="http://moo.com/<locale>/cow/<version>/<OS" displayVersion="50.0">
+<update type="minor" unsupported="true" detailsURL="http://moo.com/<locale>/cow/<version>/Darwin" displayVersion="50.0">
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
