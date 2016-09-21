@@ -707,6 +707,12 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
 class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
     """
+    Changes from ReleaseBlobV5:
+        * Removes support for platformVersion, billboardURL, licenseURL, version, and extensionVersion
+
+    For further information:
+        * https://bugzilla.mozilla.org/show_bug.cgi?id=1296685
+
     """
     jsonschema = "apprelease-v6.yml"
 

@@ -1719,7 +1719,7 @@ class TestSchema6Blob(unittest.TestCase):
         # Raises on error
         self.blobH2.validate('h', self.whitelistedDomains)
 
-    def testSchema5OptionalAttributes(self):
+    def testSchema6OptionalAttributes(self):
         updateQuery = {
             "product": "h", "buildID": "10",
             "buildTarget": "p", "locale": "l", "channel": "c1",
@@ -1744,6 +1744,73 @@ class TestSchema6Blob(unittest.TestCase):
         self.assertEqual(returned_header.strip(), expected_header.strip())
         self.assertItemsEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+    def testCheckFailForUnsuportedAttributes(self):
+        self.blobH3 = ReleaseBlobV6()
+        self.blobH3.loadJSON("""
+{
+    "name": "h3",
+    "schema_version": 5,
+    "hashFunction": "sha512",
+    "appVersion": "31.0",
+    "displayVersion": "31.0",
+    "platformVersion": "31.0",
+    "detailsUrl": "http://example.org/details/%LOCALE%",
+    "licenseUrl": "http://example.org/license/%LOCALE%",
+    "actions": "silent",
+    "billboardURL": "http://example.org/billboard/%LOCALE%",
+    "openURL": "http://example.org/url/%LOCALE%",
+    "notificationURL": "http://example.org/notification/%LOCALE%",
+    "alertURL": "http://example.org/alert/%LOCALE%",
+    "showPrompt": false,
+    "showNeverForVersion": true,
+    "promptWaitTime": 12345,
+    "fileUrls": {
+        "c1": {
+            "partials": {
+                "h1": "http://a.com/h1-partial.mar"
+            },
+            "completes": {
+                "*": "http://a.com/complete.mar"
+            }
+        },
+        "*": {
+            "partials": {
+                "h1": "http://a.com/h1-partial-catchall"
+            },
+            "completes": {
+                "*": "http://a.com/complete-catchall"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 50,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "9"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        self.assertRaises(BlobValidationError, self.blobH3.validate, 'h', self.whitelistedDomains)
 
 
 class TestDesupportBlob(unittest.TestCase):
