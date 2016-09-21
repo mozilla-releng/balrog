@@ -706,7 +706,8 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
 
 class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """
+    """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
+
     Changes from ReleaseBlobV5:
         * Removes support for platformVersion, billboardURL, licenseURL, version, and extensionVersion
 
