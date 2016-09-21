@@ -2,10 +2,7 @@ FROM python:2.7-slim
 
 MAINTAINER bhearsum@mozilla.com
 
-# Some versions of the python:2.7 Docker image remove libpcre3, which
-# uwsgi needs for routing support to be enabled.
-# We may be able to remove this after https://github.com/docker-library/python/pull/137
-# is fixed.
+# Some versions of the python:2.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm.
 # libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # libfontconfig1 is required by phantomjs
