@@ -13,6 +13,11 @@
       description: Human readable identifier
       minLength: 1
       maxLength: 100
+    product:
+      type: string
+      description: The product that the blob is associated to
+      minLength: 1
+      maxLength: 100
     schema_version:
       type: number
       description: Blob identifier number
