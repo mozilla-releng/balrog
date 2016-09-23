@@ -1,0 +1,43 @@
+FROM python:2.7-slim
+
+MAINTAINER bhearsum@mozilla.com
+
+# Some versions of the python:2.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
+# Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm.
+# mysql-client is needed to import sample data
+# libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
+# libfontconfig1 is required by phantomjs
+RUN apt-get -q update \
+    && apt-get -q --yes install libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev mysql-client \
+                                libfontconfig1 \
+    && apt-get clean
+
+WORKDIR /app
+
+# We install everything that may require the network early to decrease the cost when one of the later layers' cache is invalidated.
+COPY requirements.txt requirements-tox.txt /app/
+# This file is required by one of the node dependencies, so we copy it in early.
+COPY ui/app/css/main.less /app/ui/app/css/main.less
+COPY ui/package.json /app/ui/package.json
+
+# install the requirements into the container first
+# these rarely change and is more cache friendly
+# ... really speeds up building new containers
+RUN pip install -r requirements.txt
+RUN pip install -r requirements-tox.txt
+
+# Same thing for UI dependencies.
+WORKDIR /app/ui
+RUN npm install
+
+# We also copy in and build the UI early. If we did this after copying everything,
+# it would rebuild even when Python files change.
+COPY ui/ /app/ui/
+RUN npm run build
+
+COPY ./ /app/
+
+WORKDIR /app
+
+ENTRYPOINT ["/app/uwsgi/run.sh"]
+CMD ["public"]
