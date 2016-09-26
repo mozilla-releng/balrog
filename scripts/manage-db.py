@@ -2,7 +2,7 @@
 
 import itertools
 import logging
-from os import path
+from os import path, popen
 import sys
 
 logging.basicConfig(level=logging.INFO)
@@ -84,6 +84,12 @@ def cleanup_releases_history(trans, dryrun=True):
 
     print "Total Deleted: %d" % total_deleted
 
+def extract_active_data( loc="."):
+    popen('mysqldump -h balrogdb -u balrogadmin -pbalrogadmin balrog rules rules_history rules_scheduled_changes \
+           rules_scheduled_changes_history permissions permissions_history migrate_version  > test.sql')
+    popen('mysqldump -h balrogdb -u balrogadmin -pbalrogadmin --single-transaction balrog releases \
+           --where="exists (select NULL from rules where releases.name = rules.mapping)" >> test.sql ')
+
 if __name__ == "__main__":
     from optparse import OptionParser
     usage = """%s --db dburi action [options]\n""" % sys.argv[0]
@@ -113,6 +119,8 @@ if __name__ == "__main__":
         db.upgrade(options.version)
     elif action == 'downgrade':
         db.downgrade(options.version)
+    elif action == 'extra':
+        extract_active_data()
     elif action.startswith("cleanup"):
         if len(args) < 2:
             parser.error("need to pass maximum nightly release age")
