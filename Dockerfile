@@ -32,8 +32,7 @@ RUN npm run build
 
 RUN find . -maxdepth 1 -not -name dist -exec rm -rf {} \;
 
-RUN apt-get -q update \
-    && apt-get -q --yes remove nodejs nodejs-legacy npm \
+RUN apt-get -q --yes remove nodejs nodejs-legacy npm \
     && apt-get clean
 
 WORKDIR /app
