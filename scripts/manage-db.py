@@ -3,7 +3,7 @@
 import itertools
 import logging
 from os import path, popen
-import re
+from sqlalchemy.engine.url import make_url
 import sys
 
 logging.basicConfig(level=logging.INFO)
@@ -86,31 +86,45 @@ def cleanup_releases_history(trans, dryrun=True):
     print "Total Deleted: %d" % total_deleted
 
 
-def extract_active_data(URL, loc="."):
+def extract_active_data(URL, loc="dump.sql"):
     """
     Function was added in to enhance testing in Balrog's stage environment.
 
     :param URL: Database. eg : mysql://balrogadmin:balrogadmin@balrogdb/balrog
     :param loc: location where sqldump file must be created
-    :return: Stores sqldump data in dump.sql file in the specified location, if not specified stores in current directory
-            If dump.sql file already exists it will override that file and not append it.
+    :return: Stores sqldump data in  the specified location, if not specified stores in current directory in file dump.sql
+            If  file already exists it will override that file and not append it.
     """
-    data = re.split(':|/|@', URL)
-    user = data[3]
-    password = data[4]
-    host = data[5]
-    database = data[6]
+    url = make_url(URL)
+    user = url.username
+    password = url.password
+    host = url.host
+    database = url.database
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction %s rules rules_history rules_scheduled_changes \
-           rules_scheduled_changes_history permissions permissions_history migrate_version  > %s/dump.sql' % (host, user, password, database, loc,))
+           rules_scheduled_changes_history permissions permissions_history migrate_version  > %s' % (host, user, password, database, loc,))
+
     popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases \
-           --where="exists (select * from rules where releases.name = rules.mapping)" >> %s/dump.sql ' % (host, user, password, database, loc,))
+           --where="exists (select * from rules where releases.name = rules.mapping  )" \
+           >> %s' % (host, user, password, database, loc,))
+
+    popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases \
+           --where="exists (select * from rules where releases.name = rules.whitelist  )" \
+               >> %s ' % (host, user, password, database, loc,))
+
+    popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases \
+          --where="exists (select * from rules_scheduled_changes where releases.name = rules_scheduled_changes.base_mapping  )"\
+            >> %s' % (host, user, password, database, loc,))
+
+    popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases \
+          --where="exists (select * from rules_scheduled_changes where releases.name = rules_scheduled_changes.base_whitelist )"\
+                >> %s' % (host, user, password, database, loc,))
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases_history \
-    --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' ">> %s/dump.sql' % (host, user, password, database, loc,))
+    --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' ">> %s' % (host, user, password, database, loc,))
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases_history --where="exists (select * from rules where \
-    releases_history.name = rules.mapping AND rules.alias LIKE \'firefox-release\' ) " >> %s/dump.sql' % (host, user, password, database, loc,))
+    releases_history.name = rules.mapping AND rules.alias = \'firefox-release\' ) " >> %s' % (host, user, password, database, loc,))
 
 
 if __name__ == "__main__":
@@ -120,7 +134,8 @@ if __name__ == "__main__":
     usage += "  create: Create all the tables required for a new Balrog database\n"
     usage += "  upgrade: Upgrade an existing balrog table to a newer version.\n"
     usage += "  downgrade: Downgrade an existing balrog table to an older version.\n"
-    usage += "  extract: Extracts active data for testing "
+    usage += "  extract: Extracts active data for testing. Enter an extra arg to specify the location and filename for\
+            the data to stored in. "
     usage += "  cleanup: Cleanup old data from a database. Requires an extra arg of maximum age (in days) of nightly releases. " \
              "Anything older than this will be deleted.\n"
     usage += "  cleanup-dryrun: Show what would be removed if 'cleanup' is run."
