@@ -7,6 +7,16 @@ build_front_end() {
     cd -
 }
 
+run_back_end_tests() {
+  cd /app
+  tox $@
+}
+
+run_front_end_tests() {
+  build_front_end
+  cd /app/ui/
+  npm test
+}
 
 if [ $1 == "public" ]; then
    exec uwsgi --ini /app/uwsgi/public.ini --python-autoreload 1
@@ -40,6 +50,28 @@ elif [ $1 == "cleanup-db" ]; then
     fi
 
     exec scripts/run-batch-deletes.sh $DBURI $MAX_AGE $DELETE_RUN_TIME
+elif [ $1 == "test" ]; then
+    shift
+    if [[ $1 == "backend" ]]; then
+        shift
+        run_back_end_tests $@
+    elif [[ $1 == "frontend" ]]; then
+        run_front_end_tests
+    else
+        run_back_end_tests $@
+        backend_rc=$?
+        run_front_end_tests
+        frontend_rc=$?
+        echo
+
+        if [[ $backend_rc == 0 && $frontend_rc == 0 ]]; then
+            echo "All tests pass!!!"
+            exit 0
+        else
+            echo "FAIL FAIL FAIL FAIL FAIL FAIL FAIL FAIL. Some tests failed, see above for details."
+            exit 1
+        fi
+    fi
 else
    echo "unknown mode: $1"
    exit 1

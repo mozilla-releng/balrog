@@ -13,4 +13,4 @@ else
 fi
 
 # run the command passed from docker
-/app/uwsgi/run.sh $@
+/app/scripts/run.sh $@

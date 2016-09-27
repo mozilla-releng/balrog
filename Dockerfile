@@ -38,5 +38,5 @@ RUN apt-get -q update \
 
 WORKDIR /app
 
-ENTRYPOINT ["/app/uwsgi/run.sh"]
+ENTRYPOINT ["/app/scripts/run.sh"]
 CMD ["public"]
