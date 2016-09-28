@@ -106,7 +106,7 @@ def extract_active_data(URL, loc="dump.sql"):
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases \
                    --where="exists (select * from rules, rules_scheduled_changes  where releases.name = rules.mapping OR releases.name = rules.whitelist OR \
-                    releases.name = rules_scheduled_changes.base_mapping OR releases.name = rules_scheduled_changes.base_mapping )" \
+                    releases.name = rules_scheduled_changes.base_mapping OR releases.name = rules_scheduled_changes.base_whitelist )" \
                        >> %s ' % (host, user, password, database, loc,))
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases_history \
