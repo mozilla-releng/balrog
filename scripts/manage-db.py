@@ -101,24 +101,20 @@ def extract_active_data(URL, loc="dump.sql"):
     host = url.host
     database = url.database
 
-    popen('mysqldump -h %s -u %s -p%s --single-transaction %s rules rules_history rules_scheduled_changes \
+    popen('mysqldump -h %s -u %s -p%s --single-transaction %s dockerflow rules rules_history rules_scheduled_changes \
            rules_scheduled_changes_history permissions permissions_history migrate_version  > %s' % (host, user, password, database, loc,))
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases \
-           --where="exists (select * from rules where releases.name = rules.mapping  )" \
-           >> %s' % (host, user, password, database, loc,))
+                   --where="exists (select * from rules, rules_scheduled_changes  where releases.name = rules.mapping OR releases.name = rules_scheduled_changes.base_mapping  )" \
+                       >> %s ' % (host, user, password, database, loc,))
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases \
-           --where="exists (select * from rules where releases.name = rules.whitelist  )" \
+           --where="exists (select * from rules, rules_scheduled_changes  where releases.name = rules.whitelist OR releases.name = rules_scheduled_changes.base_whitelist  )" \
                >> %s ' % (host, user, password, database, loc,))
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases \
           --where="exists (select * from rules_scheduled_changes where releases.name = rules_scheduled_changes.base_mapping  )"\
             >> %s' % (host, user, password, database, loc,))
-
-    popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases \
-          --where="exists (select * from rules_scheduled_changes where releases.name = rules_scheduled_changes.base_whitelist )"\
-                >> %s' % (host, user, password, database, loc,))
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases_history \
     --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' ">> %s' % (host, user, password, database, loc,))
