@@ -769,6 +769,6 @@ class DesupportBlob(Blob):
         return '</update>'
 
     def containsForbiddenDomain(self, product, whitelistedDomains):
-        if isForbiddenUrl(self.get('detailsUrl', None), product, whitelistedDomains):
-            return True
+        # Although DesupportBlob contains a domain (detailsUrl), that attribute
+        # is not used to deliver binaries, so it is exempt from whitelist checks.
         return False

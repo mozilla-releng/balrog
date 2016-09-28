@@ -1853,29 +1853,3 @@ class TestDesupportBlob(unittest.TestCase):
         blob = DesupportBlob(name="d2", schema_version=50, foo="bar")
         self.assertRaises(BlobValidationError, blob.validate, 'd',
                           self.whitelistedDomains)
-
-    def testDesupportDoesntContainForbiddenDomain(self):
-        blob = DesupportBlob()
-        blob.loadJSON("""
-{
-    "name": "d1",
-    "schema_version": 50,
-    "detailsUrl": "http://moo.com/%LOCALE%/cow/%VERSION%/",
-    "displayVersion": "50.0"
-}
-""")
-        self.assertFalse(blob.containsForbiddenDomain('d',
-                                                      self.whitelistedDomains))
-
-    def testDesupportContainsForbiddenDomain(self):
-        blob = DesupportBlob()
-        blob.loadJSON("""
-{
-    "name": "d1",
-    "schema_version": 50,
-    "detailsUrl": "http://boo.com/%LOCALE%/cow/%VERSION%/",
-    "displayVersion": "50.0"
-}
-""")
-        self.assertTrue(blob.containsForbiddenDomain('d',
-                                                     self.whitelistedDomains))
