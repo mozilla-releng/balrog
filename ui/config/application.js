@@ -35,7 +35,7 @@ module.exports = function(lineman) {
       apiProxy: {
         prefix: 'api',
         enabled: true,
-        host: 'localhost',
+        host: 'balrogadmin',
         port: 7070
       }
     },

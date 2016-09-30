@@ -5,8 +5,6 @@ balrogadmin:
     - bash
     - scripts/initdb_and_run.sh
   command: admin-dev
-  ports:
-    - "7070:7070"
   expose:
     - "7070"
   volumes:
@@ -49,9 +47,9 @@ balrogagent:
   volumes:
     - ./agent:/app
   links:
-    - balrogui
+    - balrogadmin
   environment:
-    - BALROG_API_ROOT=http://balrogui:8080/api
+    - BALROG_API_ROOT=http://balrogadmin:7070/api
     - BALROG_USERNAME=balrogadmin
     - BALROG_PASSWORD=balrogadmin
     - TELEMETRY_API_ROOT=abc
