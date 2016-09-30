@@ -23,11 +23,6 @@ if [ $1 == "public" ]; then
 elif [ $1 == "admin" ]; then
    exec uwsgi --ini /app/uwsgi/admin.ini --python-autoreload 1
 elif [ $1 == "admin-dev" ]; then
-    # When running the dev instance, we override /app by the developer's folder on his host
-    # machine. Building the frontend here makes sure we always serve the most up to date
-    # revision at each `docker-compose up`. You can still build it manually with, though
-    build_front_end
-
     exec uwsgi --ini /app/uwsgi/admin.dev.ini --ini /app/uwsgi/admin.ini --python-autoreload 1
 elif [ $1 == "upgrade-db" ]; then
     if [ -z "${DBURI}" ]; then
