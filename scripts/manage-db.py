@@ -113,7 +113,7 @@ def extract_active_data(URL, loc="dump.sql"):
     --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' AND 1 limit 1000  ">> %s' % (host, user, password, database, loc,))
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction --skip-add-drop-table  --lock-tables=false %s releases_history  --where "name =\
-     (SELECT rules.mapping from rules WHERE rules.mapping=\'firefox-release\')">> %s' % (host, user, password, database, loc,))
+     (SELECT rules.mapping from rules WHERE rules.alias=\'firefox-release\')">> %s' % (host, user, password, database, loc,))
 
 
 if __name__ == "__main__":
