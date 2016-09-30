@@ -5,4 +5,4 @@
 docker build  -t balrogtest -f Dockerfile.dev .
 # Using a volume mount here ensures that the tox cache dir ends up on the host,
 # which avoids re-installing test dependencies every single time.
-docker run --rm -v `pwd`:/app balrogtest test $@
+docker run --rm balrogtest test $@

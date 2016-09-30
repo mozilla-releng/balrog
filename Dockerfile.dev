@@ -22,7 +22,7 @@ WORKDIR /app
 # The general app requirements and packages required to run Tox are installed into the system,
 # so we need to include them as part of the Docker build.
 # TODO: edit this comment
-COPY * /app/
+COPY ./ /app/
 # install the requirements into the container first
 # these rarely change and is more cache friendly
 # ... really speeds up building new containers
