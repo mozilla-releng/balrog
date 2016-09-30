@@ -2,7 +2,8 @@
 
 import itertools
 import logging
-from os import path
+from os import path, popen
+from sqlalchemy.engine.url import make_url
 import sys
 
 logging.basicConfig(level=logging.INFO)
@@ -84,6 +85,37 @@ def cleanup_releases_history(trans, dryrun=True):
 
     print "Total Deleted: %d" % total_deleted
 
+
+def extract_active_data(URL, loc="dump.sql"):
+    """
+    Function was added in to enhance testing in Balrog's stage environment.
+
+    :param URL: Database. eg : mysql://balrogadmin:balrogadmin@balrogdb/balrog
+    :param loc: location where sqldump file must be created
+    :return: Stores sqldump data in  the specified location, if not specified stores in current directory in file dump.sql
+            If  file already exists it will override that file and not append it.
+    """
+    url = make_url(URL)
+    user = url.username
+    password = url.password
+    host = url.host
+    database = url.database
+
+    popen('mysqldump -h %s -u %s -p%s --single-transaction --lock-tables=false %s dockerflow rules rules_history rules_scheduled_changes \
+           rules_scheduled_changes_history permissions permissions_history migrate_version  > %s' % (host, user, password, database, loc,))
+
+    popen('mysqldump -h %s -u %s -p%s --single-transaction --lock-tables=false %s releases \
+                   --where="exists (select * from rules, rules_scheduled_changes  where releases.name = rules.mapping OR releases.name = rules.whitelist OR \
+                    releases.name = rules_scheduled_changes.base_mapping OR releases.name = rules_scheduled_changes.base_whitelist )" \
+                       >> %s ' % (host, user, password, database, loc,))
+
+    popen('mysqldump -h %s -u %s -p%s --single-transaction --lock-tables=false %s releases_history \
+    --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' AND 1 limit 50  ">> %s' % (host, user, password, database, loc,))
+
+    popen('mysqldump -h %s -u %s -p%s --single-transaction --skip-add-drop-table --no-create-info --lock-tables=false %s releases_history  --where "name =\
+     (SELECT rules.mapping from rules WHERE rules.alias=\'firefox-release\') LIMIT 50">> %s' % (host, user, password, database, loc,))
+
+
 if __name__ == "__main__":
     from optparse import OptionParser
     usage = """%s --db dburi action [options]\n""" % sys.argv[0]
@@ -91,6 +123,8 @@ if __name__ == "__main__":
     usage += "  create: Create all the tables required for a new Balrog database\n"
     usage += "  upgrade: Upgrade an existing balrog table to a newer version.\n"
     usage += "  downgrade: Downgrade an existing balrog table to an older version.\n"
+    usage += "  extract: Extracts active data for testing. Enter an extra arg to specify the location and filename for\
+            the data to stored in. "
     usage += "  cleanup: Cleanup old data from a database. Requires an extra arg of maximum age (in days) of nightly releases. " \
              "Anything older than this will be deleted.\n"
     usage += "  cleanup-dryrun: Show what would be removed if 'cleanup' is run."
@@ -113,6 +147,12 @@ if __name__ == "__main__":
         db.upgrade(options.version)
     elif action == 'downgrade':
         db.downgrade(options.version)
+    elif action == 'extract':
+        if len(args) < 2:
+            extract_active_data(options.db)
+        else:
+            location = args[1]
+            extract_active_data(options.db, location)
     elif action.startswith("cleanup"):
         if len(args) < 2:
             parser.error("need to pass maximum nightly release age")
