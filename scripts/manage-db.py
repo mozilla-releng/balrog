@@ -101,19 +101,19 @@ def extract_active_data(URL, loc="dump.sql"):
     host = url.host
     database = url.database
 
-    popen('mysqldump -h %s -u %s -p%s --single-transaction %s dockerflow rules rules_history rules_scheduled_changes \
+    popen('mysqldump -h %s -u %s -p%s --single-transaction --lock-tables=false %s dockerflow rules rules_history rules_scheduled_changes \
            rules_scheduled_changes_history permissions permissions_history migrate_version  > %s' % (host, user, password, database, loc,))
 
-    popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases \
+    popen('mysqldump -h %s -u %s -p%s --single-transaction --lock-tables=false %s releases \
                    --where="exists (select * from rules, rules_scheduled_changes  where releases.name = rules.mapping OR releases.name = rules.whitelist OR \
                     releases.name = rules_scheduled_changes.base_mapping OR releases.name = rules_scheduled_changes.base_whitelist )" \
                        >> %s ' % (host, user, password, database, loc,))
 
-    popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases_history \
-    --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' ">> %s' % (host, user, password, database, loc,))
+    popen('mysqldump -h %s -u %s -p%s --single-transaction --lock-tables=false %s releases_history \
+    --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' AND 1 limit 1000  ">> %s' % (host, user, password, database, loc,))
 
-    popen('mysqldump -h %s -u %s -p%s --single-transaction %s releases_history --where="exists (select * from rules where \
-    releases_history.name = rules.mapping AND rules.alias = \'firefox-release\' ) " >> %s' % (host, user, password, database, loc,))
+    popen('mysqldump -h %s -u %s -p%s --single-transaction --skip-add-drop-table  --lock-tables=false %s releases_history  --where "name =\
+     (SELECT rules.mapping from rules WHERE rules.mapping=\'firefox-release\')">> %s' % (host, user, password, database, loc,))
 
 
 if __name__ == "__main__":
