@@ -36,5 +36,5 @@ RUN npm run build
 
 WORKDIR /app
 
-ENTRYPOINT ["/app/uwsgi/run.sh"]
+ENTRYPOINT ["bash", "/app/uwsgi/run.sh"]
 CMD ["public"]

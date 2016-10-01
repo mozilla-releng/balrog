@@ -13,5 +13,5 @@ COPY run.sh MANIFEST.in setup.py version.json /app/
 # test-only stuff
 COPY .coveragerc requirements-test.txt run-tests.sh tox.ini version.txt /app/
 
-ENTRYPOINT ["/app/run.sh"]
+ENTRYPOINT [ "bash", "/app/run.sh"]
 CMD ["agent"]
