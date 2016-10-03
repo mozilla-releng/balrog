@@ -9,7 +9,7 @@ from requests.exceptions import RequestException
 
 if __name__ == "__main__":
     from optparse import OptionParser
-    doc = "%s --u uri -n username -p password" % sys.argv[0]
+    doc = "%s --u url -n username -p password" % sys.argv[0]
     parser = OptionParser(doc)
     parser.add_option("-u", "--url", dest="url", type="string", default=False,
                       action="store", help="URL to the running admin API")
@@ -23,15 +23,17 @@ if __name__ == "__main__":
         print "url and auth is required"
         sys.exit(1)
 
-    url = 'http://' + options.url
-    data = requests.get(url + '/api/releases')
+    url = options.url
+    client = requests.Session()
+    data = client.get(url + '/api/releases', auth=(options.username,
+                                                   options.password))
     releases = data.json()['releases']
 
     unsuccessful_releases = []
     for release in releases:
         try:
-            client = requests.Session()
-            data = client.get(url + '/api/releases/' + release['name'])
+            data = client.get(url + '/api/releases/' + release['name'],
+                              auth=(options.username, options.password))
             blob = data.json()
             csrf_token = data.headers['X-CSRF-Token']
             if 'product' not in blob.keys():
@@ -43,16 +45,19 @@ if __name__ == "__main__":
                 data['csrf_token'] = csrf_token
 
                 r = client.post(url + '/api/releases/' + release['name'],
-                            json=data, auth=(options.username,
-                                             options.password))
-                if r.status_code == 401:
-                    print "auth credentials not accepted"
-                    sys.exit(1)
-        except RequestException:
+                                json=data, auth=(options.username,
+                                                 options.password))
+                r.raise_for_status()
+            else:
+                print "%s already has product" % release['name']
+        except RequestException as re:
+            if re.response.status_code == 401:
+                print "auth credentials not accepted"
+                sys.exit(1)
             print sys.exc_info()
             unsuccessful_releases.append(release['name'])
 
     if len(unsuccessful_releases) != 0:
-        print "these releases could not be updated successfully"
+        print "these releases could not be updated successfully:"
         for release in unsuccessful_releases:
             print release
