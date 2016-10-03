@@ -3,6 +3,8 @@ try:
 except ImportError:
     # so you're in python <2.7
     from ordereddict import OrderedDict
+
+import mock
 import unittest
 
 from auslib.global_state import dbo
@@ -10,7 +12,8 @@ from auslib.errors import BadDataError
 from auslib.web.base import app
 from auslib.blobs.base import BlobValidationError
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
-    ReleaseBlobV3, ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, DesupportBlob
+    ReleaseBlobV3, ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, DesupportBlob, \
+    UnifiedFileUrlsMixin
 
 
 class SimpleBlob(ReleaseBlobBase):
@@ -1853,3 +1856,67 @@ class TestDesupportBlob(unittest.TestCase):
         blob = DesupportBlob(name="d2", schema_version=50, foo="bar")
         self.assertRaises(BlobValidationError, blob.validate, 'd',
                           self.whitelistedDomains)
+
+
+class TestUnifiedFileUrlsMixin(unittest.TestCase):
+
+    def setUp(self):
+        fileUrls = {
+            "c1": {
+                "partials": {
+                    "h1": "http://a.com/h1-partial.mar"
+                },
+                "completes": {
+                    "*": "http://a.com/complete.mar"
+                }
+            },
+            "*": {
+                "partials": {
+                    "h1": "http://a.com/h1-partial-catchall",
+                    "h2": "http://a.com/h2-partial-catchall",
+                },
+                "completes": {
+                    "*": "http://a.com/complete-catchall"
+                }
+            }
+        }
+        values = {'fileUrls': fileUrls, 'p': {'OS_FTP': 'os_ftp', 'OS_BOUNCER': 'os_bouncer'}}
+
+        def side_effects(key, *args):
+            return values[key]
+
+        self.mixin_instance = UnifiedFileUrlsMixin()
+        self.mixin_instance.getPlatformData = mock.Mock(side_effect=side_effects)
+        self.mixin_instance.get = mock.Mock(side_effect=side_effects)
+        self.mixin_instance.log = mock.MagicMock()
+        self.mixin_instance.log.debug = mock.MagicMock()
+
+    def testGetUrlGetsFromChannel(self):
+        updateQuery = {
+            "product": "h", "version": "30.0", "buildID": "10",
+            "buildTarget": "p", "locale": "l", "channel": "c1",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        patchKey = "partials"
+        patch = {"from": "h1"}
+        specialForceHosts = ["http://a.com"]
+
+        expected_url = "http://a.com/h1-partial.mar"
+        url = self.mixin_instance._getUrl(updateQuery, patchKey, patch, specialForceHosts)
+
+        self.assertEquals(expected_url, url)
+
+    def testGetUrlDoesntFallBackToCatchAll(self):
+        updateQuery = {
+            "product": "h", "version": "30.0", "buildID": "10",
+            "buildTarget": "p", "locale": "l", "channel": "c1",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        patchKey = "partials"
+        patch = {"from": "h2"}
+        specialForceHosts = ["http://a.com"]
+
+        with self.assertRaises(ValueError):
+            self.mixin_instance._getUrl(updateQuery, patchKey, patch, specialForceHosts)
