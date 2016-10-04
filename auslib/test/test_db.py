@@ -1027,9 +1027,9 @@ class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
                         s.append(a)
                     else:
                         s.append(a)
-                        print " ".join(s)
+                        query = " ".join(s)
                         s = []
-                        trans.execute(a)
+                        trans.execute(query)
 
 
 class RulesTestMixin(object):
