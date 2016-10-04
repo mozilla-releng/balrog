@@ -1017,8 +1017,19 @@ class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
     def testSampleDataImport(self):
         with self.db.begin() as trans:
             with BZ2File(self.sample_data) as f:
-                for q in f:
-                    trans.execute(q)
+                for line in f:
+                    s = []
+                    for line in f:
+                        a = line.strip().rstrip('/n')
+                    if len(a) == 0:
+                        continue
+                    if a[-1] != ";":
+                        s.append(a)
+                    else:
+                        s.append(a)
+                        print " ".join(s)
+                        s = []
+                        trans.execute(a)
 
 
 class RulesTestMixin(object):
