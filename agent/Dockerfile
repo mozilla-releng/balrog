@@ -13,5 +13,8 @@ COPY run.sh MANIFEST.in setup.py version.json /app/
 # test-only stuff
 COPY .coveragerc requirements-test.txt run-tests.sh tox.ini version.txt /app/
 
-ENTRYPOINT [ "bash", "/app/run.sh"]
+# Using /bin/bash as the entrypoint works around some volume mount issues on Windows
+# where volume-mounted files do not have execute bits set.
+# https://github.com/docker/compose/issues/2301#issuecomment-154450785 has additional background.
+ENTRYPOINT ["/bin/bash", "/app/run.sh"]
 CMD ["agent"]
