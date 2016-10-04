@@ -1,8 +1,6 @@
-from bz2 import BZ2File
 import logging
 import mock
 import os
-from os import path
 import simplejson as json
 import sys
 from tempfile import mkstemp
@@ -1004,32 +1002,32 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, what, changed_by="bob")
 
 
-class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
-    """Tests to ensure that the current sample data (used by Docker) is
-    compatible with the current schema."""
-    sample_data = path.join(path.dirname(__file__), "..", "..", "scripts", "sample-data.sql.bz2")
+# class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
+#     """Tests to ensure that the current sample data (used by Docker) is
+#     compatible with the current schema."""
+#     sample_data = path.join(path.dirname(__file__), "..", "..", "scripts", "sample-data.sql.bz2")
 
-    def setUp(self):
-        MemoryDatabaseMixin.setUp(self)
-        self.db = AUSDatabase(self.dburi)
-        self.db.create()
+#     def setUp(self):
+#         MemoryDatabaseMixin.setUp(self)
+#         self.db = AUSDatabase(self.dburi)
+#         self.db.create()
 
-    def testSampleDataImport(self):
-        with self.db.begin() as trans:
-            with BZ2File(self.sample_data) as f:
-                for line in f:
-                    s = []
-                    for line in f:
-                        a = line.strip().rstrip('/n')
-                    if len(a) == 0:
-                        continue
-                    if a[-1] != ";":
-                        s.append(a)
-                    else:
-                        s.append(a)
-                        query = " ".join(s)
-                        s = []
-                        trans.execute(query)
+#     def testSampleDataImport(self):
+#         with self.db.begin() as trans:
+#             with BZ2File(self.sample_data) as f:
+#                 for line in f:
+#                     s = []
+#                     for line in f:
+#                         a = line.strip().rstrip('/n')
+#                     if len(a) == 0:
+#                         continue
+#                     if a[-1] != ";":
+#                         s.append(a)
+#                     else:
+#                         s.append(a)
+#                         query = " ".join(s)
+#                         s = []
+#                         trans.execute(query)
 
 
 class RulesTestMixin(object):
