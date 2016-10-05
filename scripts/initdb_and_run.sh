@@ -1,7 +1,9 @@
 set -xe
 
 if [ ! -e /app/.cache/mysql/db.done ]; then
-    sleep 30
+    # We need to sleep awhile for fresh databases because mysql will take longer to initialize.
+    # Ideally, this would find some better way to probe for mysql-readyness.
+    sleep 45
     echo "Initializing DB..."
     python scripts/manage-db.py -d mysql://balrogadmin:balrogadmin@balrogdb/balrog create
     bunzip2 -c /app/scripts/sample-data.sql.bz2 | mysql -h balrogdb -u balrogadmin --password=balrogadmin balrog
@@ -9,6 +11,8 @@ if [ ! -e /app/.cache/mysql/db.done ]; then
     touch /app/.cache/mysql/db.done
     echo "Done"
 else
+    # We also should sleep for existing databases, but we don't need for nearly as long.
+    sleep 10
     python scripts/manage-db.py -d mysql://balrogadmin:balrogadmin@balrogdb/balrog upgrade
 fi
 
