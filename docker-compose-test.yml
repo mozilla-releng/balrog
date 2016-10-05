@@ -1,4 +1,4 @@
 balrogtest:
   build: .
-  entrypoint:
-    - /app/scripts/test-entrypoint.sh
+  dockerfile: Dockerfile.dev
+  command: test

@@ -7,17 +7,22 @@ build_front_end() {
     cd -
 }
 
+run_back_end_tests() {
+  cd /app
+  tox $@
+}
+
+run_front_end_tests() {
+  build_front_end
+  cd /app/ui/
+  npm test
+}
 
 if [ $1 == "public" ]; then
    exec uwsgi --ini /app/uwsgi/public.ini --python-autoreload 1
 elif [ $1 == "admin" ]; then
    exec uwsgi --ini /app/uwsgi/admin.ini --python-autoreload 1
 elif [ $1 == "admin-dev" ]; then
-    # When running the dev instance, we override /app by the developer's folder on his host
-    # machine. Building the frontend here makes sure we always serve the most up to date
-    # revision at each `docker-compose up`. You can still build it manually with, though
-    build_front_end
-
     exec uwsgi --ini /app/uwsgi/admin.dev.ini --ini /app/uwsgi/admin.ini --python-autoreload 1
 elif [ $1 == "upgrade-db" ]; then
     if [ -z "${DBURI}" ]; then
@@ -40,6 +45,28 @@ elif [ $1 == "cleanup-db" ]; then
     fi
 
     exec scripts/run-batch-deletes.sh $DBURI $MAX_AGE $DELETE_RUN_TIME
+elif [ $1 == "test" ]; then
+    shift
+    if [[ $1 == "backend" ]]; then
+        shift
+        run_back_end_tests $@
+    elif [[ $1 == "frontend" ]]; then
+        run_front_end_tests
+    else
+        run_back_end_tests $@
+        backend_rc=$?
+        run_front_end_tests
+        frontend_rc=$?
+        echo
+
+        if [[ $backend_rc == 0 && $frontend_rc == 0 ]]; then
+            echo "All tests pass!!!"
+            exit 0
+        else
+            echo "FAIL FAIL FAIL FAIL FAIL FAIL FAIL FAIL. Some tests failed, see above for details."
+            exit 1
+        fi
+    fi
 else
    echo "unknown mode: $1"
    exit 1

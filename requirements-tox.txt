@@ -1,0 +1,8 @@
+pluggy==0.3.1 \
+# --hash=sha256:159cc783e056c07da6552aa5aef6b1e6c0064b4f18bd49c531fd2d40aafb0ea3
+py==1.4.31 \
+# --hash=sha256:a6501963c725fc2554dabfece8ae9a8fb5e149c0ac0a42fd2b02c5c1c57fc114
+tox==2.3.1 \
+# --hash=sha256:bf7fcc140863820700d3ccd65b33820ba747b61c5fe4e2b91bb8c64cb21a47ee
+virtualenv==15.0.1 \
+# --hash=sha256:1a74278b8adb383ce4c7619e33c753b1eb7b58dc1e449601c096ca4b76125f84
