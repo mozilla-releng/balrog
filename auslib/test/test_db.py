@@ -1002,6 +1002,9 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, what, changed_by="bob")
 
 
+# In https://bugzilla.mozilla.org/show_bug.cgi?id=1284481, we changed the sampled data to be a true
+# production dump, which doesn't import properly into sqlite. We should uncomment this test in the
+# future, when we have the ability to run it againts a mysql database.
 # class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
 #     """Tests to ensure that the current sample data (used by Docker) is
 #     compatible with the current schema."""
