@@ -40,5 +40,5 @@ WORKDIR /app
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.
 # https://github.com/docker/compose/issues/2301#issuecomment-154450785 has additional background.
-ENTRYPOINT ["/bin/bash", "/app/uwsgi/run.sh"]
+ENTRYPOINT ["/bin/bash", "/app/scripts/run.sh"]
 CMD ["public"]
