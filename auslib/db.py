@@ -1775,7 +1775,7 @@ class UnquotedStr(str):
 
 
 def send_email(relayhost, port, username, password, to_addr, from_addr, table, subj,
-               body):
+               body, tls):
     from email.mime.text import MIMEText
     from smtplib import SMTP
 
@@ -1787,8 +1787,9 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
         conn = SMTP()
         conn.connect(relayhost, port)
         conn.ehlo()
-        conn.starttls()
-        conn.ehlo()
+        if tls:
+            conn.starttls()
+            conn.ehlo()
     except:
         table.log.exception("Failed to connect to SMTP server:")
         return
@@ -1802,7 +1803,7 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
         conn.quit()
 
 
-def make_change_notifier(relayhost, port, username, password, to_addr, from_addr):
+def make_change_notifier(relayhost, port, username, password, to_addr, from_addr, tls):
     def bleet(table, type_, changed_by, query):
         body = ["Changed by: %s" % changed_by]
         if type_ == "UPDATE":
@@ -1826,12 +1827,12 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
 
         subj = "%s to %s detected" % (type_, table.t.name)
         send_email(relayhost, port, username, password, to_addr, from_addr,
-                   table, subj, body)
+                   table, subj, body, tls)
         table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
     return bleet
 
 
-def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr):
+def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr, tls):
     def bleet(table, type_, changed_by, query):
         body = ["Changed by: %s" % changed_by]
         where = [c for c in query._whereclause.get_children()]
@@ -1848,7 +1849,7 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
 
             subj = "Read only release %s changed to modifiable" % data['name']
             send_email(relayhost, port, username, password, to_addr, from_addr,
-                       table, subj, body)
+                       table, subj, body, tls)
             table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
     return bleet
 
@@ -1898,13 +1899,14 @@ class AUSDatabase(object):
     def setDomainWhitelist(self, domainWhitelist):
         self.releasesTable.setDomainWhitelist(domainWhitelist)
 
-    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr):
-        bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr)
+    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, tls=False):
+        bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr, tls)
         read_only_bleeter = make_change_notifier_for_read_only(relayhost, port,
                                                                username,
                                                                password,
                                                                to_addr,
-                                                               from_addr)
+                                                               from_addr,
+                                                               tls)
         self.rules.onInsert = bleeter
         self.rules.onUpdate = bleeter
         self.rules.onDelete = bleeter
