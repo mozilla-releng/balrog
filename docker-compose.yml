@@ -72,8 +72,7 @@ balrogui:
     - WEB_PORT=8080
   entrypoint:
     - /bin/bash
-    - -c
-    - cd /app && /usr/local/bin/npm install && /usr/local/bin/npm build && /usr/local/bin/npm start
+    - /app/docker-entrypoint.sh
 
 balrogdb:
   image: mysql:5.7
