@@ -22,9 +22,6 @@ WORKDIR /app
 # The general app requirements and packages required to run Tox are installed into the system.
 # We copy them in early to avoid re-installing them unless absolutely necessary.
 COPY requirements.txt requirements-tox.txt /app/
-# install the requirements into the container first
-# these rarely change and is more cache friendly
-# ... really speeds up building new containers
 RUN pip install -r requirements.txt
 RUN pip install -r requirements-tox.txt
 
