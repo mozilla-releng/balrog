@@ -2,6 +2,7 @@ import logging
 import os
 
 from auslib.log import configure_logging
+from auslib.web.base import sentry
 
 
 SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "b2gbld", "stage-ffxbld", "stage-tbirdbld", "stage-b2gbld"]
@@ -50,6 +51,11 @@ application.config["SPECIAL_FORCE_HOSTS"] = SPECIAL_FORCE_HOSTS
 # about the current code (version number, commit hash), but doesn't exist in
 # the repo itself
 application.config["VERSION_FILE"] = "/app/version.json"
+application.config['SENTRY_DSN'] = os.environ.get('SENTRY_DSN')
+application.config['SENTRY_PROCESSORS'] = ['auslib.util.sentry.SanitizeHeadersProcessor']
+
+if application.config['SENTRY_DSN']:
+    sentry.init_app(application)
 
 if os.environ.get("CACHE_CONTROL"):
     application.config["CACHE_CONTROL"] = os.environ["CACHE_CONTROL"]
