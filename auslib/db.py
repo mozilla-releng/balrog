@@ -1836,21 +1836,25 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
     def bleet(table, type_, changed_by, query):
         body = ["Changed by: %s" % changed_by]
         where = [c for c in query._whereclause.get_children()]
-        row = table.select(where=where)[0]
-        if not query.parameters['read_only'] and row['read_only']:
-            body.append("Row(s) to be updated as follows:")
-            data = {}
-            data['name'] = UnquotedStr(repr(row['name']))
-            data['product'] = UnquotedStr(repr(row['product']))
-            data['read_only'] = UnquotedStr("%s ---> %s" %
-                                            (repr(row['read_only']),
-                                             repr(query.parameters['read_only'])))
-            body.append(UTF8PrettyPrinter().pformat(data))
+        # TODO: How are we sometimes (always?) getting no rows for this. It shouldn't be possible...
+        # It's possible that the where clause is not getting extracted properly.
+        rows = table.select(where=where)
+        if rows:
+            row = rows[0]
+            if not query.parameters['read_only'] and row['read_only']:
+                body.append("Row(s) to be updated as follows:")
+                data = {}
+                data['name'] = UnquotedStr(repr(row['name']))
+                data['product'] = UnquotedStr(repr(row['product']))
+                data['read_only'] = UnquotedStr("%s ---> %s" %
+                                                (repr(row['read_only']),
+                                                repr(query.parameters['read_only'])))
+                body.append(UTF8PrettyPrinter().pformat(data))
 
-            subj = "Read only release %s changed to modifiable" % data['name']
-            send_email(relayhost, port, username, password, to_addr, from_addr,
-                       table, subj, body, tls)
-            table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
+                subj = "Read only release %s changed to modifiable" % data['name']
+                send_email(relayhost, port, username, password, to_addr, from_addr,
+                        table, subj, body, tls)
+                table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
     return bleet
 
 # A helper that sets sql_mode. This should only be used with MySQL, and
