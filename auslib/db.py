@@ -1848,12 +1848,12 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
                 data['product'] = UnquotedStr(repr(row['product']))
                 data['read_only'] = UnquotedStr("%s ---> %s" %
                                                 (repr(row['read_only']),
-                                                repr(query.parameters['read_only'])))
+                                                 repr(query.parameters['read_only'])))
                 body.append(UTF8PrettyPrinter().pformat(data))
 
                 subj = "Read only release %s changed to modifiable" % data['name']
                 send_email(relayhost, port, username, password, to_addr, from_addr,
-                        table, subj, body, tls)
+                           table, subj, body, tls)
                 table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
     return bleet
 

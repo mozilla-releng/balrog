@@ -30,7 +30,7 @@ COPY auslib/ /app/auslib/
 COPY ui/ /app/ui/
 COPY scripts/ /app/scripts/
 COPY uwsgi/ /app/uwsgi/
-COPY MANIFEST.in requirements-test.txt setup.py tox.ini version.json version.txt /app/
+COPY .coveragerc MANIFEST.in requirements-test.txt setup.py tox.ini version.json version.txt /app/
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.
