@@ -89,6 +89,11 @@ class Blob(dict):
         # of return products.
         return None
 
+    def getResponseBlobs(self):
+        # Usually returns None. It the Blob is a SuperBlobAddon, it returns the
+        # list of return blobs
+        return None
+
     def getSchema(self):
         def loadSchema():
             return yaml.load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
