@@ -587,6 +587,8 @@ class UnifiedFileUrlsMixin(object):
             # 1) Its exact specified channel.
             # 2) Its fallback channel.
             # 3) In the catch-all "channel" ("*").
+            # When a channel is present in 'fileUrls' then we don't fall back to the
+            # 'catch-all' block if a product is missing from the channel block
             channels = [
                 updateQuery['channel'],
                 getFallbackChannel(updateQuery['channel']),
@@ -594,8 +596,9 @@ class UnifiedFileUrlsMixin(object):
             ]
             url = None
             for c in channels:
-                url = self.get("fileUrls", {}).get(c, {}).get(patchKey, {}).get(from_)
-                if url:
+                config_block = self.get("fileUrls", {}).get(c, {})
+                if config_block:
+                    url = config_block.get(patchKey, {}).get(from_)
                     break
 
             # If we still can't find a fileUrl, we cannot fulfill this request.
