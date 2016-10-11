@@ -19,3 +19,7 @@ class SuperBlobAddon(Blob):
     def containsForbiddenDomain(self, product, whitelistedDomains):
         # Since SuperBlobs don't have any URLs
         return False
+
+    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        revision = self['revision']
+        return '    <addons revision=%i>' % (revision)
