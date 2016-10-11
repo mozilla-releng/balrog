@@ -5,6 +5,7 @@ from flask import make_response, request
 from flask.views import MethodView
 
 from auslib.web.base import AUS, app
+from auslib.global_state import dbo
 
 import logging
 
@@ -57,6 +58,7 @@ class ClientRequestView(MethodView):
         if release:
             response_products = release.getResponseProducts()
             response_blobs = []
+            response_blob_names = release.getResponseBlobs()
             if response_products:
                 # if we have a SuperBlob, we process the response products and
                 # concatenate their inner XMLs
@@ -70,6 +72,17 @@ class ClientRequestView(MethodView):
                     response_blobs.append({'product_query': product_query,
                                            'response_release': response_release,
                                            'response_update_type': response_update_type})
+            elif response_blob_names:
+                for blob_name in response_blob_names:
+                    product_query = query.copy()
+                    product_query["product"] = blob_name
+                    response_release = dbo.getReleaseBlob(name=blob_name)
+                    if not response_release:
+                        continue
+
+                    response_blob.append({'product_query': product_query,
+                                          'response_release': response_release,
+                                          'response_update_type': update_type})
             else:
                 response_blobs.append({'product_query': query,
                                        'response_release': release,
