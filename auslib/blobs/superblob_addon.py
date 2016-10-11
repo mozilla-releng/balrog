@@ -23,3 +23,6 @@ class SuperBlobAddon(Blob):
     def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         revision = self['revision']
         return '    <addons revision=%i>' % (revision)
+
+    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        return '    </addons>'

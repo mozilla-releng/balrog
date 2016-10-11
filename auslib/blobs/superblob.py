@@ -22,3 +22,6 @@ class SuperBlob(Blob):
 
     def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return '    <addons>'
+
+    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        return '    </addons>'
