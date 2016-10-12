@@ -757,10 +757,10 @@ class ClientTest(ClientTestBase):
 """)
 
     def testSuperBlobAddOn(self):
-        ret = self.client.get('/update/4/superblobaddon-with-mupltiple-response-blob/1.0/1/z/p/a/b/c/d/1/update.xml')
+        ret = self.client.get('/update/4/superblobaddon-with-mupltiple-response-blob/1.0/1/p/p/a/b/c/d/1/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
-    <addons>
+    <addons revision="124">
     </addons>
 </updates>
 """)

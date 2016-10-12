@@ -59,6 +59,7 @@ class ClientRequestView(MethodView):
             response_products = release.getResponseProducts()
             response_blobs = []
             response_blob_names = release.getResponseBlobs()
+            self.log.debug("got blob names: %s", response_blob_names)
             if response_products:
                 # if we have a SuperBlob, we process the response products and
                 # concatenate their inner XMLs
