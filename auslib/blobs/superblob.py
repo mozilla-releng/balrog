@@ -10,7 +10,16 @@ class SuperBlob(Blob):
             self["schema_version"] = 4000
 
     def getResponseProducts(self):
-        return self["products"]
+        if self.get("products", False):
+            return self["products"]
+        else:
+            return None
+
+    def getResponseBlobs(self):
+        if self.get("blobs", False):
+            return self["blobs"]
+        else:
+            return None
 
     def shouldServeUpdate(self, updateQuery):
         # Since a superblob update will always be returned.
@@ -21,7 +30,11 @@ class SuperBlob(Blob):
         return False
 
     def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        return '    <addons>'
+        if self.get("revision", False):
+            revision = self['revision']
+            return '    <addons revision=\"%i\">' % (revision)
+        else:
+            return '    <addons'
 
     def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return '    </addons>'

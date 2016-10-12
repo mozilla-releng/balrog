@@ -470,7 +470,7 @@ class ClientTestBase(ClientTestCommon):
                                         product='superblobaddon-with-mupltiple-response-blob', data_version=1, data="""
 {
     "name": "superblobaddon",
-    "schema_version": 6000,
+    "schema_version": 4000,
     "revision": 124,
     "blobs": ["responseblob-a", "responseblob-b"]
 }

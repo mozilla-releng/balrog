@@ -28,7 +28,6 @@ def createBlob(data):
     from auslib.blobs.whitelist import WhitelistBlobV1
     from auslib.blobs.superblob import SuperBlob
     from auslib.blobs.systemaddons import SystemAddonsBlob
-    from auslib.blobs.superblob_addon import SuperBlobAddon
 
     blob_map = {
         1: ReleaseBlobV1,
@@ -41,8 +40,7 @@ def createBlob(data):
         1000: GMPBlobV1,
         3000: WhitelistBlobV1,
         4000: SuperBlob,
-        5000: SystemAddonsBlob,
-        6000: SuperBlobAddon
+        5000: SystemAddonsBlob
     }
 
     if isinstance(data, basestring):

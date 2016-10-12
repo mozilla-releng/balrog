@@ -21,6 +21,22 @@ class TestSchema1Blob(unittest.TestCase, MemoryDatabaseMixin):
     ]
 }
 """)
+        self.superblob_addon = SuperBlob()
+        self.superblob_addon.loadJSON("""
+{
+    "name": "fake",
+    "schema_version": 6000,
+    "revision": 123,
+    "blobs": [
+        "Hello-1.0",
+        "Pocket-2.0"
+    ]
+}
+""")
+
+    def testGetResponseBlobs(self):
+        blob_names = self.superblob_addon.getResponseBlobs()
+        self.assertEqual(blob_names, ['Hello-1.0', 'Pocket-2.0'])
 
     def testGetResponseProducts(self):
         products = self.superblob.getResponseProducts()

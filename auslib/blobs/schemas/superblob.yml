@@ -1,31 +1,69 @@
 ---
   title: Super Blob
   type: object
-  required:
-    - name
-    - schema_version
-    - products
-  additionalProperties: false
-  properties:
-    name:
-      type: string
-      description: Human readable identifier
-      minLength: 1
-      maxLength: 100
-    product:
-      type: string
-      description: The product that the blob is associated to
-      minLength: 1
-      maxLength: 100
-    schema_version:
-      type: number
-      description: Blob identifier number
-      enum:
-        - 4000
-    products:
-      type: array
-      items:
-        type: string
-        description: The name of the response product
-        minLength: 1
-        maxLength: 100
+  oneOf:
+    -
+      type: object
+       required:
+        - name
+        - schema_version
+        - products
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Human readable identifier
+          minLength: 1
+          maxLength: 100
+        product:
+          type: string
+          description: The product that the blob is associated to
+          minLength: 1
+          maxLength: 100
+        schema_version:
+          type: number
+          description: Blob identifier number
+          enum:
+            - 4000
+        revision:
+          type: number
+          description: Revision number of adds collection
+          default:0
+        products:
+          type: array
+          items:
+            type: string
+            description: The name of the response product
+            minLength: 1
+            maxLength: 100
+    -
+      type: object
+      required:
+        - name
+        - schema_version
+        - revision
+        - blobs
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Human readable identifier
+          minLength: 1
+          maxLength: 100
+        schema_version:
+          type: number
+          description: Blob identifier number
+          enum:
+            - 4000
+        revision:
+          type: number
+          description: Revision number of adds collection
+        blobs:
+          type: array
+          items:
+            type: string
+            description: The name of the response blobs
+            minLength: 1
+            maxLength: 100
+
+
