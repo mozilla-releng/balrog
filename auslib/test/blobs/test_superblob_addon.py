@@ -38,7 +38,7 @@ class TestSchema1Blob(unittest.TestCase, MemoryDatabaseMixin):
                                                       self.specialForceHosts)
         footerXML = self.superblob_addon.getFooterXML(updateQuery, "minor", self.whitelistedDomains,
                                                       self.specialForceHosts)
-        expected_header = '    <addons revision=123>'
+        expected_header = '    <addons revision="123">'
         expected_footer = '    </addons>'
         self.assertEqual(headerXML, expected_header)
         self.assertEqual(footerXML, expected_footer)
