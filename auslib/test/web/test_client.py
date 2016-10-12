@@ -442,6 +442,80 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """)
+        dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
+                                     mapping='superblobaddon-with-mupltiple-response-bob', update_type='minor',
+                                     product='superblobaddon-with-mupltiple-response-bo',
+                                     data_version=1)
+        dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
+                                     mapping='superblobaddon-with-one-response-bob', update_type='minor',
+                                     product='superblobaddon-with-one-response-bob',
+                                     data_version=1)
+        dbo.rules.t.insert().execute(priority=190, backgroundRate=100,
+                                     mapping='responseblob-a', update_type='minor',
+                                     product='responseblob-a',
+                                     data_version=1)
+        dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
+                                     mapping='responseblob-b', update_type='minor',
+                                     product='responseblob-b', data_version=1)
+        dbo.releases.t.insert().execute(name='superblobaddon-with-one-response-bob',
+                                        product='superblobaddon-with-one-response-bob', data_version=1, data="""
+{
+    "name": "superblobaddon",
+    "schema_version": 6000,
+    "revision": 123
+    "blobs": ["responseblob-a"]
+}
+""")
+        dbo.releases.t.insert().execute(name='superblobaddon-with-mupltiple-response-bo',
+                                        product='superblobaddon-with-mupltiple-response-bo', data_version=1, data="""
+{
+    "name": "superblobaddon",
+    "schema_version": 6000,
+    "revision": 124
+    "products": ["responseblob-a", "responseblob-b"]
+}
+""")
+        dbo.releases.t.insert().execute(name='responseblob-a', product='responseblob-a', data_version=1, data="""
+{
+    "name": "responseblob-a",
+    "schema_version": 5000,
+    "hashFunction": "SHA512",
+    "uninstall": false,
+    "addons": {
+        "c": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                    "filesize": 2,
+                    "hashValue": "3",
+                    "fileUrl": "http://a.com/blah"
+                }
+            }
+        }
+    }
+}
+""")
+        dbo.releases.t.insert().execute(name='responseblob-b', product='responseblob-b', data_version=1, data="""
+{
+    "name": "responseblob-b",
+    "schema_version": 5000,
+    "hashFunction": "sha512",
+    "uninstall": false,
+    "addon": {
+        "b": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                        "filesize": 27,
+                        "hashValue": "23",
+                        "fileUrl": "http://a.com/b"
+
+                }
+            }
+        }
+    }
+}
+""")
 
     def tearDown(self):
         os.close(self.version_fd)
