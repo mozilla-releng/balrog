@@ -80,9 +80,9 @@ class ClientRequestView(MethodView):
                     if not response_release:
                         continue
 
-                    response_blob.append({'product_query': product_query,
-                                          'response_release': response_release,
-                                          'response_update_type': update_type})
+                    response_blobs.append({'product_query': product_query,
+                                           'response_release': response_release,
+                                           'response_update_type': update_type})
             else:
                 response_blobs.append({'product_query': query,
                                        'response_release': release,
@@ -95,16 +95,16 @@ class ClientRequestView(MethodView):
             # assume that all blobs will have similar ones. We might want to
             # verify that all of them are indeed the same in the future.
 
-            # Sampling the footer from the first blob
-            headerXML = response_blobs[0]['response_release'].getHeaderXML(response_blobs[0]['product_query'],
-                                                                           response_blobs[0]['response_update_type'],
-                                                                           app.config["WHITELISTED_DOMAINS"],
-                                                                           app.config["SPECIAL_FORCE_HOSTS"])
-            # Sampling the footer from the first blob
-            footerXML = response_blobs[0]['response_release'].getFooterXML(response_blobs[0]['product_query'],
-                                                                           response_blobs[0]['response_update_type'],
-                                                                           app.config["WHITELISTED_DOMAINS"],
-                                                                           app.config["SPECIAL_FORCE_HOSTS"])
+            # Extracting Header
+            headerXML = release.getHeaderXML(query,
+                                             update_type,
+                                             app.config["WHITELISTED_DOMAINS"],
+                                             app.config["SPECIAL_FORCE_HOSTS"])
+            # Extracting Footer
+            footerXML = release.getFooterXML(query,
+                                             update_type,
+                                             app.config["WHITELISTED_DOMAINS"],
+                                             app.config["SPECIAL_FORCE_HOSTS"])
             if headerXML:
                 xml.append(headerXML)
             for response_blob in response_blobs:
