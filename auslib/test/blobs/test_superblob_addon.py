@@ -34,8 +34,10 @@ class TestSchema1Blob(unittest.TestCase, MemoryDatabaseMixin):
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": 0
         }
-        headerXML = self.superblob_addon.getHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        footerXML = self.superblob_addon.getFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        headerXML = self.superblob_addon.getHeaderXML(updateQuery, "minor", self.whitelistedDomains,
+                                                      self.specialForceHosts)
+        footerXML = self.superblob_addon.getFooterXML(updateQuery, "minor", self.whitelistedDomains,
+                                                      self.specialForceHosts)
         expected_header = '    <addons revision=123>'
         expected_footer = '    </addons>'
         self.assertEqual(headerXML, expected_header)
