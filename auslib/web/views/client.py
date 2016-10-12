@@ -76,7 +76,7 @@ class ClientRequestView(MethodView):
                 for blob_name in response_blob_names:
                     product_query = query.copy()
                     product_query["product"] = blob_name
-                    response_release = dbo.getReleaseBlob(name=blob_name)
+                    response_release = dbo.releases.getReleaseBlob(name=blob_name)
                     if not response_release:
                         continue
 

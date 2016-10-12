@@ -443,12 +443,12 @@ class ClientTestBase(ClientTestCommon):
 }
 """)
         dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
-                                     mapping='superblobaddon-with-mupltiple-response-bob', update_type='minor',
-                                     product='superblobaddon-with-mupltiple-response-bo',
+                                     mapping='superblobaddon-with-mupltiple-response-blob', update_type='minor',
+                                     product='superblobaddon-with-mupltiple-response-blob',
                                      data_version=1)
         dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
-                                     mapping='superblobaddon-with-one-response-bob', update_type='minor',
-                                     product='superblobaddon-with-one-response-bob',
+                                     mapping='superblobaddon-with-one-response-blob', update_type='minor',
+                                     product='superblobaddon-with-one-response-blob',
                                      data_version=1)
         dbo.rules.t.insert().execute(priority=190, backgroundRate=100,
                                      mapping='responseblob-a', update_type='minor',
@@ -457,22 +457,22 @@ class ClientTestBase(ClientTestCommon):
         dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
                                      mapping='responseblob-b', update_type='minor',
                                      product='responseblob-b', data_version=1)
-        dbo.releases.t.insert().execute(name='superblobaddon-with-one-response-bob',
-                                        product='superblobaddon-with-one-response-bob', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='superblobaddon-with-one-response-blob',
+                                        product='superblobaddon-with-one-response-blob', data_version=1, data="""
 {
     "name": "superblobaddon",
     "schema_version": 6000,
-    "revision": 123
+    "revision": 123,
     "blobs": ["responseblob-a"]
 }
 """)
-        dbo.releases.t.insert().execute(name='superblobaddon-with-mupltiple-response-bo',
-                                        product='superblobaddon-with-mupltiple-response-bo', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='superblobaddon-with-mupltiple-response-blob',
+                                        product='superblobaddon-with-mupltiple-response-blob', data_version=1, data="""
 {
     "name": "superblobaddon",
     "schema_version": 6000,
-    "revision": 124
-    "products": ["responseblob-a", "responseblob-b"]
+    "revision": 124,
+    "blobs": ["responseblob-a", "responseblob-b"]
 }
 """)
         dbo.releases.t.insert().execute(name='responseblob-a', product='responseblob-a', data_version=1, data="""
@@ -753,6 +753,15 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/4/systemaddons/1.0/1/z/p/a/b/c/d/1/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
+</updates>
+""")
+
+    def testSuperBlobAddOn(self):
+        ret = self.client.get('/update/4/superblobaddon-with-mupltiple-response-blob/1.0/1/z/p/a/b/c/d/1/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <addons>
+    </addons>
 </updates>
 """)
 
