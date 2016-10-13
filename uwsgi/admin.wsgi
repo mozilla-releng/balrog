@@ -43,9 +43,9 @@ cache.make_cache("blob_schema", 50, 24 * 60 * 60)
 
 dbo.setDb(os.environ["DBURI"])
 if os.environ.get("NOTIFY_TO_ADDR"):
-    tls = False
+    use_tls = False
     if os.environ.get("SMTP_TLS"):
-        tls = True
+        use_tls = True
     dbo.setupChangeMonitors(
         os.environ["SMTP_HOST"],
         os.environ["SMTP_PORT"],
@@ -53,7 +53,7 @@ if os.environ.get("NOTIFY_TO_ADDR"):
         os.environ.get("SMTP_PASSWORD"),
         os.environ["NOTIFY_TO_ADDR"],
         os.environ["NOTIFY_FROM_ADDR"],
-        tls,
+        use_tls,
     )
 dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
