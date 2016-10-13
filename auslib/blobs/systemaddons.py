@@ -76,13 +76,13 @@ class SystemAddonsBlob(Blob):
 
         return addonXML
 
-    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         if self.get("uninstall", False) or self.hasUpdates(updateQuery, whitelistedDomains):
             return '    <addons>'
         else:
             return None
 
-    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         if self.get("uninstall", False) or self.hasUpdates(updateQuery, whitelistedDomains):
             return '    </addons>'
         else:

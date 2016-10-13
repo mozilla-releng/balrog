@@ -89,25 +89,23 @@ class ClientRequestView(MethodView):
                                        'response_release': release,
                                        'response_update_type': update_type})
 
-            xml = ['<?xml version="1.0"?>']
-            xml.append('<updates>')
-
+            xml = release.getHeaderXML()
             # We only sample the first blob for the header and footer, since we
             # assume that all blobs will have similar ones. We might want to
             # verify that all of them are indeed the same in the future.
 
             # Extracting Header
-            headerXML = release.getHeaderXML(query,
-                                             update_type,
-                                             app.config["WHITELISTED_DOMAINS"],
-                                             app.config["SPECIAL_FORCE_HOSTS"])
+            innerHeaderXML = release.getInnerHeaderXML(query,
+                                                       update_type,
+                                                       app.config["WHITELISTED_DOMAINS"],
+                                                       app.config["SPECIAL_FORCE_HOSTS"])
             # Extracting Footer
-            footerXML = release.getFooterXML(query,
-                                             update_type,
-                                             app.config["WHITELISTED_DOMAINS"],
-                                             app.config["SPECIAL_FORCE_HOSTS"])
-            if headerXML:
-                xml.append(headerXML)
+            innerFooterXML = release.getInnerFooterXML(query,
+                                                       update_type,
+                                                       app.config["WHITELISTED_DOMAINS"],
+                                                       app.config["SPECIAL_FORCE_HOSTS"])
+            if innerHeaderXML:
+                xml.append(innerHeaderXML)
             for response_blob in response_blobs:
                 xml.extend(response_blob['response_release']
                            .getInnerXML(response_blob['product_query'],
@@ -115,9 +113,9 @@ class ClientRequestView(MethodView):
                                         app.config["WHITELISTED_DOMAINS"],
                                         app.config["SPECIAL_FORCE_HOSTS"]))
             # Sampling the footer from the first blob
-            if footerXML:
-                xml.append(footerXML)
-            xml.append('</updates>')
+            if innerFooterXML:
+                xml.append(innerFooterXML)
+            xml.append(release.getFooterXML())
             # ensure valid xml by using the right entity for ampersand
             xml = re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
         else:

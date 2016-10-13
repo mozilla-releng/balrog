@@ -124,10 +124,10 @@ class Blob(dict):
                 url += '?force=1'
         return url
 
-    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         raise NotImplementedError()
 
-    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         raise NotImplementedError()
 
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
@@ -135,3 +135,12 @@ class Blob(dict):
 
     def containsForbiddenDomain(self, product, whitelistedDomains):
         raise NotImplementedError()
+
+    def getHeaderXML(self):
+        header = ['<?xml version="1.0"?>']
+        header.append('<updates>')
+        return header
+
+    def getFooterXML(self):
+        footer = '</updates>'
+        return footer

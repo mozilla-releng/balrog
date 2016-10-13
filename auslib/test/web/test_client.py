@@ -461,7 +461,7 @@ class ClientTestBase(ClientTestCommon):
                                         product='superblobaddon-with-one-response-blob', data_version=1, data="""
 {
     "name": "superblobaddon",
-    "schema_version": 6000,
+    "schema_version": 4000,
     "revision": 123,
     "blobs": ["responseblob-a"]
 }
@@ -735,10 +735,10 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+    <addons>
         <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
         <patch type="complete" URL="http://a.com/b" hashFunction="sha512" hashValue="23" size="27777777"/>
-    </update>
+    </addons>
 </updates>
 """)
 
@@ -746,9 +746,9 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/4/gmp/1.0/1/q/l/a/a/a/a/1/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+    <addons>
         <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
-    </update>
+    </addons>
 </updates>
 """)
 
@@ -756,9 +756,9 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/4/gmp-with-one-response-product/1.0/1/q/l/a/a/a/a/1/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+    <addons>
         <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
-    </update>
+    </addons>
 </updates>
 """)
 

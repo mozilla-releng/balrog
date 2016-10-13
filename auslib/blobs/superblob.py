@@ -29,12 +29,12 @@ class SuperBlob(Blob):
         # Since SuperBlobs don't have any URLs
         return False
 
-    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         if self.get("revision", False):
             revision = self['revision']
             return '    <addons revision=\"%i\">' % (revision)
         else:
-            return '    <addons'
+            return '    <addons>'
 
-    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return '    </addons>'
