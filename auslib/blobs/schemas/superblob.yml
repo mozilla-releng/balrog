@@ -3,6 +3,7 @@
   type: object
   oneOf:
     -
+    # Schema for GMP superblob
       type: object
        required:
         - name
@@ -33,6 +34,7 @@
             minLength: 1
             maxLength: 100
     -
+    # Schema for systemaddons superblob
       type: object
       required:
         - name

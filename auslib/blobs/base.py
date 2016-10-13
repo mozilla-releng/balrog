@@ -85,13 +85,17 @@ class Blob(dict):
             raise ValueError("Blob contains forbidden domain(s)")
 
     def getResponseProducts(self):
-        # Usually returns None. If the Blob is a SuperBlob, it returns the list
-        # of return products.
+        """
+        :return: Usually returns None. If the Blob is a SuperBlob, it returns the list
+                of return products.
+        """
         return None
 
     def getResponseBlobs(self):
-        # Usually returns None. It the Blob is a SuperBlobAddon, it returns the
-        # list of return blobs
+        """
+        :return: Usually returns None. It the Blob is a systemaddons superblob, it returns the
+                 list of return blobs
+        """
         return None
 
     def getSchema(self):
@@ -125,9 +129,15 @@ class Blob(dict):
         return url
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        """
+        :return: Releases-specific header should be implemented for individual blobs
+        """
         raise NotImplementedError()
 
     def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+        """
+        :return: Releases-specific header should be implemented for individual blobs
+        """
         raise NotImplementedError()
 
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
@@ -137,10 +147,16 @@ class Blob(dict):
         raise NotImplementedError()
 
     def getHeaderXML(self):
+        """
+        :return: Returns the outer most header. Returns the outer most header
+        """
         header = ['<?xml version="1.0"?>']
         header.append('<updates>')
         return header
 
     def getFooterXML(self):
+        """
+        :return: Returns the outer most footer. Returns the outer most header
+        """
         footer = '</updates>'
         return footer

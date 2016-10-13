@@ -92,17 +92,20 @@ class ClientRequestView(MethodView):
                                        'response_release': release,
                                        'response_update_type': update_type})
 
+            # getHeaderXML() returns outermost header for an update which
+            # is same for all release type
             xml = release.getHeaderXML()
-            # We only sample the first blob for the header and footer, since we
-            # assume that all blobs will have similar ones. We might want to
+            # we assume that all blobs will have similar ones. We might want to
             # verify that all of them are indeed the same in the future.
 
             # Extracting Header
+            # In case of superblob Extracting Header form parent release
             innerHeaderXML = release.getInnerHeaderXML(query,
                                                        update_type,
                                                        app.config["WHITELISTED_DOMAINS"],
                                                        app.config["SPECIAL_FORCE_HOSTS"])
             # Extracting Footer
+            # In case of superblob Extracting Header form parent release
             innerFooterXML = release.getInnerFooterXML(query,
                                                        update_type,
                                                        app.config["WHITELISTED_DOMAINS"],
@@ -115,7 +118,7 @@ class ClientRequestView(MethodView):
                                         response_blob['response_update_type'],
                                         app.config["WHITELISTED_DOMAINS"],
                                         app.config["SPECIAL_FORCE_HOSTS"]))
-            # Sampling the footer from the first blob
+
             if innerFooterXML:
                 xml.append(innerFooterXML)
             xml.append(release.getFooterXML())
