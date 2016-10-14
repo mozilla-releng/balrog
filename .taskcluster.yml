@@ -10,6 +10,8 @@ tasks:
     payload:
       maxRunTime: 1200
       image: "rail/python-test-runner"
+      env:
+        NO_VOLUME_MOUNT: 1
       command:
         - "/bin/bash"
         - "-c"
@@ -33,6 +35,8 @@ tasks:
     payload:
       maxRunTime: 1200
       image: "rail/python-test-runner"
+      env:
+        NO_VOLUME_MOUNT: 1
       command:
         - "/bin/bash"
         - "-c"
@@ -84,6 +88,8 @@ tasks:
     payload:
       maxRunTime: 1200
       image: "rail/python-test-runner"
+      env:
+        NO_VOLUME_MOUNT: 1
       command:
         - "/bin/bash"
         - "-c"
