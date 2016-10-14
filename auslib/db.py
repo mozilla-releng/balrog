@@ -185,7 +185,7 @@ class AUSTable(object):
     """
 
     def __init__(self, db, dialect, history=True, versioned=True, scheduled_changes=False,
-                 onInsert=None, onUpdate=None, onDelete=None):
+                 scheduled_changes_kwargs={}, onInsert=None, onUpdate=None, onDelete=None):
         self.db = db
         self.t = self.table
         # Enable versioning, if required
@@ -208,7 +208,7 @@ class AUSTable(object):
             self.history = None
         # Set-up a scheduled changes table if required
         if scheduled_changes:
-            self.scheduled_changes = ScheduledChangeTable(db, dialect, self.t.metadata, self)
+            self.scheduled_changes = ScheduledChangeTable(db, dialect, self.t.metadata, self, **scheduled_changes_kwargs)
         else:
             self.scheduled_changes = None
         self.log = logging.getLogger(self.__class__.__name__)
@@ -731,6 +731,7 @@ class ScheduledChangeTable(AUSTable):
     columns of its base, and adding the necessary ones to provide the schedule.
     By default, ScheduledChangeTables enable History on themselves."""
 
+    all_conditions = ("time", "uptake")
     # Scheduled changes may only have a single type of condition, but some
     # conditions require mulitple arguments. This data structure defines
     # each type of condition, and groups their args together for easier
@@ -740,7 +741,12 @@ class ScheduledChangeTable(AUSTable):
         ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
     )
 
-    def __init__(self, db, dialect, metadata, baseTable, history=True):
+    def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), history=True):
+        if not conditions:
+            raise ValueError("No conditions enabled, cannot initialize ScheduledChangesTable for %s", baseTable.t.name)
+        if set(conditions).difference(self.all_conditions):
+            raise ValueError("Unknown conditions in: %s", conditions)
+
         self.baseTable = baseTable
         self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
                            Column("sc_id", Integer, primary_key=True, autoincrement=True),
@@ -750,6 +756,7 @@ class ScheduledChangeTable(AUSTable):
                            Column("telemetry_channel", String(75)),
                            Column("telemetry_uptake", Integer),
                            )
+
         if dialect == "sqlite":
             self.table.append_column(Column("when", Integer))
         else:

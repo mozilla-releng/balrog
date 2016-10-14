@@ -1010,12 +1010,12 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
                 self.table = Table("test_table", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
                                    Column("foo", String(15), nullable=False),
                                    Column("bar", String(15)))
-                super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["when"]},
+                super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]},
                                                 history=True, versioned=True)
 
         self.table = TestTable(self.db, self.metadata)
         self.sc_table = self.table.scheduled_changes
-        self.metadata.cearte_all()
+        self.metadata.create_all()
         self.table.t.insert().execute(fooid=10, foo="h", data_version=1)
         self.table.t.insert().execute(fooid=11, foo="i", bar="j", data_version=1)
         self.sc_table.t.insert().execute(sc_id=1, when=87000, scheduled_by="bob", base_fooid=10, base_foo="h", base_bar="bbb", base_data_version=1,
