@@ -59,7 +59,6 @@ class ClientRequestView(MethodView):
             response_products = release.getResponseProducts()
             response_blobs = []
             response_blob_names = release.getResponseBlobs()
-            self.log.debug("got blob names: %s", response_blob_names)
             if response_products:
                 # if we have a SuperBlob of gmp, we process the response products and
                 # concatenate their inner XMLs
@@ -78,7 +77,8 @@ class ClientRequestView(MethodView):
                     # if we have a SuperBlob of systemaddons, we process the response products and
                     # concatenate their inner XMLs
                     product_query = query.copy()
-                    product_query["product"] = blob_name
+                    product = dbo.releases.getReleases(name=blob_name, limit=1)[0]['product']
+                    product_query["product"] = product
                     response_release = dbo.releases.getReleaseBlob(name=blob_name)
                     if not response_release:
                         self.log.warning("No release found with name: %s", blob_name)

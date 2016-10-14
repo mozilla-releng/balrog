@@ -13,19 +13,13 @@ class SuperBlob(Blob):
         """
         :return: Product in case of GMP supreblob
         """
-        if self.get("products", False):
-            return self["products"]
-        else:
-            return None
+        return self.get("products")
 
     def getResponseBlobs(self):
         """
         :return: Blob names in case of systemaddon Blobs
         """
-        if self.get("blobs", False):
-            return self["blobs"]
-        else:
-            return None
+        return self.get("blobs")
 
     def shouldServeUpdate(self, updateQuery):
         # Since a superblob update will always be returned.
@@ -39,7 +33,7 @@ class SuperBlob(Blob):
         """
         :return: Header specific to GMP and systemaddons superblob
         """
-        if self.get("revision", False):
+        if not self.get("products"):
             revision = self['revision']
             # In case of systemaddons superblob
             return '    <addons revision=\"%i\">' % (revision)

@@ -5,7 +5,7 @@
     -
     # Schema for GMP superblob
       type: object
-       required:
+      required:
         - name
         - schema_version
         - products
