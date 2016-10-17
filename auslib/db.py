@@ -305,7 +305,7 @@ class AUSTable(object):
                 trans.execute(q)
         return ret
 
-    def insert(self, changed_by=None, transaction=None, **columns):
+    def insert(self, changed_by=None, dryrun=False, transaction=None, **columns):
         """Perform an INSERT statement on this table. See AUSTable._insertStatement for
            a description of columns.
 
@@ -319,6 +319,10 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
+
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
 
@@ -377,7 +381,7 @@ class AUSTable(object):
 
         return ret
 
-    def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
+    def delete(self, where, changed_by=None, old_data_version=None, dryrun=False, transaction=None):
         """Perform a DELETE statement on this table. See AUSTable._deleteStatement for
            a description of `where'. To simplify versioning, this method can only
            delete a single row per invocation. If the where clause given would delete
@@ -396,6 +400,10 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
+
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before porceeding.
         if hasattr(where, "keys"):
@@ -464,7 +472,7 @@ class AUSTable(object):
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
 
-    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None):
+    def update(self, where, what, changed_by=None, old_data_version=None, dryrun=False, transaction=None):
         """Perform an UPDATE statement on this stable. See AUSTable._updateStatement for
            a description of `where' and `what'. This method can only update a single row
            per invocation. If the where clause given would update zero or multiple rows, a
@@ -483,6 +491,9 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
 
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before porceeding.
@@ -919,7 +930,7 @@ class ScheduledChangeTable(AUSTable):
         if not dryrun:
             renamed_what = self._prefixColumns(what)
             renamed_what["scheduled_by"] = changed_by
-            return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction)
+            return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction=transaction)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         for row in self.select(where=where, transaction=transaction):
@@ -934,7 +945,7 @@ class ScheduledChangeTable(AUSTable):
                 self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_row)
 
         if not dryrun:
-            return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
+            return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction=transaction)
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
         """Enacts a previously scheduled change by running update or insert on
