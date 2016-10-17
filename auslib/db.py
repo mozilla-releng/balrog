@@ -764,15 +764,18 @@ class ScheduledChangeTable(AUSTable):
                            Column("sc_id", Integer, primary_key=True, autoincrement=True),
                            Column("scheduled_by", String(100), nullable=False),
                            Column("complete", Boolean, default=False),
-                           Column("telemetry_product", String(15)),
-                           Column("telemetry_channel", String(75)),
-                           Column("telemetry_uptake", Integer),
                            )
 
-        if dialect == "sqlite":
-            self.table.append_column(Column("when", Integer))
-        else:
-            self.table.append_column(Column("when", BigInteger))
+        if "uptake" in conditions:
+            self.table.append_column(Column("telemetry_product", String(15)))
+            self.table.append_column(Column("telemetry_channel", String(75)))
+            self.table.append_column(Column("telemetry_uptake", Integer))
+
+        if "time" in conditions:
+            if dialect == "sqlite":
+                self.table.append_column(Column("when", Integer))
+            else:
+                self.table.append_column(Column("when", BigInteger))
 
         # The primary key column(s) are used in construct "where" clauses for
         # existing rows.
