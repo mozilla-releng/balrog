@@ -1044,13 +1044,12 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         self.sc_table._validateConditions({"when": 12345678})
 
     def testValidateConditionsTelemetryRaisesError(self):
-        # TODO: better error message?
         conditions = {
             "telemetry_product": "Firefox",
             "telemetry_channel": "nightly",
             "telemetry_uptake": "200000",
         }
-        self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table._validateConditions, conditions)
+        self.assertRaisesRegexp(ValueError, "uptake condition is disabled", self.sc_table._validateConditions, conditions)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithEnabledCondition(self):
@@ -1068,8 +1067,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
     def testInsertWithDisabledCondition(self):
         what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "telemetry_product": "aa",
                 "telemetry_channel": "bb", "telemetry_uptake": 34567}
-        # TODO: better error message?
-        self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.insert, changed_by="bob", **what)
+        self.assertRaisesRegexp(ValueError, "uptake condition is disabled", self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateWithNewValueForEnabledCondition(self):
@@ -1097,7 +1095,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
     def testUpdateChangeToDisabledCondition(self):
         where = [self.sc_table.sc_id == 1]
         what = {"telemetry_product": "pro", "telemetry_channel": "cha", "telemetry_uptake": 3456, "bar": "ccc"}
-        self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+        self.assertRaisesRegexp(ValueError, "uptake condition is disabled", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
 # In https://bugzilla.mozilla.org/show_bug.cgi?id=1284481, we changed the sampled data to be a true
 # production dump, which doesn't import properly into sqlite. We should uncomment this test in the

@@ -747,16 +747,17 @@ class ScheduledChangeTable(AUSTable):
     # conditions require mulitple arguments. This data structure defines
     # each type of condition, and groups their args together for easier
     # processing.
-    condition_groups = (
-        ("when",),
-        ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
-    )
+    condition_args = {
+        "time": ("when",),
+        "uptake": ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
+    }
 
     def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), history=True):
         if not conditions:
             raise ValueError("No conditions enabled, cannot initialize ScheduledChangesTable for %s", baseTable.t.name)
         if set(conditions).difference(self.all_conditions):
             raise ValueError("Unknown conditions in: %s", conditions)
+        self.condition_groups = [v for k, v in self.condition_args.iteritems() if k in conditions]
 
         self.baseTable = baseTable
         self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
@@ -823,14 +824,20 @@ class ScheduledChangeTable(AUSTable):
             raise ValueError("No conditions found")
 
         for c in conditions:
-            if c not in itertools.chain(*self.condition_groups):
+            for condition, args in self.condition_args.iteritems():
+                if c in args:
+                    if c in itertools.chain(*self.condition_groups):
+                        break
+                    else:
+                        raise ValueError("{} condition is disabled".format(condition))
+            else:
                 raise ValueError("Invalid condition: %s", c)
 
         for group in self.condition_groups:
             if set(group) == set(conditions.keys()):
                 break
         else:
-            raise ValueError("Invalid combination of conditions: %s", conditions.keys())
+            raise ValueError("Invalid combination of conditions: {}".format(conditions.keys()))
 
         if "when" in conditions:
             try:
