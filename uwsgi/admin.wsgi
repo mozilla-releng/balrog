@@ -1,7 +1,6 @@
 import logging
 import os
 
-from auslib.admin.base import sentry
 from auslib.log import configure_logging
 
 
@@ -56,10 +55,10 @@ dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["PAGE_TITLE"] = "Balrog Administration"
 application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
-application.config["SENTRY_DSN"] = os.environ.get("SENTRY_DSN")
-application.config["SENTRY_PROCESSORS"] = ['auslib.util.sentry.SanitizeHeadersProcessor']
 
-if application.config['SENTRY_DSN']:
+if os.environ.get("SENTRY_DSN"):
+    application.config["SENTRY_DSN"] = os.environ.get("SENTRY_DSN")
+    from auslib.admin.base import sentry
     sentry.init_app(application)
 
 # version.json is created when the Docker image is built, and contains details

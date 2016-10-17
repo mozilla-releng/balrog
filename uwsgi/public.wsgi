@@ -51,10 +51,10 @@ application.config["SPECIAL_FORCE_HOSTS"] = SPECIAL_FORCE_HOSTS
 # about the current code (version number, commit hash), but doesn't exist in
 # the repo itself
 application.config["VERSION_FILE"] = "/app/version.json"
-application.config['SENTRY_DSN'] = os.environ.get('SENTRY_DSN')
-application.config['SENTRY_PROCESSORS'] = ['auslib.util.sentry.SanitizeHeadersProcessor']
 
-if application.config['SENTRY_DSN']:
+if os.environ.get('SENTRY_DSN'):
+    application.config['SENTRY_DSN'] = os.environ.get('SENTRY_DSN')
+    from auslib.web.base import sentry
     sentry.init_app(application)
 
 if os.environ.get("CACHE_CONTROL"):
