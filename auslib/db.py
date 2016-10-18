@@ -185,7 +185,7 @@ class AUSTable(object):
     """
 
     def __init__(self, db, dialect, history=True, versioned=True, scheduled_changes=False,
-                 onInsert=None, onUpdate=None, onDelete=None):
+                 scheduled_changes_kwargs={}, onInsert=None, onUpdate=None, onDelete=None):
         self.db = db
         self.t = self.table
         # Enable versioning, if required
@@ -208,7 +208,7 @@ class AUSTable(object):
             self.history = None
         # Set-up a scheduled changes table if required
         if scheduled_changes:
-            self.scheduled_changes = ScheduledChangeTable(db, dialect, self.t.metadata, self)
+            self.scheduled_changes = ScheduledChangeTable(db, dialect, self.t.metadata, self, **scheduled_changes_kwargs)
         else:
             self.scheduled_changes = None
         self.log = logging.getLogger(self.__class__.__name__)
@@ -305,7 +305,7 @@ class AUSTable(object):
                 trans.execute(q)
         return ret
 
-    def insert(self, changed_by=None, transaction=None, **columns):
+    def insert(self, changed_by=None, dryrun=False, transaction=None, **columns):
         """Perform an INSERT statement on this table. See AUSTable._insertStatement for
            a description of columns.
 
@@ -319,6 +319,10 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
+
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
 
@@ -377,7 +381,7 @@ class AUSTable(object):
 
         return ret
 
-    def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
+    def delete(self, where, changed_by=None, old_data_version=None, dryrun=False, transaction=None):
         """Perform a DELETE statement on this table. See AUSTable._deleteStatement for
            a description of `where'. To simplify versioning, this method can only
            delete a single row per invocation. If the where clause given would delete
@@ -396,6 +400,10 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
+
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before porceeding.
         if hasattr(where, "keys"):
@@ -464,7 +472,7 @@ class AUSTable(object):
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
 
-    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None):
+    def update(self, where, what, changed_by=None, old_data_version=None, dryrun=False, transaction=None):
         """Perform an UPDATE statement on this stable. See AUSTable._updateStatement for
            a description of `where' and `what'. This method can only update a single row
            per invocation. If the where clause given would update zero or multiple rows, a
@@ -483,6 +491,9 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
 
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before porceeding.
@@ -735,25 +746,42 @@ class ScheduledChangeTable(AUSTable):
     # conditions require mulitple arguments. This data structure defines
     # each type of condition, and groups their args together for easier
     # processing.
-    condition_groups = (
-        ("when",),
-        ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
-    )
+    condition_groups = {
+        "time": ("when",),
+        "uptake": ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
+    }
+    all_conditions = condition_groups.keys()
+    # It's also useful just to know what all the valid condition args are sometimes.
+    # Note that this does not take into account conditions that may be disabled
+    # for some tables. enabled_condition_groups, which can only be constructed at
+    # instantiation time, tracks these.
+    all_condition_args = itertools.chain(*condition_groups.values())
 
-    def __init__(self, db, dialect, metadata, baseTable, history=True):
+    def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), history=True):
+        if not conditions:
+            raise ValueError("No conditions enabled, cannot initialize ScheduledChangesTable for %s", baseTable.t.name)
+        if set(conditions).difference(self.all_conditions):
+            raise ValueError("Unknown conditions in: %s", conditions)
+
+        self.enabled_condition_groups = {k: v for k, v in self.condition_groups.iteritems() if k in conditions}
+
         self.baseTable = baseTable
         self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
                            Column("sc_id", Integer, primary_key=True, autoincrement=True),
                            Column("scheduled_by", String(100), nullable=False),
                            Column("complete", Boolean, default=False),
-                           Column("telemetry_product", String(15)),
-                           Column("telemetry_channel", String(75)),
-                           Column("telemetry_uptake", Integer),
                            )
-        if dialect == "sqlite":
-            self.table.append_column(Column("when", Integer))
-        else:
-            self.table.append_column(Column("when", BigInteger))
+
+        if "uptake" in conditions:
+            self.table.append_column(Column("telemetry_product", String(15)))
+            self.table.append_column(Column("telemetry_channel", String(75)))
+            self.table.append_column(Column("telemetry_uptake", Integer))
+
+        if "time" in conditions:
+            if dialect == "sqlite":
+                self.table.append_column(Column("when", Integer))
+            else:
+                self.table.append_column(Column("when", BigInteger))
 
         # The primary key column(s) are used in construct "where" clauses for
         # existing rows.
@@ -805,14 +833,20 @@ class ScheduledChangeTable(AUSTable):
             raise ValueError("No conditions found")
 
         for c in conditions:
-            if c not in itertools.chain(*self.condition_groups):
+            for condition, args in self.condition_groups.iteritems():
+                if c in args:
+                    if c in itertools.chain(*self.enabled_condition_groups.values()):
+                        break
+                    else:
+                        raise ValueError("{} condition is disabled".format(condition))
+            else:
                 raise ValueError("Invalid condition: %s", c)
 
-        for group in self.condition_groups:
+        for group in self.enabled_condition_groups.values():
             if set(group) == set(conditions.keys()):
                 break
         else:
-            raise ValueError("Invalid combination of conditions: %s", conditions.keys())
+            raise ValueError("Invalid combination of conditions: {}".format(conditions.keys()))
 
         if "when" in conditions:
             try:
@@ -901,7 +935,7 @@ class ScheduledChangeTable(AUSTable):
                 self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
 
             conditions = {}
-            for cond in itertools.chain(*self.condition_groups):
+            for cond in itertools.chain(*self.condition_groups.values()):
                 if cond in new_row:
                     conditions[cond] = new_row[cond]
                 elif row.get(cond):
@@ -912,7 +946,7 @@ class ScheduledChangeTable(AUSTable):
         if not dryrun:
             renamed_what = self._prefixColumns(what)
             renamed_what["scheduled_by"] = changed_by
-            return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction)
+            return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction=transaction)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         for row in self.select(where=where, transaction=transaction):
@@ -927,7 +961,7 @@ class ScheduledChangeTable(AUSTable):
                 self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_row)
 
         if not dryrun:
-            return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
+            return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction=transaction)
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
         """Enacts a previously scheduled change by running update or insert on
