@@ -929,11 +929,14 @@ class ScheduledChangeTable(AUSTable):
             else:
                 self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
 
-            # TDO: how to make this work for optional conditions.....
             conditions = {}
-            for col in renamed_what:
-                if not col.startswith("base_"):
-                    conditions[col] = renamed_what[col]
+            # TDO: how to make this work for optional conditions.....
+            for cond in itertools.chain(*self.condition_args.values()):
+                if cond in new_row:
+                    conditions[cond] = new_row[cond]
+                elif row.get(cond):
+                    conditions[cond] = row[cond]
+
             self._validateConditions(conditions)
 
         if not dryrun:
