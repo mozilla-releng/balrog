@@ -1053,11 +1053,11 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithEnabledCondition(self):
-        what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "when": 90900}
+        what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "when": 909000}
         self.sc_table.insert(changed_by="bob", **what)
         row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
-        self.assertEquals(row.when, 90900)
+        self.assertEquals(row.when, 909000)
         self.assertEquals(row.data_version, 1)
         self.assertEquals(row.base_fooid, 11)
         self.assertEquals(row.base_foo, "i")
@@ -1072,12 +1072,12 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateWithNewValueForEnabledCondition(self):
         where = [self.sc_table.sc_id == 1]
-        what = {"when": 100030, "bar": "ccc"}
+        what = {"when": 1000300, "bar": "ccc"}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
         row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
         history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
-        self.assertEquals(row.when, 100030)
+        self.assertEquals(row.when, 1000300)
         self.assertEquals(row.data_version, 2)
         self.assertEquals(row.base_fooid, 10)
         self.assertEquals(row.base_foo, "h")
@@ -1085,7 +1085,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         self.assertEquals(row.base_data_version, 1)
         self.assertEquals(history_row.changed_by, "bob")
         self.assertEquals(history_row.scheduled_by, "bob")
-        self.assertEquals(history_row.when, 100030)
+        self.assertEquals(history_row.when, 1000300)
         self.assertEquals(history_row.data_version, 2)
         self.assertEquals(history_row.base_fooid, 10)
         self.assertEquals(history_row.base_foo, "h")
@@ -1094,7 +1094,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
 
     def testUpdateChangeToDisabledCondition(self):
         where = [self.sc_table.sc_id == 1]
-        what = {"telemetry_product": "pro", "telemetry_channel": "cha", "telemetry_uptake": 3456, "bar": "ccc"}
+        what = {"telemetry_product": "pro", "telemetry_channel": "cha", "telemetry_uptake": 3456, "bar": "ccc", "when": None}
         self.assertRaisesRegexp(ValueError, "uptake condition is disabled", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
 # In https://bugzilla.mozilla.org/show_bug.cgi?id=1284481, we changed the sampled data to be a true

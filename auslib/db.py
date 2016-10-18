@@ -917,6 +917,7 @@ class ScheduledChangeTable(AUSTable):
             return ret.inserted_primary_key[0]
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+        renamed_what = self._prefixColumns(what)
         # We need to check each Scheduled Change that would be affected by this
         # to ensure the new row will be valid.
         for row in self.select(where=where, transaction=transaction):
@@ -928,17 +929,14 @@ class ScheduledChangeTable(AUSTable):
             else:
                 self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
 
+            # TDO: how to make this work for optional conditions.....
             conditions = {}
-            for cond in itertools.chain(*self.condition_groups):
-                if cond in new_row:
-                    conditions[cond] = new_row[cond]
-                elif row.get(cond):
-                    conditions[cond] = row[cond]
-
+            for col in renamed_what:
+                if not col.startswith("base_"):
+                    conditions[col] = renamed_what[col]
             self._validateConditions(conditions)
 
         if not dryrun:
-            renamed_what = self._prefixColumns(what)
             renamed_what["scheduled_by"] = changed_by
             return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction=transaction)
 
