@@ -22,7 +22,7 @@ RUN pip install -r requirements.txt
 COPY auslib/ /app/auslib/
 COPY ui/ /app/ui/
 COPY uwsgi/ /app/uwsgi/
-COPY scripts/manage-db.py scripts/run-batch-deletes.sh /app/scripts/
+COPY scripts/manage-db.py scripts/run-batch-deletes.sh scripts/run.sh /app/scripts/
 COPY version.json /app/
 RUN rm -rf /app/auslib/test
 
