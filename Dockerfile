@@ -2,6 +2,8 @@ FROM python:2.7-slim
 
 MAINTAINER bhearsum@mozilla.com
 
+COPY sources.list.jessie /etc/apt/sources.list
+
 # Some versions of the python:2.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm. These will get removed after building.
 # libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
