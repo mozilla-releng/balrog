@@ -98,27 +98,24 @@ class ClientRequestView(MethodView):
             # we assume that all blobs will have similar ones. We might want to
             # verify that all of them are indeed the same in the future.
 
-            # Extracting Header
+            # Appending Header
             # In case of superblob Extracting Header form parent release
-            innerHeaderXML = release.getInnerHeaderXML(query,
-                                                       update_type,
-                                                       app.config["WHITELISTED_DOMAINS"],
-                                                       app.config["SPECIAL_FORCE_HOSTS"])
-            # Extracting Footer
-            # In case of superblob Extracting Header form parent release
-            innerFooterXML = release.getInnerFooterXML(query,
-                                                       update_type,
-                                                       app.config["WHITELISTED_DOMAINS"],
-                                                       app.config["SPECIAL_FORCE_HOSTS"])
-            xml.append(innerHeaderXML)
+            xml.append(release.getInnerHeaderXML(query,
+                                                 update_type,
+                                                 app.config["WHITELISTED_DOMAINS"],
+                                                 app.config["SPECIAL_FORCE_HOSTS"]))
             for response_blob in response_blobs:
                 xml.extend(response_blob['response_release']
                            .getInnerXML(response_blob['product_query'],
                                         response_blob['response_update_type'],
                                         app.config["WHITELISTED_DOMAINS"],
                                         app.config["SPECIAL_FORCE_HOSTS"]))
-
-            xml.append(innerFooterXML)
+            # Appending Footer
+            # In case of superblob Extracting Header form parent release
+            xml.append(release.getInnerFooterXML(query,
+                                                 update_type,
+                                                 app.config["WHITELISTED_DOMAINS"],
+                                                 app.config["SPECIAL_FORCE_HOSTS"]))
             xml.append(release.getFooterXML())
             # ensure valid xml by using the right entity for ampersand
             xml = re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
