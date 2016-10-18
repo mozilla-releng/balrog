@@ -742,7 +742,6 @@ class ScheduledChangeTable(AUSTable):
     columns of its base, and adding the necessary ones to provide the schedule.
     By default, ScheduledChangeTables enable History on themselves."""
 
-    all_conditions = ("time", "uptake")
     # Scheduled changes may only have a single type of condition, but some
     # conditions require mulitple arguments. This data structure defines
     # each type of condition, and groups their args together for easier
@@ -751,6 +750,11 @@ class ScheduledChangeTable(AUSTable):
         "time": ("when",),
         "uptake": ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
     }
+    all_conditions = condition_groups.keys()
+    # It's also useful just to know what all the valid condition args are sometimes.
+    # Note that this does not take into account conditions that may be disabled
+    # for some tables. enabled_condition_groups, which can only be constructed at
+    # instantiation time, tracks these.
     all_condition_args = itertools.chain(*condition_groups.values())
 
     def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), history=True):
