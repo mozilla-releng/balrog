@@ -7,6 +7,7 @@ from xml.dom import minidom
 from auslib.global_state import dbo
 from auslib.web.base import app
 from auslib.web.views.client import ClientRequestView
+from auslib.errors import BadDataError
 
 
 class ClientTestCommon(unittest.TestCase):
@@ -723,3 +724,17 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             m.side_effect = Exception('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertUpdatesAreEmpty(ret)
+
+    def testSentryBadDataError(self):
+        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
+            m.side_effect = BadDataError("exterminate!")
+            with mock.patch("auslib.web.base.sentry") as sentry:
+                self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
+                self.assertFalse(sentry.captureException.called)
+
+    def testSentryRealError(self):
+        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
+            m.side_effect = Exception("exterminate!")
+            with mock.patch("auslib.web.base.sentry") as sentry:
+                self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
+                self.assertTrue(sentry.captureException.called)

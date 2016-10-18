@@ -3,10 +3,13 @@ import urllib
 from flask import Flask, request
 from flask_compress import Compress
 
+from raven.contrib.flask import Sentry
+
 import logging
 log = logging.getLogger(__name__)
 
 app = Flask(__name__)
+sentry = Sentry()
 
 from auslib.admin.views.csrf import CSRFView
 from auslib.admin.views.permissions import UsersView, PermissionsView, \
