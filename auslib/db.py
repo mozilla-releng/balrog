@@ -750,7 +750,6 @@ class ScheduledChangeTable(AUSTable):
         "time": ("when",),
         "uptake": ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
     }
-    all_conditions = condition_groups.keys()
     # It's also useful just to know what all the valid condition args are sometimes.
     # Note that this does not take into account conditions that may be disabled
     # for some tables. enabled_condition_groups, which can only be constructed at
@@ -760,7 +759,7 @@ class ScheduledChangeTable(AUSTable):
     def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), history=True):
         if not conditions:
             raise ValueError("No conditions enabled, cannot initialize ScheduledChangesTable for %s", baseTable.t.name)
-        if set(conditions).difference(self.all_conditions):
+        if set(conditions).difference(self.condition_groups.keys()):
             raise ValueError("Unknown conditions in: %s", conditions)
 
         self.enabled_condition_groups = {k: v for k, v in self.condition_groups.iteritems() if k in conditions}
