@@ -12,8 +12,8 @@ MAINTAINER bhearsum@mozilla.com
 # mysql-client is needed to import sample data
 # libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # libfontconfig1 is required by phantomjs
-RUN apt-get -q update \
-    && apt-get -q --yes install libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev mysql-client \
+RUN apt-get -q -o Acquire::Retires=5 update \
+    && apt-get -q -o Acquire::Retires=5 --yes install libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev mysql-client \
                                 libfontconfig1 \
     && apt-get clean
 

@@ -5,8 +5,8 @@ MAINTAINER bhearsum@mozilla.com
 # Some versions of the python:2.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm. These will get removed after building.
 # libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
-RUN apt-get -q update \
-    && apt-get -q --yes install libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev \
+RUN apt-get -q -o Acquire::Retires=5 update \
+    && apt-get -q -o Acquire::Retires=5 --yes install libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev \
     && apt-get clean
 
 WORKDIR /app
@@ -32,7 +32,7 @@ RUN npm run build
 
 RUN find . -maxdepth 1 -not -name dist -exec rm -rf {} \;
 
-RUN apt-get -q --yes remove nodejs nodejs-legacy npm \
+RUN apt-get -q -o Acquire::Retires=5 --yes remove nodejs nodejs-legacy npm \
     && apt-get clean
 
 WORKDIR /app
