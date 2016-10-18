@@ -1036,6 +1036,30 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         columns = set([c.name for c in self.table.scheduled_changes.t.get_children()])
         self.assertEquals(expected, columns)
 
+    def testSCTableWithNoConditions(self):
+        class TestTable2(AUSTable):
+
+            def __init__(self, db, metadata):
+                self.table = Table("test_table3", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
+                                   Column("foo", String(15), nullable=False),
+                                   Column("bar", String(15)))
+                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": []},
+                                                 history=True, versioned=True)
+
+        self.assertRaisesRegexp(ValueError, "No conditions enabled", TestTable2, self.db, self.metadata)
+
+    def testSCTableWithBadConditions(self):
+        class TestTable3(AUSTable):
+
+            def __init__(self, db, metadata):
+                self.table = Table("test_table3", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
+                                   Column("foo", String(15), nullable=False),
+                                   Column("bar", String(15)))
+                super(TestTable3, self).__init__(db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time", "blech"]},
+                                                 history=True, versioned=True)
+
+        self.assertRaisesRegexp(ValueError, "Unknown conditions", TestTable3, self.db, self.metadata)
+
     def testValidateConditionsNone(self):
         self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table._validateConditions, {})
 
