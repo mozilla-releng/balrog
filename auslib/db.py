@@ -747,17 +747,19 @@ class ScheduledChangeTable(AUSTable):
     # conditions require mulitple arguments. This data structure defines
     # each type of condition, and groups their args together for easier
     # processing.
-    condition_args = {
+    condition_groups = {
         "time": ("when",),
         "uptake": ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
     }
+    all_condition_args = itertools.chain(*condition_groups.values())
 
     def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), history=True):
         if not conditions:
             raise ValueError("No conditions enabled, cannot initialize ScheduledChangesTable for %s", baseTable.t.name)
         if set(conditions).difference(self.all_conditions):
             raise ValueError("Unknown conditions in: %s", conditions)
-        self.condition_groups = [v for k, v in self.condition_args.iteritems() if k in conditions]
+
+        self.enabled_condition_groups = {k: v for k, v in self.condition_groups.iteritems() if k in conditions}
 
         self.baseTable = baseTable
         self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
@@ -827,16 +829,16 @@ class ScheduledChangeTable(AUSTable):
             raise ValueError("No conditions found")
 
         for c in conditions:
-            for condition, args in self.condition_args.iteritems():
+            for condition, args in self.condition_groups.iteritems():
                 if c in args:
-                    if c in itertools.chain(*self.condition_groups):
+                    if c in itertools.chain(*self.enabled_condition_groups.values()):
                         break
                     else:
                         raise ValueError("{} condition is disabled".format(condition))
             else:
                 raise ValueError("Invalid condition: %s", c)
 
-        for group in self.condition_groups:
+        for group in self.enabled_condition_groups.values():
             if set(group) == set(conditions.keys()):
                 break
         else:
@@ -917,7 +919,6 @@ class ScheduledChangeTable(AUSTable):
             return ret.inserted_primary_key[0]
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
-        renamed_what = self._prefixColumns(what)
         # We need to check each Scheduled Change that would be affected by this
         # to ensure the new row will be valid.
         for row in self.select(where=where, transaction=transaction):
@@ -930,8 +931,7 @@ class ScheduledChangeTable(AUSTable):
                 self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
 
             conditions = {}
-            # TDO: how to make this work for optional conditions.....
-            for cond in itertools.chain(*self.condition_args.values()):
+            for cond in itertools.chain(*self.condition_groups.values()):
                 if cond in new_row:
                     conditions[cond] = new_row[cond]
                 elif row.get(cond):
@@ -940,6 +940,7 @@ class ScheduledChangeTable(AUSTable):
             self._validateConditions(conditions)
 
         if not dryrun:
+            renamed_what = self._prefixColumns(what)
             renamed_what["scheduled_by"] = changed_by
             return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction=transaction)
 
