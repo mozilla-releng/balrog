@@ -110,8 +110,7 @@ class ClientRequestView(MethodView):
                                                        update_type,
                                                        app.config["WHITELISTED_DOMAINS"],
                                                        app.config["SPECIAL_FORCE_HOSTS"])
-            if innerHeaderXML:
-                xml.append(innerHeaderXML)
+            xml.append(innerHeaderXML)
             for response_blob in response_blobs:
                 xml.extend(response_blob['response_release']
                            .getInnerXML(response_blob['product_query'],
@@ -119,8 +118,7 @@ class ClientRequestView(MethodView):
                                         app.config["WHITELISTED_DOMAINS"],
                                         app.config["SPECIAL_FORCE_HOSTS"]))
 
-            if innerFooterXML:
-                xml.append(innerFooterXML)
+            xml.append(innerFooterXML)
             xml.append(release.getFooterXML())
             # ensure valid xml by using the right entity for ampersand
             xml = re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))

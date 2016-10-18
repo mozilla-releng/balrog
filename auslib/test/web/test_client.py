@@ -768,6 +768,8 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/4/systemaddons/1.0/1/z/p/a/b/c/d/1/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
+
+
 </updates>
 """)
 

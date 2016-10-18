@@ -114,10 +114,10 @@ class TestSchema1Blob(unittest.TestCase):
                                                             self.whitelistedDomains,
                                                             self.specialForceHosts)
         returned = [x.strip() for x in returned]
-        expected_header = None
+        expected_header = ""
         expected = []
         expected = [x.strip() for x in expected]
-        expected_footer = None
+        expected_footer = ""
         self.assertEqual(returned_header, expected_header)
         self.assertItemsEqual(returned, expected)
         self.assertEqual(returned_footer, expected_footer)
