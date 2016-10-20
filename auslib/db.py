@@ -1914,6 +1914,9 @@ class AUSDatabase(object):
         self.rules.onInsert = bleeter
         self.rules.onUpdate = bleeter
         self.rules.onDelete = bleeter
+        self.rules.scheduled_changes.onInsert = bleeter
+        self.rules.scheduled_changes.onUpdate = bleeter
+        self.rules.scheduled_changes.onDelete = bleeter
         self.permissions.onInsert = bleeter
         self.permissions.onUpdate = bleeter
         self.permissions.onDelete = bleeter
