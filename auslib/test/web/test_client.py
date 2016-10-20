@@ -47,7 +47,7 @@ class ClientTestBase(ClientTestCommon):
         self.version_fd, self.version_file = mkstemp()
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
-        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'b2g', 'response-a', 'response-b', 's')}
+        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'b2g', 'response-a', 'response-b', 's', 'responseblob-a', 'responseblob-b')}
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
             f.write("""
@@ -443,6 +443,95 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """)
+        dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
+                                     mapping='superblobaddon-with-multiple-response-blob', update_type='minor',
+                                     product='superblobaddon-with-multiple-response-blob',
+                                     data_version=1)
+        dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
+                                     mapping='superblobaddon-with-one-response-blob', update_type='minor',
+                                     product='superblobaddon-with-one-response-blob',
+                                     data_version=1)
+        dbo.releases.t.insert().execute(name='superblobaddon-with-one-response-blob',
+                                        product='superblobaddon-with-one-response-blob', data_version=1, data="""
+{
+    "name": "superblobaddon",
+    "schema_version": 4000,
+    "revision": 123,
+    "blobs": ["responseblob-a"]
+}
+""")
+        dbo.releases.t.insert().execute(name='superblobaddon-with-multiple-response-blob',
+                                        product='superblobaddon-with-multiple-response-blob', data_version=1, data="""
+{
+    "name": "superblobaddon",
+    "schema_version": 4000,
+    "revision": 124,
+    "blobs": ["responseblob-a", "responseblob-b"]
+}
+""")
+        dbo.releases.t.insert().execute(name='responseblob-a', product='responseblob-a', data_version=1, data="""
+{
+    "name": "responseblob-a",
+    "schema_version": 5000,
+    "hashFunction": "SHA512",
+    "addons": {
+        "c": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                    "filesize": 2,
+                    "hashValue": "3",
+                    "fileUrl": "http://a.com/e"
+                },
+                "q": {
+                    "filesize": 4,
+                    "hashValue": "5",
+                    "fileUrl": "http://a.com/e"
+                },
+                "q2": {
+                    "alias": "q"
+                }
+            }
+        },
+        "d": {
+            "version": "5",
+            "platforms": {
+                "q": {
+                    "filesize": 10,
+                    "hashValue": "11",
+                    "fileUrl": "http://a.com/c"
+                },
+                "default": {
+                    "filesize": 20,
+                    "hashValue": "50",
+                    "fileUrl": "http://a.com/c"
+                }
+            }
+        }
+    }
+}
+""")
+        dbo.releases.t.insert().execute(name='responseblob-b', product='responseblob-b', data_version=1, data="""
+{
+    "name": "responseblob-b",
+    "schema_version": 5000,
+    "hashFunction": "sha512",
+    "uninstall": false,
+    "addons": {
+        "b": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                        "filesize": 27,
+                        "hashValue": "23",
+                        "fileUrl": "http://a.com/b"
+
+                }
+            }
+        }
+    }
+}
+""")
 
     def tearDown(self):
         os.close(self.version_fd)
@@ -640,10 +729,10 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+    <addons>
         <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
         <patch type="complete" URL="http://a.com/b" hashFunction="sha512" hashValue="23" size="27777777"/>
-    </update>
+    </addons>
 </updates>
 """)
 
@@ -651,9 +740,9 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/4/gmp/1.0/1/q/l/a/a/a/a/1/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+    <addons>
         <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
-    </update>
+    </addons>
 </updates>
 """)
 
@@ -661,9 +750,9 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/4/gmp-with-one-response-product/1.0/1/q/l/a/a/a/a/1/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
+    <addons>
         <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
-    </update>
+    </addons>
 </updates>
 """)
 
@@ -680,6 +769,33 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/4/systemaddons/1.0/1/z/p/a/b/c/d/1/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
+
+
+</updates>
+""")
+
+    def testSuperBlobAddOnMultipleUpdates(self):
+        ret = self.client.get('/update/3/superblobaddon-with-multiple-response-blob/1.0/1/p/l/a/a/a/a/update.xml')
+        # update / 3 / gg / 3 / 1 / p / l / a / a / a / a / update.xml?force = 0
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <addons revision="124">
+        <addon id="c" URL="http://a.com/e" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
+        <addon id="d" URL="http://a.com/c" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
+        <addon id="b" URL="http://a.com/b" hashFunction="sha512" hashValue="23" size="27" version="1"/>
+    </addons>
+</updates>
+""")
+
+    def testSuperBlobAddOnOneUpdates(self):
+        ret = self.client.get('/update/3/superblobaddon-with-one-response-blob/1.0/1/p/l/a/a/a/a/update.xml')
+        # update / 3 / gg / 3 / 1 / p / l / a / a / a / a / update.xml?force = 0
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <addons revision="123">
+        <addon id="c" URL="http://a.com/e" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
+        <addon id="d" URL="http://a.com/c" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
+    </addons>
 </updates>
 """)
 

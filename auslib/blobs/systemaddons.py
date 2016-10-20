@@ -76,17 +76,17 @@ class SystemAddonsBlob(Blob):
 
         return addonXML
 
-    def getHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         if self.get("uninstall", False) or self.hasUpdates(updateQuery, whitelistedDomains):
             return '    <addons>'
         else:
-            return None
+            return ""
 
-    def getFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         if self.get("uninstall", False) or self.hasUpdates(updateQuery, whitelistedDomains):
             return '    </addons>'
         else:
-            return None
+            return ""
 
     def containsForbiddenDomain(self, product, whitelistedDomains):
         """Returns True if the blob contains any file URLs that contain a

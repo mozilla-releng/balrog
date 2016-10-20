@@ -5,6 +5,7 @@ from flask import make_response, request
 from flask.views import MethodView
 
 from auslib.web.base import AUS, app
+from auslib.global_state import dbo
 
 import logging
 
@@ -57,8 +58,9 @@ class ClientRequestView(MethodView):
         if release:
             response_products = release.getResponseProducts()
             response_blobs = []
+            response_blob_names = release.getResponseBlobs()
             if response_products:
-                # if we have a SuperBlob, we process the response products and
+                # if we have a SuperBlob of gmp, we process the response products and
                 # concatenate their inner XMLs
                 for product in response_products:
                     product_query = query.copy()
@@ -70,40 +72,51 @@ class ClientRequestView(MethodView):
                     response_blobs.append({'product_query': product_query,
                                            'response_release': response_release,
                                            'response_update_type': response_update_type})
+            elif response_blob_names:
+                for blob_name in response_blob_names:
+                    # if we have a SuperBlob of systemaddons, we process the response products and
+                    # concatenate their inner XMLs
+                    product_query = query.copy()
+                    product = dbo.releases.getReleases(name=blob_name, limit=1)[0]['product']
+                    product_query["product"] = product
+                    response_release = dbo.releases.getReleaseBlob(name=blob_name)
+                    if not response_release:
+                        self.log.warning("No release found with name: %s", blob_name)
+                        continue
+
+                    response_blobs.append({'product_query': product_query,
+                                           'response_release': response_release,
+                                           'response_update_type': update_type})
             else:
                 response_blobs.append({'product_query': query,
                                        'response_release': release,
                                        'response_update_type': update_type})
 
-            xml = ['<?xml version="1.0"?>']
-            xml.append('<updates>')
-
-            # We only sample the first blob for the header and footer, since we
-            # assume that all blobs will have similar ones. We might want to
+            # getHeaderXML() returns outermost header for an update which
+            # is same for all release type
+            xml = release.getHeaderXML()
+            # we assume that all blobs will have similar ones. We might want to
             # verify that all of them are indeed the same in the future.
 
-            # Sampling the footer from the first blob
-            headerXML = response_blobs[0]['response_release'].getHeaderXML(response_blobs[0]['product_query'],
-                                                                           response_blobs[0]['response_update_type'],
-                                                                           app.config["WHITELISTED_DOMAINS"],
-                                                                           app.config["SPECIAL_FORCE_HOSTS"])
-            # Sampling the footer from the first blob
-            footerXML = response_blobs[0]['response_release'].getFooterXML(response_blobs[0]['product_query'],
-                                                                           response_blobs[0]['response_update_type'],
-                                                                           app.config["WHITELISTED_DOMAINS"],
-                                                                           app.config["SPECIAL_FORCE_HOSTS"])
-            if headerXML:
-                xml.append(headerXML)
+            # Appending Header
+            # In case of superblob Extracting Header form parent release
+            xml.append(release.getInnerHeaderXML(query,
+                                                 update_type,
+                                                 app.config["WHITELISTED_DOMAINS"],
+                                                 app.config["SPECIAL_FORCE_HOSTS"]))
             for response_blob in response_blobs:
                 xml.extend(response_blob['response_release']
                            .getInnerXML(response_blob['product_query'],
                                         response_blob['response_update_type'],
                                         app.config["WHITELISTED_DOMAINS"],
                                         app.config["SPECIAL_FORCE_HOSTS"]))
-            # Sampling the footer from the first blob
-            if footerXML:
-                xml.append(footerXML)
-            xml.append('</updates>')
+            # Appending Footer
+            # In case of superblob Extracting Header form parent release
+            xml.append(release.getInnerFooterXML(query,
+                                                 update_type,
+                                                 app.config["WHITELISTED_DOMAINS"],
+                                                 app.config["SPECIAL_FORCE_HOSTS"]))
+            xml.append(release.getFooterXML())
             # ensure valid xml by using the right entity for ampersand
             xml = re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
         else:
