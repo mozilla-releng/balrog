@@ -12,14 +12,16 @@ class SystemAddonsBlob(Blob):
             self["schema_version"] = 5000
 
     def getAddonsForPlatform(self, platform):
-        for v in self["addons"]:
-            if platform in self["addons"][v]["platforms"] or "default" in self["addons"][v]["platforms"]:
+        for v in self.get("addons", {}):
+            platforms = self["addons"].get(v, {}).get("platforms", {})
+            if platform in platforms or "default" in platforms:
                 yield v
 
     def getResolvedPlatform(self, addon, platform):
-        if platform in self['addons'][addon]['platforms']:
-            return self['addons'][addon]['platforms'][platform].get('alias', platform)
-        if "default" in self['addons'][addon]['platforms']:
+        platforms = self.get("addons", {}).get(addon, {}).get("platforms", {})
+        if platform in platforms:
+            return self.get('addons', {}).get(addon, {}).get('platforms', {}).get(platform, {}).get('alias', platform)
+        if "default" in platforms:
             return "default"
         raise BadDataError("No platform '%s' or default in addon '%s'",
                            platform, addon)
@@ -27,7 +29,7 @@ class SystemAddonsBlob(Blob):
     def getPlatformData(self, addon, platform):
         platform = self.getResolvedPlatform(addon, platform)
         try:
-            return self['addons'][addon]['platforms'][platform]
+            return self.get("addons", {}).get(addon, {}).get("platforms", {}).get(platform)
         except KeyError:
             raise BadDataError("No platform '%s' in addon '%s'", platform,
                                addon)
