@@ -102,7 +102,7 @@ def extract_active_data(URL, loc="dump.sql"):
     database = url.database
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction --lock-tables=false %s dockerflow rules rules_history rules_scheduled_changes \
-           rules_scheduled_changes_history permissions permissions_history migrate_version  > %s' % (host, user, password, database, loc,))
+           rules_scheduled_changes_history migrate_version  > %s' % (host, user, password, database, loc,))
 
     popen('mysqldump -h %s -u %s -p%s --single-transaction --lock-tables=false %s releases \
                    --where="exists (select * from rules, rules_scheduled_changes  where releases.name = rules.mapping OR releases.name = rules.whitelist OR \
