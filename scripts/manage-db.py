@@ -86,36 +86,68 @@ def cleanup_releases_history(trans, dryrun=True):
     print "Total Deleted: %d" % total_deleted
 
 
-def extract_active_data(URL, loc="dump.sql"):
+def extract_active_data(url, dump_location='dump.sql'):
     """
-    Function was added in to enhance testing in Balrog's stage environment.
+    Stores sqldump data in the specified location. If not specified, stores it in current directory in file dump.sql
+    If file already exists it will override that file and not append it.
 
-    :param URL: Database. eg : mysql://balrogadmin:balrogadmin@balrogdb/balrog
-    :param loc: location where sqldump file must be created
-    :return: Stores sqldump data in  the specified location, if not specified stores in current directory in file dump.sql
-            If  file already exists it will override that file and not append it.
+    Function added in to enhance testing in Balrog's stage environment.
+
+    :param url: Database. eg : mysql://balrogadmin:balrogadmin@balrogdb/balrog
+    :param dump_location: location where sqldump file must be created
     """
-    url = make_url(URL)
+    url = make_url(url)
     user = url.username
     password = url.password
     host = url.host
     database = url.database
     port = url.port
 
-    popen('mysqldump -h %s -u %s -p%s -P %s --protocol=tcp --single-transaction --lock-tables=false %s dockerflow rules rules_history rules_scheduled_changes \
-           rules_scheduled_changes_history permissions permissions_history migrate_version  > %s' % (host, user, password, port, database, loc,))
+    mysql_default_command = ' '.join((
+        'mysqldump',
+        '-h %s' % host,
+        '-u %s' % user,
+        '-p%s' % password,
+        '-P %s' % port,
+        # Prevent socket from being used, so that balrogdb in docker can be called from localhost (via port forwarding for instance)
+        '--protocol=tcp',
+        '--single-transaction',
+        '--lock-tables=false',
+    ))
 
-    popen('mysqldump -h %s -u %s -p%s -P %s --protocol=tcp --single-transaction --lock-tables=false %s releases \
-                   --where="exists (select * from rules, rules_scheduled_changes  where releases.name = rules.mapping OR releases.name = rules.whitelist OR \
-                    releases.name = rules_scheduled_changes.base_mapping OR releases.name = rules_scheduled_changes.base_whitelist )" \
-                       >> %s ' % (host, user, password, port, database, loc,))
+    popen(
+        _strip_multiple_spaces('%s %s dockerflow rules rules_history rules_scheduled_changes rules_scheduled_changes_history permissions \
+        permissions_history migrate_version  > %s' % (mysql_default_command, database, dump_location,))
+    )
 
-    popen('mysqldump -h %s -u %s -p%s -P %s --protocol=tcp --single-transaction --lock-tables=false %s releases_history \
-         --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' \
-         AND 1 limit 50  ">> %s' % (host, user, password, port, database, loc,))
+    popen(
+        _strip_multiple_spaces('%s %s releases --where="EXISTS ( \
+            SELECT * \
+            FROM rules, rules_scheduled_changes \
+            WHERE releases.name = rules.mapping \
+               OR releases.name = rules.whitelist \
+               OR releases.name = rules_scheduled_changes.base_mapping \
+               OR releases.name = rules_scheduled_changes.base_whitelist \
+            )" \
+        >> %s' % (mysql_default_command, database, dump_location,))
+    )
 
-    popen('mysqldump -h %s -u %s -p%s -P %s --protocol=tcp --single-transaction --skip-add-drop-table --no-create-info --lock-tables=false %s releases_history  --where "name =\
-     (SELECT rules.mapping from rules WHERE rules.alias=\'firefox-release\') LIMIT 50">> %s' % (host, user, password, port, database, loc,))
+    popen(
+        _strip_multiple_spaces('%s %s releases_history --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' \
+        AND 1 limit 50" >> %s' % (mysql_default_command, database, dump_location,))
+    )
+
+    popen(
+        _strip_multiple_spaces('%s --skip-add-drop-table --no-create-info %s releases_history --where "name = ( \
+            SELECT rules.mapping \
+            FROM rules \
+            WHERE rules.alias=\'firefox-release\' \
+        ) LIMIT 50" >> %s' % (mysql_default_command, database, dump_location,))
+    )
+
+
+def _strip_multiple_spaces(string):
+    return ' '.join(string.split())
 
 
 if __name__ == "__main__":
