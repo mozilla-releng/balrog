@@ -103,8 +103,8 @@ tasks:
           - pull_request.*
           - push
     metadata:
-      name: Balrog Agent Tests
-      description: Balrog Agent Tests
+      name: Balrog Python Client Tests
+      description: Balrog Python Client Tests
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
 
