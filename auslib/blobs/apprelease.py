@@ -735,7 +735,7 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
 
 class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
+    """  Compatible with Gecko 50.0 and above, ie Firefox/Thunderbird 50.0 and above.
 
     Changes from ReleaseBlobV6:
         * Adds support for backgroundInterval
