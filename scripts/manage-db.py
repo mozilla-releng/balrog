@@ -100,21 +100,22 @@ def extract_active_data(URL, loc="dump.sql"):
     password = url.password
     host = url.host
     database = url.database
+    port = url.port
 
-    popen('mysqldump -h %s -u %s -p%s --single-transaction --lock-tables=false %s dockerflow rules rules_history rules_scheduled_changes \
-           rules_scheduled_changes_history permissions permissions_history migrate_version  > %s' % (host, user, password, database, loc,))
+    popen('mysqldump -h %s -u %s -p%s -P %s --protocol=tcp --single-transaction --lock-tables=false %s dockerflow rules rules_history rules_scheduled_changes \
+           rules_scheduled_changes_history permissions permissions_history migrate_version  > %s' % (host, user, password, port, database, loc,))
 
-    popen('mysqldump -h %s -u %s -p%s --single-transaction --lock-tables=false %s releases \
+    popen('mysqldump -h %s -u %s -p%s -P %s --protocol=tcp --single-transaction --lock-tables=false %s releases \
                    --where="exists (select * from rules, rules_scheduled_changes  where releases.name = rules.mapping OR releases.name = rules.whitelist OR \
                     releases.name = rules_scheduled_changes.base_mapping OR releases.name = rules_scheduled_changes.base_whitelist )" \
-                       >> %s ' % (host, user, password, database, loc,))
+                       >> %s ' % (host, user, password, port, database, loc,))
 
-    popen('mysqldump -h %s -u %s -p%s --single-transaction --lock-tables=false %s releases_history \
+    popen('mysqldump -h %s -u %s -p%s -P %s --protocol=tcp --single-transaction --lock-tables=false %s releases_history \
          --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' \
-         AND 1 limit 50  ">> %s' % (host, user, password, database, loc,))
+         AND 1 limit 50  ">> %s' % (host, user, password, port, database, loc,))
 
-    popen('mysqldump -h %s -u %s -p%s --single-transaction --skip-add-drop-table --no-create-info --lock-tables=false %s releases_history  --where "name =\
-     (SELECT rules.mapping from rules WHERE rules.alias=\'firefox-release\') LIMIT 50">> %s' % (host, user, password, database, loc,))
+    popen('mysqldump -h %s -u %s -p%s -P %s --protocol=tcp --single-transaction --skip-add-drop-table --no-create-info --lock-tables=false %s releases_history  --where "name =\
+     (SELECT rules.mapping from rules WHERE rules.alias=\'firefox-release\') LIMIT 50">> %s' % (host, user, password, port, database, loc,))
 
 
 if __name__ == "__main__":
