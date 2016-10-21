@@ -108,7 +108,7 @@ def extract_active_data(url, dump_location='dump.sql'):
         '-h %s' % host,
         '-u %s' % user,
         '-p%s' % password,
-        '-P %s' % port,
+        '' if port is None else '-P %s' % port,
         # Prevent socket from being used, so that balrogdb in docker can be called from localhost (via port forwarding for instance)
         '--protocol=tcp',
         '--single-transaction',
