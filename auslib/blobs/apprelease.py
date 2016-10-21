@@ -734,6 +734,32 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
             self['schema_version'] = 6
 
 
+class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+    """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
+
+    Changes from ReleaseBlobV6:
+        * Adds support for backgroundInterval
+
+    For further information:
+        * https://bugzilla.mozilla.org/show_bug.cgi?id=1309660
+
+    """
+    jsonschema = "apprelease-v7.yml"
+
+    # for the benefit of get*XML
+    optional_ = ('showPrompt', 'showNeverForVersion',
+                 'actions', 'openURL', 'notificationURL', 'alertURL',
+                 'promptWaitTime', 'backgroundInterval')
+    # params that can have %LOCALE% interpolated
+    interpolable_ = ('openURL', 'notificationURL', 'alertURL')
+
+    def __init__(self, **kwargs):
+        # ensure schema_version is set if we init ReleaseBlobV6 directly
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 7
+
+
 class DesupportBlob(Blob):
     """ This blob is used to inform users that their OS is no longer supported. This is available
     on the client side since Firefox 24 (bug 843497).
