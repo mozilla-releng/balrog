@@ -1005,6 +1005,7 @@ class Rules(AUSTable):
                            Column('alias', String(50), unique=True),
                            Column('priority', Integer),
                            Column('mapping', String(100)),
+                           Column('fallbackMapping', String(100)),
                            Column('backgroundRate', Integer),
                            Column('update_type', String(15), nullable=False),
                            Column('product', String(15)),

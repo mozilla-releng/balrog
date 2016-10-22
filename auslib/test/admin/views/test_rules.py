@@ -121,6 +121,7 @@ class TestSingleRuleView_JSON(ViewTest):
         expected = dict(
             backgroundRate=100,
             mapping="c",
+            fallbackMapping="fallback_c",
             priority=100,
             product=None,
             version="3.5",
@@ -147,6 +148,7 @@ class TestSingleRuleView_JSON(ViewTest):
         expected = dict(
             backgroundRate=100,
             mapping="b",
+            fallbackMapping="fallback_b",
             priority=100,
             product=None,
             version="3.3",
@@ -174,7 +176,8 @@ class TestSingleRuleView_JSON(ViewTest):
 
     def testPost(self):
         # Make some changes to a rule
-        ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
+        ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d',
+                                               fallbackMapping="fallback_d", priority=73, data_version=1,
                                                product='Firefox', channel='nightly', systemCapabilities="SSE"))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
@@ -184,6 +187,7 @@ class TestSingleRuleView_JSON(ViewTest):
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'd')
+        self.assertEquals(r[0]['fallbackMapping'], 'fallback_d')
         self.assertEquals(r[0]['backgroundRate'], 71)
         self.assertEquals(r[0]['systemCapabilities'], "SSE")
         self.assertEquals(r[0]['priority'], 73)
