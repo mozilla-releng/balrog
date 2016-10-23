@@ -185,7 +185,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             # return : db name
             'rule_id': 'rule_id',
             'mapping': 'mapping',
-            'fallbackMapping':'fallbackMapping',
+            'fallbackMapping': 'fallbackMapping',
             'priority': 'priority',
             'alias': 'alias',
             'product': 'product',

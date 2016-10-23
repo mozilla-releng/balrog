@@ -171,7 +171,7 @@ class RuleForm(Form):
     backgroundRate = IntegerField('Background Rate', validators=[Required(), NumberRange(0, 100)])
     priority = IntegerField('Priority', validators=[Required()])
     mapping = SelectField('Mapping', validators=[])
-    fallbackMapping = SelectField('fallbackMapping', validators=[])
+    fallbackMapping = SelectField('fallbackMapping', validators=[Optional()])
     alias = NullableStringField('Alias', validators=[Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Length(0, 15)])
     version = NullableStringField('Version', validators=[Length(0, 10), version_validator()])
