@@ -1553,7 +1553,9 @@ class Releases(AUSTable):
 
         whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == where["name"]).execute().fetchone()[0]
 
-        if mapping_count > 0 or whitelist_count > 0:
+        fallbackMapping_count = dbo.rules.t.count().where(dbo.rules.fallbackMapping == where["name"]).execute().fetchone()[0]
+
+        if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
             msg = "%s has rules pointing to it. Hence it cannot be deleted." % (self.name)
             raise ValueError(msg)
         for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):

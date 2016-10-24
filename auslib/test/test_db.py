@@ -1569,6 +1569,16 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                       data_version=1)
         self.assertRaises(ValueError, self.releases.delete, {"name": "e"}, changed_by='me', old_data_version=1)
 
+    def testDeleteWithRuleFallbackMapping(self):
+        self.releases.t.insert().execute(name='fallback', product='e',
+                                         data=json.dumps(dict(name="e", schema_version=1, hashFunction="sha512")),
+                                         data_version=1)
+        self.rules.t.insert().execute(rule_id=1, priority=100, fallbackMapping="fallback", version='3.5', buildTarget='e', backgroundRate=100,
+                                      whitelist='e', update_type='z',
+                                      data_version=1)
+
+        self.assertRaises(ValueError, self.releases.delete, {"name": "fallback"}, changed_by='me', old_data_version=1)
+
     def testDeleteReleaseWhenReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertRaises(ReadOnlyError, self.releases.delete, {"name": "a"}, changed_by='me', old_data_version=2)
