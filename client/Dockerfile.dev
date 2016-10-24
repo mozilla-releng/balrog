@@ -1,0 +1,9 @@
+
+FROM rail/python-test-runner
+
+WORKDIR /app
+
+COPY balrogclient/ /app/balrogclient/
+COPY setup.py /app/
+COPY tox.ini /app/
+
