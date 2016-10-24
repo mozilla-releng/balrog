@@ -95,6 +95,19 @@
             </a>
         </span>
       </h5>
+      <h5 title="FallBack Mapping">
+       Fallback Mapping: <span ng-show="rule.fallbackMapping">
+            <b ng-bind-html="highlightSearch(rule.fallbackMapping, 'fallbackMapping')"></b>
+            <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.fallbackMapping)">
+                <i class="glyphicon glyphicon-eye-open"></i>
+                View
+            </a>
+            <a class="btn btn-default btn-xs" href="/releases/#{{ rule.fallbackMapping }}">
+                <i class="glyphicon glyphicon-pencil"></i>
+                Edit
+            </a>
+        </span>
+      </h5>
       <h5 title="Data version">
         Data version: <b>{{ rule.data_version }}</b>
       </h5>
@@ -138,8 +151,6 @@
       <dd>{{ rule.update_type }}</dd>
       <dt ng-show="rule.headerArchitecture">Header Architecture:</dt>
       <dd>{{ rule.headerArchitecture }}</dd>
-      <dt ng-show="rule.fallbackMapping">Fallback Mapping:</dt>
-      <dd>{{ rule.fallbackMapping }}</dd>
     </dl>
 
   </div>
