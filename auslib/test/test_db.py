@@ -1507,6 +1507,16 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                     dict(name='ab', product='a', data_version=1, read_only=False, rule_ids=[])]
         self.assertEquals(releases, expected)
 
+    def testGetReleaseInfoWithFallbackMapping(self):
+        self.releases.t.insert().execute(name='fallback', product='e',
+                                         data=json.dumps(dict(name="e", schema_version=1, hashFunction="sha512")),
+                                         data_version=1)
+        self.rules.t.insert().execute(rule_id=1, priority=100, fallbackMapping="fallback", version='3.5',
+                                      whitelist='e', update_type='z', data_version=1)
+        releases = self.releases.getReleaseInfo(product='e')
+        expected = [dict(name='fallback', product='e', data_version=1, read_only=False, rule_ids=[1])]
+        self.assertEquals(releases, expected)
+
     def testGetReleaseInfoNoMatch(self):
         releases = self.releases.getReleaseInfo(product='ue')
         expected = []

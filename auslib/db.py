@@ -1317,7 +1317,8 @@ class Releases(AUSTable):
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
 
         if not nameOnly:
-            j = join(dbo.releases.t, dbo.rules.t, ((dbo.releases.name == dbo.rules.mapping) | (dbo.releases.name == dbo.rules.whitelist)))
+            j = join(dbo.releases.t, dbo.rules.t, ((dbo.releases.name == dbo.rules.mapping) | (dbo.releases.name == dbo.rules.whitelist) |
+                                                   (dbo.releases.name == dbo.rules.fallbackMapping)))
             ref_list = select([dbo.releases.name, dbo.rules.rule_id]).select_from(j).execute().fetchall()
 
             for row in rows:
