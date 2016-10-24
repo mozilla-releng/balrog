@@ -45,6 +45,12 @@ elif [ $1 == "cleanup-db" ]; then
     fi
 
     exec scripts/run-batch-deletes.sh $DBURI $MAX_AGE $DELETE_RUN_TIME
+elif [ $1 == "extract-active-data" ]; then
+    if [ -z "${DBURI}" ]; then
+        echo "\${DBURI} must be set!"
+        exit 1
+    fi
+    exec python scripts/manage-db.py -d ${DBURI} extract ${OUTPUT_FILE}
 elif [ $1 == "test" ]; then
     shift
     if [[ $1 == "backend" ]]; then
