@@ -11,6 +11,7 @@ describe("controller: RuleEditCtrl", function() {
     "buildID": null,
     "backgroundRate": 100,
     "mapping": "No-Update",
+    "fallbackMapping": null,
     "rule_id": 19,
     "priority": 1,
     "data_version": 9,

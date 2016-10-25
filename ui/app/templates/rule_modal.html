@@ -6,13 +6,7 @@
 <div class="modal-body">
   <form role="form">
     <div class="row">
-      <div class="col-md-6">
-        <div class="form-group" ng-class="{'has-error': errors.alias}">
-          <label for="id_distribution">Alias</label>
-          <input type="text" class="form-control" id="id_distribution" ng-model="rule.alias">
-          <p class="help-block" ng-show="errors.alias">{{ errors.alias.join(', ') }}</p>
-        </div>
-      </div>
+
       <div class="col-md-6">
         <div class="form-group"  ng-class="{'has-error': errors.product}">
           <label for="id_product">Product</label>
@@ -21,8 +15,6 @@
           <p class="help-block" ng-show="errors.product">{{ errors.product.join(', ') }}</p>
         </div>
       </div>
-    </div>
-    <div class="row">
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.channel}">
           <label for="id_channel">Channel</label>
@@ -31,12 +23,23 @@
           <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(', ') }}</p>
         </div>
       </div>
+    </div>
+    <div class="row">
+
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.mapping}">
           <label for="id_mapping">Mapping</label>
           <input type="text" class="form-control" id="id_mapping" ng-model="rule.mapping"
            typeahead="name for name in names | filter:$viewValue | limitTo:16">
           <p class="help-block" ng-show="errors.mapping">{{ errors.mapping.join(', ') }}</p>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-group" ng-class="{'has-error': errors.fallbackMapping}">
+          <label for="id_fallbackMapping">Fallback Mapping</label>
+          <input type="text" class="form-control" id="id_mapping" ng-model="rule.fallbackMapping"
+           typeahead="name for name in names | filter:$viewValue | limitTo:16">
+          <p class="help-block" ng-show="errors.fallbackMapping">{{ errors.fallbackMapping.join(', ') }}</p>
         </div>
       </div>
     </div>
@@ -146,6 +149,15 @@
         </div>
       </div>
       <div class="col-md-6">
+        <div class="form-group" ng-class="{'has-error': errors.alias}">
+          <label for="id_distribution">Alias</label>
+          <input type="text" class="form-control" id="id_distribution" ng-model="rule.alias">
+          <p class="help-block" ng-show="errors.alias">{{ errors.alias.join(', ') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
         <div class="form-group" ng-class="{'has-error': errors.comment}">
           <label for="id_comment">Comment</label>
           <input type="text" class="form-control" id="id_comment" ng-model="rule.comment">

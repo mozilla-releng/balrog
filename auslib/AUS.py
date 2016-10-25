@@ -84,7 +84,13 @@ class AUS:
         if not updateQuery['force'] and rule['backgroundRate'] < 100:
             self.log.debug("backgroundRate < 100, rolling the dice")
             if self.rand.getInt() >= rule['backgroundRate']:
-                self.log.debug("request was dropped")
+                fallbackReleaseName = rule['fallbackMapping']
+                if fallbackReleaseName:
+                    release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1)[0]
+                    blob = release['data']
+                    return blob, rule['update_type']
+
+                self.log.debug("No fallback releases. Request was dropped")
                 return None, None
 
         # 3) Incoming release is older than the one in the mapping, defined as one of:
