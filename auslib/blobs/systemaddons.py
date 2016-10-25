@@ -28,11 +28,7 @@ class SystemAddonsBlob(Blob):
 
     def getPlatformData(self, addon, platform):
         platform = self.getResolvedPlatform(addon, platform)
-        try:
-            return self.get("addons", {}).get(addon, {}).get("platforms", {}).get(platform)
-        except KeyError:
-            raise BadDataError("No platform '%s' in addon '%s'", platform,
-                               addon)
+        return self.get("addons", {}).get(addon, {}).get("platforms", {}).get(platform)
 
     def shouldServeUpdate(self, updateQuery):
         # SystemAddon updates should always be returned. It is the responsibility
