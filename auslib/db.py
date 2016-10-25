@@ -1038,6 +1038,7 @@ class Rules(AUSTable):
                            Column('alias', String(50), unique=True),
                            Column('priority', Integer),
                            Column('mapping', String(100)),
+                           Column('fallbackMapping', String(100)),
                            Column('backgroundRate', Integer),
                            Column('update_type', String(15), nullable=False),
                            Column('product', String(15)),
@@ -1349,7 +1350,8 @@ class Releases(AUSTable):
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
 
         if not nameOnly:
-            j = join(dbo.releases.t, dbo.rules.t, ((dbo.releases.name == dbo.rules.mapping) | (dbo.releases.name == dbo.rules.whitelist)))
+            j = join(dbo.releases.t, dbo.rules.t, ((dbo.releases.name == dbo.rules.mapping) | (dbo.releases.name == dbo.rules.whitelist) |
+                                                   (dbo.releases.name == dbo.rules.fallbackMapping)))
             ref_list = select([dbo.releases.name, dbo.rules.rule_id]).select_from(j).execute().fetchall()
 
             for row in rows:
@@ -1585,7 +1587,9 @@ class Releases(AUSTable):
 
         whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == where["name"]).execute().fetchone()[0]
 
-        if mapping_count > 0 or whitelist_count > 0:
+        fallbackMapping_count = dbo.rules.t.count().where(dbo.rules.fallbackMapping == where["name"]).execute().fetchone()[0]
+
+        if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
             msg = "%s has rules pointing to it. Hence it cannot be deleted." % (self.name)
             raise ValueError(msg)
         for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):

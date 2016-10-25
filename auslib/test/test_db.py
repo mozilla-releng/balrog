@@ -1186,6 +1186,8 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1)
         self.paths.t.insert().execute(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z",
                                       data_version=1)
+        self.paths.t.insert().execute(rule_id=10, priority=100, buildTarget="g", mapping="g", fallbackMapping='fallback', backgroundRate=100,
+                                      update_type="z", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
 
     def testGetOrderedRules(self):
@@ -1197,6 +1199,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z', data_version=1),
             dict(rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z', data_version=1),
             dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z", data_version=1),
+            dict(rule_id=10, priority=100, buildTarget="g", mapping="g", fallbackMapping='fallback', backgroundRate=100, update_type="z", data_version=1),
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z', data_version=1),
             dict(rule_id=3, priority=100, backgroundRate=100, version='3.5', buildTarget='a', mapping='a', update_type='z', data_version=1),
             dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z', data_version=1),
@@ -1341,6 +1344,22 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, [])
 
+    def testGetRulesMatchingQueryFallbackMapping(self):
+        rules = self.paths.getRulesMatchingQuery(
+            dict(product="", version="5.0", channel="", buildTarget="g",
+                 buildID="", locale="", osVersion="", distribution="",
+                 distVersion="", headerArchitecture="", force=False,
+                 queryVersion=6, fallbackMapping="fallback"
+                 ),
+            fallbackChannel="",
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=10, priority=100, buildTarget="g", mapping="g", fallbackMapping='fallback', backgroundRate=100,
+                 update_type="z", data_version=1)
+        ]
+        self.assertEquals(rules, expected)
+
     def testGetRulesMatchingQueryLocale(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product='', version='', channel='', buildTarget='e',
@@ -1432,7 +1451,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEquals(rule, [])
 
     def testGetNumberOfRules(self):
-        self.assertEquals(self.paths.countRules(), 9)
+        self.assertEquals(self.paths.countRules(), 10)
 
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
@@ -1607,6 +1626,16 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                     dict(name='ab', product='a', data_version=1, read_only=False, rule_ids=[])]
         self.assertEquals(releases, expected)
 
+    def testGetReleaseInfoWithFallbackMapping(self):
+        self.releases.t.insert().execute(name='fallback', product='e',
+                                         data=json.dumps(dict(name="e", schema_version=1, hashFunction="sha512")),
+                                         data_version=1)
+        self.rules.t.insert().execute(rule_id=1, priority=100, fallbackMapping="fallback", version='3.5',
+                                      whitelist='e', update_type='z', data_version=1)
+        releases = self.releases.getReleaseInfo(product='e')
+        expected = [dict(name='fallback', product='e', data_version=1, read_only=False, rule_ids=[1])]
+        self.assertEquals(releases, expected)
+
     def testGetReleaseInfoNoMatch(self):
         releases = self.releases.getReleaseInfo(product='ue')
         expected = []
@@ -1668,6 +1697,16 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='e', backgroundRate=100, whitelist='e', update_type='z',
                                       data_version=1)
         self.assertRaises(ValueError, self.releases.delete, {"name": "e"}, changed_by='me', old_data_version=1)
+
+    def testDeleteWithRuleFallbackMapping(self):
+        self.releases.t.insert().execute(name='fallback', product='e',
+                                         data=json.dumps(dict(name="e", schema_version=1, hashFunction="sha512")),
+                                         data_version=1)
+        self.rules.t.insert().execute(rule_id=1, priority=100, fallbackMapping="fallback", version='3.5', buildTarget='e', backgroundRate=100,
+                                      whitelist='e', update_type='z',
+                                      data_version=1)
+
+        self.assertRaises(ValueError, self.releases.delete, {"name": "fallback"}, changed_by='me', old_data_version=1)
 
     def testDeleteReleaseWhenReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()

@@ -46,6 +46,7 @@ class RulesAPIView(AdminView):
 
         what = dict(backgroundRate=form.backgroundRate.data,
                     mapping=form.mapping.data,
+                    fallbackMapping=form.fallbackMapping.data,
                     priority=form.priority.data,
                     alias=form.alias.data,
                     product=form.product.data,
@@ -184,6 +185,7 @@ class RuleHistoryAPIView(HistoryAdminView):
             # return : db name
             'rule_id': 'rule_id',
             'mapping': 'mapping',
+            'fallbackMapping': 'fallbackMapping',
             'priority': 'priority',
             'alias': 'alias',
             'product': 'product',
@@ -237,6 +239,7 @@ class RuleHistoryAPIView(HistoryAdminView):
         what = dict(
             backgroundRate=change['backgroundRate'],
             mapping=change['mapping'],
+            fallbackMapping=change['fallbackMapping'],
             priority=change['priority'],
             alias=change['alias'],
             product=change['product'],
