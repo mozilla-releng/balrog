@@ -141,21 +141,24 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-md-4">
+      <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.headerArchitecture}">
           <label for="id_headerArchitecture">Header Architecture</label>
           <input type="text" class="form-control" id="id_headerArchitecture" ng-model="rule.headerArchitecture">
           <p class="help-block" ng-show="errors.headerArchitecture">{{ errors.headerArchitecture.join(', ') }}</p>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.alias}">
           <label for="id_distribution">Alias</label>
           <input type="text" class="form-control" id="id_distribution" ng-model="rule.alias">
           <p class="help-block" ng-show="errors.alias">{{ errors.alias.join(', ') }}</p>
         </div>
       </div>
-      <div class="col-md-4">
+
+    </div>
+    <div class="row">
+      <div class="col-md-12">
         <div class="form-group" ng-class="{'has-error': errors.comment}">
           <label for="id_comment">Comment</label>
           <input type="text" class="form-control" id="id_comment" ng-model="rule.comment">
