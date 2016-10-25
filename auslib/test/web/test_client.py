@@ -47,7 +47,8 @@ class ClientTestBase(ClientTestCommon):
         self.version_fd, self.version_file = mkstemp()
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
-        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'b2g', 'response-a', 'response-b', 's', 'responseblob-a', 'responseblob-b')}
+        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'b2g', 'response-a', 'response-b', 's', 'responseblob-a',
+                                                       'responseblob-b', 'q', 'fallback')}
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
             f.write("""
@@ -123,6 +124,57 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """)
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping='q', update_type='minor', product='q',
+                                     fallbackMapping='fallback', data_version=1)
+        dbo.releases.t.insert().execute(name='q', product='q', data_version=1, data="""
+{
+    "name": "q",
+    "schema_version": 1,
+    "appv": "1.0",
+    "extv": "1.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "5",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "5",
+                        "from": "*",
+                        "hashValue": "5",
+                        "fileUrl": "http://a.com/q"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+        dbo.releases.t.insert().execute(name='fallback', product='q', data_version=1, data="""
+{
+    "name": "fallback",
+    "schema_version": 1,
+    "appv": "1.0",
+    "extv": "1.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "5",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "5",
+                        "from": "*",
+                        "hashValue": "5",
+                        "fileUrl": "http://a.com/fallback"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='c', update_type='minor', product='c',
                                      distribution='default', data_version=1)
         dbo.releases.t.insert().execute(name='c', product='c', data_version=1, data="""
@@ -645,6 +697,16 @@ class ClientTest(ClientTestBase):
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="5">
         <patch type="complete" URL="http://a.com/s" hashFunction="sha512" hashValue="5" size="5"/>
+    </update>
+</updates>
+""")
+
+    def testVersion6GetWithFallbackMapping(self):
+        ret = self.client.get('/update/6/q/1.0/1/p/l/a/a/a/a/1/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="5">
+        <patch type="complete" URL="http://a.com/fallback" hashFunction="sha512" hashValue="5" size="5"/>
     </update>
 </updates>
 """)
