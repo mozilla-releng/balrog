@@ -1909,21 +1909,17 @@ class AUSDatabase(object):
 
     def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, use_tls=False):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls)
+        for t in (self.rules, self.rules.scheduled_changes, self.permissions):
+            t.onInsert = bleeter
+            t.onUpdate = bleeter
+            t.onDelete = bleeter
+
         read_only_bleeter = make_change_notifier_for_read_only(relayhost, port,
                                                                username,
                                                                password,
                                                                to_addr,
                                                                from_addr,
                                                                use_tls)
-        self.rules.onInsert = bleeter
-        self.rules.onUpdate = bleeter
-        self.rules.onDelete = bleeter
-        self.rules.scheduled_changes.onInsert = bleeter
-        self.rules.scheduled_changes.onUpdate = bleeter
-        self.rules.scheduled_changes.onDelete = bleeter
-        self.permissions.onInsert = bleeter
-        self.permissions.onUpdate = bleeter
-        self.permissions.onDelete = bleeter
         self.releases.onUpdate = read_only_bleeter
 
     def hasPermission(self, *args, **kwargs):
