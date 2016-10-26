@@ -121,6 +121,7 @@ class TestSingleRuleView_JSON(ViewTest):
         expected = dict(
             backgroundRate=100,
             mapping="c",
+            fallbackMapping=None,
             priority=100,
             product=None,
             version="3.5",
@@ -147,6 +148,7 @@ class TestSingleRuleView_JSON(ViewTest):
         expected = dict(
             backgroundRate=100,
             mapping="b",
+            fallbackMapping=None,
             priority=100,
             product=None,
             version="3.3",
@@ -174,7 +176,8 @@ class TestSingleRuleView_JSON(ViewTest):
 
     def testPost(self):
         # Make some changes to a rule
-        ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
+        ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d',
+                                               fallbackMapping="fallback_d", priority=73, data_version=1,
                                                product='Firefox', channel='nightly', systemCapabilities="SSE"))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
@@ -184,6 +187,7 @@ class TestSingleRuleView_JSON(ViewTest):
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'd')
+        self.assertEquals(r[0]['fallbackMapping'], 'fallback_d')
         self.assertEquals(r[0]['backgroundRate'], 71)
         self.assertEquals(r[0]['systemCapabilities'], "SSE")
         self.assertEquals(r[0]['priority'], 73)
@@ -716,21 +720,21 @@ class TestRuleScheduledChanges(ViewTest):
                     "sc_id": 1, "when": 1000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 1, "priority": 100,
                     "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "update_type": "minor",
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
-                    "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None,
+                    "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
                     "backgroundRate": 100, "product": "baz", "mapping": "ab", "update_type": "minor", "version": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
-                    "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
+                    "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
                     "sc_id": 3, "when": 2000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
                     "backgroundRate": 100, "product": "ff", "mapping": "ghi", "update_type": "minor", "version": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
-                    "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
+                    "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
             ],
@@ -746,28 +750,28 @@ class TestRuleScheduledChanges(ViewTest):
                     "sc_id": 1, "when": 1000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 1, "priority": 100,
                     "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "update_type": "minor",
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
-                    "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None,
+                    "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
                     "backgroundRate": 100, "product": "baz", "mapping": "ab", "update_type": "minor", "version": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
-                    "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
+                    "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
                     "sc_id": 3, "when": 2000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
                     "backgroundRate": 100, "product": "ff", "mapping": "ghi", "update_type": "minor", "version": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
-                    "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
+                    "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
                     "sc_id": 4, "when": 500000, "scheduled_by": "bill", "complete": True, "sc_data_version": 2, "rule_id": 5, "priority": 80,
                     "version": "3.3", "buildTarget": "d", "backgroundRate": 0, "mapping": "c", "update_type": "minor",
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
-                    "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None, "comment": None,
+                    "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
             ],
@@ -791,8 +795,8 @@ class TestRuleScheduledChanges(ViewTest):
             "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "scheduled_by": "bill", "base_rule_id": 5,
             "base_priority": 80, "base_buildTarget": "d", "base_version": "3.3", "base_backgroundRate": 100, "base_mapping": "c", "base_update_type": "minor",
             "base_data_version": 1, "data_version": 1, "sc_id": 5, "when": None, "complete": False, "base_alias": None, "base_product": None,
-            "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None, "base_distVersion": None,
-            "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None, "base_systemCapabilities": None,
+            "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None, "base_fallbackMapping": None,
+            "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None, "base_systemCapabilities": None,
         }
         self.assertEquals(db_data, expected)
 
@@ -814,7 +818,8 @@ class TestRuleScheduledChanges(ViewTest):
             "base_update_type": "minor", "base_mapping": "a", "sc_id": 5, "data_version": 1, "complete": False, "base_data_version": None,
             "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "base_rule_id": None, "base_buildTarget": None,
             "base_version": None, "base_alias": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None,
-            "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None, "base_systemCapabilities": None,
+            "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,
+            "base_systemCapabilities": None,
         }
         self.assertEquals(db_data, expected)
 
@@ -874,11 +879,13 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 1, "when": 2000000, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1, "base_priority": 100,
-            "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100, "base_mapping": "c", "base_update_type": "minor",
-            "base_data_version": 1, "base_alias": None, "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None,
-            "base_osVersion": None, "base_distribution": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None,
-            "base_whitelist": None, "base_systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+            "sc_id": 1, "when": 2000000, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1,
+            "base_priority": 100, "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100,
+            "base_mapping": "c", "base_update_type": "minor", "base_data_version": 1, "base_alias": None,
+            "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None,
+            "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
+            "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None, "base_systemCapabilities": None,
+            "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
         }
         self.assertEquals(db_data, expected)
 
@@ -925,7 +932,7 @@ class TestRuleScheduledChanges(ViewTest):
 
         row = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()[0]
         expected = {
-            "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b",
+            "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "fallbackMapping": None,
             "update_type": "minor", "data_version": 2, "alias": None, "product": None, "channel": None, "buildID": None,
             "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
             "comment": None, "whitelist": None, "systemCapabilities": None,
@@ -941,7 +948,7 @@ class TestRuleScheduledChanges(ViewTest):
 
         row = dbo.rules.t.select().where(dbo.rules.rule_id == 6).execute().fetchall()[0]
         expected = {
-            "rule_id": 6, "priority": 50, "version": None, "buildTarget": None, "backgroundRate": 100, "mapping": "ab",
+            "rule_id": 6, "priority": 50, "version": None, "buildTarget": None, "backgroundRate": 100, "mapping": "ab", "fallbackMapping": None,
             "update_type": "minor", "data_version": 1, "alias": None, "product": "baz", "channel": None, "buildID": None,
             "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
             "comment": None, "whitelist": None, "systemCapabilities": None,
@@ -960,7 +967,7 @@ class TestRuleScheduledChanges(ViewTest):
             "revisions": [
                 {
                     "change_id": 2, "changed_by": "bill", "timestamp": 6, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 1,
-                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "def", "update_type": "minor",
+                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "def", "fallbackMapping": None, "update_type": "minor",
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
                     "version": None, "channel": None, "buildTarget": None, "buildID": None, "locale": None,
                     "osVersion": None, "systemCapabilities": None, "distribution": None, "distVersion": None,
@@ -968,7 +975,7 @@ class TestRuleScheduledChanges(ViewTest):
                 },
                 {
                     "change_id": 3, "changed_by": "bill", "timestamp": 10, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 2,
-                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "ghi", "update_type": "minor",
+                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "ghi", "fallbackMapping": None, "update_type": "minor",
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
                     "version": None, "channel": None, "buildTarget": None, "buildID": None, "locale": None,
                     "osVersion": None, "systemCapabilities": None, "distribution": None, "distVersion": None,
@@ -989,8 +996,9 @@ class TestRuleScheduledChanges(ViewTest):
             "sc_id": 3, "when": 2000000, "scheduled_by": "bill", "complete": False, "data_version": 3, "base_rule_id": None, "base_priority": 150,
             "base_backgroundRate": 100, "base_product": "ff", "base_mapping": "def", "base_update_type": "minor", "base_version": None,
             "base_buildTarget": None, "base_alias": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None,
-            "base_distribution": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,
-            "base_data_version": None, "base_systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+            "base_distribution": None, 'base_fallbackMapping': None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None,
+            "base_whitelist": None, "base_data_version": None, "base_systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None,
+            "telemetry_uptake": None,
         }
         self.assertEquals(got, expected)
 

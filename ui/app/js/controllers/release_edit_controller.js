@@ -11,7 +11,36 @@ function ($scope, $modalInstance, CSRF, Releases, release) {
     $scope.products = response.product;
   });
 
+  $scope.errors = {};
   $scope.saving = false;
+  
+  $scope.fillName = function () {
+    var file = $scope.dataFile;
+    $scope.errors.data = [];
+    var reader = new FileReader();
+    reader.onloadend = function(evt) {
+      var blob = evt.target.result;
+      $scope.$apply( function() {
+         var name = JSON.parse(blob).name;
+         if(!name) {
+           $scope.errors.data = ["Form submission error", "Name missing in blob.\n"];
+         }
+         else if (name !== $scope.release.name) {
+          $scope.errors.data = ["Form submission error", "Name differs compared to name in blob.\n"];
+        }
+      });
+    };
+    if (typeof file !== 'undefined') {
+      // should work
+      reader.readAsText(file);
+    }
+
+  };
+
+  $scope.changeName = function () {
+    //wait for actual file to be loaded
+    setTimeout($scope.fillName, 0);
+  };
 
   $scope.saveChanges = function () {
     $scope.saving = true;
