@@ -724,6 +724,20 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testValidateConditionsMissingTelemetryValue(self):
         self.assertRaisesRegexp(ValueError, "Invalid combination of conditions", self.sc_table.conditions.validate, {"telemetry_product": "foo"})
 
+    def testSelectIncludesConditionColumns(self):
+        row = self.sc_table.select(where=[self.sc_table.sc_id == 2])[0]
+        self.assertEquals(row["scheduled_by"], "bob")
+        self.assertEquals(row["complete"], False)
+        self.assertEquals(row["data_version"], 1)
+        self.assertEquals(row["base_fooid"], None)
+        self.assertEquals(row["base_foo"], "cc")
+        self.assertEquals(row["base_bar"], "ceecee")
+        self.assertEquals(row["base_data_version"], None)
+        self.assertEquals(row["telemetry_product"], None)
+        self.assertEquals(row["telemetry_channel"], None)
+        self.assertEquals(row["telemetry_uptake"], None)
+        self.assertEquals(row["when"], 567000)
+
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertForExistingRow(self):
         what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000}

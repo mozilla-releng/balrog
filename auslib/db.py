@@ -843,6 +843,17 @@ class ScheduledChangeTable(AUSTable):
                 ret[k] = v
         return ret
 
+    def select(self, where, transaction=None, **kwargs):
+        ret = []
+        for row in super(ScheduledChangeTable, self).select(where, transaction=transaction, **kwargs):
+            columns = [getattr(self.conditions, c) for c in itertools.chain(*self.conditions.condition_groups)]
+            conditions = self.conditions.select([self.conditions.sc_id == row["sc_id"]], transaction=transaction, columns=columns)
+            # This can happen mid-delete, where the conditions have been deleted but the scheduled change has not.
+            if conditions:
+                row.update(conditions[0])
+            ret.append(row)
+        return ret
+
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         # We need to do additional checks for any changes that are modifying an
         # existing row. These lists will have PK clauses in them at the end of
