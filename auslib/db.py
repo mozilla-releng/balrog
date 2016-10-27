@@ -906,35 +906,47 @@ class ScheduledChangeTable(AUSTable):
         else:
             self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_columns)
 
-        self.conditions.insert(changed_by, transaction, dryrun, **condition_columns)
         if not dryrun:
             what["scheduled_by"] = changed_by
             ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **what)
-            return ret.inserted_primary_key[0]
+            sc_id = ret.inserted_primary_key[0]
+            self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
+            return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         # We need to check each Scheduled Change that would be affected by this
         # to ensure the new row will be valid.
+        base_what = {}
+        condition_what = {}
+        for k in what:
+            if k in itertools.chain(*self.conditions.condition_groups):
+                condition_what[k] = what[k]
+            else:
+                base_what[k] = what[k]
+
         for row in self.select(where=where, transaction=transaction):
             new_row = row.copy()
-            new_row.update(self._prefixColumns(what))
+            new_row.update(self._prefixColumns(base_what))
             base_table_where = {pk: new_row["base_%s" % pk] for pk in self.base_primary_key}
             if new_row.get("base_data_version"):
                 self.baseTable.update(base_table_where, new_row, changed_by, new_row["base_data_version"], transaction=transaction, dryrun=True)
             else:
                 self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
 
+            existing_conditions = self.conditions.select(where=[self.conditions.sc_id == new_row["sc_id"]], transaction=transaction)[0]
             conditions = {}
-            for cond in itertools.chain(*self.condition_groups):
-                if cond in new_row:
-                    conditions[cond] = new_row[cond]
-                elif row.get(cond):
-                    conditions[cond] = row[cond]
+            for cond in itertools.chain(*self.conditions.condition_groups):
+                if cond in condition_what:
+                    conditions[cond] = condition_what[cond]
+                elif existing_conditions.get(cond):
+                    conditions[cond] = existing_conditions[cond]
 
             self.conditions.validate(conditions)
 
+            self.conditions.update([self.conditions.sc_id == new_row["sc_id"]], conditions, changed_by, old_data_version, transaction)
+
         if not dryrun:
-            renamed_what = self._prefixColumns(what)
+            renamed_what = self._prefixColumns(base_what)
             renamed_what["scheduled_by"] = changed_by
             return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction)
 
