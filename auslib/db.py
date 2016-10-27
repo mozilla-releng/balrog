@@ -305,7 +305,7 @@ class AUSTable(object):
                 trans.execute(q)
         return ret
 
-    def insert(self, changed_by=None, transaction=None, **columns):
+    def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
         """Perform an INSERT statement on this table. See AUSTable._insertStatement for
            a description of columns.
 
@@ -319,6 +319,10 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
+
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
 
@@ -786,15 +790,6 @@ class ScheduledChangeTable(AUSTable):
     columns of its base, and adding the necessary ones to provide the schedule.
     By default, ScheduledChangeTables enable History on themselves."""
 
-    # Scheduled changes may only have a single type of condition, but some
-    # conditions require mulitple arguments. This data structure defines
-    # each type of condition, and groups their args together for easier
-    # processing.
-    condition_groups = (
-        ("when",),
-        ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
-    )
-
     def __init__(self, db, dialect, metadata, baseTable, history=True):
         table_name = "{}_scheduled_changes".format(baseTable.t.name)
         self.baseTable = baseTable
@@ -853,18 +848,26 @@ class ScheduledChangeTable(AUSTable):
         # existing row. These lists will have PK clauses in them at the end of
         # the following loop, but only if the change contains a PK. This makes
         # it easy to do the extra checks conditionally afterwards.
+        base_columns = {}
+        condition_columns = {}
+        for k in columns:
+            if k in itertools.chain(*self.conditions.condition_groups):
+                condition_columns[k] = columns[k]
+            else:
+                base_columns[k] = columns[k]
+
         base_table_where = []
         sc_table_where = []
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
-            if pk in columns:
-                sc_table_where.append(getattr(self, "base_%s" % pk) == columns[pk])
+            if pk in base_columns:
+                sc_table_where.append(getattr(self, "base_%s" % pk) == base_columns[pk])
                 # If a non-null data_version was provided it implies that the
                 # base table row should already exist. This will be checked for
                 # after we finish basic checks on the individual parts of the
                 # PK.
-                if "data_version" in columns and columns["data_version"]:
-                    base_table_where.append(getattr(self.baseTable, pk) == columns[pk])
+                if "data_version" in base_columns and base_columns["data_version"]:
+                    base_table_where.append(getattr(self.baseTable, pk) == base_columns[pk])
             # Non-Integer columns can have autoincrement set to True for some reason.
             # Any non-integer columns in the primary key are always required (because
             # autoincrement actually isn't a thing for them), and any Integer columns
@@ -883,7 +886,7 @@ class ScheduledChangeTable(AUSTable):
             if not current_data_version:
                 raise ValueError("Cannot create scheduled change with data_version for non-existent row")
 
-            if current_data_version and current_data_version[0]["data_version"] != columns.get("data_version"):
+            if current_data_version and current_data_version[0]["data_version"] != base_columns.get("data_version"):
                 raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
 
         # If the change has a PK in it, we must ensure that no existing change
@@ -893,21 +896,17 @@ class ScheduledChangeTable(AUSTable):
             if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
                 raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
 
-        what = self._prefixColumns(columns)
-        conditions = {}
-        for col in what:
-            if not col.startswith("base_"):
-                conditions[col] = what[col]
-
-        self.conditions.validate(conditions)
+        what = self._prefixColumns(base_columns)
+        self.conditions.validate(condition_columns)
 
         # Use the appropriate base table methods in dry run mode to ensure the
         # user has permission for the change they want to schedule
-        if columns.get("data_version"):
-            self.baseTable.update(base_table_where, columns, changed_by, columns["data_version"], transaction=transaction, dryrun=True)
+        if base_columns.get("data_version"):
+            self.baseTable.update(base_table_where, base_columns, changed_by, base_columns["data_version"], transaction=transaction, dryrun=True)
         else:
-            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **columns)
+            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_columns)
 
+        self.conditions.insert(changed_by, transaction, dryrun, **condition_columns)
         if not dryrun:
             what["scheduled_by"] = changed_by
             ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **what)
@@ -953,8 +952,8 @@ class ScheduledChangeTable(AUSTable):
             else:
                 self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_row)
 
+        self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun)
         if not dryrun:
-            self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun)
             return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
 
     def enactChange(self, sc_id, enacted_by, transaction=None):

@@ -744,7 +744,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         what = {"foo": "newthing1", "when": 888000}
         self.sc_table.insert(changed_by="bob", **what)
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 6).execute().fetchall()[0]
-        cond_row = self.sc_table.conditionst.select().where(self.sc_table.conditions.sc_id == 6).execute().fetchall()[0]
+        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 6).execute().fetchall()[0]
         self.assertEquals(sc_row.scheduled_by, "bob")
         self.assertEquals(sc_row.data_version, 1)
         self.assertEquals(sc_row.base_fooid, None)
@@ -769,7 +769,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876000}
         table.scheduled_changes.insert(changed_by="mary", **what)
         sc_row = table.scheduled_changes.t.select().where(table.scheduled_changes.sc_id == 1).execute().fetchall()[0]
-        cond_row = table.scheduled_changes.conditionst.select().where(table.scheduled_changes.conditions.sc_id == 1).execute().fetchall()[0]
+        cond_row = table.scheduled_changes.conditions.t.select().where(table.scheduled_changes.conditions.sc_id == 1).execute().fetchall()[0]
         self.assertEquals(sc_row.scheduled_by, "mary")
         self.assertEquals(sc_row.data_version, 1)
         self.assertEquals(sc_row.base_foo_name, "i'm a foo")
