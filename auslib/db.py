@@ -749,6 +749,33 @@ class ConditionsTable(AUSTable):
 
         super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
 
+    # TODO: It feels weird to have the main scheduledchanges table call this w/ conditions as args....
+    def validate(self, conditions):
+        # Filter out conditions whose values are none before processing.
+        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
+        if not conditions:
+            raise ValueError("No conditions found")
+
+        for c in conditions:
+            if c not in itertools.chain(*self.condition_groups):
+                raise ValueError("Invalid condition: %s", c)
+
+        for group in self.condition_groups:
+            if set(group) == set(conditions.keys()):
+                break
+        else:
+            raise ValueError("Invalid combination of conditions: %s", conditions.keys())
+
+        if "when" in conditions:
+            try:
+                time.gmtime(conditions["when"] / 1000)
+            except:
+                raise ValueError("Cannot parse 'when' as a unix timestamp.")
+
+            if conditions["when"] < getMillisecondTimestamp():
+                raise ValueError("Cannot schedule changes in the past")
+
+
 class ScheduledChangeTable(AUSTable):
     """A Table that stores the necessary information to schedule changes
     to the baseTable provided. A ScheduledChangeTable ends up mirroring the
@@ -817,31 +844,6 @@ class ScheduledChangeTable(AUSTable):
                 ret[k] = v
         return ret
 
-    def _validateConditions(self, conditions):
-        # Filter out conditions whose values are none before processing.
-        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
-        if not conditions:
-            raise ValueError("No conditions found")
-
-        for c in conditions:
-            if c not in itertools.chain(*self.condition_groups):
-                raise ValueError("Invalid condition: %s", c)
-
-        for group in self.condition_groups:
-            if set(group) == set(conditions.keys()):
-                break
-        else:
-            raise ValueError("Invalid combination of conditions: %s", conditions.keys())
-
-        if "when" in conditions:
-            try:
-                time.gmtime(conditions["when"] / 1000)
-            except:
-                raise ValueError("Cannot parse 'when' as a unix timestamp.")
-
-            if conditions["when"] < getMillisecondTimestamp():
-                raise ValueError("Cannot schedule changes in the past")
-
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         # We need to do additional checks for any changes that are modifying an
         # existing row. These lists will have PK clauses in them at the end of
@@ -893,7 +895,7 @@ class ScheduledChangeTable(AUSTable):
             if not col.startswith("base_"):
                 conditions[col] = what[col]
 
-        self._validateConditions(conditions)
+        self.conditions.validate(conditions)
 
         # Use the appropriate base table methods in dry run mode to ensure the
         # user has permission for the change they want to schedule
@@ -926,7 +928,7 @@ class ScheduledChangeTable(AUSTable):
                 elif row.get(cond):
                     conditions[cond] = row[cond]
 
-            self._validateConditions(conditions)
+            self.conditions.validate(conditions)
 
         if not dryrun:
             renamed_what = self._prefixColumns(what)
