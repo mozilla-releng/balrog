@@ -864,7 +864,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(cond_history_row.change_id, 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
-    def testUpdateChangeIdStaysInSyncWithoutConditionsChange(self):
+    def testUpdateChangeIdAndDataVersionStayInSyncWithoutConditionsChange(self):
         where = [self.sc_table.sc_id == 1]
         what = {"foo": "bb"}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)

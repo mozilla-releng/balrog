@@ -377,7 +377,7 @@ class AUSTable(object):
 
         return ret
 
-    def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         """Perform a DELETE statement on this table. See AUSTable._deleteStatement for
            a description of `where'. To simplify versioning, this method can only
            delete a single row per invocation. If the where clause given would delete
@@ -396,6 +396,10 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
+
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before porceeding.
         if hasattr(where, "keys"):
@@ -936,7 +940,9 @@ class ScheduledChangeTable(AUSTable):
             return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+        conditions_where = []
         for row in self.select(where=where, transaction=transaction):
+            conditions_where.append(self.conditions.sc_id == row["sc_id"])
             base_row = {col[5:]: row[col] for col in row if col.startswith("base_")}
             base_table_where = {pk: row["base_%s" % pk] for pk in self.base_primary_key}
             # TODO: What permissions *should* be required to delete a scheduled change?
@@ -948,6 +954,7 @@ class ScheduledChangeTable(AUSTable):
                 self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_row)
 
         if not dryrun:
+            self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun)
             return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
