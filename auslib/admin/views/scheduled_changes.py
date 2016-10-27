@@ -149,6 +149,7 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             .execute()\
             .fetchone()[0]
 
+        # TODO: also need to retrieve from conditions table to get conditions
         revisions = self.table.scheduled_changes.history.select(
             where=[self.table.scheduled_changes.history.sc_id == sc_id,
                    self.table.scheduled_changes.history.data_version != null()],

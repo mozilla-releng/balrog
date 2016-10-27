@@ -665,51 +665,66 @@ class TestRuleScheduledChanges(ViewTest):
 
     def setUp(self):
         super(TestRuleScheduledChanges, self).setUp()
+        # TODO: make sure history tables return conditions columns too
         dbo.rules.scheduled_changes.t.insert().execute(
-            sc_id=1, when=1000000, scheduled_by="bill", data_version=1, base_rule_id=1, base_priority=100, base_version="3.5", base_buildTarget="d",
+            sc_id=1, scheduled_by="bill", data_version=1, base_rule_id=1, base_priority=100, base_version="3.5", base_buildTarget="d",
             base_backgroundRate=100, base_mapping="b", base_update_type="minor", base_data_version=1,
         )
+        dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=1000000, data_version=1)
         dbo.rules.scheduled_changes.t.insert().execute(
-            sc_id=2, when=1500000, scheduled_by="bill", data_version=1, base_priority=50, base_backgroundRate=100, base_product="baz",
+            sc_id=2, scheduled_by="bill", data_version=1, base_priority=50, base_backgroundRate=100, base_product="baz",
             base_mapping="ab", base_update_type="minor",
         )
+        dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=1500000, data_version=1)
         dbo.rules.scheduled_changes.t.insert().execute(
-            sc_id=3, when=2000000, scheduled_by="bill", data_version=2, base_priority=150, base_backgroundRate=100, base_product="ff",
+            sc_id=3, scheduled_by="bill", data_version=2, base_priority=150, base_backgroundRate=100, base_product="ff",
             base_mapping="ghi", base_update_type="minor",
         )
+        dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=2000000, data_version=2)
         dbo.rules.scheduled_changes.t.insert().execute(
-            sc_id=4, when=500000, scheduled_by="bill", data_version=2, complete=True, base_rule_id=5, base_priority=80, base_version="3.3",
+            sc_id=4, scheduled_by="bill", data_version=2, complete=True, base_rule_id=5, base_priority=80, base_version="3.3",
             base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1,
         )
+        dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=4, when=500000, data_version=2)
+
+        dbo.rules.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=5, sc_id=3)
+        dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=5, sc_id=3)
+
         dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=1, changed_by="bill", timestamp=5, sc_id=3
-        )
-        dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=6, sc_id=3, scheduled_by="bill", when=2000000, data_version=1, base_priority=150,
+            change_id=2, changed_by="bill", timestamp=6, sc_id=3, scheduled_by="bill", data_version=1, base_priority=150,
             base_backgroundRate=100, base_product="ff", base_mapping="def", base_update_type="minor",
         )
+        dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=6, sc_id=3, when=2000000, data_version=1)
+
         dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=3, changed_by="bill", timestamp=10, sc_id=3, scheduled_by="bill", when=2000000, data_version=2, base_priority=150,
+            change_id=3, changed_by="bill", timestamp=10, sc_id=3, scheduled_by="bill", data_version=2, base_priority=150,
             base_backgroundRate=100, base_product="ff", base_mapping="ghi", base_update_type="minor",
         )
+        dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=10, sc_id=3, when=2000000, data_version=2)
+
+        dbo.rules.scheduled_changes.history.t.insert().execute(change_id=4, changed_by="bill", timestamp=15, sc_id=2)
+        dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=4, changed_by="bill", timestamp=15, sc_id=2)
+
         dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=4, changed_by="bill", timestamp=15, sc_id=2
-        )
-        dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=5, changed_by="bill", timestamp=16, sc_id=2, when=1500000, scheduled_by="bill", data_version=1, base_priority=50,
+            change_id=5, changed_by="bill", timestamp=16, sc_id=2, scheduled_by="bill", data_version=1, base_priority=50,
             base_backgroundRate=100, base_product="baz", base_mapping="ab", base_update_type="minor"
         )
+        dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=16, sc_id=2, when=1500000, data_version=1)
+
+        dbo.rules.scheduled_changes.history.t.insert().execute(change_id=6, changed_by="bill", timestamp=5, sc_id=4)
+        dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=6, changed_by="bill", timestamp=5, sc_id=4)
+
         dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=6, changed_by="bill", timestamp=5, sc_id=4
-        )
-        dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=7, changed_by="bill", timestamp=6, sc_id=4, scheduled_by="bill", when=500000, data_version=1, base_priority=80,
+            change_id=7, changed_by="bill", timestamp=6, sc_id=4, scheduled_by="bill", data_version=1, base_priority=80,
             base_version="3.3", base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1
         )
+        dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=7, changed_by="bill", timestamp=6, sc_id=4, when=500000, data_version=1)
+
         dbo.rules.scheduled_changes.history.t.insert().execute(
-            change_id=8, changed_by="bill", timestamp=7, sc_id=4, scheduled_by="bill", when=500000, data_version=2, complete=True, base_rule_id=5,
+            change_id=8, changed_by="bill", timestamp=7, sc_id=4, scheduled_by="bill", data_version=2, complete=True, base_rule_id=5,
             base_priority=80, base_version="3.3", base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1
         )
+        dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=8, changed_by="bill", timestamp=7, sc_id=4, when=500000, data_version=2)
 
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/rules")
