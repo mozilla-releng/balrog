@@ -725,6 +725,30 @@ class History(AUSTable):
             self.log.debug("ERROR, change doesn't correspond to any known operation")
 
 
+class ConditionsTable(AUSTable):
+    # Scheduled changes may only have a single type of condition, but some
+    # conditions require mulitple arguments. This data structure defines
+    # each type of condition, and groups their args together for easier
+    # processing.
+    condition_groups = (
+        ("when",),
+        ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
+    )
+
+    def __init__(self, db, dialect, metadata, baseName, history=True):
+        self.table = Table("{}_conditions".format(baseName), metadata,
+                           Column("sc_id", Integer, primary_key=True),
+                           Column("telemetry_product", String(15)),
+                           Column("telemetry_channel", String(75)),
+                           Column("telemetry_uptake", Integer),
+                           )
+        if dialect == "sqlite":
+            self.table.append_column(Column("when", Integer))
+        else:
+            self.table.append_column(Column("when", BigInteger))
+
+        super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
+
 class ScheduledChangeTable(AUSTable):
     """A Table that stores the necessary information to schedule changes
     to the baseTable provided. A ScheduledChangeTable ends up mirroring the
@@ -741,19 +765,14 @@ class ScheduledChangeTable(AUSTable):
     )
 
     def __init__(self, db, dialect, metadata, baseTable, history=True):
+        table_name = "{}_scheduled_changes".format(baseTable.t.name)
         self.baseTable = baseTable
-        self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
+        self.table = Table(table_name, metadata,
                            Column("sc_id", Integer, primary_key=True, autoincrement=True),
                            Column("scheduled_by", String(100), nullable=False),
                            Column("complete", Boolean, default=False),
-                           Column("telemetry_product", String(15)),
-                           Column("telemetry_channel", String(75)),
-                           Column("telemetry_uptake", Integer),
                            )
-        if dialect == "sqlite":
-            self.table.append_column(Column("when", Integer))
-        else:
-            self.table.append_column(Column("when", BigInteger))
+        self.conditions = ConditionsTable(db, dialect, metadata, table_name)
 
         # The primary key column(s) are used in construct "where" clauses for
         # existing rows.
