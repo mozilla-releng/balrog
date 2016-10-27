@@ -2847,9 +2847,10 @@ class TestChangeNotifiers(unittest.TestCase):
         self.db.create()
         self.db.rules.t.insert().execute(rule_id=2, priority=100, channel='release', backgroundRate=100, update_type='z', data_version=1)
         self.db.rules.t.insert().execute(rule_id=3, priority=100, channel='release', backgroundRate=100, update_type='y', data_version=1)
-        self.db.rules.scheduled_changes.t.insert().execute(sc_id=1, complete=0, when=10000000000000000, scheduled_by="bob", base_rule_id=2, base_priority=100,
+        self.db.rules.scheduled_changes.t.insert().execute(sc_id=1, complete=0, scheduled_by="bob", base_rule_id=2, base_priority=100,
                                                            base_channel='release', base_backgroundRate=10, base_update_type='z', base_data_version=1,
                                                            data_version=1)
+        self.db.rules.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000000000000, data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.releases.t.insert().execute(name='a', product='a', read_only=True,
                                             data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
