@@ -845,16 +845,16 @@ class ScheduledChangeTable(AUSTable):
 
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
-        # sc_id must be included in "columns" so that we can retrieve conditions
-        if "columns" in kwargs and kwargs["columns"] is not None:
+        # We'll be retrieving condition information for each Scheduled Change,
+        # and we'll need sc_id to do so.
+        if kwargs.get("columns") is not None:
+            # Columns can be specified as names or Column instances, so we must check for both.
             if "sc_id" not in kwargs["columns"] and self.sc_id not in kwargs["columns"]:
                 kwargs["columns"].append(self.sc_id)
         for row in super(ScheduledChangeTable, self).select(where=where, transaction=transaction, **kwargs):
             columns = [getattr(self.conditions, c) for c in itertools.chain(*self.conditions.condition_groups)]
             conditions = self.conditions.select([self.conditions.sc_id == row["sc_id"]], transaction=transaction, columns=columns)
-            # This can happen mid-delete, where the conditions have been deleted but the scheduled change has not.
-            if conditions:
-                row.update(conditions[0])
+            row.update(conditions[0])
             ret.append(row)
         return ret
 
@@ -979,9 +979,10 @@ class ScheduledChangeTable(AUSTable):
             else:
                 self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_row)
 
-        self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun)
         if not dryrun:
-            return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
+            ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
+            self.conditions.delete(conditions_where, changed_by, old_data_version, transaction)
+            return ret
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
         """Enacts a previously scheduled change by running update or insert on
