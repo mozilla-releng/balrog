@@ -843,6 +843,20 @@ class ScheduledChangeTable(AUSTable):
                 ret[k] = v
         return ret
 
+    def _splitColumns(self, columns):
+        """Because Scheduled Changes are stored across two Tables, we need to
+        split out the parts that are in the main table from the parts that
+        are stored in the conditions table in a few different places."""
+        base_columns = {}
+        condition_columns = {}
+        for k in columns:
+            if k in itertools.chain(*self.conditions.condition_groups):
+                condition_columns[k] = columns[k]
+            else:
+                base_columns[k] = columns[k]
+
+        return base_columns, condition_columns
+
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
         # We'll be retrieving condition information for each Scheduled Change,
@@ -859,18 +873,12 @@ class ScheduledChangeTable(AUSTable):
         return ret
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        base_columns, condition_columns = self._splitColumns(columns)
+
         # We need to do additional checks for any changes that are modifying an
         # existing row. These lists will have PK clauses in them at the end of
         # the following loop, but only if the change contains a PK. This makes
         # it easy to do the extra checks conditionally afterwards.
-        base_columns = {}
-        condition_columns = {}
-        for k in columns:
-            if k in itertools.chain(*self.conditions.condition_groups):
-                condition_columns[k] = columns[k]
-            else:
-                base_columns[k] = columns[k]
-
         base_table_where = []
         sc_table_where = []
         for pk in self.base_primary_key:
@@ -929,16 +937,10 @@ class ScheduledChangeTable(AUSTable):
             return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+        base_what, condition_what = self._splitColumns(what)
+
         # We need to check each Scheduled Change that would be affected by this
         # to ensure the new row will be valid.
-        base_what = {}
-        condition_what = {}
-        for k in what:
-            if k in itertools.chain(*self.conditions.condition_groups):
-                condition_what[k] = what[k]
-            else:
-                base_what[k] = what[k]
-
         for row in self.select(where=where, transaction=transaction):
             new_row = row.copy()
             new_row.update(self._prefixColumns(base_what))
