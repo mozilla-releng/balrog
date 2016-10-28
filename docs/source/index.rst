@@ -14,7 +14,8 @@ Contents:
    
    installation
    contribute
-
+   codeoverview
+   architecture
 
 Indices and tables
 ==================

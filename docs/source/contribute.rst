@@ -40,7 +40,8 @@ the commit message.
 
 Submitting your work
 --------------------
-In general, you should submit your work with a pull request to master. Make sure you reference the Bug number on the Pull Request. Now, you have to wait for the review. 
+Once you have made the required changes make sure all the test still pass.
+Then, you should submit your work with a pull request to master. Make sure you reference the Bug number on the Pull Request. Now, you have to wait for the review. 
 
 Once your code has been positively reviewed, it will be deployed shortly after.
 So if you want feedback on your code but it's not ready to be deployed, you
@@ -48,4 +49,4 @@ should note it in the pull request.
 
 Contact
 -------
-If you have any problems you can on #balrog
+If you have any problems you can contact us at #balrog
