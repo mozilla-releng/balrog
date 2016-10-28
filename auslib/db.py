@@ -757,7 +757,6 @@ class ConditionsTable(AUSTable):
 
         super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
 
-    # TODO: It feels weird to have the main scheduledchanges table call this w/ conditions as args....
     def validate(self, conditions):
         # Filter out conditions whose values are none before processing.
         conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
