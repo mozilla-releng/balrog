@@ -857,6 +857,12 @@ class ScheduledChangeTable(AUSTable):
 
         return base_columns, condition_columns
 
+    def _simulateChange(self, base_table_where, new_row, changed_by, transaction):
+        if new_row.get("data_version"):
+            self.baseTable.update(base_table_where, new_row, changed_by, new_row["data_version"], transaction=transaction, dryrun=True)
+        else:
+            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
+
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
         # We'll be retrieving condition information for each Scheduled Change,
@@ -922,12 +928,7 @@ class ScheduledChangeTable(AUSTable):
         what = self._prefixColumns(base_columns)
         self.conditions.validate(condition_columns)
 
-        # Use the appropriate base table methods in dry run mode to ensure the
-        # user has permission for the change they want to schedule
-        if base_columns.get("data_version"):
-            self.baseTable.update(base_table_where, base_columns, changed_by, base_columns["data_version"], transaction=transaction, dryrun=True)
-        else:
-            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_columns)
+        self._simulateChange(base_table_where, base_columns, changed_by, transaction)
 
         if not dryrun:
             what["scheduled_by"] = changed_by
@@ -945,10 +946,9 @@ class ScheduledChangeTable(AUSTable):
             new_row = row.copy()
             new_row.update(self._prefixColumns(base_what))
             base_table_where = {pk: new_row["base_%s" % pk] for pk in self.base_primary_key}
-            if new_row.get("base_data_version"):
-                self.baseTable.update(base_table_where, new_row, changed_by, new_row["base_data_version"], transaction=transaction, dryrun=True)
-            else:
-                self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
+
+            unprefixed_row = {col[5:]: row[col] for col in row if col.startswith("base_")}
+            self._simulateChange(base_table_where, unprefixed_row, changed_by, transaction)
 
             existing_conditions = self.conditions.select(where=[self.conditions.sc_id == new_row["sc_id"]], transaction=transaction)[0]
             conditions = {}
@@ -976,10 +976,7 @@ class ScheduledChangeTable(AUSTable):
             # TODO: What permissions *should* be required to delete a scheduled change?
             # It seems a bit odd to be checking base table update/insert here. Maybe
             # something broader should be required?
-            if base_row.get("base_data_version"):
-                self.baseTable.update(base_table_where, base_row, changed_by, base_row["base_data_version"], transaction=transaction, dryrun=True)
-            else:
-                self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_row)
+            self._simulateChange(base_table_where, base_row, changed_by, transaction)
 
         if not dryrun:
             ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
