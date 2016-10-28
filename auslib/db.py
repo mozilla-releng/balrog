@@ -967,9 +967,9 @@ class ScheduledChangeTable(AUSTable):
             self.conditions.update([self.conditions.sc_id == sc_columns["sc_id"]], condition_columns, changed_by, old_data_version, transaction)
 
         if not dryrun:
-            base_columns = self._prefixColumns(base_columns)
-            base_columns["scheduled_by"] = changed_by
-            return super(ScheduledChangeTable, self).update(where, base_columns, changed_by, old_data_version, transaction)
+            base_what = self._prefixColumns(base_what)
+            base_what["scheduled_by"] = changed_by
+            return super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         conditions_where = []
