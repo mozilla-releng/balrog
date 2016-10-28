@@ -857,7 +857,7 @@ class ScheduledChangeTable(AUSTable):
 
         return base_columns, condition_columns
 
-    def _simulateChange(self, base_table_where, new_row, changed_by, transaction):
+    def _checkBaseTablePermissions(self, base_table_where, new_row, changed_by, transaction):
         if new_row.get("data_version"):
             self.baseTable.update(base_table_where, new_row, changed_by, new_row["data_version"], transaction=transaction, dryrun=True)
         else:
@@ -909,7 +909,7 @@ class ScheduledChangeTable(AUSTable):
                 raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
 
         self.conditions.validate(condition_columns)
-        self._simulateChange(base_table_where, base_columns, changed_by, transaction)
+        self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
 
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
@@ -980,7 +980,7 @@ class ScheduledChangeTable(AUSTable):
             # TODO: What permissions *should* be required to delete a scheduled change?
             # It seems a bit odd to be checking base table update/insert here. Maybe
             # something broader should be required?
-            self._simulateChange(base_table_where, base_row, changed_by, transaction)
+            self._checkBaseTablePermissions(base_table_where, base_row, changed_by, transaction)
 
         if not dryrun:
             ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
