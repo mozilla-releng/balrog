@@ -146,6 +146,11 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             .execute()\
             .fetchone()[0]
 
+        # As far as web API consumers are concerned, scheduled changes are just one object.
+        # On the backend, they are stored across two tables though, so we need to look up
+        # history in both and return the combined version.
+        # This is done by the database layer for non-history parts of Scheduled Changes, but
+        # for complicated technical reasons we can't do it there for History, so we do it here instead.
         revisions = self.table.scheduled_changes.history.select(
             where=[self.table.scheduled_changes.history.sc_id == sc_id,
                    self.table.scheduled_changes.history.data_version != null()],
