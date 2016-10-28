@@ -845,6 +845,10 @@ class ScheduledChangeTable(AUSTable):
 
     def select(self, where, transaction=None, **kwargs):
         ret = []
+        # sc_id must be included in "columns" so that we can retrieve conditions
+        if "columns" in kwargs and kwargs["columns"] is not None:
+            if "sc_id" not in kwargs["columns"] and self.sc_id not in kwargs["columns"]:
+                kwargs["columns"].append(self.sc_id)
         for row in super(ScheduledChangeTable, self).select(where, transaction=transaction, **kwargs):
             columns = [getattr(self.conditions, c) for c in itertools.chain(*self.conditions.condition_groups)]
             conditions = self.conditions.select([self.conditions.sc_id == row["sc_id"]], transaction=transaction, columns=columns)
