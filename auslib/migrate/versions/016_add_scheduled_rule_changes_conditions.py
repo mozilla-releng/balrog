@@ -1,8 +1,6 @@
 from sqlalchemy import Table, Column, Integer, String, MetaData, \
     BigInteger
 
-
-
 # TODO: migrate data from sc -> sc conditions before deleting
 def upgrade(migrate_engine):
     metadata = MetaData(bind=migrate_engine)

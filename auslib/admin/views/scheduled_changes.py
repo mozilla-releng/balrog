@@ -157,6 +157,12 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             offset=offset,
             order_by=[self.table.scheduled_changes.history.timestamp.asc()],
         )
+        for r in revisions:
+            cond = self.table.scheduled_changes.conditions.history.select(
+                where=[self.table.scheduled_changes.conditions.history.sc_id == r["sc_id"],
+                       self.table.scheduled_changes.conditions.history.data_version == r["data_version"]],
+            )
+            r.update(cond[0])
 
         ret = {
             "count": total_count,
@@ -181,7 +187,7 @@ class ScheduledChangeHistoryView(HistoryAdminView):
         if not change_id:
             self.log.warning("Bad input: %s", "no change_id")
             return Response(status=400, response=json.dumps({"exception": "no change_id"}))
-        change = self.table.scheduled_changes.history.getChange(change_id=change_id)
+        change = self.table.scheduled_changes.history.getChange(change_id=change_id, transaction=transaction)
         if change is None:
             return Response(status=400, response=json.dumps({"exception": "bad change_id"}))
         if change['sc_id'] != sc_id:
@@ -191,16 +197,21 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             return Response(status=400, response=json.dumps({"exception": "bad sc_id"}))
         old_data_version = sc['data_version']
 
+        cond_change = self.table.scheduled_changes.conditions.history.getChange(
+            data_version=change["data_version"],
+            column_values={"sc_id": change["sc_id"]},
+            transaction=transaction,
+        )
         what = dict(
             # One could argue that we should restore scheduled_by to its value from the change,
             # but since the person who is reverting could be different, it's probably best to
             # use that instead.
             scheduled_by=changed_by,
             complete=change["complete"],
-            when=change["when"],
-            telemetry_product=change["telemetry_product"],
-            telemetry_channel=change["telemetry_channel"],
-            telemetry_uptake=change["telemetry_uptake"],
+            when=cond_change["when"],
+            telemetry_product=cond_change["telemetry_product"],
+            telemetry_channel=cond_change["telemetry_channel"],
+            telemetry_uptake=cond_change["telemetry_uptake"],
         )
         # Copy in all the base table columns, too.
         for col in self.table.scheduled_changes.t.get_children():
