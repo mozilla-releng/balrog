@@ -14,8 +14,8 @@ Cloning the  Repository
 By creating a fork, you are able to generate *pull request* so that the changes can be easily seen and reviewed by other community members. 
 
 
-Finding a Bugs
---------------
+Finding Bugs to Solve
+---------------------
 You can take look at the bugs filed at bugzilla for
 `Balrog Backend <https://bugzilla.mozilla.org/buglist.cgi?product=Release%20Engineering&component=Balrog%3A%20Backend&resolution=---&list_id=13281625>`_
 and

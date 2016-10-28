@@ -16,6 +16,7 @@ Contents:
    contribute
    codeoverview
    architecture
+   rules_detailed
 
 Indices and tables
 ==================
