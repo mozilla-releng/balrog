@@ -28,15 +28,36 @@ Each rule has mulitple columns. They all fall into one of the following Category
 -   **Response** : these contain information that ends up in the response
 -   **Info** : Informational columns, not used as part of serving updates
 
-**Different column in the above categories are:**
--------------------------------------------------
-Category : Matchable
-++++++++++++++++++++
+**How are requests matched up to rules?**
 
-1.Product
-^^^^^^^^^
-    - **Description** : The name of the appliaction requesting an update
+The incoming request parts match up directly to incoming URL parts. 
+For example, most update requests will send an URL in the following format  
 
-    - **Mactching Logic** : Exact string match only
+::
+    
+    /update/3/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml?force=1
 
-    - **Examples** : "Firefox" or "B2G"
+The following logic is used to figure out which rule an update matches and what to respond with:
+
+-   If a rule specifies one of these fields and a request's field doesn't match it, the rule is considered not to be a match and the rule is ignored for that request. 
+
+-   If "force" wasn't specified, the backgroundRate of the selected rule is looked at
+
+-   If we still choose serve an update after accounting for backgroundRate we look at the rule's mapping. This is a foreign key that points at an entry in the releases table. That row has most of the information we need to construct the update.
+  
+-   Using the update_type and release that the mapping points to, construct and return an XML response with the details of the update for the client
+
+--------
+Releases
+--------
+To Balrog, a "release" is data about a related set of builds. 
+This does _not_ match up with the concept of a "release" being on the "beta", "release" or "esr" channel elsewhere. In Balrog, each set of nightlies on any branch is considered a release.
+
+While there's no enforced format on release names, there are a few conventions that we use:
+
+- Nightly-style builds submit to releases named by product and branch. Each nightly generally submits to two different releases, one "dated" (eg: Firefox-mozilla-central-nightly-20150513010203) and one "latest" (eg: Firefox-mozilla-central-nightly-latest).
+
+- Release-style builds submit to releases named by product, version number, and build number, eg: Firefox-38.0-build1
+
+- GMP blobs are created by hand and generally named with the version of each plugin they contain in the name, eg: GMP-20150423-CDM-v4-OpenH264-v1.4
+
