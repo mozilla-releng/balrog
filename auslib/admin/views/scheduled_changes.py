@@ -26,9 +26,6 @@ class ScheduledChangesView(AdminView):
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
             r = {}
-            # TODO: maybe we should require API consumers to use actual column names instead of rewriting?
-            # that may mean we can't re-use rules forms, but it makes this less ugly...
-            # if there's a way to make callers use the column names and still use rules forms we should definitely do that
             for k, v in row.iteritems():
                 if k == "data_version":
                     r["sc_data_version"] = v
@@ -149,7 +146,6 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             .execute()\
             .fetchone()[0]
 
-        # TODO: also need to retrieve from conditions table to get conditions
         revisions = self.table.scheduled_changes.history.select(
             where=[self.table.scheduled_changes.history.sc_id == sc_id,
                    self.table.scheduled_changes.history.data_version != null()],
