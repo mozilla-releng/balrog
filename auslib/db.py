@@ -873,8 +873,7 @@ class ScheduledChangeTable(AUSTable):
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
             if pk in base_columns:
-                if not sc_id:
-                    sc_table_where.append(getattr(self, "base_%s" % pk) == base_columns[pk])
+                sc_table_where.append(getattr(self, "base_%s" % pk) == base_columns[pk])
                 # If a non-null data_version was provided it implies that the
                 # base table row should already exist. This will be checked for
                 # after we finish basic checks on the individual parts of the
@@ -901,9 +900,10 @@ class ScheduledChangeTable(AUSTable):
             if current_data_version and current_data_version[0]["data_version"] != base_columns.get("data_version"):
                 raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
 
-        # If the change has a PK in it, we must ensure that no existing change
-        # with that PK is active before allowing it.
-        if sc_table_where:
+        # If the change has a PK in it and the change isn't already scheduled
+        # (meaning we're validating an update to it), we must ensure that no
+        # existing change with that PK is active before allowing it.
+        if not sc_id and sc_table_where:
             sc_table_where.append(self.complete == False) # noqa because we need to use == for sqlalchemy operator overloading to work
             if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
                 raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
@@ -953,7 +953,7 @@ class ScheduledChangeTable(AUSTable):
 
             base_columns = {col.replace("base_", ""): base_columns[col] for col in base_columns}
             for col in base_columns:
-                if base_what.get(col):
+                if col in base_what:
                     base_columns[col] = base_what[col]
 
             condition_columns = self.conditions.select(

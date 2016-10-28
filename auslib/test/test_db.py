@@ -992,6 +992,43 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(cond_history_row.data_version, 2)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateBaseTableNoConflictChangingToNull(self):
+        # fooid 2 has a change scheduled that would update its "foo" column
+        # we'll change "bar" underneath it. This doesn't conflict with the
+        # scheduled change, so it should simply be updated with the new "bar"
+        # value.
+        self.table.update([self.table.fooid == 2], what={"bar": None}, changed_by="bob", old_data_version=2)
+        row = self.table.t.select().where(self.table.fooid == 2).execute().fetchall()[0]
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
+        sc_history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 4).execute().fetchall()[0]
+        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 4).execute().fetchall()[0]
+        cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 4).execute().fetchall()[0]
+        self.assertEquals(row.fooid, 2)
+        self.assertEquals(row.foo, "b")
+        self.assertEquals(row.bar, None)
+        self.assertEquals(row.data_version, 3)
+        # This should end up with the scheduled changed incorporating our new
+        # value for "foo" as well as the new "bar" value.
+        self.assertEquals(sc_row.scheduled_by, "bob")
+        self.assertEquals(sc_row.data_version, 2)
+        self.assertEquals(sc_row.base_fooid, 2)
+        self.assertEquals(sc_row.base_foo, "dd")
+        self.assertEquals(sc_row.base_bar, None)
+        self.assertEquals(sc_row.base_data_version, 3)
+        # ...As well as a new history table entry.
+        self.assertEquals(sc_history_row.changed_by, "bob")
+        self.assertEquals(sc_history_row.scheduled_by, "bob")
+        self.assertEquals(sc_history_row.data_version, 2)
+        self.assertEquals(sc_history_row.base_fooid, 2)
+        self.assertEquals(sc_history_row.base_foo, "dd")
+        self.assertEquals(sc_history_row.base_bar, None)
+        self.assertEquals(sc_history_row.base_data_version, 3)
+        self.assertEquals(cond_row.when, 333000)
+        self.assertEquals(cond_row.data_version, 2)
+        self.assertEquals(cond_history_row.when, 333000)
+        self.assertEquals(cond_history_row.data_version, 2)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateBaseTableConflictWithRecentChanges(self):
         where = [self.table.fooid == 1]
         what = {"bar": "bar"}
@@ -1051,33 +1088,6 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testEnactChangeNoPermissions(self):
         # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
         self.assertRaises(PermissionDeniedError, self.table.scheduled_changes.enactChange, 1, "jeremy")
-
-    @mock.patch("time.time", mock.MagicMock(return_value=200))
-    def testMergeUpdateNoConflict(self):
-        old_row = self.table.select(where=[self.table.fooid == 2])[0]
-        what = {"fooid": 2, "bar": "bar", "data_version": 3}
-        self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 4).execute().fetchall()[0]
-        self.assertEquals(sc_row.base_foo, "dd")
-        self.assertEquals(sc_row.base_bar, "bar")
-        self.assertEquals(sc_row.base_data_version, 3)
-        self.assertEquals(sc_row.data_version, 2)
-        self.assertEquals(cond_row.when, 333000)
-        self.assertEquals(cond_row.data_version, 2)
-
-    @mock.patch("time.time", mock.MagicMock(return_value=200))
-    def testMergeUpdateNoConflictChangingToNull(self):
-        old_row = self.table.select(where=[self.table.fooid == 2])[0]
-        what = {"fooid": 2, "bar": None, "data_version": 3}
-        self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 4).execute().fetchall()[0]
-        self.assertEquals(sc_row.base_foo, "dd")
-        self.assertEquals(sc_row.base_bar, None)
-        self.assertEquals(sc_row.base_data_version, 3)
-        self.assertEquals(cond_row.when, 333000)
-        self.assertEquals(cond_row.data_version, 2)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testMergeUpdateWithConflict(self):
