@@ -16,14 +16,18 @@ Cloning
 -------
 
 Clone the source files using
+
 ::
+    
     $ git clone https://github.com/mozilla/balrog
 
 Usage
 -----
 Once these prerequisites are installed, run the
 following command to create and run the necessary images:
+
 ::
+    
     $ docker-compose up
 
 Once it completes, you should be able to access

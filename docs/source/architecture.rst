@@ -61,3 +61,20 @@ While there's no enforced format on release names, there are a few conventions t
 
 - GMP blobs are created by hand and generally named with the version of each plugin they contain in the name, eg: GMP-20150423-CDM-v4-OpenH264-v1.4
 
+-----------
+Permissions
+-----------
+The permissions table is a simple list of usernames and the ACLs(Access Control Lists) that they have. 
+A user could be an "admin", giving them write access to everything, or could have one or more specific permissions. 
+These specific ACLs let us do things such as give B2G folks access to Balrog without the risk of them or their tools accidentally messing up Firefox updates.
+
+--------------
+History Tables
+--------------
+Change attribution and recording is embedded deeply into Balrog.
+The rules, releases, and permissions tables all have a corresponding history table that records the time a change was made and who made it.
+his allows us to look back in time when debugging issues, attribute changes to people (aka blame), and quickly roll back bad changes.
+
+
+
+

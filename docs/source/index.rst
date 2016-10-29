@@ -10,12 +10,13 @@ Welcome to Balrog's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
    installation
    contribute
    codeoverview
    architecture
+   infrastructure
    rules_detailed
 
 Indices and tables
