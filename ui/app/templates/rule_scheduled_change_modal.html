@@ -91,7 +91,7 @@
       </div>
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.fallbackMapping}">
-        <label for="id_fallbackMapping">Mapping</label>
+        <label for="id_fallbackMapping">Fallback Mapping</label>
         <input type="text" class="form-control" id="id_fallbackMapping" ng-model="sc.fallbackMapping"
         typeahead="name for name in names | filter:$viewValue | limitTo:16">
         <p class="help-block" ng-show="errors.fallbackMapping">{{ errors.fallbackMapping.join(', ') }}</p>
