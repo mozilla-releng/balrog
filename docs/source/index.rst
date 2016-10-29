@@ -18,6 +18,7 @@ Contents:
    architecture
    infrastructure
    rules_detailed
+   deploying_changes
 
 Indices and tables
 ==================

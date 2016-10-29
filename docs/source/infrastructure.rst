@@ -58,4 +58,11 @@ Here's an example:
 
 - Do additional queries on the new logfile.
 
+-------
+Backups
+-------
+Balrog uses the built-in RDS backups.
+The database in snapshotted nightly, and incremental backups are done throughout the day. 
+If necessary, we have the ability to recover to within a 5 minute window. Database restoration is done by CloudOps, and they should be contacted immediately if needed.
+
 
