@@ -98,6 +98,13 @@
             View
         </a>
       </dd>
+      <dt ng-show="sc.fallbackMapping">Fallback Mapping:</dt>
+      <dd><span>{{ sc.fallbackMapping }}</span>
+        <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(sc.fallbackMapping)">
+          <i class="glyphicon glyphicon-eye-open"></i>
+            View
+        </a>
+      </dd>
       <dt ng-show="sc.alias" title="Can be used in place of rule_id in REST operations">Alias:</dt>
       <dd>{{ sc.alias }}</dd>
       <dt ng-show="sc.backgroundRate !== null">Rate:</dt>
