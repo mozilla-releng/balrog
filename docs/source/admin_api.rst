@@ -197,30 +197,29 @@ There are a few query arguments that affect its response.
 If no arguments are provided, it returns information about all of the Releases in the database in the following format:
 
 ::
+
     {
     "releases": [
-            {
-            "name": "Firefox-34.0-build1",
-            "product": "Firefox",
-            "data_version": 4,
-            "read_only": null
-
-            },
-            {
-            "name": "Fennec-34.0-build1",
-            "product": "Fennec",
-            "data_version": 43,
-            "read_only": true
-
-            },
+        {
+        "name": "Firefox-34.0-build1",
+        "product": "Firefox",
+        "data_version": 4,
+        "read_only": null
+        },
+        {
+        "name": "Fennec-34.0-build1",
+        "product": "Fennec",
+        "data_version": 43,
+        "read_only": true
+        },
         ...
         ]
     }
 
+
+
 If "product" is passed, only Releases with the given product name will be returned.
-
 If "name_prefix" is passed, only Releases whose name starts with the given prefix will be returned.
-
 If "names_only" is set to true, the response changes format and provides a list of all of the Release names in the database:
 
 ::
@@ -313,9 +312,9 @@ Returns whether or not the named Release is marked as read_only. Eg:
 
 ::
 
-	{
-  "read_only": true
-}
+    {
+        "read_only": true
+    }
 
 
 **/releases/<release>/builds/<platform>/<locale>**
