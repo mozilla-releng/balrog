@@ -936,9 +936,10 @@ class ScheduledChangeTable(AUSTable):
         base_columns = self._prefixColumns(base_columns)
         base_columns["scheduled_by"] = changed_by
         ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **base_columns)
-        sc_id = ret.inserted_primary_key[0]
-        self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
-        return sc_id
+        if not dryrun:
+            sc_id = ret.inserted_primary_key[0]
+            self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
+            return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         base_what, condition_what = self._splitColumns(what)
@@ -1163,8 +1164,8 @@ class Rules(AUSTable):
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
+        ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
-            ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, **columns)
             return ret.inserted_primary_key[0]
 
     def getOrderedRules(self, transaction=None):
@@ -1301,8 +1302,8 @@ class Rules(AUSTable):
             if not self.db.hasPermission(changed_by, "rule", "modify", current_rule["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_rule["product"]))
 
-        if not dryrun:
-            return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
+        return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version,
+                                         transaction=transaction, dryrun=dryrun)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         if "rule_id" in where and self._isAlias(where["rule_id"]):
@@ -1313,8 +1314,7 @@ class Rules(AUSTable):
         if not self.db.hasPermission(changed_by, "rule", "delete", product, transaction):
             raise PermissionDeniedError("%s is not allowed to delete rules for product %s" % (changed_by, product))
 
-        if not dryrun:
-            super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+        super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
 
 class Releases(AUSTable):
@@ -1454,8 +1454,8 @@ class Releases(AUSTable):
             raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
         columns["data"] = blob.getJSON()
 
+        ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
-            ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, **columns)
             cache.put("blob", columns["name"], {"data_version": 1, "blob": blob})
             cache.put("blob_version", columns["name"], 1)
             return ret.inserted_primary_key[0]
@@ -1503,47 +1503,48 @@ class Releases(AUSTable):
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
                 what['data'] = blob.getJSON()
-        if not dryrun:
-            for release in current_releases:
-                name = current_release["name"]
-                new_data_version = old_data_version + 1
-                try:
-                    super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version,
-                                                 transaction=transaction)
-                except OutdatedDataError as e:
-                    self.log.debug("trying to update older data_version %s for release %s" % (old_data_version, name))
-                    if blob is not None:
-                        ancestor_change = self.history.getChange(data_version=old_data_version,
-                                                                 column_values={'name': name},
-                                                                 transaction=transaction)
-                        # if we have no historical information about the ancestor blob
-                        if ancestor_change is None:
-                            self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
-                            raise
-                        ancestor_blob = createBlob(ancestor_change.get('data'))
-                        tip_release = self.getReleases(name=name, transaction=transaction)[0]
-                        tip_blob = tip_release.get('data')
-                        m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
-                        try:
-                            m.run()
-                            # Merger merges the patches into a single unified patch,
-                            # but we need dictdiffer.patch to actually apply the patch
-                            # to the original blob
-                            unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
-                            # converting the resultant dict into a blob and then
-                            # converting it to JSON
-                            what['data'] = createBlob(unified_blob).getJSON()
-                            # we want the data_version for the dictdiffer.merged blob to be one
-                            # more than that of the latest blob
-                            tip_data_version = tip_release['data_version']
-                            super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
-                                                         transaction=transaction)
-                            # cache will have a data_version of one plus the tip
-                            # data_version
-                            new_data_version = tip_data_version + 1
-                        except dictdiffer.merge.UnresolvedConflictsException:
-                            self.log.debug("latest version of release %s cannot be merged with new blob" % name)
-                            raise e
+
+        for release in current_releases:
+            name = current_release["name"]
+            new_data_version = old_data_version + 1
+            try:
+                super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version,
+                                             transaction=transaction, dryrun=dryrun)
+            except OutdatedDataError as e:
+                self.log.debug("trying to update older data_version %s for release %s" % (old_data_version, name))
+                if blob is not None:
+                    ancestor_change = self.history.getChange(data_version=old_data_version,
+                                                             column_values={'name': name},
+                                                             transaction=transaction)
+                    # if we have no historical information about the ancestor blob
+                    if ancestor_change is None:
+                        self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
+                        raise
+                    ancestor_blob = createBlob(ancestor_change.get('data'))
+                    tip_release = self.getReleases(name=name, transaction=transaction)[0]
+                    tip_blob = tip_release.get('data')
+                    m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
+                    try:
+                        m.run()
+                        # Merger merges the patches into a single unified patch,
+                        # but we need dictdiffer.patch to actually apply the patch
+                        # to the original blob
+                        unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
+                        # converting the resultant dict into a blob and then
+                        # converting it to JSON
+                        what['data'] = createBlob(unified_blob).getJSON()
+                        # we want the data_version for the dictdiffer.merged blob to be one
+                        # more than that of the latest blob
+                        tip_data_version = tip_release['data_version']
+                        super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
+                                                     transaction=transaction)
+                        # cache will have a data_version of one plus the tip
+                        # data_version
+                        new_data_version = tip_data_version + 1
+                    except dictdiffer.merge.UnresolvedConflictsException:
+                        self.log.debug("latest version of release %s cannot be merged with new blob" % name)
+                        raise e
+            if not dryrun:
                 cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
                 cache.put("blob_version", name, new_data_version)
 
@@ -1623,8 +1624,8 @@ class Releases(AUSTable):
             self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
             if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
+        super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
         if not dryrun:
-            super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
             for name in names:
                 cache.invalidate("blob", name)
                 cache.invalidate("blob_version", name)
@@ -1701,12 +1702,11 @@ class Permissions(AUSTable):
         if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
 
-        if not dryrun:
-            self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
-                           columns.get("options"))
-            super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, **columns)
-            self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
-                           columns["username"], columns.get("options"))
+        self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
+                       columns.get("options"))
+        super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
+                       columns["username"], columns.get("options"))
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):
@@ -1724,15 +1724,14 @@ class Permissions(AUSTable):
         else:
             what["options"] = None
 
-        if not dryrun:
-            super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
+                                        transaction=transaction, dryrun=dryrun)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to revoke permissions", changed_by)
 
-        if not dryrun:
-            super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+        super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
     def getPermission(self, username, permission, transaction=None):
         try:
@@ -1811,16 +1810,15 @@ class Dockerflow(AUSTable):
             value = {'watchdog': 1}
             where = None
 
-        if not dryrun:
-            self._putWatchdogValue(changed_by=changed_by, value=value, where=where, transaction=transaction)
+        self._putWatchdogValue(changed_by=changed_by, value=value, where=where, transaction=transaction, dryrun=dryrun)
 
         return value['watchdog']
 
-    def _putWatchdogValue(self, changed_by, value, where=None, transaction=None):
+    def _putWatchdogValue(self, changed_by, value, where=None, transaction=None, dryrun=False):
         if where is None:
-            super(Dockerflow, self).insert(changed_by=changed_by, transaction=transaction, watchdog=value['watchdog'])
+            super(Dockerflow, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, watchdog=value['watchdog'])
         else:
-            super(Dockerflow, self).update(where=where, what=value, changed_by=changed_by, transaction=transaction)
+            super(Dockerflow, self).update(where=where, what=value, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
 
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
