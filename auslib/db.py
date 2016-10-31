@@ -749,7 +749,7 @@ class ConditionsTable(AUSTable):
     def __init__(self, db, dialect, metadata, baseName, conditions, history=True):
         if not conditions:
             raise ValueError("No conditions enabled, cannot initialize conditions for for {}".format(baseName))
-        if set(conditions).difference(self.condition_groups.keys()):
+        if set(conditions) - set(self.condition_groups):
             raise ValueError("Unknown conditions in: {}".format(conditions))
 
         self.enabled_condition_groups = {k: v for k, v in self.condition_groups.iteritems() if k in conditions}
