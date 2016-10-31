@@ -472,7 +472,7 @@ class AUSTable(object):
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
 
-    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None):
+    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         """Perform an UPDATE statement on this stable. See AUSTable._updateStatement for
            a description of `where' and `what'. This method can only update a single row
            per invocation. If the where clause given would update zero or multiple rows, a
@@ -491,6 +491,9 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
 
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before porceeding.
@@ -931,12 +934,11 @@ class ScheduledChangeTable(AUSTable):
         self.validate(base_columns, condition_columns, changed_by, transaction)
 
         base_columns = self._prefixColumns(base_columns)
-        if not dryrun:
-            base_columns["scheduled_by"] = changed_by
-            ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **base_columns)
-            sc_id = ret.inserted_primary_key[0]
-            self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
-            return sc_id
+        base_columns["scheduled_by"] = changed_by
+        ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **base_columns)
+        sc_id = ret.inserted_primary_key[0]
+        self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
+        return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         base_what, condition_what = self._splitColumns(what)
@@ -944,6 +946,8 @@ class ScheduledChangeTable(AUSTable):
         # We need to check each Scheduled Change that would be affected by this
         # to ensure the new row will be valid.
         for row in self.select(where=where, transaction=transaction):
+            # Before validation, we need to create the new version of the
+            # Scheduled Change by combining the old one with the new data.
             sc_columns, condition_columns = self._splitColumns(row)
             base_columns = {}
             for col in sc_columns:
@@ -963,12 +967,11 @@ class ScheduledChangeTable(AUSTable):
 
             self.validate(base_columns, condition_columns, changed_by, sc_id=sc_columns["sc_id"], transaction=transaction)
 
-            self.conditions.update([self.conditions.sc_id == sc_columns["sc_id"]], condition_columns, changed_by, old_data_version, transaction)
+            self.conditions.update([self.conditions.sc_id == sc_columns["sc_id"]], condition_columns, changed_by, old_data_version, transaction, dryrun=dryrun)
 
-        if not dryrun:
-            base_what = self._prefixColumns(base_what)
-            base_what["scheduled_by"] = changed_by
-            return super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction)
+        base_what = self._prefixColumns(base_what)
+        base_what["scheduled_by"] = changed_by
+        return super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         conditions_where = []
@@ -981,10 +984,9 @@ class ScheduledChangeTable(AUSTable):
             # something broader should be required?
             self._checkBaseTablePermissions(base_table_where, base_row, changed_by, transaction)
 
-        if not dryrun:
-            ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
-            self.conditions.delete(conditions_where, changed_by, old_data_version, transaction)
-            return ret
+        ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction, dryrun=dryrun)
+        self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun=dryrun)
+        return ret
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
         """Enacts a previously scheduled change by running update or insert on
