@@ -14,7 +14,7 @@ import migrate.versioning.api
 from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
-    ReadOnlyError, PermissionDeniedError, ChangeScheduledError
+    ReadOnlyError, PermissionDeniedError, ChangeScheduledError, SignoffsTable
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -1000,6 +1000,27 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         old_row = self.table.select(where=[self.table.fooid == 1])[0]
         what = {"fooid": 1, "bar": "abc", "data_version": 1}
         self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, what, changed_by="bob")
+
+
+class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
+
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.engine = self.db.engine
+        self.metadata = self.db.metadata
+
+        self.signoffs = SignoffsTable(self.db, self.metadata, "sqlite", "test_table")
+        self.metadata.create_all()
+
+    def testSignoffsHasCorrectTablesAndColumns(self):
+        columns = [c.name for c in self.signoffs.t.get_children()]
+        expected = ["sc_id", "username", "role"]
+        self.assertEquals(set(columns), set(expected))
+        history_columns = [c.name for c in self.signoffs.history.t.get_children()]
+        expected = ["change_id", "changed_by", "timestamp"] + expected
+        self.assertEquals(set(history_columns), set(expected))
 
 
 # In https://bugzilla.mozilla.org/show_bug.cgi?id=1284481, we changed the sampled data to be a true

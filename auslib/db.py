@@ -997,6 +997,17 @@ class ScheduledChangeTable(AUSTable):
             self.log.debug("Merged %s into scheduled change '%s'", what, sc["sc_id"])
 
 
+class SignoffsTable(AUSTable):
+
+    def __init__(self, db, metadata, dialect, baseName):
+        self.table = Table("{}_signoffs".format(baseName), metadata,
+                           Column("sc_id", Integer, primary_key=True, autoincrement=False),
+                           Column("username", String(100), primary_key=True),
+                           Column("role", String(50), nullable=False),
+                           )
+        super(SignoffsTable, self).__init__(self, db, dialect, versioned=False)
+
+
 class Rules(AUSTable):
 
     def __init__(self, db, metadata, dialect):
