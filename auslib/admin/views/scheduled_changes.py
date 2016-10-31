@@ -146,11 +146,12 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             .execute()\
             .fetchone()[0]
 
-        # As far as web API consumers are concerned, scheduled changes are just one object.
-        # On the backend, they are stored across two tables though, so we need to look up
+        # Although Scheduled Changes are stored across two tables, we don't
+        # expose that through the API. Because of this, we need to look up
         # history in both and return the combined version.
         # This is done by the database layer for non-history parts of Scheduled Changes, but
-        # for complicated technical reasons we can't do it there for History, so we do it here instead.
+        # that's not feasible for History due to the inheritance structure of the tables,
+        # so we do it here instead.
         revisions = self.table.scheduled_changes.history.select(
             where=[self.table.scheduled_changes.history.sc_id == sc_id,
                    self.table.scheduled_changes.history.data_version != null()],
@@ -158,6 +159,8 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             offset=offset,
             order_by=[self.table.scheduled_changes.history.timestamp.asc()],
         )
+        # There's a big 'ol assumption here that the primary Scheduled Changes
+        # table and the conditions table always keep their data version in sync.
         for r in revisions:
             cond = self.table.scheduled_changes.conditions.history.select(
                 where=[self.table.scheduled_changes.conditions.history.sc_id == r["sc_id"],
@@ -198,6 +201,8 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             return Response(status=400, response=json.dumps({"exception": "bad sc_id"}))
         old_data_version = sc['data_version']
 
+        # There's a big 'ol assumption here that the primary Scheduled Changes
+        # table and the conditions table always keep their data version in sync.
         cond_change = self.table.scheduled_changes.conditions.history.getChange(
             data_version=change["data_version"],
             column_values={"sc_id": change["sc_id"]},
