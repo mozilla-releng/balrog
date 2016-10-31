@@ -305,7 +305,7 @@ class AUSTable(object):
                 trans.execute(q)
         return ret
 
-    def insert(self, changed_by=None, dryrun=False, transaction=None, **columns):
+    def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
         """Perform an INSERT statement on this table. See AUSTable._insertStatement for
            a description of columns.
 
@@ -381,7 +381,7 @@ class AUSTable(object):
 
         return ret
 
-    def delete(self, where, changed_by=None, old_data_version=None, dryrun=False, transaction=None):
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         """Perform a DELETE statement on this table. See AUSTable._deleteStatement for
            a description of `where'. To simplify versioning, this method can only
            delete a single row per invocation. If the where clause given would delete
@@ -472,7 +472,7 @@ class AUSTable(object):
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
 
-    def update(self, where, what, changed_by=None, old_data_version=None, dryrun=False, transaction=None):
+    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         """Perform an UPDATE statement on this stable. See AUSTable._updateStatement for
            a description of `where' and `what'. This method can only update a single row
            per invocation. If the where clause given would update zero or multiple rows, a
@@ -736,12 +736,7 @@ class History(AUSTable):
             self.log.debug("ERROR, change doesn't correspond to any known operation")
 
 
-class ScheduledChangeTable(AUSTable):
-    """A Table that stores the necessary information to schedule changes
-    to the baseTable provided. A ScheduledChangeTable ends up mirroring the
-    columns of its base, and adding the necessary ones to provide the schedule.
-    By default, ScheduledChangeTables enable History on themselves."""
-
+class ConditionsTable(AUSTable):
     # Scheduled changes may only have a single type of condition, but some
     # conditions require mulitple arguments. This data structure defines
     # each type of condition, and groups their args together for easier
@@ -751,19 +746,16 @@ class ScheduledChangeTable(AUSTable):
         "uptake": ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
     }
 
-    def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), history=True):
+    def __init__(self, db, dialect, metadata, baseName, conditions, history=True):
         if not conditions:
-            raise ValueError("No conditions enabled, cannot initialize ScheduledChangesTable for %s", baseTable.t.name)
+            raise ValueError("No conditions enabled, cannot initialize conditions for for {}".format(baseName))
         if set(conditions).difference(self.condition_groups.keys()):
-            raise ValueError("Unknown conditions in: %s", conditions)
+            raise ValueError("Unknown conditions in: {}".format(conditions))
 
         self.enabled_condition_groups = {k: v for k, v in self.condition_groups.iteritems() if k in conditions}
 
-        self.baseTable = baseTable
-        self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
-                           Column("sc_id", Integer, primary_key=True, autoincrement=True),
-                           Column("scheduled_by", String(100), nullable=False),
-                           Column("complete", Boolean, default=False),
+        self.table = Table("{}_conditions".format(baseName), metadata,
+                           Column("sc_id", Integer, primary_key=True),
                            )
 
         if "uptake" in conditions:
@@ -776,6 +768,55 @@ class ScheduledChangeTable(AUSTable):
                 self.table.append_column(Column("when", Integer))
             else:
                 self.table.append_column(Column("when", BigInteger))
+
+        super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
+
+    def validate(self, conditions):
+        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
+        if not conditions:
+            raise ValueError("No conditions found")
+
+        for c in conditions:
+            for condition, args in self.condition_groups.iteritems():
+                if c in args:
+                    if c in itertools.chain(*self.enabled_condition_groups.values()):
+                        break
+                    else:
+                        raise ValueError("{} condition is disabled".format(condition))
+            else:
+                raise ValueError("Invalid condition: %s", c)
+
+        for group in self.enabled_condition_groups.values():
+            if set(group) == set(conditions.keys()):
+                break
+        else:
+            raise ValueError("Invalid combination of conditions: {}".format(conditions.keys()))
+
+        if "when" in conditions:
+            try:
+                time.gmtime(conditions["when"] / 1000)
+            except:
+                raise ValueError("Cannot parse 'when' as a unix timestamp.")
+
+            if conditions["when"] < getMillisecondTimestamp():
+                raise ValueError("Cannot schedule changes in the past")
+
+
+class ScheduledChangeTable(AUSTable):
+    """A Table that stores the necessary information to schedule changes
+    to the baseTable provided. A ScheduledChangeTable ends up mirroring the
+    columns of its base, and adding the necessary ones to provide the schedule.
+    By default, ScheduledChangeTables enable History on themselves."""
+
+    def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), history=True):
+        table_name = "{}_scheduled_changes".format(baseTable.t.name)
+        self.baseTable = baseTable
+        self.table = Table(table_name, metadata,
+                           Column("sc_id", Integer, primary_key=True, autoincrement=True),
+                           Column("scheduled_by", String(100), nullable=False),
+                           Column("complete", Boolean, default=False),
+                           )
+        self.conditions = ConditionsTable(db, dialect, metadata, table_name, conditions)
 
         # The primary key column(s) are used in construct "where" clauses for
         # existing rows.
@@ -820,38 +861,27 @@ class ScheduledChangeTable(AUSTable):
                 ret[k] = v
         return ret
 
-    def _validateConditions(self, conditions):
-        # Filter out conditions whose values are none before processing.
-        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
-        if not conditions:
-            raise ValueError("No conditions found")
-
-        for c in conditions:
-            for condition, args in self.condition_groups.iteritems():
-                if c in args:
-                    if c in itertools.chain(*self.enabled_condition_groups.values()):
-                        break
-                    else:
-                        raise ValueError("{} condition is disabled".format(condition))
+    def _splitColumns(self, columns):
+        """Because Scheduled Changes are stored across two Tables, we need to
+        split out the parts that are in the main table from the parts that
+        are stored in the conditions table in a few different places."""
+        base_columns = {}
+        condition_columns = {}
+        for k in columns:
+            if k in itertools.chain(*self.conditions.condition_groups.values()):
+                condition_columns[k] = columns[k]
             else:
-                raise ValueError("Invalid condition: %s", c)
+                base_columns[k] = columns[k]
 
-        for group in self.enabled_condition_groups.values():
-            if set(group) == set(conditions.keys()):
-                break
+        return base_columns, condition_columns
+
+    def _checkBaseTablePermissions(self, base_table_where, new_row, changed_by, transaction):
+        if new_row.get("data_version"):
+            self.baseTable.update(base_table_where, new_row, changed_by, new_row["data_version"], transaction=transaction, dryrun=True)
         else:
-            raise ValueError("Invalid combination of conditions: {}".format(conditions.keys()))
+            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
 
-        if "when" in conditions:
-            try:
-                time.gmtime(conditions["when"] / 1000)
-            except:
-                raise ValueError("Cannot parse 'when' as a unix timestamp.")
-
-            if conditions["when"] < getMillisecondTimestamp():
-                raise ValueError("Cannot schedule changes in the past")
-
-    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+    def validate(self, base_columns, condition_columns, changed_by, sc_id=None, transaction=None):
         # We need to do additional checks for any changes that are modifying an
         # existing row. These lists will have PK clauses in them at the end of
         # the following loop, but only if the change contains a PK. This makes
@@ -860,14 +890,14 @@ class ScheduledChangeTable(AUSTable):
         sc_table_where = []
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
-            if pk in columns:
-                sc_table_where.append(getattr(self, "base_%s" % pk) == columns[pk])
+            if pk in base_columns:
+                sc_table_where.append(getattr(self, "base_%s" % pk) == base_columns[pk])
                 # If a non-null data_version was provided it implies that the
                 # base table row should already exist. This will be checked for
                 # after we finish basic checks on the individual parts of the
                 # PK.
-                if "data_version" in columns and columns["data_version"]:
-                    base_table_where.append(getattr(self.baseTable, pk) == columns[pk])
+                if "data_version" in base_columns and base_columns["data_version"]:
+                    base_table_where.append(getattr(self.baseTable, pk) == base_columns[pk])
             # Non-Integer columns can have autoincrement set to True for some reason.
             # Any non-integer columns in the primary key are always required (because
             # autoincrement actually isn't a thing for them), and any Integer columns
@@ -882,80 +912,97 @@ class ScheduledChangeTable(AUSTable):
         # of the base table row.
         if base_table_where:
             current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction)
-
             if not current_data_version:
                 raise ValueError("Cannot create scheduled change with data_version for non-existent row")
 
-            if current_data_version and current_data_version[0]["data_version"] != columns.get("data_version"):
+            if current_data_version and current_data_version[0]["data_version"] != base_columns.get("data_version"):
                 raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
 
-        # If the change has a PK in it, we must ensure that no existing change
-        # with that PK is active before allowing it.
-        if sc_table_where:
+        # If the change has a PK in it and the change isn't already scheduled
+        # (meaning we're validating an update to it), we must ensure that no
+        # existing change with that PK is active before allowing it.
+        if not sc_id and sc_table_where:
             sc_table_where.append(self.complete == False) # noqa because we need to use == for sqlalchemy operator overloading to work
             if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
                 raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
 
-        what = self._prefixColumns(columns)
-        conditions = {}
-        for col in what:
-            if not col.startswith("base_"):
-                conditions[col] = what[col]
+        self.conditions.validate(condition_columns)
+        self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
 
-        self._validateConditions(conditions)
+    def select(self, where=None, transaction=None, **kwargs):
+        ret = []
+        # We'll be retrieving condition information for each Scheduled Change,
+        # and we'll need sc_id to do so.
+        if kwargs.get("columns") is not None:
+            # Columns can be specified as names or Column instances, so we must check for both.
+            if "sc_id" not in kwargs["columns"] and self.sc_id not in kwargs["columns"]:
+                kwargs["columns"].append(self.sc_id)
+        for row in super(ScheduledChangeTable, self).select(where=where, transaction=transaction, **kwargs):
+            columns = [getattr(self.conditions, c) for c in itertools.chain(*self.conditions.enabled_condition_groups.values())]
+            conditions = self.conditions.select([self.conditions.sc_id == row["sc_id"]], transaction=transaction, columns=columns)
+            row.update(conditions[0])
+            ret.append(row)
+        return ret
 
-        # Use the appropriate base table methods in dry run mode to ensure the
-        # user has permission for the change they want to schedule
-        if columns.get("data_version"):
-            self.baseTable.update(base_table_where, columns, changed_by, columns["data_version"], transaction=transaction, dryrun=True)
-        else:
-            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **columns)
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        base_columns, condition_columns = self._splitColumns(columns)
 
-        if not dryrun:
-            what["scheduled_by"] = changed_by
-            ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **what)
-            return ret.inserted_primary_key[0]
+        self.validate(base_columns, condition_columns, changed_by, transaction)
+
+        base_columns = self._prefixColumns(base_columns)
+        base_columns["scheduled_by"] = changed_by
+        ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **base_columns)
+        sc_id = ret.inserted_primary_key[0]
+        self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
+        return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+        base_what, condition_what = self._splitColumns(what)
+
         # We need to check each Scheduled Change that would be affected by this
         # to ensure the new row will be valid.
         for row in self.select(where=where, transaction=transaction):
-            new_row = row.copy()
-            new_row.update(self._prefixColumns(what))
-            base_table_where = {pk: new_row["base_%s" % pk] for pk in self.base_primary_key}
-            if new_row.get("base_data_version"):
-                self.baseTable.update(base_table_where, new_row, changed_by, new_row["base_data_version"], transaction=transaction, dryrun=True)
-            else:
-                self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
+            # Before validation, we need to create the new version of the
+            # Scheduled Change by combining the old one with the new data.
+            sc_columns, condition_columns = self._splitColumns(row)
+            base_columns = {}
+            for col in sc_columns:
+                if col.startswith("base_") and sc_columns[col] is not None:
+                    base_columns[col] = sc_columns[col]
 
-            conditions = {}
-            for cond in itertools.chain(*self.condition_groups.values()):
-                if cond in new_row:
-                    conditions[cond] = new_row[cond]
-                elif row.get(cond):
-                    conditions[cond] = row[cond]
+            base_columns = {col.replace("base_", ""): base_columns[col] for col in base_columns}
+            for col in base_columns:
+                if col in base_what:
+                    base_columns[col] = base_what[col]
 
-            self._validateConditions(conditions)
+            condition_columns = self.conditions.select(
+                where=[self.conditions.sc_id == sc_columns["sc_id"]],
+                columns=[getattr(self.conditions, cond) for cond in itertools.chain(*self.conditions.enabled_condition_groups.values())],
+                transaction=transaction)[0]
+            condition_columns.update(condition_what)
 
-        if not dryrun:
-            renamed_what = self._prefixColumns(what)
-            renamed_what["scheduled_by"] = changed_by
-            return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction=transaction)
+            self.validate(base_columns, condition_columns, changed_by, sc_id=sc_columns["sc_id"], transaction=transaction)
+
+            self.conditions.update([self.conditions.sc_id == sc_columns["sc_id"]], condition_columns, changed_by, old_data_version, transaction, dryrun=dryrun)
+
+        base_what = self._prefixColumns(base_what)
+        base_what["scheduled_by"] = changed_by
+        return super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+        conditions_where = []
         for row in self.select(where=where, transaction=transaction):
+            conditions_where.append(self.conditions.sc_id == row["sc_id"])
             base_row = {col[5:]: row[col] for col in row if col.startswith("base_")}
             base_table_where = {pk: row["base_%s" % pk] for pk in self.base_primary_key}
             # TODO: What permissions *should* be required to delete a scheduled change?
             # It seems a bit odd to be checking base table update/insert here. Maybe
             # something broader should be required?
-            if base_row.get("base_data_version"):
-                self.baseTable.update(base_table_where, base_row, changed_by, base_row["base_data_version"], transaction=transaction, dryrun=True)
-            else:
-                self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_row)
+            self._checkBaseTablePermissions(base_table_where, base_row, changed_by, transaction)
 
-        if not dryrun:
-            return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction=transaction)
+        ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction, dryrun=dryrun)
+        self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun=dryrun)
+        return ret
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
         """Enacts a previously scheduled change by running update or insert on
@@ -1937,18 +1984,17 @@ class AUSDatabase(object):
 
     def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, use_tls=False):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls)
+        for t in (self.rules, self.rules.scheduled_changes, self.permissions):
+            t.onInsert = bleeter
+            t.onUpdate = bleeter
+            t.onDelete = bleeter
+
         read_only_bleeter = make_change_notifier_for_read_only(relayhost, port,
                                                                username,
                                                                password,
                                                                to_addr,
                                                                from_addr,
                                                                use_tls)
-        self.rules.onInsert = bleeter
-        self.rules.onUpdate = bleeter
-        self.rules.onDelete = bleeter
-        self.permissions.onInsert = bleeter
-        self.permissions.onUpdate = bleeter
-        self.permissions.onDelete = bleeter
         self.releases.onUpdate = read_only_bleeter
 
     def hasPermission(self, *args, **kwargs):

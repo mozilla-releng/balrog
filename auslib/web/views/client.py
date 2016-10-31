@@ -54,6 +54,7 @@ class ClientRequestView(MethodView):
         query = self.getQueryFromURL(url)
         self.log.debug("Got query: %s", query)
         release, update_type = AUS.evaluateRules(query)
+
         # passing {},None returns empty xml
         if release:
             response_products = release.getResponseProducts()

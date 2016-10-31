@@ -26,9 +26,6 @@ class ScheduledChangesView(AdminView):
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
             r = {}
-            # TODO: maybe we should require API consumers to use actual column names instead of rewriting?
-            # that may mean we can't re-use rules forms, but it makes this less ugly...
-            # if there's a way to make callers use the column names and still use rules forms we should definitely do that
             for k, v in row.iteritems():
                 if k == "data_version":
                     r["sc_data_version"] = v
@@ -149,6 +146,12 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             .execute()\
             .fetchone()[0]
 
+        # Although Scheduled Changes are stored across two tables, we don't
+        # expose that through the API. Because of this, we need to look up
+        # history in both and return the combined version.
+        # This is done by the database layer for non-history parts of Scheduled Changes, but
+        # that's not feasible for History due to the inheritance structure of the tables,
+        # so we do it here instead.
         revisions = self.table.scheduled_changes.history.select(
             where=[self.table.scheduled_changes.history.sc_id == sc_id,
                    self.table.scheduled_changes.history.data_version != null()],
@@ -156,6 +159,14 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             offset=offset,
             order_by=[self.table.scheduled_changes.history.timestamp.asc()],
         )
+        # There's a big 'ol assumption here that the primary Scheduled Changes
+        # table and the conditions table always keep their data version in sync.
+        for r in revisions:
+            cond = self.table.scheduled_changes.conditions.history.select(
+                where=[self.table.scheduled_changes.conditions.history.sc_id == r["sc_id"],
+                       self.table.scheduled_changes.conditions.history.data_version == r["data_version"]],
+            )
+            r.update(cond[0])
 
         ret = {
             "count": total_count,
@@ -180,7 +191,7 @@ class ScheduledChangeHistoryView(HistoryAdminView):
         if not change_id:
             self.log.warning("Bad input: %s", "no change_id")
             return Response(status=400, response=json.dumps({"exception": "no change_id"}))
-        change = self.table.scheduled_changes.history.getChange(change_id=change_id)
+        change = self.table.scheduled_changes.history.getChange(change_id=change_id, transaction=transaction)
         if change is None:
             return Response(status=400, response=json.dumps({"exception": "bad change_id"}))
         if change['sc_id'] != sc_id:
@@ -190,16 +201,23 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             return Response(status=400, response=json.dumps({"exception": "bad sc_id"}))
         old_data_version = sc['data_version']
 
+        # There's a big 'ol assumption here that the primary Scheduled Changes
+        # table and the conditions table always keep their data version in sync.
+        cond_change = self.table.scheduled_changes.conditions.history.getChange(
+            data_version=change["data_version"],
+            column_values={"sc_id": change["sc_id"]},
+            transaction=transaction,
+        )
         what = dict(
             # One could argue that we should restore scheduled_by to its value from the change,
             # but since the person who is reverting could be different, it's probably best to
             # use that instead.
             scheduled_by=changed_by,
             complete=change["complete"],
-            when=change["when"],
-            telemetry_product=change["telemetry_product"],
-            telemetry_channel=change["telemetry_channel"],
-            telemetry_uptake=change["telemetry_uptake"],
+            when=cond_change["when"],
+            telemetry_product=cond_change["telemetry_product"],
+            telemetry_channel=cond_change["telemetry_channel"],
+            telemetry_uptake=cond_change["telemetry_uptake"],
         )
         # Copy in all the base table columns, too.
         for col in self.table.scheduled_changes.t.get_children():
