@@ -1,13 +1,9 @@
-=====
-Rules
-=====
-The most important part of Balrog to understand is its rules.
-When a request comes in it is matched against each of Balrog's rule to find the one that best suits it (more in this below).
-Once found, Balrog looks at that rule's "mapping", which points at a release that has the required information to serve an update back to the client.
-Without any rules, Balrog will never serve an update.
-With badly configured rules Balrog could do bad things like serve Firefox updates to B2G devices.
 
-**What's in a rule?**
+.. _rulestable:
+
+===========
+Rules Table
+===========
 
 Each rule has mulitple columns. They all fall into one of the following Category:
 
@@ -17,6 +13,7 @@ Each rule has mulitple columns. They all fall into one of the following Category
 -   **Info** : Informational columns, not used as part of serving updates
 
 **Different columns in the above categories are:**
+
 
 ------------------------
 **Category : Matchable**
@@ -138,14 +135,14 @@ Each rule has mulitple columns. They all fall into one of the following Category
 ^^^^^^^^^^^
     - **Description** : The priority of the rule, relative to other rules. If multiple rules match an incoming request based on the Matchable columns, the rule with the highest priority is chosen.    
 
-    - **Examples** : Any number, by convention positive integers.
+    - **Value** : Any number, by convention positive integers.
 
 
 2. backgroundRate   
 ^^^^^^^^^^^^^^^^^
     - **Description** : The percentage of background update requests that should receive the latest update if they match this rule. Others receive the update from Fallback Mapping, if specified. Generally, this is used as a throttle to increase or decrease the rate at which the majority of users receive the latest update. 
 
-    - **Examples** : Any number 0 to 100
+    - **Value** : Any number 0 to 100
 
 
 -----------------------
@@ -157,9 +154,7 @@ Each rule has mulitple columns. They all fall into one of the following Category
 
     - **Description** : The Release to construct an update out of if the user is on the right side of a background rate dice roll, or if the background rate is 100. This is a foreign key to the "name" column of the Releases table.  
 
-    - **Mactching Logic**
-
-    - **Examples** : Any valid release name, or NULL.
+    - **Value** : Any valid release name, or NULL.
 
 
 2. Fallback Mapping 
@@ -167,7 +162,7 @@ Each rule has mulitple columns. They all fall into one of the following Category
 
     - **Description** : The Release to construct an update out of when the user is on the wrong side of a background rate dice roll. This is a foreign key to the "name" column of the Releases table.  
 
-    - **Examples** : Any valid release name, or NULL.
+    - **Value** : Any valid release name, or NULL.
 
 
 3. update_type
@@ -175,9 +170,7 @@ Each rule has mulitple columns. They all fall into one of the following Category
 
     - **Description** : The update_type to use in the XML response. It's very rare for a rule to use anything other than "minor" these days.    
 
-    - **Mactching Logic**
-
-    - **Examples** : "minor" or "major"
+    - **Value** : "minor" or "major"
 
 -------------------
 **Category : info** 
@@ -188,7 +181,7 @@ Each rule has mulitple columns. They all fall into one of the following Category
 
     - **Description** : The id of the rule. This id is necessary to make changes to the rule through the REST API.	
 
-    - **Examples** : Autoincrementing integer
+    - **Value** : Autoincrementing integer
 
 2. Alias
 ^^^^^^^^
@@ -202,6 +195,6 @@ Each rule has mulitple columns. They all fall into one of the following Category
 
     - **Description** : A string describing the purpose of the rule. Not always necessary for obvious rules.	
 
-    - **Examples** : Any string
+    - **Value** : Any string
 
 

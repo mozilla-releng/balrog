@@ -1,3 +1,5 @@
+.. _adminapi:
+
 =========
 Admin API
 =========

@@ -64,7 +64,7 @@ For example, if you wanted to modify the "Firefox-38.0-build3" release, follow t
 2.	Click the "Releases" link at the top of the page
 3.	Find the "Firefox-38.0-build3" release and click the "Download" link
 4.	Save the file locally and modify it to your liking
-5.	Click the "Update" link for "Firefox-38.0-build3"
+5.  Click the "Update" link for "Firefox-38.0-build3"
 6.	Click "Browse" and choose your new local version
 7.	Click "Save Changes"
 

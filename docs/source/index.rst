@@ -15,10 +15,12 @@ Contents:
    installation
    contribute
    codeoverview
-   architecture
+   domians
+   database
+   admin_app
    infrastructure
-   rules_detailed
    deploying_changes
+   withoutdocker
 
 Indices and tables
 ==================
