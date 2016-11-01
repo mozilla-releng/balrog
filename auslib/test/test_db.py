@@ -2707,6 +2707,71 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertFalse(self.permissions.hasPermission("bob", "release", "modify", "reallyfake"))
 
 
+class TestUserRolesTable(unittest.TestCase, MemoryDatabaseMixin):
+
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.user_roles = self.db.permissions.user_roles
+        self.user_roles.t.insert().execute(username="luke", role="releng", data_version=1)
+        self.user_roles.t.insert().execute(username="luke", role="dev", data_version=1)
+        self.user_roles.t.insert().execute(username="jackson", role="releng", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="lorelai", data_version=1)
+
+    def testUserRolesHasCorrectTablesAndColumns(self):
+        columns = [c.name for c in self.user_roles.t.get_children()]
+        expected = ["username", "role", "data_version"]
+        self.assertEquals(set(columns), set(expected))
+        history_columns = [c.name for c in self.user_roles.history.t.get_children()]
+        expected = ["change_id", "changed_by", "timestamp"] + expected
+        self.assertEquals(set(history_columns), set(expected))
+
+    def testGetAllUsers(self):
+        self.assertEquals(set(self.user_roles.getAllUsers()), set(["luke", "jackson"]))
+
+    def testGetUserRoles(self):
+        got = self.user_roles.getRoles("luke")
+        self.assertEquals(set(got), set(["releng", "dev"]))
+
+    def testGetUserRolesNonExistantUser(self):
+        got = self.user_roles.getRoles("kirk")
+        self.assertEquals(got, [])
+
+    def testInsertWithPermission(self):
+        self.user_roles.insert("lorelai", username="emily", role="relman")
+        got = self.user_roles.t.select().where(self.user_roles.username == "emily").execute().fetchall()
+        self.assertEquals(got, [("emily", "relman", 1)])
+
+    def testInsertWithoutPermission(self):
+        self.assertRaises(PermissionDeniedError, self.user_roles.insert, changed_by="kirk", username="rory", role="releng")
+
+    def testInsertMissingColumns(self):
+        self.assertRaisesRegexp(ValueError, "username and role are required", self.user_roles.insert, changed_by="jackson", role="dev")
+
+    def testInsertExistingRole(self):
+        self.assertRaises(TransactionError, self.user_roles.insert, changed_by="lorelai", username="luke", role="releng")
+
+    def testInsertRoleForExistingUser(self):
+        self.user_roles.insert("lorelai", username="luke", role="relman")
+        got = self.user_roles.t.select().where(self.user_roles.username == "luke").execute().fetchall()
+        self.assertEquals(len(got), 3)
+        self.assertIn(("luke", "releng", 1), got)
+        self.assertIn(("luke", "dev", 1), got)
+        self.assertIn(("luke", "relman", 1), got)
+
+    def testUpdate(self):
+        self.assertRaises(AttributeError, self.user_roles.update, {"username": "luke"}, {"role": "relman"}, "lorelai", 1)
+
+    def testDeleteWithPermission(self):
+        self.user_roles.delete({"username": "luke", "role": "releng"}, changed_by="lorelai", old_data_version=1)
+        got = self.user_roles.t.select().where(self.user_roles.username == "luke").execute().fetchall()
+        self.assertEquals(len(got), 1)
+
+    def testDeleteWithoutPermission(self):
+        self.assertRaises(PermissionDeniedError, self.user_roles.delete, where={"username": "luke"}, changed_by="kirk", old_data_version=1)
+
+
 class TestDockerflow(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):

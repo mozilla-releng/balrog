@@ -1581,6 +1581,45 @@ class Releases(AUSTable):
             raise ReadOnlyError("Release '%s' is read only" % name)
 
 
+class UserRoles(AUSTable):
+
+    def __init__(self, db, metadata, dialect):
+        self.table = Table("user_roles", metadata,
+                           Column("username", String(100), primary_key=True),
+                           Column("role", String(50), primary_key=True),
+                           )
+        super(UserRoles, self).__init__(db, dialect)
+
+    def getAllUsers(self, transaction=None):
+        res = self.select(columns=[self.username], distinct=True, transaction=transaction)
+        return [r["username"] for r in res]
+
+    def getRoles(self, username, transaction=None):
+        res = self.select(where=[self.username == username], columns=[self.role], distinct=True, transaction=transaction)
+        return [r["role"] for r in res]
+
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+        raise AttributeError("User roles cannot be modified (only granted and revoked)")
+
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        if "username" not in columns or "role" not in columns:
+            raise ValueError("username and role are required")
+
+        if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to grant user roles" % changed_by)
+
+        if not dryrun:
+            self.log.debug("granting {} role to {}".format(columns["role"], columns["username"]))
+            return super(UserRoles, self).insert(changed_by, transaction, **columns)
+
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+        if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to revoke user roles", changed_by)
+
+        if not dryrun:
+            return super(UserRoles, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+
+
 class Permissions(AUSTable):
     """allPermissions defines the structure and possible options for all
        available permissions. Permissions can be limited to specific types
@@ -1605,6 +1644,7 @@ class Permissions(AUSTable):
                            Column('username', String(100), primary_key=True),
                            Column('options', Text)
                            )
+        self.user_roles = UserRoles(db, metadata, dialect)
         AUSTable.__init__(self, db, dialect)
 
     def assertPermissionExists(self, permission):
@@ -1617,8 +1657,10 @@ class Permissions(AUSTable):
                 raise ValueError('Unknown option "%s" for permission "%s"' % (opt, permission))
 
     def getAllUsers(self, transaction=None):
-        res = self.select(columns=[self.username], distinct=True, transaction=transaction)
-        return [r['username'] for r in res]
+        users = self.select(columns=[self.username], distinct=True, transaction=transaction)
+        users = set([u["username"] for u in users])
+        users.update(self.user_roles.getAllUsers(transaction))
+        return list(users)
 
     def getAllPermissions(self, transaction=None):
         ret = defaultdict(dict)
