@@ -16,9 +16,30 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+
+autodoc_mock_imports = ['auslib.AUS',
+                        'auslib.config',
+                        'auslib.db',
+                        'auslib.dockerflow',
+                        'auslib.errors',
+                        'auslib.log',
+                        'auslib.admin.base',
+                        'auslib.admin',
+                        'auslib.admin.views.base',
+                        'auslib.admin.views.csrf',
+                        'migrate.versioning.schema', 
+                        'migrate.versioning.api',
+                        'dictdiffer',
+                        'dictdiffer.merge',
+                        'auslib.global_state',
+                        'auslib.blobs.base',
+                        'auslib.util.comparison',
+                        'auslib.util.timestamp',
+                        'flask',
+                        'admin.views.base',]
+sys.path.insert(0, os.path.abspath('../..'))
 
 # -- General configuration ------------------------------------------------
 
@@ -30,7 +51,7 @@
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.ifconfig',
+    'sphinx.ext.ifconfig', 'sphinx.ext.autodoc'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

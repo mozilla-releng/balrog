@@ -11,7 +11,8 @@ Contents:
 
 .. toctree::
    :maxdepth: 1
-   
+    
+   auslib.blobs
    installation
    contribute
    codeoverview
