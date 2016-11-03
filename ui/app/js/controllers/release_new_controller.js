@@ -104,6 +104,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, releases) {
         "No file has been selected.",
         "error"
       );
+      $scope.saving = false;
       return;
     } else {
       // should work

@@ -63,7 +63,7 @@
     <hr>
     <h4>Rule Details</h4>
     <div class="row">
-      <div class="col-md-12">
+      <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.product}">
         <label for="id_product">Product</label>
         <input type="text" class="form-control" id="id_product" ng-model="sc.product"
@@ -71,8 +71,6 @@
         <p class="help-block" ng-show="errors.product">{{ errors.product.join(', ') }}</p>
         </div>
       </div>
-    </div>
-    <div class="row">
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.channel}">
         <label for="id_channel">Channel</label>
@@ -80,13 +78,23 @@
         typeahead="channel for channel in channels | filter:$viewValue | limitTo:16">
         <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(', ') }}</p>
         </div>
-      </div>
+        </div>
+    </div>
+    <div class="row">
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.mapping}">
         <label for="id_mapping">Mapping</label>
         <input type="text" class="form-control" id="id_mapping" ng-model="sc.mapping"
         typeahead="name for name in names | filter:$viewValue | limitTo:16">
         <p class="help-block" ng-show="errors.mapping">{{ errors.mapping.join(', ') }}</p>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-group" ng-class="{'has-error': errors.fallbackMapping}">
+        <label for="id_fallbackMapping">Fallback Mapping</label>
+        <input type="text" class="form-control" id="id_fallbackMapping" ng-model="sc.fallbackMapping"
+        typeahead="name for name in names | filter:$viewValue | limitTo:16">
+        <p class="help-block" ng-show="errors.fallbackMapping">{{ errors.fallbackMapping.join(', ') }}</p>
         </div>
       </div>
     </div>
