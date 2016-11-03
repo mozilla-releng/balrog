@@ -113,6 +113,9 @@ class UserRoleView(AdminView):
 
     @requirelogin
     def _put(self, username, role, changed_by, transaction):
+        # These requests are idempotent - if the user already has the desired role,
+        # no change needs to be made. Because of this there's also no reason to
+        # return an error.
         r = dbo.permissions.user_roles.select({"username": username, "role": role}, transaction=transaction)
         if r:
             return Response(status=200, response=json.dumps({"new_data_version": r[0]["data_version"]}))
