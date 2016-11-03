@@ -101,7 +101,7 @@ class UserRolesView(AdminView):
     """/users/:username/roles"""
 
     def get(self, username):
-        roles = dbo.permissions.user_roles.getRoles(username)
+        roles = dbo.permissions.getUserRoles(username)
         if roles:
             return jsonify({"roles": roles})
         else:
@@ -120,12 +120,12 @@ class UserRoleView(AdminView):
         if r:
             return Response(status=200, response=json.dumps({"new_data_version": r[0]["data_version"]}))
 
-        dbo.permissions.user_roles.insert(changed_by, transaction, username=username, role=role)
+        dbo.permissions.grantRole(username, role, changed_by, transaction)
         return Response(status=201, response=json.dumps({"new_data_version": 1}))
 
     @requirelogin
     def _delete(self, username, role, changed_by, transaction):
-        if role not in dbo.permissions.user_roles.getRoles(username):
+        if role not in dbo.permissions.getUserRoles(username):
             return Response(status=404)
 
         form = DbEditableForm(request.args)
@@ -133,6 +133,5 @@ class UserRoleView(AdminView):
             self.log.warning("Bad input: %s", form.errors)
             return Response(status=400, response=json.dumps(form.errors))
 
-        dbo.permissions.user_roles.delete(where={"username": username, "role": role}, changed_by=changed_by,
-                                          old_data_version=form.data_version.data, transaction=transaction)
+        dbo.permissions.revokeRole(username, role, changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
         return Response(status=200)

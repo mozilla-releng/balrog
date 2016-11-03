@@ -11,7 +11,7 @@ class TestUsersAPI_JSON(ViewTest):
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         data['users'] = set(data['users'])
-        self.assertEqual(data, dict(users=set(['bill', 'billy', 'bob', 'ashanti', 'mary', 'luke'])))
+        self.assertEqual(data, dict(users=set(['bill', 'billy', 'bob', 'ashanti', 'mary'])))
 
 
 class TestPermissionsAPI_JSON(ViewTest):
@@ -181,11 +181,11 @@ class TestUserRolesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 404)
 
     def testGrantRole(self):
-        ret = self._put("/users/jackson/roles/dev")
+        ret = self._put("/users/ashanti/roles/dev")
         self.assertStatusCode(ret, 201)
         self.assertEquals(ret.data, json.dumps(dict(new_data_version=1)), ret.data)
-        got = dbo.permissions.user_roles.t.select().where(dbo.permissions.user_roles.username == "jackson").execute().fetchall()
-        self.assertEquals(got, [("jackson", "dev", 1)])
+        got = dbo.permissions.user_roles.t.select().where(dbo.permissions.user_roles.username == "ashanti").execute().fetchall()
+        self.assertEquals(got, [("ashanti", "dev", 1)])
 
     def testGrantExistingRole(self):
         ret = self._put("/users/bill/roles/releng")
@@ -199,15 +199,15 @@ class TestUserRolesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 403)
 
     def testRevokeRole(self):
-        ret = self._delete("/users/luke/roles/relman", qs=dict(data_version=1))
+        ret = self._delete("/users/bob/roles/relman", qs=dict(data_version=1))
         self.assertStatusCode(ret, 200)
-        got = dbo.permissions.user_roles.t.select().where(dbo.permissions.user_roles.username == "luke").execute().fetchall()
+        got = dbo.permissions.user_roles.t.select().where(dbo.permissions.user_roles.username == "bob").execute().fetchall()
         self.assertEquals(got, [])
 
     def testRevokeRoleWithoutPermission(self):
-        ret = self._delete("/users/luke/roles/relman", username="lane", qs=dict(data_version=1))
+        ret = self._delete("/users/bob/roles/relman", username="lane", qs=dict(data_version=1))
         self.assertStatusCode(ret, 403)
 
     def testRevokeRoleBadDataVersion(self):
-        ret = self._delete("/users/luke/roles/relman", qs=dict(data_version=3))
+        ret = self._delete("/users/bob/roles/relman", qs=dict(data_version=3))
         self.assertStatusCode(ret, 400)
