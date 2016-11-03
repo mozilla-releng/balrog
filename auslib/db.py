@@ -1667,6 +1667,9 @@ class Permissions(AUSTable):
         if not self.hasPermission(changed_by, "permission", "create", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to grant user roles" % changed_by)
 
+        if len(self.getUserPermissions(username, transaction)) < 1:
+            raise ValueError("Cannot grant a role to a user without any permissions")
+
         self.log.debug("granting {} role to {}".format(role, username))
         return self.user_roles.insert(changed_by, transaction, username=username, role=role)
 
@@ -1693,8 +1696,15 @@ class Permissions(AUSTable):
         if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to revoke permissions", changed_by)
 
+        usernames = [r["username"] for r in self.select(where=where, transaction=transaction)]
+
         if not dryrun:
             super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+
+            for u in usernames:
+                if len(self.getUserPermissions(u, transaction)) == 0:
+                    for role in self.user_roles.select([self.user_roles.username == u], transaction=transaction):
+                        self.revokeRole(u, role["role"], changed_by=changed_by, old_data_version=role["data_version"], transaction=transaction)
 
     def revokeRole(self, username, role, changed_by=None, old_data_version=None, transaction=None):
         if not self.hasPermission(changed_by, "permission", "delete", transaction=transaction):

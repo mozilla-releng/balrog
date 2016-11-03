@@ -2669,8 +2669,8 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertIn(("bob", "relman", 1), got)
 
     def testGrantRoleToUserWhoDoesntHaveAPermission(self):
-        self.assertRaisesRegexp(ValueError, "cannot grant role to user without a permission",
-                                self.user_roles.insert, changed_by="bill", username="kirk", role="dev")
+        self.assertRaisesRegexp(ValueError, "Cannot grant a role to a user without any permissions",
+                                self.permissions.grantRole, changed_by="bill", username="kirk", role="dev")
 
     def testRevokePermission(self):
         self.permissions.delete({"username": "bob", "permission": "release"}, changed_by="bill", old_data_version=1)
