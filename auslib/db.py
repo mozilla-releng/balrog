@@ -319,12 +319,12 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
+        if self.history and not changed_by:
+            raise ValueError("changed_by must be passed for Tables that have history")
+
         if dryrun:
             self.log.debug("In dryrun mode, not doing anything...")
             return
-
-        if self.history and not changed_by:
-            raise ValueError("changed_by must be passed for Tables that have history")
 
         if transaction:
             return self._prepareInsert(transaction, changed_by, **columns)
@@ -400,10 +400,6 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        if dryrun:
-            self.log.debug("In dryrun mode, not doing anything...")
-            return
-
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before porceeding.
         if hasattr(where, "keys"):
@@ -413,6 +409,10 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("old_data_version must be passed for Tables that are versioned")
+
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
 
         if transaction:
             return self._prepareDelete(transaction, where, changed_by, old_data_version)
@@ -491,10 +491,6 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        if dryrun:
-            self.log.debug("In dryrun mode, not doing anything...")
-            return
-
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before porceeding.
         if hasattr(where, "keys"):
@@ -504,6 +500,10 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("update: old_data_version must be passed for Tables that are versioned")
+
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
 
         if transaction:
             return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
