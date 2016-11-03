@@ -949,23 +949,26 @@ class ScheduledChangeTable(AUSTable):
         for row in self.select(where=where, transaction=transaction):
             # Before validation, we need to create the new version of the
             # Scheduled Change by combining the old one with the new data.
+            # To do this, we need to split the columns up a bit. First,
+            # separating the primary scheduled changes columns from the conditions...
             sc_columns, condition_columns = self._splitColumns(row)
+            # ...and then combine taking the baseTable parts of sc_columns
+            # and combining them with any new values provided in base_what.
             base_columns = {}
             for col in sc_columns:
-                if col.startswith("base_") and sc_columns[col] is not None:
-                    base_columns[col] = sc_columns[col]
+                if not col.startswith("base_"):
+                    continue
+                base_col = col.replace("base_", "")
+                if base_col in base_what:
+                    base_columns[base_col] = base_what[base_col]
+                elif sc_columns.get(col):
+                    base_columns[base_col] = sc_columns[col]
 
-            base_columns = {col.replace("base_", ""): base_columns[col] for col in base_columns}
-            for col in base_columns:
-                if col in base_what:
-                    base_columns[col] = base_what[col]
-
-            condition_columns = self.conditions.select(
-                where=[self.conditions.sc_id == sc_columns["sc_id"]],
-                columns=[getattr(self.conditions, cond) for cond in itertools.chain(*self.conditions.condition_groups)],
-                transaction=transaction)[0]
+            # Similarly, we need to integrate the new values for any conditions
+            # with the existing ones.
             condition_columns.update(condition_what)
 
+            # Now that we have all that sorted out, we can validate the new values for everything.
             self.validate(base_columns, condition_columns, changed_by, sc_id=sc_columns["sc_id"], transaction=transaction)
 
             self.conditions.update([self.conditions.sc_id == sc_columns["sc_id"]], condition_columns, changed_by, old_data_version, transaction, dryrun=dryrun)
