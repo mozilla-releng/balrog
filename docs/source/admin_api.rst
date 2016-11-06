@@ -146,9 +146,9 @@ Returns previous versions of the rule identified by the id or alias given in a J
         ]
     }
 
-This endpoint suports pagination. 
-If "page" and "limit" are present in the query args, a slice of the revisions are returned instead of the full history. 
-Eg: if page is "2" and limit is "5", the 6th through 10th revisions would be returned. "count" is not affected by pagination - it will always return the total number of revisions that exist.
+This endpoint supports pagination. 
+If "page" and "limit" are present in the query args, a slice of the revisions is returned instead of the full history. 
+Eg: if the page is "2" and the limit is "5", the 6th through 10th revisions would be returned. "count" is not affected by pagination - it will always return the total number of revisions that exist.
 
 
 POST
@@ -283,7 +283,7 @@ POST
 ****
 
 Updates the named Release with the data given. 
-The "blob" field is updated with the new one instead of being completely overriden. 
+The "blob" field is updated with the new one instead of being completely overridden. 
 If the Release does not exist, it is created. 
 The following parameters are supported:
 
@@ -390,9 +390,10 @@ Returns previous versions of the named Release in a JSON Object in the following
     }
 
 
-This endpoint suports pagination. 
+This endpoint supports pagination. 
 If "page" and "limit" are present in the query args, a slice of the revisions are returned instead of the full history. 
-Eg: if page is "2" and limit is "5", the 6th through 10th revisions would be returned. "count" is not affected by pagination - it will always return the total number of revisions that exist.
+Eg: if the page is "2" and the limit is "5", the 6th through 10th revisions would be returned. "count" is not affected 
+by pagination - it will always return the total number of revisions that exist.
 
 POST
 ****
@@ -408,7 +409,7 @@ GET
 ***
 Returns a JSON Object containing the unique values for the given column. 
 For example, /releases/columns/product would return something like:
-
+vpn
 ::
 
     {
@@ -448,7 +449,7 @@ Returns all of the users known to Balrog inside of a JSON Object in the followin
     }
 
 
-Note that Balrog only tracks permisssions, not accounts, so this list does not include users who are able to login, but have no permissions to change anything.
+Note that Balrog only tracks permissions, not accounts, so this list does not include users who are able to log in, but have no permissions to change anything.
 
 **/users/<username>/permissions**
 ---------------------------------

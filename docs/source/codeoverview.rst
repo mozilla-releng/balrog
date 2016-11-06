@@ -12,6 +12,6 @@ Balrog's code is divided into the following parts:
 
 -   `Admin API <https://github.com/mozilla/balrog/tree/master/auslib/admin>`_: A simple RESTful API that allows the Admin UI and automation to make changes to Balrog's database.
 
--   `The Admin UI <https://github.com/mozilla/balrog/tree/master/ui>`_ : A human friendly interface to manage updates.
+-   `The Admin UI <https://github.com/mozilla/balrog/tree/master/ui>`_ : A human-friendly interface to manage updates.
 
--   `The Balrog Agent <https://github.com/mozilla/balrog/tree/master/agent>`_: A long running process that is responsible for enacting Schedul Changes.
+-   `The Balrog Agent <https://github.com/mozilla/balrog/tree/master/agent>`_: A long running process that is responsible for enacting Schedule Changes.

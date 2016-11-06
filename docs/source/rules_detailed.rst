@@ -5,7 +5,7 @@
 Rules Table
 ===========
 
-Each rule has mulitple columns. They all fall into one of the following Category:
+Each rule has multiple columns. They all fall into one of the following Category:
 
 -   **Matchable** : These correspond to information provided in the update request, and are used to filter out rules that don't apply to the request
 -   **Decision** : These are also used to filter rules, but do not correspond to information in the request
@@ -21,9 +21,9 @@ Category : Matchable
 
 1. Product
 ^^^^^^^^^^
-    - **Description** : The name of the appliaction requesting an update
+    - **Description** : The name of the application requesting an update
 
-    - **Mactching Logic** : Exact string match only
+    - **Matching Logic** : Exact string match only
 
     - **Examples** : "Firefox" or "B2G"
 
@@ -31,7 +31,7 @@ Category : Matchable
 ^^^^^^^^^^
     - **Description** : The version of the application requesting an update
 
-    - **Mactching Logic** : Exact string match or operator plus version to compare the incoming one against
+    - **Matching Logic** : Exact string match or operator plus version to compare the incoming one against
 
     - **Examples** : "36.0" or ">=38.0a1"
 
@@ -40,7 +40,7 @@ Category : Matchable
 
     - **Description** : The update channel of the application request an update.
 
-    - **Mactching Logic** : Exact string match or a string with "*" character to glob
+    - **Matching Logic** : Exact string match or a string with "*" character to glob
 
     - **Examples** : "nightly" or "beta*"
 
@@ -49,7 +49,7 @@ Category : Matchable
 
     - **Description** : The "build target" of the application requesting an update. This is usually related to the target platform the app was built for
 
-    - **Mactching Logic** : Exact string match only
+    - **Matching Logic** : Exact string match only
 
     - **Examples** : "Darwin_x86_64-gcc3-u-i386-x86_64" or "flame-kk-userdebug"
 
@@ -59,7 +59,7 @@ Category : Matchable
 
     - **Description** : The build ID of the application requesting an update
 
-    - **Mactching Logic** : Exact string match or operator plus buildID to compare the incoming one against
+    - **Matching Logic** : Exact string match or operator plus buildID to compare the incoming one against
 
     - **Examples** : "201410010830" or "<201512010830"
 
@@ -68,7 +68,7 @@ Category : Matchable
 
     - **Description** : The locale of the application requesting an update.
 
-    - **Mactching Logic** : Exact string match or comma separated list of locales to do an exact match on
+    - **Matching Logic** : Exact string match or comma separated list of locales to do an exact match on
 
     - **Examples** : "de" or "en-US,en-GB,id"
 
@@ -77,7 +77,7 @@ Category : Matchable
 
     - **Description** : The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
 
-    - **Mactching Logic** : Partial string match or comma separated list of partial strings to match on
+    - **Matching Logic** : Partial string match or comma separated list of partial strings to match on
 
     - **Examples** : "Windows_NT 5.0" or "Darwin 6,Darwin 7,Darwin 8"
 
@@ -86,7 +86,7 @@ Category : Matchable
 
     - **Description** : The supported hardware features of the application requesting an update. This field is primarily used to point desupported users based on their hardware. Eg: users who do not support SSE2
 
-    - **Mactching Logic** : Full string match or comma separated list of full strings to match on
+    - **Matching Logic** : Full string match or comma separated list of full strings to match on
 
     - **Examples** : "SSE" or "MMX,SSE"
 
@@ -96,7 +96,7 @@ Category : Matchable
 
     - **Description** : The partner distribution name of the application requesting an update or "default" if the application is not a partner build.
 
-    - **Mactching Logic** : Exact string match only
+    - **Matching Logic** : Exact string match only
 
     - **Examples** : "default" or "yahoo"
 
@@ -105,7 +105,7 @@ Category : Matchable
 
     - **Description** : The version of the partner distribution of the application requesting an update or "default" if the application is not a partner build.
 
-    - **Mactching Logic** : Exact string match only
+    - **Matching Logic** : Exact string match only
 
     - **Examples** : "default" or "1.19"
 
@@ -114,7 +114,7 @@ Category : Matchable
 
     - **Description** : The architecture of the OS of the client as guessed based on build target. This field is mostly deprecated now that this information is included in the build target.
 
-    - **Mactching Logic** : Exact string match only
+    - **Matching Logic** : Exact string match only
 
     - **Examples** : "PPC" and "Intel" are the only possible value
 
@@ -123,7 +123,7 @@ Category : Matchable
 
     - **Description** : A pointer to a Whitelist blob (stored in the Releases table) that can determine whether an update request is authorized to have the Release this rule is mapped to.
 
-    - **Mactching Logic** : If a whitelist is present, its shouldServeUpdate is called. If it returns True, this rule is considered to be matching. If it returns False, this rule is thrown out.
+    - **Matching Logic** : If a whitelist is present, its shouldServeUpdate is called. If it returns True, this rule is considered to be matching. If it returns False, this rule is thrown out.
 
     - **Examples** : Any valid release name, or NULL
 

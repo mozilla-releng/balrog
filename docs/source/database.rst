@@ -3,8 +3,8 @@ Database Model
 ==============
 
 
-Balrog's model centres around two concepts: Rules and Releases.
-When a request for update from an application is received it is matched up against the rules.
+Balrog's model centers around two concepts: Rules and Releases.
+When a request for an update from an application is received it is matched up against the rules.
 Once the correct rule has been found, it contains a pointer to a Release, which contains all of the metadata needed to construct a proper update response.
 Rules and Releases are described in greater detail below:
 
@@ -15,13 +15,13 @@ Rules
 
 The most important part of Balrog to understand is its rules.
 When a request comes in it is matched against each of Balrog's rule to find the one that best suits it (more in this below).
-Once found, Balrog looks at that rule's "mapping", which points at a release that has the required information to serve an update back to the client.
+Once found, Balrog looks at that rule's "mapping", which points to a release that has the required information to serve an update back to the client.
 Without any rules, Balrog will never serve an update.
 With badly configured rules Balrog could do bad things like serve Firefox updates to B2G devices.
 
 **What's in a rule?**
 
-Each rule has mulitple columns. They all fall into one of the following Category:
+Each rule has multiple columns. They all fall into one of the following Category:
 
 -   **Matchable** : These correspond to information provided in the update request, and are used to filter out rules that don't apply to the request
 -   **Decision** : These are also used to filter rules, but do not correspond to information in the request
@@ -81,7 +81,7 @@ For detailed information  on columns read :ref:`rulestable`.
 **How are requests matched up to rules?**
 
 The incoming request parts match up directly to incoming URL parts.
-For example, most update requests will send an URL in the following format
+For example, most update requests will send a URL in the following format
 
 ::
 
@@ -93,7 +93,7 @@ The following logic is used to figure out which rule an update matches and what 
 
 -   If "force" wasn't specified, the backgroundRate of the selected rule is looked at
 
--   If we still choose serve an update after accounting for backgroundRate we look at the rule's mapping. This is a foreign key that points at an entry in the releases table. That row has most of the information we need to construct the update.
+-   If we still choose serve an update after accounting for backgroundRate we look at the rule's mapping. This is a foreign key that points to  an entry in the releases table. That row has most of the information we need to construct the update.
 
 -   Using the update_type and release that the mapping points to, construct and return an XML response with the details of the update for the client
 
@@ -174,11 +174,11 @@ Scheduled Changes
 -----------------
 
 Rules may have changes scheduled in advance.
-Currently these changes may only be scheduled based on a timestamp,
+Currently, these changes may only be scheduled based on a timestamp,
 but there is the possibility that they could be driven by release uptake, crashes, or other data in the future.
 Permissions for Scheduled Changes are inherited from regular Rule permissions.
-If you want to scheduled a change to a Rule, you must have the right permissions to modify that Rule directly.
-No special permission on top of that is needed to scheduled a change.
+If you want to schedule a change to a Rule, you must have the right permissions to modify that Rule directly.
+No special permission on top of that is needed to schedule a change.
 Scheduled Changes are stored in a separate table that mirrors the main Rules table,
 and tracks the extra information required to schedule and enact them.
 

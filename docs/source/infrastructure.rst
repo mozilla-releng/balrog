@@ -24,7 +24,7 @@ We aggregate exceptions from both the `public apps <https://sentry.prod.mozaws.n
 -------------------
 Change Notification
 -------------------
-Changes made to Rules, Scheduled Rule Changes, Permissions, or the read-only flag of a Release will send e-mail notification to the `balrog-db-changes mailing list <https://groups.google.com/a/mozilla.com/forum/#!forum/balrog-db-changes>`_. 
+Changes made to Rules, Scheduled Rule Changes, Permissions, or the read-only flag of a Release will send an e-mail notification to the `balrog-db-changes mailing list <https://groups.google.com/a/mozilla.com/forum/#!forum/balrog-db-changes>`_. 
 This serves us an alert system - if we see changes made that we weren't expecting, we can go investigate them.
 
 
@@ -39,9 +39,9 @@ Here's an example:
 
 -   Launch EC2 instance (you probably a compute-optimized one, and at least 100GB of storage).
 
--   Generate an access token for your CloudOps AWS account. If you don't have a CloudOps AWS account, talk to Ben Hearsum or Bensong Wong. Put the token in a plaintext file somewher on the instance.
+-   Generate an access token for your CloudOps AWS account. If you don't have a CloudOps AWS account, talk to Ben Hearsum or Bensong Wong. Put the token in a plaintext file somewhere on the instance.
 
-    -   If you've chosen local storage, you'll probably need to format and mount volume.
+    -   If you've chosen local storage, you'll probably need to format and mount the volume.
 
 -   Install s3fs by following the instructions on https://github.com/s3fs-fuse/s3fs-fuse.
 

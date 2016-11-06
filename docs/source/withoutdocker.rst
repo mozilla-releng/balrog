@@ -34,7 +34,7 @@ These are optional:
 
 -   **LOG_LEVEL** - Controls the python level the app logs at. Set to INFO by default.
 -   **LOG_FORMAT** - Controls the log format. If unset, mozlog format (json) will be used. Can be overridden with "plain" to log simple plain-text messages. The former is recommended for production, the latter for local development.
--   **NOTIFY_TO_ADDR** - An address to send e-mail to if a Rule or Permission changes. Unset by default, and only used for the admin app. If set, the following additional variables are required:
+-   **NOTIFY_TO_ADDR** - An address to send an e-mail to if a Rule or Permission changes. Unset by default, and only used for the admin app. If set, the following additional variables are required:
     
     -   **SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD** - Information about the SMTP relay to send mail through.
     -   **NOTIFY_FROM_ADDR** - The "from" address to use when sending mail.
