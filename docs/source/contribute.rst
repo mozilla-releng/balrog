@@ -3,13 +3,13 @@ Contributing to Balrog
 ======================
 
 
-If you like to get involved in the development of Balrog there're lots of areas where we could use some help.
+If you like to get involved in the development of Balrog, there're lots of areas where we could use some help.
 
 ------------
 Requirements
 ------------
 
-These instructions assume you have the following installed( if not, you can follow the lonk for installation instrutions)
+These instructions assume you have the following installed( if not, you can follow the link for installation instructions)
 
 -   `Git <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_
 -   `Docker <https://docs.docker.com/v1.8/installation>`_
@@ -26,7 +26,7 @@ Cloning the  Repository
 
         $   git clone git@github.com:<user-id>/balrog.git
 
-By creating a fork, you are able to generate *pull request* so that the changes can be easily seen and reviewed by other community members.
+By creating a fork, you are able to generate a *pull request* so that the changes can be easily seen and reviewed by other community members.
 
 -----
 Usage
@@ -64,7 +64,7 @@ Git workflow
 ------------
 
 When you want to start contributing, you should create a branch from master.
-This allows you to work on different project at the same time.
+This allows you to work on different projects at the same time.
 
 ::
 
@@ -78,9 +78,9 @@ the commit message.
 Running Tests
 -------------
 
-It is good idea to run all test to see if balrog is running properly.
+It is a good idea to run all tests to see if Balrog is running properly.
 
-To excuting  all tests, run
+To excute all tests, run
 ::
 
     $ ./run-tests.sh
@@ -112,12 +112,12 @@ so it's possible to have failures that aren't related to Balrog code or your cha
 Submitting your work
 --------------------
 
-Once you have made the required changes make sure all the test still pass.
+Once you have made the required changes, make sure all the tests still pass.
 Then, you should submit your work with a pull request to master.
 Make sure you reference the Bug number on the Pull Request.
 Now, you have to wait for the review.
 
 Once your code has been positively reviewed, it will be deployed shortly after.
-So if you want feedback on your code but it's not ready to be deployed, you
+So if you want feedback on your code, but it's not ready to be deployed, you
 should note it in the pull request.
 
