@@ -16,7 +16,6 @@ Contents:
     
    contribute
    codeoverview
-   domians
    database
    rules_detailed
    admin_api

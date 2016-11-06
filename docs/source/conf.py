@@ -19,26 +19,6 @@
 import os
 import sys
 
-autodoc_mock_imports = ['auslib.AUS',
-                        'auslib.config',
-                        'auslib.db',
-                        'auslib.dockerflow',
-                        'auslib.errors',
-                        'auslib.log',
-                        'auslib.admin.base',
-                        'auslib.admin',
-                        'auslib.admin.views.base',
-                        'auslib.admin.views.csrf',
-                        'migrate.versioning.schema', 
-                        'migrate.versioning.api',
-                        'dictdiffer',
-                        'dictdiffer.merge',
-                        'auslib.global_state',
-                        'auslib.blobs.base',
-                        'auslib.util.comparison',
-                        'auslib.util.timestamp',
-                        'flask',
-                        'admin.views.base',]
 sys.path.insert(0, os.path.abspath('../..'))
 
 # -- General configuration ------------------------------------------------
