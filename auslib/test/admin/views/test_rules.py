@@ -991,16 +991,16 @@ class TestRuleScheduledChanges(ViewTest):
             "count": 2,
             "revisions": [
                 {
-                    "change_id": 2, "changed_by": "bill", "timestamp": 6, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 1,
-                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "def", "fallbackMapping": None, "update_type": "minor",
+                    "change_id": 3, "changed_by": "bill", "timestamp": 10, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 2,
+                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "ghi", "fallbackMapping": None, "update_type": "minor",
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
                     "version": None, "channel": None, "buildTarget": None, "buildID": None, "locale": None,
                     "osVersion": None, "systemCapabilities": None, "distribution": None, "distVersion": None,
                     "headerArchitecture": None, "comment": None, "whitelist": None, "alias": None, "data_version": None,
                 },
                 {
-                    "change_id": 3, "changed_by": "bill", "timestamp": 10, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 2,
-                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "ghi", "fallbackMapping": None, "update_type": "minor",
+                    "change_id": 2, "changed_by": "bill", "timestamp": 6, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 1,
+                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "def", "fallbackMapping": None, "update_type": "minor",
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
                     "version": None, "channel": None, "buildTarget": None, "buildID": None, "locale": None,
                     "osVersion": None, "systemCapabilities": None, "distribution": None, "distVersion": None,

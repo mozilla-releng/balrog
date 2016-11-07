@@ -157,7 +157,7 @@ class ScheduledChangeHistoryView(HistoryAdminView):
                    self.table.scheduled_changes.history.data_version != null()],
             limit=limit,
             offset=offset,
-            order_by=[self.table.scheduled_changes.history.timestamp.asc()],
+            order_by=[self.table.scheduled_changes.history.timestamp.desc()],
         )
         # There's a big 'ol assumption here that the primary Scheduled Changes
         # table and the conditions table always keep their data version in sync.
