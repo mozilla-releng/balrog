@@ -316,6 +316,8 @@ class AUSTable(object):
            @param transaction: A transaction object to add the insert statement (and history changes) to.
                                If provided, you must commit the transaction yourself. If None, they will
                                be added to a locally-scoped transaction and committed.
+           @param dryrun: If true, this insert statement will not actually be run.
+           @type dryrun bool
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
@@ -397,6 +399,11 @@ class AUSTable(object):
                                     match the current version of the row, an OutdatedDataError will be
                                     raised and the delete will fail. Required when versioning is enabled.
            @type old_data_version: int
+           @param transaction: A transaction object to add the delete statement (and history changes) to.
+                               If provided, you must commit the transaction yourself. If None, they will
+                               be added to a locally-scoped transaction and committed.
+           @param dryrun: If true, this insert statement will not actually be run.
+           @type dryrun bool
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
@@ -480,6 +487,8 @@ class AUSTable(object):
 
            @param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
            @type where: list of clauses or key/value pairs.
+           @param what: Key/value pairs containing new values for the given columns.
+           @type what: key/value pairs
            @param changed_by: The username of the person inserting the row. Required when
                               history is enabled. Unused otherwise. No authorization checks are done
                               at this level.
@@ -488,6 +497,11 @@ class AUSTable(object):
                                     match the current version of the row, an OutdatedDataError will be
                                     raised and the delete will fail. Required when versioning is enabled.
            @type old_data_version: int
+           @param transaction: A transaction object to add the update statement (and history changes) to.
+                               If provided, you must commit the transaction yourself. If None, they will
+                               be added to a locally-scoped transaction and committed.
+           @param dryrun: If true, this insert statement will not actually be run.
+           @type dryrun bool
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
