@@ -1149,6 +1149,20 @@ class TestSchema4Blob(unittest.TestCase):
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         dbo.setDomainWhitelist(self.whitelistedDomains)
+        dbo.releases.t.insert().execute(name='h0', product='h', version='29.0', data_version=1, data="""
+{
+    "name": "h0",
+    "schema_version": 4,
+    "platforms": {
+        "p": {
+            "buildID": "5",
+            "locales": {
+                "l": {}
+            }
+        }
+    }
+}
+""")
         dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data="""
 {
     "name": "h1",
@@ -1225,6 +1239,82 @@ class TestSchema4Blob(unittest.TestCase):
                             "filesize": 40,
                             "from": "*",
                             "hashValue": "41"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        self.blobH3 = ReleaseBlobV4()
+        self.blobH3.loadJSON("""
+{
+    "name": "h3",
+    "schema_version": 4,
+    "hashFunction": "sha512",
+    "appVersion": "32.0",
+    "displayVersion": "32.0",
+    "platformVersion": "32.0",
+    "fileUrls": {
+        "c1": {
+            "partials": {
+                "h1": "http://a.com/h1-partial.mar",
+                "h2": "http://a.com/h2-partial.mar"
+            },
+            "completes": {
+                "*": "http://a.com/complete.mar"
+            }
+        },
+        "c2": {
+            "partials": {
+                "h1": "http://a.com/h1-%LOCALE%-partial",
+                "h2": "http://a.com/h2-%LOCALE%-partial"
+            },
+            "completes": {
+                "*": "http://a.com/%LOCALE%-complete"
+            }
+        },
+        "*": {
+            "partials": {
+                "h0": "http://a.com/h0-partial-catchall.mar",
+                "h1": "http://a.com/h1-partial-catchall",
+                "h2": "http://a.com/h2-partial-catchall"
+            },
+            "completes": {
+                "*": "http://a.com/complete-catchall"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 500,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 60,
+                            "from": "h2",
+                            "hashValue": "70"
+                        },
+                        {
+                            "filesize": 80,
+                            "from": "h1",
+                            "hashValue": "90"
+                        },
+                        {
+                            "filesize": 90,
+                            "from": "h0",
+                            "hashValue": "100"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 400,
+                            "from": "*",
+                            "hashValue": "410"
                         }
                     ]
                 }
@@ -1377,6 +1467,29 @@ class TestSchema4Blob(unittest.TestCase):
         self.assertEqual(returned_header.strip(), expected_header.strip())
         self.assertItemsEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+    def testSchema4MismatchedLocalePartialsAndFileUrls(self):
+        updateQuery = {
+            "product": "h", "version": "29.0", "buildID": "5",
+            "buildTarget": "p", "locale": "l", "channel": "c1",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned_header = self.blobH3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH3.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" displayVersion="32.0" appVersion="32.0" platformVersion="32.0" buildID="500">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="410" size="400"/>
+"""]
+        expected_footer = "</update>"
+        expected = [x.strip() for x in expected]
+        self.assertEquals(returned_header.strip(), expected_header.strip())
+        self.assertEquals(returned, expected)
+        self.assertEquals(returned_footer.strip(), expected_footer.strip())
 
     def testConvertFromV3(self):
         v3Blob = ReleaseBlobV3()
