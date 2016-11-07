@@ -1554,7 +1554,7 @@ class Releases(AUSTable):
                         # more than that of the latest blob
                         tip_data_version = tip_release['data_version']
                         super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
-                                                     transaction=transaction)
+                                                     transaction=transaction, dryrun=dryrun)
                         # cache will have a data_version of one plus the tip
                         # data_version
                         new_data_version = tip_data_version + 1
