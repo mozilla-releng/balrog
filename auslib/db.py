@@ -61,6 +61,11 @@ class OutdatedDataError(SQLAlchemyError):
     """Raised when an update or delete fails because of outdated data."""
 
 
+class MismatchedDataVersionError(SQLAlchemyError):
+    """Raised when the data version of a scheduled change and its associated conditions
+    row do not match after an insert or update."""
+
+
 class WrongNumberOfRowsError(SQLAlchemyError):
     """Raised when an update or delete fails because the clause matches more than one row."""
 
@@ -297,7 +302,7 @@ class AUSTable(object):
         query = self._insertStatement(**data)
 
         if self.onInsert:
-            self.onInsert(self, "INSERT", changed_by, query)
+            self.onInsert(self, "INSERT", changed_by, query, trans)
 
         ret = trans.execute(query)
         if self.history:
@@ -366,7 +371,7 @@ class AUSTable(object):
         query = self._deleteStatement(where)
 
         if self.onDelete:
-            self.onDelete(self, "DELETE", changed_by, query)
+            self.onDelete(self, "DELETE", changed_by, query, trans)
 
         ret = trans.execute(query)
         if ret.rowcount != 1:
@@ -468,7 +473,7 @@ class AUSTable(object):
         query = self._updateStatement(where, new_row)
 
         if self.onUpdate:
-            self.onUpdate(self, "UPDATE", changed_by, query)
+            self.onUpdate(self, "UPDATE", changed_by, query, trans)
 
         ret = trans.execute(query)
         if self.history:
@@ -879,6 +884,18 @@ class ScheduledChangeTable(AUSTable):
         else:
             self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
 
+    def _dataVersionsAreSynced(self, sc_id, transaction):
+        sc_row = super(ScheduledChangeTable, self).select(where=[self.sc_id == sc_id], transaction=transaction, columns=[self.data_version])
+        conditions_row = self.conditions.select(where=[self.conditions.sc_id == sc_id], transaction=transaction, columns=[self.conditions.data_version])
+        if not sc_row or len(sc_row) != 1 or not conditions_row or len(conditions_row) != 1:
+            return False
+        self.log.debug("sc_row data version is %s", sc_row[0].get("data_version"))
+        self.log.debug("conditions_row data version is %s", conditions_row[0].get("data_version"))
+        if sc_row[0].get("data_version") != conditions_row[0].get("data_version"):
+            return False
+
+        return True
+
     def validate(self, base_columns, condition_columns, changed_by, sc_id=None, transaction=None):
         # We need to do additional checks for any changes that are modifying an
         # existing row. These lists will have PK clauses in them at the end of
@@ -953,14 +970,18 @@ class ScheduledChangeTable(AUSTable):
         if not dryrun:
             sc_id = ret.inserted_primary_key[0]
             self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
+            if not self._dataVersionsAreSynced(sc_id, transaction):
+                raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s", sc_id)
             return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         base_what, condition_what = self._splitColumns(what)
 
+        affected_ids = []
         # We need to check each Scheduled Change that would be affected by this
         # to ensure the new row will be valid.
         for row in self.select(where=where, transaction=transaction):
+            affected_ids.append(row["sc_id"])
             # Before validation, we need to create the new version of the
             # Scheduled Change by combining the old one with the new data.
             # To do this, we need to split the columns up a bit. First,
@@ -989,7 +1010,11 @@ class ScheduledChangeTable(AUSTable):
 
         base_what = self._prefixColumns(base_what)
         base_what["scheduled_by"] = changed_by
-        return super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
+        super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
+
+        for sc_id in affected_ids:
+            if not self._dataVersionsAreSynced(sc_id, transaction):
+                raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s" % sc_id)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         conditions_where = []
@@ -1882,12 +1907,12 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
 
 
 def make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls):
-    def bleet(table, type_, changed_by, query):
+    def bleet(table, type_, changed_by, query, transaction):
         body = ["Changed by: %s" % changed_by]
         if type_ == "UPDATE":
             body.append("Row(s) to be updated as follows:")
             where = [c for c in query._whereclause.get_children()]
-            for row in table.select(where=where):
+            for row in table.select(where=where, transaction=transaction):
                 for k in row:
                     if query.parameters[k] != row[k]:
                         row[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(query.parameters[k])))
@@ -1897,7 +1922,7 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
         elif type_ == "DELETE":
             body.append("Row(s) to be removed:")
             where = [c for c in query._whereclause.get_children()]
-            for row in table.select(where=where):
+            for row in table.select(where=where, transaction=transaction):
                 body.append(UTF8PrettyPrinter().pformat(row))
         elif type_ == "INSERT":
             body.append("Row to be inserted:")
@@ -1911,12 +1936,12 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
 
 
 def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr, use_tls):
-    def bleet(table, type_, changed_by, query):
+    def bleet(table, type_, changed_by, query, transaction):
         body = ["Changed by: %s" % changed_by]
         where = [c for c in query._whereclause.get_children()]
         # TODO: How are we sometimes (always?) getting no rows for this. It shouldn't be possible...
         # It's possible that the where clause is not getting extracted properly.
-        rows = table.select(where=where)
+        rows = table.select(where=where, transaction=transaction)
         if rows:
             row = rows[0]
             if not query.parameters['read_only'] and row['read_only']:

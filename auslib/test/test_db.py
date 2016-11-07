@@ -14,7 +14,8 @@ import migrate.versioning.api
 from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
-    ReadOnlyError, PermissionDeniedError, ChangeScheduledError
+    ReadOnlyError, PermissionDeniedError, ChangeScheduledError, \
+    MismatchedDataVersionError
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -849,6 +850,17 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(ChangeScheduledError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertRaisesErrorOnDataVersionBetweenCoreAndConditions(self):
+        # We need to fake out the conditions table insert so we do it ourselves
+        def noop(*args, **kwargs):
+            pass
+        self.sc_table.conditions.insert = noop
+        self.sc_table.conditions.t.insert().execute(sc_id=6, when=10000000, data_version=4)
+
+        what = {"foo": "newthing1", "when": 888000}
+        self.assertRaises(MismatchedDataVersionError, self.sc_table.insert, changed_by="bob", **what)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateNoChangesSinceCreation(self):
         where = [self.sc_table.sc_id == 1]
         what = {"when": 888000, "foo": "bb"}
@@ -944,6 +956,16 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         where = [self.sc_table.sc_id == 2]
         what = {"when": None}
         self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateRaisesErrorOnDataVersionBetweenCoreAndConditions(self):
+        # We need to fake out the conditions table update method to make it possible to have mismatched versions
+        def noop(*args, **kwargs):
+            pass
+        self.sc_table.conditions.update = noop
+        self.sc_table.conditions.t.update().where(self.sc_table.conditions.sc_id == 1).execute(data_version=4)
+        self.assertRaises(MismatchedDataVersionError, self.sc_table.update, [self.sc_table.sc_id == 1],
+                          what={"bar": "bar"}, changed_by="bob", old_data_version=1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateWithoutPermissionOnBaseTable(self):
