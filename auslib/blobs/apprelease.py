@@ -93,7 +93,21 @@ class ReleaseBlobBase(Blob):
         if patch['from'] != '*' and fromRelease is None:
             return None
 
-        url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
+        try:
+            url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
+        except ValueError:
+            # Sometimes we may not be able to find a partial update even though
+            # we've told to. Because there should be a complete to fall back on,
+            # this is non-fatal, but is note-worthy.
+            # https://bugzilla.mozilla.org/show_bug.cgi?id=1312562 has more
+            # details on this.
+            if patchType == "partial":
+                self.log.exception("Caught non-fatal exception finding fileUrl for partial update:")
+                return None
+            # If we happen to find no _complete_ update, this is more serious,
+            # and we need to re-raise the exception.
+            else:
+                raise
         # TODO: should be raising a bigger alarm here, or aborting
         # the update entirely? Right now, another patch type could still
         # return an update. Eg, the partial could contain a forbidden domain
