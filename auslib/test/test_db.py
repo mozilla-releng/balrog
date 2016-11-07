@@ -2682,11 +2682,12 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.revokeRole("bob", "releng", "bill", old_data_version=1)
         got = self.user_roles.t.select().where(self.user_roles.username == "bob").execute().fetchall()
         self.assertEquals(len(got), 1)
+        self.assertEquals(got[0], ("bob", "dev", 1))
 
     def testRevokeRoleWithoutPermission(self):
         self.assertRaises(PermissionDeniedError, self.permissions.revokeRole, username="bob", role="releng", changed_by="kirk", old_data_version=1)
 
-    def testRevokingPermissionAlsoRevokeRolesRole(self):
+    def testRevokingPermissionAlsoRevokeRoles(self):
         self.permissions.delete({"username": "cathy", "permission": "rule"}, changed_by="bill", old_data_version=1)
         got = self.db.permissions.t.select().where(self.db.permissions.username == "cathy").execute().fetchall()
         self.assertEquals(len(got), 0)
@@ -2774,22 +2775,6 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testUpdateUserRole(self):
         self.assertRaises(AttributeError, self.user_roles.update, {"username": "bob"}, {"role": "relman"}, "bill", 1)
-
-
-class TestUserRolesTable(unittest.TestCase, MemoryDatabaseMixin):
-
-    def setUp(self):
-        MemoryDatabaseMixin.setUp(self)
-        self.db = AUSDatabase(self.dburi)
-        self.db.create()
-        self.user_roles = self.db.permissions.user_roles
-        self.user_roles.t.insert().execute(username="luke", role="releng", data_version=1)
-        self.user_roles.t.insert().execute(username="luke", role="dev", data_version=1)
-        self.user_roles.t.insert().execute(username="jackson", role="releng", data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="lorelai", data_version=1)
-        self.db.permissions.t.insert().execute(permission="rule", username="luke", data_version=1)
-        self.db.permissions.t.insert().execute(permission="rule", username="jackson", data_version=1)
-        self.db.permissions.t.insert().execute(permission="rule", username="emily", data_version=1)
 
 
 class TestDockerflow(unittest.TestCase, MemoryDatabaseMixin):
