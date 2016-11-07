@@ -665,7 +665,6 @@ class TestRuleScheduledChanges(ViewTest):
 
     def setUp(self):
         super(TestRuleScheduledChanges, self).setUp()
-        # TODO: make sure history tables return conditions columns too
         dbo.rules.scheduled_changes.t.insert().execute(
             sc_id=1, scheduled_by="bill", data_version=1, base_rule_id=1, base_priority=100, base_version="3.5", base_buildTarget="d",
             base_backgroundRate=100, base_mapping="b", base_update_type="minor", base_data_version=1,
