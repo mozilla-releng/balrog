@@ -1581,6 +1581,19 @@ class Releases(AUSTable):
             raise ReadOnlyError("Release '%s' is read only" % name)
 
 
+class UserRoles(AUSTable):
+
+    def __init__(self, db, metadata, dialect):
+        self.table = Table("user_roles", metadata,
+                           Column("username", String(100), primary_key=True),
+                           Column("role", String(50), primary_key=True),
+                           )
+        super(UserRoles, self).__init__(db, dialect)
+
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+        raise AttributeError("User roles cannot be modified (only granted and revoked)")
+
+
 class Permissions(AUSTable):
     """allPermissions defines the structure and possible options for all
        available permissions. Permissions can be limited to specific types
@@ -1605,6 +1618,7 @@ class Permissions(AUSTable):
                            Column('username', String(100), primary_key=True),
                            Column('options', Text)
                            )
+        self.user_roles = UserRoles(db, metadata, dialect)
         AUSTable.__init__(self, db, dialect)
 
     def assertPermissionExists(self, permission):
@@ -1649,6 +1663,16 @@ class Permissions(AUSTable):
             self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
                            columns["username"], columns.get("options"))
 
+    def grantRole(self, username, role, changed_by, transaction=None):
+        if not self.hasPermission(changed_by, "permission", "create", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to grant user roles" % changed_by)
+
+        if len(self.getUserPermissions(username, transaction)) < 1:
+            raise ValueError("Cannot grant a role to a user without any permissions")
+
+        self.log.debug("granting {} role to {}".format(role, username))
+        return self.user_roles.insert(changed_by, transaction, username=username, role=role)
+
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to modify permissions" % changed_by)
@@ -1672,8 +1696,21 @@ class Permissions(AUSTable):
         if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to revoke permissions", changed_by)
 
+        usernames = [r["username"] for r in self.select(where=where, transaction=transaction)]
+
         if not dryrun:
             super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+
+            for u in usernames:
+                if len(self.getUserPermissions(u, transaction)) == 0:
+                    for role in self.user_roles.select([self.user_roles.username == u], transaction=transaction):
+                        self.revokeRole(u, role["role"], changed_by=changed_by, old_data_version=role["data_version"], transaction=transaction)
+
+    def revokeRole(self, username, role, changed_by=None, old_data_version=None, transaction=None):
+        if not self.hasPermission(changed_by, "permission", "delete", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to revoke user roles", changed_by)
+
+        return self.user_roles.delete({"username": username, "role": role}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
     def getPermission(self, username, permission, transaction=None):
         try:
@@ -1707,6 +1744,10 @@ class Permissions(AUSTable):
                 return {}
         else:
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
+
+    def getUserRoles(self, username, transaction=None):
+        res = self.user_roles.select(where=[self.user_roles.username == username], columns=[self.user_roles.role], distinct=True, transaction=transaction)
+        return [r["role"] for r in res]
 
     def hasPermission(self, username, thing, action, product=None, transaction=None):
         # Supporting product-wise admin permissions. If there are no options
