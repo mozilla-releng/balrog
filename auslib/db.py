@@ -1108,9 +1108,9 @@ class Rules(AUSTable):
             ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, **columns)
             return ret.inserted_primary_key[0]
 
-    def getOrderedRules(self, transaction=None):
+    def getOrderedRules(self, where=None, transaction=None):
         """Returns all of the rules, sorted in ascending order"""
-        return self.select(order_by=(self.priority, self.version, self.mapping), transaction=transaction)
+        return self.select(where=where, order_by=(self.priority, self.version, self.mapping), transaction=transaction)
 
     def countRules(self, transaction=None):
         """Returns a number of the count of rules"""
