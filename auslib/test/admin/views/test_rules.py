@@ -14,6 +14,17 @@ class TestRulesAPI_JSON(ViewTest):
         got = json.loads(ret.data)
         self.assertEquals(got["count"], 5)
 
+    def testGetRulesWithProductFilter(self):
+        ret = self._get("/rules", qs={"product": "fake"})
+        got = json.loads(ret.data)
+        expected = {
+            "rule_id": 4, "product": "fake", "priority": 80, "buildTarget": "d", "backgroundRate": 100, "mapping": "a",
+            "update_type": "minor", "data_version": 1
+        }
+        self.assertEquals(got["count"], 1)
+        for k, v in expected.iteritems():
+            self.assertEquals(got["rules"][0][k], v)
+
     def testNewRulePost(self):
         ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c', priority=33,
                                              product='Firefox', update_type='minor', channel='nightly'))
