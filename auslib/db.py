@@ -326,10 +326,6 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        if dryrun:
-            self.log.debug("In dryrun mode, not doing anything...")
-            return
-
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
 
@@ -416,10 +412,6 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        if dryrun:
-            self.log.debug("In dryrun mode, not doing anything...")
-            return
-
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before porceeding.
         if hasattr(where, "keys"):
