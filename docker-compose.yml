@@ -25,6 +25,7 @@ balrogadmin:
     - SMTP_PORT
     - SMTP_USERNAME
     - SMTP_PASSWORD
+    - SMTP_TLS
     - NOTIFY_TO_ADDR
     - NOTIFY_FROM_ADDR
 

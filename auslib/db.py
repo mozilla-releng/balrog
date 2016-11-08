@@ -1813,13 +1813,19 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
         if type_ == "UPDATE":
             body.append("Row(s) to be updated as follows:")
             where = [c for c in query._whereclause.get_children()]
+            changed = {}
+            unchanged = {}
             for row in table.select(where=where):
                 for k in row:
                     if query.parameters[k] != row[k]:
-                        row[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(query.parameters[k])))
+                        changed[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(query.parameters[k])))
                     else:
-                        row[k] = UnquotedStr("%s (unchanged)" % repr(row[k]))
-                body.append(UTF8PrettyPrinter().pformat(row))
+                        unchanged[k] = UnquotedStr("%s" % repr(row[k]))
+                body.append('Changed values:')
+                body.append(UTF8PrettyPrinter().pformat(changed))
+                body.append('\nUnchanged:')
+                body.append(UTF8PrettyPrinter().pformat(unchanged))
+            body.append('\n\n')
         elif type_ == "DELETE":
             body.append("Row(s) to be removed:")
             where = [c for c in query._whereclause.get_children()]

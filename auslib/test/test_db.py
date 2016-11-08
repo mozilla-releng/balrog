@@ -2799,11 +2799,11 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("UPDATE to rules"))
         mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
         mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'channel': u'release' (unchanged)"))
+        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'channel': u'release',"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE to rules_scheduled_changes"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release' (unchanged)"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
 
     def testOnDelete(self):
         def doit():
@@ -2831,7 +2831,7 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release' (unchanged)"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
 
     def testOnDeleteRuleSC(self):
         def doit():
