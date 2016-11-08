@@ -43,6 +43,8 @@ class ViewTest(unittest.TestCase):
                                            options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
         dbo.permissions.t.insert().execute(permission='admin', username='billy',
                                            options=json.dumps(dict(products=['a'])), data_version=1)
+        dbo.permissions.user_roles.t.insert().execute(username="bill", role="releng", data_version=1)
+        dbo.permissions.user_roles.t.insert().execute(username="bob", role="relman", data_version=1)
         dbo.releases.t.insert().execute(
             name='a', product='a', data=json.dumps(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
