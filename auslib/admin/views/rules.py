@@ -20,7 +20,14 @@ class RulesAPIView(AdminView):
     """/rules"""
 
     def get(self, **kwargs):
-        rules = dbo.rules.getOrderedRules()
+        # We can't use a form here because it will enforce "csrf_token" needing
+        # to exist, which doesn't make sense for GET requests.
+        where = {}
+        for field in ("product",):
+            if request.args.get(field):
+                where[field] = request.args[field]
+
+        rules = dbo.rules.getOrderedRules(where=where)
         count = 0
         _rules = []
         for rule in rules:
