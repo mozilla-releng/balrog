@@ -4,7 +4,7 @@ from auslib.global_state import dbo
 from auslib.test.admin.views.base import ViewTest
 
 
-class TestPermissionsAPI_JSON(ViewTest):
+class TestUsersAPI_JSON(ViewTest):
 
     def testUsers(self):
         ret = self._get('/users')
@@ -12,6 +12,9 @@ class TestPermissionsAPI_JSON(ViewTest):
         data = json.loads(ret.data)
         data['users'] = set(data['users'])
         self.assertEqual(data, dict(users=set(['bill', 'billy', 'bob', 'ashanti', 'mary'])))
+
+
+class TestPermissionsAPI_JSON(ViewTest):
 
     def testPermissionsCollection(self):
         ret = self._get('/users/bill/permissions')
@@ -164,3 +167,47 @@ class TestPermissionsAPI_JSON(ViewTest):
     def testPermissionDeleteWithoutPermission(self):
         ret = self._delete("/users/bob/permissions/permission", qs=dict(data_version=1), username="anna")
         self.assertStatusCode(ret, 403)
+
+
+class TestUserRolesAPI_JSON(ViewTest):
+
+    def testGetRoles(self):
+        ret = self._get("/users/bill/roles")
+        self.assertStatusCode(ret, 200)
+        self.assertEquals(json.loads(ret.data), {"roles": ["releng"]})
+
+    def testGetRolesMissingUser(self):
+        ret = self.client.get("/users/dean/roles")
+        self.assertStatusCode(ret, 404)
+
+    def testGrantRole(self):
+        ret = self._put("/users/ashanti/roles/dev")
+        self.assertStatusCode(ret, 201)
+        self.assertEquals(ret.data, json.dumps(dict(new_data_version=1)), ret.data)
+        got = dbo.permissions.user_roles.t.select().where(dbo.permissions.user_roles.username == "ashanti").execute().fetchall()
+        self.assertEquals(got, [("ashanti", "dev", 1)])
+
+    def testGrantExistingRole(self):
+        ret = self._put("/users/bill/roles/releng")
+        self.assertStatusCode(ret, 200)
+        self.assertEquals(ret.data, json.dumps(dict(new_data_version=1)), ret.data)
+        got = dbo.permissions.user_roles.t.select().where(dbo.permissions.user_roles.username == "bill").execute().fetchall()
+        self.assertEquals(got, [("bill", "releng", 1)])
+
+    def testGrantRoleWithoutPermission(self):
+        ret = self._put("/users/emily/roles/relman", username="rory", data=dict(data_version=1))
+        self.assertStatusCode(ret, 403)
+
+    def testRevokeRole(self):
+        ret = self._delete("/users/bob/roles/relman", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 200)
+        got = dbo.permissions.user_roles.t.select().where(dbo.permissions.user_roles.username == "bob").execute().fetchall()
+        self.assertEquals(got, [])
+
+    def testRevokeRoleWithoutPermission(self):
+        ret = self._delete("/users/bob/roles/relman", username="lane", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 403)
+
+    def testRevokeRoleBadDataVersion(self):
+        ret = self._delete("/users/bob/roles/relman", qs=dict(data_version=3))
+        self.assertStatusCode(ret, 400)

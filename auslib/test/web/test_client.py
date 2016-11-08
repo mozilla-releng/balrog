@@ -899,7 +899,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
 
     def testCacheControlIsSet(self):
         ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
-        self.assertEqual(ret.headers.get("Cache-Control"), "public, max-age=60")
+        self.assertEqual(ret.headers.get("Cache-Control"), "public, max-age=90")
 
     def testCacheControlIsNotSetFor404(self):
         ret = self.client.get('/whizzybang')

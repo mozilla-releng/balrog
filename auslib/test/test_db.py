@@ -14,7 +14,8 @@ import migrate.versioning.api
 from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
-    ReadOnlyError, PermissionDeniedError, ChangeScheduledError
+    ReadOnlyError, PermissionDeniedError, ChangeScheduledError, \
+    MismatchedDataVersionError
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -851,6 +852,17 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(ChangeScheduledError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertRaisesErrorOnDataVersionBetweenCoreAndConditions(self):
+        # We need to fake out the conditions table insert so we do it ourselves
+        def noop(*args, **kwargs):
+            pass
+        self.sc_table.conditions.insert = noop
+        self.sc_table.conditions.t.insert().execute(sc_id=6, when=10000000, data_version=4)
+
+        what = {"foo": "newthing1", "when": 888000}
+        self.assertRaises(MismatchedDataVersionError, self.sc_table.insert, changed_by="bob", **what)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateNoChangesSinceCreation(self):
         where = [self.sc_table.sc_id == 1]
         what = {"when": 888000, "foo": "bb"}
@@ -946,6 +958,16 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         where = [self.sc_table.sc_id == 2]
         what = {"when": None}
         self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateRaisesErrorOnDataVersionBetweenCoreAndConditions(self):
+        # We need to fake out the conditions table update method to make it possible to have mismatched versions
+        def noop(*args, **kwargs):
+            pass
+        self.sc_table.conditions.update = noop
+        self.sc_table.conditions.t.update().where(self.sc_table.conditions.sc_id == 1).execute(data_version=4)
+        self.assertRaises(MismatchedDataVersionError, self.sc_table.update, [self.sc_table.sc_id == 1],
+                          what={"bar": "bar"}, changed_by="bob", old_data_version=1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateWithoutPermissionOnBaseTable(self):
@@ -2843,6 +2865,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
         self.permissions = self.db.permissions
+        self.user_roles = self.db.permissions.user_roles
         self.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         self.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)
         self.permissions.t.insert().execute(permission="release", username="bob", options=json.dumps(dict(products=["fake"])), data_version=1)
@@ -2854,6 +2877,25 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
                                             username='george',
                                             options=json.dumps(dict(products=["foo"])),
                                             data_version=1)
+        self.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
+        self.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
+        self.user_roles.t.insert().execute(username="cathy", role="releng", data_version=1)
+
+    def testPermissionsHasCorrectTablesAndColumns(self):
+        columns = [c.name for c in self.permissions.t.get_children()]
+        expected = ["username", "permission", "options", "data_version"]
+        self.assertEquals(set(columns), set(expected))
+        history_columns = [c.name for c in self.permissions.history.t.get_children()]
+        expected = ["change_id", "changed_by", "timestamp"] + expected
+        self.assertEquals(set(history_columns), set(expected))
+
+    def testUserRolesHasCorrectTablesAndColumns(self):
+        columns = [c.name for c in self.user_roles.t.get_children()]
+        expected = ["username", "role", "data_version"]
+        self.assertEquals(set(columns), set(expected))
+        history_columns = [c.name for c in self.user_roles.history.t.get_children()]
+        expected = ["change_id", "changed_by", "timestamp"] + expected
+        self.assertEquals(set(history_columns), set(expected))
 
     def testGrantPermissions(self):
         query = self.permissions.t.select().where(self.permissions.username == "jess")
@@ -2874,11 +2916,50 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(ValueError, self.permissions.insert, changed_by="bob", username="bud", permission="rule",
                           options=dict(foo=1))
 
+    def testGrantRoleWithPermission(self):
+        self.permissions.grantRole("fred", "relman", "bill")
+        got = self.user_roles.t.select().where(self.user_roles.username == "fred").execute().fetchall()
+        self.assertEquals(got, [("fred", "relman", 1)])
+
+    def testGrantRoleWithoutPermission(self):
+        self.assertRaises(PermissionDeniedError, self.permissions.grantRole, username="rory", role="releng", changed_by="cathy")
+
+    def testGrantRoleExistingRole(self):
+        self.assertRaises(TransactionError, self.permissions.grantRole, username="bob", role="releng", changed_by="bill")
+
+    def testGrantRoleForExistingUser(self):
+        self.permissions.grantRole("bob", "relman", "bill")
+        got = self.user_roles.t.select().where(self.user_roles.username == "bob").execute().fetchall()
+        self.assertEquals(len(got), 3)
+        self.assertIn(("bob", "releng", 1), got)
+        self.assertIn(("bob", "dev", 1), got)
+        self.assertIn(("bob", "relman", 1), got)
+
+    def testGrantRoleToUserWhoDoesntHaveAPermission(self):
+        self.assertRaisesRegexp(ValueError, "Cannot grant a role to a user without any permissions",
+                                self.permissions.grantRole, changed_by="bill", username="kirk", role="dev")
+
     def testRevokePermission(self):
         self.permissions.delete({"username": "bob", "permission": "release"}, changed_by="bill", old_data_version=1)
         query = self.permissions.t.select().where(self.permissions.username == "bob")
         query = query.where(self.permissions.permission == "release")
         self.assertEquals(len(query.execute().fetchall()), 0)
+
+    def testRevokeRoleWithPermission(self):
+        self.permissions.revokeRole("bob", "releng", "bill", old_data_version=1)
+        got = self.user_roles.t.select().where(self.user_roles.username == "bob").execute().fetchall()
+        self.assertEquals(len(got), 1)
+        self.assertEquals(got[0], ("bob", "dev", 1))
+
+    def testRevokeRoleWithoutPermission(self):
+        self.assertRaises(PermissionDeniedError, self.permissions.revokeRole, username="bob", role="releng", changed_by="kirk", old_data_version=1)
+
+    def testRevokingPermissionAlsoRevokeRoles(self):
+        self.permissions.delete({"username": "cathy", "permission": "rule"}, changed_by="bill", old_data_version=1)
+        got = self.db.permissions.t.select().where(self.db.permissions.username == "cathy").execute().fetchall()
+        self.assertEquals(len(got), 0)
+        got = self.user_roles.t.select().where(self.user_roles.username == "cathy").execute().fetchall()
+        self.assertEquals(len(got), 0)
 
     def testGetAllUsers(self):
         self.assertEquals(set(self.permissions.getAllUsers()), set(["bill",
@@ -2950,6 +3031,17 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testHasPermissionNotAllowedByProduct(self):
         self.assertFalse(self.permissions.hasPermission("bob", "release", "modify", "reallyfake"))
+
+    def testGetUserRoles(self):
+        got = self.permissions.getUserRoles("bob")
+        self.assertEquals(set(got), set(["releng", "dev"]))
+
+    def testGetUserRolesNonExistantUser(self):
+        got = self.permissions.getUserRoles("kirk")
+        self.assertEquals(got, [])
+
+    def testUpdateUserRole(self):
+        self.assertRaises(AttributeError, self.user_roles.update, {"username": "bob"}, {"role": "relman"}, "bill", 1)
 
 
 class TestDockerflow(unittest.TestCase, MemoryDatabaseMixin):
@@ -3045,11 +3137,11 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("UPDATE to rules"))
         mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
         mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'channel': u'release' (unchanged)"))
+        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'channel': u'release',"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE to rules_scheduled_changes"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release' (unchanged)"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
 
     def testOnDelete(self):
         def doit():
@@ -3077,7 +3169,7 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release' (unchanged)"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
 
     def testOnDeleteRuleSC(self):
         def doit():

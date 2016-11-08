@@ -680,7 +680,7 @@ class TestRuleScheduledChanges(ViewTest):
             sc_id=3, scheduled_by="bill", data_version=2, base_priority=150, base_backgroundRate=100, base_product="ff",
             base_mapping="ghi", base_update_type="minor",
         )
-        dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=2000000, data_version=2)
+        dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=2900000, data_version=2)
         dbo.rules.scheduled_changes.t.insert().execute(
             sc_id=4, scheduled_by="bill", data_version=2, complete=True, base_rule_id=5, base_priority=80, base_version="3.3",
             base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1,
@@ -700,7 +700,7 @@ class TestRuleScheduledChanges(ViewTest):
             change_id=3, changed_by="bill", timestamp=10, sc_id=3, scheduled_by="bill", data_version=2, base_priority=150,
             base_backgroundRate=100, base_product="ff", base_mapping="ghi", base_update_type="minor",
         )
-        dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=10, sc_id=3, when=2000000, data_version=2)
+        dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=10, sc_id=3, when=2900000, data_version=2)
 
         dbo.rules.scheduled_changes.history.t.insert().execute(change_id=4, changed_by="bill", timestamp=15, sc_id=2)
         dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=4, changed_by="bill", timestamp=15, sc_id=2)
@@ -746,7 +746,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
-                    "sc_id": 3, "when": 2000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
+                    "sc_id": 3, "when": 2900000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
                     "backgroundRate": 100, "product": "ff", "mapping": "ghi", "update_type": "minor", "version": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
@@ -776,7 +776,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                 },
                 {
-                    "sc_id": 3, "when": 2000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
+                    "sc_id": 3, "when": 2900000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
                     "backgroundRate": 100, "product": "ff", "mapping": "ghi", "update_type": "minor", "version": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
@@ -991,16 +991,16 @@ class TestRuleScheduledChanges(ViewTest):
             "count": 2,
             "revisions": [
                 {
-                    "change_id": 2, "changed_by": "bill", "timestamp": 6, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 1,
-                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "def", "fallbackMapping": None, "update_type": "minor",
+                    "change_id": 3, "changed_by": "bill", "timestamp": 10, "sc_id": 3, "scheduled_by": "bill", "when": 2900000, "sc_data_version": 2,
+                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "ghi", "fallbackMapping": None, "update_type": "minor",
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
                     "version": None, "channel": None, "buildTarget": None, "buildID": None, "locale": None,
                     "osVersion": None, "systemCapabilities": None, "distribution": None, "distVersion": None,
                     "headerArchitecture": None, "comment": None, "whitelist": None, "alias": None, "data_version": None,
                 },
                 {
-                    "change_id": 3, "changed_by": "bill", "timestamp": 10, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 2,
-                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "ghi", "fallbackMapping": None, "update_type": "minor",
+                    "change_id": 2, "changed_by": "bill", "timestamp": 6, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 1,
+                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "def", "fallbackMapping": None, "update_type": "minor",
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
                     "version": None, "channel": None, "buildTarget": None, "buildID": None, "locale": None,
                     "osVersion": None, "systemCapabilities": None, "distribution": None, "distVersion": None,
