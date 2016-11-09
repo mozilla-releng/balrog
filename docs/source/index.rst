@@ -17,7 +17,6 @@ Contents:
    contribute
    codeoverview
    database
-   rules_detailed
    admin_api
    withoutdocker
    blobs
