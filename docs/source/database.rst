@@ -28,12 +28,6 @@ Each rule has multiple columns. They all fall into one of the following Category
 -   **Response** : these contain information that ends up in the response
 -   **Info** : Informational columns, not used as part of serving updates
 
-The percentage of background update requests that
-The Release to construct an update out of when
-the user is on the wrong side of a background
-rate dice roll. This is a foreign key to the
-"name" column of the Releases table.
-
 Following tables show columns according to different Categories:
 
   +------------------------+--------------------+--------------------------------------------------+---------------------------------+----------------------------+
@@ -59,7 +53,7 @@ Following tables show columns according to different Categories:
   |                        | id                 | The id of the rule. This id is necessary to      | N/A                             | Autoincrementing           |
   |                        |                    | make changes to the rule through the REST API.   |                                 | integer                    |
   +------------------------+--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |Matchable               | buildID            | The build ID of the application requesting an    | Exact string match or           | "201410010830"             |
+  | Matchable              | buildID            | The build ID of the application requesting an    | Exact string match or           | "201410010830"             |
   |                        |                    | update.                                          | operator plus buildid to        | or                         |
   |                        |                    |                                                  | compare the incoming one against| "<201512010830"            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
@@ -113,7 +107,7 @@ Following tables show columns according to different Categories:
   |                        |                    | whitelisting IMEIs for FirefoxOS updates.        | be matching. If it returns      |                            |
   |                        |                    |                                                  | False, this rule is thrown out. |                            |
   +------------------------+--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |Response                | Fallback Mapping   | The Release to construct an update out of when   | N/A                             | Any valid release          |
+  | Response               | Fallback Mapping   | The Release to construct an update out of when   | N/A                             | Any valid release          |
   |                        |                    | the user is on the wrong side of a background    |                                 | name, or NULL              |
   |                        |                    | rate dice roll. This is a foreign key to the     |                                 |                            |
   |                        |                    | "name" column of the Releases table.             |                                 |                            |
