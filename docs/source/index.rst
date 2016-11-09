@@ -19,7 +19,6 @@ Contents:
    database
    rules_detailed
    admin_api
-   infrastructure
    withoutdocker
    blobs
    gmp_example
