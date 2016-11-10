@@ -60,12 +60,20 @@ There is no limit to the number of <addon> blocks that can be in a response, but
 Superblobs
 ----------
 
-Superblobs are used to serve multiple updates.
+Superblobs are used to serve multiple updates for GMP and System Addons releases.
+They point at the releases that should be severed for the respective query.
 
-Response Format
-***************
+Superblob Example
+*****************
 
-.. code-block:: xml
-    
-    <updates>
-    </updates>
+.. code-block:: json
+
+  {
+    "products": [
+      "CDM",
+      "OpenH264",
+      "Widevine"
+    ],
+    "name": "GMP-Superblob",
+    "schema_version": 4000
+  }
