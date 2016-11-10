@@ -9,6 +9,8 @@ Once the correct rule has been found, it contains a pointer to a Release, which 
 Rules and Releases are described in greater detail below:
 
 
+.. _rulestable:
+
 -----
 Rules
 -----
@@ -27,6 +29,7 @@ Each rule has multiple columns. They all fall into one of the following Category
 -   **Decision** : These are also used to filter rules, but do not correspond to information in the request
 -   **Response** : these contain information that ends up in the response
 -   **Info** : Informational columns, not used as part of serving updates
+
 
 Following tables show columns according to different Categories:
 
@@ -124,7 +127,6 @@ Following tables show columns according to different Categories:
   +------------------------+--------------------+--------------------------------------------------+---------------------------------+----------------------------+
 
 
-For detailed information  on columns read :ref:`rulestable`.
 
 **How are requests matched up to rules?**
 
