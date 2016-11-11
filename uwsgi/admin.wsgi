@@ -15,6 +15,7 @@ DOMAIN_WHITELIST = {
     "clients2.googleusercontent.com": ("Widevine",),
     "redirector.gvt1.com": ("Widevine",),
     "ftp.mozilla.org": ("SystemAddons",),
+    "bucketlister-delivery.stage.mozaws.net": ("Fennec-bucketlisttest"),
 }
 
 # Logging needs to be set-up before importing the application to make sure that
