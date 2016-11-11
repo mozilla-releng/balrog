@@ -2729,6 +2729,89 @@ class TestDockerflow(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(entry['watchdog'], 2)
 
 
+class TestShutoffs(unittest.TestCase, MemoryDatabaseMixin):
+
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.shutoffs = self.db.shutoffs
+        self.db.permissions.t.insert().execute(permission="shutoff",
+                                               username="bill",
+                                               options='{"actions": ["set"], "products": ["a"]}',
+                                               data_version=1)
+        self.db.permissions.t.insert().execute(permission="shutoff",
+                                               username="bob",
+                                               options='{"actions": ["unset"], "products": ["a"]}',
+                                               data_version=1)
+        self.shutoffs.t.insert().execute(product='a', channel='beta', mapping='a')
+        self.shutoffs.t.insert().execute(product='b', channel='beta', mapping='a')
+        self.db.releases.t.insert().execute(name='a', product='a',
+                                            data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
+                                            data_version=1)
+
+    def testShutoffRulePresent(self):
+        is_shutoff, mapping = self.shutoffs.getShutoff(product='a',
+                                                       channel='beta')
+        self.assertTrue(is_shutoff)
+        self.assertEquals(mapping, 'a')
+
+    def testShutoffRuleAbsent(self):
+        is_shutoff, mapping = self.shutoffs.getShutoff(product='a',
+                                                       channel='alpha')
+        self.assertFalse(is_shutoff)
+        self.assertEquals(mapping, None)
+
+    def testAddShutoffRule(self):
+        is_shutoff, mapping = self.shutoffs.getShutoff(product='a',
+                                                       channel='alpha')
+        self.assertFalse(is_shutoff)
+        self.assertEquals(mapping, None)
+        self.shutoffs.insert(changed_by='bill', product='a', channel='alpha',
+                             mapping='a')
+        is_shutoff, mapping = self.shutoffs.getShutoff(product='a',
+                                                       channel='alpha')
+        self.assertTrue(is_shutoff)
+        self.assertEquals(mapping, 'a')
+
+    def testAddShutoffRuleNotPermittedForAction(self):
+        self.assertRaises(PermissionDeniedError,
+                          self.shutoffs.insert,
+                          changed_by='bob',
+                          product='a',
+                          channel='alpha',
+                          mapping='a')
+
+    def testAddShutoffRuleNotPermittedForProduct(self):
+        self.assertRaises(PermissionDeniedError,
+                          self.shutoffs.insert,
+                          changed_by='bill',
+                          product='b',
+                          channel='alpha',
+                          mapping='a')
+
+    def testDeleteShutoffRule(self):
+        is_shutoff, mapping = self.shutoffs.getShutoff(product='a',
+                                                       channel='beta')
+        self.assertTrue(is_shutoff)
+        self.assertEquals(mapping, 'a')
+        self.shutoffs.delete(changed_by='bob', product='a', channel='beta')
+        is_shutoff, mapping = self.shutoffs.getShutoff(product='a',
+                                                       channel='beta')
+        self.assertFalse(is_shutoff)
+        self.assertEquals(mapping, None)
+
+    def testDeleteShutoffRuleNotPermittedForAction(self):
+        self.assertRaises(PermissionDeniedError,
+                          self.shutoffs.delete,
+                          changed_by='bill', product='a', channel='beta')
+
+    def testDeleteShutoffRuleNotPermittedForProduct(self):
+        self.assertRaises(PermissionDeniedError,
+                          self.shutoffs.delete,
+                          changed_by='bob', product='b', channel='beta')
+
+
 class TestDB(unittest.TestCase):
 
     def testSetDburiAlreadySetup(self):

@@ -584,6 +584,14 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """)
+        dbo.releases.t.insert().execute(name='empty', product='empty', data_version=1, data="""
+{
+    "name": "empty",
+    "schema_version": 4000,
+    "revision": 123,
+    "products": []
+}
+""")
 
     def tearDown(self):
         os.close(self.version_fd)
@@ -831,8 +839,6 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/4/systemaddons/1.0/1/z/p/a/b/c/d/1/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
-
-
 </updates>
 """)
 
@@ -882,6 +888,21 @@ class ClientTest(ClientTestBase):
                 ret = self.client.get(request)
                 self.assertEqual(ret.status_code, 404)
                 self.assertFalse(mock_cr_view.called)
+
+    def testShutoffRule(self):
+        ret = self.client.get('/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <addons>
+        <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
+        <patch type="complete" URL="http://a.com/b" hashFunction="sha512" hashValue="23" size="27777777"/>
+    </addons>
+</updates>
+""")
+        dbo.shutoffs.t.insert().execute(product='gmp', mapping='empty')
+        self.assertTrue(dbo.shutoffs.getShutoff(product='gmp')[0])
+        ret = self.client.get('/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml')
+        self.assertUpdatesAreEmpty(ret)
 
 
 class ClientTestWithErrorHandlers(ClientTestCommon):

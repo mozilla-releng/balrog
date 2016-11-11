@@ -55,51 +55,63 @@ class AUS:
         self.log = logging.getLogger(self.__class__.__name__)
 
     def evaluateRules(self, updateQuery):
-        self.log.debug("Looking for rules that apply to:")
+        self.log.debug("Checking if there is a shutoff rule for:")
         self.log.debug(updateQuery)
-        rules = dbo.rules.getRulesMatchingQuery(
-            updateQuery,
-            fallbackChannel=getFallbackChannel(updateQuery['channel'])
-        )
-
-        # TODO: throw any N->N update rules and keep the highest priority remaining one?
-        if len(rules) < 1:
-            return None, None
-
-        rules = sorted(rules, key=lambda rule: rule['priority'], reverse=True)
-        rule = rules[0]
-        self.log.debug("Matching rule: %s" % rule)
-
-        # There's a few cases where we have a matching rule but don't want
-        # to serve an update:
-        # 1) No mapping.
-        if not rule['mapping']:
-            self.log.debug("Matching rule points at null mapping.")
-            return None, None
-
-        # 2) For background checks (force=1 missing from query), we might not
-        # serve every request an update
-        # backgroundRate=100 means all requests are served
-        # backgroundRate=25 means only one quarter of requests are served
-        if not updateQuery['force'] and rule['backgroundRate'] < 100:
-            self.log.debug("backgroundRate < 100, rolling the dice")
-            if self.rand.getInt() >= rule['backgroundRate']:
-                fallbackReleaseName = rule['fallbackMapping']
-                if fallbackReleaseName:
-                    release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1)[0]
-                    blob = release['data']
-                    return blob, rule['update_type']
-
-                self.log.debug("No fallback releases. Request was dropped")
+        is_shutoff, shutoff_mapping = dbo.shutoffs.getShutoff(product=updateQuery.get('product'),
+                                                              channel=updateQuery.get('channel'))
+        if is_shutoff:
+            self.log.debug("Updates are shutoff for this query, returning mapped empty release %s", shutoff_mapping)
+            release = dbo.releases.getReleases(name=shutoff_mapping, limit=1)[0]
+            blob = release['data']
+            if not blob.shouldServeUpdate(updateQuery):
                 return None, None
 
-        # 3) Incoming release is older than the one in the mapping, defined as one of:
-        #    * version decreases
-        #    * version is the same and buildID doesn't increase
-        release = dbo.releases.getReleases(name=rule['mapping'], limit=1)[0]
-        blob = release['data']
-        if not blob.shouldServeUpdate(updateQuery):
-            return None, None
+            self.log.debug("Returning release %s", release['name'])
+            return blob, 'minor'  # We assume shutoff updates are minor
+        else:
+            rules = dbo.rules.getRulesMatchingQuery(
+                updateQuery,
+                fallbackChannel=getFallbackChannel(updateQuery['channel'])
+            )
 
-        self.log.debug("Returning release %s", release['name'])
-        return blob, rule['update_type']
+            # TODO: throw any N->N update rules and keep the highest priority remaining one?
+            if len(rules) < 1:
+                return None, None
+
+            rules = sorted(rules, key=lambda rule: rule['priority'], reverse=True)
+            rule = rules[0]
+            self.log.debug("Matching rule: %s" % rule)
+
+            # There's a few cases where we have a matching rule but don't want
+            # to serve an update:
+            # 1) No mapping.
+            if not rule['mapping']:
+                self.log.debug("Matching rule points at null mapping.")
+                return None, None
+
+            # 2) For background checks (force=1 missing from query), we might not
+            # serve every request an update
+            # backgroundRate=100 means all requests are served
+            # backgroundRate=25 means only one quarter of requests are served
+            if not updateQuery['force'] and rule['backgroundRate'] < 100:
+                self.log.debug("backgroundRate < 100, rolling the dice")
+                if self.rand.getInt() >= rule['backgroundRate']:
+                    fallbackReleaseName = rule['fallbackMapping']
+                    if fallbackReleaseName:
+                        release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1)[0]
+                        blob = release['data']
+                        return blob, rule['update_type']
+
+                    self.log.debug("No fallback releases. Request was dropped")
+                    return None, None
+
+            # 3) Incoming release is older than the one in the mapping, defined as one of:
+            #    * version decreases
+            #    * version is the same and buildID doesn't increase
+            release = dbo.releases.getReleases(name=rule['mapping'], limit=1)[0]
+            blob = release['data']
+            if not blob.shouldServeUpdate(updateQuery):
+                return None, None
+
+            self.log.debug("Returning release %s", release['name'])
+            return blob, rule['update_type']
