@@ -1768,6 +1768,8 @@ class Dockerflow(AUSTable):
 class Shutoffs(AUSTable):
     def __init__(self, db, metadata, dialect):
         self.table = Table('shutoffs', metadata,
+                           Column('shutoff_id', Integer, primary_key=True,
+                                  autoincrement=True),
                            Column('product', String(15), nullable=False),
                            Column('channel', String(75)),
                            Column('mapping', String(100)),

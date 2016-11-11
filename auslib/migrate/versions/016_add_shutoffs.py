@@ -1,9 +1,10 @@
-from sqlalchemy import Table, Column, String, MetaData, UniqueConstraint
+from sqlalchemy import Table, Column, Integer, String, MetaData, UniqueConstraint
 
 metadata = MetaData()
 
 shutoffs = Table(
     "shutoffs", metadata,
+    Column('shutoff_id', Integer, primary_key=True, autoincrement=True),
     Column("product", String(15), nullable=False),
     Column("channel", String(75)),
     Column("mapping", String(100)),
