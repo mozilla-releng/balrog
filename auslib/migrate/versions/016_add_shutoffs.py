@@ -6,7 +6,7 @@ shutoffs = Table(
     "shutoffs", metadata,
     Column("product", String(15), nullable=False),
     Column("channel", String(75)),
-    Column("mapping", String(75)),
+    Column("mapping", String(100)),
     UniqueConstraint('product', 'channel')
 )
 
