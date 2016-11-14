@@ -15,8 +15,10 @@ DOMAIN_WHITELIST = {
     "clients2.googleusercontent.com": ("Widevine",),
     "redirector.gvt1.com": ("Widevine",),
     "ftp.mozilla.org": ("SystemAddons",),
-    "bucketlister-delivery.stage.mozaws.net": ("Fennec-tcmigration", "Firefox-tcmigration"),
 }
+
+if os.environ.get("ENV") == "stage":
+    DOMAIN_WHITELIST.update({"bucketlister-delivery.stage.mozaws.net": ("Fennec", "Firefox")})
 
 # Logging needs to be set-up before importing the application to make sure that
 # logging done from other modules uses our Logger.
