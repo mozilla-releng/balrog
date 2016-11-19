@@ -22,6 +22,7 @@ Contents:
    blobs
    gmp_example
    balrog_agent
+   autodocs/auslib
 
 Indices and tables
 ==================
