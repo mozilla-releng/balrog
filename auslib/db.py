@@ -886,11 +886,11 @@ class ScheduledChangeTable(AUSTable):
         are stored in the conditions table in a few different places."""
         base_columns = {}
         condition_columns = {}
-        for k in columns:
-            if k in itertools.chain(*self.conditions.condition_groups.values()):
-                condition_columns[k] = columns[k]
+        for cond_type in columns:
+            if cond_type in itertools.chain(*self.conditions.condition_groups.values()):
+                condition_columns[cond_type] = columns[cond_type]
             else:
-                base_columns[k] = columns[k]
+                base_columns[cond_type] = columns[cond_type]
 
         return base_columns, condition_columns
 
