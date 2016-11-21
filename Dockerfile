@@ -6,7 +6,7 @@ MAINTAINER bhearsum@mozilla.com
 # Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm. These will get removed after building.
 # libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 RUN apt-get -q update \
-    && apt-get -q --yes install libpcre3 libpcre3-dev libmysqlclient-dev \
+    && apt-get -q --yes install libpcre3 libpcre3-dev libmysqlclient-dev mysql-client \
     && apt-get clean
 
 WORKDIR /app
