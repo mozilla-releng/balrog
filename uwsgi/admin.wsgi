@@ -17,9 +17,6 @@ DOMAIN_WHITELIST = {
     "ftp.mozilla.org": ("SystemAddons",),
 }
 
-if os.environ.get("ENV") == "stage":
-    DOMAIN_WHITELIST.update({"bucketlister-delivery.stage.mozaws.net": ("Fennec", "Firefox")})
-
 # Logging needs to be set-up before importing the application to make sure that
 # logging done from other modules uses our Logger.
 logging_kwargs = {
