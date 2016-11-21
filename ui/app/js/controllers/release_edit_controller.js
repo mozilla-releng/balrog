@@ -21,12 +21,16 @@ function ($scope, $modalInstance, CSRF, Releases, release) {
     reader.onloadend = function(evt) {
       var blob = evt.target.result;
       $scope.$apply( function() {
-         var name = JSON.parse(blob).name;
-         if(!name) {
-           $scope.errors.data = ["Form submission error", "Name missing in blob.\n"];
-         }
-         else if (name !== $scope.release.name) {
-          $scope.errors.data = ["Form submission error", "Name differs compared to name in blob.\n"];
+        try {
+          var name = JSON.parse(blob).name;
+          if(!name) {
+            $scope.errors.data = ["Form submission error", "Name missing in blob.\n"];
+          }
+          else if (name !== $scope.release.name) {
+            $scope.errors.data = ["Form submission error", "Name differs compared to name in blob.\n"];
+          }
+        }catch(err) {
+          $scope.errors.data = ["Form submission error", "Malformed JSON file.\n"];
         }
       });
     };
