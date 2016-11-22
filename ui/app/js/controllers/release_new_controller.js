@@ -27,12 +27,16 @@ function($scope, $http, $modalInstance, CSRF, Releases, releases) {
     reader.onloadend = function(evt) {
       var blob = evt.target.result;
       $scope.$apply( function() {
-        var name = JSON.parse(blob).name;
-        if (name) {
-           $scope.release.name = name;
-        }
-        else {
-          $scope.errors.data = ["Form submission error", "Missing name field in JSON blob.\n"];
+        try{
+          var name = JSON.parse(blob).name;
+          if (name) {
+            $scope.release.name = name;
+          }
+          else {
+            $scope.errors.data = ["Form submission error", "Missing name field in JSON blob.\n"];
+          }
+        }catch(err) {
+           $scope.errors.data = ["Form submission error", "Malformed JSON file.\n"];
         }
       });
     };
@@ -104,6 +108,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, releases) {
         "No file has been selected.",
         "error"
       );
+      $scope.saving = false;
       return;
     } else {
       // should work

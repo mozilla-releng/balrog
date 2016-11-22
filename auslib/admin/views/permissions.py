@@ -4,7 +4,7 @@ from flask import request, Response, jsonify
 
 from auslib.global_state import dbo
 from auslib.admin.views.base import requirelogin, AdminView
-from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm
+from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm, DbEditableForm
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 
@@ -95,3 +95,43 @@ class SpecificPermissionView(AdminView):
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)
+
+
+class UserRolesView(AdminView):
+    """/users/:username/roles"""
+
+    def get(self, username):
+        roles = dbo.permissions.getUserRoles(username)
+        if roles:
+            return jsonify({"roles": roles})
+        else:
+            return Response(status=404, response="No roles found for user")
+
+
+class UserRoleView(AdminView):
+    """/users/:username/roles/:role"""
+
+    @requirelogin
+    def _put(self, username, role, changed_by, transaction):
+        # These requests are idempotent - if the user already has the desired role,
+        # no change needs to be made. Because of this there's also no reason to
+        # return an error.
+        r = dbo.permissions.user_roles.select({"username": username, "role": role}, transaction=transaction)
+        if r:
+            return Response(status=200, response=json.dumps({"new_data_version": r[0]["data_version"]}))
+
+        dbo.permissions.grantRole(username, role, changed_by, transaction)
+        return Response(status=201, response=json.dumps({"new_data_version": 1}))
+
+    @requirelogin
+    def _delete(self, username, role, changed_by, transaction):
+        if role not in dbo.permissions.getUserRoles(username):
+            return Response(status=404)
+
+        form = DbEditableForm(request.args)
+        if not form.validate():
+            self.log.warning("Bad input: %s", form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
+
+        dbo.permissions.revokeRole(username, role, changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
+        return Response(status=200)
