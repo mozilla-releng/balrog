@@ -1280,6 +1280,11 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.metadata = self.db.metadata
         self.signoffs = SignoffsTable(self.db, self.metadata, "sqlite", "test_table")
         self.metadata.create_all()
+        self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="relman", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="qa", data_version=1)
+        self.signoffs.t.insert().execute(sc_id=1, username="nancy", role="relman")
 
     def testSignoffsHasCorrectTablesAndColumns(self):
         columns = [c.name for c in self.signoffs.t.get_children()]
@@ -1289,6 +1294,36 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         expected = ["change_id", "changed_by", "timestamp"] + expected
         self.assertEquals(set(history_columns), set(expected))
 
+    def testSignoffWithPermission(self):
+        self.signoffs.insert("bob", sc_id=1, username="bob", role="releng")
+        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "bob").execute().fetchall()
+        self.assertEquals(got, [(1, "bob", "releng")])
+
+    def testSignoffWithoutPermission(self):
+        self.signoffs.insert("jim", sc_id=1, username="jim", role="releng")
+        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "jim").execute().fetchall()
+        self.assertEquals(len(got), 0)
+
+    def testSignoffASecondTimeWithSameRole(self):
+        self.signoffs.insert("nancy", sc_id=1, username="nancy", role="relman")
+        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
+        self.assertEquals(got, [(1, "nancy", "relman")])
+
+    def testSignoffWithSecondRole(self):
+        self.assertRaisesRegexp(PermissionDeniedError, "Cannot signoff on scheduled change with second role",
+                                self.signoffs.insert, "bob", sc_id=1, username="bob", role="releng")
+
+    def testCannotUpdateSignoff(self):
+        self.assertRaises(AttributeError, self.signoffs.update, {"username": "nancy"}, {"role": "qa"}, "nancy")
+
+    def testRevokeSignoff(self):
+        self.signoffs.delete({"sc_id": 1, "username": "nancy"}, changed_by="nancy")
+        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
+        self.assertEquals(len(got), 0)
+
+    def testRevokeOtherUsersSignoff(self):
+        self.assertRaisesRegexp(PermissionDeniedError, "Cannot revoke a signoff made by another user",
+                                self.signoffs.delete, {"sc_id": 1, "username": "nancy"}, changed_by="bob")
 
 # In https://bugzilla.mozilla.org/show_bug.cgi?id=1284481, we changed the sampled data to be a true
 # production dump, which doesn't import properly into sqlite. We should uncomment this test in the
