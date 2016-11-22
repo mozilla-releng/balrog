@@ -35,9 +35,7 @@ extensions = [
 ]
 
 autodoc_mock_imports = [
-    'flask',
     'flask_wtf',
-    'flask.views',
     'raven.contrib.flask',
     'repoze.lru',
     'flask_compress',
@@ -45,9 +43,6 @@ autodoc_mock_imports = [
     'migrate.versioning.api',
     'dictdiffer',
     'dictdiffer.merge',
-    'wtforms',
-    'wtforms.widgets',
-    'wtforms.validators',
     'flask_wtf.form',
 ]
 
