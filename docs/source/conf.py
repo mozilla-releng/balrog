@@ -34,24 +34,6 @@ extensions = [
     'sphinx.ext.ifconfig', 'sphinx.ext.autodoc'
 ]
 
-autodoc_mock_imports = [
-    'flask_wtf',
-    'raven.contrib.flask',
-    'repoze.lru',
-    'flask_compress',
-    'migrate.versioning.schema',
-    'migrate.versioning.api',
-    'dictdiffer',
-    'dictdiffer.merge',
-    'flask_wtf.form',
-]
-
-def autodoc_skip_member(app, what, name, obj, skip, options):
-    exclusions = (''
-                  )
-    exclude = name in exclusions
-    return skip or exclude
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
