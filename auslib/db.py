@@ -190,7 +190,7 @@ class AUSTable(object):
     """
 
     def __init__(self, db, dialect, history=True, versioned=True, scheduled_changes=False,
-                 onInsert=None, onUpdate=None, onDelete=None):
+                 scheduled_changes_kwargs={}, onInsert=None, onUpdate=None, onDelete=None):
         self.db = db
         self.t = self.table
         # Enable versioning, if required
@@ -213,7 +213,7 @@ class AUSTable(object):
             self.history = None
         # Set-up a scheduled changes table if required
         if scheduled_changes:
-            self.scheduled_changes = ScheduledChangeTable(db, dialect, self.t.metadata, self)
+            self.scheduled_changes = ScheduledChangeTable(db, dialect, self.t.metadata, self, **scheduled_changes_kwargs)
         else:
             self.scheduled_changes = None
         self.log = logging.getLogger(self.__class__.__name__)
@@ -760,40 +760,56 @@ class ConditionsTable(AUSTable):
     # conditions require mulitple arguments. This data structure defines
     # each type of condition, and groups their args together for easier
     # processing.
-    condition_groups = (
-        ("when",),
-        ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
-    )
+    condition_groups = {
+        "time": ("when",),
+        "uptake": ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
+    }
 
-    def __init__(self, db, dialect, metadata, baseName, history=True):
+    def __init__(self, db, dialect, metadata, baseName, conditions, history=True):
+        if not conditions:
+            raise ValueError("No conditions enabled, cannot initialize conditions for for {}".format(baseName))
+        if set(conditions) - set(self.condition_groups):
+            raise ValueError("Unknown conditions in: {}".format(conditions))
+
+        self.enabled_condition_groups = {k: v for k, v in self.condition_groups.iteritems() if k in conditions}
+
         self.table = Table("{}_conditions".format(baseName), metadata,
                            Column("sc_id", Integer, primary_key=True),
-                           Column("telemetry_product", String(15)),
-                           Column("telemetry_channel", String(75)),
-                           Column("telemetry_uptake", Integer),
                            )
-        if dialect == "sqlite":
-            self.table.append_column(Column("when", Integer))
-        else:
-            self.table.append_column(Column("when", BigInteger))
+
+        if "uptake" in conditions:
+            self.table.append_column(Column("telemetry_product", String(15)))
+            self.table.append_column(Column("telemetry_channel", String(75)))
+            self.table.append_column(Column("telemetry_uptake", Integer))
+
+        if "time" in conditions:
+            if dialect == "sqlite":
+                self.table.append_column(Column("when", Integer))
+            else:
+                self.table.append_column(Column("when", BigInteger))
 
         super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
 
     def validate(self, conditions):
-        # Filter out conditions whose values are none before processing.
         conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
         if not conditions:
             raise ValueError("No conditions found")
 
         for c in conditions:
-            if c not in itertools.chain(*self.condition_groups):
+            for condition, args in self.condition_groups.iteritems():
+                if c in args:
+                    if c in itertools.chain(*self.enabled_condition_groups.values()):
+                        break
+                    else:
+                        raise ValueError("{} condition is disabled".format(condition))
+            else:
                 raise ValueError("Invalid condition: %s", c)
 
-        for group in self.condition_groups:
+        for group in self.enabled_condition_groups.values():
             if set(group) == set(conditions.keys()):
                 break
         else:
-            raise ValueError("Invalid combination of conditions: %s", conditions.keys())
+            raise ValueError("Invalid combination of conditions: {}".format(conditions.keys()))
 
         if "when" in conditions:
             try:
@@ -811,7 +827,7 @@ class ScheduledChangeTable(AUSTable):
     columns of its base, and adding the necessary ones to provide the schedule.
     By default, ScheduledChangeTables enable History on themselves."""
 
-    def __init__(self, db, dialect, metadata, baseTable, history=True):
+    def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), history=True):
         table_name = "{}_scheduled_changes".format(baseTable.t.name)
         self.baseTable = baseTable
         self.table = Table(table_name, metadata,
@@ -819,7 +835,7 @@ class ScheduledChangeTable(AUSTable):
                            Column("scheduled_by", String(100), nullable=False),
                            Column("complete", Boolean, default=False),
                            )
-        self.conditions = ConditionsTable(db, dialect, metadata, table_name)
+        self.conditions = ConditionsTable(db, dialect, metadata, table_name, conditions)
 
         # The primary key column(s) are used in construct "where" clauses for
         # existing rows.
@@ -870,11 +886,11 @@ class ScheduledChangeTable(AUSTable):
         are stored in the conditions table in a few different places."""
         base_columns = {}
         condition_columns = {}
-        for k in columns:
-            if k in itertools.chain(*self.conditions.condition_groups):
-                condition_columns[k] = columns[k]
+        for cond_type in columns:
+            if cond_type in itertools.chain(*self.conditions.condition_groups.values()):
+                condition_columns[cond_type] = columns[cond_type]
             else:
-                base_columns[k] = columns[k]
+                base_columns[cond_type] = columns[cond_type]
 
         return base_columns, condition_columns
 
@@ -953,7 +969,7 @@ class ScheduledChangeTable(AUSTable):
             if "sc_id" not in kwargs["columns"] and self.sc_id not in kwargs["columns"]:
                 kwargs["columns"].append(self.sc_id)
         for row in super(ScheduledChangeTable, self).select(where=where, transaction=transaction, **kwargs):
-            columns = [getattr(self.conditions, c) for c in itertools.chain(*self.conditions.condition_groups)]
+            columns = [getattr(self.conditions, c) for c in itertools.chain(*self.conditions.enabled_condition_groups.values())]
             conditions = self.conditions.select([self.conditions.sc_id == row["sc_id"]], transaction=transaction, columns=columns)
             row.update(conditions[0])
             ret.append(row)

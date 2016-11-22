@@ -669,6 +669,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue(self.table.history)
         self.assertTrue(self.table.scheduled_changes)
         self.assertTrue(self.table.scheduled_changes.history)
+        self.assertTrue(self.table.scheduled_changes.conditions)
+        self.assertTrue(self.table.scheduled_changes.conditions.history)
 
     def testTablesHaveCorrectColumns(self):
         sc_columns = [c.name for c in self.sc_table.t.get_children()]
@@ -1117,6 +1119,155 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         what = {"fooid": 1, "bar": "abc", "data_version": 1}
         self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, what, changed_by="bob")
 
+
+class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDatabaseMixin):
+
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.engine = self.db.engine
+        self.metadata = self.db.metadata
+
+        class TestTable(AUSTable):
+
+            def __init__(self, db, metadata):
+                self.table = Table("test_table", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
+                                   Column("foo", String(15), nullable=False),
+                                   Column("bar", String(15)))
+                super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]},
+                                                history=True, versioned=True)
+
+        self.table = TestTable(self.db, self.metadata)
+        self.sc_table = self.table.scheduled_changes
+        self.metadata.create_all()
+        self.table.t.insert().execute(fooid=10, foo="h", data_version=1)
+        self.table.t.insert().execute(fooid=11, foo="i", bar="j", data_version=1)
+        self.sc_table.t.insert().execute(sc_id=1, scheduled_by="bob", base_fooid=10, base_foo="h", base_bar="bbb", base_data_version=1, data_version=1)
+        self.sc_table.conditions.t.insert().execute(sc_id=1, when=87000, data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
+
+    def testAllTablesCreated(self):
+        self.assertTrue(self.table)
+        self.assertTrue(self.table.history)
+        self.assertTrue(self.table.scheduled_changes)
+        self.assertTrue(self.table.scheduled_changes.history)
+        self.assertTrue(self.table.scheduled_changes.conditions)
+        self.assertTrue(self.table.scheduled_changes.conditions.history)
+
+    def testSCTableHasCorrectColumns(self):
+        sc_columns = [c.name for c in self.sc_table.t.get_children()]
+        self.assertTrue("sc_id" in sc_columns)
+        self.assertTrue("scheduled_by" in sc_columns)
+        self.assertTrue("complete" in sc_columns)
+        self.assertTrue("data_version" in sc_columns)
+        self.assertTrue("base_fooid" in sc_columns)
+        self.assertTrue("base_foo" in sc_columns)
+        self.assertTrue("base_bar" in sc_columns)
+        self.assertTrue("base_data_version" in sc_columns)
+        self.assertTrue("telemetry_product" not in sc_columns)
+        self.assertTrue("telemetry_channel" not in sc_columns)
+        self.assertTrue("telemetry_uptake" not in sc_columns)
+        self.assertTrue("when" not in sc_columns)
+
+        cond_columns = [c.name for c in self.sc_table.conditions.t.get_children()]
+        self.assertTrue("sc_id" in cond_columns)
+        self.assertTrue("telemetry_product" not in cond_columns)
+        self.assertTrue("telemetry_channel" not in cond_columns)
+        self.assertTrue("telemetry_uptake" not in cond_columns)
+        self.assertTrue("when" in cond_columns)
+
+    def testSCTableWithNoConditions(self):
+        class TestTable2(AUSTable):
+
+            def __init__(self, db, metadata):
+                self.table = Table("test_table3", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
+                                   Column("foo", String(15), nullable=False),
+                                   Column("bar", String(15)))
+                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": []},
+                                                 history=True, versioned=True)
+
+        self.assertRaisesRegexp(ValueError, "No conditions enabled", TestTable2, self.db, self.metadata)
+
+    def testSCTableWithBadConditions(self):
+        class TestTable3(AUSTable):
+
+            def __init__(self, db, metadata):
+                self.table = Table("test_table3", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
+                                   Column("foo", String(15), nullable=False),
+                                   Column("bar", String(15)))
+                super(TestTable3, self).__init__(db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time", "blech"]},
+                                                 history=True, versioned=True)
+
+        self.assertRaisesRegexp(ValueError, "Unknown conditions", TestTable3, self.db, self.metadata)
+
+    def testValidateConditionsNone(self):
+        self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.conditions.validate, {})
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testValidateConditionsJustWhen(self):
+        self.sc_table.conditions.validate({"when": 12345678})
+
+    def testValidateConditionsTelemetryRaisesError(self):
+        conditions = {
+            "telemetry_product": "Firefox",
+            "telemetry_channel": "nightly",
+            "telemetry_uptake": "200000",
+        }
+        self.assertRaisesRegexp(ValueError, "uptake condition is disabled", self.sc_table.conditions.validate, conditions)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertWithEnabledCondition(self):
+        what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "when": 909000}
+        self.sc_table.insert(changed_by="bob", **what)
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
+        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 2).execute().fetchall()[0]
+        self.assertEquals(row.scheduled_by, "bob")
+        self.assertEquals(row.data_version, 1)
+        self.assertEquals(row.base_fooid, 11)
+        self.assertEquals(row.base_foo, "i")
+        self.assertEquals(row.base_bar, "jjj")
+        self.assertEquals(row.base_data_version, 1)
+        self.assertEquals(cond_row.when, 909000)
+        self.assertEquals(cond_row.data_version, 1)
+
+    def testInsertWithDisabledCondition(self):
+        what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "telemetry_product": "aa",
+                "telemetry_channel": "bb", "telemetry_uptake": 34567}
+        self.assertRaisesRegexp(ValueError, "uptake condition is disabled", self.sc_table.insert, changed_by="bob", **what)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateWithNewValueForEnabledCondition(self):
+        where = [self.sc_table.sc_id == 1]
+        what = {"when": 1000300, "bar": "ccc"}
+        self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
+        row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
+        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1).execute().fetchall()[0]
+        history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
+        cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1).execute().fetchall()[0]
+        self.assertEquals(row.scheduled_by, "bob")
+        self.assertEquals(row.data_version, 2)
+        self.assertEquals(row.base_fooid, 10)
+        self.assertEquals(row.base_foo, "h")
+        self.assertEquals(row.base_bar, "ccc")
+        self.assertEquals(row.base_data_version, 1)
+        self.assertEquals(history_row.changed_by, "bob")
+        self.assertEquals(history_row.scheduled_by, "bob")
+        self.assertEquals(history_row.data_version, 2)
+        self.assertEquals(history_row.base_fooid, 10)
+        self.assertEquals(history_row.base_foo, "h")
+        self.assertEquals(history_row.base_bar, "ccc")
+        self.assertEquals(history_row.base_data_version, 1)
+        self.assertEquals(cond_row.when, 1000300)
+        self.assertEquals(cond_row.data_version, 2)
+        self.assertEquals(cond_history_row.changed_by, "bob")
+        self.assertEquals(cond_history_row.when, 1000300)
+        self.assertEquals(cond_history_row.data_version, 2)
+
+    def testUpdateChangeToDisabledCondition(self):
+        where = [self.sc_table.sc_id == 1]
+        what = {"telemetry_product": "pro", "telemetry_channel": "cha", "telemetry_uptake": 3456, "bar": "ccc", "when": None}
+        self.assertRaisesRegexp(ValueError, "uptake condition is disabled", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
 # In https://bugzilla.mozilla.org/show_bug.cgi?id=1284481, we changed the sampled data to be a true
 # production dump, which doesn't import properly into sqlite. We should uncomment this test in the
