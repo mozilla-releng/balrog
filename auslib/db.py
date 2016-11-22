@@ -1123,7 +1123,28 @@ class SignoffsTable(AUSTable):
                            Column("username", String(100), primary_key=True),
                            Column("role", String(50), nullable=False),
                            )
-        super(SignoffsTable, self).__init__(self, db, dialect, versioned=False)
+        super(SignoffsTable, self).__init__(db, dialect, versioned=False)
+
+    def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
+        if "sc_id" not in columns or "role" not in columns:
+            raise ValueError("sc_id and role must be provided when signing off")
+        if "username" in columns and columns["username"] != changed_by:
+            raise PermissionDeniedError("Cannot signoff on behalf of another user")
+        if not self.db.hasRole(changed_by, columns["role"], transaction=transaction):
+            raise PermissionDeniedError("{} cannot signoff with role '{}'".format(changed_by, columns["role"]))
+
+        # There shouldn't be more than one...
+        existing_signoff = self.select({"sc_id": columns["sc_id"], "username": changed_by}, transaction)
+        if existing_signoff:
+            existing_signoff = existing_signoff[0]
+            if existing_signoff["role"] != columns["role"]:
+                raise PermissionDeniedError("Cannot signoff with a second role")
+            # Signoff already made under the same role, we don't need to do
+            # anything!
+            return True
+
+        columns["username"] = changed_by
+        super(SignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
 
     def update(self, where, what, changed_by=None, transaction=None, dryrun=False):
         raise AttributeError("Signoffs cannot be modified (only granted and revoked)")
