@@ -1,5 +1,5 @@
-auslib package
-==============
+Developer Documentation (Auslib Package)
+========================================
 
 Subpackages
 -----------
