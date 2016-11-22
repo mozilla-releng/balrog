@@ -1125,6 +1125,16 @@ class SignoffsTable(AUSTable):
                            )
         super(SignoffsTable, self).__init__(self, db, dialect, versioned=False)
 
+    def update(self, where, what, changed_by=None, transaction=None, dryrun=False):
+        raise AttributeError("Signoffs cannot be modified (only granted and revoked)")
+
+    def delete(self, where, changed_by=None, transaction=None, dryrun=False):
+        for row in self.select(where, transaction):
+            if row["username"] != changed_by:
+                raise PermissionDeniedError("Cannot revoke a signoff made by another user")
+
+        super(SignoffsTable, self).delete(where, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
+
 
 class Rules(AUSTable):
 
