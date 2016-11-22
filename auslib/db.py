@@ -1912,6 +1912,12 @@ class Permissions(AUSTable):
 
         return True
 
+    def hasRole(self, username, role, transaction=None):
+        if role in self.getUserRoles(username, transaction):
+            return True
+
+        return False
+
 
 class Dockerflow(AUSTable):
     def __init__(self, db, metadata, dialect):
@@ -2107,6 +2113,9 @@ class AUSDatabase(object):
 
     def hasPermission(self, *args, **kwargs):
         return self.permissions.hasPermission(*args, **kwargs)
+
+    def hasRole(self, *args, **kwargs):
+        return self.permissions.hasRole(*args, **kwargs)
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,

@@ -1300,9 +1300,8 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(got, [(1, "bob", "releng")])
 
     def testSignoffWithoutPermission(self):
-        self.signoffs.insert("jim", sc_id=1, username="jim", role="releng")
-        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "jim").execute().fetchall()
-        self.assertEquals(len(got), 0)
+        self.assertRaisesRegexp(PermissionDeniedError, "jim cannot signoff with role 'releng'",
+                                self.signoffs.insert, "jim", sc_id=1, username="jim", role="releng")
 
     def testSignoffASecondTimeWithSameRole(self):
         self.signoffs.insert("nancy", sc_id=1, username="nancy", role="relman")
@@ -1310,8 +1309,8 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(got, [(1, "nancy", "relman")])
 
     def testSignoffWithSecondRole(self):
-        self.assertRaisesRegexp(PermissionDeniedError, "Cannot signoff on scheduled change with second role",
-                                self.signoffs.insert, "bob", sc_id=1, username="bob", role="releng")
+        self.assertRaisesRegexp(PermissionDeniedError, "Cannot signoff with a second role",
+                                self.signoffs.insert, "nancy", sc_id=1, username="nancy", role="qa")
 
     def testCannotUpdateSignoff(self):
         self.assertRaises(AttributeError, self.signoffs.update, {"username": "nancy"}, {"role": "qa"}, "nancy")
@@ -3110,6 +3109,12 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testUpdateUserRole(self):
         self.assertRaises(AttributeError, self.user_roles.update, {"username": "bob"}, {"role": "relman"}, "bill", 1)
+
+    def testHasRole(self):
+        self.assertTrue(self.permissions.hasRole("bob", "releng"))
+
+    def testHasRoleNegative(self):
+        self.assertFalse(self.permissions.hasRole("cathy", "dev"))
 
 
 class TestDockerflow(unittest.TestCase, MemoryDatabaseMixin):
