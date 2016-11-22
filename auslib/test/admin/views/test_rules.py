@@ -681,6 +681,7 @@ class TestRuleScheduledChanges(ViewTest):
             base_backgroundRate=100, base_mapping="b", base_update_type="minor", base_data_version=1,
         )
         dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=1000000, data_version=1)
+        dbo.rules.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
         dbo.rules.scheduled_changes.t.insert().execute(
             sc_id=2, scheduled_by="bill", data_version=1, base_priority=50, base_backgroundRate=100, base_product="baz",
             base_mapping="ab", base_update_type="minor",
@@ -1050,3 +1051,27 @@ class TestRuleScheduledChanges(ViewTest):
     def testRevertScheduledChangeChangeIdDoesntMatchScId(self):
         ret = self._post("/scheduled_changes/rules/3/revisions", data={"change_id": 4})
         self.assertEquals(ret.status_code, 400, ret.data)
+
+    def testSignoffWithPermission(self):
+        ret = self._post("/scheduled_changes/rules/2/signoffs", data=dict(role="qa"), username="bill")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+    def testSignoffWithoutPermission(self):
+        ret = self._post("/scheduled_changes/rules/2/signoffs", data=dict(role="relman"), username="bill")
+        self.assertEquals(ret.status_code, 403, ret.data)
+
+    def testSignoffASecondTimeWithSameRole(self):
+        ret = self._post("/scheduled_changes/rules/1/signoffs", data=dict(role="releng"), username="bill")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+    def testSignoffWithSecondRole(self):
+        ret = self._post("/scheduled_changes/rules/1/signoffs", data=dict(role="qa"), username="bill")
+        self.assertEquals(ret.status_code, 403, ret.data)
+
+    def testRevokeSignoff(self):
+        # TODO: implement me when rules_signoffs table exists
+        self.fail()
+
+    def testRevokeOtherUsersSignoff(self):
+        # TODO: implement me when rules_signoffs table exists
+        self.fail()
