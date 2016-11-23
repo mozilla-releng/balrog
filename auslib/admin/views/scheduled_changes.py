@@ -5,7 +5,7 @@ from sqlalchemy.sql.expression import null
 from flask import jsonify, request, Response
 
 from auslib.admin.views.base import AdminView, HistoryAdminView
-from auslib.admin.views.forms import DbEditableForm
+from auslib.admin.views.forms import DbEditableForm, SignoffForm
 
 
 class ScheduledChangesView(AdminView):
@@ -115,6 +115,30 @@ class EnactScheduledChangeView(AdminView):
 
     def _post(self, sc_id, transaction, changed_by):
         self.sc_table.enactChange(sc_id, changed_by, transaction)
+        return Response(status=200)
+
+
+class SignoffsView(AdminView):
+    """/scheduled_change/:namespace/:sc_id/signoffs"""
+
+    def __init__(self, namespace, table):
+        self.namespace = namespace
+        self.path = "/scheduled_changes/%s/:sc_id/signoffs" % namespace
+        self.signoffs_table = table.scheduled_changes.signoffs
+        super(SignoffsView, self).__init__()
+
+    def _post(self, sc_id, transaction, changed_by):
+        form = SignoffForm()
+        if not form.validate():
+            self.log.warning("Bad input: %s", form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
+
+        try:
+            self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **form.data)
+        except ValueError as e:
+            self.log.warning("Bad input: %s", e)
+            return Response(status=400, response=json.dumps({"exception": e.args}))
+
         return Response(status=200)
 
 
