@@ -45,12 +45,12 @@ The response format for GMP and System Addons is as follows:
 
 .. code-block:: xml
 
-	<updates>
-		<addons>
-			<addon id="gmp-eme-adobe" URL="https://cdmdownload.adobe.com/firefox/win/x86/primetime_gmp_win_x86_gmc_30527.1.zip" hashFunction="sha512" hashValue="d0077885971419a5db8e8ab9f0cb2cac236be98497aa9b6f86ff3b528788fc01a755a8dd401f391f364ff6e586204a766e61afe20cf5e597ceeb92dee9ed1ebc" size="3696996" version="15"/>
-			<addon id="gmp-gmpopenh264" URL="http://ciscobinary.openh264.org/openh264-win32-2706e36bf0a8b7c539c803ed877148c005ffca59.zip" hashFunction="sha512" hashValue="45124a776054dcfc81bfc65ad4ff85bd65113900c86f98b70917c695cd9d8924d9b0878da39d14b2af5708029bc0346be6d7d92f1d856443b3051f0d3180894d" size="341180" version="1.5.3"/>
-		</addons>
-	</updates>
+    <updates>
+        <addons>
+            <addon id="gmp-eme-adobe" URL="https://cdmdownload.adobe.com/firefox/win/x86/primetime_gmp_win_x86_gmc_30527.1.zip" hashFunction="sha512" hashValue="d0077885971419a5db8e8ab9f0cb2cac236be98497aa9b6f86ff3b528788fc01a755a8dd401f391f364ff6e586204a766e61afe20cf5e597ceeb92dee9ed1ebc" size="3696996" version="15"/>
+            <addon id="gmp-gmpopenh264" URL="http://ciscobinary.openh264.org/openh264-win32-2706e36bf0a8b7c539c803ed877148c005ffca59.zip" hashFunction="sha512" hashValue="45124a776054dcfc81bfc65ad4ff85bd65113900c86f98b70917c695cd9d8924d9b0878da39d14b2af5708029bc0346be6d7d92f1d856443b3051f0d3180894d" size="341180" version="1.5.3"/>
+        </addons>
+    </updates>
 
 
 Similar to App Release blobs, not all <addon> lines are required, but if an <addons> block is present, at least one <addon> must be inside of it.

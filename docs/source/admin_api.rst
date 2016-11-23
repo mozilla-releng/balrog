@@ -125,24 +125,24 @@ Returns previous versions of the rule identified by the id or alias given in a J
 ::
 
     {
-    	"count": 2,
-    	"rules": [
-    	{
-    		"id": 1,
-    		"change_id": 4,
-    		"timestamp": 1451610061000,
-    		"changed_by": "jane",
-    		"product": "Firefox",
-    		...
-    	},
-    	{
-    		"id": 1,
-    		"change_id": 4,
-    		"timestamp": 1451610061000,
-    		"changed_by": "jane",
-    		"product": "Firefox",
-    		...
-    	}
+        "count": 2,
+        "rules": [
+        {
+            "id": 1,
+            "change_id": 4,
+            "timestamp": 1451610061000,
+            "changed_by": "jane",
+            "product": "Firefox",
+            ...
+        },
+        {
+            "id": 1,
+            "change_id": 4,
+            "timestamp": 1451610061000,
+            "changed_by": "jane",
+            "product": "Firefox",
+            ...
+        }
         ]
     }
 
@@ -170,19 +170,19 @@ For example, /rules/columns/product would return something like:
 ::
 
     {
-        "count": 10,
-        "product": [
-            "Firefox",
-            "Graphene",
-            "Thunderbird",
-            "MetroFirefox",
-            "Horizon",
-            "B2G",
-            "GMP",
-            "Fennec",
-            "SystemAddons",
-            "B2GDroid"
-        ]
+      "count": 10,
+      "product": [
+        "Firefox",
+        "Graphene",
+        "Thunderbird",
+        "MetroFirefox",
+        "Horizon",
+        "B2G",
+        "GMP",
+        "Fennec",
+        "SystemAddons",
+        "B2GDroid"
+      ]
     }
 
 
@@ -204,21 +204,21 @@ If no arguments are provided, it returns information about all of the Releases i
 ::
 
     {
-    "releases": [
+      "releases": [
         {
-        "name": "Firefox-34.0-build1",
-        "product": "Firefox",
-        "data_version": 4,
-        "read_only": null
+          "name": "Firefox-34.0-build1",
+          "product": "Firefox",
+          "data_version": 4,
+          "read_only": null
         },
         {
-        "name": "Fennec-34.0-build1",
-        "product": "Fennec",
-        "data_version": 43,
-        "read_only": true
-        },
-        ...
-        ]
+          "name": "Fennec-34.0-build1",
+          "product": "Fennec",
+          "data_version": 43,
+          "read_only": true
+          },
+          ...
+      ]
     }
 
 
@@ -230,11 +230,11 @@ If "names_only" is set to true, the response changes format and provides a list 
 ::
 
     {
-    "names": [
+      "names": [
         "Firefox-34.0-build1",
         "Fennec-34.0-build1",
         ...
-        ]
+       ]
     }
 
 
@@ -260,13 +260,13 @@ If "pretty" is present in the query string and set to true, it will be pretty fo
 ::
 
     {
-    "name": "Firefox-mozilla-central-nightly-latest",
-    "schema_version": 4,
-    "platforms": {
+      "name": "Firefox-mozilla-central-nightly-latest",
+      "schema_version": 4,
+      "platforms": {
         "WINNT_x86-msvc": {
         ...
         }
-        }
+      }
     }
 
 
@@ -318,7 +318,7 @@ Returns whether or not the named Release is marked as read_only. Eg:
 ::
 
     {
-        "read_only": true
+      "read_only": true
     }
 
 
@@ -340,18 +340,18 @@ Returns the platform+locale specific data of the named Release, which is a JSON 
       "platformVersion": "48.0a1",
       "partials": [
         {
-          "fileUrl": "https://mozilla-nightly-updates.s3.amazonaws.com/mozilla-central/20160329030246/Firefox-mozilla-central-48.0a1-win32-de-20160327030437-20160329030246.partial.mar?versionId=uIza17vCjTuL6XVvCvtpzlVVQSelUdJm",
-          "from": "Firefox-mozilla-central-nightly-20160327030437",
-          "hashValue": "0d36245eedef3bfce927339ee89da58400f8afa5a8cc8b4323f7407660f291bbfa1f00527665d5f16614de679723b874d92d650dbf319ffbfa1e672729ba09c9",
-          "filesize": 10388948
+            "fileUrl": "https://mozilla-nightly-updates.s3.amazonaws.com/mozilla-central/20160329030246/Firefox-mozilla-central-48.0a1-win32-de-20160327030437-20160329030246.partial.mar?versionId=uIza17vCjTuL6XVvCvtpzlVVQSelUdJm",
+            "from": "Firefox-mozilla-central-nightly-20160327030437",
+            "hashValue": "0d36245eedef3bfce927339ee89da58400f8afa5a8cc8b4323f7407660f291bbfa1f00527665d5f16614de679723b874d92d650dbf319ffbfa1e672729ba09c9",
+            "filesize": 10388948
         }
       ],
       "completes": [
         {
-          "fileUrl": "https://mozilla-nightly-updates.s3.amazonaws.com/mozilla-central/20160329030246/Firefox-mozilla-central-48.0a1-win32-de.complete.mar?versionId=sdNQURDy9.8GH3P4SLdO1V.XtA9MLIzu",
-          "from": "*",
-          "hashValue": "981082f1b7f5264d88aa017f45362aac362990842b82a0934e70506c1536304b0fda6beb229b7ef56b153d71b69669cc92b5f2987d282cc026e9ed993b88e582",
-          "filesize": 53656493
+            "fileUrl": "https://mozilla-nightly-updates.s3.amazonaws.com/mozilla-central/20160329030246/Firefox-mozilla-central-48.0a1-win32-de.complete.mar?versionId=sdNQURDy9.8GH3P4SLdO1V.XtA9MLIzu",
+            "from": "*",
+            "hashValue": "981082f1b7f5264d88aa017f45362aac362990842b82a0934e70506c1536304b0fda6beb229b7ef56b153d71b69669cc92b5f2987d282cc026e9ed993b88e582",
+            "filesize": 53656493
         }
       ]
     }
@@ -469,16 +469,16 @@ Returns all of the permissions that the given username has been granted in a JSO
 ::
 
     {
-        "/releases/:name": {
-            "data_version": 1,
-            "options": {
-              "method": "POST,
-              "product": [
-                "Firefox",
-                "Fennec"
-              ]
-            }
-        },
+      "/releases/:name": {
+        "data_version": 1,
+        "options": {
+          "method": "POST,
+          "product": [
+            "Firefox",
+            "Fennec"
+          ]
+        }
+      },
         ...
     }
 
