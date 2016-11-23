@@ -1,20 +1,15 @@
-auslib.web package
-==================
+auslib.web
+==========
 
-===========
-Subpackages
-===========
 
 .. toctree::
 
     auslib.web.views
 
-==========
-Submodules
-==========
 
-auslib.web.base module
-----------------------
+
+auslib.web.base
+---------------
 
 .. automodule:: auslib.web.base
     :members:

@@ -2,9 +2,6 @@ Developer Documentation (Auslib Package)
 ========================================
 
 
-===========
-Subpackages
-===========
 
 .. toctree::
 
@@ -14,60 +11,58 @@ Subpackages
     auslib.util
     auslib.web
 
-==========
-Submodules
-==========
 
-auslib.AUS module
------------------
+
+auslib.AUS
+----------
 
 .. automodule:: auslib.AUS
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.config module
---------------------
+auslib.config
+-------------
 
 .. automodule:: auslib.config
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.db module
-----------------
+auslib.db
+---------
 
 .. automodule:: auslib.db
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.dockerflow module
-------------------------
+auslib.dockerflow
+-----------------
 
 .. automodule:: auslib.dockerflow
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.errors module
---------------------
+auslib.errors
+-------------
 
 .. automodule:: auslib.errors
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.global_state module
---------------------------
+auslib.global_state
+-------------------
 
 .. automodule:: auslib.global_state
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.log module
------------------
+auslib.log
+----------
 
 .. automodule:: auslib.log
     :members:

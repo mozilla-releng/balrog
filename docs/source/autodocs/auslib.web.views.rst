@@ -1,12 +1,8 @@
-auslib.web.views package
-========================
+auslib.web.views
+================
 
-==========
-Submodules
-==========
-
-auslib.web.views.client module
-------------------------------
+auslib.web.views.client
+-----------------------
 
 .. automodule:: auslib.web.views.client
     :members:

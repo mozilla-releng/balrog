@@ -1,20 +1,14 @@
-auslib.admin package
-====================
+auslib.admin
+============
 
-===========
-Subpackages
-===========
+
 
 .. toctree::
 
     auslib.admin.views
 
-==========
-Submodules
-==========
-
-auslib.admin.base module
-------------------------
+auslib.admin.base
+-----------------
 
 .. automodule:: auslib.admin.base
     :members:
