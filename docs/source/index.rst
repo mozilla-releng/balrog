@@ -5,22 +5,21 @@
 
 Welcome to Balrog's documentation!
 ==================================
-**Balrog** is the software that runs the server side component of the update system used by Firefox and other Mozilla products. 
-It is the successor to AUS (Application Update Service), which did not scale to our current needs nor allow us to adapt to more recent business requirements. 
+**Balrog** is the software that runs the server side component of the update system used by Firefox and other Mozilla products.
+It is the successor to AUS (Application Update Service), which did not scale to our current needs nor allow us to adapt to more recent business requirements.
 Balrog helps us ship updates faster and with much more flexability than we've had in the past.
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
-    
+
    contribute
    codeoverview
    database
    admin_api
    withoutdocker
    blobs
-   gmp_example
    balrog_agent
    autodocs/auslib
 
