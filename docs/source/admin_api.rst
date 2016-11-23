@@ -4,7 +4,7 @@
 Admin API
 =========
 
-Balrog's Admin app provides an API that allows for retrieval and modification of Rules, Releases, and Permissions. 
+Balrog's Admin app provides an API that allows for retrieval and modification of Rules, Releases, and Permissions.
 This page documents all of the available endpoints, their parameters, and responses.
 POST and PUT requests may submit parameters as multipart form data or json.
 
@@ -40,7 +40,7 @@ Returns all of the Rules in Balrog's database inside of a JSON Object in the fol
 
 POST
 ****
-Creates a new rule with the provided values. 
+Creates a new rule with the provided values.
 The following parameters are supported:
 
 -   priority (required)
@@ -71,7 +71,7 @@ GET
 
 Returns the entire rule identified by the id or alias given in JSON format. Eg:
 
-::	
+::
 
     {
         "rule_id": 3,
@@ -111,9 +111,9 @@ DELETE
 Deletes the rule identified by the id or alias given. The following parameters are supported:
 
 -	data_version (required)
- 
 
- 
+
+
 **/rules/<id_or_alias>/revisions**
 ----------------------------------
 
@@ -141,20 +141,20 @@ Returns previous versions of the rule identified by the id or alias given in a J
     		"timestamp": 1451610061000,
     		"changed_by": "jane",
     		"product": "Firefox",
-    		...	
-    	}   
+    		...
+    	}
         ]
     }
 
-This endpoint supports pagination. 
-If "page" and "limit" are present in the query args, a slice of the revisions is returned instead of the full history. 
+This endpoint supports pagination.
+If "page" and "limit" are present in the query args, a slice of the revisions is returned instead of the full history.
 Eg: if the page is "2" and the limit is "5", the 6th through 10th revisions would be returned. "count" is not affected by pagination - it will always return the total number of revisions that exist.
 
 
 POST
 ****
 
-Reverts the rule identified by the given id (alias is not supported here) to the version identified by the change_id given in the request body. 
+Reverts the rule identified by the given id (alias is not supported here) to the version identified by the change_id given in the request body.
 The request body must be a JSON object containing a "change_id" key.
 
 
@@ -186,6 +186,9 @@ For example, /rules/columns/product would return something like:
     }
 
 
+--------
+Releases
+--------
 
 **/releases**
 -------------
@@ -193,8 +196,8 @@ For example, /rules/columns/product would return something like:
 GET
 ***
 
-Returns a JSON Object containing metadata about Releases in Balrog's database. 
-Due to its size, the actual Release "blob" is never returned from this endpoint. 
+Returns a JSON Object containing metadata about Releases in Balrog's database.
+Due to its size, the actual Release "blob" is never returned from this endpoint.
 There are a few query arguments that affect its response.
 If no arguments are provided, it returns information about all of the Releases in the database in the following format:
 
@@ -251,7 +254,7 @@ Creates a new Release with the provided values. The following parameters are sup
 GET
 ***
 
-Returns the "data" portion of the named Release, which is a JSON Object. 
+Returns the "data" portion of the named Release, which is a JSON Object.
 If "pretty" is present in the query string and set to true, it will be pretty formatted. For example:
 
 ::
@@ -270,8 +273,8 @@ If "pretty" is present in the query string and set to true, it will be pretty fo
 PUT
 ***
 
-Overwrites the named Release with the data given. 
-The "blob" field is completely overridden with the new one, not updated. 
+Overwrites the named Release with the data given.
+The "blob" field is completely overridden with the new one, not updated.
 If the Release does not exist, it is created. The following parameters are supported:
 
 -	name (required)
@@ -282,9 +285,9 @@ If the Release does not exist, it is created. The following parameters are suppo
 POST
 ****
 
-Updates the named Release with the data given. 
-The "blob" field is updated with the new one instead of being completely overridden. 
-If the Release does not exist, it is created. 
+Updates the named Release with the data given.
+The "blob" field is updated with the new one instead of being completely overridden.
+If the Release does not exist, it is created.
 The following parameters are supported:
 
 -	product (required)
@@ -298,7 +301,7 @@ The following parameters are supported:
 DELETE
 ******
 
-Deletes the named Release. 
+Deletes the named Release.
 The following parameters are supported:
 
 - data_version (required)
@@ -357,7 +360,7 @@ Returns the platform+locale specific data of the named Release, which is a JSON 
 PUT
 ***
 
-Sets or unsets the read_only flag of the named Release. 
+Sets or unsets the read_only flag of the named Release.
 The following parameters are supported:
 
 -	name (required)
@@ -390,15 +393,15 @@ Returns previous versions of the named Release in a JSON Object in the following
     }
 
 
-This endpoint supports pagination. 
-If "page" and "limit" are present in the query args, a slice of the revisions are returned instead of the full history. 
-Eg: if the page is "2" and the limit is "5", the 6th through 10th revisions would be returned. "count" is not affected 
+This endpoint supports pagination.
+If "page" and "limit" are present in the query args, a slice of the revisions are returned instead of the full history.
+Eg: if the page is "2" and the limit is "5", the 6th through 10th revisions would be returned. "count" is not affected
 by pagination - it will always return the total number of revisions that exist.
 
 POST
 ****
 
-Reverts the named Release to the version identified by the change_id given in the request body. 
+Reverts the named Release to the version identified by the change_id given in the request body.
 The request body must be a JSON object containing a "change_id" key.
 
 
@@ -407,7 +410,7 @@ The request body must be a JSON object containing a "change_id" key.
 
 GET
 ***
-Returns a JSON Object containing the unique values for the given column. 
+Returns a JSON Object containing the unique values for the given column.
 For example, /releases/columns/product would return something like:
 vpn
 ::
@@ -428,6 +431,10 @@ vpn
       ]
     }
 
+
+-----
+Users
+-----
 
 **/users**
 ----------
@@ -520,6 +527,9 @@ Deletes the named permission for the username given. The following parameters ar
 
 -	data_version (required)
 
+------
+Others
+------
 
 **/csrf_token**
 ---------------
