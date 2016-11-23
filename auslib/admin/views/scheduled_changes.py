@@ -3,6 +3,7 @@ import json
 from sqlalchemy.sql.expression import null
 
 from flask import jsonify, request, Response
+from flask_wtf import Form
 
 from auslib.admin.views.base import AdminView, HistoryAdminView
 from auslib.admin.views.forms import DbEditableForm, SignoffForm
@@ -146,6 +147,11 @@ class SignoffsView(AdminView):
         signoff = self.signoffs_table.select(where, transaction)
         if not signoff:
             return Response(status=404, response="{} has no signoff to revoke".format(changed_by))
+
+        form = Form(request.args)
+        if not form.validate():
+            self.log.warning("Bad input: %s", form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
 
         self.signoffs_table.delete(where, changed_by=changed_by, transaction=transaction)
         return Response(status=200)
