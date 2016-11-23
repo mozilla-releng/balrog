@@ -141,6 +141,15 @@ class SignoffsView(AdminView):
 
         return Response(status=200)
 
+    def _delete(self, sc_id, transaction, changed_by):
+        where = {"sc_id": sc_id}
+        signoff = self.signoffs_table.select(where, transaction)
+        if not signoff:
+            return Response(status=404, response="{} has no signoff to revoke".format(changed_by))
+
+        self.signoffs_table.delete(where, changed_by=changed_by, transaction=transaction)
+        return Response(status=200)
+
 
 class ScheduledChangeHistoryView(HistoryAdminView):
     """/scheduled_changes/:namespace/revisions"""

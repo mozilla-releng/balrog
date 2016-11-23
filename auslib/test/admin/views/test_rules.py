@@ -1069,9 +1069,9 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(ret.status_code, 403, ret.data)
 
     def testRevokeSignoff(self):
-        # TODO: implement me when rules_signoffs table exists
-        self.fail()
+        ret = self._delete("/scheduled_changes/rules/1/signoffs", username="bill")
+        self.assertEquals(ret.status_code, 200, ret.data)
 
     def testRevokeOtherUsersSignoff(self):
-        # TODO: implement me when rules_signoffs table exists
-        self.fail()
+        ret = self._delete("/scheduled_changes/rules/1/signoffs", username="bob")
+        self.assertEquals(ret.status_code, 403, ret.data)
