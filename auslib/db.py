@@ -1126,6 +1126,8 @@ class SignoffsTable(AUSTable):
                            Column("username", String(100), primary_key=True),
                            Column("role", String(50), nullable=False),
                            )
+        # Because Signoffs cannot be modified, there's no possibility of an
+        # update race, so they do not need to be versioned.
         super(SignoffsTable, self).__init__(db, dialect, versioned=False)
 
     def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
@@ -1136,9 +1138,10 @@ class SignoffsTable(AUSTable):
         if not self.db.hasRole(changed_by, columns["role"], transaction=transaction):
             raise PermissionDeniedError("{} cannot signoff with role '{}'".format(changed_by, columns["role"]))
 
-        # There shouldn't be more than one...
         existing_signoff = self.select({"sc_id": columns["sc_id"], "username": changed_by}, transaction)
         if existing_signoff:
+            # It shouldn't be possible for there to be more than one signoff,
+            # so not iterating over this should be fine.
             existing_signoff = existing_signoff[0]
             if existing_signoff["role"] != columns["role"]:
                 raise PermissionDeniedError("Cannot signoff with a second role")
