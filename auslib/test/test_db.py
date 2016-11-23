@@ -671,6 +671,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue(self.table.scheduled_changes.history)
         self.assertTrue(self.table.scheduled_changes.conditions)
         self.assertTrue(self.table.scheduled_changes.conditions.history)
+        self.assertTrue(self.table.scheduled_changes.signoffs)
+        self.assertTrue(self.table.scheduled_changes.signoffs.history)
 
     def testTablesHaveCorrectColumns(self):
         sc_columns = [c.name for c in self.sc_table.t.get_children()]
@@ -693,6 +695,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue("telemetry_channel" in cond_columns)
         self.assertTrue("telemetry_uptake" in cond_columns)
         self.assertTrue("when" in cond_columns)
+
+        signoff_columns = [c.name for c in self.sc_table.signoffs.t.get_children()]
+        self.assertTrue("sc_id" in signoff_columns)
+        self.assertTrue("username" in signoff_columns)
+        self.assertTrue("role" in signoff_columns)
 
     def testValidateConditionsNone(self):
         self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.conditions.validate, {})
@@ -1154,6 +1161,8 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         self.assertTrue(self.table.scheduled_changes.history)
         self.assertTrue(self.table.scheduled_changes.conditions)
         self.assertTrue(self.table.scheduled_changes.conditions.history)
+        self.assertTrue(self.table.scheduled_changes.signoffs)
+        self.assertTrue(self.table.scheduled_changes.signoffs.history)
 
     def testSCTableHasCorrectColumns(self):
         sc_columns = [c.name for c in self.sc_table.t.get_children()]
@@ -1176,6 +1185,11 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         self.assertTrue("telemetry_channel" not in cond_columns)
         self.assertTrue("telemetry_uptake" not in cond_columns)
         self.assertTrue("when" in cond_columns)
+
+        signoff_columns = [c.name for c in self.sc_table.signoffs.t.get_children()]
+        self.assertTrue("sc_id" in signoff_columns)
+        self.assertTrue("username" in signoff_columns)
+        self.assertTrue("role" in signoff_columns)
 
     def testSCTableWithNoConditions(self):
         class TestTable2(AUSTable):

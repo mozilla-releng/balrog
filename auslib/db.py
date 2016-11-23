@@ -836,7 +836,8 @@ class ScheduledChangeTable(AUSTable):
                            Column("complete", Boolean, default=False),
                            )
         self.conditions = ConditionsTable(db, dialect, metadata, table_name, conditions)
-        # TODO: should be optional? needs to be verified by tests either way
+        # Signoffs are configurable at runtime, which means that we always need
+        # a Signoffs table, even if it may not be used immediately.
         self.signoffs = SignoffsTable(db, metadata, dialect, table_name)
 
         # The primary key column(s) are used in construct "where" clauses for
