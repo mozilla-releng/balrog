@@ -1,8 +1,9 @@
 auslib.util package
 ===================
 
+==========
 Submodules
-----------
+==========
 
 auslib.util.cache module
 ------------------------
@@ -53,10 +54,3 @@ auslib.util.versions module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: auslib.util
-    :members:
-    :undoc-members:
-    :show-inheritance:

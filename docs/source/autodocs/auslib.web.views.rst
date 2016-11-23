@@ -1,8 +1,9 @@
 auslib.web.views package
 ========================
 
+==========
 Submodules
-----------
+==========
 
 auslib.web.views.client module
 ------------------------------
@@ -13,10 +14,3 @@ auslib.web.views.client module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: auslib.web.views
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -1,8 +1,9 @@
 auslib.blobs package
 ====================
 
+==========
 Submodules
-----------
+==========
 
 auslib.blobs.apprelease module
 ------------------------------
@@ -52,11 +53,3 @@ auslib.blobs.whitelist module
     :undoc-members:
     :show-inheritance:
 
-
-Module contents
----------------
-
-.. automodule:: auslib.blobs
-    :members:
-    :undoc-members:
-    :show-inheritance:

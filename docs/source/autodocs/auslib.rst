@@ -1,8 +1,10 @@
 Developer Documentation (Auslib Package)
 ========================================
 
+
+===========
 Subpackages
------------
+===========
 
 .. toctree::
 
@@ -12,8 +14,9 @@ Subpackages
     auslib.util
     auslib.web
 
+==========
 Submodules
-----------
+==========
 
 auslib.AUS module
 -----------------
@@ -71,11 +74,3 @@ auslib.log module
     :undoc-members:
     :show-inheritance:
 
-
-Module contents
----------------
-
-.. automodule:: auslib
-    :members:
-    :undoc-members:
-    :show-inheritance:

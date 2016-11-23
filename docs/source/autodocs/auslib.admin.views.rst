@@ -1,8 +1,9 @@
 auslib.admin.views package
 ==========================
 
+==========
 Submodules
-----------
+==========
 
 auslib.admin.views.base module
 ------------------------------
@@ -64,15 +65,6 @@ auslib.admin.views.scheduled_changes module
 -------------------------------------------
 
 .. automodule:: auslib.admin.views.scheduled_changes
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: auslib.admin.views
     :members:
     :undoc-members:
     :show-inheritance:
