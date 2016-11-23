@@ -18,6 +18,40 @@ function($scope, $http, $modalInstance, CSRF, Releases, releases) {
   $scope.errors = {};
   $scope.saving = false;
 
+  $scope.fillName = function () {
+    var file = $scope.dataFile;
+    $scope.errors.data = [];
+    $scope.release.name = "";
+
+    var reader = new FileReader();
+    reader.onloadend = function(evt) {
+      var blob = evt.target.result;
+      $scope.$apply( function() {
+        try{
+          var name = JSON.parse(blob).name;
+          if (name) {
+            $scope.release.name = name;
+          }
+          else {
+            $scope.errors.data = ["Form submission error", "Missing name field in JSON blob.\n"];
+          }
+        }catch(err) {
+           $scope.errors.data = ["Form submission error", "Malformed JSON file.\n"];
+        }
+      });
+    };
+    if (typeof file !== 'undefined') {
+      // should work
+      reader.readAsText(file);
+    }
+
+  };
+
+  $scope.changeName = function () {
+    //wait for actual file to be loaded
+    setTimeout($scope.fillName, 0);
+  };
+
   $scope.saveChanges = function () {
     if (!$scope.release.product.trim()) {
       sweetAlert(
@@ -74,6 +108,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, releases) {
         "No file has been selected.",
         "error"
       );
+      $scope.saving = false;
       return;
     } else {
       // should work

@@ -61,6 +61,11 @@ class OutdatedDataError(SQLAlchemyError):
     """Raised when an update or delete fails because of outdated data."""
 
 
+class MismatchedDataVersionError(SQLAlchemyError):
+    """Raised when the data version of a scheduled change and its associated conditions
+    row do not match after an insert or update."""
+
+
 class WrongNumberOfRowsError(SQLAlchemyError):
     """Raised when an update or delete fails because the clause matches more than one row."""
 
@@ -185,7 +190,7 @@ class AUSTable(object):
     """
 
     def __init__(self, db, dialect, history=True, versioned=True, scheduled_changes=False,
-                 onInsert=None, onUpdate=None, onDelete=None):
+                 scheduled_changes_kwargs={}, onInsert=None, onUpdate=None, onDelete=None):
         self.db = db
         self.t = self.table
         # Enable versioning, if required
@@ -208,7 +213,7 @@ class AUSTable(object):
             self.history = None
         # Set-up a scheduled changes table if required
         if scheduled_changes:
-            self.scheduled_changes = ScheduledChangeTable(db, dialect, self.t.metadata, self)
+            self.scheduled_changes = ScheduledChangeTable(db, dialect, self.t.metadata, self, **scheduled_changes_kwargs)
         else:
             self.scheduled_changes = None
         self.log = logging.getLogger(self.__class__.__name__)
@@ -297,7 +302,7 @@ class AUSTable(object):
         query = self._insertStatement(**data)
 
         if self.onInsert:
-            self.onInsert(self, "INSERT", changed_by, query)
+            self.onInsert(self, "INSERT", changed_by, query, trans)
 
         ret = trans.execute(query)
         if self.history:
@@ -305,7 +310,7 @@ class AUSTable(object):
                 trans.execute(q)
         return ret
 
-    def insert(self, changed_by=None, transaction=None, **columns):
+    def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
         """Perform an INSERT statement on this table. See AUSTable._insertStatement for
            a description of columns.
 
@@ -316,11 +321,17 @@ class AUSTable(object):
            @param transaction: A transaction object to add the insert statement (and history changes) to.
                                If provided, you must commit the transaction yourself. If None, they will
                                be added to a locally-scoped transaction and committed.
+           @param dryrun: If true, this insert statement will not actually be run.
+           @type dryrun bool
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
+
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
 
         if transaction:
             return self._prepareInsert(transaction, changed_by, **columns)
@@ -360,7 +371,7 @@ class AUSTable(object):
         query = self._deleteStatement(where)
 
         if self.onDelete:
-            self.onDelete(self, "DELETE", changed_by, query)
+            self.onDelete(self, "DELETE", changed_by, query, trans)
 
         ret = trans.execute(query)
         if ret.rowcount != 1:
@@ -377,7 +388,7 @@ class AUSTable(object):
 
         return ret
 
-    def delete(self, where, changed_by=None, old_data_version=None, transaction=None):
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         """Perform a DELETE statement on this table. See AUSTable._deleteStatement for
            a description of `where'. To simplify versioning, this method can only
            delete a single row per invocation. If the where clause given would delete
@@ -393,6 +404,11 @@ class AUSTable(object):
                                     match the current version of the row, an OutdatedDataError will be
                                     raised and the delete will fail. Required when versioning is enabled.
            @type old_data_version: int
+           @param transaction: A transaction object to add the delete statement (and history changes) to.
+                               If provided, you must commit the transaction yourself. If None, they will
+                               be added to a locally-scoped transaction and committed.
+           @param dryrun: If true, this insert statement will not actually be run.
+           @type dryrun bool
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
@@ -405,6 +421,10 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("old_data_version must be passed for Tables that are versioned")
+
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
 
         if transaction:
             return self._prepareDelete(transaction, where, changed_by, old_data_version)
@@ -453,7 +473,7 @@ class AUSTable(object):
         query = self._updateStatement(where, new_row)
 
         if self.onUpdate:
-            self.onUpdate(self, "UPDATE", changed_by, query)
+            self.onUpdate(self, "UPDATE", changed_by, query, trans)
 
         ret = trans.execute(query)
         if self.history:
@@ -464,7 +484,7 @@ class AUSTable(object):
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
 
-    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None):
+    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         """Perform an UPDATE statement on this stable. See AUSTable._updateStatement for
            a description of `where' and `what'. This method can only update a single row
            per invocation. If the where clause given would update zero or multiple rows, a
@@ -472,6 +492,8 @@ class AUSTable(object):
 
            @param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
            @type where: list of clauses or key/value pairs.
+           @param what: Key/value pairs containing new values for the given columns.
+           @type what: key/value pairs
            @param changed_by: The username of the person inserting the row. Required when
                               history is enabled. Unused otherwise. No authorization checks are done
                               at this level.
@@ -480,10 +502,14 @@ class AUSTable(object):
                                     match the current version of the row, an OutdatedDataError will be
                                     raised and the delete will fail. Required when versioning is enabled.
            @type old_data_version: int
+           @param transaction: A transaction object to add the update statement (and history changes) to.
+                               If provided, you must commit the transaction yourself. If None, they will
+                               be added to a locally-scoped transaction and committed.
+           @param dryrun: If true, this insert statement will not actually be run.
+           @type dryrun bool
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before porceeding.
         if hasattr(where, "keys"):
@@ -493,6 +519,10 @@ class AUSTable(object):
             raise ValueError("changed_by must be passed for Tables that have history")
         if self.versioned and not old_data_version:
             raise ValueError("update: old_data_version must be passed for Tables that are versioned")
+
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
 
         if transaction:
             return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
@@ -725,35 +755,87 @@ class History(AUSTable):
             self.log.debug("ERROR, change doesn't correspond to any known operation")
 
 
+class ConditionsTable(AUSTable):
+    # Scheduled changes may only have a single type of condition, but some
+    # conditions require mulitple arguments. This data structure defines
+    # each type of condition, and groups their args together for easier
+    # processing.
+    condition_groups = {
+        "time": ("when",),
+        "uptake": ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
+    }
+
+    def __init__(self, db, dialect, metadata, baseName, conditions, history=True):
+        if not conditions:
+            raise ValueError("No conditions enabled, cannot initialize conditions for for {}".format(baseName))
+        if set(conditions) - set(self.condition_groups):
+            raise ValueError("Unknown conditions in: {}".format(conditions))
+
+        self.enabled_condition_groups = {k: v for k, v in self.condition_groups.iteritems() if k in conditions}
+
+        self.table = Table("{}_conditions".format(baseName), metadata,
+                           Column("sc_id", Integer, primary_key=True),
+                           )
+
+        if "uptake" in conditions:
+            self.table.append_column(Column("telemetry_product", String(15)))
+            self.table.append_column(Column("telemetry_channel", String(75)))
+            self.table.append_column(Column("telemetry_uptake", Integer))
+
+        if "time" in conditions:
+            if dialect == "sqlite":
+                self.table.append_column(Column("when", Integer))
+            else:
+                self.table.append_column(Column("when", BigInteger))
+
+        super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
+
+    def validate(self, conditions):
+        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
+        if not conditions:
+            raise ValueError("No conditions found")
+
+        for c in conditions:
+            for condition, args in self.condition_groups.iteritems():
+                if c in args:
+                    if c in itertools.chain(*self.enabled_condition_groups.values()):
+                        break
+                    else:
+                        raise ValueError("{} condition is disabled".format(condition))
+            else:
+                raise ValueError("Invalid condition: %s", c)
+
+        for group in self.enabled_condition_groups.values():
+            if set(group) == set(conditions.keys()):
+                break
+        else:
+            raise ValueError("Invalid combination of conditions: {}".format(conditions.keys()))
+
+        if "when" in conditions:
+            try:
+                time.gmtime(conditions["when"] / 1000)
+            except:
+                raise ValueError("Cannot parse 'when' as a unix timestamp.")
+
+            if conditions["when"] < getMillisecondTimestamp():
+                raise ValueError("Cannot schedule changes in the past")
+
+
 class ScheduledChangeTable(AUSTable):
     """A Table that stores the necessary information to schedule changes
     to the baseTable provided. A ScheduledChangeTable ends up mirroring the
     columns of its base, and adding the necessary ones to provide the schedule.
     By default, ScheduledChangeTables enable History on themselves."""
 
-    # Scheduled changes may only have a single type of condition, but some
-    # conditions require mulitple arguments. This data structure defines
-    # each type of condition, and groups their args together for easier
-    # processing.
-    condition_groups = (
-        ("when",),
-        ("telemetry_product", "telemetry_channel", "telemetry_uptake"),
-    )
-
-    def __init__(self, db, dialect, metadata, baseTable, history=True):
+    def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), history=True):
+        table_name = "{}_scheduled_changes".format(baseTable.t.name)
         self.baseTable = baseTable
-        self.table = Table("%s_scheduled_changes" % baseTable.t.name, metadata,
+        self.table = Table(table_name, metadata,
                            Column("sc_id", Integer, primary_key=True, autoincrement=True),
                            Column("scheduled_by", String(100), nullable=False),
                            Column("complete", Boolean, default=False),
-                           Column("telemetry_product", String(15)),
-                           Column("telemetry_channel", String(75)),
-                           Column("telemetry_uptake", Integer),
                            )
-        if dialect == "sqlite":
-            self.table.append_column(Column("when", Integer))
-        else:
-            self.table.append_column(Column("when", BigInteger))
+        self.conditions = ConditionsTable(db, dialect, metadata, table_name, conditions)
 
         # The primary key column(s) are used in construct "where" clauses for
         # existing rows.
@@ -798,32 +880,39 @@ class ScheduledChangeTable(AUSTable):
                 ret[k] = v
         return ret
 
-    def _validateConditions(self, conditions):
-        # Filter out conditions whose values are none before processing.
-        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
-        if not conditions:
-            raise ValueError("No conditions found")
+    def _splitColumns(self, columns):
+        """Because Scheduled Changes are stored across two Tables, we need to
+        split out the parts that are in the main table from the parts that
+        are stored in the conditions table in a few different places."""
+        base_columns = {}
+        condition_columns = {}
+        for cond_type in columns:
+            if cond_type in itertools.chain(*self.conditions.condition_groups.values()):
+                condition_columns[cond_type] = columns[cond_type]
+            else:
+                base_columns[cond_type] = columns[cond_type]
 
-        for c in conditions:
-            if c not in itertools.chain(*self.condition_groups):
-                raise ValueError("Invalid condition: %s", c)
+        return base_columns, condition_columns
 
-        for group in self.condition_groups:
-            if set(group) == set(conditions.keys()):
-                break
+    def _checkBaseTablePermissions(self, base_table_where, new_row, changed_by, transaction):
+        if new_row.get("data_version"):
+            self.baseTable.update(base_table_where, new_row, changed_by, new_row["data_version"], transaction=transaction, dryrun=True)
         else:
-            raise ValueError("Invalid combination of conditions: %s", conditions.keys())
+            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
 
-        if "when" in conditions:
-            try:
-                time.gmtime(conditions["when"] / 1000)
-            except:
-                raise ValueError("Cannot parse 'when' as a unix timestamp.")
+    def _dataVersionsAreSynced(self, sc_id, transaction):
+        sc_row = super(ScheduledChangeTable, self).select(where=[self.sc_id == sc_id], transaction=transaction, columns=[self.data_version])
+        conditions_row = self.conditions.select(where=[self.conditions.sc_id == sc_id], transaction=transaction, columns=[self.conditions.data_version])
+        if not sc_row or len(sc_row) != 1 or not conditions_row or len(conditions_row) != 1:
+            return False
+        self.log.debug("sc_row data version is %s", sc_row[0].get("data_version"))
+        self.log.debug("conditions_row data version is %s", conditions_row[0].get("data_version"))
+        if sc_row[0].get("data_version") != conditions_row[0].get("data_version"):
+            return False
 
-            if conditions["when"] < getMillisecondTimestamp():
-                raise ValueError("Cannot schedule changes in the past")
+        return True
 
-    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+    def validate(self, base_columns, condition_columns, changed_by, sc_id=None, transaction=None):
         # We need to do additional checks for any changes that are modifying an
         # existing row. These lists will have PK clauses in them at the end of
         # the following loop, but only if the change contains a PK. This makes
@@ -832,14 +921,14 @@ class ScheduledChangeTable(AUSTable):
         sc_table_where = []
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
-            if pk in columns:
-                sc_table_where.append(getattr(self, "base_%s" % pk) == columns[pk])
+            if pk in base_columns:
+                sc_table_where.append(getattr(self, "base_%s" % pk) == base_columns[pk])
                 # If a non-null data_version was provided it implies that the
                 # base table row should already exist. This will be checked for
                 # after we finish basic checks on the individual parts of the
                 # PK.
-                if "data_version" in columns and columns["data_version"]:
-                    base_table_where.append(getattr(self.baseTable, pk) == columns[pk])
+                if "data_version" in base_columns and base_columns["data_version"]:
+                    base_table_where.append(getattr(self.baseTable, pk) == base_columns[pk])
             # Non-Integer columns can have autoincrement set to True for some reason.
             # Any non-integer columns in the primary key are always required (because
             # autoincrement actually isn't a thing for them), and any Integer columns
@@ -854,80 +943,109 @@ class ScheduledChangeTable(AUSTable):
         # of the base table row.
         if base_table_where:
             current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction)
-
             if not current_data_version:
                 raise ValueError("Cannot create scheduled change with data_version for non-existent row")
 
-            if current_data_version and current_data_version[0]["data_version"] != columns.get("data_version"):
+            if current_data_version and current_data_version[0]["data_version"] != base_columns.get("data_version"):
                 raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
 
-        # If the change has a PK in it, we must ensure that no existing change
-        # with that PK is active before allowing it.
-        if sc_table_where:
+        # If the change has a PK in it and the change isn't already scheduled
+        # (meaning we're validating an update to it), we must ensure that no
+        # existing change with that PK is active before allowing it.
+        if not sc_id and sc_table_where:
             sc_table_where.append(self.complete == False) # noqa because we need to use == for sqlalchemy operator overloading to work
             if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
                 raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
 
-        what = self._prefixColumns(columns)
-        conditions = {}
-        for col in what:
-            if not col.startswith("base_"):
-                conditions[col] = what[col]
+        self.conditions.validate(condition_columns)
+        self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
 
-        self._validateConditions(conditions)
+    def select(self, where=None, transaction=None, **kwargs):
+        ret = []
+        # We'll be retrieving condition information for each Scheduled Change,
+        # and we'll need sc_id to do so.
+        if kwargs.get("columns") is not None:
+            # Columns can be specified as names or Column instances, so we must check for both.
+            if "sc_id" not in kwargs["columns"] and self.sc_id not in kwargs["columns"]:
+                kwargs["columns"].append(self.sc_id)
+        for row in super(ScheduledChangeTable, self).select(where=where, transaction=transaction, **kwargs):
+            columns = [getattr(self.conditions, c) for c in itertools.chain(*self.conditions.enabled_condition_groups.values())]
+            conditions = self.conditions.select([self.conditions.sc_id == row["sc_id"]], transaction=transaction, columns=columns)
+            row.update(conditions[0])
+            ret.append(row)
+        return ret
 
-        # Use the appropriate base table methods in dry run mode to ensure the
-        # user has permission for the change they want to schedule
-        if columns.get("data_version"):
-            self.baseTable.update(base_table_where, columns, changed_by, columns["data_version"], transaction=transaction, dryrun=True)
-        else:
-            self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **columns)
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        base_columns, condition_columns = self._splitColumns(columns)
 
+        self.validate(base_columns, condition_columns, changed_by, transaction)
+
+        base_columns = self._prefixColumns(base_columns)
+        base_columns["scheduled_by"] = changed_by
+        ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **base_columns)
         if not dryrun:
-            what["scheduled_by"] = changed_by
-            ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, **what)
-            return ret.inserted_primary_key[0]
+            sc_id = ret.inserted_primary_key[0]
+            self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
+            if not self._dataVersionsAreSynced(sc_id, transaction):
+                raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s", sc_id)
+            return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+        base_what, condition_what = self._splitColumns(what)
+
+        affected_ids = []
         # We need to check each Scheduled Change that would be affected by this
         # to ensure the new row will be valid.
         for row in self.select(where=where, transaction=transaction):
-            new_row = row.copy()
-            new_row.update(self._prefixColumns(what))
-            base_table_where = {pk: new_row["base_%s" % pk] for pk in self.base_primary_key}
-            if new_row.get("base_data_version"):
-                self.baseTable.update(base_table_where, new_row, changed_by, new_row["base_data_version"], transaction=transaction, dryrun=True)
-            else:
-                self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
+            affected_ids.append(row["sc_id"])
+            # Before validation, we need to create the new version of the
+            # Scheduled Change by combining the old one with the new data.
+            # To do this, we need to split the columns up a bit. First,
+            # separating the primary scheduled changes columns from the conditions...
+            sc_columns, condition_columns = self._splitColumns(row)
+            # ...and then combine taking the baseTable parts of sc_columns
+            # and combining them with any new values provided in base_what.
+            base_columns = {}
+            for col in sc_columns:
+                if not col.startswith("base_"):
+                    continue
+                base_col = col.replace("base_", "")
+                if base_col in base_what:
+                    base_columns[base_col] = base_what[base_col]
+                elif sc_columns.get(col):
+                    base_columns[base_col] = sc_columns[col]
 
-            conditions = {}
-            for cond in itertools.chain(*self.condition_groups):
-                if cond in new_row:
-                    conditions[cond] = new_row[cond]
-                elif row.get(cond):
-                    conditions[cond] = row[cond]
+            # Similarly, we need to integrate the new values for any conditions
+            # with the existing ones.
+            condition_columns.update(condition_what)
 
-            self._validateConditions(conditions)
+            # Now that we have all that sorted out, we can validate the new values for everything.
+            self.validate(base_columns, condition_columns, changed_by, sc_id=sc_columns["sc_id"], transaction=transaction)
 
-        if not dryrun:
-            renamed_what = self._prefixColumns(what)
-            renamed_what["scheduled_by"] = changed_by
-            return super(ScheduledChangeTable, self).update(where, renamed_what, changed_by, old_data_version, transaction)
+            self.conditions.update([self.conditions.sc_id == sc_columns["sc_id"]], condition_columns, changed_by, old_data_version, transaction, dryrun=dryrun)
+
+        base_what = self._prefixColumns(base_what)
+        base_what["scheduled_by"] = changed_by
+        super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
+
+        for sc_id in affected_ids:
+            if not self._dataVersionsAreSynced(sc_id, transaction):
+                raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s" % sc_id)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+        conditions_where = []
         for row in self.select(where=where, transaction=transaction):
+            conditions_where.append(self.conditions.sc_id == row["sc_id"])
             base_row = {col[5:]: row[col] for col in row if col.startswith("base_")}
             base_table_where = {pk: row["base_%s" % pk] for pk in self.base_primary_key}
             # TODO: What permissions *should* be required to delete a scheduled change?
             # It seems a bit odd to be checking base table update/insert here. Maybe
             # something broader should be required?
-            if base_row.get("base_data_version"):
-                self.baseTable.update(base_table_where, base_row, changed_by, base_row["base_data_version"], transaction=transaction, dryrun=True)
-            else:
-                self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **base_row)
+            self._checkBaseTablePermissions(base_table_where, base_row, changed_by, transaction)
 
-        if not dryrun:
-            return super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction)
+        ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction, dryrun=dryrun)
+        self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun=dryrun)
+        return ret
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
         """Enacts a previously scheduled change by running update or insert on
@@ -1104,13 +1222,13 @@ class Rules(AUSTable):
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
+        ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
-            ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, **columns)
             return ret.inserted_primary_key[0]
 
-    def getOrderedRules(self, transaction=None):
+    def getOrderedRules(self, where=None, transaction=None):
         """Returns all of the rules, sorted in ascending order"""
-        return self.select(order_by=(self.priority, self.version, self.mapping), transaction=transaction)
+        return self.select(where=where, order_by=(self.priority, self.version, self.mapping), transaction=transaction)
 
     def countRules(self, transaction=None):
         """Returns a number of the count of rules"""
@@ -1242,8 +1360,8 @@ class Rules(AUSTable):
             if not self.db.hasPermission(changed_by, "rule", "modify", current_rule["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_rule["product"]))
 
-        if not dryrun:
-            return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
+        return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version,
+                                         transaction=transaction, dryrun=dryrun)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         if "rule_id" in where and self._isAlias(where["rule_id"]):
@@ -1254,8 +1372,7 @@ class Rules(AUSTable):
         if not self.db.hasPermission(changed_by, "rule", "delete", product, transaction):
             raise PermissionDeniedError("%s is not allowed to delete rules for product %s" % (changed_by, product))
 
-        if not dryrun:
-            super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+        super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
 
 class Releases(AUSTable):
@@ -1395,8 +1512,8 @@ class Releases(AUSTable):
             raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
         columns["data"] = blob.getJSON()
 
+        ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
-            ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, **columns)
             cache.put("blob", columns["name"], {"data_version": 1, "blob": blob})
             cache.put("blob_version", columns["name"], 1)
             return ret.inserted_primary_key[0]
@@ -1444,47 +1561,48 @@ class Releases(AUSTable):
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
                 what['data'] = blob.getJSON()
-        if not dryrun:
-            for release in current_releases:
-                name = current_release["name"]
-                new_data_version = old_data_version + 1
-                try:
-                    super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version,
-                                                 transaction=transaction)
-                except OutdatedDataError as e:
-                    self.log.debug("trying to update older data_version %s for release %s" % (old_data_version, name))
-                    if blob is not None:
-                        ancestor_change = self.history.getChange(data_version=old_data_version,
-                                                                 column_values={'name': name},
-                                                                 transaction=transaction)
-                        # if we have no historical information about the ancestor blob
-                        if ancestor_change is None:
-                            self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
-                            raise
-                        ancestor_blob = createBlob(ancestor_change.get('data'))
-                        tip_release = self.getReleases(name=name, transaction=transaction)[0]
-                        tip_blob = tip_release.get('data')
-                        m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
-                        try:
-                            m.run()
-                            # Merger merges the patches into a single unified patch,
-                            # but we need dictdiffer.patch to actually apply the patch
-                            # to the original blob
-                            unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
-                            # converting the resultant dict into a blob and then
-                            # converting it to JSON
-                            what['data'] = createBlob(unified_blob).getJSON()
-                            # we want the data_version for the dictdiffer.merged blob to be one
-                            # more than that of the latest blob
-                            tip_data_version = tip_release['data_version']
-                            super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
-                                                         transaction=transaction)
-                            # cache will have a data_version of one plus the tip
-                            # data_version
-                            new_data_version = tip_data_version + 1
-                        except dictdiffer.merge.UnresolvedConflictsException:
-                            self.log.debug("latest version of release %s cannot be merged with new blob" % name)
-                            raise e
+
+        for release in current_releases:
+            name = current_release["name"]
+            new_data_version = old_data_version + 1
+            try:
+                super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version,
+                                             transaction=transaction, dryrun=dryrun)
+            except OutdatedDataError as e:
+                self.log.debug("trying to update older data_version %s for release %s" % (old_data_version, name))
+                if blob is not None:
+                    ancestor_change = self.history.getChange(data_version=old_data_version,
+                                                             column_values={'name': name},
+                                                             transaction=transaction)
+                    # if we have no historical information about the ancestor blob
+                    if ancestor_change is None:
+                        self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
+                        raise
+                    ancestor_blob = createBlob(ancestor_change.get('data'))
+                    tip_release = self.getReleases(name=name, transaction=transaction)[0]
+                    tip_blob = tip_release.get('data')
+                    m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
+                    try:
+                        m.run()
+                        # Merger merges the patches into a single unified patch,
+                        # but we need dictdiffer.patch to actually apply the patch
+                        # to the original blob
+                        unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
+                        # converting the resultant dict into a blob and then
+                        # converting it to JSON
+                        what['data'] = createBlob(unified_blob).getJSON()
+                        # we want the data_version for the dictdiffer.merged blob to be one
+                        # more than that of the latest blob
+                        tip_data_version = tip_release['data_version']
+                        super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
+                                                     transaction=transaction, dryrun=dryrun)
+                        # cache will have a data_version of one plus the tip
+                        # data_version
+                        new_data_version = tip_data_version + 1
+                    except dictdiffer.merge.UnresolvedConflictsException:
+                        self.log.debug("latest version of release %s cannot be merged with new blob" % name)
+                        raise e
+            if not dryrun:
                 cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
                 cache.put("blob_version", name, new_data_version)
 
@@ -1564,8 +1682,8 @@ class Releases(AUSTable):
             self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
             if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
+        super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
         if not dryrun:
-            super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
             for name in names:
                 cache.invalidate("blob", name)
                 cache.invalidate("blob_version", name)
@@ -1579,6 +1697,19 @@ class Releases(AUSTable):
     def _proceedIfNotReadOnly(self, name, limit=None, transaction=None):
         if self.isReadOnly(name, limit, transaction):
             raise ReadOnlyError("Release '%s' is read only" % name)
+
+
+class UserRoles(AUSTable):
+
+    def __init__(self, db, metadata, dialect):
+        self.table = Table("user_roles", metadata,
+                           Column("username", String(100), primary_key=True),
+                           Column("role", String(50), primary_key=True),
+                           )
+        super(UserRoles, self).__init__(db, dialect)
+
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+        raise AttributeError("User roles cannot be modified (only granted and revoked)")
 
 
 class Permissions(AUSTable):
@@ -1605,6 +1736,7 @@ class Permissions(AUSTable):
                            Column('username', String(100), primary_key=True),
                            Column('options', Text)
                            )
+        self.user_roles = UserRoles(db, metadata, dialect)
         AUSTable.__init__(self, db, dialect)
 
     def assertPermissionExists(self, permission):
@@ -1642,12 +1774,21 @@ class Permissions(AUSTable):
         if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
 
-        if not dryrun:
-            self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
-                           columns.get("options"))
-            super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, **columns)
-            self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
-                           columns["username"], columns.get("options"))
+        self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
+                       columns.get("options"))
+        super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
+                       columns["username"], columns.get("options"))
+
+    def grantRole(self, username, role, changed_by, transaction=None):
+        if not self.hasPermission(changed_by, "permission", "create", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to grant user roles" % changed_by)
+
+        if len(self.getUserPermissions(username, transaction)) < 1:
+            raise ValueError("Cannot grant a role to a user without any permissions")
+
+        self.log.debug("granting {} role to {}".format(role, username))
+        return self.user_roles.insert(changed_by, transaction, username=username, role=role)
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):
@@ -1665,15 +1806,27 @@ class Permissions(AUSTable):
         else:
             what["options"] = None
 
-        if not dryrun:
-            super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
+                                        transaction=transaction, dryrun=dryrun)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to revoke permissions", changed_by)
 
+        usernames = [r["username"] for r in self.select(where=where, transaction=transaction)]
         if not dryrun:
             super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
+
+            for u in usernames:
+                if len(self.getUserPermissions(u, transaction)) == 0:
+                    for role in self.user_roles.select([self.user_roles.username == u], transaction=transaction):
+                        self.revokeRole(u, role["role"], changed_by=changed_by, old_data_version=role["data_version"], transaction=transaction)
+
+    def revokeRole(self, username, role, changed_by=None, old_data_version=None, transaction=None):
+        if not self.hasPermission(changed_by, "permission", "delete", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to revoke user roles", changed_by)
+
+        return self.user_roles.delete({"username": username, "role": role}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
     def getPermission(self, username, permission, transaction=None):
         try:
@@ -1707,6 +1860,10 @@ class Permissions(AUSTable):
                 return {}
         else:
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
+
+    def getUserRoles(self, username, transaction=None):
+        res = self.user_roles.select(where=[self.user_roles.username == username], columns=[self.user_roles.role], distinct=True, transaction=transaction)
+        return [r["role"] for r in res]
 
     def hasPermission(self, username, thing, action, product=None, transaction=None):
         # Supporting product-wise admin permissions. If there are no options
@@ -1752,16 +1909,15 @@ class Dockerflow(AUSTable):
             value = {'watchdog': 1}
             where = None
 
-        if not dryrun:
-            self._putWatchdogValue(changed_by=changed_by, value=value, where=where, transaction=transaction)
+        self._putWatchdogValue(changed_by=changed_by, value=value, where=where, transaction=transaction, dryrun=dryrun)
 
         return value['watchdog']
 
-    def _putWatchdogValue(self, changed_by, value, where=None, transaction=None):
+    def _putWatchdogValue(self, changed_by, value, where=None, transaction=None, dryrun=False):
         if where is None:
-            super(Dockerflow, self).insert(changed_by=changed_by, transaction=transaction, watchdog=value['watchdog'])
+            super(Dockerflow, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, watchdog=value['watchdog'])
         else:
-            super(Dockerflow, self).update(where=where, what=value, changed_by=changed_by, transaction=transaction)
+            super(Dockerflow, self).update(where=where, what=value, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
 
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
@@ -1808,22 +1964,28 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
 
 
 def make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls):
-    def bleet(table, type_, changed_by, query):
+    def bleet(table, type_, changed_by, query, transaction):
         body = ["Changed by: %s" % changed_by]
         if type_ == "UPDATE":
             body.append("Row(s) to be updated as follows:")
             where = [c for c in query._whereclause.get_children()]
-            for row in table.select(where=where):
+            changed = {}
+            unchanged = {}
+            for row in table.select(where=where, transaction=transaction):
                 for k in row:
                     if query.parameters[k] != row[k]:
-                        row[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(query.parameters[k])))
+                        changed[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(query.parameters[k])))
                     else:
-                        row[k] = UnquotedStr("%s (unchanged)" % repr(row[k]))
-                body.append(UTF8PrettyPrinter().pformat(row))
+                        unchanged[k] = UnquotedStr("%s" % repr(row[k]))
+                body.append('Changed values:')
+                body.append(UTF8PrettyPrinter().pformat(changed))
+                body.append('\nUnchanged:')
+                body.append(UTF8PrettyPrinter().pformat(unchanged))
+            body.append('\n\n')
         elif type_ == "DELETE":
             body.append("Row(s) to be removed:")
             where = [c for c in query._whereclause.get_children()]
-            for row in table.select(where=where):
+            for row in table.select(where=where, transaction=transaction):
                 body.append(UTF8PrettyPrinter().pformat(row))
         elif type_ == "INSERT":
             body.append("Row to be inserted:")
@@ -1837,12 +1999,12 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
 
 
 def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr, use_tls):
-    def bleet(table, type_, changed_by, query):
+    def bleet(table, type_, changed_by, query, transaction):
         body = ["Changed by: %s" % changed_by]
         where = [c for c in query._whereclause.get_children()]
         # TODO: How are we sometimes (always?) getting no rows for this. It shouldn't be possible...
         # It's possible that the where clause is not getting extracted properly.
-        rows = table.select(where=where)
+        rows = table.select(where=where, transaction=transaction)
         if rows:
             row = rows[0]
             if not query.parameters['read_only'] and row['read_only']:
@@ -1909,18 +2071,17 @@ class AUSDatabase(object):
 
     def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, use_tls=False):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls)
+        for t in (self.rules, self.rules.scheduled_changes, self.permissions):
+            t.onInsert = bleeter
+            t.onUpdate = bleeter
+            t.onDelete = bleeter
+
         read_only_bleeter = make_change_notifier_for_read_only(relayhost, port,
                                                                username,
                                                                password,
                                                                to_addr,
                                                                from_addr,
                                                                use_tls)
-        self.rules.onInsert = bleeter
-        self.rules.onUpdate = bleeter
-        self.rules.onDelete = bleeter
-        self.permissions.onInsert = bleeter
-        self.permissions.onUpdate = bleeter
-        self.permissions.onDelete = bleeter
         self.releases.onUpdate = read_only_bleeter
 
     def hasPermission(self, *args, **kwargs):

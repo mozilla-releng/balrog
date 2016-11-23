@@ -13,8 +13,9 @@ import logging
 class ClientRequestView(MethodView):
     def __init__(self, *args, **kwargs):
         # By default, we want a cache that can be shared across requests from different users ("public")
-        # and a maximum age of 60 seconds, to keep our TTL low.
-        self.cacheControl = app.config.get("CACHE_CONTROL", "public, max-age=60")
+        # and a maximum age of 90 seconds, to keep our TTL low.
+        # We bumped this from 60s -> 90s in November, 2016.
+        self.cacheControl = app.config.get("CACHE_CONTROL", "public, max-age=90")
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)
 
@@ -54,6 +55,7 @@ class ClientRequestView(MethodView):
         query = self.getQueryFromURL(url)
         self.log.debug("Got query: %s", query)
         release, update_type = AUS.evaluateRules(query)
+
         # passing {},None returns empty xml
         if release:
             response_products = release.getResponseProducts()

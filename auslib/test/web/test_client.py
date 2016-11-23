@@ -865,6 +865,24 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/3/product_that_should_not_be_updated/1.0/1/p/l/a/a/a/a/update.xml')
         self.assertUpdatesAreEmpty(ret)
 
+    def testNonSubstitutedUrlVariablesReturn404(self):
+        request1 = '/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml'
+        request2 = '/update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml'
+        request3 = '/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
+            'update.xml'
+        request4 = '/update/4/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
+            '%MOZ_VERSION%/update.xml'
+        request5 = '/update/5/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
+            '%IMEI%/update.xml'
+        request6 = '/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/' \
+            '%DISTRIBUTION_VERSION%/update.xml'
+
+        with mock.patch('auslib.web.views.client.ClientRequestView') as mock_cr_view:
+            for request in [request1, request2, request3, request4, request5, request6]:
+                ret = self.client.get(request)
+                self.assertEqual(ret.status_code, 404)
+                self.assertFalse(mock_cr_view.called)
+
 
 class ClientTestWithErrorHandlers(ClientTestCommon):
     """Most of the tests are run without the error handler because it gives more
@@ -881,7 +899,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
 
     def testCacheControlIsSet(self):
         ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
-        self.assertEqual(ret.headers.get("Cache-Control"), "public, max-age=60")
+        self.assertEqual(ret.headers.get("Cache-Control"), "public, max-age=90")
 
     def testCacheControlIsNotSetFor404(self):
         ret = self.client.get('/whizzybang')
@@ -916,3 +934,21 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             with mock.patch("auslib.web.base.sentry") as sentry:
                 self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
                 self.assertTrue(sentry.captureException.called)
+
+    def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):
+        request1 = '/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml'
+        request2 = '/update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml'
+        request3 = '/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
+            'update.xml'
+        request4 = '/update/4/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
+            '%MOZ_VERSION%/update.xml'
+        request5 = '/update/5/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
+            '%IMEI%/update.xml'
+        request6 = '/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/' \
+            '%DISTRIBUTION_VERSION%/update.xml'
+
+        with mock.patch('auslib.web.views.client.ClientRequestView') as mock_cr_view:
+            for request in [request1, request2, request3, request4, request5, request6]:
+                ret = self.client.get(request)
+                self.assertUpdatesAreEmpty(ret)
+                self.assertFalse(mock_cr_view.called)
