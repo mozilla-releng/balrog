@@ -26,7 +26,13 @@ class ScheduledChangesView(AdminView):
             rows = self.sc_table.select(where={"complete": False})
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
-            r = {}
+            # TODO: Probably need to return signoffs still required after
+            # that's been implemented. That + existing signoffs may end up
+            # in the same data structure.
+            r = {"signoffs": {}}
+            for signoff in self.sc_table.signoffs.select({"sc_id": row["sc_id"]}):
+                r["signoffs"][signoff["username"]] = signoff["role"]
+
             for k, v in row.iteritems():
                 if k == "data_version":
                     r["sc_data_version"] = v
