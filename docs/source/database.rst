@@ -19,7 +19,7 @@ The most important part of Balrog to understand is its rules.
 When a request comes in it is matched against each of Balrog's rule to find the one that best suits it (more in this below).
 Once found, Balrog looks at that rule's "mapping", which points to a release that has the required information to serve an update back to the client.
 Without any rules, Balrog will never serve an update.
-With badly configured rules Balrog could do bad things like serve Firefox updates to B2G devices.
+With badly configured rules Balrog could do bad things like serve Firefox updates to Thunderbird users. 
 
 **What's in a rule?**
 

@@ -11,7 +11,7 @@ App Release
 
 App Release blobs are used for Gecko Application updates - generally anything that receives updates through MAR files (eg: Firefox, Fennec, B2G, Thunderbird).
 Each App Release Blob contains all of the metadata for all platforms and locales of a particular release.
-Here is an example that shows the Firefox-43.0.2-build1 blob, with all of its platforms and locales.
+Here is an example that shows the :ref:`appreleaseExample`, with all of its platforms and locales.
 
 Response Format
 ***************

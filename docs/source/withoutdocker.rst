@@ -2,6 +2,8 @@
 Running without Docker Compose
 ==============================
 
+Generally, this is only done in production. For local development, Docker Compose is always recommended.
+
 -------------------
 Creating a database
 -------------------

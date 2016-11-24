@@ -7,6 +7,7 @@ Developer Documentation (Auslib Package)
 
     auslib.admin
     auslib.blobs
+    auslib.db
     auslib.test
     auslib.util
     auslib.web
@@ -25,14 +26,6 @@ auslib.config
 -------------
 
 .. automodule:: auslib.config
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-auslib.db
----------
-
-.. automodule:: auslib.db
     :members:
     :undoc-members:
     :show-inheritance:
