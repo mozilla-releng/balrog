@@ -1391,7 +1391,7 @@ class Releases(AUSTable):
         else:
             dataType = Text
         self.table.append_column(Column('data', dataType, nullable=False))
-        AUSTable.__init__(self, db, dialect)
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
@@ -1737,7 +1737,7 @@ class Permissions(AUSTable):
                            Column('options', Text)
                            )
         self.user_roles = UserRoles(db, metadata, dialect)
-        AUSTable.__init__(self, db, dialect)
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def assertPermissionExists(self, permission):
         if permission not in self.allPermissions.keys():

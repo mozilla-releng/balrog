@@ -1338,6 +1338,14 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                                       update_type="z", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
 
+    def testAllTablesCreated(self):
+        self.assertTrue(self.db.rules)
+        self.assertTrue(self.db.rules.history)
+        self.assertTrue(self.db.rules.scheduled_changes)
+        self.assertTrue(self.db.rules.scheduled_changes.history)
+        self.assertTrue(self.db.rules.scheduled_changes.conditions)
+        self.assertTrue(self.db.rules.scheduled_changes.conditions.history)
+
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
         expected = [
@@ -1754,6 +1762,14 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def tearDown(self):
         dbo.reset()
+
+    def testAllTablesCreated(self):
+        self.assertTrue(dbo.releases)
+        self.assertTrue(dbo.releases.history)
+        self.assertTrue(dbo.releases.scheduled_changes)
+        self.assertTrue(dbo.releases.scheduled_changes.history)
+        self.assertTrue(dbo.releases.scheduled_changes.conditions)
+        self.assertTrue(dbo.releases.scheduled_changes.conditions.history)
 
     def testGetReleases(self):
         self.assertEquals(len(self.releases.getReleases()), 4)
@@ -2892,6 +2908,14 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         self.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
         self.user_roles.t.insert().execute(username="cathy", role="releng", data_version=1)
+
+    def testAllTablesCreated(self):
+        self.assertTrue(self.db.permissions)
+        self.assertTrue(self.db.permissions.history)
+        self.assertTrue(self.db.permissions.scheduled_changes)
+        self.assertTrue(self.db.permissions.scheduled_changes.history)
+        self.assertTrue(self.db.permissions.scheduled_changes.conditions)
+        self.assertTrue(self.db.permissions.scheduled_changes.conditions.history)
 
     def testPermissionsHasCorrectTablesAndColumns(self):
         columns = [c.name for c in self.permissions.t.get_children()]
