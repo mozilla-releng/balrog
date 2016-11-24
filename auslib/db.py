@@ -834,6 +834,7 @@ class ScheduledChangeTable(AUSTable):
                            Column("sc_id", Integer, primary_key=True, autoincrement=True),
                            Column("scheduled_by", String(100), nullable=False),
                            Column("complete", Boolean, default=False),
+                           Column("change_type", String(50)),
                            )
         self.conditions = ConditionsTable(db, dialect, metadata, table_name, conditions)
 
