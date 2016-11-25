@@ -158,7 +158,8 @@ class ExistingPermissionForm(DbEditableForm):
 
 
 class ScheduledChangeNewPermissionForm(ScheduledChangeTimeForm, NewPermissionForm):
-    pass
+    permission = StringField('Permission', validators=[Length(0, 50), Required()])
+    username = StringField('Username', validators=[Length(0, 100), Required()])
 
 
 class ScheduledChangeExistingPermissionForm(ScheduledChangeTimeForm, ExistingPermissionForm):

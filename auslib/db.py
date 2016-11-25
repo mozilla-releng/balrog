@@ -980,6 +980,14 @@ class ScheduledChangeTable(AUSTable):
 
         self.validate(base_columns, condition_columns, changed_by, transaction)
 
+        # Some columns are objects, and must be stored as serialized JSON instead.
+        # It would be better to do this only for columns we know need it to avoid
+        # accidentally storing something else as JSON, but we don't have that kind
+        # of specialized knowledge at this level...
+        for col in base_columns:
+            if isinstance(base_columns[col], dict):
+                base_columns[col] = json.dumps(base_columns[col])
+
         base_columns = self._prefixColumns(base_columns)
         base_columns["scheduled_by"] = changed_by
         ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **base_columns)
@@ -1021,6 +1029,10 @@ class ScheduledChangeTable(AUSTable):
 
             # Now that we have all that sorted out, we can validate the new values for everything.
             self.validate(base_columns, condition_columns, changed_by, sc_id=sc_columns["sc_id"], transaction=transaction)
+
+            for col in base_columns:
+                if isinstance(base_columns[col], dict):
+                    base_columns[col] = json.dumps(base_columns[col])
 
             self.conditions.update([self.conditions.sc_id == sc_columns["sc_id"]], condition_columns, changed_by, old_data_version, transaction, dryrun=dryrun)
 

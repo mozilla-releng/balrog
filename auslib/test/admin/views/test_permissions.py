@@ -280,7 +280,27 @@ class TestPermissionsScheduledChanges(ViewTest):
         cond_expected = {"sc_id": 4, "data_version": 1, "when": 400000000}
         self.assertEquals(dict(cond[0]), cond_expected)
 
-#    def testAddScheduledChangeNewPermission(self):
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeNewPermission(self):
+        data = {
+            "when": 400000000, "permission": "release", "username": "jill", "options": '{"products": ["a"]}',
+        }
+        ret = self._post("/scheduled_changes/permissions", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"sc_id": 4})
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 4, "scheduled_by": "bill", "complete": False, "data_version": 1,
+            "base_permission": "release", "base_username": "jill", "base_options": '{"products": ["a"]}', "base_data_version": None,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 4, "data_version": 1, "when": 400000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
 #    def testUpdateScheduledChangeExistingPermission(self):
 #    def testUpdateScheduledChangeNewPermission(self):
 #    def testDeleteScheduledChange(self):
