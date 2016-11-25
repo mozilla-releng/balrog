@@ -640,19 +640,23 @@ class ScheduledChangesTableMixin(object):
         self.table.t.insert().execute(fooid=2, foo="b", bar="bb", data_version=2)
         self.table.t.insert().execute(fooid=3, foo="c", data_version=2)
         self.sc_table.t.insert().execute(sc_id=1, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1,
-                                         data_version=1)
+                                         data_version=1, change_type="update")
         self.sc_table.conditions.t.insert().execute(sc_id=1, when=234000, data_version=1)
-        self.sc_table.t.insert().execute(sc_id=2, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1)
+        self.sc_table.t.insert().execute(sc_id=2, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1, change_type="new")
         self.sc_table.conditions.t.insert().execute(sc_id=2, when=567000, data_version=1)
         self.sc_table.t.insert().execute(sc_id=3, scheduled_by="bob", complete=True, base_fooid=2, base_foo="b", base_bar="bb", base_data_version=1,
-                                         data_version=1)
+                                         data_version=1, change_type="update")
         self.sc_table.conditions.t.insert().execute(sc_id=3, when=1000, data_version=1)
         self.sc_table.t.insert().execute(sc_id=4, scheduled_by="bob", base_fooid=2, base_foo="dd", base_bar="bb", base_data_version=2,
-                                         data_version=1)
+                                         data_version=1, change_type="update")
         self.sc_table.conditions.t.insert().execute(sc_id=4, when=333000, data_version=1)
         self.sc_table.t.insert().execute(sc_id=5, scheduled_by="bob", complete=True, base_fooid=3, base_foo="c", base_bar=None, base_data_version=1,
-                                         data_version=1)
+                                         data_version=1, change_type="update")
         self.sc_table.conditions.t.insert().execute(sc_id=5, when=39000, data_version=1)
+        self.sc_table.t.insert().execute(sc_id=6, scheduled_by="bob", complete=True, base_fooid=3, base_foo="c",
+                                         base_bar=None, base_data_version=2,
+                                         data_version=1, change_type="delete")
+        self.sc_table.conditions.t.insert().execute(sc_id=6, when=39000, data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
         self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options='{"actions": ["enact"]}', data_version=1)
@@ -745,8 +749,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testInsertForExistingRow(self):
         what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000}
         self.sc_table.insert(changed_by="bob", **what)
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 6).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 6).execute().fetchall()[0]
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 7).execute().fetchall()[0]
+        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 7).execute().fetchall()[0]
         self.assertEquals(sc_row.scheduled_by, "bob")
         self.assertEquals(sc_row.data_version, 1)
         self.assertEquals(sc_row.base_fooid, 3)
@@ -760,8 +764,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testInsertForNewRow(self):
         what = {"foo": "newthing1", "when": 888000}
         self.sc_table.insert(changed_by="bob", **what)
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 6).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 6).execute().fetchall()[0]
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 7).execute().fetchall()[0]
+        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 7).execute().fetchall()[0]
         self.assertEquals(sc_row.scheduled_by, "bob")
         self.assertEquals(sc_row.data_version, 1)
         self.assertEquals(sc_row.base_fooid, None)
@@ -857,7 +861,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         def noop(*args, **kwargs):
             pass
         self.sc_table.conditions.insert = noop
-        self.sc_table.conditions.t.insert().execute(sc_id=6, when=10000000, data_version=4)
+        self.sc_table.conditions.t.insert().execute(sc_id=7, when=10000000, data_version=4)
 
         what = {"foo": "newthing1", "when": 888000}
         self.assertRaises(MismatchedDataVersionError, self.sc_table.insert, changed_by="bob", **what)
@@ -1108,6 +1112,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(history_row.changed_by, "bob")
         self.assertEquals(history_row.data_version, 2)
         self.assertEquals(sc_row.complete, True)
+
+    def testEnactChangeForDeletingExistingRow(self):
+        self.table.scheduled_changes.enactChange(6, "nancy")
+        row = self.table.t.select().where(self.table.fooid == 3).execute().fetchall()
+        self.assertEquals(row, [])
 
     def testEnactChangeNoPermissions(self):
         # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
