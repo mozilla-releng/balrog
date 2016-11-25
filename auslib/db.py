@@ -976,13 +976,15 @@ class ScheduledChangeTable(AUSTable):
             ret.append(row)
         return ret
 
-    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+    def insert(self, changed_by, transaction=None, dryrun=False, change_type=None, **columns):
         base_columns, condition_columns = self._splitColumns(columns)
 
         self.validate(base_columns, condition_columns, changed_by, transaction)
 
         base_columns = self._prefixColumns(base_columns)
         base_columns["scheduled_by"] = changed_by
+        base_columns["change_type"] = change_type
+
         ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **base_columns)
         if not dryrun:
             sc_id = ret.inserted_primary_key[0]
@@ -1056,6 +1058,7 @@ class ScheduledChangeTable(AUSTable):
 
         sc = self.select(where=[self.sc_id == sc_id], transaction=transaction)[0]
         what = {}
+        change_type = sc["change_type"]
         for col in sc:
             if col.startswith("base_"):
                 what[col[5:]] = sc[col]
@@ -1075,7 +1078,12 @@ class ScheduledChangeTable(AUSTable):
 
         # If the scheduled change had a data version, it means the row already
         # exists, and we need to use update() to enact it.
-        if what["data_version"]:
+        if change_type == "delete":
+            where = []
+            for col in self.base_primary_key:
+                where.append((getattr(self.baseTable, col) == sc["base_%s" % col]))
+            self.baseTable.delete(where, sc["scheduled_by"], sc["base_data_version"], transaction=transaction)
+        elif change_type == "update":
             where = []
             for col in self.base_primary_key:
                 where.append((getattr(self.baseTable, col) == sc["base_%s" % col]))
@@ -1189,7 +1197,7 @@ class Rules(AUSTable):
     def _buildIDMatchesRule(self, ruleBuildID, queryBuildID):
         """Decides whether a buildID from the rules matches an incoming one.
            If the ruleBuildID is null, we match any queryBuildID. If it's not
-           null, we must either match exactly, or match with a camparison
+           null, we musvdt either match exactly, or match with a camparison
            operator."""
         if ruleBuildID is None:
             return True
