@@ -1197,7 +1197,7 @@ class Rules(AUSTable):
     def _buildIDMatchesRule(self, ruleBuildID, queryBuildID):
         """Decides whether a buildID from the rules matches an incoming one.
            If the ruleBuildID is null, we match any queryBuildID. If it's not
-           null, we musvdt either match exactly, or match with a camparison
+           null, we must either match exactly, or match with a camparison
            operator."""
         if ruleBuildID is None:
             return True
