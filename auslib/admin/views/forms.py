@@ -157,6 +157,23 @@ class ExistingPermissionForm(DbEditableForm):
     options = JSONStringField(None, 'Options')
 
 
+class ScheduledChangeNewPermissionForm(ScheduledChangeTimeForm, NewPermissionForm):
+    pass
+
+
+class ScheduledChangeExistingPermissionForm(ScheduledChangeTimeForm, ExistingPermissionForm):
+    permission = StringField('Permission', validators=[Length(0, 50), Required()])
+    username = StringField('Username', validators=[Length(0, 100), Required()])
+
+
+class EditScheduledChangeNewPermissionForm(ScheduledChangeTimeForm, NewPermissionForm):
+    sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
+
+
+class EditScheduledChangeExistingPermissionForm(ScheduledChangeTimeForm, ExistingPermissionForm):
+    sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
+
+
 class PartialReleaseForm(Form):
     # Because we do implicit release creation in the Releases views, we can't
     # have data_version be Required(). The views are responsible for checking

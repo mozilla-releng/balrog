@@ -13,7 +13,9 @@ sentry = Sentry()
 
 from auslib.admin.views.csrf import CSRFView
 from auslib.admin.views.permissions import UsersView, PermissionsView, \
-    SpecificPermissionView, UserRolesView, UserRoleView
+    SpecificPermissionView, UserRolesView, UserRoleView, \
+    PermissionScheduledChangesView, PermissionScheduledChangeView, \
+    EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView
 from auslib.admin.views.releases import SingleLocaleView, \
     SingleReleaseView, ReleaseHistoryView, \
     ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView
@@ -90,3 +92,8 @@ app.add_url_rule("/scheduled_changes/rules", view_func=RuleScheduledChangesView.
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>", view_func=RuleScheduledChangeView.as_view("scheduled_change_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/enact", view_func=EnactRuleScheduledChangeView.as_view("ench_scheduled_change_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/revisions", view_func=RuleScheduledChangeHistoryView.as_view("scheduled_change_rules_history"))
+app.add_url_rule("/scheduled_changes/permissions", view_func=PermissionScheduledChangesView.as_view("scheduled_changes_permissions"))
+app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>", view_func=PermissionScheduledChangeView.as_view("scheduled_change_permissions"))
+app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/enact", view_func=EnactPermissionScheduledChangeView.as_view("ench_scheduled_change_permissions"))
+app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/revisions",
+                 view_func=PermissionScheduledChangeHistoryView.as_view("scheduled_change_permissions_history"))

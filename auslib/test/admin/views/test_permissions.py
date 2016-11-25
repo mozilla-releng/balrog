@@ -1,3 +1,4 @@
+import mock
 import simplejson as json
 
 from auslib.global_state import dbo
@@ -167,6 +168,125 @@ class TestPermissionsAPI_JSON(ViewTest):
     def testPermissionDeleteWithoutPermission(self):
         ret = self._delete("/users/bob/permissions/permission", qs=dict(data_version=1), username="anna")
         self.assertStatusCode(ret, 403)
+
+
+class TestPermissionsScheduledChanges(ViewTest):
+    maxDiff = 10000
+
+    def setUp(self):
+        super(TestPermissionsScheduledChanges, self).setUp()
+        dbo.permissions.scheduled_changes.t.insert().execute(
+            sc_id=1, scheduled_by="bill", data_version=1, base_permission="rule", base_username="janet"
+        )
+        dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
+        dbo.permissions.scheduled_changes.history.t.insert().execute(
+            change_id=2, changed_by="bill", timestamp=21, sc_id=1, scheduled_by="bill", data_version=1,
+            base_permission="rule", base_username="janet"
+        )
+        dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000, data_version=1)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
+            change_id=2, changed_by="bill", timestamp=21, sc_id=1, when=10000000, data_version=1
+        )
+
+        dbo.permissions.scheduled_changes.t.insert().execute(
+            sc_id=2, scheduled_by="bill", data_version=1, base_permission="release_locale", base_username="ashanti",
+            base_options=None, base_data_version=1,
+        )
+        dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=40, sc_id=2)
+        dbo.permissions.scheduled_changes.history.t.insert().execute(
+            change_id=4, changed_by="bill", timestamp=41, sc_id=2, scheduled_by="bill", data_version=1,
+            base_permission="release_locale", base_username="ashanti", base_options=None, base_data_version=1
+        )
+        dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=20000000, data_version=1)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=40, sc_id=2)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
+            change_id=4, changed_by="bill", timestamp=41, sc_id=2, when=20000000, data_version=1
+        )
+
+        dbo.permissions.scheduled_changes.t.insert().execute(
+            sc_id=3, scheduled_by="bill", data_version=2, base_permission="permission", base_username="bob", complete=True
+        )
+        dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=60, sc_id=3)
+        dbo.permissions.scheduled_changes.history.t.insert().execute(
+            change_id=6, changed_by="bill", timestamp=61, sc_id=3, scheduled_by="bill", data_version=2,
+            base_permission="permission", base_username="bob"
+        )
+        dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=30000000, data_version=1)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=60, sc_id=3)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
+            change_id=6, changed_by="bill", timestamp=61, sc_id=3, when=30000000, data_version=1
+        )
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
+            change_id=7, changed_by="bill", timestamp=61, sc_id=3, when=30000000, data_version=2, complete=True
+        )
+
+    def testGetScheduledChanges(self):
+        ret = self._get("/scheduled_changes/permissions")
+        expected = {
+            "count": 2,
+            "scheduled_changes": [
+                {
+                    "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
+                    "permission": "rule", "username": "janet", "options": None, "data_version": None,
+                },
+                {
+                    "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
+                    "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
+                },
+            ],
+        }
+        self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetScheduledChangesWithCompleted(self):
+        ret = self._get("/scheduled_changes/permissions", qs={"all": 1})
+        expected = {
+            "count": 3,
+            "scheduled_changes": [
+                {
+                    "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
+                    "permission": "rule", "username": "janet", "options": None, "data_version": None,
+                },
+                {
+                    "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
+                    "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
+                },
+                {
+                    "sc_id": 3, "when": 30000000, "scheduled_by": "bill", "complete": True, "sc_data_version": 2,
+                    "permission": "permission", "username": "bob", "options": None, "data_version": None,
+                },
+            ],
+        }
+        self.assertEquals(json.loads(ret.data), expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeExistingPermission(self):
+        data = {
+            "when": 400000000, "permission": "rule", "username": "bob", "options": None, "data_version": 1
+        }
+        ret = self._post("/scheduled_changes/permissions", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"sc_id": 4})
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 4, "scheduled_by": "bill", "complete": False, "data_version": 1,
+            "base_permission": "rule", "base_username": "bob", "base_options": None, "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 4, "data_version": 1, "when": 400000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
+#    def testAddScheduledChangeNewPermission(self):
+#    def testUpdateScheduledChangeExistingPermission(self):
+#    def testUpdateScheduledChangeNewPermission(self):
+#    def testDeleteScheduledChange(self):
+#    def testEnactScheduledChangeExistingPermission(self):
+#    def testEnactScheduledChangeNewPermission(self):
+#    def testGetScheduledChangeHistoryRevisions(self):
 
 
 class TestUserRolesAPI_JSON(ViewTest):
