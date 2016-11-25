@@ -79,8 +79,8 @@ def upgrade(migrate_engine):
         Column("scheduled_by", String(100)),
         Column("complete", Boolean, default=False),
         Column("data_version", Integer),
-        Column('base_permission', String(50), nullable=False),
-        Column('base_username', String(100), nullable=False),
+        Column('base_permission', String(50)),
+        Column('base_username', String(100)),
         Column('base_options', Text),
         Column("base_data_version", Integer)
     )
