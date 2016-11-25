@@ -105,3 +105,16 @@ def upgrade(migrate_engine):
     permissions_scheduled_changes_conditions_history.append_column(Column("timestamp", bigintType, nullable=False))
 
     metadata.create_all()
+
+
+def downgrade(migrate_engine):
+    metadata = MetaData(bind=migrate_engine)
+
+    Table("releases_scheduled_changes", metadata, autoload=True).drop()
+    Table("releases_scheduled_changes_history", metadata, autoload=True).drop()
+    Table("releases_scheduled_changes_conditions", metadata, autoload=True).drop()
+    Table("releases_scheduled_changes_conditions_history", metadata, autoload=True).drop()
+    Table("permissions_scheduled_changes", metadata, autoload=True).drop()
+    Table("permissions_scheduled_changes_history", metadata, autoload=True).drop()
+    Table("permissions_scheduled_changes_conditions", metadata, autoload=True).drop()
+    Table("permissions_scheduled_changes_conditions_history", metadata, autoload=True).drop()
