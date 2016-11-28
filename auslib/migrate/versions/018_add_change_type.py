@@ -25,7 +25,6 @@ def upgrade(migrate_engine):
         """)
 
     # 3) Alter the column and set nullable=False
-    # Warning occurring due to this is discussed in https://bugs.launchpad.net/nova/+bug/854163
     change_type.alter(nullable=False)
 
     change_type = Column("change_type", String(50))

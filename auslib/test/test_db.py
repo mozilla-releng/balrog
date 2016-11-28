@@ -3128,7 +3128,7 @@ class TestChangeNotifiers(unittest.TestCase):
         self.db.rules.t.insert().execute(rule_id=3, priority=100, channel='release', backgroundRate=100, update_type='y', data_version=1)
         self.db.rules.scheduled_changes.t.insert().execute(sc_id=1, complete=0, scheduled_by="bob", base_rule_id=2, base_priority=100,
                                                            base_channel='release', base_backgroundRate=10, base_update_type='z', base_data_version=1,
-                                                           data_version=1)
+                                                           data_version=1, change_type="update")
         self.db.rules.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000000000000, data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.releases.t.insert().execute(name='a', product='a', read_only=True,
@@ -3181,7 +3181,7 @@ class TestChangeNotifiers(unittest.TestCase):
     def testOnInsertRuleSC(self):
         def doit():
             self.db.rules.scheduled_changes.insert("bob", when=2000000000000000, product="foo", channel="bar", backgroundRate=100, priority=50,
-                                                   update_type="minor")
+                                                   update_type="minor", change_type="new")
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
