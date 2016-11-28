@@ -1147,7 +1147,7 @@ class SignoffsTable(AUSTable):
                 raise PermissionDeniedError("Cannot signoff with a second role")
             # Signoff already made under the same role, we don't need to do
             # anything!
-            return True
+            return
 
         columns["username"] = changed_by
         super(SignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
@@ -1943,10 +1943,7 @@ class Permissions(AUSTable):
         return True
 
     def hasRole(self, username, role, transaction=None):
-        if role in self.getUserRoles(username, transaction):
-            return True
-
-        return False
+        return role in self.getUserRoles(username, transaction)
 
 
 class Dockerflow(AUSTable):

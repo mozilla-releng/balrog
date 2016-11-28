@@ -44,7 +44,6 @@ def handleGeneralExceptions(messages):
             except PermissionDeniedError as e:
                 msg = "Permission denied to perform the request. {}".format(e.message)
                 logging.warning(msg)
-                logging.warning(e)
                 return Response(status=403, response=json.dumps({"exception": msg}), mimetype="application/json")
         return decorated
     return wrap
