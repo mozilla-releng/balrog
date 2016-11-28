@@ -345,9 +345,56 @@ class TestPermissionsScheduledChanges(ViewTest):
         cond_expected = {"sc_id": 1, "data_version": 2, "when": 450000000}
         self.assertEquals(dict(cond[0]), cond_expected)
 
-#    def testDeleteScheduledChange(self):
-#    def testEnactScheduledChangeExistingPermission(self):
-#    def testEnactScheduledChangeNewPermission(self):
+    def testDeleteScheduledChange(self):
+        ret = self._delete("/scheduled_changes/permissions/1", qs={"data_version": 1})
+        self.assertEquals(ret.status_code, 200, ret.data)
+        got = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 1).execute().fetchall()
+        self.assertEquals(got, [])
+        cond_got = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
+        self.assertEquals(cond_got, [])
+
+    def testEnactScheduledChangeExistingPermission(self):
+        ret = self._post("/scheduled_changes/permissions/2/enact")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 2, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_permission": "release_locale", "base_username": "ashanti",
+            "base_options": None, "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+
+        base_row = dbo.permissions.t.select().where(dbo.permissions.username == "ashanti")\
+                                             .where(dbo.permissions.permission == "release_locale")\
+                                             .execute().fetchall()[0]
+        base_expected = {
+            "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 2
+        }
+        self.assertEquals(dict(base_row), base_expected)
+
+    def testEnactScheduledChangeNewPermission(self):
+        ret = self._post("/scheduled_changes/permissions/1/enact")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_permission": "rule", "base_username": "janet",
+            "base_options": None, "base_data_version": None,
+        }
+        self.assertEquals(db_data, expected)
+
+        base_row = dbo.permissions.t.select().where(dbo.permissions.username == "janet")\
+                                             .where(dbo.permissions.permission == "rule")\
+                                             .execute().fetchall()[0]
+        base_expected = {
+            "permission": "rule", "username": "janet", "options": None, "data_version": 1
+        }
+        self.assertEquals(dict(base_row), base_expected)
+
 #    def testGetScheduledChangeHistoryRevisions(self):
 
 
