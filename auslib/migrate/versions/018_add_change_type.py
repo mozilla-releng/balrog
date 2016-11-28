@@ -4,12 +4,48 @@ from sqlalchemy import Column, String, MetaData, Table
 def upgrade(migrate_engine):
     metadata = MetaData(bind=migrate_engine)
 
+    # In order to add a column a nullable=False:
+    # 1) Add the column with nullable=True
     change_type = Column("change_type", String(50))
     change_type.create(Table("rules_scheduled_changes", metadata, autoload=True))
+
+    # 2) Update the values of change_type depending on base_data_version
+
+    migrate_engine.execute("""
+        UPDATE "rules_scheduled_changes"
+        SET change_type = "new"
+        WHERE
+            base_data_version==NULL
+        """)
+    migrate_engine.execute("""
+        UPDATE "rules_scheduled_changes"
+        SET change_type = "update"
+        WHERE
+            base_data_version!=NULL
+        """)
+
+    # 3) Alter the column and set nullable=False
+    # Warning occurring due to this is discussed in https://bugs.launchpad.net/nova/+bug/854163
+    change_type.alter(nullable=False)
 
     change_type = Column("change_type", String(50))
     change_type.create(Table("rules_scheduled_changes_history", metadata,
                              autoload=True))
+
+    migrate_engine.execute("""
+        UPDATE "rules_scheduled_changes_history"
+        SET change_type = "new"
+        WHERE
+            base_mapping!=NULL AND
+            base_data_version==NULL
+        """)
+    migrate_engine.execute("""
+        UPDATE "rules_scheduled_changes_history"
+        SET change_type = "update"
+        WHERE
+            base_mapping!=NULL AND
+            base_data_version==NULL
+        """)
 
 
 def downgrade(migrate_engine):
