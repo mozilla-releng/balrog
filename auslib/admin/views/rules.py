@@ -298,9 +298,9 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        if request.json and request.json.get("data_version"):
+        if request.json and request.json.get("change_type") == "update":
             form = ScheduledChangeExistingRuleForm()
-        else:
+        elif request.json.get("change_type") == "new":
             form = ScheduledChangeNewRuleForm()
 
         releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
