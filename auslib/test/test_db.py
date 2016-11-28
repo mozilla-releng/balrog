@@ -678,6 +678,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testTablesHaveCorrectColumns(self):
         sc_columns = [c.name for c in self.sc_table.t.get_children()]
+        self.assertEquals(len(sc_columns), 9)
         self.assertTrue("sc_id" in sc_columns)
         self.assertTrue("scheduled_by" in sc_columns)
         self.assertTrue("complete" in sc_columns)
@@ -686,17 +687,20 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue("base_foo" in sc_columns)
         self.assertTrue("base_bar" in sc_columns)
         self.assertTrue("base_data_version" in sc_columns)
+        self.assertTrue("change_type" in sc_columns)
         self.assertTrue("telemetry_product" not in sc_columns)
         self.assertTrue("telemetry_channel" not in sc_columns)
         self.assertTrue("telemetry_uptake" not in sc_columns)
         self.assertTrue("when" not in sc_columns)
 
         cond_columns = [c.name for c in self.sc_table.conditions.t.get_children()]
+        self.assertEquals(len(cond_columns), 6)
         self.assertTrue("sc_id" in cond_columns)
         self.assertTrue("telemetry_product" in cond_columns)
         self.assertTrue("telemetry_channel" in cond_columns)
         self.assertTrue("telemetry_uptake" in cond_columns)
         self.assertTrue("when" in cond_columns)
+        self.assertTrue("data_version" in cond_columns)
 
     def testValidateConditionsNone(self):
         self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.conditions.validate, {})
