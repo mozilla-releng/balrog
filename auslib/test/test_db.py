@@ -1321,6 +1321,8 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.signoffs.insert("nancy", sc_id=1, username="nancy", role="relman")
         got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
         self.assertEquals(got, [(1, "nancy", "relman")])
+        history = self.signoffs.history.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
+        self.assertEquals(len(history), 0)
 
     def testSignoffWithSecondRole(self):
         self.assertRaisesRegexp(PermissionDeniedError, "Cannot signoff with a second role",
