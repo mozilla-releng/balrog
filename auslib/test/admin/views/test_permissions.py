@@ -176,12 +176,13 @@ class TestPermissionsScheduledChanges(ViewTest):
     def setUp(self):
         super(TestPermissionsScheduledChanges, self).setUp()
         dbo.permissions.scheduled_changes.t.insert().execute(
-            sc_id=1, scheduled_by="bill", data_version=1, base_permission="rule", base_username="janet"
+            sc_id=1, scheduled_by="bill", data_version=1, base_permission="rule", base_username="janet",
+            base_options='{"products": ["foo"]}',
         )
         dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
         dbo.permissions.scheduled_changes.history.t.insert().execute(
             change_id=2, changed_by="bill", timestamp=21, sc_id=1, scheduled_by="bill", data_version=1,
-            base_permission="rule", base_username="janet"
+            base_permission="rule", base_username="janet", base_options='{"products": ["foo"]}',
         )
         dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000, data_version=1)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
@@ -209,16 +210,20 @@ class TestPermissionsScheduledChanges(ViewTest):
         )
         dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=60, sc_id=3)
         dbo.permissions.scheduled_changes.history.t.insert().execute(
-            change_id=6, changed_by="bill", timestamp=61, sc_id=3, scheduled_by="bill", data_version=2,
-            base_permission="permission", base_username="bob"
+            change_id=6, changed_by="bill", timestamp=61, sc_id=3, scheduled_by="bill", data_version=1,
+            base_permission="permission", base_username="bob", complete=False,
         )
-        dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=30000000, data_version=1)
+        dbo.permissions.scheduled_changes.history.t.insert().execute(
+            change_id=7, changed_by="bill", timestamp=100, sc_id=3, scheduled_by="bill", data_version=2,
+            base_permission="permission", base_username="bob", complete=True,
+        )
+        dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=30000000, data_version=2)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=60, sc_id=3)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
             change_id=6, changed_by="bill", timestamp=61, sc_id=3, when=30000000, data_version=1
         )
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=7, changed_by="bill", timestamp=61, sc_id=3, when=30000000, data_version=2, complete=True
+            change_id=7, changed_by="bill", timestamp=100, sc_id=3, when=30000000, data_version=2
         )
 
     def testGetScheduledChanges(self):
@@ -228,7 +233,7 @@ class TestPermissionsScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
-                    "permission": "rule", "username": "janet", "options": None, "data_version": None,
+                    "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None,
                 },
                 {
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
@@ -245,7 +250,7 @@ class TestPermissionsScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
-                    "permission": "rule", "username": "janet", "options": None, "data_version": None,
+                    "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None,
                 },
                 {
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
@@ -395,7 +400,23 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         self.assertEquals(dict(base_row), base_expected)
 
-#    def testGetScheduledChangeHistoryRevisions(self):
+    def testGetScheduledChangeHistoryRevisions(self):
+        ret = self._get("/scheduled_changes/permissions/3/revisions")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        expected = {
+            "count": 2,
+            "revisions": [
+                {
+                    "change_id": 7, "changed_by": "bill", "timestamp": 100, "sc_id": 3, "scheduled_by": "bill", "data_version": None,
+                    "permission": "permission", "username": "bob", "options": None, "when": 30000000, "complete": True, "sc_data_version": 2,
+                },
+                {
+                    "change_id": 6, "changed_by": "bill", "timestamp": 61, "sc_id": 3, "scheduled_by": "bill", "data_version": None,
+                    "permission": "permission", "username": "bob", "options": None, "when": 30000000, "complete": False, "sc_data_version": 1,
+                },
+            ],
+        }
+        self.assertEquals(json.loads(ret.data), expected)
 
 
 class TestUserRolesAPI_JSON(ViewTest):
