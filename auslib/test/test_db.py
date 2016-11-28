@@ -1298,6 +1298,8 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="nancy", role="relman", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="nancy", role="qa", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="janet", role="relman", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="charlie", data_version=1)
         self.signoffs.t.insert().execute(sc_id=1, username="nancy", role="relman")
 
     def testSignoffsHasCorrectTablesAndColumns(self):
@@ -1336,8 +1338,18 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
         self.assertEquals(len(got), 0)
 
-    def testRevokeOtherUsersSignoff(self):
-        self.assertRaisesRegexp(PermissionDeniedError, "Cannot revoke a signoff made by another user",
+    def testRevokeOtherUsersSignoffAsAdmin(self):
+        self.signoffs.delete({"sc_id": 1, "username": "nancy"}, changed_by="charlie")
+        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
+        self.assertEquals(len(got), 0)
+
+    def testRevokeOtherUsersSignoffWithSameRole(self):
+        self.signoffs.delete({"sc_id": 1, "username": "nancy"}, changed_by="janet")
+        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
+        self.assertEquals(len(got), 0)
+
+    def testRevokeOtherUsersSignoffWithoutPermission(self):
+        self.assertRaisesRegexp(PermissionDeniedError, "Cannot revoke a signoff made by someone in a group you do not belong to",
                                 self.signoffs.delete, {"sc_id": 1, "username": "nancy"}, changed_by="bob")
 
 # In https://bugzilla.mozilla.org/show_bug.cgi?id=1284481, we changed the sampled data to be a true
@@ -3131,6 +3143,12 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testHasRoleNegative(self):
         self.assertFalse(self.permissions.hasRole("cathy", "dev"))
+
+    def testIsAdmin(self):
+        self.assertTrue(self.permissions.isAdmin("bill"))
+
+    def testIsAdminNegative(self):
+        self.assertFalse(self.permissions.isAdmin("bob"))
 
 
 class TestDockerflow(unittest.TestCase, MemoryDatabaseMixin):

@@ -1157,8 +1157,8 @@ class SignoffsTable(AUSTable):
 
     def delete(self, where, changed_by=None, transaction=None, dryrun=False):
         for row in self.select(where, transaction):
-            if row["username"] != changed_by:
-                raise PermissionDeniedError("Cannot revoke a signoff made by another user")
+            if not self.db.hasRole(changed_by, row["role"], transaction=transaction) and not self.db.isAdmin(changed_by, transaction=transaction):
+                raise PermissionDeniedError("Cannot revoke a signoff made by someone in a group you do not belong to")
 
         super(SignoffsTable, self).delete(where, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
@@ -1913,6 +1913,9 @@ class Permissions(AUSTable):
         res = self.user_roles.select(where=[self.user_roles.username == username], columns=[self.user_roles.role], distinct=True, transaction=transaction)
         return [r["role"] for r in res]
 
+    def isAdmin(self, username, transaction=None):
+        return bool(self.getPermission(username, "admin", transaction))
+
     def hasPermission(self, username, thing, action, product=None, transaction=None):
         # Supporting product-wise admin permissions. If there are no options
         # with admin, we assume that the user has admin access over all
@@ -2137,6 +2140,9 @@ class AUSDatabase(object):
                                                                from_addr,
                                                                use_tls)
         self.releases.onUpdate = read_only_bleeter
+
+    def isAdmin(self, *args, **kwargs):
+        return self.permissions.isAdmin(*args, **kwargs)
 
     def hasPermission(self, *args, **kwargs):
         return self.permissions.hasPermission(*args, **kwargs)
