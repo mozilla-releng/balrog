@@ -210,6 +210,15 @@ The table below describe all possible permissions:
   |                        |                     |                                   | be granted this permission.   |
   +------------------------+---------------------+-----------------------------------+-------------------------------+
 
+
+----------
+User Roles
+----------
+
+Users may hold any number of Roles. Roles are used when signing off on Scheduled Changes.
+
+Roles and Permissions are not directly related - assigning a User a Role does not inherently grant them any Permissions.
+
 --------------
 History Tables
 --------------
@@ -223,13 +232,8 @@ This allows us to look back in time when debugging issues, attribute changes to 
 Scheduled Changes
 -----------------
 
-Rules may have changes scheduled in advance.
-Currently, these changes may only be scheduled based on a timestamp,
-but there is the possibility that they could be driven by release uptake, crashes, or other data in the future.
-Permissions for Scheduled Changes are inherited from regular Rule permissions.
-If you want to schedule a change to a Rule, you must have the right permissions to modify that Rule directly.
-No special permission on top of that is needed to schedule a change.
-Scheduled Changes are stored in a separate table that mirrors the main Rules table,
-and tracks the extra information required to schedule and enact them.
+Some tables (only Rules currently) support having changes to them scheduled in advance. Tables with Scheduled Changes enabled will have additional related tables to store the necessary information about them.
 
+The primary Scheduled Changes table stores the desired new version of the object and the user who scheduled it. The Conditions table stores information about when to enact the Scheduled Change. Finally, the Signoffs table stores information about who (if anybody) has signed off on the Scheduled Change. All of these tables have their own History tables too.
 
+Permissions for Scheduled Changes are inherited from their asociated base table. Eg: to scheduled a change to a Rule, you must have permission to modify that Rule directly. No special permission is required on top of that.
