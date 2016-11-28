@@ -834,7 +834,7 @@ class ScheduledChangeTable(AUSTable):
                            Column("sc_id", Integer, primary_key=True, autoincrement=True),
                            Column("scheduled_by", String(100), nullable=False),
                            Column("complete", Boolean, default=False),
-                           Column("change_type", String(50)),
+                           Column("change_type", String(50), nullable=False),
                            )
         self.conditions = ConditionsTable(db, dialect, metadata, table_name, conditions)
 
@@ -976,14 +976,13 @@ class ScheduledChangeTable(AUSTable):
             ret.append(row)
         return ret
 
-    def insert(self, changed_by, transaction=None, dryrun=False, change_type=None, **columns):
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         base_columns, condition_columns = self._splitColumns(columns)
 
         self.validate(base_columns, condition_columns, changed_by, transaction)
 
         base_columns = self._prefixColumns(base_columns)
         base_columns["scheduled_by"] = changed_by
-        base_columns["change_type"] = change_type
 
         ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **base_columns)
         if not dryrun:
