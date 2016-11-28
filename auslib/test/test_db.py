@@ -747,7 +747,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertForExistingRow(self):
-        what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000}
+        what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
         self.sc_table.insert(changed_by="bob", **what)
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 7).execute().fetchall()[0]
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 7).execute().fetchall()[0]
@@ -762,7 +762,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertForNewRow(self):
-        what = {"foo": "newthing1", "when": 888000}
+        what = {"foo": "newthing1", "when": 888000, "change_type": "new"}
         self.sc_table.insert(changed_by="bob", **what)
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 7).execute().fetchall()[0]
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 7).execute().fetchall()[0]
@@ -787,7 +787,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
         table = TestTable2(self.db, self.metadata)
         self.metadata.create_all()
-        what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876000}
+        what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876000, "change_type": "new"}
         table.scheduled_changes.insert(changed_by="mary", **what)
         sc_row = table.scheduled_changes.t.select().where(table.scheduled_changes.sc_id == 1).execute().fetchall()[0]
         cond_row = table.scheduled_changes.conditions.t.select().where(table.scheduled_changes.conditions.sc_id == 1).execute().fetchall()[0]
@@ -863,7 +863,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.sc_table.conditions.insert = noop
         self.sc_table.conditions.t.insert().execute(sc_id=7, when=10000000, data_version=4)
 
-        what = {"foo": "newthing1", "when": 888000}
+        what = {"foo": "newthing1", "when": 888000, "change_type": "new"}
         self.assertRaises(MismatchedDataVersionError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
@@ -1152,7 +1152,8 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         self.metadata.create_all()
         self.table.t.insert().execute(fooid=10, foo="h", data_version=1)
         self.table.t.insert().execute(fooid=11, foo="i", bar="j", data_version=1)
-        self.sc_table.t.insert().execute(sc_id=1, scheduled_by="bob", base_fooid=10, base_foo="h", base_bar="bbb", base_data_version=1, data_version=1)
+        self.sc_table.t.insert().execute(sc_id=1, scheduled_by="bob", base_fooid=10, base_foo="h", base_bar="bbb", base_data_version=1, data_version=1,
+                                         change_type="update")
         self.sc_table.conditions.t.insert().execute(sc_id=1, when=87000, data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
 
@@ -1227,7 +1228,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithEnabledCondition(self):
-        what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "when": 909000}
+        what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "when": 909000, "change_type": "new"}
         self.sc_table.insert(changed_by="bob", **what)
         row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 2).execute().fetchall()[0]
