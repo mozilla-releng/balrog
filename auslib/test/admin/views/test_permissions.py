@@ -301,8 +301,50 @@ class TestPermissionsScheduledChanges(ViewTest):
         cond_expected = {"sc_id": 4, "data_version": 1, "when": 400000000}
         self.assertEquals(dict(cond[0]), cond_expected)
 
-#    def testUpdateScheduledChangeExistingPermission(self):
-#    def testUpdateScheduledChangeNewPermission(self):
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeExistingPermission(self):
+        data = {
+            "options": '{"products": ["Thunderbird"]}', "data_version": 1, "sc_data_version": 1, "when": 200000000,
+        }
+        ret = self._post("/scheduled_changes/permissions/2", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 2, "complete": False, "data_version": 2, "scheduled_by": "bill", "base_permission": "release_locale", "base_username": "ashanti",
+            "base_options": '{"products": ["Thunderbird"]}', "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 2, "data_version": 2, "when": 200000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeNewPermission(self):
+        data = {
+            "options": '{"products": ["Firefox"]}', "sc_data_version": 1, "when": 450000000,
+        }
+        ret = self._post("/scheduled_changes/permissions/1", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 1, "complete": False, "data_version": 2, "scheduled_by": "bill", "base_permission": "rule", "base_username": "janet",
+            "base_options": '{"products": ["Firefox"]}', "base_data_version": None,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 1, "data_version": 2, "when": 450000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
 #    def testDeleteScheduledChange(self):
 #    def testEnactScheduledChangeExistingPermission(self):
 #    def testEnactScheduledChangeNewPermission(self):
