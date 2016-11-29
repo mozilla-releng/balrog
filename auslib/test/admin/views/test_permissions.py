@@ -388,7 +388,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_permission": "rule", "base_username": "janet",
-            "base_options": None, "base_data_version": None,
+            "base_options": '{"products": ["foo"]}', "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
 
@@ -396,7 +396,7 @@ class TestPermissionsScheduledChanges(ViewTest):
                                              .where(dbo.permissions.permission == "rule")\
                                              .execute().fetchall()[0]
         base_expected = {
-            "permission": "rule", "username": "janet", "options": None, "data_version": 1
+            "permission": "rule", "username": "janet", "options": '{"products": ["foo"]}', "data_version": 1
         }
         self.assertEquals(dict(base_row), base_expected)
 

@@ -1780,6 +1780,8 @@ class Permissions(AUSTable):
 
         self.assertPermissionExists(columns["permission"])
         if columns.get("options"):
+            if not isinstance(columns["options"], dict):
+                columns["options"] = json.loads(columns["options"])
             self.assertOptionsExist(columns["permission"], columns["options"])
             columns["options"] = json.dumps(columns["options"])
 
@@ -1811,6 +1813,8 @@ class Permissions(AUSTable):
 
         for current_permission in self.select(where=where, transaction=transaction):
             if what.get("options"):
+                if not isinstance(what["options"], dict):
+                    what["options"] = json.loads(what["options"])
                 self.assertOptionsExist(what.get("permission", current_permission["permission"]), what["options"])
 
         if what.get("options"):

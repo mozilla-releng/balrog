@@ -112,7 +112,8 @@ class PermissionScheduledChangesView(ScheduledChangesView):
         # be deserialized before
         resp_data = json.loads(resp.data)
         for i in range(resp_data["count"]):
-            resp_data["scheduled_changes"][i]["options"] = json.loads(resp_data["scheduled_changes"][i]["options"])
+            if resp_data["scheduled_changes"][i]["options"]:
+                resp_data["scheduled_changes"][i]["options"] = json.loads(resp_data["scheduled_changes"][i]["options"])
         resp.data = json.dumps(resp_data)
         return resp
 
