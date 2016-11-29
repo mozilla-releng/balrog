@@ -979,6 +979,12 @@ class ScheduledChangeTable(AUSTable):
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         base_columns, condition_columns = self._splitColumns(columns)
 
+        if base_columns["change_type"] == "delete":
+            for pk in self.base_primary_key:
+                if pk not in base_columns:
+                    raise ValueError("Missing primary key column %s. PK values needed for deletion" % (pk))
+                if base_columns[pk] is None:
+                    raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
         self.validate(base_columns, condition_columns, changed_by, transaction)
 
         base_columns = self._prefixColumns(base_columns)
