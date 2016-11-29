@@ -4,6 +4,7 @@ from sqlalchemy.sql.expression import null
 
 from flask import jsonify, request, Response
 
+from auslib.blobs.base import createBlob
 from auslib.admin.views.base import AdminView, HistoryAdminView
 from auslib.admin.views.forms import DbEditableForm
 
@@ -40,7 +41,15 @@ class ScheduledChangesView(AdminView):
             return Response(status=400, response=json.dumps(form.errors))
 
         try:
-            sc_id = self.sc_table.insert(changed_by, transaction, **form.data)
+            # TODO: fixme awful hack because you can't have a field called "data" in a wtform
+            # TODO: probably need to do this in releases.py, because we need to load it as a blob
+            from copy import deepcopy
+            kwargs = deepcopy(form.data)
+            if "blob" in kwargs:
+                kwargs["data"] = createBlob(kwargs["blob"])
+                del kwargs["blob"]
+            print kwargs
+            sc_id = self.sc_table.insert(changed_by, transaction, **kwargs)
         except ValueError as e:
             self.log.warning("Bad input: %s", e)
             return Response(status=400, response=json.dumps({"exception": e.args}))

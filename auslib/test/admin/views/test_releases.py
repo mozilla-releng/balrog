@@ -1093,11 +1093,50 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(json.loads(ret.data), expected)
 
     def testGetScheduledChangesWithCompleted(self):
-        pass
+        ret = self._get("/scheduled_changes/releases", qs={"all": 1})
+        expected = {
+            "count": 3,
+            "scheduled_changes": [
+                {
+                    "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "name": "m",
+                    "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
+                    "data_version": None,
+                },
+                {
+                    "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "name": "c",
+                    "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"}, "read_only": False,
+                    "data_version": 1,
+                },
+                {
+                    "sc_id": 3, "when": 10000000, "scheduled_by": "bill", "complete": True, "sc_data_version": 2, "name": "b",
+                    "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
+                    "data_version": 1,
+                },
+            ]
+        }
+        self.assertEquals(json.loads(ret.data), expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingRelease(self):
-        pass
+        data = {
+            "when": 2300000000, "name": "ab", "blob": '{"name": "ab", "hashFunction": "sha256", "schema_version": 1}',
+            "product": "ab", "data_version": 1
+        }
+        ret = self._post("/scheduled_changes/releases", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"sc_id": 4})
+        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 4, "scheduled_by": "bill", "complete": False, "data_version": 1,
+            "base_name": "ab", "base_data": {"name": "ab", "hashFunction": "sha256", "schema_version": 1}, "base_data_version": 1
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 4, "data_version": 1, "when": 400000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewRelease(self):
