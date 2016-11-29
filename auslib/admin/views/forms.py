@@ -224,6 +224,14 @@ class ScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
     rule_id = IntegerField('Rule ID', validators=[Required()])
 
 
+class ScheduledChangeDeleteRuleForm(ScheduledChangeForm):
+    """
+    ScheduledChangeDeletionForm includes all the PK columns and ScheduledChangeForm columns
+    """
+    rule_id = IntegerField('Rule ID', validators=[Required()])
+    data_version = IntegerField('data_version', widget=HiddenInput())
+
+
 class EditScheduledChangeNewRuleForm(ScheduledChangeForm, RuleForm):
     sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
 
