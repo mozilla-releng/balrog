@@ -267,3 +267,19 @@ class ReadOnlyForm(Form):
     product = StringField('Product', validators=[Required()])
     read_only = BooleanField('read_only')
     data_version = IntegerField('data_version', widget=HiddenInput())
+
+
+class ScheduledChangeNewReleaseForm(ScheduledChangeTimeForm, CompleteReleaseForm):
+    pass
+
+
+class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm, CompleteReleaseForm):
+    pass
+
+
+class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm, CompleteReleaseForm):
+    sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
+
+
+class EditScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm, CompleteReleaseForm):
+    sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())

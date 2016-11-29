@@ -1,3 +1,4 @@
+import mock
 import simplejson as json
 
 from sqlalchemy import select
@@ -1015,18 +1016,112 @@ class TestReleasesAPI_JSON(ViewTest):
 """))
 
 
-def byteify(input):
-    if isinstance(input, dict):
-        res = {}
-        for key, value in input.items():
-            res[byteify(key)] = byteify(value)
-        return res
-    elif isinstance(input, list):
-        return [byteify(element) for element in input]
-    elif isinstance(input, unicode):
-        return input.encode('utf-8')
-    else:
-        return input
+class TestReleasesScheduledChanges(ViewTest):
+    maxDiff = 10000
+
+    def setUp(self):
+        super(TestReleasesScheduledChanges, self).setUp()
+        dbo.releases.scheduled_changes.t.insert().execute(
+            sc_id=1, scheduled_by="bill", data_version=1, base_name="m", base_product="m",
+            base_data=json.dumps(dict(name="m", hashFunction="sha512", schema_version=1))
+        )
+        dbo.releases.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=50, sc_id=1)
+        dbo.releases.scheduled_changes.history.t.insert().execute(
+            change_id=2, changed_by="bill", timestamp=51, sc_id=1, scheduled_by="bill", data_version=1, base_name="m", base_product="m",
+            base_data=json.dumps(dict(name="m", hashFunction="sha512", schema_version=1))
+        )
+        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=4000000000, data_version=1)
+        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=50, sc_id=1)
+        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
+            change_id=2, changed_by="bill", timestamp=51, sc_id=1, when=4000000000, data_version=1
+        )
+
+        dbo.releases.scheduled_changes.t.insert().execute(
+            sc_id=2, scheduled_by="bill", data_version=1, base_name="c", base_product="c",
+            base_data=json.dumps(dict(name="c", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
+        )
+        dbo.releases.scheduled_changes.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=70, sc_id=2)
+        dbo.releases.scheduled_changes.history.t.insert().execute(
+            change_id=4, changed_by="bill", timestamp=71, sc_id=2, scheduled_by="bill", data_version=1, base_name="c", base_product="c",
+            base_data=json.dumps(dict(name="c", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
+        )
+        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=6000000000, data_version=1)
+        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=70, sc_id=2)
+        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
+            change_id=4, changed_by="bill", timestamp=71, sc_id=2, when=6000000000, data_version=1
+        )
+
+        dbo.releases.scheduled_changes.t.insert().execute(
+            sc_id=3, complete=True, scheduled_by="bill", data_version=2, base_name="b", base_product="b",
+            base_data=json.dumps(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
+        )
+        dbo.releases.scheduled_changes.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=6, sc_id=3)
+        dbo.releases.scheduled_changes.history.t.insert().execute(
+            change_id=6, changed_by="bill", timestamp=7, sc_id=3, complete=False, scheduled_by="bill", data_version=1, base_name="b",
+            base_product="b", base_data=json.dumps(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
+        )
+        dbo.releases.scheduled_changes.history.t.insert().execute(
+            change_id=7, changed_by="bill", timestamp=25, sc_id=3, complete=True, scheduled_by="bill", data_version=2, base_name="b",
+            base_product="b", base_data=json.dumps(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
+        )
+        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=10000000, data_version=2)
+        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=6, sc_id=3)
+        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
+            change_id=6, changed_by="bill", timestamp=7, sc_id=3, when=10000000, data_version=1
+        )
+        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
+            change_id=7, changed_by="bill", timestamp=25, sc_id=3, when=10000000, data_version=2
+        )
+
+    def testGetScheduledChanges(self):
+        ret = self._get("/scheduled_changes/releases")
+        expected = {
+            "count": 2,
+            "scheduled_changes": [
+                {
+                    "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "name": "m",
+                    "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
+                    "data_version": None,
+                },
+                {
+                    "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "name": "c",
+                    "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"}, "read_only": False,
+                    "data_version": 1,
+                },
+            ]
+        }
+        self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetScheduledChangesWithCompleted(self):
+        pass
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeExistingRelease(self):
+        pass
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeNewRelease(self):
+        pass
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeExistingRelease(self):
+        pass
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeNewRelease(self):
+        pass
+
+    def testDeleteScheduledChange(self):
+        pass
+
+    def testEnactScheduledChangeExistingRelease(self):
+        pass
+
+    def testEnactScheduledChangeNewRelease(self):
+        pass
+
+    def testGetScheduledChangeHistoryRevisions(self):
+        pass
 
 
 class TestReleaseHistoryView(ViewTest):

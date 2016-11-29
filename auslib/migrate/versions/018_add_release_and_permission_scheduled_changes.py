@@ -53,7 +53,7 @@ def upgrade(migrate_engine):
     )
 
     releases_scheduled_changes.append_column(Column("base_data", dataType, nullable=False))
-    releases_scheduled_changes_history.append_column(Column("base_data", dataType, nullable=False))
+    releases_scheduled_changes_history.append_column(Column("base_data", dataType))
     releases_scheduled_changes_history.append_column(Column("timestamp", bigintType, nullable=False))
     releases_scheduled_changes_conditions.append_column(Column("when", bigintType))
     releases_scheduled_changes_conditions_history.append_column(Column("when", bigintType))

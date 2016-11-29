@@ -18,7 +18,9 @@ from auslib.admin.views.permissions import UsersView, PermissionsView, \
     EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView
 from auslib.admin.views.releases import SingleLocaleView, \
     SingleReleaseView, ReleaseHistoryView, \
-    ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView
+    ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView, \
+    ReleaseScheduledChangesView, ReleaseScheduledChangeView, \
+    EnactReleaseScheduledChangeView, ReleaseScheduledChangeHistoryView
 from auslib.admin.views.rules import RulesAPIView, \
     SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView, \
     RuleScheduledChangesView, RuleScheduledChangeView, \
@@ -97,3 +99,8 @@ app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>", view_func=Permiss
 app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/enact", view_func=EnactPermissionScheduledChangeView.as_view("ench_scheduled_change_permissions"))
 app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/revisions",
                  view_func=PermissionScheduledChangeHistoryView.as_view("scheduled_change_permissions_history"))
+app.add_url_rule("/scheduled_changes/releases", view_func=ReleaseScheduledChangesView.as_view("scheduled_changes_releases"))
+app.add_url_rule("/scheduled_changes/releases/<int:sc_id>", view_func=ReleaseScheduledChangeView.as_view("scheduled_change_releases"))
+app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/enact", view_func=EnactReleaseScheduledChangeView.as_view("ench_scheduled_change_releases"))
+app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/revisions",
+                 view_func=ReleaseScheduledChangeHistoryView.as_view("scheduled_change_releases_history"))

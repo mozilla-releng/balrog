@@ -11,7 +11,11 @@ from auslib.admin.views.base import (
     requirelogin, AdminView, HistoryAdminView
 )
 from auslib.admin.views.csrf import get_csrf_headers
-from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, DbEditableForm, ReadOnlyForm
+from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, DbEditableForm, ReadOnlyForm, \
+    ScheduledChangeNewReleaseForm, ScheduledChangeExistingReleaseForm, \
+    EditScheduledChangeNewReleaseForm, EditScheduledChangeExistingReleaseForm
+from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
+    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
@@ -520,3 +524,64 @@ class SingleReleaseColumnView(AdminView):
             column: column_values,
         }
         return jsonify(ret)
+
+
+class ReleaseScheduledChangesView(ScheduledChangesView):
+    def __init__(self):
+        super(ReleaseScheduledChangesView, self).__init__("releases", dbo.releases)
+
+    def get(self):
+        resp = super(ReleaseScheduledChangesView, self).get()
+        # The base class that does most of the work doesn't have enough
+        # information to know that te "data" value for each Release should
+        # be deserialized before
+        resp_data = json.loads(resp.data)
+        for i in range(resp_data["count"]):
+            resp_data["scheduled_changes"][i]["data"] = json.loads(resp_data["scheduled_changes"][i]["data"])
+        resp.data = json.dumps(resp_data)
+        return resp
+
+    @requirelogin
+    def _post(self, transaction, changed_by):
+        if request.json and request.json.get("data_version"):
+            form = ScheduledChangeExistingReleaseForm()
+        else:
+            form = ScheduledChangeNewReleaseForm()
+
+        return super(ReleaseScheduledChangesView, self)._post(form, transaction, changed_by)
+
+
+class ReleaseScheduledChangeView(ScheduledChangeView):
+    def __init__(self):
+        super(ReleaseScheduledChangeView, self).__init__("releases", dbo.releases)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        if request.json and request.json.get("data_version"):
+            form = EditScheduledChangeExistingReleaseForm()
+        else:
+            form = EditScheduledChangeNewReleaseForm()
+
+        return super(ReleaseScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(ReleaseScheduledChangeView, self)._delete(sc_id, transaction, changed_by)
+
+
+class EnactReleaseScheduledChangeView(EnactScheduledChangeView):
+    def __init__(self):
+        super(EnactReleaseScheduledChangeView, self).__init__("releases", dbo.releases)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(EnactReleaseScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+
+
+class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    def __init__(self):
+        super(ReleaseScheduledChangeHistoryView, self).__init__("releases", dbo.releases)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(ReleaseScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
