@@ -1082,6 +1082,41 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         what = {"bar": "bar"}
         self.assertRaises(UpdateMergeError, self.table.update, where=where, what=what, changed_by="bob", old_data_version=1)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testUpdateDeleteScheduledChange(self):
+        where = {"sc_id": 6}
+        what = {"when": 800000, "base_foo": "bb", "data_version": 1, "fooid": 1}
+        self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
+        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 6).execute().fetchall()[0]
+        sc_history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 6).execute().fetchall()[
+            0]
+        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 6).execute().fetchall()[
+            0]
+        cond_history_row = self.sc_table.conditions.history.t.select().where(
+            self.sc_table.conditions.history.sc_id == 6).execute().fetchall()[0]
+        self.assertEquals(sc_row.scheduled_by, "bob")
+        self.assertEquals(sc_row.data_version, 2)
+        self.assertEquals(sc_row.base_fooid, 1)
+        self.assertEquals(sc_row.base_foo, "bb")
+        self.assertEquals(sc_row.base_data_version, 1)
+        self.assertEquals(sc_history_row.changed_by, "bob")
+        self.assertEquals(sc_history_row.scheduled_by, "bob")
+        self.assertEquals(sc_history_row.data_version, 2)
+        self.assertEquals(sc_history_row.base_fooid, 1)
+        self.assertEquals(sc_history_row.base_foo, "bb")
+        self.assertEquals(sc_history_row.base_data_version, 1)
+        self.assertEquals(cond_row.when, 800000)
+        self.assertEquals(cond_row.data_version, 2)
+        self.assertEquals(cond_history_row.when, 800000)
+        self.assertEquals(cond_history_row.data_version, 2)
+
+    def testDeleteChangeForDeleteScheduledChange(self):
+        self.sc_table.delete(where=[self.sc_table.sc_id == 6], changed_by="bob", old_data_version=1)
+        ret = self.sc_table.t.select().where(self.sc_table.sc_id == 6).execute().fetchall()
+        self.assertEquals(len(ret), 0)
+        ret = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 6).execute().fetchall()
+        self.assertEquals(len(ret), 0)
+
     def testDeleteChange(self):
         self.sc_table.delete(where=[self.sc_table.sc_id == 2], changed_by="bob", old_data_version=1)
         ret = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()
