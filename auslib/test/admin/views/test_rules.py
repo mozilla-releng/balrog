@@ -695,6 +695,7 @@ class TestRuleScheduledChanges(ViewTest):
             sc_id=4, scheduled_by="bill", data_version=2, complete=True, base_rule_id=5, base_priority=80, base_version="3.3",
             base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1, change_type="update",
         )
+
         dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=4, when=500000, data_version=2)
 
         dbo.rules.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=5, sc_id=3)
@@ -836,6 +837,31 @@ class TestRuleScheduledChanges(ViewTest):
         cond_expected = {"sc_id": 5, "data_version": 1, "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "when": None}
         self.assertEquals(dict(cond[0]), cond_expected)
 
+    def testAddScheduledChangeExistingDeletingRule(self):
+        data = {
+            "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "data_version": 1,
+            "rule_id": 5, "change_type": "delete",
+        }
+        ret = self._post("/scheduled_changes/rules", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+
+        r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 5).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "scheduled_by": "bill", "base_rule_id": 5, "base_priority": None, "base_buildTarget": None, "base_version": None, "base_backgroundRate": None,
+            "base_mapping": None, "base_update_type": None, "base_data_version": 1, "data_version": 1, "sc_id": 5, "complete": False, "base_alias": None,
+            "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None,
+            "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,
+            "base_systemCapabilities": None, "change_type": "delete",
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 5, "data_version": 1, "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "when": None}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewRule(self):
         data = {
@@ -861,6 +887,23 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(len(cond), 1)
         cond_expected = {"sc_id": 5, "data_version": 1, "when": 1234567, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None}
         self.assertEquals(dict(cond[0]), cond_expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeNewRuleWithoutUpdateType(self):
+        data = {
+            "when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah", "mapping": "a", "change_type": "new"
+        }
+        ret = self._post("/scheduled_changes/rules", data=data)
+        self.assertEquals(ret.status_code, 400, ret.data)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeUpdateRuleRuleWithoutUpdateType(self):
+        data = {
+            "when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah",
+            "mapping": "a", "change_type": "new", "data_version": 1
+        }
+        ret = self._post("/scheduled_changes/rules", data=data)
+        self.assertEquals(ret.status_code, 400, ret.data)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeInThePast(self):
@@ -903,6 +946,14 @@ class TestRuleScheduledChanges(ViewTest):
             "telemetry_product": "foo", "priority": 120, "backgroundRate": 100, "update_type": "minor", "change_type": "new"
         }
         ret = self._post("scheduled_changes/rules", data=data)
+        self.assertEquals(ret.status_code, 400)
+
+    def testAddScheduledChangeForDeletionMissingRequiredPKColumns(self):
+        data = {
+            "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "data_version": 1,
+            "change_type": "delete",
+        }
+        ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 400)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
