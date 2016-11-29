@@ -45,6 +45,8 @@ def upgrade(migrate_engine):
             base_mapping!=NULL AND
             base_data_version==NULL
         """)
+    rules_scheduled_changes = Table("rules_scheduled_changes", metadata, autoload=True)
+    rules_scheduled_changes.c.base_update_type.alter(nullable=True)
 
 
 def downgrade(migrate_engine):
