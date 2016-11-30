@@ -1740,13 +1740,13 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.rules = dbo.rules
         self.releases = dbo.releases
         self.permissions = dbo.permissions
-        self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='a', product='a', data=dict(name="a", schema_version=1, hashFunction="sha512"),
                                          data_version=1)
-        self.releases.t.insert().execute(name='ab', product='a', data=json.dumps(dict(name="ab", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='ab', product='a', data=dict(name="ab", schema_version=1, hashFunction="sha512"),
                                          data_version=1)
-        self.releases.t.insert().execute(name='b', product='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='b', product='b', data=dict(name="b", schema_version=1, hashFunction="sha512"),
                                          data_version=1)
-        self.releases.t.insert().execute(name='c', product='c', data=json.dumps(dict(name="c", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='c', product='c', data=dict(name="c", schema_version=1, hashFunction="sha512"),
                                          data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
@@ -1788,7 +1788,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseInfoWithFallbackMapping(self):
         self.releases.t.insert().execute(name='fallback', product='e',
-                                         data=json.dumps(dict(name="e", schema_version=1, hashFunction="sha512")),
+                                         data=dict(name="e", schema_version=1, hashFunction="sha512"),
                                          data_version=1)
         self.rules.t.insert().execute(rule_id=1, priority=100, fallbackMapping="fallback", version='3.5',
                                       whitelist='e', update_type='z', data_version=1)

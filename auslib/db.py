@@ -1375,6 +1375,24 @@ class Rules(AUSTable):
         super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
 
+class BlobColumn(sqlalchemy.types.TypeDecorator):
+    # TODO: use LONGTEXT for mysql
+
+    impl = Text
+
+    def process_bind_param(self, value, dialect):
+        from auslib.blobs.base import Blob
+        if isinstance(value, Blob):
+            return value.getJSON()
+        elif isinstance(value, dict):
+            return json.dumps(value)
+        else:
+            return value
+
+    def process_result_value(self, value, dialect):
+        return createBlob(value)
+
+
 class Releases(AUSTable):
 
     def __init__(self, db, metadata, dialect):
@@ -1387,10 +1405,8 @@ class Releases(AUSTable):
                            )
         if dialect == 'mysql':
             from sqlalchemy.dialects.mysql import LONGTEXT
-            dataType = LONGTEXT
-        else:
-            dataType = Text
-        self.table.append_column(Column('data', dataType, nullable=False))
+            BlobColumn.impl = LONGTEXT
+        self.table.append_column(Column('data', BlobColumn, nullable=False))
         AUSTable.__init__(self, db, dialect)
 
     def setDomainWhitelist(self, domainWhitelist):
