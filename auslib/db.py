@@ -978,6 +978,8 @@ class ScheduledChangeTable(AUSTable):
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         base_columns, condition_columns = self._splitColumns(columns)
+        if "change_type" not in base_columns:
+            raise ValueError("Change type is required")
 
         if base_columns["change_type"] == "delete":
             for pk in self.base_primary_key:
