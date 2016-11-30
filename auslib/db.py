@@ -1074,6 +1074,9 @@ class ScheduledChangeTable(AUSTable):
             if col.startswith("base_"):
                 what[col[5:]] = sc[col]
 
+        # TODO: OMG HACK! This needs to be handled elsewhere
+        if "data" in what:
+            what["data"] = createBlob(what["data"])
         # The scheduled change is marked as complete first to avoid it being
         # updated unnecessarily when the base table's update method calls
         # mergeUpdate. If the base table update fails, this will get reverted

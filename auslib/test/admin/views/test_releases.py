@@ -1221,13 +1221,73 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(cond_got, [])
 
     def testEnactScheduledChangeExistingRelease(self):
-        pass
+        ret = self._post("/scheduled_changes/releases/2/enact")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        db_data["base_data"] = json.loads(db_data["base_data"])
+        expected = {
+            "sc_id": 2, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_name": "c", "base_product": "c",
+            "base_read_only": False, "base_data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
+            "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+
+        base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "c").execute().fetchall()[0])
+        base_row["data"] = json.loads(base_row["data"])
+        base_expected = {
+            "name": "c", "product": "c", "read_only": False,
+            "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"}, "data_version": 2,
+        }
+        self.assertEquals(dict(base_row), base_expected)
 
     def testEnactScheduledChangeNewRelease(self):
-        pass
+        ret = self._post("/scheduled_changes/releases/1/enact")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        db_data["base_data"] = json.loads(db_data["base_data"])
+        expected = {
+            "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_name": "m", "base_product": "m",
+            "base_read_only": False, "base_data": {"name": "m", "hashFunction": "sha512", "schema_version": 1},
+            "base_data_version": None,
+        }
+        self.assertEquals(db_data, expected)
+
+        base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "m").execute().fetchall()[0])
+        base_row["data"] = json.loads(base_row["data"])
+        base_expected = {
+            "name": "m", "product": "m", "read_only": False,
+            "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "data_version": 1,
+        }
+        self.assertEquals(dict(base_row), base_expected)
 
     def testGetScheduledChangeHistoryRevisions(self):
-        pass
+        ret = self._get("/scheduled_changes/releases/3/revisions")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        ret = json.loads(ret.data)
+        ret["revisions"][0]["data"] = json.loads(ret["revisions"][0]["data"])
+        ret["revisions"][1]["data"] = json.loads(ret["revisions"][1]["data"])
+        expected = {
+            "count": 2,
+            "revisions": [
+                {
+                    "change_id": 7, "changed_by": "bill", "timestamp": 25, "sc_id": 3, "scheduled_by": "bill", "data_version": 1,
+                    "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
+                    "complete": True, "when": 10000000, "sc_data_version": 2,
+                },
+                {
+                    "change_id": 6, "changed_by": "bill", "timestamp": 7, "sc_id": 3, "scheduled_by": "bill", "data_version": 1,
+                    "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
+                    "complete": False, "when": 10000000, "sc_data_version": 1,
+                },
+            ],
+        }
+        self.assertEquals(ret, expected)
 
 
 class TestReleaseHistoryView(ViewTest):
