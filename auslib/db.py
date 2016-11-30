@@ -1053,6 +1053,9 @@ class ScheduledChangeTable(AUSTable):
             # TODO: What permissions *should* be required to delete a scheduled change?
             # It seems a bit odd to be checking base table update/insert here. Maybe
             # something broader should be required?
+            # TODO: OMG HACK! This needs to be handled elsewhere
+            if "data" in base_row:
+                base_row["data"] = createBlob(base_row["data"])
             self._checkBaseTablePermissions(base_table_where, base_row, changed_by, transaction)
 
         ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction, dryrun=dryrun)

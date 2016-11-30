@@ -1213,7 +1213,12 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(dict(cond[0]), cond_expected)
 
     def testDeleteScheduledChange(self):
-        pass
+        ret = self._delete("/scheduled_changes/releases/2", qs={"data_version": 1})
+        self.assertEquals(ret.status_code, 200, ret.data)
+        got = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2).execute().fetchall()
+        self.assertEquals(got, [])
+        cond_got = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 2).execute().fetchall()
+        self.assertEquals(cond_got, [])
 
     def testEnactScheduledChangeExistingRelease(self):
         pass
