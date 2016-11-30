@@ -643,7 +643,7 @@ class ScheduledChangesTableMixin(object):
         self.sc_table.t.insert().execute(sc_id=1, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1,
                                          data_version=1, change_type="update")
         self.sc_table.conditions.t.insert().execute(sc_id=1, when=234000, data_version=1)
-        self.sc_table.t.insert().execute(sc_id=2, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1, change_type="new")
+        self.sc_table.t.insert().execute(sc_id=2, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1, change_type="insert")
         self.sc_table.conditions.t.insert().execute(sc_id=2, when=567000, data_version=1)
         self.sc_table.t.insert().execute(sc_id=3, scheduled_by="bob", complete=True, base_fooid=2, base_foo="b", base_bar="bb", base_data_version=1,
                                          data_version=1, change_type="update")
@@ -767,7 +767,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertForNewRow(self):
-        what = {"foo": "newthing1", "when": 888000, "change_type": "new"}
+        what = {"foo": "newthing1", "when": 888000, "change_type": "insert"}
         self.sc_table.insert(changed_by="bob", **what)
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 7).execute().fetchall()[0]
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 7).execute().fetchall()[0]
@@ -792,7 +792,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
         table = TestTable2(self.db, self.metadata)
         self.metadata.create_all()
-        what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876000, "change_type": "new"}
+        what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876000, "change_type": "insert"}
         table.scheduled_changes.insert(changed_by="mary", **what)
         sc_row = table.scheduled_changes.t.select().where(table.scheduled_changes.sc_id == 1).execute().fetchall()[0]
         cond_row = table.scheduled_changes.conditions.t.select().where(table.scheduled_changes.conditions.sc_id == 1).execute().fetchall()[0]
@@ -807,7 +807,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithNonNullableColumn(self):
-        what = {"bar": "abc", "when": 34567000, "change_type": "new"}
+        what = {"bar": "abc", "when": 34567000, "change_type": "insert"}
         # TODO: we should really be checking directly for IntegrityError, but AUSTransaction eats it.
         self.assertRaisesRegexp(TransactionError, "IntegrityError", self.sc_table.insert, changed_by="bob", **what)
 
@@ -829,11 +829,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
         table = TestTable2("fake", self.metadata)
         self.metadata.create_all()
-        what = {"fooid": 2, "when": 4532000, "change_type": "new"}
+        what = {"fooid": 2, "when": 4532000, "change_type": "insert"}
         self.assertRaisesRegexp(ValueError, "Missing primary key column", table.scheduled_changes.insert, changed_by="bob", **what)
 
     def testInsertWithMalformedTimestamp(self):
-        what = {"foo": "blah", "when": "abc", "change_type": "new"}
+        what = {"foo": "blah", "when": "abc", "change_type": "insert"}
         self.assertRaisesRegexp(ValueError, "Cannot parse", self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
@@ -847,7 +847,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithoutPermissionOnBaseTable(self):
-        what = {"fooid": 4, "bar": "blah", "when": 343000, "change_type": "new"}
+        what = {"fooid": 4, "bar": "blah", "when": 343000, "change_type": "insert"}
         self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
@@ -868,7 +868,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.sc_table.conditions.insert = noop
         self.sc_table.conditions.t.insert().execute(sc_id=7, when=10000000, data_version=4)
 
-        what = {"foo": "newthing1", "when": 888000, "change_type": "new"}
+        what = {"foo": "newthing1", "when": 888000, "change_type": "insert"}
         self.assertRaises(MismatchedDataVersionError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
@@ -1283,7 +1283,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithEnabledCondition(self):
-        what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "when": 909000, "change_type": "new"}
+        what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "when": 909000, "change_type": "insert"}
         self.sc_table.insert(changed_by="bob", **what)
         row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 2).execute().fetchall()[0]
@@ -3232,7 +3232,7 @@ class TestChangeNotifiers(unittest.TestCase):
     def testOnInsertRuleSC(self):
         def doit():
             self.db.rules.scheduled_changes.insert("bob", when=2000000000000000, product="foo", channel="bar", backgroundRate=100, priority=50,
-                                                   update_type="minor", change_type="new")
+                                                   update_type="minor", change_type="insert")
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))

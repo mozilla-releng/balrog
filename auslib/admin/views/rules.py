@@ -302,7 +302,7 @@ class RuleScheduledChangesView(ScheduledChangesView):
         if request.json.get("change_type") != "delete":
             if request.json and request.json.get("change_type") == "update":
                 form = ScheduledChangeExistingRuleForm()
-            elif request.json.get("change_type") == "new":
+            elif request.json.get("change_type") == "insert":
                 form = ScheduledChangeNewRuleForm()
 
             releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
