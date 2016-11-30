@@ -60,7 +60,7 @@ class DiffView(FieldView):
 
     def get_prev_id(self, value, change_id):
 
-        release_name = json.loads(value)['name']
+        release_name = value['name']
 
         table = dbo.releases.history
         old_revision = table.select(
@@ -81,8 +81,8 @@ class DiffView(FieldView):
         prev_id = self.get_prev_id(value, change_id)
         previous = self.get_value(type_, prev_id, field)
 
-        value = self.format_value(value)
-        previous = self.format_value(previous)
+        value = self.format_value(value.getJSON())
+        previous = self.format_value(previous.getJSON())
 
         differ = difflib.Differ()
         result = differ.compare(
