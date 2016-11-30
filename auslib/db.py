@@ -1376,18 +1376,11 @@ class Rules(AUSTable):
 
 
 class BlobColumn(sqlalchemy.types.TypeDecorator):
-    # TODO: use LONGTEXT for mysql
 
     impl = Text
 
     def process_bind_param(self, value, dialect):
-        from auslib.blobs.base import Blob
-        if isinstance(value, Blob):
-            return value.getJSON()
-        elif isinstance(value, dict):
-            return json.dumps(value)
-        else:
-            return value
+        return value.getJSON()
 
     def process_result_value(self, value, dialect):
         return createBlob(value)
@@ -1526,7 +1519,6 @@ class Releases(AUSTable):
         blob.validate(columns["product"], self.domainWhitelist)
         if columns["name"] != blob["name"]:
             raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
-        columns["data"] = blob.getJSON()
 
         ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
@@ -1576,7 +1568,6 @@ class Releases(AUSTable):
                 name = what.get("name", name)
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-                what['data'] = blob.getJSON()
 
         for release in current_releases:
             name = current_release["name"]
@@ -1594,7 +1585,7 @@ class Releases(AUSTable):
                     if ancestor_change is None:
                         self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
                         raise
-                    ancestor_blob = createBlob(ancestor_change.get('data'))
+                    ancestor_blob = ancestor_change.get('data')
                     tip_release = self.getReleases(name=name, transaction=transaction)[0]
                     tip_blob = tip_release.get('data')
                     m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
@@ -1606,7 +1597,7 @@ class Releases(AUSTable):
                         unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
                         # converting the resultant dict into a blob and then
                         # converting it to JSON
-                        what['data'] = createBlob(unified_blob).getJSON()
+                        what['data'] = unified_blob
                         # we want the data_version for the dictdiffer.merged blob to be one
                         # more than that of the latest blob
                         tip_data_version = tip_release['data_version']
@@ -1660,7 +1651,7 @@ class Releases(AUSTable):
                     releaseBlob['platforms'][a] = {'alias': platform}
 
         releaseBlob.validate(product, self.domainWhitelist)
-        what = dict(data=releaseBlob.getJSON())
+        what = dict(data=releaseBlob)
 
         super(Releases, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                                      transaction=transaction)
