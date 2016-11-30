@@ -48,7 +48,7 @@ def upgrade(migrate_engine):
         "releases_scheduled_changes_conditions_history", metadata,
         Column("change_id", Integer, primary_key=True, autoincrement=True),
         Column("changed_by", String(100), nullable=False),
-        Column("sc_id", Integer, primary_key=True),
+        Column("sc_id", Integer, nullable=False),
         Column("data_version", Integer),
     )
 
