@@ -48,7 +48,6 @@ class ScheduledChangesView(AdminView):
             if "blob" in kwargs:
                 kwargs["data"] = createBlob(kwargs["blob"])
                 del kwargs["blob"]
-            print kwargs
             sc_id = self.sc_table.insert(changed_by, transaction, **kwargs)
         except ValueError as e:
             self.log.warning("Bad input: %s", e)
@@ -88,6 +87,10 @@ class ScheduledChangeView(AdminView):
             # from the rule (aka, set as NULL in the db). The underlying Form
             # will have already converted it to None, so we can treat it the
             # same as a modification here.
+            # TODO: fixme awful hack because you can't have a field called "data" in a wtform
+            # TODO: probably need to do this in releases.py, because we need to load it as a blob
+            if k == "blob":
+                what["data"] = createBlob(v)
             if (request.json and k in request.json):
                 what[k] = v
 
