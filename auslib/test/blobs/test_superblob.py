@@ -1,10 +1,9 @@
 import unittest
 
 from auslib.blobs.superblob import SuperBlob
-from auslib.test.test_db import MemoryDatabaseMixin
 
 
-class TestSchema1Blob(unittest.TestCase, MemoryDatabaseMixin):
+class TestSchema1Blob(unittest.TestCase):
     maxDiff = 2000
 
     def setUp(self):
