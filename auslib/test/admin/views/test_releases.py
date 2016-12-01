@@ -1120,7 +1120,7 @@ class TestReleasesScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingRelease(self):
         data = {
-            "when": 2300000000, "name": "ab", "blob": '{"name": "ab", "hashFunction": "sha256", "schema_version": 1}',
+            "when": 2300000000, "name": "ab", "data": '{"name": "ab", "hashFunction": "sha256", "schema_version": 1}',
             "product": "ab", "data_version": 1
         }
         ret = self._post("/scheduled_changes/releases", data=data)
@@ -1143,7 +1143,7 @@ class TestReleasesScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewRelease(self):
         data = {
-            "when": 5200000000, "name": "q", "blob": '{"name": "q", "hashFunction": "sha512", "schema_version": 1}',
+            "when": 5200000000, "name": "q", "data": '{"name": "q", "hashFunction": "sha512", "schema_version": 1}',
             "product": "q",
         }
         ret = self._post("/scheduled_changes/releases", data=data)
@@ -1166,7 +1166,7 @@ class TestReleasesScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingRelease(self):
         data = {
-            "blob": '{"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "c", "product": "c",
+            "data": '{"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "c", "product": "c",
             "data_version": 1, "sc_data_version": 1, "when": 78900000000,
         }
         ret = self._post("/scheduled_changes/releases/2", data=data)
@@ -1191,7 +1191,7 @@ class TestReleasesScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeNewRelease(self):
         data = {
-            "blob": '{"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1}', "name": "m", "product": "m",
+            "data": '{"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1}', "name": "m", "product": "m",
             "sc_data_version": 1,
         }
         ret = self._post("/scheduled_changes/releases/1", data=data)

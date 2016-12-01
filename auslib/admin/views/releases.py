@@ -537,6 +537,7 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
         else:
             form = ScheduledChangeNewReleaseForm()
 
+        form.data.data = createBlob(form.data.data)
         return super(ReleaseScheduledChangesView, self)._post(form, transaction, changed_by)
 
 
@@ -551,6 +552,7 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
         else:
             form = EditScheduledChangeNewReleaseForm()
 
+        form.data.data = createBlob(form.data.data)
         return super(ReleaseScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
 
     @requirelogin

@@ -4,7 +4,6 @@ from sqlalchemy.sql.expression import null
 
 from flask import jsonify, request, Response
 
-from auslib.blobs.base import createBlob
 from auslib.admin.views.base import AdminView, HistoryAdminView
 from auslib.admin.views.forms import DbEditableForm
 
@@ -41,14 +40,7 @@ class ScheduledChangesView(AdminView):
             return Response(status=400, response=json.dumps(form.errors))
 
         try:
-            # TODO: fixme awful hack because you can't have a field called "data" in a wtform
-            # TODO: probably need to do this in releases.py, because we need to load it as a blob
-            from copy import deepcopy
-            kwargs = deepcopy(form.data)
-            if "blob" in kwargs:
-                kwargs["data"] = createBlob(kwargs["blob"])
-                del kwargs["blob"]
-            sc_id = self.sc_table.insert(changed_by, transaction, **kwargs)
+            sc_id = self.sc_table.insert(changed_by, transaction, **{k: v.data for k, v in form._fields.items()})
         except ValueError as e:
             self.log.warning("Bad input: %s", e)
             return Response(status=400, response=json.dumps({"exception": e.args}))
@@ -75,7 +67,7 @@ class ScheduledChangeView(AdminView):
         # We need to be able to support changing AND removing things
         # and because of how Flask's request object and WTForm's defaults work
         # this gets a little hairy.
-        for k, v in form.data.iteritems():
+        for k, v in form._fields.iteritems():
             # sc_data_version is a "special" column, in that it's not part of the
             # primary data, and shouldn't be updatable by the user.
             if k == "sc_data_version":
@@ -87,12 +79,8 @@ class ScheduledChangeView(AdminView):
             # from the rule (aka, set as NULL in the db). The underlying Form
             # will have already converted it to None, so we can treat it the
             # same as a modification here.
-            # TODO: fixme awful hack because you can't have a field called "data" in a wtform
-            # TODO: probably need to do this in releases.py, because we need to load it as a blob
-            if k == "blob":
-                what["data"] = createBlob(v)
             if (request.json and k in request.json):
-                what[k] = v
+                what[k] = v.data
 
         try:
             self.sc_table.update({"sc_id": sc_id}, what, changed_by, form.sc_data_version.data, transaction)

@@ -269,17 +269,31 @@ class ReadOnlyForm(Form):
     data_version = IntegerField('data_version', widget=HiddenInput())
 
 
-class ScheduledChangeNewReleaseForm(ScheduledChangeTimeForm, CompleteReleaseForm):
-    pass
+class ScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
+    name = StringField('Name', validators=[Required()])
+    product = StringField('Product', validators=[Required()])
+    data = JSONStringField({}, 'Data', validators=[Required()], widget=FileInput())
+    data_version = IntegerField('data_version', widget=HiddenInput())
 
 
-class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm, CompleteReleaseForm):
-    pass
+class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
+    name = StringField('Name', validators=[Required()])
+    product = StringField('Product', validators=[Optional()])
+    data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
+    data_version = IntegerField('data_version', widget=HiddenInput())
 
 
-class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm, CompleteReleaseForm):
+class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
+    name = StringField('Name', validators=[Required()])
+    product = StringField('Product', validators=[Required()])
+    data = JSONStringField({}, 'Data', validators=[Required()], widget=FileInput())
+    data_version = IntegerField('data_version', widget=HiddenInput())
     sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
 
 
-class EditScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm, CompleteReleaseForm):
+class EditScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
+    name = StringField('Name', validators=[Required()])
+    product = StringField('Product', validators=[Optional()])
+    data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
+    data_version = IntegerField('data_version', widget=HiddenInput())
     sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
