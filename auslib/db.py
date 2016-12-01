@@ -904,7 +904,7 @@ class ScheduledChangeTable(AUSTable):
         elif new_row.get("change_type") == "insert":
             self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
         elif new_row.get("change_type") == "delete":
-            self.baseTable.delete(base_table_where, changed_by, new_row["data_version"], transaction=transaction)
+            self.baseTable.delete(base_table_where, changed_by, new_row["data_version"], transaction=transaction, dryrun=True)
 
     def _dataVersionsAreSynced(self, sc_id, transaction):
         sc_row = super(ScheduledChangeTable, self).select(where=[self.sc_id == sc_id], transaction=transaction, columns=[self.data_version])
