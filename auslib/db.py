@@ -83,6 +83,32 @@ class ChangeScheduledError(SQLAlchemyError):
     for data consistency reasons."""
 
 
+class JSONColumn(sqlalchemy.types.TypeDecorator):
+
+    impl = Text
+
+    def process_bind_param(self, value, dialect):
+        if value:
+            value = json.dumps(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value:
+            value = json.loads(value)
+        return value
+
+
+class BlobColumn(sqlalchemy.types.TypeDecorator):
+
+    impl = Text
+
+    def process_bind_param(self, value, dialect):
+        return value.getJSON()
+
+    def process_result_value(self, value, dialect):
+        return createBlob(value)
+
+
 class AUSTransaction(object):
     """Manages a single transaction. Requires a connection object.
 
@@ -1375,17 +1401,6 @@ class Rules(AUSTable):
         super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
 
-class BlobColumn(sqlalchemy.types.TypeDecorator):
-
-    impl = Text
-
-    def process_bind_param(self, value, dialect):
-        return value.getJSON()
-
-    def process_result_value(self, value, dialect):
-        return createBlob(value)
-
-
 class Releases(AUSTable):
 
     def __init__(self, db, metadata, dialect):
@@ -1741,7 +1756,7 @@ class Permissions(AUSTable):
         self.table = Table('permissions', metadata,
                            Column('permission', String(50), primary_key=True),
                            Column('username', String(100), primary_key=True),
-                           Column('options', Text)
+                           Column('options', JSONColumn)
                            )
         self.user_roles = UserRoles(db, metadata, dialect)
         AUSTable.__init__(self, db, dialect)
@@ -1776,7 +1791,6 @@ class Permissions(AUSTable):
         self.assertPermissionExists(columns["permission"])
         if columns.get("options"):
             self.assertOptionsExist(columns["permission"], columns["options"])
-            columns["options"] = json.dumps(columns["options"])
 
         if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
@@ -1808,11 +1822,6 @@ class Permissions(AUSTable):
             if what.get("options"):
                 self.assertOptionsExist(what.get("permission", current_permission["permission"]), what["options"])
 
-        if what.get("options"):
-            what["options"] = json.dumps(what["options"])
-        else:
-            what["options"] = None
-
         super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                                         transaction=transaction, dryrun=dryrun)
 
@@ -1837,10 +1846,7 @@ class Permissions(AUSTable):
 
     def getPermission(self, username, permission, transaction=None):
         try:
-            row = self.select(where=[self.username == username, self.permission == permission], transaction=transaction)[0]
-            if row['options']:
-                row['options'] = json.loads(row['options'])
-            return row
+            return self.select(where=[self.username == username, self.permission == permission], transaction=transaction)[0]
         except IndexError:
             return {}
 
@@ -1848,23 +1854,16 @@ class Permissions(AUSTable):
         rows = self.select(columns=[self.permission, self.options, self.data_version], where=[self.username == username], transaction=transaction)
         ret = dict()
         for row in rows:
-            perm = row['permission']
-            opt = row['options']
-            ret[perm] = dict()
-            ret[perm]['data_version'] = row['data_version']
-            if opt:
-                ret[perm]['options'] = json.loads(opt)
-            else:
-                ret[perm]['options'] = None
+            ret[row["permission"]] = {
+                "options": row["options"],
+                "data_version": row["data_version"]
+            }
         return ret
 
     def getOptions(self, username, permission, transaction=None):
         ret = self.select(columns=[self.options], where=[self.username == username, self.permission == permission], transaction=transaction)
         if ret:
-            if ret[0]['options']:
-                return json.loads(ret[0]['options'])
-            else:
-                return {}
+            return ret[0]["options"]
         else:
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
 
@@ -1878,7 +1877,7 @@ class Permissions(AUSTable):
         # products.
         if self.select(where=[self.username == username, self.permission == 'admin'], transaction=transaction):
             options = self.getOptions(username, 'admin', transaction=transaction)
-            if options.get("products") and product not in options["products"]:
+            if options and options.get("products") and product not in options["products"]:
                 return False
             return True
 
@@ -1887,14 +1886,15 @@ class Permissions(AUSTable):
         except ValueError:
             return False
 
-        # If a user has a permission that doesn't explicitly limit the type of
-        # actions they can perform, they are allowed to do any type of action.
-        if options.get("actions") and action not in options["actions"]:
-            return False
-        # Similarly, permissions without products specified grant that
-        # that permission without any limitation on the product.
-        if options.get("products") and product not in options["products"]:
-            return False
+        if options:
+            # If a user has a permission that doesn't explicitly limit the type of
+            # actions they can perform, they are allowed to do any type of action.
+            if options.get("actions") and action not in options["actions"]:
+                return False
+            # Similarly, permissions without products specified grant that
+            # that permission without any limitation on the product.
+            if options.get("products") and product not in options["products"]:
+                return False
 
         return True
 

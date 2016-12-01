@@ -1,7 +1,6 @@
 import logging
 import mock
 import os
-import simplejson as json
 import sys
 from tempfile import mkstemp
 import unittest
@@ -655,7 +654,7 @@ class ScheduledChangesTableMixin(object):
         self.sc_table.conditions.t.insert().execute(sc_id=5, when=39000, data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
-        self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options='{"actions": ["enact"]}', data_version=1)
+        self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options={"actions": ["enact"]}, data_version=1)
 
 
 class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, MemoryDatabaseMixin):
@@ -1750,7 +1749,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                          data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
-        self.permissions.t.insert().execute(permission="release", username="bob", options=json.dumps(dict(products=["c"])), data_version=1)
+        self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["c"]), data_version=1)
 
     def tearDown(self):
         dbo.reset()
@@ -2729,7 +2728,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        result_blob = json.loads("""
+        result_blob = createBlob("""
 {
     "name": "p",
     "schema_version": 1,
@@ -2880,14 +2879,14 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.user_roles = self.db.permissions.user_roles
         self.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         self.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)
-        self.permissions.t.insert().execute(permission="release", username="bob", options=json.dumps(dict(products=["fake"])), data_version=1)
+        self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["fake"]), data_version=1)
         self.permissions.t.insert().execute(permission="rule", username="cathy", data_version=1)
-        self.permissions.t.insert().execute(permission="rule", username="bob", options=json.dumps(dict(actions=["modify"])), data_version=1)
-        self.permissions.t.insert().execute(permission="rule", username="fred", options=json.dumps(dict(products=["foo", "bar"], actions=["modify"])),
+        self.permissions.t.insert().execute(permission="rule", username="bob", options=dict(actions=["modify"]), data_version=1)
+        self.permissions.t.insert().execute(permission="rule", username="fred", options=dict(products=["foo", "bar"], actions=["modify"]),
                                             data_version=1)
         self.permissions.t.insert().execute(permission='admin',
                                             username='george',
-                                            options=json.dumps(dict(products=["foo"])),
+                                            options=dict(products=["foo"]),
                                             data_version=1)
         self.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         self.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
@@ -2919,7 +2918,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.insert("bob", username="cathy", permission="release", options=dict(products=["SeaMonkey"]))
         query = self.permissions.t.select().where(self.permissions.username == "cathy")
         query = query.where(self.permissions.permission == "release")
-        self.assertEquals(query.execute().fetchall(), [("release", "cathy", json.dumps(dict(products=["SeaMonkey"])), 1)])
+        self.assertEquals(query.execute().fetchall(), [("release", "cathy", dict(products=["SeaMonkey"]), 1)])
 
     def testGrantPermissionsUnknownPermission(self):
         self.assertRaises(ValueError, self.permissions.insert, changed_by="bob", username="bud", permission="bad")
@@ -3010,7 +3009,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(ValueError, self.permissions.getOptions, "fake", "fake")
 
     def testGetOptionsNoOptions(self):
-        self.assertEquals(self.permissions.getOptions("cathy", "rule"), {})
+        self.assertEquals(self.permissions.getOptions("cathy", "rule"), None)
 
     def testHasPermissionAdmin(self):
         self.assertTrue(self.permissions.hasPermission("bill", "rule", "delete"))

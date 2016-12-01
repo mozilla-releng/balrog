@@ -35,15 +35,15 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.permissions.t.insert().execute(permission='permission', username='bob', data_version=1)
         dbo.permissions.t.insert().execute(permission='release', username='bob',
-                                           options=json.dumps(dict(products=['fake', 'b'], actions=["create", "modify"])), data_version=1)
-        dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=json.dumps(dict(actions=["set"])), data_version=1)
-        dbo.permissions.t.insert().execute(permission='rule', username='bob', options=json.dumps(dict(actions=["modify"], products=['fake'])), data_version=1)
-        dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
-        dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=json.dumps(dict(actions=["enact"])), data_version=1)
+                                           options=dict(products=['fake', 'b'], actions=["create", "modify"]), data_version=1)
+        dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=dict(actions=["set"]), data_version=1)
+        dbo.permissions.t.insert().execute(permission='rule', username='bob', options=dict(actions=["modify"], products=['fake']), data_version=1)
+        dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=dict(actions=["modify"], products=['a']), data_version=1)
+        dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=dict(actions=["enact"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_locale', username='ashanti',
-                                           options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
+                                           options=dict(actions=["modify"], products=['a']), data_version=1)
         dbo.permissions.t.insert().execute(permission='admin', username='billy',
-                                           options=json.dumps(dict(products=['a'])), data_version=1)
+                                           options=dict(products=['a']), data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="bill", role="releng", data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="bob", role="relman", data_version=1)
         dbo.releases.t.insert().execute(
