@@ -896,10 +896,15 @@ class ScheduledChangeTable(AUSTable):
         return base_columns, condition_columns
 
     def _checkBaseTablePermissions(self, base_table_where, new_row, changed_by, transaction):
-        if new_row.get("data_version"):
+        if "change_type" not in new_row:
+            raise ValueError("change_type needed to check Permission")
+
+        if new_row.get("change_type") == "update":
             self.baseTable.update(base_table_where, new_row, changed_by, new_row["data_version"], transaction=transaction, dryrun=True)
-        else:
+        elif new_row.get("change_type") == "insert":
             self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
+        elif new_row.get("change_type") == "delete":
+            self.baseTable.delete(base_table_where, changed_by, new_row["data_version"], transaction=transaction)
 
     def _dataVersionsAreSynced(self, sc_id, transaction):
         sc_row = super(ScheduledChangeTable, self).select(where=[self.sc_id == sc_id], transaction=transaction, columns=[self.data_version])
@@ -957,6 +962,7 @@ class ScheduledChangeTable(AUSTable):
             sc_table_where.append(self.complete == False) # noqa because we need to use == for sqlalchemy operator overloading to work
             if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
                 raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
+        self.log.debug("base_columns: %s" % (base_columns))
 
         self.conditions.validate(condition_columns)
         self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
@@ -1024,7 +1030,7 @@ class ScheduledChangeTable(AUSTable):
                     base_columns[base_col] = base_what[base_col]
                 elif sc_columns.get(col):
                     base_columns[base_col] = sc_columns[col]
-
+            base_columns["change_type"] = sc_columns["change_type"]
             # Similarly, we need to integrate the new values for any conditions
             # with the existing ones.
             condition_columns.update(condition_what)
@@ -1047,12 +1053,13 @@ class ScheduledChangeTable(AUSTable):
         for row in self.select(where=where, transaction=transaction):
             conditions_where.append(self.conditions.sc_id == row["sc_id"])
             base_row = {col[5:]: row[col] for col in row if col.startswith("base_")}
+            base_row["change_type"] = row["change_type"]
             base_table_where = {pk: row["base_%s" % pk] for pk in self.base_primary_key}
             # TODO: What permissions *should* be required to delete a scheduled change?
             # It seems a bit odd to be checking base table update/insert here. Maybe
             # something broader should be required?
             self._checkBaseTablePermissions(base_table_where, base_row, changed_by, transaction)
-
+        self.log.debug("base_row: %s" % (base_row))
         ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction, dryrun=dryrun)
         self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun=dryrun)
         return ret
@@ -1069,6 +1076,7 @@ class ScheduledChangeTable(AUSTable):
         for col in sc:
             if col.startswith("base_"):
                 what[col[5:]] = sc[col]
+            what["change_type"] = sc["change_type"]
 
         # The scheduled change is marked as complete first to avoid it being
         # updated unnecessarily when the base table's update method calls
