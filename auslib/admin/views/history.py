@@ -29,9 +29,8 @@ class FieldView(AdminView):
         return revision[field]
 
     def format_value(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, dict):
             try:
-                value = json.loads(value)
                 value = json.dumps(value, indent=2, sort_keys=True)
             except ValueError:
                 pass
