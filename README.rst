@@ -58,7 +58,7 @@ Tests can also run by using tox
 Documentation
 -------------
 
-Documentation of Balrog is hosted at http://mozilla-balrog.readthedocs.io/en/latest/index.html
+Balrog's documentation is hosted at http://mozilla-balrog.readthedocs.io/en/latest/index.html
 
 
 Getting Involved
