@@ -76,17 +76,21 @@ class DiffView(FieldView):
 
     def get(self, type_, change_id, field):
         value = self.get_value(type_, change_id, field)
+        data_version = self.get_value(type_, change_id, "data_version")
 
         prev_id = self.get_prev_id(value, change_id)
         previous = self.get_value(type_, prev_id, field)
+        prev_data_version = self.get_value(type_, prev_id, "data_version")
 
-        value = self.format_value(value.getJSON())
-        previous = self.format_value(previous.getJSON())
+        value = self.format_value(value)
+        previous = self.format_value(previous)
 
-        differ = difflib.Differ()
-        result = differ.compare(
+        result = difflib.unified_diff(
             previous.splitlines(),
-            value.splitlines()
+            value.splitlines(),
+            fromfile="Data Version {}".format(prev_data_version),
+            tofile="Data Version {}".format(data_version),
+            lineterm=""
         )
 
         return Response('\n'.join(result), content_type='text/plain')
