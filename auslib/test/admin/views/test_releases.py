@@ -1024,12 +1024,12 @@ class TestReleasesScheduledChanges(ViewTest):
         super(TestReleasesScheduledChanges, self).setUp()
         dbo.releases.scheduled_changes.t.insert().execute(
             sc_id=1, scheduled_by="bill", data_version=1, base_name="m", base_product="m",
-            base_data=json.dumps(dict(name="m", hashFunction="sha512", schema_version=1))
+            base_data=createBlob(dict(name="m", hashFunction="sha512", schema_version=1))
         )
         dbo.releases.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=50, sc_id=1)
         dbo.releases.scheduled_changes.history.t.insert().execute(
             change_id=2, changed_by="bill", timestamp=51, sc_id=1, scheduled_by="bill", data_version=1, base_name="m", base_product="m",
-            base_data=json.dumps(dict(name="m", hashFunction="sha512", schema_version=1))
+            base_data=createBlob(dict(name="m", hashFunction="sha512", schema_version=1))
         )
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=4000000000, data_version=1)
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=50, sc_id=1)
@@ -1039,12 +1039,12 @@ class TestReleasesScheduledChanges(ViewTest):
 
         dbo.releases.scheduled_changes.t.insert().execute(
             sc_id=2, scheduled_by="bill", data_version=1, base_name="c", base_product="c",
-            base_data=json.dumps(dict(name="c", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
+            base_data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
         )
         dbo.releases.scheduled_changes.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=70, sc_id=2)
         dbo.releases.scheduled_changes.history.t.insert().execute(
             change_id=4, changed_by="bill", timestamp=71, sc_id=2, scheduled_by="bill", data_version=1, base_name="c", base_product="c",
-            base_data=json.dumps(dict(name="c", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
+            base_data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
         )
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=6000000000, data_version=1)
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=70, sc_id=2)
@@ -1054,16 +1054,16 @@ class TestReleasesScheduledChanges(ViewTest):
 
         dbo.releases.scheduled_changes.t.insert().execute(
             sc_id=3, complete=True, scheduled_by="bill", data_version=2, base_name="b", base_product="b",
-            base_data=json.dumps(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
+            base_data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
         )
         dbo.releases.scheduled_changes.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=6, sc_id=3)
         dbo.releases.scheduled_changes.history.t.insert().execute(
             change_id=6, changed_by="bill", timestamp=7, sc_id=3, complete=False, scheduled_by="bill", data_version=1, base_name="b",
-            base_product="b", base_data=json.dumps(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
+            base_product="b", base_data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
         )
         dbo.releases.scheduled_changes.history.t.insert().execute(
             change_id=7, changed_by="bill", timestamp=25, sc_id=3, complete=True, scheduled_by="bill", data_version=2, base_name="b",
-            base_product="b", base_data=json.dumps(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
+            base_product="b", base_data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
         )
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=10000000, data_version=2)
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=6, sc_id=3)
@@ -1129,7 +1129,7 @@ class TestReleasesScheduledChanges(ViewTest):
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 4).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_data"] = json.loads(db_data["base_data"])
+        db_data["base_data"] = db_data["base_data"]
         expected = {
             "sc_id": 4, "scheduled_by": "bill", "complete": False, "data_version": 1, "base_product": "ab", "base_read_only": False,
             "base_name": "ab", "base_data": {"name": "ab", "hashFunction": "sha256", "schema_version": 1}, "base_data_version": 1
@@ -1152,7 +1152,7 @@ class TestReleasesScheduledChanges(ViewTest):
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 4).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_data"] = json.loads(db_data["base_data"])
+        db_data["base_data"] = db_data["base_data"]
         expected = {
             "sc_id": 4, "scheduled_by": "bill", "complete": False, "data_version": 1, "base_product": "q", "base_read_only": False,
             "base_name": "q", "base_data": {"name": "q", "hashFunction": "sha512", "schema_version": 1}, "base_data_version": None,
@@ -1176,7 +1176,7 @@ class TestReleasesScheduledChanges(ViewTest):
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_data"] = json.loads(db_data["base_data"])
+        db_data["base_data"] = db_data["base_data"]
         expected = {
             "sc_id": 2, "complete": False, "data_version": 2, "scheduled_by": "bill", "base_name": "c", "base_product": "c",
             "base_read_only": False, "base_data": {"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1},
@@ -1201,7 +1201,7 @@ class TestReleasesScheduledChanges(ViewTest):
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_data"] = json.loads(db_data["base_data"])
+        db_data["base_data"] = db_data["base_data"]
         expected = {
             "sc_id": 1, "complete": False, "data_version": 2, "scheduled_by": "bill", "base_name": "m", "base_product": "m",
             "base_read_only": False, "base_data": {"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1},
@@ -1228,7 +1228,6 @@ class TestReleasesScheduledChanges(ViewTest):
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_data"] = json.loads(db_data["base_data"])
         expected = {
             "sc_id": 2, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_name": "c", "base_product": "c",
             "base_read_only": False, "base_data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
@@ -1237,12 +1236,11 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(db_data, expected)
 
         base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "c").execute().fetchall()[0])
-        base_row["data"] = json.loads(base_row["data"])
         base_expected = {
             "name": "c", "product": "c", "read_only": False,
             "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"}, "data_version": 2,
         }
-        self.assertEquals(dict(base_row), base_expected)
+        self.assertEquals(base_row, base_expected)
 
     def testEnactScheduledChangeNewRelease(self):
         ret = self._post("/scheduled_changes/releases/1/enact")
@@ -1251,7 +1249,6 @@ class TestReleasesScheduledChanges(ViewTest):
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_data"] = json.loads(db_data["base_data"])
         expected = {
             "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_name": "m", "base_product": "m",
             "base_read_only": False, "base_data": {"name": "m", "hashFunction": "sha512", "schema_version": 1},
@@ -1260,19 +1257,16 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(db_data, expected)
 
         base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "m").execute().fetchall()[0])
-        base_row["data"] = json.loads(base_row["data"])
         base_expected = {
             "name": "m", "product": "m", "read_only": False,
             "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "data_version": 1,
         }
-        self.assertEquals(dict(base_row), base_expected)
+        self.assertEquals(base_row, base_expected)
 
     def testGetScheduledChangeHistoryRevisions(self):
         ret = self._get("/scheduled_changes/releases/3/revisions")
         self.assertEquals(ret.status_code, 200, ret.data)
         ret = json.loads(ret.data)
-        ret["revisions"][0]["data"] = json.loads(ret["revisions"][0]["data"])
-        ret["revisions"][1]["data"] = json.loads(ret["revisions"][1]["data"])
         expected = {
             "count": 2,
             "revisions": [

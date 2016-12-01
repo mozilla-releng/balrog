@@ -177,12 +177,12 @@ class TestPermissionsScheduledChanges(ViewTest):
         super(TestPermissionsScheduledChanges, self).setUp()
         dbo.permissions.scheduled_changes.t.insert().execute(
             sc_id=1, scheduled_by="bill", data_version=1, base_permission="rule", base_username="janet",
-            base_options='{"products": ["foo"]}',
+            base_options={"products": ["foo"]},
         )
         dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
         dbo.permissions.scheduled_changes.history.t.insert().execute(
             change_id=2, changed_by="bill", timestamp=21, sc_id=1, scheduled_by="bill", data_version=1,
-            base_permission="rule", base_username="janet", base_options='{"products": ["foo"]}',
+            base_permission="rule", base_username="janet", base_options={"products": ["foo"]},
         )
         dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000, data_version=1)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
@@ -296,7 +296,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 4).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_options"] = json.loads(db_data["base_options"])
+        db_data["base_options"] = db_data["base_options"]
         expected = {
             "sc_id": 4, "scheduled_by": "bill", "complete": False, "data_version": 1,
             "base_permission": "release", "base_username": "jill", "base_options": {"products": ["a"]}, "base_data_version": None,
@@ -319,7 +319,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_options"] = json.loads(db_data["base_options"])
+        db_data["base_options"] = db_data["base_options"]
         expected = {
             "sc_id": 2, "complete": False, "data_version": 2, "scheduled_by": "bill", "base_permission": "release_locale", "base_username": "ashanti",
             "base_options": {"products": ["Thunderbird"]}, "base_data_version": 1,
@@ -342,7 +342,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_options"] = json.loads(db_data["base_options"])
+        db_data["base_options"] = db_data["base_options"]
         expected = {
             "sc_id": 1, "complete": False, "data_version": 2, "scheduled_by": "bill", "base_permission": "rule", "base_username": "janet",
             "base_options": {"products": ["Firefox"]}, "base_data_version": None,
@@ -389,7 +389,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_options"] = json.loads(db_data["base_options"])
+        db_data["base_options"] = db_data["base_options"]
         expected = {
             "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_permission": "rule", "base_username": "janet",
             "base_options": {"products": ["foo"]}, "base_data_version": None,
@@ -399,7 +399,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         base_row = dict(dbo.permissions.t.select().where(dbo.permissions.username == "janet")
                                                   .where(dbo.permissions.permission == "rule")
                                                   .execute().fetchall()[0])
-        base_row["options"] = json.loads(base_row["options"])
+        base_row["options"] = base_row["options"]
         base_expected = {
             "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": 1
         }

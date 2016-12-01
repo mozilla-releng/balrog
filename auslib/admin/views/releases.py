@@ -530,17 +530,6 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
     def __init__(self):
         super(ReleaseScheduledChangesView, self).__init__("releases", dbo.releases)
 
-    def get(self):
-        resp = super(ReleaseScheduledChangesView, self).get()
-        # The base class that does most of the work doesn't have enough
-        # information to know that te "data" value for each Release should
-        # be deserialized before
-        resp_data = json.loads(resp.data)
-        for i in range(resp_data["count"]):
-            resp_data["scheduled_changes"][i]["data"] = json.loads(resp_data["scheduled_changes"][i]["data"])
-        resp.data = json.dumps(resp_data)
-        return resp
-
     @requirelogin
     def _post(self, transaction, changed_by):
         if request.json and request.json.get("data_version"):

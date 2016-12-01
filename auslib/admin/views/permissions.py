@@ -105,18 +105,6 @@ class PermissionScheduledChangesView(ScheduledChangesView):
     def __init__(self):
         super(PermissionScheduledChangesView, self).__init__("permissions", dbo.permissions)
 
-    def get(self):
-        resp = super(PermissionScheduledChangesView, self).get()
-        # The base class that does most of the work doesn't have enough
-        # information to know that te "data" value for each Permission should
-        # be deserialized before
-        resp_data = json.loads(resp.data)
-        for i in range(resp_data["count"]):
-            if resp_data["scheduled_changes"][i]["options"]:
-                resp_data["scheduled_changes"][i]["options"] = json.loads(resp_data["scheduled_changes"][i]["options"])
-        resp.data = json.dumps(resp_data)
-        return resp
-
     @requirelogin
     def _post(self, transaction, changed_by):
         if request.json and request.json.get("data_version"):
