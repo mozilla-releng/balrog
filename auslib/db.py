@@ -83,6 +83,34 @@ class ChangeScheduledError(SQLAlchemyError):
     for data consistency reasons."""
 
 
+class JSONColumn(sqlalchemy.types.TypeDecorator):
+
+    impl = Text
+
+    def process_bind_param(self, value, dialect):
+        if value:
+            value = json.dumps(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value:
+            value = json.loads(value)
+        return value
+
+
+def BlobColumn(impl=Text):
+    class cls(sqlalchemy.types.TypeDecorator):
+
+        def process_bind_param(self, value, dialect):
+            return value.getJSON()
+
+        def process_result_value(self, value, dialect):
+            return createBlob(value)
+
+    cls.impl = impl
+    return cls
+
+
 class AUSTransaction(object):
     """Manages a single transaction. Requires a connection object.
 
@@ -980,14 +1008,6 @@ class ScheduledChangeTable(AUSTable):
 
         self.validate(base_columns, condition_columns, changed_by, transaction)
 
-        # Some columns are objects, and must be stored as serialized JSON instead.
-        # It would be better to do this only for columns we know need it to avoid
-        # accidentally storing something else as JSON, but we don't have that kind
-        # of specialized knowledge at this level...
-        for col in base_columns:
-            if isinstance(base_columns[col], dict):
-                base_columns[col] = json.dumps(base_columns[col])
-
         base_columns = self._prefixColumns(base_columns)
         base_columns["scheduled_by"] = changed_by
         ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **base_columns)
@@ -1034,9 +1054,6 @@ class ScheduledChangeTable(AUSTable):
 
         base_what = self._prefixColumns(base_what)
         base_what["scheduled_by"] = changed_by
-        for col in base_what:
-            if isinstance(base_what[col], dict):
-                base_what[col] = json.dumps(base_what[col])
 
         super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
 
@@ -1053,9 +1070,6 @@ class ScheduledChangeTable(AUSTable):
             # TODO: What permissions *should* be required to delete a scheduled change?
             # It seems a bit odd to be checking base table update/insert here. Maybe
             # something broader should be required?
-            # TODO: OMG HACK! This needs to be handled elsewhere
-            if "data" in base_row:
-                base_row["data"] = createBlob(base_row["data"])
             self._checkBaseTablePermissions(base_table_where, base_row, changed_by, transaction)
 
         ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction, dryrun=dryrun)
@@ -1074,9 +1088,6 @@ class ScheduledChangeTable(AUSTable):
             if col.startswith("base_"):
                 what[col[5:]] = sc[col]
 
-        # TODO: OMG HACK! This needs to be handled elsewhere
-        if "data" in what:
-            what["data"] = createBlob(what["data"])
         # The scheduled change is marked as complete first to avoid it being
         # updated unnecessarily when the base table's update method calls
         # mergeUpdate. If the base table update fails, this will get reverted
@@ -1408,7 +1419,7 @@ class Releases(AUSTable):
             dataType = LONGTEXT
         else:
             dataType = Text
-        self.table.append_column(Column('data', dataType, nullable=False))
+        self.table.append_column(Column('data', BlobColumn(dataType), nullable=False))
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -1528,7 +1539,6 @@ class Releases(AUSTable):
         blob.validate(columns["product"], self.domainWhitelist)
         if columns["name"] != blob["name"]:
             raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
-        columns["data"] = blob.getJSON()
 
         ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
@@ -1578,7 +1588,6 @@ class Releases(AUSTable):
                 name = what.get("name", name)
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-                what['data'] = blob.getJSON()
 
         for release in current_releases:
             name = current_release["name"]
@@ -1596,7 +1605,7 @@ class Releases(AUSTable):
                     if ancestor_change is None:
                         self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
                         raise
-                    ancestor_blob = createBlob(ancestor_change.get('data'))
+                    ancestor_blob = ancestor_change.get('data')
                     tip_release = self.getReleases(name=name, transaction=transaction)[0]
                     tip_blob = tip_release.get('data')
                     m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
@@ -1608,7 +1617,7 @@ class Releases(AUSTable):
                         unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
                         # converting the resultant dict into a blob and then
                         # converting it to JSON
-                        what['data'] = createBlob(unified_blob).getJSON()
+                        what['data'] = unified_blob
                         # we want the data_version for the dictdiffer.merged blob to be one
                         # more than that of the latest blob
                         tip_data_version = tip_release['data_version']
@@ -1662,7 +1671,7 @@ class Releases(AUSTable):
                     releaseBlob['platforms'][a] = {'alias': platform}
 
         releaseBlob.validate(product, self.domainWhitelist)
-        what = dict(data=releaseBlob.getJSON())
+        what = dict(data=releaseBlob)
 
         super(Releases, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                                      transaction=transaction)
@@ -1752,7 +1761,7 @@ class Permissions(AUSTable):
         self.table = Table('permissions', metadata,
                            Column('permission', String(50), primary_key=True),
                            Column('username', String(100), primary_key=True),
-                           Column('options', Text)
+                           Column('options', JSONColumn)
                            )
         self.user_roles = UserRoles(db, metadata, dialect)
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
@@ -1786,10 +1795,7 @@ class Permissions(AUSTable):
 
         self.assertPermissionExists(columns["permission"])
         if columns.get("options"):
-            if not isinstance(columns["options"], dict):
-                columns["options"] = json.loads(columns["options"])
             self.assertOptionsExist(columns["permission"], columns["options"])
-            columns["options"] = json.dumps(columns["options"])
 
         if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
@@ -1819,14 +1825,7 @@ class Permissions(AUSTable):
 
         for current_permission in self.select(where=where, transaction=transaction):
             if what.get("options"):
-                if not isinstance(what["options"], dict):
-                    what["options"] = json.loads(what["options"])
                 self.assertOptionsExist(what.get("permission", current_permission["permission"]), what["options"])
-
-        if what.get("options"):
-            what["options"] = json.dumps(what["options"])
-        else:
-            what["options"] = None
 
         super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                                         transaction=transaction, dryrun=dryrun)
@@ -1852,10 +1851,7 @@ class Permissions(AUSTable):
 
     def getPermission(self, username, permission, transaction=None):
         try:
-            row = self.select(where=[self.username == username, self.permission == permission], transaction=transaction)[0]
-            if row['options']:
-                row['options'] = json.loads(row['options'])
-            return row
+            return self.select(where=[self.username == username, self.permission == permission], transaction=transaction)[0]
         except IndexError:
             return {}
 
@@ -1863,23 +1859,16 @@ class Permissions(AUSTable):
         rows = self.select(columns=[self.permission, self.options, self.data_version], where=[self.username == username], transaction=transaction)
         ret = dict()
         for row in rows:
-            perm = row['permission']
-            opt = row['options']
-            ret[perm] = dict()
-            ret[perm]['data_version'] = row['data_version']
-            if opt:
-                ret[perm]['options'] = json.loads(opt)
-            else:
-                ret[perm]['options'] = None
+            ret[row["permission"]] = {
+                "options": row["options"],
+                "data_version": row["data_version"]
+            }
         return ret
 
     def getOptions(self, username, permission, transaction=None):
         ret = self.select(columns=[self.options], where=[self.username == username, self.permission == permission], transaction=transaction)
         if ret:
-            if ret[0]['options']:
-                return json.loads(ret[0]['options'])
-            else:
-                return {}
+            return ret[0]["options"]
         else:
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
 
@@ -1893,7 +1882,7 @@ class Permissions(AUSTable):
         # products.
         if self.select(where=[self.username == username, self.permission == 'admin'], transaction=transaction):
             options = self.getOptions(username, 'admin', transaction=transaction)
-            if options.get("products") and product not in options["products"]:
+            if options and options.get("products") and product not in options["products"]:
                 return False
             return True
 
@@ -1902,14 +1891,15 @@ class Permissions(AUSTable):
         except ValueError:
             return False
 
-        # If a user has a permission that doesn't explicitly limit the type of
-        # actions they can perform, they are allowed to do any type of action.
-        if options.get("actions") and action not in options["actions"]:
-            return False
-        # Similarly, permissions without products specified grant that
-        # that permission without any limitation on the product.
-        if options.get("products") and product not in options["products"]:
-            return False
+        if options:
+            # If a user has a permission that doesn't explicitly limit the type of
+            # actions they can perform, they are allowed to do any type of action.
+            if options.get("actions") and action not in options["actions"]:
+                return False
+            # Similarly, permissions without products specified grant that
+            # that permission without any limitation on the product.
+            if options.get("products") and product not in options["products"]:
+                return False
 
         return True
 

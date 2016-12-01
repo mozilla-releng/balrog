@@ -5,6 +5,7 @@ import unittest
 
 from auslib.global_state import dbo, cache
 from auslib.admin.base import app
+from auslib.blobs.base import createBlob
 
 
 class ViewTest(unittest.TestCase):
@@ -34,26 +35,26 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.permissions.t.insert().execute(permission='permission', username='bob', data_version=1)
         dbo.permissions.t.insert().execute(permission='release', username='bob',
-                                           options=json.dumps(dict(products=['fake', 'b'], actions=["create", "modify"])), data_version=1)
-        dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=json.dumps(dict(actions=["set"])), data_version=1)
-        dbo.permissions.t.insert().execute(permission='rule', username='bob', options=json.dumps(dict(actions=["modify"], products=['fake'])), data_version=1)
-        dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
-        dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=json.dumps(dict(actions=["enact"])), data_version=1)
+                                           options=dict(products=['fake', 'b'], actions=["create", "modify"]), data_version=1)
+        dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=dict(actions=["set"]), data_version=1)
+        dbo.permissions.t.insert().execute(permission='rule', username='bob', options=dict(actions=["modify"], products=['fake']), data_version=1)
+        dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=dict(actions=["modify"], products=['a']), data_version=1)
+        dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=dict(actions=["enact"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_locale', username='ashanti',
-                                           options=json.dumps(dict(actions=["modify"], products=['a'])), data_version=1)
+                                           options=dict(actions=["modify"], products=['a']), data_version=1)
         dbo.permissions.t.insert().execute(permission='admin', username='billy',
-                                           options=json.dumps(dict(products=['a'])), data_version=1)
+                                           options=dict(products=['a']), data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="bill", role="releng", data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="bob", role="relman", data_version=1)
         dbo.releases.t.insert().execute(
-            name='a', product='a', data=json.dumps(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
+            name='a', product='a', data=createBlob(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
-            name='ab', product='a', data=json.dumps(dict(name='ab', hashFunction="sha512", schema_version=1)), data_version=1)
+            name='ab', product='a', data=createBlob(dict(name='ab', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
-            name='b', product='b', data=json.dumps(dict(name='b', hashFunction="sha512", schema_version=1)), data_version=1)
+            name='b', product='b', data=createBlob(dict(name='b', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
-            name='c', product='c', data=json.dumps(dict(name='c', hashFunction="sha512", schema_version=1)), data_version=1)
-        dbo.releases.t.insert().execute(name='d', product='d', data_version=1, data="""
+            name='c', product='c', data=createBlob(dict(name='c', hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.releases.t.insert().execute(name='d', product='d', data_version=1, data=createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -72,7 +73,7 @@ class ViewTest(unittest.TestCase):
         }
     }
 }
-""")
+"""))
         dbo.rules.t.insert().execute(
             rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='minor', data_version=1
         )

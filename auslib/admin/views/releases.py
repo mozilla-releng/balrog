@@ -21,7 +21,7 @@ __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
 
 def createRelease(release, product, changed_by, transaction, releaseData):
-    blob = createBlob(json.dumps(releaseData))
+    blob = createBlob(releaseData)
     dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release,
                         product=product, data=blob)
     return dbo.releases.getReleases(name=release, transaction=transaction)[0]

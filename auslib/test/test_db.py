@@ -1,7 +1,6 @@
 import logging
 import mock
 import os
-import simplejson as json
 import sys
 from tempfile import mkstemp
 import unittest
@@ -655,7 +654,7 @@ class ScheduledChangesTableMixin(object):
         self.sc_table.conditions.t.insert().execute(sc_id=5, when=39000, data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
-        self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options='{"actions": ["enact"]}', data_version=1)
+        self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options={"actions": ["enact"]}, data_version=1)
 
 
 class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, MemoryDatabaseMixin):
@@ -1748,17 +1747,17 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.rules = dbo.rules
         self.releases = dbo.releases
         self.permissions = dbo.permissions
-        self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='a', product='a', data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.releases.t.insert().execute(name='ab', product='a', data=json.dumps(dict(name="ab", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='ab', product='a', data=createBlob(dict(name="ab", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.releases.t.insert().execute(name='b', product='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='b', product='b', data=createBlob(dict(name="b", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.releases.t.insert().execute(name='c', product='c', data=json.dumps(dict(name="c", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='c', product='c', data=createBlob(dict(name="c", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
-        self.permissions.t.insert().execute(permission="release", username="bob", options=json.dumps(dict(products=["c"])), data_version=1)
+        self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["c"]), data_version=1)
 
     def tearDown(self):
         dbo.reset()
@@ -1778,11 +1777,11 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(len(self.releases.getReleases(limit=1)), 1)
 
     def testGetReleasesWithWhere(self):
-        expected = [dict(product='b', name='b', data=dict(name="b", schema_version=1, hashFunction="sha512"), data_version=1)]
+        expected = [dict(product='b', name='b', data=createBlob(dict(name="b", schema_version=1, hashFunction="sha512")), data_version=1)]
         self.assertEquals(self.releases.getReleases(name='b'), expected)
 
     def testGetReleaseBlob(self):
-        expected = dict(name="c", schema_version=1, hashFunction="sha512")
+        expected = createBlob(dict(name="c", schema_version=1, hashFunction="sha512"))
         self.assertEquals(self.releases.getReleaseBlob(name='c'), expected)
 
     def testGetReleaseBlobNonExistentRelease(self):
@@ -1804,7 +1803,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseInfoWithFallbackMapping(self):
         self.releases.t.insert().execute(name='fallback', product='e',
-                                         data=json.dumps(dict(name="e", schema_version=1, hashFunction="sha512")),
+                                         data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.rules.t.insert().execute(rule_id=1, priority=100, fallbackMapping="fallback", version='3.5',
                                       whitelist='e', update_type='z', data_version=1)
@@ -1861,14 +1860,14 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(release, [])
 
     def testDeleteWithRuleMapping(self):
-        self.releases.t.insert().execute(name='d', product='d', data=json.dumps(dict(name="d", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='d', product='d', data=createBlob(dict(name="d", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='d', update_type='z',
                                       data_version=1)
         self.assertRaises(ValueError, self.releases.delete, {"name": "d"}, changed_by='me', old_data_version=1)
 
     def testDeleteWithRuleWhitelist(self):
-        self.releases.t.insert().execute(name='e', product='e', data=json.dumps(dict(name="e", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='e', product='e', data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='e', backgroundRate=100, whitelist='e', update_type='z',
                                       data_version=1)
@@ -1876,7 +1875,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testDeleteWithRuleFallbackMapping(self):
         self.releases.t.insert().execute(name='fallback', product='e',
-                                         data=json.dumps(dict(name="e", schema_version=1, hashFunction="sha512")),
+                                         data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.rules.t.insert().execute(rule_id=1, priority=100, fallbackMapping="fallback", version='3.5', buildTarget='e', backgroundRate=100,
                                       whitelist='e', update_type='z',
@@ -2070,9 +2069,9 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
         self.rules = dbo.rules
         self.releases = dbo.releases
         self.permissions = dbo.permissions
-        self.releases.t.insert().execute(name='a', product='a', data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='a', product='a', data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.releases.t.insert().execute(name='b', product='b', data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
+        self.releases.t.insert().execute(name='b', product='b', data=createBlob(dict(name="b", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
@@ -2277,7 +2276,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
         self.releases = self.db.releases
-        self.releases.t.insert().execute(name='a', product='a', data_version=1, data="""
+        self.releases.t.insert().execute(name='a', product='a', data_version=1, data=createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -2301,21 +2300,21 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-""")
-        self.releases.t.insert().execute(name='b', product='b', data_version=1, data="""
+"""))
+        self.releases.t.insert().execute(name='b', product='b', data_version=1, data=createBlob("""
 {
     "name": "b",
     "hashFunction": "sha512",
     "schema_version": 1
 }
-""")
+"""))
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
 
     def testAddRelease(self):
         blob = ReleaseBlobV1(name="d", hashFunction="sha512")
         self.releases.insert(changed_by="bill", name='d', product='d', data=blob)
-        expected = [('d', 'd', False, json.dumps(dict(name="d", schema_version=1, hashFunction="sha512")), 1)]
+        expected = [('d', 'd', False, createBlob(dict(name="d", schema_version=1, hashFunction="sha512")), 1)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'd').execute().fetchall(), expected)
 
     def testAddReleaseAlreadyExists(self):
@@ -2325,7 +2324,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testUpdateRelease(self):
         blob = ReleaseBlobV1(name='a', hashFunction="sha512")
         self.releases.update({"name": "a"}, {"product": "z", "data": blob}, "bill", 1)
-        expected = [('a', 'z', False, json.dumps(dict(name='a', schema_version=1, hashFunction="sha512")), 2)]
+        expected = [('a', 'z', False, createBlob(dict(name='a', schema_version=1, hashFunction="sha512")), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'a').execute().fetchall(), expected)
 
     def testUpdateReleaseWhenReadOnly(self):
@@ -2337,7 +2336,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     def testUpdateReleaseWithBlob(self):
         blob = ReleaseBlobV1(name='b', schema_version=1, hashFunction="sha512")
         self.releases.update({"name": "b"}, {"product": "z", "data": blob}, "bill", 1)
-        expected = [('b', 'z', False, json.dumps(dict(name='b', schema_version=1, hashFunction="sha512")), 2)]
+        expected = [('b', 'z', False, createBlob(dict(name='b', schema_version=1, hashFunction="sha512")), 2)]
         self.assertEquals(self.releases.t.select().where(self.releases.name == 'b').execute().fetchall(), expected)
 
     def testUpdateReleaseInvalidBlob(self):
@@ -2354,8 +2353,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
-        expected = json.loads("""
+        ret = select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0]
+        expected = createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -2398,8 +2397,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill', alias=['p4'])
-        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
-        expected = json.loads("""
+        ret = select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0]
+        expected = createBlob("""
 {
     "name": "a",
     "hashFunction": "sha512",
@@ -2445,8 +2444,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='l', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
-        expected = json.loads("""
+        ret = select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0]
+        expected = createBlob("""
 {
     "name": "a",
     "hashFunction": "sha512",
@@ -2482,8 +2481,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             }
         }
         self.releases.addLocaleToRelease(name='b', product='b', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'b').execute().fetchone()[0])
-        expected = json.loads("""
+        ret = select([self.releases.data]).where(self.releases.name == 'b').execute().fetchone()[0]
+        expected = createBlob("""
 {
     "name": "b",
     "hashFunction": "sha512",
@@ -2514,8 +2513,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='p3', locale='l', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
-        expected = json.loads("""
+        ret = select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0]
+        expected = createBlob("""
 {
     "name": "a",
     "hashFunction": "sha512",
@@ -2560,8 +2559,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
-        expected = json.loads("""
+        ret = select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0]
+        expected = createBlob("""
 {
     "name": "a",
     "hashFunction": "sha512",
@@ -2608,8 +2607,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='p2', locale='j', data=data, old_data_version=1, changed_by='bill')
-        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0])
-        expected = json.loads("""
+        ret = select([self.releases.data]).where(self.releases.name == 'a').execute().fetchone()[0]
+        expected = createBlob("""
 {
     "name": "a",
     "hashFunction": "sha512",
@@ -2745,7 +2744,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        result_blob = json.loads("""
+        result_blob = createBlob("""
 {
     "name": "p",
     "schema_version": 1,
@@ -2787,7 +2786,7 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.insert(changed_by="bill", name='p', product='z', data=ancestor_blob)
         self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by='bill', old_data_version=1)
         self.releases.update({"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1)
-        ret = json.loads(select([self.releases.data]).where(self.releases.name == 'p').execute().fetchone()[0])
+        ret = select([self.releases.data]).where(self.releases.name == 'p').execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
 
     def testAddConflictingOutdatedData(self):
@@ -2896,14 +2895,14 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.user_roles = self.db.permissions.user_roles
         self.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         self.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)
-        self.permissions.t.insert().execute(permission="release", username="bob", options=json.dumps(dict(products=["fake"])), data_version=1)
+        self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["fake"]), data_version=1)
         self.permissions.t.insert().execute(permission="rule", username="cathy", data_version=1)
-        self.permissions.t.insert().execute(permission="rule", username="bob", options=json.dumps(dict(actions=["modify"])), data_version=1)
-        self.permissions.t.insert().execute(permission="rule", username="fred", options=json.dumps(dict(products=["foo", "bar"], actions=["modify"])),
+        self.permissions.t.insert().execute(permission="rule", username="bob", options=dict(actions=["modify"]), data_version=1)
+        self.permissions.t.insert().execute(permission="rule", username="fred", options=dict(products=["foo", "bar"], actions=["modify"]),
                                             data_version=1)
         self.permissions.t.insert().execute(permission='admin',
                                             username='george',
-                                            options=json.dumps(dict(products=["foo"])),
+                                            options=dict(products=["foo"]),
                                             data_version=1)
         self.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         self.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
@@ -2943,7 +2942,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.insert("bob", username="cathy", permission="release", options=dict(products=["SeaMonkey"]))
         query = self.permissions.t.select().where(self.permissions.username == "cathy")
         query = query.where(self.permissions.permission == "release")
-        self.assertEquals(query.execute().fetchall(), [("release", "cathy", json.dumps(dict(products=["SeaMonkey"])), 1)])
+        self.assertEquals(query.execute().fetchall(), [("release", "cathy", dict(products=["SeaMonkey"]), 1)])
 
     def testGrantPermissionsUnknownPermission(self):
         self.assertRaises(ValueError, self.permissions.insert, changed_by="bob", username="bud", permission="bad")
@@ -3034,7 +3033,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(ValueError, self.permissions.getOptions, "fake", "fake")
 
     def testGetOptionsNoOptions(self):
-        self.assertEquals(self.permissions.getOptions("cathy", "rule"), {})
+        self.assertEquals(self.permissions.getOptions("cathy", "rule"), None)
 
     def testHasPermissionAdmin(self):
         self.assertTrue(self.permissions.hasPermission("bill", "rule", "delete"))
@@ -3142,11 +3141,11 @@ class TestChangeNotifiers(unittest.TestCase):
         self.db.rules.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000000000000, data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.releases.t.insert().execute(name='a', product='a', read_only=True,
-                                            data=json.dumps(dict(name="a", schema_version=1, hashFunction="sha512")),
+                                            data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")),
                                             data_version=1)
         self.db.releases.t.insert().execute(name='b', product='b',
                                             read_only=False,
-                                            data=json.dumps(dict(name="b", schema_version=1, hashFunction="sha512")),
+                                            data=createBlob(dict(name="b", schema_version=1, hashFunction="sha512")),
                                             data_version=1)
 
     def _runTest(self, changer):

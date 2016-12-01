@@ -3,6 +3,7 @@ import simplejson as json
 
 from sqlalchemy import select
 
+from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.test.admin.views.base import ViewTest
 
@@ -29,7 +30,7 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._post('/releases/d', data=dict(data=data, product='d', data_version=1))
         self.assertStatusCode(ret, 200)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'd').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads("""
+        self.assertEqual(ret, createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -135,7 +136,7 @@ class TestReleasesAPI_JSON(ViewTest):
                 }
             }
         }"""
-        result_blob = """
+        result_blob = createBlob("""
         {
             "name": "dd",
             "schema_version": 1,
@@ -169,14 +170,14 @@ class TestReleasesAPI_JSON(ViewTest):
                     }
                 }
             }
-        }"""
+        }""")
 
         # Testing Put request to add new release
         ret = self._put('/releases/dd', data=dict(blob=ancestor_blob, name='dd',
                                                   product='dd', data_version=1))
         self.assertStatusCode(ret, 201)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads(ancestor_blob))
+        self.assertEqual(ret, createBlob(ancestor_blob))
 
         # Updating same release
         ret = self._put('/releases/dd', data=dict(blob=blob1, name='dd',
@@ -191,7 +192,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(json.loads(ret.data), dict(new_data_version=3))
 
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads(result_blob))
+        self.assertEqual(ret, result_blob)
 
     def testReleasePutUpdateConflictingOutdatedData(self):
         ancestor_blob = """
@@ -269,7 +270,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
 
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'dd').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads(ancestor_blob))
+        self.assertEqual(ret, createBlob(ancestor_blob))
 
         # Updating same release
         ret = self._put('/releases/dd', data=dict(blob=blob1, name='dd',
@@ -348,7 +349,7 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
         self.assertEqual(ret['product'], 'e')
         self.assertEqual(ret['name'], 'e')
-        self.assertEqual(json.loads(ret['data']), json.loads("""
+        self.assertEqual(ret['data'], createBlob("""
 {
     "name": "e",
     "hashFunction": "sha512",
@@ -371,7 +372,7 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
         self.assertEqual(ret['product'], 'e')
         self.assertEqual(ret['name'], 'e')
-        self.assertEqual(json.loads(ret['data']), json.loads("""
+        self.assertEqual(ret['data'], createBlob("""
 {
     "name": "e",
     "hashFunction": "sha512",
@@ -442,7 +443,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'a').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads("""
+        self.assertEqual(ret, createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -475,7 +476,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'a').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads("""
+        self.assertEqual(ret, createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -525,7 +526,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'e').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads("""
+        self.assertEqual(ret, createBlob("""
 {
     "name": "e",
     "schema_version": 1,
@@ -559,7 +560,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'd').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads("""
+        self.assertEqual(ret, createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -602,7 +603,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'e').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads("""
+        self.assertEqual(ret, createBlob("""
 {
     "name": "e",
     "hashFunction": "sha512",
@@ -639,7 +640,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'd').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads("""
+        self.assertEqual(ret, createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -688,7 +689,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'a').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads("""
+        self.assertEqual(ret, createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -709,7 +710,7 @@ class TestReleasesAPI_JSON(ViewTest):
 }
 """))
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'ab').execute().fetchone()[0]
-        self.assertEqual(json.loads(ret), json.loads("""
+        self.assertEqual(ret, createBlob("""
 {
     "name": "ab",
     "schema_version": 1,
@@ -839,7 +840,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['name'], 'new_release')
         self.assertEquals(r[0]['product'], 'Firefox')
-        self.assertEquals(json.loads(r[0]['data']), json.loads("""
+        self.assertEquals(r[0]['data'], createBlob("""
 {
     "name": "new_release",
     "hashFunction": "sha512",
@@ -889,7 +890,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['name'], 'd')
         self.assertEquals(r[0]['product'], 'Firefox')
-        self.assertEquals(json.loads(r[0]['data']), json.loads("""
+        self.assertEquals(r[0]['data'], createBlob("""
 {
     "name": "d",
     "schema_version": 3,
@@ -929,7 +930,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['name'], 'gmprel')
         self.assertEquals(r[0]['product'], 'a')
-        self.assertEquals(json.loads(r[0]['data']), json.loads("""
+        self.assertEquals(r[0]['data'], createBlob("""
 {
     "name": "gmprel",
     "schema_version": 1000,
@@ -1004,7 +1005,7 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = dbo.releases.t.select().where(dbo.releases.name == 'e').execute().fetchone()
         self.assertEqual(ret['product'], 'e')
         self.assertEqual(ret['name'], 'e')
-        self.assertEqual(json.loads(ret['data']), json.loads("""
+        self.assertEqual(ret['data'], createBlob("""
 {
     "name": "e",
     "hashFunction": "sha512",
@@ -1352,7 +1353,7 @@ class TestReleaseHistoryView(ViewTest):
         table = dbo.releases
         row, = table.select(where=[table.name == 'd'])
         self.assertEqual(row['data_version'], 3)
-        data = json.loads(row['data'])
+        data = row['data']
         self.assertEqual(data['fakePartials'], False)
         self.assertEqual(data['detailsUrl'], 'boop')
 
@@ -1377,7 +1378,7 @@ class TestReleaseHistoryView(ViewTest):
 
         row, = table.select(where=[table.name == 'd'])
         self.assertEqual(row['data_version'], 4)
-        data = json.loads(row['data'])
+        data = row['data']
         self.assertEqual(data['fakePartials'], True)
         self.assertEqual(data['detailsUrl'], 'beep')
 

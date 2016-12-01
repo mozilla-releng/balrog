@@ -115,7 +115,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         query = dbo.permissions.t.select()
         query = query.where(dbo.permissions.username == 'bob')
         query = query.where(dbo.permissions.permission == 'release_locale')
-        self.assertEqual(query.execute().fetchone(), ('release_locale', 'bob', json.dumps(dict(products=['fake'])), 1))
+        self.assertEqual(query.execute().fetchone(), ('release_locale', 'bob', dict(products=['fake']), 1))
 
     def testPermissionModify(self):
         ret = self._put('/users/bob/permissions/release',
@@ -125,7 +125,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         query = dbo.permissions.t.select()
         query = query.where(dbo.permissions.username == 'bob')
         query = query.where(dbo.permissions.permission == 'release')
-        self.assertEqual(query.execute().fetchone(), ('release', 'bob', json.dumps(dict(products=['different'])), 2))
+        self.assertEqual(query.execute().fetchone(), ('release', 'bob', dict(products=['different']), 2))
 
     def testPermissionModifyWithoutDataVersion(self):
         ret = self._put("/users/bob/permissions/release",

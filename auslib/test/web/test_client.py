@@ -4,6 +4,7 @@ from tempfile import mkstemp
 import unittest
 from xml.dom import minidom
 
+from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.web.base import app
 from auslib.web.views.client import ClientRequestView
@@ -65,7 +66,7 @@ class ClientTestBase(ClientTestCommon):
         self.view = ClientRequestView()
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='b',
                                      data_version=1)
-        dbo.releases.t.insert().execute(name='b', product='b', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='b', product='b', data_version=1, data=createBlob("""
 {
     "name": "b",
     "schema_version": 1,
@@ -96,11 +97,11 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
 
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='s', update_type='minor', product='s',
                                      systemCapabilities="SSE", data_version=1)
-        dbo.releases.t.insert().execute(name='s', product='s', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='s', product='s', data_version=1, data=createBlob("""
 {
     "name": "s",
     "schema_version": 1,
@@ -123,10 +124,10 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
         dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping='q', update_type='minor', product='q',
                                      fallbackMapping='fallback', data_version=1)
-        dbo.releases.t.insert().execute(name='q', product='q', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='q', product='q', data_version=1, data=createBlob("""
 {
     "name": "q",
     "schema_version": 1,
@@ -149,8 +150,8 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
-        dbo.releases.t.insert().execute(name='fallback', product='q', data_version=1, data="""
+"""))
+        dbo.releases.t.insert().execute(name='fallback', product='q', data_version=1, data=createBlob("""
 {
     "name": "fallback",
     "schema_version": 1,
@@ -173,11 +174,11 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
 
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='c', update_type='minor', product='c',
                                      distribution='default', data_version=1)
-        dbo.releases.t.insert().execute(name='c', product='c', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='c', product='c', data_version=1, data=createBlob("""
 {
     "name": "c",
     "schema_version": 1,
@@ -200,9 +201,9 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='d', update_type='minor', product='d', data_version=1)
-        dbo.releases.t.insert().execute(name='d', product='d', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='d', product='d', data_version=1, data=createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -225,10 +226,10 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
 
         dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping='e', update_type='minor', product='e', data_version=1)
-        dbo.releases.t.insert().execute(name='e', product='e', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='e', product='e', data_version=1, data=createBlob("""
 {
     "name": "e",
     "schema_version": 1,
@@ -249,14 +250,14 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
 
         dbo.rules.t.insert().execute(priority=100, backgroundRate=100, mapping='foxfood-whitelisted', update_type='minor', product='b2g',
                                      whitelist='b2g-whitelist', data_version=1)
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='foxfood-whitelisted', update_type='minor', product='b2g',
                                      channel="foxfood", whitelist='b2g-whitelist', data_version=1)
         dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping='foxfood-fallback', update_type='minor', product='b2g', data_version=1)
-        dbo.releases.t.insert().execute(name='b2g-whitelist', product='b2g', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='b2g-whitelist', product='b2g', data_version=1, data=createBlob("""
 {
   "name": "b2g-whitelist",
   "schema_version": 3000,
@@ -266,9 +267,9 @@ class ClientTestBase(ClientTestCommon):
     { "imei": "000000000000002" }
   ]
 }
-""")
+"""))
 
-        dbo.releases.t.insert().execute(name='foxfood-whitelisted', product='b2g', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='foxfood-whitelisted', product='b2g', data_version=1, data=createBlob("""
 {
     "name": "foxfood-whitelisted",
     "schema_version": 1,
@@ -290,8 +291,8 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
-        dbo.releases.t.insert().execute(name='foxfood-fallback', product='b2g', data_version=1, data="""
+"""))
+        dbo.releases.t.insert().execute(name='foxfood-fallback', product='b2g', data_version=1, data=createBlob("""
 {
     "name": "foxfood-fallback",
     "schema_version": 1,
@@ -313,7 +314,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
         dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
                                      mapping='gmp', update_type='minor',
                                      product='gmp',
@@ -330,21 +331,21 @@ class ClientTestBase(ClientTestCommon):
                                      mapping='response-b', update_type='minor',
                                      product='response-b', data_version=1)
         dbo.releases.t.insert().execute(name='gmp-with-one-response-product',
-                                        product='gmp-with-one-response-product', data_version=1, data="""
+                                        product='gmp-with-one-response-product', data_version=1, data=createBlob("""
 {
     "name": "superblob",
     "schema_version": 4000,
     "products": ["response-a"]
 }
-""")
-        dbo.releases.t.insert().execute(name='gmp', product='gmp', data_version=1, data="""
+"""))
+        dbo.releases.t.insert().execute(name='gmp', product='gmp', data_version=1, data=createBlob("""
 {
     "name": "superblob",
     "schema_version": 4000,
     "products": ["response-a", "response-b"]
 }
-""")
-        dbo.releases.t.insert().execute(name='response-a', product='response-a', data_version=1, data="""
+"""))
+        dbo.releases.t.insert().execute(name='response-a', product='response-a', data_version=1, data=createBlob("""
 {
     "name": "response-a",
     "schema_version": 1,
@@ -379,8 +380,8 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
-        dbo.releases.t.insert().execute(name='response-b', product='response-b', data_version=1, data="""
+"""))
+        dbo.releases.t.insert().execute(name='response-b', product='response-b', data_version=1, data=createBlob("""
 {
     "name": "response-b",
     "schema_version": 1,
@@ -402,24 +403,24 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
         dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
                                      mapping='systemaddons-uninstall', update_type='minor',
                                      product='systemaddons-uninstall', data_version=1)
         dbo.releases.t.insert().execute(name='systemaddons-uninstall',
-                                        product='systemaddons-uninstall', data_version=1, data="""
+                                        product='systemaddons-uninstall', data_version=1, data=createBlob("""
 {
     "name": "fake",
     "schema_version": 5000,
     "hashFunction": "SHA512",
     "uninstall": true
 }
-""")
+"""))
         dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
                                      mapping='systemaddons', update_type='minor',
                                      product='systemaddons', data_version=1)
         dbo.releases.t.insert().execute(name='systemaddons',
-                                        product='systemaddons', data_version=1, data="""
+                                        product='systemaddons', data_version=1, data=createBlob("""
 {
     "name": "fake",
     "schema_version": 5000,
@@ -438,12 +439,12 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
 
         dbo.rules.t.insert().execute(priority=1000, backgroundRate=0, mapping='product_that_should_not_be_updated-1.1',
                                      update_type='minor', product='product_that_should_not_be_updated',
                                      data_version=1)
-        dbo.releases.t.insert().execute(name='product_that_should_not_be_updated-1.1', product='product_that_should_not_be_updated', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='product_that_should_not_be_updated-1.1', product='product_that_should_not_be_updated', data_version=1, data=createBlob("""
 {
     "name": "product_that_should_not_be_updated-1.1",
     "schema_version": 1,
@@ -466,12 +467,12 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
 
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='product_that_should_not_be_updated-2.0',
                                      update_type='minor', product='product_that_should_not_be_updated',
                                      data_version=1)
-        dbo.releases.t.insert().execute(name='product_that_should_not_be_updated-2.0', product='product_that_should_not_be_updated', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='product_that_should_not_be_updated-2.0', product='product_that_should_not_be_updated', data_version=1, data=createBlob("""
 {
     "name": "product_that_should_not_be_updated-2.0",
     "schema_version": 1,
@@ -494,7 +495,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
         dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
                                      mapping='superblobaddon-with-multiple-response-blob', update_type='minor',
                                      product='superblobaddon-with-multiple-response-blob',
@@ -504,24 +505,24 @@ class ClientTestBase(ClientTestCommon):
                                      product='superblobaddon-with-one-response-blob',
                                      data_version=1)
         dbo.releases.t.insert().execute(name='superblobaddon-with-one-response-blob',
-                                        product='superblobaddon-with-one-response-blob', data_version=1, data="""
+                                        product='superblobaddon-with-one-response-blob', data_version=1, data=createBlob("""
 {
     "name": "superblobaddon",
     "schema_version": 4000,
     "revision": 123,
     "blobs": ["responseblob-a"]
 }
-""")
+"""))
         dbo.releases.t.insert().execute(name='superblobaddon-with-multiple-response-blob',
-                                        product='superblobaddon-with-multiple-response-blob', data_version=1, data="""
+                                        product='superblobaddon-with-multiple-response-blob', data_version=1, data=createBlob("""
 {
     "name": "superblobaddon",
     "schema_version": 4000,
     "revision": 124,
     "blobs": ["responseblob-a", "responseblob-b"]
 }
-""")
-        dbo.releases.t.insert().execute(name='responseblob-a', product='responseblob-a', data_version=1, data="""
+"""))
+        dbo.releases.t.insert().execute(name='responseblob-a', product='responseblob-a', data_version=1, data=createBlob("""
 {
     "name": "responseblob-a",
     "schema_version": 5000,
@@ -562,8 +563,8 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
-        dbo.releases.t.insert().execute(name='responseblob-b', product='responseblob-b', data_version=1, data="""
+"""))
+        dbo.releases.t.insert().execute(name='responseblob-b', product='responseblob-b', data_version=1, data=createBlob("""
 {
     "name": "responseblob-b",
     "schema_version": 5000,
@@ -583,7 +584,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-""")
+"""))
 
     def tearDown(self):
         os.close(self.version_fd)
