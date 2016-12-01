@@ -98,15 +98,17 @@ class JSONColumn(sqlalchemy.types.TypeDecorator):
         return value
 
 
-class BlobColumn(sqlalchemy.types.TypeDecorator):
+def BlobColumn(impl=Text):
+    class cls(sqlalchemy.types.TypeDecorator):
 
-    impl = Text
+        def process_bind_param(self, value, dialect):
+            return value.getJSON()
 
-    def process_bind_param(self, value, dialect):
-        return value.getJSON()
+        def process_result_value(self, value, dialect):
+            return createBlob(value)
 
-    def process_result_value(self, value, dialect):
-        return createBlob(value)
+    cls.impl = impl
+    return cls
 
 
 class AUSTransaction(object):
@@ -1413,8 +1415,10 @@ class Releases(AUSTable):
                            )
         if dialect == 'mysql':
             from sqlalchemy.dialects.mysql import LONGTEXT
-            BlobColumn.impl = LONGTEXT
-        self.table.append_column(Column('data', BlobColumn, nullable=False))
+            dataType = LONGTEXT
+        else:
+            dataType = Text
+        self.table.append_column(Column('data', BlobColumn(dataType), nullable=False))
         AUSTable.__init__(self, db, dialect)
 
     def setDomainWhitelist(self, domainWhitelist):
