@@ -40,7 +40,12 @@ class ScheduledChangesView(AdminView):
             return Response(status=400, response=json.dumps(form.errors))
 
         try:
-            sc_id = self.sc_table.insert(changed_by, transaction, **{k: v.data for k, v in form._fields.items()})
+            # Forms can normally be accessed as a dict through form.data,
+            # but because some of the Forms we end up using have a Field
+            # called "data", this gets overridden, so we need to construct
+            # a dict ourselves.
+            columns = {k: v.data for k, v in form._fields.iteritems()}
+            sc_id = self.sc_table.insert(changed_by, transaction, **columns)
         except ValueError as e:
             self.log.warning("Bad input: %s", e)
             return Response(status=400, response=json.dumps({"exception": e.args}))
