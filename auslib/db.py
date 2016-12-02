@@ -969,15 +969,8 @@ class ScheduledChangeTable(AUSTable):
         # existing row. These lists will have PK clauses in them at the end of
         # the following loop, but only if the change contains a PK. This makes
         # it easy to do the extra checks conditionally afterwards.
-        base_table_where = []
+        pk_where = []
         sc_table_where = []
-
-        if base_columns["change_type"] == "delete":
-            for pk in self.base_primary_key:
-                if pk not in base_columns:
-                    raise ValueError("Missing primary key column %s. PK values needed for deletion" % (pk))
-                if base_columns[pk] is None:
-                    raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
 
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
@@ -987,8 +980,7 @@ class ScheduledChangeTable(AUSTable):
                 # base table row should already exist. This will be checked for
                 # after we finish basic checks on the individual parts of the
                 # PK.
-                if "data_version" in base_columns and base_columns["data_version"]:
-                    base_table_where.append(getattr(self.baseTable, pk) == base_columns[pk])
+                pk_where.append(getattr(self.baseTable, pk) == base_columns[pk])
             # Non-Integer columns can have autoincrement set to True for some reason.
             # Any non-integer columns in the primary key are always required (because
             # autoincrement actually isn't a thing for them), and any Integer columns
@@ -996,13 +988,19 @@ class ScheduledChangeTable(AUSTable):
             elif not isinstance(base_column.type, (sqlalchemy.types.Integer,)) or not base_column.autoincrement:
                 raise ValueError("Missing primary key column '%s' which is not autoincrement", pk)
 
-        # If anything ended up in base_table_where, it means that the baseTable
-        # row should already exist. In these cases, we need to check to make sure
-        # that the scheduled change has the same data version as the base table,
-        # to ensure that a change is not being scheduled from an out of date version
-        # of the base table row.
-        if base_table_where:
-            current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction)
+        if base_columns["change_type"] == "delete":
+            for pk in self.base_primary_key:
+                if pk not in base_columns:
+                    raise ValueError("Missing primary key column %s. PK values needed for deletion" % (pk))
+                if base_columns[pk] is None:
+                    raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
+        elif base_columns["change_type"] == "update":
+            # If anything ended up in base_table_where, it means that the baseTable
+            # row should already exist. In these cases, we need to check to make sure
+            # that the scheduled change has the same data version as the base table,
+            # to ensure that a change is not being scheduled from an out of date version
+            # of the base table row.
+            current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=pk_where, transaction=transaction)
             if not current_data_version:
                 raise ValueError("Cannot create scheduled change with data_version for non-existent row")
 
@@ -1010,16 +1008,11 @@ class ScheduledChangeTable(AUSTable):
                 raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
         # If the base table row shouldn't already exist, we need to make sure they don't
         # to avoid getting an IntegrityError when the change is enacted.
-        else:
-            # TODO: stop duplicating this after merging scheduled deletion patch
-            pk_where = []
-            for pk in self.base_primary_key:
-                if pk in base_columns:
-                    pk_where.append(getattr(self.baseTable, pk) == base_columns[pk])
-            if pk_where:
-                print self.baseTable.select(columns=(self.baseTable.data_version,), where=pk_where, transaction=transaction)
-                if self.baseTable.select(columns=(self.baseTable.data_version,), where=pk_where, transaction=transaction):
-                    raise ValueError("Cannot schedule change for duplicate PK")
+        elif base_columns["change_type"] == "insert" and pk_where:
+            print pk_where
+            print base_columns
+            if self.baseTable.select(columns=(self.baseTable.data_version,), where=pk_where, transaction=transaction):
+                raise ValueError("Cannot schedule change for duplicate PK")
 
         # If the change has a PK in it and the change isn't already scheduled
         # (meaning we're validating an update to it), we must ensure that no
@@ -1031,7 +1024,7 @@ class ScheduledChangeTable(AUSTable):
         self.log.debug("base_columns: %s" % (base_columns))
 
         self.conditions.validate(condition_columns)
-        self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
+        self._checkBaseTablePermissions(pk_where, base_columns, changed_by, transaction)
 
     def select(self, where=None, transaction=None, **kwargs):
         ret = []

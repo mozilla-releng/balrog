@@ -308,6 +308,27 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeDeletePermission(self):
+        data = {
+            "when": 400000000, "permission": "build", "username": "ashanti", "change_type": "delete", "data_version": 1,
+        }
+        ret = self._post("/scheduled_changes/permissions", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"sc_id": 4})
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 4, "scheduled_by": "bill", "change_type": "delete", "complete": False, "data_version": 1,
+            "base_permission": "build", "base_username": "ashanti", "base_options": None, "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 4, "data_version": 1, "when": 400000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingPermission(self):
         data = {
             "options": '{"products": ["Thunderbird"]}', "data_version": 1, "sc_data_version": 1, "when": 200000000,

@@ -169,6 +169,13 @@ class ScheduledChangeExistingPermissionForm(ScheduledChangeTimeForm, ExistingPer
     change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
 
 
+class ScheduledChangeDeletePermissionForm(ScheduledChangeTimeForm):
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+    permission = StringField('Permission', validators=[Length(0, 50), Required()])
+    username = StringField('Username', validators=[Length(0, 100), Required()])
+    data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
+
+
 class EditScheduledChangeNewPermissionForm(ScheduledChangeTimeForm, NewPermissionForm):
     sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
 
@@ -253,7 +260,7 @@ class ScheduledChangeDeleteRuleForm(ScheduledChangeTimeForm, ScheduledChangeUpta
     """
     change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
     rule_id = IntegerField('Rule ID', validators=[Required()])
-    data_version = IntegerField('data_version', widget=HiddenInput())
+    data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 
 
 class EditScheduledChangeNewRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, RuleForm):
@@ -302,12 +309,9 @@ class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
 
 
 class ScheduledChangeDeleteReleaseForm(ScheduledChangeTimeForm):
-    """
-    ScheduledChangeDeletionForm includes all the PK columns ,ScheduledChangeForm columns and data version
-    """
     change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
     name = StringField('Name', validators=[Required()])
-    data_version = IntegerField('data_version', widget=HiddenInput())
+    data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
 
 
 class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):

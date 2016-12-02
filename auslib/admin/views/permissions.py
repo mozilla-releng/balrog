@@ -6,7 +6,8 @@ from auslib.global_state import dbo
 from auslib.admin.views.base import requirelogin, AdminView
 from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm, DbEditableForm, \
     ScheduledChangeNewPermissionForm, ScheduledChangeExistingPermissionForm, \
-    EditScheduledChangeNewPermissionForm, EditScheduledChangeExistingPermissionForm
+    EditScheduledChangeNewPermissionForm, EditScheduledChangeExistingPermissionForm, \
+    ScheduledChangeDeletePermissionForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView
 
@@ -107,10 +108,16 @@ class PermissionScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        if request.json and request.json.get("data_version"):
+        change_type = request.json.get("change_type")
+
+        if change_type == "update":
             form = ScheduledChangeExistingPermissionForm()
-        else:
+        elif change_type == "insert":
             form = ScheduledChangeNewPermissionForm()
+        elif change_type == "delete":
+            form = ScheduledChangeDeletePermissionForm()
+        else:
+            return Response(status=400, response="Invalid or missing change_type")
 
         return super(PermissionScheduledChangesView, self)._post(form, transaction, changed_by)
 
