@@ -905,6 +905,8 @@ class ScheduledChangeTable(AUSTable):
             self.baseTable.insert(changed_by, transaction=transaction, dryrun=True, **new_row)
         elif new_row.get("change_type") == "delete":
             self.baseTable.delete(base_table_where, changed_by, new_row["data_version"], transaction=transaction, dryrun=True)
+        else:
+            raise ValueError("Unknown Change Type")
 
     def _dataVersionsAreSynced(self, sc_id, transaction):
         sc_row = super(ScheduledChangeTable, self).select(where=[self.sc_id == sc_id], transaction=transaction, columns=[self.data_version])
@@ -925,6 +927,14 @@ class ScheduledChangeTable(AUSTable):
         # it easy to do the extra checks conditionally afterwards.
         base_table_where = []
         sc_table_where = []
+
+        if base_columns["change_type"] == "delete":
+            for pk in self.base_primary_key:
+                if pk not in base_columns:
+                    raise ValueError("Missing primary key column %s. PK values needed for deletion" % (pk))
+                if base_columns[pk] is None:
+                    raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
+
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
             if pk in base_columns:
@@ -987,12 +997,6 @@ class ScheduledChangeTable(AUSTable):
         if "change_type" not in base_columns:
             raise ValueError("Change type is required")
 
-        if base_columns["change_type"] == "delete":
-            for pk in self.base_primary_key:
-                if pk not in base_columns:
-                    raise ValueError("Missing primary key column %s. PK values needed for deletion" % (pk))
-                if base_columns[pk] is None:
-                    raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
         self.validate(base_columns, condition_columns, changed_by, transaction)
 
         base_columns = self._prefixColumns(base_columns)
@@ -1030,7 +1034,10 @@ class ScheduledChangeTable(AUSTable):
                     base_columns[base_col] = base_what[base_col]
                 elif sc_columns.get(col):
                     base_columns[base_col] = sc_columns[col]
+
+            # As we need change_type in base_columns and it does not start with "base_". We assign it outside the loop
             base_columns["change_type"] = sc_columns["change_type"]
+
             # Similarly, we need to integrate the new values for any conditions
             # with the existing ones.
             condition_columns.update(condition_what)
@@ -1053,13 +1060,14 @@ class ScheduledChangeTable(AUSTable):
         for row in self.select(where=where, transaction=transaction):
             conditions_where.append(self.conditions.sc_id == row["sc_id"])
             base_row = {col[5:]: row[col] for col in row if col.startswith("base_")}
+            # we also need change_type in base_row to check permission
             base_row["change_type"] = row["change_type"]
             base_table_where = {pk: row["base_%s" % pk] for pk in self.base_primary_key}
             # TODO: What permissions *should* be required to delete a scheduled change?
             # It seems a bit odd to be checking base table update/insert here. Maybe
             # something broader should be required?
             self._checkBaseTablePermissions(base_table_where, base_row, changed_by, transaction)
-        self.log.debug("base_row: %s" % (base_row))
+
         ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction, dryrun=dryrun)
         self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun=dryrun)
         return ret
@@ -1076,7 +1084,6 @@ class ScheduledChangeTable(AUSTable):
         for col in sc:
             if col.startswith("base_"):
                 what[col[5:]] = sc[col]
-            what["change_type"] = sc["change_type"]
 
         # The scheduled change is marked as complete first to avoid it being
         # updated unnecessarily when the base table's update method calls
@@ -1103,8 +1110,10 @@ class ScheduledChangeTable(AUSTable):
             for col in self.base_primary_key:
                 where.append((getattr(self.baseTable, col) == sc["base_%s" % col]))
             self.baseTable.update(where, what, sc["scheduled_by"], sc["base_data_version"], transaction=transaction)
-        else:
+        elif change_type == "insert":
             self.baseTable.insert(sc["scheduled_by"], transaction=transaction, **what)
+        else:
+            raise ValueError("Unknown Change Type")
 
     def mergeUpdate(self, old_row, what, changed_by, transaction=None):
         """Merges an update to the base table into any changes that may be
@@ -1120,6 +1129,7 @@ class ScheduledChangeTable(AUSTable):
             where.append((getattr(self, "base_%s" % col) == old_row[col]))
 
         scheduled_changes = self.select(where=where, transaction=transaction)
+
         if not scheduled_changes:
             self.log.debug("No scheduled changes found for update; nothing to do")
             return

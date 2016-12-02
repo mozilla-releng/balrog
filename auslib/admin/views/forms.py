@@ -144,7 +144,6 @@ class ScheduledChangeForm(Form):
     telemetry_channel = NullableStringField("Telemetry Channel")
     telemetry_uptake = NullableStringField("Telemetry Uptake")
     when = IntegerField("When", validators=[Optional(), not_in_the_past()])
-    change_type = StringField("Change Type")
 
 
 class NewPermissionForm(Form):
@@ -213,7 +212,7 @@ class EditRuleForm(DbEditableForm):
 
 
 class ScheduledChangeNewRuleForm(ScheduledChangeForm, RuleForm):
-    pass
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
 
 
 class ScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
@@ -221,13 +220,15 @@ class ScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
     # URLs that contain them. Scheduled changes, on the other hand, are edited
     # through URLs that contain scheduled change IDs, so we need to include
     # the rule_id in the form when editing scheduled changes for rules.
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
     rule_id = IntegerField('Rule ID', validators=[Required()])
 
 
 class ScheduledChangeDeleteRuleForm(ScheduledChangeForm):
     """
-    ScheduledChangeDeletionForm includes all the PK columns and ScheduledChangeForm columns
+    ScheduledChangeDeletionForm includes all the PK columns ,ScheduledChangeForm columns and data version
     """
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
     rule_id = IntegerField('Rule ID', validators=[Required()])
     data_version = IntegerField('data_version', widget=HiddenInput())
 

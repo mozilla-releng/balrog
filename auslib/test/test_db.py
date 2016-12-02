@@ -671,7 +671,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testAllTablesCreated(self):
         self.assertTrue(self.table)
-        self.assertTrue(self.table.history)
+        self.assertTrue(self.table.history) 
         self.assertTrue(self.table.scheduled_changes)
         self.assertTrue(self.table.scheduled_changes.history)
         self.assertTrue(self.table.scheduled_changes.conditions)
@@ -1182,6 +1182,15 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         old_row = self.table.select(where=[self.table.fooid == 1])[0]
         what = {"fooid": 1, "bar": "abc", "data_version": 1}
         self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, what, changed_by="bob")
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testMergeUpdateForDeleteScheduledChange(self):
+        old_row = self.table.select(where=[self.table.fooid == 3])[0]
+        what = {"fooid": 3, "bar": "abc", "data_version": 1}
+        self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
+        new_row = self.sc_table.select(where=[self.sc_table.sc_id == 6])[0]
+        self.assertEquals(new_row["base_data_version"], 1)
+        self.assertEquals(new_row["base_bar"], "abc")
 
 
 class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDatabaseMixin):
