@@ -3,9 +3,10 @@ import json
 from sqlalchemy.sql.expression import null
 
 from flask import jsonify, request, Response
+from flask_wtf import Form
 
 from auslib.admin.views.base import AdminView, HistoryAdminView
-from auslib.admin.views.forms import DbEditableForm
+from auslib.admin.views.forms import DbEditableForm, SignoffForm
 
 
 class ScheduledChangesView(AdminView):
@@ -25,7 +26,13 @@ class ScheduledChangesView(AdminView):
             rows = self.sc_table.select(where={"complete": False})
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
-            r = {}
+            # TODO: Probably need to return signoffs still required after
+            # that's been implemented. That + existing signoffs may end up
+            # in the same data structure.
+            r = {"signoffs": {}}
+            for signoff in self.sc_table.signoffs.select({"sc_id": row["sc_id"]}):
+                r["signoffs"][signoff["username"]] = signoff["role"]
+
             for k, v in row.iteritems():
                 if k == "data_version":
                     r["sc_data_version"] = v
@@ -115,6 +122,44 @@ class EnactScheduledChangeView(AdminView):
 
     def _post(self, sc_id, transaction, changed_by):
         self.sc_table.enactChange(sc_id, changed_by, transaction)
+        return Response(status=200)
+
+
+class SignoffsView(AdminView):
+    """/scheduled_change/:namespace/:sc_id/signoffs"""
+
+    def __init__(self, namespace, table):
+        self.namespace = namespace
+        self.path = "/scheduled_changes/%s/:sc_id/signoffs" % namespace
+        self.signoffs_table = table.scheduled_changes.signoffs
+        super(SignoffsView, self).__init__()
+
+    def _post(self, sc_id, transaction, changed_by):
+        form = SignoffForm()
+        if not form.validate():
+            self.log.warning("Bad input: %s", form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
+
+        try:
+            self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **form.data)
+        except ValueError as e:
+            self.log.warning("Bad input: %s", e)
+            return Response(status=400, response=json.dumps({"exception": e.args}))
+
+        return Response(status=200)
+
+    def _delete(self, sc_id, transaction, changed_by):
+        where = {"sc_id": sc_id}
+        signoff = self.signoffs_table.select(where, transaction)
+        if not signoff:
+            return Response(status=404, response="{} has no signoff to revoke".format(changed_by))
+
+        form = Form(request.args)
+        if not form.validate():
+            self.log.warning("Bad input: %s", form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
+
+        self.signoffs_table.delete(where, changed_by=changed_by, transaction=transaction)
         return Response(status=200)
 
 

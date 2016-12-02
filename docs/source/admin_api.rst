@@ -527,6 +527,179 @@ Deletes the named permission for the username given. The following parameters ar
 
 -	data_version (required)
 
+**/users/<username>/roles**
+---------------------------------
+
+GET
+***
+
+Returns all of the roles that the given username holds in a JSON Object in the following format:
+
+::
+
+    {
+      "roles": [
+        "qa",
+        "releng"
+      ]
+    }
+
+
+**/users/<username>/roles/<role>**
+----------------------------------------------
+
+PUT
+***
+
+Grants the given username the given role. If the user already holds that role, this is a no-op.
+
+DELETE
+******
+
+Revokes the given role from the given username. The "data_version" parameter must be provided.
+
+-----------------
+Scheduled Changes
+-----------------
+
+**/scheduled_changes/<table>**
+------------------------------
+
+GET
+***
+
+Returns the Scheduled Changes for the named table. If the query arg "all" evaluates to True, Scheduled Changes that have been enacted
+will be returned along with active ones. If "all" evaluates to False, only active Scheduled Changes will be returned. Example response:
+
+::
+
+    {
+        "count": 2,
+        "scheduled_changes": [
+        {
+            "sc_id": 1,
+            "when": 100000,
+            "complete": True,
+            "scheduled_by": "janet",
+            "signoffs": {
+                "janet": "relman"
+            },
+            # base table columns follow...
+        },
+        {
+            "sc_id": 2,
+            "when": 20000000000,
+            "complete": False,
+            "scheduled_by": "charlie",
+            "signoffs": {
+                "charlie": "releng",
+                "janet": "relman"
+            },
+            # base table columns follow...
+        }
+        ]
+    }
+
+POST
+****
+
+Creates a new Scheduled Change for the named table. The following parameters are supported:
+
+- when
+- telemetry_product
+- telemetry_channel
+- telemetry_uptake
+
+Either "when" or the full set of "telemetry" parameters must be provided as a condition. Details of a base table row to be created or modified are also required. Eg, "product", "channel", "priority", "backgroundRate" and "mapping" might be included if a Scheduled Change for a Rule was being created.
+
+**/scheduled_changes/<table>/<sc_id>**
+--------------------------------------
+
+POST
+****
+
+Modifies an existing Scheduled Change for the named table. Supported parameters are the same as /scheduled_changes/<table> POST.
+
+DELETE
+******
+
+Deletes the given Scheduled Change for the named table. "data_version" must be provided.
+
+**/scheduled_changes/<table>/<sc_id>/enact**
+--------------------------------------------
+
+POST
+****
+
+Enacts the given Scheduled Change for the named table. This endpoint should only be used by the :ref:`balrog_agent`.
+
+**/scheduled_changes/<table>/<sc_id>/signoffs**
+-----------------------------------------------
+
+POST
+****
+
+Signs off on the given Scheduled Change for the named table. "role" must be provided in the request body.
+
+DELETE
+******
+
+Removes an existing Signoff from the Scheduled Change for the named table.
+
+**/scheduled_changes/<table>/<sc_id>/<id>/revisions**
+-----------------------------------------------------
+
+GET
+***
+
+Returns previous versions of the scheduled change identified by the id given in a JSON Object in the following format:
+
+::
+
+    {
+        "count": 2,
+        "scheduled_changes": [
+        {
+            "change_id": 4,
+            "timestamp": 1451610061000,
+            "changed_by": "jane",
+            "sc_id": 1,
+            "complete": False,
+            "when": 1000000000,
+            "scheduled_by": "jane",
+            "signoffs": {
+                "jane": "relman"
+            },
+            # base table columns follow...
+        },
+        {
+            "change_id": 4,
+            "timestamp": 1451610061000,
+            "changed_by": "jane",
+            "sc_id": 1,
+            "complete": False,
+            "when": 2000000000,
+            "scheduled_by": "jane",
+            "signoffs": {
+                "jane": "relman"
+            },
+            # base table columns follow...
+        }
+        ]
+    }
+
+This endpoint supports pagination.
+If "page" and "limit" are present in the query args, a slice of the revisions is returned instead of the full history.
+Eg: if the page is "2" and the limit is "5", the 6th through 10th revisions would be returned. "count" is not affected by pagination - it will always return the total number of revisions that exist.
+
+
+POST
+****
+
+Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body.
+The request body must be a JSON object containing a "change_id" key.
+
+
 ------
 Others
 ------
@@ -555,12 +728,3 @@ GET
 ***
 
 Returns a diff of the value of the named field from the named table at the specified change_id vs. the previous change to that object.
-
-
-
-
-
-
-
-
-

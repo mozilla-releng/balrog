@@ -836,6 +836,9 @@ class ScheduledChangeTable(AUSTable):
                            Column("complete", Boolean, default=False),
                            )
         self.conditions = ConditionsTable(db, dialect, metadata, table_name, conditions)
+        # Signoffs are configurable at runtime, which means that we always need
+        # a Signoffs table, even if it may not be used immediately.
+        self.signoffs = SignoffsTable(db, metadata, dialect, table_name)
 
         # The primary key column(s) are used in construct "where" clauses for
         # existing rows.
@@ -1113,6 +1116,51 @@ class ScheduledChangeTable(AUSTable):
             # If we get here, the change is safely mergeable
             self.update(where=[self.sc_id == sc["sc_id"]], what=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=transaction)
             self.log.debug("Merged %s into scheduled change '%s'", what, sc["sc_id"])
+
+
+class SignoffsTable(AUSTable):
+
+    def __init__(self, db, metadata, dialect, baseName):
+        self.table = Table("{}_signoffs".format(baseName), metadata,
+                           Column("sc_id", Integer, primary_key=True, autoincrement=False),
+                           Column("username", String(100), primary_key=True),
+                           Column("role", String(50), nullable=False),
+                           )
+        # Because Signoffs cannot be modified, there's no possibility of an
+        # update race, so they do not need to be versioned.
+        super(SignoffsTable, self).__init__(db, dialect, versioned=False)
+
+    def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
+        if "sc_id" not in columns or "role" not in columns:
+            raise ValueError("sc_id and role must be provided when signing off")
+        if "username" in columns and columns["username"] != changed_by:
+            raise PermissionDeniedError("Cannot signoff on behalf of another user")
+        if not self.db.hasRole(changed_by, columns["role"], transaction=transaction):
+            raise PermissionDeniedError("{} cannot signoff with role '{}'".format(changed_by, columns["role"]))
+
+        existing_signoff = self.select({"sc_id": columns["sc_id"], "username": changed_by}, transaction)
+        if existing_signoff:
+            # It shouldn't be possible for there to be more than one signoff,
+            # so not iterating over this should be fine.
+            existing_signoff = existing_signoff[0]
+            if existing_signoff["role"] != columns["role"]:
+                raise PermissionDeniedError("Cannot signoff with a second role")
+            # Signoff already made under the same role, we don't need to do
+            # anything!
+            return
+
+        columns["username"] = changed_by
+        super(SignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+
+    def update(self, where, what, changed_by=None, transaction=None, dryrun=False):
+        raise AttributeError("Signoffs cannot be modified (only granted and revoked)")
+
+    def delete(self, where, changed_by=None, transaction=None, dryrun=False):
+        for row in self.select(where, transaction):
+            if not self.db.hasRole(changed_by, row["role"], transaction=transaction) and not self.db.isAdmin(changed_by, transaction=transaction):
+                raise PermissionDeniedError("Cannot revoke a signoff made by someone in a group you do not belong to")
+
+        super(SignoffsTable, self).delete(where, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
 
 class Rules(AUSTable):
@@ -1865,6 +1913,9 @@ class Permissions(AUSTable):
         res = self.user_roles.select(where=[self.user_roles.username == username], columns=[self.user_roles.role], distinct=True, transaction=transaction)
         return [r["role"] for r in res]
 
+    def isAdmin(self, username, transaction=None):
+        return bool(self.getPermission(username, "admin", transaction))
+
     def hasPermission(self, username, thing, action, product=None, transaction=None):
         # Supporting product-wise admin permissions. If there are no options
         # with admin, we assume that the user has admin access over all
@@ -1890,6 +1941,9 @@ class Permissions(AUSTable):
             return False
 
         return True
+
+    def hasRole(self, username, role, transaction=None):
+        return role in self.getUserRoles(username, transaction)
 
 
 class Dockerflow(AUSTable):
@@ -2084,8 +2138,14 @@ class AUSDatabase(object):
                                                                use_tls)
         self.releases.onUpdate = read_only_bleeter
 
+    def isAdmin(self, *args, **kwargs):
+        return self.permissions.isAdmin(*args, **kwargs)
+
     def hasPermission(self, *args, **kwargs):
         return self.permissions.hasPermission(*args, **kwargs)
+
+    def hasRole(self, *args, **kwargs):
+        return self.permissions.hasRole(*args, **kwargs)
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,
