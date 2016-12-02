@@ -1023,13 +1023,13 @@ class TestReleasesScheduledChanges(ViewTest):
     def setUp(self):
         super(TestReleasesScheduledChanges, self).setUp()
         dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=1, scheduled_by="bill", data_version=1, base_name="m", base_product="m",
+            sc_id=1, scheduled_by="bill", change_type="insert", data_version=1, base_name="m", base_product="m",
             base_data=createBlob(dict(name="m", hashFunction="sha512", schema_version=1))
         )
         dbo.releases.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=50, sc_id=1)
         dbo.releases.scheduled_changes.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=51, sc_id=1, scheduled_by="bill", data_version=1, base_name="m", base_product="m",
-            base_data=createBlob(dict(name="m", hashFunction="sha512", schema_version=1))
+            change_id=2, changed_by="bill", timestamp=51, sc_id=1, scheduled_by="bill", change_type="insert", data_version=1, base_name="m",
+            base_product="m", base_data=createBlob(dict(name="m", hashFunction="sha512", schema_version=1))
         )
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=4000000000, data_version=1)
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=50, sc_id=1)
@@ -1038,13 +1038,13 @@ class TestReleasesScheduledChanges(ViewTest):
         )
 
         dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=2, scheduled_by="bill", data_version=1, base_name="c", base_product="c",
+            sc_id=2, scheduled_by="bill", change_type="update", data_version=1, base_name="c", base_product="c",
             base_data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
         )
         dbo.releases.scheduled_changes.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=70, sc_id=2)
         dbo.releases.scheduled_changes.history.t.insert().execute(
-            change_id=4, changed_by="bill", timestamp=71, sc_id=2, scheduled_by="bill", data_version=1, base_name="c", base_product="c",
-            base_data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
+            change_id=4, changed_by="bill", timestamp=71, sc_id=2, scheduled_by="bill", change_type="update", data_version=1, base_name="c",
+            base_product="c", base_data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
         )
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=6000000000, data_version=1)
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=70, sc_id=2)
@@ -1053,16 +1053,16 @@ class TestReleasesScheduledChanges(ViewTest):
         )
 
         dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=3, complete=True, scheduled_by="bill", data_version=2, base_name="b", base_product="b",
+            sc_id=3, complete=True, scheduled_by="bill", change_type="update", data_version=2, base_name="b", base_product="b",
             base_data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
         )
         dbo.releases.scheduled_changes.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=6, sc_id=3)
         dbo.releases.scheduled_changes.history.t.insert().execute(
-            change_id=6, changed_by="bill", timestamp=7, sc_id=3, complete=False, scheduled_by="bill", data_version=1, base_name="b",
+            change_id=6, changed_by="bill", timestamp=7, sc_id=3, complete=False, scheduled_by="bill", change_type="update", data_version=1, base_name="b",
             base_product="b", base_data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
         )
         dbo.releases.scheduled_changes.history.t.insert().execute(
-            change_id=7, changed_by="bill", timestamp=25, sc_id=3, complete=True, scheduled_by="bill", data_version=2, base_name="b",
+            change_id=7, changed_by="bill", timestamp=25, sc_id=3, complete=True, change_type="update", scheduled_by="bill", data_version=2, base_name="b",
             base_product="b", base_data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), base_data_version=1
         )
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=10000000, data_version=2)
@@ -1080,14 +1080,14 @@ class TestReleasesScheduledChanges(ViewTest):
             "count": 2,
             "scheduled_changes": [
                 {
-                    "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "name": "m",
-                    "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
+                    "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
+                    "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
                     "data_version": None,
                 },
                 {
-                    "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "name": "c",
-                    "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"}, "read_only": False,
-                    "data_version": 1,
+                    "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
+                    "name": "c", "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
+                    "read_only": False, "data_version": 1,
                 },
             ]
         }
@@ -1099,18 +1099,18 @@ class TestReleasesScheduledChanges(ViewTest):
             "count": 3,
             "scheduled_changes": [
                 {
-                    "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "name": "m",
-                    "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
+                    "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
+                    "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
                     "data_version": None,
                 },
                 {
-                    "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "name": "c",
-                    "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"}, "read_only": False,
-                    "data_version": 1,
+                    "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
+                    "name": "c", "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
+                    "read_only": False, "data_version": 1,
                 },
                 {
-                    "sc_id": 3, "when": 10000000, "scheduled_by": "bill", "complete": True, "sc_data_version": 2, "name": "b",
-                    "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
+                    "sc_id": 3, "when": 10000000, "scheduled_by": "bill", "change_type": "update", "complete": True, "sc_data_version": 2,
+                    "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
                     "data_version": 1,
                 },
             ]
@@ -1121,7 +1121,7 @@ class TestReleasesScheduledChanges(ViewTest):
     def testAddScheduledChangeExistingRelease(self):
         data = {
             "when": 2300000000, "name": "ab", "data": '{"name": "ab", "hashFunction": "sha256", "schema_version": 1}',
-            "product": "ab", "data_version": 1
+            "product": "ab", "data_version": 1, "change_type": "update"
         }
         ret = self._post("/scheduled_changes/releases", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -1131,7 +1131,7 @@ class TestReleasesScheduledChanges(ViewTest):
         db_data = dict(r[0])
         db_data["base_data"] = db_data["base_data"]
         expected = {
-            "sc_id": 4, "scheduled_by": "bill", "complete": False, "data_version": 1, "base_product": "ab", "base_read_only": False,
+            "sc_id": 4, "scheduled_by": "bill", "change_type": "update", "complete": False, "data_version": 1, "base_product": "ab", "base_read_only": False,
             "base_name": "ab", "base_data": {"name": "ab", "hashFunction": "sha256", "schema_version": 1}, "base_data_version": 1
         }
         self.assertEquals(db_data, expected)
@@ -1144,7 +1144,7 @@ class TestReleasesScheduledChanges(ViewTest):
     def testAddScheduledChangeNewRelease(self):
         data = {
             "when": 5200000000, "name": "q", "data": '{"name": "q", "hashFunction": "sha512", "schema_version": 1}',
-            "product": "q",
+            "product": "q", "change_type": "insert",
         }
         ret = self._post("/scheduled_changes/releases", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -1154,7 +1154,7 @@ class TestReleasesScheduledChanges(ViewTest):
         db_data = dict(r[0])
         db_data["base_data"] = db_data["base_data"]
         expected = {
-            "sc_id": 4, "scheduled_by": "bill", "complete": False, "data_version": 1, "base_product": "q", "base_read_only": False,
+            "sc_id": 4, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1, "base_product": "q", "base_read_only": False,
             "base_name": "q", "base_data": {"name": "q", "hashFunction": "sha512", "schema_version": 1}, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
@@ -1178,7 +1178,7 @@ class TestReleasesScheduledChanges(ViewTest):
         db_data = dict(r[0])
         db_data["base_data"] = db_data["base_data"]
         expected = {
-            "sc_id": 2, "complete": False, "data_version": 2, "scheduled_by": "bill", "base_name": "c", "base_product": "c",
+            "sc_id": 2, "complete": False, "change_type": "update", "data_version": 2, "scheduled_by": "bill", "base_name": "c", "base_product": "c",
             "base_read_only": False, "base_data": {"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1},
             "base_data_version": 1,
         }
@@ -1203,7 +1203,7 @@ class TestReleasesScheduledChanges(ViewTest):
         db_data = dict(r[0])
         db_data["base_data"] = db_data["base_data"]
         expected = {
-            "sc_id": 1, "complete": False, "data_version": 2, "scheduled_by": "bill", "base_name": "m", "base_product": "m",
+            "sc_id": 1, "complete": False, "change_type": "insert", "data_version": 2, "scheduled_by": "bill", "base_name": "m", "base_product": "m",
             "base_read_only": False, "base_data": {"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1},
             "base_data_version": None,
         }
@@ -1229,7 +1229,7 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 2, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_name": "c", "base_product": "c",
+            "sc_id": 2, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "update", "base_name": "c", "base_product": "c",
             "base_read_only": False, "base_data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
             "base_data_version": 1,
         }
@@ -1250,7 +1250,7 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_name": "m", "base_product": "m",
+            "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_name": "m", "base_product": "m",
             "base_read_only": False, "base_data": {"name": "m", "hashFunction": "sha512", "schema_version": 1},
             "base_data_version": None,
         }
@@ -1271,12 +1271,12 @@ class TestReleasesScheduledChanges(ViewTest):
             "count": 2,
             "revisions": [
                 {
-                    "change_id": 7, "changed_by": "bill", "timestamp": 25, "sc_id": 3, "scheduled_by": "bill", "data_version": 1,
+                    "change_id": 7, "changed_by": "bill", "timestamp": 25, "sc_id": 3, "scheduled_by": "bill", "change_type": "update", "data_version": 1,
                     "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
                     "complete": True, "when": 10000000, "sc_data_version": 2,
                 },
                 {
-                    "change_id": 6, "changed_by": "bill", "timestamp": 7, "sc_id": 3, "scheduled_by": "bill", "data_version": 1,
+                    "change_id": 6, "changed_by": "bill", "timestamp": 7, "sc_id": 3, "scheduled_by": "bill", "change_type": "update", "data_version": 1,
                     "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
                     "complete": False, "when": 10000000, "sc_data_version": 1,
                 },

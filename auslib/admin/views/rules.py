@@ -11,7 +11,8 @@ from auslib.admin.views.base import (
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
     ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
-    EditScheduledChangeNewRuleForm, EditScheduledChangeExistingRuleForm
+    ScheduledChangeDeleteRuleForm, EditScheduledChangeNewRuleForm, \
+    EditScheduledChangeExistingRuleForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView
 
@@ -298,14 +299,36 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        if request.json and request.json.get("data_version"):
+
+        change_type = request.json.get("change_type")
+
+        if change_type == "update":
             form = ScheduledChangeExistingRuleForm()
-        else:
+
+            releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+
+            self.log.debug("releaseNames: %s" % (releaseNames))
+            self.log.debug("transaction: %s" % (transaction))
+
+            form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+            form.mapping.choices.insert(0, ('', 'NULL'))
+
+        elif change_type == "insert":
             form = ScheduledChangeNewRuleForm()
 
-        releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
-        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
-        form.mapping.choices.insert(0, ('', 'NULL'))
+            releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+
+            self.log.debug("releaseNames: %s" % (releaseNames))
+            self.log.debug("transaction: %s" % (transaction))
+
+            form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+            form.mapping.choices.insert(0, ('', 'NULL'))
+
+        elif change_type == "delete":
+            form = ScheduledChangeDeleteRuleForm()
+
+        else:
+            return Response(status=400, response="Change Type invalid or not entered")
 
         return super(RuleScheduledChangesView, self)._post(form, transaction, changed_by)
 
@@ -322,6 +345,7 @@ class RuleScheduledChangeView(ScheduledChangeView):
             form = EditScheduledChangeNewRuleForm()
 
         releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+
         form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
         form.mapping.choices.insert(0, ('', 'NULL'))
 

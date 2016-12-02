@@ -176,12 +176,12 @@ class TestPermissionsScheduledChanges(ViewTest):
     def setUp(self):
         super(TestPermissionsScheduledChanges, self).setUp()
         dbo.permissions.scheduled_changes.t.insert().execute(
-            sc_id=1, scheduled_by="bill", data_version=1, base_permission="rule", base_username="janet",
+            sc_id=1, scheduled_by="bill", change_type="insert", data_version=1, base_permission="rule", base_username="janet",
             base_options={"products": ["foo"]},
         )
         dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
         dbo.permissions.scheduled_changes.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=21, sc_id=1, scheduled_by="bill", data_version=1,
+            change_id=2, changed_by="bill", timestamp=21, sc_id=1, scheduled_by="bill", change_type="insert", data_version=1,
             base_permission="rule", base_username="janet", base_options={"products": ["foo"]},
         )
         dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000, data_version=1)
@@ -191,12 +191,12 @@ class TestPermissionsScheduledChanges(ViewTest):
         )
 
         dbo.permissions.scheduled_changes.t.insert().execute(
-            sc_id=2, scheduled_by="bill", data_version=1, base_permission="release_locale", base_username="ashanti",
+            sc_id=2, scheduled_by="bill", change_type="update", data_version=1, base_permission="release_locale", base_username="ashanti",
             base_options=None, base_data_version=1,
         )
         dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=40, sc_id=2)
         dbo.permissions.scheduled_changes.history.t.insert().execute(
-            change_id=4, changed_by="bill", timestamp=41, sc_id=2, scheduled_by="bill", data_version=1,
+            change_id=4, changed_by="bill", timestamp=41, sc_id=2, scheduled_by="bill", change_type="update", data_version=1,
             base_permission="release_locale", base_username="ashanti", base_options=None, base_data_version=1
         )
         dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=20000000, data_version=1)
@@ -206,15 +206,15 @@ class TestPermissionsScheduledChanges(ViewTest):
         )
 
         dbo.permissions.scheduled_changes.t.insert().execute(
-            sc_id=3, scheduled_by="bill", data_version=2, base_permission="permission", base_username="bob", complete=True
+            sc_id=3, scheduled_by="bill", change_type="insert", data_version=2, base_permission="permission", base_username="bob", complete=True
         )
         dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=60, sc_id=3)
         dbo.permissions.scheduled_changes.history.t.insert().execute(
-            change_id=6, changed_by="bill", timestamp=61, sc_id=3, scheduled_by="bill", data_version=1,
+            change_id=6, changed_by="bill", timestamp=61, sc_id=3, scheduled_by="bill", change_type="insert", data_version=1,
             base_permission="permission", base_username="bob", complete=False,
         )
         dbo.permissions.scheduled_changes.history.t.insert().execute(
-            change_id=7, changed_by="bill", timestamp=100, sc_id=3, scheduled_by="bill", data_version=2,
+            change_id=7, changed_by="bill", timestamp=100, sc_id=3, scheduled_by="bill", change_type="insert", data_version=2,
             base_permission="permission", base_username="bob", complete=True,
         )
         dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=30000000, data_version=2)
@@ -232,11 +232,11 @@ class TestPermissionsScheduledChanges(ViewTest):
             "count": 2,
             "scheduled_changes": [
                 {
-                    "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
+                    "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None,
                 },
                 {
-                    "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
+                    "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
                 },
             ],
@@ -249,15 +249,15 @@ class TestPermissionsScheduledChanges(ViewTest):
             "count": 3,
             "scheduled_changes": [
                 {
-                    "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
+                    "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None,
                 },
                 {
-                    "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1,
+                    "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
                 },
                 {
-                    "sc_id": 3, "when": 30000000, "scheduled_by": "bill", "complete": True, "sc_data_version": 2,
+                    "sc_id": 3, "when": 30000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
                     "permission": "permission", "username": "bob", "options": None, "data_version": None,
                 },
             ],
@@ -267,7 +267,7 @@ class TestPermissionsScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingPermission(self):
         data = {
-            "when": 400000000, "permission": "rule", "username": "bob", "options": None, "data_version": 1
+            "when": 400000000, "permission": "rule", "username": "bob", "options": None, "data_version": 1, "change_type": "update",
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -276,7 +276,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 4, "scheduled_by": "bill", "complete": False, "data_version": 1,
+            "sc_id": 4, "scheduled_by": "bill", "change_type": "update", "complete": False, "data_version": 1,
             "base_permission": "rule", "base_username": "bob", "base_options": None, "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
@@ -288,7 +288,7 @@ class TestPermissionsScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewPermission(self):
         data = {
-            "when": 400000000, "permission": "release", "username": "jill", "options": '{"products": ["a"]}',
+            "when": 400000000, "permission": "release", "username": "jill", "options": '{"products": ["a"]}', "change_type": "insert",
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -298,7 +298,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         db_data["base_options"] = db_data["base_options"]
         expected = {
-            "sc_id": 4, "scheduled_by": "bill", "complete": False, "data_version": 1,
+            "sc_id": 4, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1,
             "base_permission": "release", "base_username": "jill", "base_options": {"products": ["a"]}, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
@@ -321,8 +321,8 @@ class TestPermissionsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         db_data["base_options"] = db_data["base_options"]
         expected = {
-            "sc_id": 2, "complete": False, "data_version": 2, "scheduled_by": "bill", "base_permission": "release_locale", "base_username": "ashanti",
-            "base_options": {"products": ["Thunderbird"]}, "base_data_version": 1,
+            "sc_id": 2, "complete": False, "data_version": 2, "scheduled_by": "bill", "change_type": "update", "base_permission": "release_locale",
+            "base_username": "ashanti", "base_options": {"products": ["Thunderbird"]}, "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 2).execute().fetchall()
@@ -344,8 +344,8 @@ class TestPermissionsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         db_data["base_options"] = db_data["base_options"]
         expected = {
-            "sc_id": 1, "complete": False, "data_version": 2, "scheduled_by": "bill", "base_permission": "rule", "base_username": "janet",
-            "base_options": {"products": ["Firefox"]}, "base_data_version": None,
+            "sc_id": 1, "complete": False, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_permission": "rule",
+            "base_username": "janet", "base_options": {"products": ["Firefox"]}, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
@@ -369,8 +369,8 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 2, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_permission": "release_locale", "base_username": "ashanti",
-            "base_options": None, "base_data_version": 1,
+            "sc_id": 2, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "update", "base_permission": "release_locale",
+            "base_username": "ashanti", "base_options": None, "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
 
@@ -391,8 +391,8 @@ class TestPermissionsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         db_data["base_options"] = db_data["base_options"]
         expected = {
-            "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "base_permission": "rule", "base_username": "janet",
-            "base_options": {"products": ["foo"]}, "base_data_version": None,
+            "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_permission": "rule",
+            "base_username": "janet", "base_options": {"products": ["foo"]}, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
 
@@ -412,12 +412,14 @@ class TestPermissionsScheduledChanges(ViewTest):
             "count": 2,
             "revisions": [
                 {
-                    "change_id": 7, "changed_by": "bill", "timestamp": 100, "sc_id": 3, "scheduled_by": "bill", "data_version": None,
-                    "permission": "permission", "username": "bob", "options": None, "when": 30000000, "complete": True, "sc_data_version": 2,
+                    "change_id": 7, "changed_by": "bill", "timestamp": 100, "sc_id": 3, "scheduled_by": "bill", "change_type": "insert",
+                    "data_version": None, "permission": "permission", "username": "bob", "options": None, "when": 30000000, "complete": True,
+                    "sc_data_version": 2,
                 },
                 {
-                    "change_id": 6, "changed_by": "bill", "timestamp": 61, "sc_id": 3, "scheduled_by": "bill", "data_version": None,
-                    "permission": "permission", "username": "bob", "options": None, "when": 30000000, "complete": False, "sc_data_version": 1,
+                    "change_id": 6, "changed_by": "bill", "timestamp": 61, "sc_id": 3, "scheduled_by": "bill", "change_type": "insert",
+                    "data_version": None, "permission": "permission", "username": "bob", "options": None, "when": 30000000, "complete": False,
+                    "sc_data_version": 1,
                 },
             ],
         }

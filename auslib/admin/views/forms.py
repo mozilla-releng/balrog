@@ -160,11 +160,13 @@ class ExistingPermissionForm(DbEditableForm):
 class ScheduledChangeNewPermissionForm(ScheduledChangeTimeForm, NewPermissionForm):
     permission = StringField('Permission', validators=[Length(0, 50), Required()])
     username = StringField('Username', validators=[Length(0, 100), Required()])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
 
 
 class ScheduledChangeExistingPermissionForm(ScheduledChangeTimeForm, ExistingPermissionForm):
     permission = StringField('Permission', validators=[Length(0, 50), Required()])
     username = StringField('Username', validators=[Length(0, 100), Required()])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
 
 
 class EditScheduledChangeNewPermissionForm(ScheduledChangeTimeForm, NewPermissionForm):
@@ -233,7 +235,7 @@ class EditRuleForm(DbEditableForm):
 
 
 class ScheduledChangeNewRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, RuleForm):
-    pass
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
 
 
 class ScheduledChangeExistingRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, EditRuleForm):
@@ -241,7 +243,17 @@ class ScheduledChangeExistingRuleForm(ScheduledChangeTimeForm, ScheduledChangeUp
     # URLs that contain them. Scheduled changes, on the other hand, are edited
     # through URLs that contain scheduled change IDs, so we need to include
     # the rule_id in the form when editing scheduled changes for rules.
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
     rule_id = IntegerField('Rule ID', validators=[Required()])
+
+
+class ScheduledChangeDeleteRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm):
+    """
+    ScheduledChangeDeletionForm includes all the PK columns ,ScheduledChangeForm columns and data version
+    """
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+    rule_id = IntegerField('Rule ID', validators=[Required()])
+    data_version = IntegerField('data_version', widget=HiddenInput())
 
 
 class EditScheduledChangeNewRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, RuleForm):
@@ -274,6 +286,7 @@ class ScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
     product = StringField('Product', validators=[Required()])
     data = JSONStringField({}, 'Data', validators=[Required()], widget=FileInput())
     data_version = IntegerField('data_version', widget=HiddenInput())
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
 
 
 class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
@@ -281,6 +294,7 @@ class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
     product = StringField('Product', validators=[Optional()])
     data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
     data_version = IntegerField('data_version', widget=HiddenInput())
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
 
 
 class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
