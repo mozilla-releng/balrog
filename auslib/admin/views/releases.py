@@ -220,7 +220,7 @@ class SingleReleaseView(AdminView):
             indent = 4
         else:
             indent = None
-        return Response(response=json.dumps(release[0]['data'], indent=indent), mimetype='application/json', headers=headers)
+        return Response(response=json.dumps(release[0]['data'], indent=indent, sort_keys=True), mimetype='application/json', headers=headers)
 
     @requirelogin
     def _put(self, release, changed_by, transaction):
