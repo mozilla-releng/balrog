@@ -1,3 +1,5 @@
+.. _balrog_agent:
+
 ============
 Balrog Agent
 ============

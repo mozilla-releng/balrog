@@ -174,7 +174,8 @@ class TestUserRolesAPI_JSON(ViewTest):
     def testGetRoles(self):
         ret = self._get("/users/bill/roles")
         self.assertStatusCode(ret, 200)
-        self.assertEquals(json.loads(ret.data), {"roles": ["releng"]})
+        got = set(json.loads(ret.data)["roles"])
+        self.assertEquals(got, set(["releng", "qa"]))
 
     def testGetRolesMissingUser(self):
         ret = self.client.get("/users/dean/roles")
@@ -192,7 +193,7 @@ class TestUserRolesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 200)
         self.assertEquals(ret.data, json.dumps(dict(new_data_version=1)), ret.data)
         got = dbo.permissions.user_roles.t.select().where(dbo.permissions.user_roles.username == "bill").execute().fetchall()
-        self.assertEquals(got, [("bill", "releng", 1)])
+        self.assertEquals(got, [("bill", "qa", 1), ("bill", "releng", 1)])
 
     def testGrantRoleWithoutPermission(self):
         ret = self._put("/users/emily/roles/relman", username="rory", data=dict(data_version=1))
