@@ -985,6 +985,18 @@ class ScheduledChangeTable(AUSTable):
 
             if current_data_version and current_data_version[0]["data_version"] != base_columns.get("data_version"):
                 raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
+        # If the base table row shouldn't already exist, we need to make sure they don't
+        # to avoid getting an IntegrityError when the change is enacted.
+        else:
+            # TODO: stop duplicating this after merging scheduled deletion patch
+            pk_where = []
+            for pk in self.base_primary_key:
+                if pk in base_columns:
+                    pk_where.append(getattr(self.baseTable, pk) == base_columns[pk])
+            if pk_where:
+                print self.baseTable.select(columns=(self.baseTable.data_version,), where=pk_where, transaction=transaction)
+                if self.baseTable.select(columns=(self.baseTable.data_version,), where=pk_where, transaction=transaction):
+                    raise ValueError("Cannot schedule change for duplicate PK")
 
         # If the change has a PK in it and the change isn't already scheduled
         # (meaning we're validating an update to it), we must ensure that no

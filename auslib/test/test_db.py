@@ -862,6 +862,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(MismatchedDataVersionError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertCreateExistingPK(self):
+        what = {"fooid": 3, "foo": "mine is better", "when": 99999999}
+        self.assertRaisesRegexp(ValueError, "Cannot schedule change for duplicate PK", self.sc_table.insert, changed_by="bob", **what)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateNoChangesSinceCreation(self):
         where = [self.sc_table.sc_id == 1]
         what = {"when": 888000, "foo": "bb"}
