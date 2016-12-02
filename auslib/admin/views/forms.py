@@ -267,6 +267,10 @@ class EditScheduledChangeExistingRuleForm(ScheduledChangeTimeForm, ScheduledChan
     sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
 
 
+class SignoffForm(Form):
+    role = StringField('Role', validators=[Required()])
+
+
 class CompleteReleaseForm(Form):
     name = StringField('Name', validators=[Required()])
     product = StringField('Product', validators=[Required()])

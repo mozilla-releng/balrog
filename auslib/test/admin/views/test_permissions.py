@@ -233,11 +233,11 @@ class TestPermissionsScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
-                    "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None,
+                    "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None, "signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
-                    "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
+                    "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1, "signoffs": {},
                 },
             ],
         }
@@ -250,15 +250,15 @@ class TestPermissionsScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
-                    "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None,
+                    "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None, "signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
-                    "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
+                    "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1, "signoffs": {},
                 },
                 {
                     "sc_id": 3, "when": 30000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
-                    "permission": "permission", "username": "bob", "options": None, "data_version": None,
+                    "permission": "permission", "username": "bob", "options": None, "data_version": None, "signoffs": {},
                 },
             ],
         }
@@ -431,7 +431,8 @@ class TestUserRolesAPI_JSON(ViewTest):
     def testGetRoles(self):
         ret = self._get("/users/bill/roles")
         self.assertStatusCode(ret, 200)
-        self.assertEquals(json.loads(ret.data), {"roles": ["releng"]})
+        got = set(json.loads(ret.data)["roles"])
+        self.assertEquals(got, set(["releng", "qa"]))
 
     def testGetRolesMissingUser(self):
         ret = self.client.get("/users/dean/roles")
@@ -449,7 +450,7 @@ class TestUserRolesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 200)
         self.assertEquals(ret.data, json.dumps(dict(new_data_version=1)), ret.data)
         got = dbo.permissions.user_roles.t.select().where(dbo.permissions.user_roles.username == "bill").execute().fetchall()
-        self.assertEquals(got, [("bill", "releng", 1)])
+        self.assertEquals(got, [("bill", "qa", 1), ("bill", "releng", 1)])
 
     def testGrantRoleWithoutPermission(self):
         ret = self._put("/users/emily/roles/relman", username="rory", data=dict(data_version=1))

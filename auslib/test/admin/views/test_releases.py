@@ -1082,12 +1082,12 @@ class TestReleasesScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
-                    "data_version": None,
+                    "data_version": None, "signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "name": "c", "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
-                    "read_only": False, "data_version": 1,
+                    "read_only": False, "data_version": 1, "signoffs": {},
                 },
             ]
         }
@@ -1101,17 +1101,17 @@ class TestReleasesScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
-                    "data_version": None,
+                    "data_version": None, "signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "name": "c", "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
-                    "read_only": False, "data_version": 1,
+                    "read_only": False, "data_version": 1, "signoffs": {},
                 },
                 {
                     "sc_id": 3, "when": 10000000, "scheduled_by": "bill", "change_type": "update", "complete": True, "sc_data_version": 2,
                     "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
-                    "data_version": 1,
+                    "data_version": 1, "signoffs": {},
                 },
             ]
         }

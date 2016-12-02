@@ -54,12 +54,29 @@ def upgrade(migrate_engine):
         Column("data_version", Integer),
     )
 
+    releases_scheduled_changes_signoffs = Table( # noqa - to hush pyflakes about this not being used.
+        "releases_scheduled_changes_signoffs", metadata,
+        Column("sc_id", Integer, primary_key=True, autoincrement=False),
+        Column("username", String(100), primary_key=True),
+        Column("role", String(50), nullable=False),
+    )
+
+    releases_scheduled_changes_signoffs_history = Table(
+        "releases_scheduled_changes_signoffs_history", metadata,
+        Column("change_id", Integer, primary_key=True, autoincrement=True),
+        Column("changed_by", String(100), nullable=False),
+        Column("sc_id", Integer, nullable=False, autoincrement=False),
+        Column("username", String(100), nullable=False),
+        Column("role", String(50)),
+    )
+
     releases_scheduled_changes.append_column(Column("base_data", dataType, nullable=False))
     releases_scheduled_changes_history.append_column(Column("base_data", dataType))
     releases_scheduled_changes_history.append_column(Column("timestamp", bigintType, nullable=False))
     releases_scheduled_changes_conditions.append_column(Column("when", bigintType))
     releases_scheduled_changes_conditions_history.append_column(Column("when", bigintType))
     releases_scheduled_changes_conditions_history.append_column(Column("timestamp", bigintType, nullable=False))
+    releases_scheduled_changes_signoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
 
     permissions_scheduled_changes = Table( # noqa
         "permissions_scheduled_changes", metadata,
@@ -103,10 +120,26 @@ def upgrade(migrate_engine):
         Column("data_version", Integer),
     )
 
+    permissions_scheduled_changes_signoffs = Table( # noqa - to hush pyflakes about this not being used.
+        "permissions_scheduled_changes_signoffs", metadata,
+        Column("sc_id", Integer, primary_key=True, autoincrement=False),
+        Column("username", String(100), primary_key=True),
+        Column("role", String(50), nullable=False),
+    )
+
+    permissions_scheduled_changes_signoffs_history = Table(
+        "permissions_scheduled_changes_signoffs_history", metadata,
+        Column("change_id", Integer, primary_key=True, autoincrement=True),
+        Column("changed_by", String(100), nullable=False),
+        Column("sc_id", Integer, nullable=False, autoincrement=False),
+        Column("username", String(100), nullable=False),
+        Column("role", String(50)),
+    )
     permissions_scheduled_changes_history.append_column(Column("timestamp", bigintType, nullable=False))
     permissions_scheduled_changes_conditions.append_column(Column("when", bigintType))
     permissions_scheduled_changes_conditions_history.append_column(Column("when", bigintType))
     permissions_scheduled_changes_conditions_history.append_column(Column("timestamp", bigintType, nullable=False))
+    permissions_scheduled_changes_signoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
 
     metadata.create_all()
 
@@ -118,7 +151,11 @@ def downgrade(migrate_engine):
     Table("releases_scheduled_changes_history", metadata, autoload=True).drop()
     Table("releases_scheduled_changes_conditions", metadata, autoload=True).drop()
     Table("releases_scheduled_changes_conditions_history", metadata, autoload=True).drop()
+    Table("releases_scheduled_changes_signoffs", metadata, autoload=True).drop()
+    Table("releases_scheduled_changes_signoffs_history", metadata, autoload=True).drop()
     Table("permissions_scheduled_changes", metadata, autoload=True).drop()
     Table("permissions_scheduled_changes_history", metadata, autoload=True).drop()
     Table("permissions_scheduled_changes_conditions", metadata, autoload=True).drop()
     Table("permissions_scheduled_changes_conditions_history", metadata, autoload=True).drop()
+    Table("permissions_scheduled_changes_signoffs", metadata, autoload=True).drop()
+    Table("permissions_scheduled_changes_signoffs_history", metadata, autoload=True).drop()

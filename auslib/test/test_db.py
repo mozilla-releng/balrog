@@ -14,7 +14,7 @@ from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
     ReadOnlyError, PermissionDeniedError, ChangeScheduledError, \
-    MismatchedDataVersionError
+    MismatchedDataVersionError, SignoffsTable
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -676,6 +676,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue(self.table.scheduled_changes.history)
         self.assertTrue(self.table.scheduled_changes.conditions)
         self.assertTrue(self.table.scheduled_changes.conditions.history)
+        self.assertTrue(self.table.scheduled_changes.signoffs)
+        self.assertTrue(self.table.scheduled_changes.signoffs.history)
 
     def testTablesHaveCorrectColumns(self):
         sc_columns = [c.name for c in self.sc_table.t.get_children()]
@@ -702,6 +704,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue("telemetry_uptake" in cond_columns)
         self.assertTrue("when" in cond_columns)
         self.assertTrue("data_version" in cond_columns)
+
+        signoff_columns = [c.name for c in self.sc_table.signoffs.t.get_children()]
+        self.assertTrue("sc_id" in signoff_columns)
+        self.assertTrue("username" in signoff_columns)
+        self.assertTrue("role" in signoff_columns)
 
     def testValidateConditionsNone(self):
         self.assertRaisesRegexp(ValueError, "No conditions found", self.sc_table.conditions.validate, {})
@@ -1233,6 +1240,8 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         self.assertTrue(self.table.scheduled_changes.history)
         self.assertTrue(self.table.scheduled_changes.conditions)
         self.assertTrue(self.table.scheduled_changes.conditions.history)
+        self.assertTrue(self.table.scheduled_changes.signoffs)
+        self.assertTrue(self.table.scheduled_changes.signoffs.history)
 
     def testSCTableHasCorrectColumns(self):
         sc_columns = [c.name for c in self.sc_table.t.get_children()]
@@ -1255,6 +1264,11 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         self.assertTrue("telemetry_channel" not in cond_columns)
         self.assertTrue("telemetry_uptake" not in cond_columns)
         self.assertTrue("when" in cond_columns)
+
+        signoff_columns = [c.name for c in self.sc_table.signoffs.t.get_children()]
+        self.assertTrue("sc_id" in signoff_columns)
+        self.assertTrue("username" in signoff_columns)
+        self.assertTrue("role" in signoff_columns)
 
     def testSCTableWithNoConditions(self):
         class TestTable2(AUSTable):
@@ -1347,6 +1361,75 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         where = [self.sc_table.sc_id == 1]
         what = {"telemetry_product": "pro", "telemetry_channel": "cha", "telemetry_uptake": 3456, "bar": "ccc", "when": None}
         self.assertRaisesRegexp(ValueError, "uptake condition is disabled", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+
+
+class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
+
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.engine = self.db.engine
+        self.metadata = self.db.metadata
+        self.signoffs = SignoffsTable(self.db, self.metadata, "sqlite", "test_table")
+        self.metadata.create_all()
+        self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="relman", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="qa", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="janet", role="relman", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="charlie", data_version=1)
+        self.signoffs.t.insert().execute(sc_id=1, username="nancy", role="relman")
+
+    def testSignoffsHasCorrectTablesAndColumns(self):
+        columns = [c.name for c in self.signoffs.t.get_children()]
+        expected = ["sc_id", "username", "role"]
+        self.assertEquals(set(columns), set(expected))
+        history_columns = [c.name for c in self.signoffs.history.t.get_children()]
+        expected = ["change_id", "changed_by", "timestamp"] + expected
+        self.assertEquals(set(history_columns), set(expected))
+
+    def testSignoffWithPermission(self):
+        self.signoffs.insert("bob", sc_id=1, username="bob", role="releng")
+        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "bob").execute().fetchall()
+        self.assertEquals(got, [(1, "bob", "releng")])
+
+    def testSignoffWithoutPermission(self):
+        self.assertRaisesRegexp(PermissionDeniedError, "jim cannot signoff with role 'releng'",
+                                self.signoffs.insert, "jim", sc_id=1, username="jim", role="releng")
+
+    def testSignoffASecondTimeWithSameRole(self):
+        self.signoffs.insert("nancy", sc_id=1, username="nancy", role="relman")
+        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
+        self.assertEquals(got, [(1, "nancy", "relman")])
+        history = self.signoffs.history.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
+        self.assertEquals(len(history), 0)
+
+    def testSignoffWithSecondRole(self):
+        self.assertRaisesRegexp(PermissionDeniedError, "Cannot signoff with a second role",
+                                self.signoffs.insert, "nancy", sc_id=1, username="nancy", role="qa")
+
+    def testCannotUpdateSignoff(self):
+        self.assertRaises(AttributeError, self.signoffs.update, {"username": "nancy"}, {"role": "qa"}, "nancy")
+
+    def testRevokeSignoff(self):
+        self.signoffs.delete({"sc_id": 1, "username": "nancy"}, changed_by="nancy")
+        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
+        self.assertEquals(len(got), 0)
+
+    def testRevokeOtherUsersSignoffAsAdmin(self):
+        self.signoffs.delete({"sc_id": 1, "username": "nancy"}, changed_by="charlie")
+        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
+        self.assertEquals(len(got), 0)
+
+    def testRevokeOtherUsersSignoffWithSameRole(self):
+        self.signoffs.delete({"sc_id": 1, "username": "nancy"}, changed_by="janet")
+        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
+        self.assertEquals(len(got), 0)
+
+    def testRevokeOtherUsersSignoffWithoutPermission(self):
+        self.assertRaisesRegexp(PermissionDeniedError, "Cannot revoke a signoff made by someone in a group you do not belong to",
+                                self.signoffs.delete, {"sc_id": 1, "username": "nancy"}, changed_by="bob")
 
 # In https://bugzilla.mozilla.org/show_bug.cgi?id=1284481, we changed the sampled data to be a true
 # production dump, which doesn't import properly into sqlite. We should uncomment this test in the
@@ -3157,6 +3240,18 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testUpdateUserRole(self):
         self.assertRaises(AttributeError, self.user_roles.update, {"username": "bob"}, {"role": "relman"}, "bill", 1)
+
+    def testHasRole(self):
+        self.assertTrue(self.permissions.hasRole("bob", "releng"))
+
+    def testHasRoleNegative(self):
+        self.assertFalse(self.permissions.hasRole("cathy", "dev"))
+
+    def testIsAdmin(self):
+        self.assertTrue(self.permissions.isAdmin("bill"))
+
+    def testIsAdminNegative(self):
+        self.assertFalse(self.permissions.isAdmin("bob"))
 
 
 class TestDockerflow(unittest.TestCase, MemoryDatabaseMixin):
