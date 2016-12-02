@@ -640,6 +640,7 @@ class ScheduledChangesTableMixin(object):
         self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
         self.table.t.insert().execute(fooid=2, foo="b", bar="bb", data_version=2)
         self.table.t.insert().execute(fooid=3, foo="c", data_version=2)
+        self.table.t.insert().execute(fooid=4, foo="d", data_version=2)
         self.sc_table.t.insert().execute(sc_id=1, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1,
                                          data_version=1, change_type="update")
         self.sc_table.conditions.t.insert().execute(sc_id=1, when=234000, data_version=1)
@@ -654,10 +655,10 @@ class ScheduledChangesTableMixin(object):
         self.sc_table.t.insert().execute(sc_id=5, scheduled_by="bob", complete=True, base_fooid=3, base_foo="c", base_bar="bb", base_data_version=1,
                                          data_version=1, change_type="update")
         self.sc_table.conditions.t.insert().execute(sc_id=5, when=39000, data_version=1)
-        self.sc_table.t.insert().execute(sc_id=6, scheduled_by="bob", complete=True, base_fooid=3, base_foo="c",
+        self.sc_table.t.insert().execute(sc_id=6, scheduled_by="bob", complete=False, base_fooid=4, base_foo="d",
                                          base_bar=None, base_data_version=2,
                                          data_version=1, change_type="delete")
-        self.sc_table.conditions.t.insert().execute(sc_id=6, when=39000, data_version=1)
+        self.sc_table.conditions.t.insert().execute(sc_id=6, when=400000, data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
         self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options='{"actions": ["enact"]}', data_version=1)
@@ -671,7 +672,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testAllTablesCreated(self):
         self.assertTrue(self.table)
-        self.assertTrue(self.table.history) 
+        self.assertTrue(self.table.history)
         self.assertTrue(self.table.scheduled_changes)
         self.assertTrue(self.table.scheduled_changes.history)
         self.assertTrue(self.table.scheduled_changes.conditions)
@@ -847,7 +848,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithoutPermissionOnBaseTable(self):
-        what = {"fooid": 4, "bar": "blah", "when": 343000, "change_type": "insert"}
+        what = {"fooid": 5, "bar": "blah", "when": 343000, "change_type": "insert"}
         self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
@@ -1135,19 +1136,19 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testEnactChangeNewRow(self):
         self.table.scheduled_changes.enactChange(2, "nancy")
-        row = self.table.t.select().where(self.table.fooid == 4).execute().fetchall()[0]
-        history_rows = self.table.history.t.select().where(self.table.history.fooid == 4).execute().fetchall()
+        row = self.table.t.select().where(self.table.fooid == 5).execute().fetchall()[0]
+        history_rows = self.table.history.t.select().where(self.table.history.fooid == 5).execute().fetchall()
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
-        self.assertEquals(row.fooid, 4)
+        self.assertEquals(row.fooid, 5)
         self.assertEquals(row.foo, "cc")
         self.assertEquals(row.bar, "ceecee")
         self.assertEquals(row.data_version, 1)
-        self.assertEquals(history_rows[0].fooid, 4)
+        self.assertEquals(history_rows[0].fooid, 5)
         self.assertEquals(history_rows[0].foo, None)
         self.assertEquals(history_rows[0].bar, None)
         self.assertEquals(history_rows[0].changed_by, "bob")
         self.assertEquals(history_rows[0].data_version, None)
-        self.assertEquals(history_rows[1].fooid, 4)
+        self.assertEquals(history_rows[1].fooid, 5)
         self.assertEquals(history_rows[1].foo, "cc")
         self.assertEquals(history_rows[1].bar, "ceecee")
         self.assertEquals(history_rows[1].changed_by, "bob")
@@ -1170,7 +1171,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testEnactChangeForDeletingExistingRow(self):
         self.table.scheduled_changes.enactChange(6, "nancy")
-        row = self.table.t.select().where(self.table.fooid == 3).execute().fetchall()
+        row = self.table.t.select().where(self.table.fooid == 4).execute().fetchall()
         self.assertEquals(row, [])
 
     def testEnactChangeNoPermissions(self):
@@ -1185,11 +1186,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testMergeUpdateForDeleteScheduledChange(self):
-        old_row = self.table.select(where=[self.table.fooid == 3])[0]
-        what = {"fooid": 3, "bar": "abc", "data_version": 1}
+        old_row = self.table.select(where=[self.table.fooid == 4])[0]
+        what = {"fooid": 4, "bar": "abc", "data_version": 2}
         self.sc_table.mergeUpdate(old_row, what, changed_by="bob")
         new_row = self.sc_table.select(where=[self.sc_table.sc_id == 6])[0]
-        self.assertEquals(new_row["base_data_version"], 1)
+        self.assertEquals(new_row["base_data_version"], 2)
         self.assertEquals(new_row["base_bar"], "abc")
 
 
