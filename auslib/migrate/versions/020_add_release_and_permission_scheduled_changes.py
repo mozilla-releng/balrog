@@ -20,7 +20,7 @@ def upgrade(migrate_engine):
         Column("change_type", String(50), nullable=False),
         Column("data_version", Integer),
         Column("base_name", String(100), nullable=False),
-        Column("base_product", String(15), nullable=False),
+        Column("base_product", String(15)),
         Column("base_read_only", Boolean, default=False),
         Column("base_data_version", Integer),
     )
@@ -70,7 +70,7 @@ def upgrade(migrate_engine):
         Column("role", String(50)),
     )
 
-    releases_scheduled_changes.append_column(Column("base_data", dataType, nullable=False))
+    releases_scheduled_changes.append_column(Column("base_data", dataType))
     releases_scheduled_changes_history.append_column(Column("base_data", dataType))
     releases_scheduled_changes_history.append_column(Column("timestamp", bigintType, nullable=False))
     releases_scheduled_changes_conditions.append_column(Column("when", bigintType))

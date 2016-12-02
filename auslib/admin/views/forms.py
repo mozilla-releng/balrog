@@ -301,6 +301,15 @@ class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
     change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
 
 
+class ScheduledChangeDeleteReleaseForm(ScheduledChangeTimeForm):
+    """
+    ScheduledChangeDeletionForm includes all the PK columns ,ScheduledChangeForm columns and data version
+    """
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+    name = StringField('Name', validators=[Required()])
+    data_version = IntegerField('data_version', widget=HiddenInput())
+
+
 class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
     name = StringField('Name', validators=[Required()])
     product = StringField('Product', validators=[Required()])

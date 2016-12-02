@@ -12,7 +12,7 @@ from auslib.admin.views.base import (
 )
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, DbEditableForm, ReadOnlyForm, \
-    ScheduledChangeNewReleaseForm, ScheduledChangeExistingReleaseForm, \
+    ScheduledChangeNewReleaseForm, ScheduledChangeExistingReleaseForm, ScheduledChangeDeleteReleaseForm, \
     EditScheduledChangeNewReleaseForm, EditScheduledChangeExistingReleaseForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView
@@ -532,12 +532,19 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        if request.json and request.json.get("data_version"):
-            form = ScheduledChangeExistingReleaseForm()
-        else:
-            form = ScheduledChangeNewReleaseForm()
+        change_type = request.json.get("change_type")
 
-        form.data.data = createBlob(form.data.data)
+        if change_type == "update":
+            form = ScheduledChangeExistingReleaseForm()
+            form.data.data = createBlob(form.data.data)
+        elif change_type == "insert":
+            form = ScheduledChangeNewReleaseForm()
+            form.data.data = createBlob(form.data.data)
+        elif change_type == "delete":
+            form = ScheduledChangeDeleteReleaseForm()
+        else:
+            return Response(status=400, response="Invalid or missing change_type")
+
         return super(ReleaseScheduledChangesView, self)._post(form, transaction, changed_by)
 
 

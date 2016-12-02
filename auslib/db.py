@@ -92,12 +92,12 @@ class JSONColumn(sqlalchemy.types.TypeDecorator):
     impl = Text
 
     def process_bind_param(self, value, dialect):
-        if value:
+        if value is not None:
             value = json.dumps(value)
         return value
 
     def process_result_value(self, value, dialect):
-        if value:
+        if value is not None:
             value = json.loads(value)
         return value
 
@@ -111,10 +111,14 @@ def BlobColumn(impl=Text):
     class cls(sqlalchemy.types.TypeDecorator):
 
         def process_bind_param(self, value, dialect):
-            return value.getJSON()
+            if value is not None:
+                value = value.getJSON()
+            return value
 
         def process_result_value(self, value, dialect):
-            return createBlob(value)
+            if value is not None:
+                value = createBlob(value)
+            return value
 
     cls.impl = impl
     return cls
@@ -1798,20 +1802,21 @@ class Releases(AUSTable):
 
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
         names = []
-        mapping_count = dbo.rules.t.count().where(dbo.rules.mapping == where["name"]).execute().fetchone()[0]
-
-        whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == where["name"]).execute().fetchone()[0]
-
-        fallbackMapping_count = dbo.rules.t.count().where(dbo.rules.fallbackMapping == where["name"]).execute().fetchone()[0]
-
-        if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
-            msg = "%s has rules pointing to it. Hence it cannot be deleted." % (self.name)
-            raise ValueError(msg)
         for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):
             names.append(toDelete["name"])
             self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
             if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
+
+        for name in names:
+            mapping_count = dbo.rules.t.count().where(dbo.rules.mapping == name).execute().fetchone()[0]
+            whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == name).execute().fetchone()[0]
+            fallbackMapping_count = dbo.rules.t.count().where(dbo.rules.fallbackMapping == name).execute().fetchone()[0]
+
+            if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
+                msg = "%s has rules pointing to it. Hence it cannot be deleted." % (self.name)
+                raise ValueError(msg)
+
         super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
         if not dryrun:
             for name in names:
