@@ -84,6 +84,10 @@ class ChangeScheduledError(SQLAlchemyError):
 
 
 class JSONColumn(sqlalchemy.types.TypeDecorator):
+    """JSONColumns are used for types that are deserialized JSON (usually
+    dicts) in memory, but need to be serialized to text before storage.
+    JSONColumn handles the conversion both ways, serialized just before
+    storage, and deserialized just after retrieval."""
 
     impl = Text
 
@@ -99,6 +103,11 @@ class JSONColumn(sqlalchemy.types.TypeDecorator):
 
 
 def BlobColumn(impl=Text):
+    """BlobColumns are used to store Release Blobs, which are ultimately dicts.
+    Release Blobs must be serialized before storage, and deserialized upon
+    retrevial. This type handles both conversions. Some database engines
+    (eg: mysql) may require a different underlying type than Text. The
+    desired type may be passed in as an argument."""
     class cls(sqlalchemy.types.TypeDecorator):
 
         def process_bind_param(self, value, dialect):
@@ -1496,7 +1505,7 @@ class Releases(AUSTable):
         def getBlob():
             try:
                 row = self.select(where=[self.name == name], columns=[self.data], limit=1, transaction=transaction)[0]
-                blob = createBlob(row['data'])
+                blob = row['data']
                 return {"data_version": data_version, "blob": blob}
             except IndexError:
                 raise KeyError("Couldn't find release with name '%s'" % name)
