@@ -38,7 +38,7 @@ class TestRulesAPI_JSON(ViewTest):
 
     def testNewRulePostJSON(self):
         data = dict(
-            backgroundRate=31, mapping="c", priority=33, product="Firefox",
+            backgroundRate=0, mapping="c", priority=33, product="Firefox",
             update_type="minor", channel="nightly"
         )
         ret = self._post("/rules", data=data)
