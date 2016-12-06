@@ -169,7 +169,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           return [];
         },
         sc: function() {
-          return angular.copy(rule);
+          sc = angular.copy(rule);
+          sc["change_type"] = "update";
+          return sc;
         }
       }
     });

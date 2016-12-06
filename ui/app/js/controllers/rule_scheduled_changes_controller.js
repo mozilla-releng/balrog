@@ -91,6 +91,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             priority: 0,
             update_type: 'minor',
             when: null,
+            change_type: 'insert',
           };
         }
       }
