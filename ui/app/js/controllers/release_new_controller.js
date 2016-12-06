@@ -61,6 +61,24 @@ function($scope, $http, $modalInstance, CSRF, Releases, releases) {
       );
       return;
     }
+    if (!$scope.dataFile) {
+      sweetAlert(
+        "Form Error",
+        "No file has been selected.",
+        "error"
+      );
+      return;
+    }
+
+    if (!$scope.release.name.trim()) {
+      sweetAlert(
+        "Form Error",
+        "Name is required",
+        "error"
+      );
+      return;
+    }
+
     $scope.saving = true;
     $scope.errors = {};
 
@@ -102,18 +120,8 @@ function($scope, $http, $modalInstance, CSRF, Releases, releases) {
         });
       });
     };
-    if (typeof file === 'undefined') {
-      sweetAlert(
-        "Form Error",
-        "No file has been selected.",
-        "error"
-      );
-      $scope.saving = false;
-      return;
-    } else {
       // should work
-      reader.readAsText(file);
-    }
+    reader.readAsText(file);
 
   };
 
