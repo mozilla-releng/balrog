@@ -880,7 +880,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(MismatchedDataVersionError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
-    def testDeleteScheduledChangeWithoutPKcColumns(self):
+    def testDeleteScheduledChangeWithoutPKColumns(self):
         class TestTable2(AUSTable):
             def __init__(self, db, metadata):
                 self.table = Table("test_table2", metadata,
