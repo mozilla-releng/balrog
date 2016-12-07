@@ -169,7 +169,7 @@ class RuleHistoryAPIView(HistoryAdminView):
 
         try:
             page = int(request.args.get('page', 1))
-            limit = int(request.args.get('limit', 100))
+            limit = int(request.args.get('limit', 10))
             assert page >= 1
         except (ValueError, AssertionError) as msg:
             self.log.warning("Bad input: %s", msg)
