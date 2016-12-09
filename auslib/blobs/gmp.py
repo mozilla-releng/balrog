@@ -61,6 +61,15 @@ class GMPBlobV1(Blob):
 
         return vendorXML
 
+    def validate(self, *args, **kwargs, ignore=False):
+        Blob.validate(self, *args, **kwargs)
+        required_length = Blob.hashes[self["hashFunction"].upper()]
+        if not ignore:
+            for vendors in self["vendors"]:
+                for platform in vendors["platforms"]:
+                    if len(platform["hashValue"]) != required_length:
+                        raise ValueError("Length of hash is not equal to that of {} function".format(self["hashFunction"]))
+
     def containsForbiddenDomain(self, product, whitelistedDomains):
         """Returns True if the blob contains any file URLs that contain a
            domain that we're not allowed to serve updates to."""

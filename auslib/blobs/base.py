@@ -58,6 +58,7 @@ def createBlob(data):
 
 class Blob(dict):
     jsonschema = None
+    hashes = dict(SHA1=40, SHA256=64, SHA512=128, SHA384=96)
 
     def __init__(self, *args, **kwargs):
         super(Blob, self).__init__(self, *args, **kwargs)
