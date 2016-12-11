@@ -5,12 +5,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.failed = false;
 
   $scope.rule_id = parseInt($routeParams.id, 10);
-  $scope.pr_ch_options = ["All rules"];
+  $scope.pr_ch_options = [];
 
   $scope.currentPage = 1;
   $scope.pageSize = 20;
   $scope.maxSize = 10;
   $scope.rules = [];
+  $scope.pr_ch_filter = "";
 
   function loadPage(newPage) {
     Rules.getHistory($scope.rule_id, $scope.pageSize, newPage)
@@ -54,6 +55,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
               }
             });
           });
+        })
+        .finally(function() {
+          $scope.pr_ch_options.sort().unshift("All rules");
+          $scope.pr_ch_filter = $scope.pr_ch_options[0];
         });
       });
     })
@@ -98,7 +103,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     ];
   }
   $scope.ordering_str = $scope.ordering_options[0];
-  $scope.pr_ch_filter = $scope.pr_ch_options[0];
 
   $scope.filters = {
     search: $location.hash(),
@@ -126,7 +130,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.removeFilterSearchWord = Search.removeFilterSearchWord;
 
   $scope.filterBySelect = function(rule) {
-    if ($scope.pr_ch_selected[0] === "All rules") {
+    if ($scope.pr_ch_selected[0].toLowerCase() === "all rules") {
       return true;
     }
     else if ($scope.pr_ch_selected && $scope.pr_ch_selected.length > 1) {
@@ -152,6 +156,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         // },
         rule: function () {
           return rule;
+        },
+        pr_ch_options: function() {
+          return $scope.pr_ch_options;
         }
       }
     });
@@ -212,6 +219,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             update_type: 'minor',
             _duplicate: false,
           };
+        },
+        pr_ch_options: function() {
+          return $scope.pr_ch_options;
         }
       }
     });
@@ -234,6 +244,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           copy._duplicate = true;
           return copy;
         },
+        pr_ch_options: function() {
+          return $scope.pr_ch_options;
+        }
       }
     });
   };
