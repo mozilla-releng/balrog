@@ -12,7 +12,7 @@ Requirements
 These instructions assume you have the following installed (if not, you can follow the links for installation instructions).
 
 -   `Git <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_
--   `Docker <https://docs.docker.com/v1.8/installation>`_
+-   `Docker <https://docs.docker.com/engine/getstarted/step_one/>`_
 -   `Tox <http://tox.readthedocs.io/en/latest/install.html>`_ (Optional)
 
 -----------------------
