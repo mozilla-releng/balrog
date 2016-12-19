@@ -36,7 +36,8 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
         $scope.rules.push($scope.rule);
 
         if(rule.product) {
-          all_rules = $scope.pr_ch_options.shift();
+          // The first entry is special, and we want to avoid it getting sorted later.
+          first_entry = $scope.pr_ch_options.shift();
           if($scope.products.indexOf(rule.product) === -1) {
             $scope.pr_ch_options.push(rule.product);
             if(rule.channel) {
@@ -46,7 +47,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
           else if($scope.channels.indexOf(rule.channel) === -1) {
             $scope.pr_ch_options.push(rule.product + "," + rule.channel);
           }
-          $scope.pr_ch_options.sort().unshift(all_rules);
+          $scope.pr_ch_options.sort().unshift(first_entry);
         }
 
         $modalInstance.close();
