@@ -150,6 +150,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       templateUrl: 'rule_modal.html',
       controller: 'RuleEditCtrl',
       size: 'lg',  // can be lg or sm
+      backdrop: 'static',
       resolve: {
         // items: function () {
         //   return $scope.items;
@@ -171,6 +172,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       templateUrl: 'rule_scheduled_change_modal.html',
       controller: 'NewRuleScheduledChangeCtrl',
       size: 'lg',
+      backdrop: 'static',
       resolve: {
         scheduled_changes: function() {
           return [];
@@ -187,6 +189,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     var modalInstance = $modal.open({
       templateUrl: 'rule_delete_modal.html',
       controller: 'RuleDeleteCtrl',
+      backdrop: 'static',
       // size: 'sm',
       resolve: {
         rule: function () {
@@ -206,6 +209,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       templateUrl: 'rule_modal.html',
       controller: 'NewRuleCtrl',
       size: 'lg',
+      backdrop: 'static',
       resolve: {
         rules: function() {
           return $scope.rules;
@@ -233,6 +237,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       templateUrl: 'rule_modal.html',
       controller: 'NewRuleCtrl',
       size: 'lg',
+      backdrop: 'static',
       resolve: {
         rules: function() {
           return $scope.rules;
@@ -257,6 +262,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     var modalInstance = $modal.open({
       templateUrl: 'rule_revert_modal.html',
       controller: 'RuleRevertCtrl',
+      backdrop: 'static',
       // size: 'sm',
       resolve: {
         revision: function () {
@@ -283,6 +289,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         templateUrl: 'release_data_modal.html',
         controller: 'ReleaseDataCtrl',
         size: 'lg',
+        backdrop: 'static',
         resolve: {
           release: function () {
             return response;
