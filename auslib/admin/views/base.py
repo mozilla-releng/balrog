@@ -104,6 +104,11 @@ class HistoryAdminView(AdminView):
                 # prep the value for being shown in revision_row.html
                 if value is None:
                     value = 'NULL'
+                elif isinstance(value, dict):
+                    try:
+                        value = json.dumps(value, indent=2, sort_keys=True)
+                    except ValueError:
+                        pass
                 elif isinstance(value, int):
                     value = unicode(str(value), 'utf8')
                 elif not isinstance(value, basestring):

@@ -3,6 +3,7 @@ import unittest
 
 from auslib.global_state import dbo
 from auslib.AUS import AUS
+from auslib.blobs.base import createBlob
 
 
 def RandomAUSTestWithoutFallback(AUS, backgroundRate, force, mapping):
@@ -74,11 +75,11 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
         dbo.create()
         dbo.releases.t.insert().execute(
             name='b', product='b', data_version=1,
-            data='{"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
+            data=createBlob({"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}))
 
         dbo.releases.t.insert().execute(
             name='fallback', product='c', data_version=1,
-            data='{"name": "fallback", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
+            data=createBlob({"name": "fallback", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}))
 
     def tearDown(self):
         dbo.reset()
@@ -120,11 +121,11 @@ class TestAUSThrottlingWithFallback(unittest.TestCase):
         dbo.create()
         dbo.releases.t.insert().execute(
             name='b', product='b', data_version=1,
-            data='{"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
+            data=createBlob({"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}))
 
         dbo.releases.t.insert().execute(
             name='fallback', product='b', data_version=1,
-            data='{"name": "fallback", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}')
+            data=createBlob({"name": "fallback", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}))
 
     def tearDown(self):
         dbo.reset()

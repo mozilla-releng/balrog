@@ -10,7 +10,7 @@ import unittest
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.web.base import app
-from auslib.blobs.base import BlobValidationError
+from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV7, DesupportBlob, \
     UnifiedFileUrlsMixin
@@ -463,7 +463,7 @@ class TestSchema2Blob(unittest.TestCase):
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         dbo.setDomainWhitelist(self.whitelistedDomains)
-        dbo.releases.t.insert().execute(name='j1', product='j', version='39.0', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='j1', product='j', version='39.0', data_version=1, data=createBlob("""
 {
     "name": "j1",
     "schema_version": 2,
@@ -476,7 +476,7 @@ class TestSchema2Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""))
         self.blobJ2 = ReleaseBlobV2()
         self.blobJ2.loadJSON("""
 {
@@ -690,7 +690,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         dbo.setDomainWhitelist(self.whitelistedDomains)
-        dbo.releases.t.insert().execute(name='j1', product='j', version='0.5', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='j1', product='j', version='0.5', data_version=1, data=createBlob("""
 {
     "name": "j1",
     "schema_version": 2,
@@ -704,7 +704,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         }
     }
 }
-""")
+"""))
         self.blobJ2 = ReleaseBlobV2()
         self.blobJ2.loadJSON("""
 {
@@ -812,7 +812,7 @@ class TestSchema3Blob(unittest.TestCase):
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         dbo.setDomainWhitelist(self.whitelistedDomains)
-        dbo.releases.t.insert().execute(name='f1', product='f', version='22.0', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='f1', product='f', version='22.0', data_version=1, data=createBlob("""
 {
     "name": "f1",
     "schema_version": 3,
@@ -825,8 +825,8 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-""")
-        dbo.releases.t.insert().execute(name='f2', product='f', version='23.0', data_version=1, data="""
+"""))
+        dbo.releases.t.insert().execute(name='f2', product='f', version='23.0', data_version=1, data=createBlob("""
 {
     "name": "f2",
     "schema_version": 3,
@@ -839,7 +839,7 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""))
         self.blobF3 = ReleaseBlobV3()
         self.blobF3.loadJSON("""
 {
@@ -898,7 +898,7 @@ class TestSchema3Blob(unittest.TestCase):
     }
 }
 """)
-        dbo.releases.t.insert().execute(name='g1', product='g', version='23.0', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='g1', product='g', version='23.0', data_version=1, data=createBlob("""
 {
     "name": "g1",
     "schema_version": 3,
@@ -911,7 +911,7 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""))
         self.blobG2 = ReleaseBlobV3()
         self.blobG2.loadJSON("""
 {
@@ -1149,7 +1149,7 @@ class TestSchema4Blob(unittest.TestCase):
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         dbo.setDomainWhitelist(self.whitelistedDomains)
-        dbo.releases.t.insert().execute(name='h0', product='h', version='29.0', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='h0', product='h', version='29.0', data_version=1, data=createBlob("""
 {
     "name": "h0",
     "schema_version": 4,
@@ -1162,8 +1162,8 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-""")
-        dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data="""
+"""))
+        dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data=createBlob("""
 {
     "name": "h1",
     "schema_version": 4,
@@ -1176,7 +1176,7 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""))
         self.blobH2 = ReleaseBlobV4()
         self.blobH2.loadJSON("""
 {
@@ -1634,7 +1634,7 @@ class TestSchema5Blob(unittest.TestCase):
         app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data=createBlob("""
 {
     "name": "h1",
     "schema_version": 5,
@@ -1647,7 +1647,7 @@ class TestSchema5Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""))
         self.blobH2 = ReleaseBlobV5()
         self.blobH2.loadJSON("""
 {
@@ -1755,7 +1755,7 @@ class TestSchema6Blob(unittest.TestCase):
         app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data=createBlob("""
 {
     "name": "h1",
     "schema_version": 6,
@@ -1768,7 +1768,7 @@ class TestSchema6Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""))
         self.blobH2 = ReleaseBlobV6()
         self.blobH2.loadJSON("""
 {
@@ -1939,7 +1939,7 @@ class TestSchema7Blob(unittest.TestCase):
         app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data="""
+        dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data=createBlob("""
 {
     "name": "h1",
     "schema_version": 7,
@@ -1952,7 +1952,7 @@ class TestSchema7Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""))
         self.blobH2 = ReleaseBlobV7()
         self.blobH2.loadJSON("""
 {

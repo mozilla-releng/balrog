@@ -83,6 +83,43 @@ class ChangeScheduledError(SQLAlchemyError):
     for data consistency reasons."""
 
 
+class JSONColumn(sqlalchemy.types.TypeDecorator):
+    """JSONColumns are used for types that are deserialized JSON (usually
+    dicts) in memory, but need to be serialized to text before storage.
+    JSONColumn handles the conversion both ways, serialized just before
+    storage, and deserialized just after retrieval."""
+
+    impl = Text
+
+    def process_bind_param(self, value, dialect):
+        if value:
+            value = json.dumps(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value:
+            value = json.loads(value)
+        return value
+
+
+def BlobColumn(impl=Text):
+    """BlobColumns are used to store Release Blobs, which are ultimately dicts.
+    Release Blobs must be serialized before storage, and deserialized upon
+    retrevial. This type handles both conversions. Some database engines
+    (eg: mysql) may require a different underlying type than Text. The
+    desired type may be passed in as an argument."""
+    class cls(sqlalchemy.types.TypeDecorator):
+
+        def process_bind_param(self, value, dialect):
+            return value.getJSON()
+
+        def process_result_value(self, value, dialect):
+            return createBlob(value)
+
+    cls.impl = impl
+    return cls
+
+
 class AUSTransaction(object):
     """Manages a single transaction. Requires a connection object.
 
@@ -1438,7 +1475,7 @@ class Releases(AUSTable):
             dataType = LONGTEXT
         else:
             dataType = Text
-        self.table.append_column(Column('data', dataType, nullable=False))
+        self.table.append_column(Column('data', BlobColumn(dataType), nullable=False))
         AUSTable.__init__(self, db, dialect)
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -1515,7 +1552,7 @@ class Releases(AUSTable):
         def getBlob():
             try:
                 row = self.select(where=[self.name == name], columns=[self.data], limit=1, transaction=transaction)[0]
-                blob = createBlob(row['data'])
+                blob = row['data']
                 return {"data_version": data_version, "blob": blob}
             except IndexError:
                 raise KeyError("Couldn't find release with name '%s'" % name)
@@ -1558,7 +1595,6 @@ class Releases(AUSTable):
         blob.validate(columns["product"], self.domainWhitelist)
         if columns["name"] != blob["name"]:
             raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
-        columns["data"] = blob.getJSON()
 
         ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
@@ -1608,7 +1644,6 @@ class Releases(AUSTable):
                 name = what.get("name", name)
                 if name != blob["name"]:
                     raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
-                what['data'] = blob.getJSON()
 
         for release in current_releases:
             name = current_release["name"]
@@ -1626,7 +1661,7 @@ class Releases(AUSTable):
                     if ancestor_change is None:
                         self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
                         raise
-                    ancestor_blob = createBlob(ancestor_change.get('data'))
+                    ancestor_blob = ancestor_change.get('data')
                     tip_release = self.getReleases(name=name, transaction=transaction)[0]
                     tip_blob = tip_release.get('data')
                     m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
@@ -1638,7 +1673,7 @@ class Releases(AUSTable):
                         unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
                         # converting the resultant dict into a blob and then
                         # converting it to JSON
-                        what['data'] = createBlob(unified_blob).getJSON()
+                        what['data'] = unified_blob
                         # we want the data_version for the dictdiffer.merged blob to be one
                         # more than that of the latest blob
                         tip_data_version = tip_release['data_version']
@@ -1692,7 +1727,7 @@ class Releases(AUSTable):
                     releaseBlob['platforms'][a] = {'alias': platform}
 
         releaseBlob.validate(product, self.domainWhitelist)
-        what = dict(data=releaseBlob.getJSON())
+        what = dict(data=releaseBlob)
 
         super(Releases, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                                      transaction=transaction)
@@ -1782,7 +1817,7 @@ class Permissions(AUSTable):
         self.table = Table('permissions', metadata,
                            Column('permission', String(50), primary_key=True),
                            Column('username', String(100), primary_key=True),
-                           Column('options', Text)
+                           Column('options', JSONColumn)
                            )
         self.user_roles = UserRoles(db, metadata, dialect)
         AUSTable.__init__(self, db, dialect)
@@ -1817,7 +1852,6 @@ class Permissions(AUSTable):
         self.assertPermissionExists(columns["permission"])
         if columns.get("options"):
             self.assertOptionsExist(columns["permission"], columns["options"])
-            columns["options"] = json.dumps(columns["options"])
 
         if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
@@ -1849,11 +1883,6 @@ class Permissions(AUSTable):
             if what.get("options"):
                 self.assertOptionsExist(what.get("permission", current_permission["permission"]), what["options"])
 
-        if what.get("options"):
-            what["options"] = json.dumps(what["options"])
-        else:
-            what["options"] = None
-
         super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
                                         transaction=transaction, dryrun=dryrun)
 
@@ -1878,10 +1907,7 @@ class Permissions(AUSTable):
 
     def getPermission(self, username, permission, transaction=None):
         try:
-            row = self.select(where=[self.username == username, self.permission == permission], transaction=transaction)[0]
-            if row['options']:
-                row['options'] = json.loads(row['options'])
-            return row
+            return self.select(where=[self.username == username, self.permission == permission], transaction=transaction)[0]
         except IndexError:
             return {}
 
@@ -1889,23 +1915,16 @@ class Permissions(AUSTable):
         rows = self.select(columns=[self.permission, self.options, self.data_version], where=[self.username == username], transaction=transaction)
         ret = dict()
         for row in rows:
-            perm = row['permission']
-            opt = row['options']
-            ret[perm] = dict()
-            ret[perm]['data_version'] = row['data_version']
-            if opt:
-                ret[perm]['options'] = json.loads(opt)
-            else:
-                ret[perm]['options'] = None
+            ret[row["permission"]] = {
+                "options": row["options"],
+                "data_version": row["data_version"]
+            }
         return ret
 
     def getOptions(self, username, permission, transaction=None):
         ret = self.select(columns=[self.options], where=[self.username == username, self.permission == permission], transaction=transaction)
         if ret:
-            if ret[0]['options']:
-                return json.loads(ret[0]['options'])
-            else:
-                return {}
+            return ret[0]["options"]
         else:
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
 
@@ -1917,30 +1936,31 @@ class Permissions(AUSTable):
         return bool(self.getPermission(username, "admin", transaction))
 
     def hasPermission(self, username, thing, action, product=None, transaction=None):
-        # Supporting product-wise admin permissions. If there are no options
-        # with admin, we assume that the user has admin access over all
-        # products.
-        if self.select(where=[self.username == username, self.permission == 'admin'], transaction=transaction):
-            options = self.getOptions(username, 'admin', transaction=transaction)
-            if options.get("products") and product not in options["products"]:
+        perm = self.getPermission(username, "admin", transaction=transaction)
+        if perm:
+            options = perm["options"]
+            if options and options.get("products") and product not in options["products"]:
+                # Supporting product-wise admin permissions. If there are no options
+                # with admin, we assume that the user has admin access over all
+                # products.
                 return False
             return True
 
-        try:
-            options = self.getOptions(username, thing, transaction=transaction)
-        except ValueError:
-            return False
+        perm = self.getPermission(username, thing, transaction=transaction)
+        if perm:
+            options = perm["options"]
+            if options:
+                # If a user has a permission that doesn't explicitly limit the type of
+                # actions they can perform, they are allowed to do any type of action.
+                if options.get("actions") and action not in options["actions"]:
+                    return False
+                # Similarly, permissions without products specified grant that
+                # that permission without any limitation on the product.
+                if options.get("products") and product not in options["products"]:
+                    return False
+            return True
 
-        # If a user has a permission that doesn't explicitly limit the type of
-        # actions they can perform, they are allowed to do any type of action.
-        if options.get("actions") and action not in options["actions"]:
-            return False
-        # Similarly, permissions without products specified grant that
-        # that permission without any limitation on the product.
-        if options.get("products") and product not in options["products"]:
-            return False
-
-        return True
+        return False
 
     def hasRole(self, username, role, transaction=None):
         return role in self.getUserRoles(username, transaction)

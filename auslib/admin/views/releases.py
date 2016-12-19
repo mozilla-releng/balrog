@@ -17,7 +17,7 @@ __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
 
 def createRelease(release, product, changed_by, transaction, releaseData):
-    blob = createBlob(json.dumps(releaseData))
+    blob = createBlob(releaseData)
     dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release,
                         product=product, data=blob)
     return dbo.releases.getReleases(name=release, transaction=transaction)[0]
@@ -220,7 +220,7 @@ class SingleReleaseView(AdminView):
             indent = 4
         else:
             indent = None
-        return Response(response=json.dumps(release[0]['data'], indent=indent), mimetype='application/json', headers=headers)
+        return Response(response=json.dumps(release[0]['data'], indent=indent, sort_keys=True), mimetype='application/json', headers=headers)
 
     @requirelogin
     def _put(self, release, changed_by, transaction):
