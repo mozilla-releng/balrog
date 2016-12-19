@@ -965,22 +965,17 @@ class ScheduledChangeTable(AUSTable):
         return True
 
     def validate(self, base_columns, condition_columns, changed_by, sc_id=None, transaction=None):
-        # We need to do additional checks for any changes that are modifying an
-        # existing row. These lists will have PK clauses in them at the end of
-        # the following loop, but only if the change contains a PK. This makes
-        # it easy to do the extra checks conditionally afterwards.
-        pk_where = []
+        # Depending on the change type, we may do some additional checks
+        # against the base table PK columns. It's cleaner to build up these
+        # early than do it later.
+        base_table_where = []
         sc_table_where = []
 
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
             if pk in base_columns:
                 sc_table_where.append(getattr(self, "base_%s" % pk) == base_columns[pk])
-                # If a non-null data_version was provided it implies that the
-                # base table row should already exist. This will be checked for
-                # after we finish basic checks on the individual parts of the
-                # PK.
-                pk_where.append(getattr(self.baseTable, pk) == base_columns[pk])
+                base_table_where.append(getattr(self.baseTable, pk) == base_columns[pk])
             # Non-Integer columns can have autoincrement set to True for some reason.
             # Any non-integer columns in the primary key are always required (because
             # autoincrement actually isn't a thing for them), and any Integer columns
@@ -1000,18 +995,16 @@ class ScheduledChangeTable(AUSTable):
             # that the scheduled change has the same data version as the base table,
             # to ensure that a change is not being scheduled from an out of date version
             # of the base table row.
-            current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=pk_where, transaction=transaction)
+            current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction)
             if not current_data_version:
                 raise ValueError("Cannot create scheduled change with data_version for non-existent row")
 
             if current_data_version and current_data_version[0]["data_version"] != base_columns.get("data_version"):
                 raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
-        # If the base table row shouldn't already exist, we need to make sure they don't
-        # to avoid getting an IntegrityError when the change is enacted.
-        elif base_columns["change_type"] == "insert" and pk_where:
-            print pk_where
-            print base_columns
-            if self.baseTable.select(columns=(self.baseTable.data_version,), where=pk_where, transaction=transaction):
+        elif base_columns["change_type"] == "insert" and base_table_where:
+            # If the base table row shouldn't already exist, we need to make sure they don't
+            # to avoid getting an IntegrityError when the change is enacted.
+            if self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction):
                 raise ValueError("Cannot schedule change for duplicate PK")
 
         # If the change has a PK in it and the change isn't already scheduled
@@ -1024,7 +1017,7 @@ class ScheduledChangeTable(AUSTable):
         self.log.debug("base_columns: %s" % (base_columns))
 
         self.conditions.validate(condition_columns)
-        self._checkBaseTablePermissions(pk_where, base_columns, changed_by, transaction)
+        self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
 
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
