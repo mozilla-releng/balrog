@@ -232,7 +232,7 @@ This allows us to look back in time when debugging issues, attribute changes to 
 Scheduled Changes
 -----------------
 
-Some tables (only Rules currently) support having changes to them scheduled in advance. Tables with Scheduled Changes enabled will have additional related tables to store the necessary information about them.
+Some tables (Rules, Releases, and Permissions) support having changes to them scheduled in advance. Tables with Scheduled Changes enabled will have additional related tables to store the necessary information about them.
 
 The primary Scheduled Changes table stores the desired new version of the object and the user who scheduled it. The Conditions table stores information about when to enact the Scheduled Change. Finally, the Signoffs table stores information about who (if anybody) has signed off on the Scheduled Change. All of these tables have their own History tables too.
 
