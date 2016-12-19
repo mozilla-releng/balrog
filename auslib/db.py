@@ -1936,31 +1936,31 @@ class Permissions(AUSTable):
         return bool(self.getPermission(username, "admin", transaction))
 
     def hasPermission(self, username, thing, action, product=None, transaction=None):
-        # Supporting product-wise admin permissions. If there are no options
-        # with admin, we assume that the user has admin access over all
-        # products.
-        if self.select(where=[self.username == username, self.permission == 'admin'], transaction=transaction):
-            options = self.getOptions(username, 'admin', transaction=transaction)
+        perm = self.getPermission(username, "admin", transaction=transaction)
+        if perm:
+            options = perm["options"]
             if options and options.get("products") and product not in options["products"]:
+                # Supporting product-wise admin permissions. If there are no options
+                # with admin, we assume that the user has admin access over all
+                # products.
                 return False
             return True
 
-        try:
-            options = self.getOptions(username, thing, transaction=transaction)
-        except ValueError:
-            return False
+        perm = self.getPermission(username, thing, transaction=transaction)
+        if perm:
+            options = perm["options"]
+            if options:
+                # If a user has a permission that doesn't explicitly limit the type of
+                # actions they can perform, they are allowed to do any type of action.
+                if options.get("actions") and action not in options["actions"]:
+                    return False
+                # Similarly, permissions without products specified grant that
+                # that permission without any limitation on the product.
+                if options.get("products") and product not in options["products"]:
+                    return False
+            return True
 
-        if options:
-            # If a user has a permission that doesn't explicitly limit the type of
-            # actions they can perform, they are allowed to do any type of action.
-            if options.get("actions") and action not in options["actions"]:
-                return False
-            # Similarly, permissions without products specified grant that
-            # that permission without any limitation on the product.
-            if options.get("products") and product not in options["products"]:
-                return False
-
-        return True
+        return False
 
     def hasRole(self, username, role, transaction=None):
         return role in self.getUserRoles(username, transaction)
