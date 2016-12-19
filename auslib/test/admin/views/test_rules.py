@@ -43,7 +43,7 @@ class TestRulesAPI_JSON(ViewTest):
         r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'c')
-        self.assertEquals(r[0]['backgroundRate'], 31)
+        self.assertEquals(r[0]['backgroundRate'], 0)
         self.assertEquals(r[0]['priority'], 33)
         self.assertEquals(r[0]['data_version'], 1)
 	
