@@ -46,10 +46,10 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(r[0]['backgroundRate'], 0)
         self.assertEquals(r[0]['priority'], 33)
         self.assertEquals(r[0]['data_version'], 1)
-	
+
     def testNewRulePostJSON(self):
         data = dict(
-            backgroundRate=0, mapping="c", priority=33, product="Firefox",
+            backgroundRate=31, mapping="c", priority=33, product="Firefox",
             update_type="minor", channel="nightly"
         )
         ret = self._post("/rules", data=data)

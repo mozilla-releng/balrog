@@ -1,12 +1,13 @@
 import simplejson as json
 
 from flask_wtf import Form
-from wtforms import StringField, IntegerField, SelectField, BooleanField
+from wtforms import StringField, IntegerField, SelectField, BooleanField, TextField
 from wtforms.widgets import TextInput, FileInput, HiddenInput
-from wtforms.validators import Required, Optional, NumberRange, Length, Regexp, ValidationError
+from wtforms.validators import Required, Optional, NumberRange, Length, Regexp, ValidationError, any_of
 from auslib.util.comparison import get_op
 from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.util.versions import MozillaVersion
+
 
 import logging
 log = logging.getLogger(__name__)
@@ -168,7 +169,7 @@ class PartialReleaseForm(Form):
 
 
 class RuleForm(Form):
-    backgroundRate = IntegerField('Background Rate', validators=[any_of(range(0,100,1))])
+    backgroundRate = IntegerField('Background Rate', validators=[any_of(range(0, 101, 1))])
     priority = IntegerField('Priority', validators=[Required()])
     mapping = SelectField('Mapping', validators=[])
     fallbackMapping = NullableStringField('fallbackMapping', validators=[Optional()])
