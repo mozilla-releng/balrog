@@ -123,6 +123,7 @@ describe("controller: NewRuleController", function() {
     update_type: 'minor',
     _duplicate: false,
   };
+  var pr_ch_options = ['GMP'];
 
   beforeEach(inject(function($controller, $rootScope, $location, $modal, Rules, Releases, $httpBackend) {
     this.$location = $location;
@@ -140,6 +141,7 @@ describe("controller: NewRuleController", function() {
       Releases: Releases,
       rules: rules,
       rule: rule,
+      pr_ch_options: pr_ch_options,
     });
   }));
 

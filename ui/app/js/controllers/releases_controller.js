@@ -129,6 +129,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
       templateUrl: 'release_data_modal.html',
       controller: 'ReleaseDataCtrl',
       size: 'lg',
+      backdrop: 'static',
       resolve: {
         release: function () {
           return release;
@@ -147,6 +148,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
       templateUrl: 'release_data_modal.html',
       controller: 'ReleaseDataCtrl',
       size: 'lg',
+      backdrop: 'static',
       resolve: {
         release: function () {
           return release;
@@ -164,6 +166,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
     var modalInstance = $modal.open({
       templateUrl: 'release_modal.html',
       controller: 'ReleaseEditCtrl',
+      backdrop: 'static',
       // size: size,  // can be lg or sm
       resolve: {
         release: function () {
@@ -179,6 +182,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
     var modalInstance = $modal.open({
       templateUrl: 'release_delete_modal.html',
       controller: 'ReleaseDeleteCtrl',
+      backdrop: 'static',
       // size: 'sm',
       resolve: {
         release: function () {
@@ -197,6 +201,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
     var modalInstance = $modal.open({
       templateUrl: 'release_modal.html',
       controller: 'NewReleaseCtrl',
+      backdrop: 'static',
       // size: 'sm',
       resolve: {
         releases: function() {
@@ -212,6 +217,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
     var modalInstance = $modal.open({
       templateUrl: 'release_revert_modal.html',
       controller: 'ReleaseRevertCtrl',
+      backdrop: 'static',
       // size: 'sm',
       resolve: {
         release: function () {
@@ -233,6 +239,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
     var modalInstance = $modal.open({
       templateUrl: 'release_read_only_modal.html',
       controller: 'ReleaseReadOnlyCtrl',
+      backdrop: 'static',
       // size: 'sm',
       resolve: {
         release: function() {

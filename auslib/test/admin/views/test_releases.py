@@ -1172,7 +1172,6 @@ class TestReleasesScheduledChanges(ViewTest):
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 4).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_data"] = db_data["base_data"]
         expected = {
             "sc_id": 4, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1, "base_product": "q", "base_read_only": False,
             "base_name": "q", "base_data": {"name": "q", "hashFunction": "sha512", "schema_version": 1}, "base_data_version": None,
@@ -1196,7 +1195,6 @@ class TestReleasesScheduledChanges(ViewTest):
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_data"] = db_data["base_data"]
         expected = {
             "sc_id": 2, "complete": False, "change_type": "update", "data_version": 2, "scheduled_by": "bill", "base_name": "c", "base_product": "c",
             "base_read_only": False, "base_data": {"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1},
@@ -1221,7 +1219,6 @@ class TestReleasesScheduledChanges(ViewTest):
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_data"] = db_data["base_data"]
         expected = {
             "sc_id": 1, "complete": False, "change_type": "insert", "data_version": 2, "scheduled_by": "bill", "base_name": "m", "base_product": "m",
             "base_read_only": False, "base_data": {"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1},

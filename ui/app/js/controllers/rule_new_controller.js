@@ -1,5 +1,5 @@
 angular.module('app').controller('NewRuleCtrl',
-function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule) {
+function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_ch_options) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
@@ -20,6 +20,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule) {
   $scope.rule = rule;
   $scope.errors = {};
   $scope.saving = false;
+  $scope.pr_ch_options = pr_ch_options;
 
   $scope.saveChanges = function () {
     $scope.saving = true;
@@ -33,6 +34,22 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule) {
         $scope.rule.data_version = 1;
         $scope.rule.rule_id = parseInt(response, 10);
         $scope.rules.push($scope.rule);
+
+        if(rule.product) {
+          // The first entry is special, and we want to avoid it getting sorted later.
+          first_entry = $scope.pr_ch_options.shift();
+          if($scope.products.indexOf(rule.product) === -1) {
+            $scope.pr_ch_options.push(rule.product);
+            if(rule.channel) {
+              $scope.pr_ch_options.push(rule.product + "," + rule.channel);
+            }
+          }
+          else if($scope.channels.indexOf(rule.channel) === -1) {
+            $scope.pr_ch_options.push(rule.product + "," + rule.channel);
+          }
+          $scope.pr_ch_options.sort().unshift(first_entry);
+        }
+
         $modalInstance.close();
       })
       .error(function(response, status) {

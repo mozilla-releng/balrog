@@ -79,6 +79,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       templateUrl: 'rule_scheduled_change_modal.html',
       controller: 'NewRuleScheduledChangeCtrl',
       size: 'lg',
+      backdrop: 'static',
       resolve: {
         scheduled_changes: function() {
           return $scope.scheduled_changes;
@@ -102,6 +103,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       templateUrl: "rule_scheduled_change_modal.html",
       controller: "EditRuleScheduledChangeCtrl",
       size: 'lg',
+      backdrop: 'static',
       resolve: {
         sc: function() {
           sc.when = new Date(sc.when);
@@ -115,6 +117,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     var modalInstance = $modal.open({
       templateUrl: "rule_scheduled_change_delete_modal.html",
       controller: "DeleteRuleScheduledChangeCtrl",
+      backdrop: 'static',
       resolve: {
         sc: function() {
           return sc;
@@ -134,6 +137,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         templateUrl: 'release_data_modal.html',
         controller: 'ReleaseDataCtrl',
         size: 'lg',
+        backdrop: 'static',
         resolve: {
           release: function () {
             return response;

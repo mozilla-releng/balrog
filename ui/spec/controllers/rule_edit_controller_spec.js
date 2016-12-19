@@ -28,6 +28,7 @@ describe("controller: RuleEditCtrl", function() {
     "distVersion": null,
     "whitelist": null
   };
+  var pr_ch_options = ['GMP'];
 
   beforeEach(inject(function($controller, $rootScope, $location, $modal, Rules, Releases, $httpBackend) {
     this.$location = $location;
@@ -44,6 +45,7 @@ describe("controller: RuleEditCtrl", function() {
       Rules: Rules,
       Releases: Releases,
       rule: rule,
+      pr_ch_options: pr_ch_options,
     });
   }));
 

@@ -79,6 +79,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal)
     var modalInstance = $modal.open({
       templateUrl: 'permissions_modal.html',
       controller: 'UserPermissionsCtrl',
+      backdrop: 'static',
       // size: size,  // can be lg or sm
       resolve: {
         user: function () {
@@ -99,6 +100,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal)
     var modalInstance = $modal.open({
       templateUrl: 'user_modal.html',
       controller: 'NewUserCtrl',
+      backdrop: 'static',
       // size: 'sm',
       resolve: {
         users: function () {
