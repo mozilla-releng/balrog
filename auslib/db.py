@@ -9,7 +9,7 @@ import sys
 import time
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger, Boolean, join
+    create_engine, select, BigInteger, Boolean, join, UniqueConstraint
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 import sqlalchemy.types
@@ -1776,6 +1776,7 @@ class Permissions(AUSTable):
         "rule": ["actions", "products"],
         "permission": ["actions"],
         "scheduled_change": ["actions"],
+        "shutoff": ["actions"],
     }
 
     def __init__(self, db, metadata, dialect):
@@ -1974,6 +1975,56 @@ class Dockerflow(AUSTable):
             super(Dockerflow, self).update(where=where, what=value, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
 
+class Shutoffs(AUSTable):
+    def __init__(self, db, metadata, dialect):
+        self.table = Table('shutoffs', metadata,
+                           Column('shutoff_id', Integer, primary_key=True,
+                                  autoincrement=True),
+                           Column('product', String(15), nullable=False),
+                           Column('channel', String(75)),
+                           Column('mapping', String(100)),
+                           UniqueConstraint('product', 'channel')
+                           )
+        AUSTable.__init__(self, db, dialect, history=False, versioned=False)
+
+    def getShutoff(self, transaction=None, **columns):
+        """Returns a tuple where the first field says if the product+channel
+        combo is shutoff or not, and the second field specifies the mapped
+        empty release"""
+        # Since we are able to shutoff entire products without specifying a
+        # channel, we first get all shutoffs for a product and check if any of
+        # them has 'channel' set to None
+        matched_shutoffs = self.select(where=[self.product == columns.get('product')],
+                                       transaction=transaction)
+        for shutoff in matched_shutoffs:
+            if shutoff.get('channel') is None or shutoff.get('channel') == columns.get('channel'):
+                return (True, shutoff.get('mapping'))
+        return (False, None)
+
+    def insert(self, changed_by, transaction=None, **columns):
+        """Only users with the 'shutoff' permission, with the 'set' action or admins can insert
+        shutoff rules"""
+        if not self.db.hasPermission(changed_by, "shutoff", "set", columns['product'], transaction=transaction):
+            raise PermissionDeniedError("%s can't shut off the product: %s" % (changed_by, columns['product']))
+
+        super(Shutoffs, self).insert(changed_by=changed_by, transaction=transaction, **columns)
+
+    def delete(self, changed_by, transaction=None, **columns):
+        """Only users with the 'shutoff' permission, with the 'unset' action or
+        admins can delete shutoff rules"""
+        if not self.db.hasPermission(changed_by, "shutoff", "unset", columns['product'], transaction=transaction):
+            raise PermissionDeniedError("%s can't unset the shutoff rule on product: %s" % (changed_by, columns['product']))
+
+        columns['channel'] = columns['channel'] or None
+        where = [self.product == columns.get('product'),
+                 self.channel == columns.get('channel')]
+        super(Shutoffs, self).delete(changed_by=changed_by, where=where, transaction=transaction)
+
+    def getOrderedShutoffs(self, transaction=None):
+        """Returns all of the shutoffs, sorted in ascending order"""
+        return self.select(order_by=(self.mapping), transaction=transaction)
+
+
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
@@ -2118,6 +2169,7 @@ class AUSDatabase(object):
         self.releasesTable = Releases(self, self.metadata, dialect)
         self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
+        self.shutoffsTable = Shutoffs(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -2198,3 +2250,7 @@ class AUSDatabase(object):
     @property
     def dockerflow(self):
         return self.dockerflowTable
+
+    @property
+    def shutoffs(self):
+        return self.shutoffsTable

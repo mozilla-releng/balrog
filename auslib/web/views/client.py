@@ -58,37 +58,38 @@ class ClientRequestView(MethodView):
 
         # passing {},None returns empty xml
         if release:
-            response_products = release.getResponseProducts()
             response_blobs = []
-            response_blob_names = release.getResponseBlobs()
-            if response_products:
-                # if we have a SuperBlob of gmp, we process the response products and
-                # concatenate their inner XMLs
-                for product in response_products:
-                    product_query = query.copy()
-                    product_query["product"] = product
-                    response_release, response_update_type = AUS.evaluateRules(product_query)
-                    if not response_release:
-                        continue
-
-                    response_blobs.append({'product_query': product_query,
-                                           'response_release': response_release,
-                                           'response_update_type': response_update_type})
-            elif response_blob_names:
-                for blob_name in response_blob_names:
-                    # if we have a SuperBlob of systemaddons, we process the response products and
+            if release.get('schema_version') == 4000:  # if we have a Superblob
+                response_products = release.getResponseProducts()
+                response_blob_names = release.getResponseBlobs()
+                if response_products:
+                    # if we have a SuperBlob of gmp, we process the response products and
                     # concatenate their inner XMLs
-                    product_query = query.copy()
-                    product = dbo.releases.getReleases(name=blob_name, limit=1)[0]['product']
-                    product_query["product"] = product
-                    response_release = dbo.releases.getReleaseBlob(name=blob_name)
-                    if not response_release:
-                        self.log.warning("No release found with name: %s", blob_name)
-                        continue
+                    for product in response_products:
+                        product_query = query.copy()
+                        product_query["product"] = product
+                        response_release, response_update_type = AUS.evaluateRules(product_query)
+                        if not response_release:
+                            continue
 
-                    response_blobs.append({'product_query': product_query,
-                                           'response_release': response_release,
-                                           'response_update_type': update_type})
+                        response_blobs.append({'product_query': product_query,
+                                               'response_release': response_release,
+                                               'response_update_type': response_update_type})
+                elif response_blob_names:
+                    for blob_name in response_blob_names:
+                        # if we have a SuperBlob of systemaddons, we process the response products and
+                        # concatenate their inner XMLs
+                        product_query = query.copy()
+                        product = dbo.releases.getReleases(name=blob_name, limit=1)[0]['product']
+                        product_query["product"] = product
+                        response_release = dbo.releases.getReleaseBlob(name=blob_name)
+                        if not response_release:
+                            self.log.warning("No release found with name: %s", blob_name)
+                            continue
+
+                        response_blobs.append({'product_query': product_query,
+                                               'response_release': response_release,
+                                               'response_update_type': update_type})
             else:
                 response_blobs.append({'product_query': query,
                                        'response_release': release,
@@ -119,6 +120,7 @@ class ClientRequestView(MethodView):
                                                  app.config["WHITELISTED_DOMAINS"],
                                                  app.config["SPECIAL_FORCE_HOSTS"]))
             xml.append(release.getFooterXML())
+            xml = filter(lambda x: x != '', xml) # removing extraneous newlines
             # ensure valid xml by using the right entity for ampersand
             xml = re.sub('&(?!amp;)', '&amp;', '\n'.join(xml))
         else:
