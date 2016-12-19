@@ -1120,6 +1120,10 @@ class TestRuleScheduledChanges(ViewTest):
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/rules/2/signoffs", data=dict(role="qa"), username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        self.assertEquals(db_data, {"sc_id": 2, "username": "bill", "role": "qa"})
 
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/rules/2/signoffs", data=dict(role="relman"), username="bill")
@@ -1128,6 +1132,10 @@ class TestRuleScheduledChanges(ViewTest):
     def testSignoffASecondTimeWithSameRole(self):
         ret = self._post("/scheduled_changes/rules/1/signoffs", data=dict(role="releng"), username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        self.assertEquals(db_data, {"sc_id": 1, "username": "bill", "role": "releng"})
 
     def testSignoffWithSecondRole(self):
         ret = self._post("/scheduled_changes/rules/1/signoffs", data=dict(role="qa"), username="bill")
@@ -1136,6 +1144,8 @@ class TestRuleScheduledChanges(ViewTest):
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/rules/1/signoffs", username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 0)
 
     def testRevokeOtherUsersSignoff(self):
         ret = self._delete("/scheduled_changes/rules/1/signoffs", username="bob")

@@ -1031,6 +1031,7 @@ class TestReleasesScheduledChanges(ViewTest):
             change_id=2, changed_by="bill", timestamp=51, sc_id=1, scheduled_by="bill", change_type="insert", data_version=1, base_name="m",
             base_product="m", base_data=createBlob(dict(name="m", hashFunction="sha512", schema_version=1))
         )
+        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=4000000000, data_version=1)
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=50, sc_id=1)
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
@@ -1082,7 +1083,7 @@ class TestReleasesScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
-                    "data_version": None, "signoffs": {},
+                    "data_version": None, "signoffs": {"bill": "releng"},
                 },
                 {
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
@@ -1101,7 +1102,7 @@ class TestReleasesScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
-                    "data_version": None, "signoffs": {},
+                    "data_version": None, "signoffs": {"bill": "releng"},
                 },
                 {
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
@@ -1300,6 +1301,24 @@ class TestReleasesScheduledChanges(ViewTest):
             ],
         }
         self.assertEquals(ret, expected)
+
+    def testSignoffWithRelease(self):
+        ret = self._post("/scheduled_changes/releases/2/signoffs", data=dict(role="qa"), username="bill")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        self.assertEquals(db_data, {"sc_id": 1, "username": "bill", "role": "releng"})
+
+    def testSignoffWithoutRelease(self):
+        ret = self._post("/scheduled_changes/releases/2/signoffs", data=dict(role="relman"), username="bill")
+        self.assertEquals(ret.status_code, 403, ret.data)
+
+    def testRevokeSignoff(self):
+        ret = self._delete("/scheduled_changes/releases/1/signoffs", username="bill")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 0)
 
 
 class TestReleaseHistoryView(ViewTest):

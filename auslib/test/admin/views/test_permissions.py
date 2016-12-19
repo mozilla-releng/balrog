@@ -184,6 +184,7 @@ class TestPermissionsScheduledChanges(ViewTest):
             change_id=2, changed_by="bill", timestamp=21, sc_id=1, scheduled_by="bill", change_type="insert", data_version=1,
             base_permission="rule", base_username="janet", base_options={"products": ["foo"]},
         )
+        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
         dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000, data_version=1)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
@@ -233,7 +234,8 @@ class TestPermissionsScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
-                    "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None, "signoffs": {},
+                    "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None,
+                    "signoffs": {"bill": "releng"},
                 },
                 {
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
@@ -250,7 +252,8 @@ class TestPermissionsScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
-                    "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None, "signoffs": {},
+                    "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None,
+                    "signoffs": {"bill": "releng"},
                 },
                 {
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
@@ -445,6 +448,24 @@ class TestPermissionsScheduledChanges(ViewTest):
             ],
         }
         self.assertEquals(json.loads(ret.data), expected)
+
+    def testSignoffWithPermission(self):
+        ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="qa"), username="bill")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.permissions.scheduled_changes.signoffs.t.select().where(dbo.permissions.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        self.assertEquals(db_data, {"sc_id": 2, "username": "bill", "role": "qa"})
+
+    def testSignoffWithoutPermission(self):
+        ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="relman"), username="bill")
+        self.assertEquals(ret.status_code, 403, ret.data)
+
+    def testRevokeSignoff(self):
+        ret = self._delete("/scheduled_changes/permissions/1/signoffs", username="bill")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.permissions.scheduled_changes.signoffs.t.select().where(dbo.permissions.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 0)
 
 
 class TestUserRolesAPI_JSON(ViewTest):

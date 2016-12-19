@@ -9,7 +9,8 @@ from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm, 
     EditScheduledChangeNewPermissionForm, EditScheduledChangeExistingPermissionForm, \
     ScheduledChangeDeletePermissionForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
-    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView
+    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
+    SignoffsView
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 
@@ -147,6 +148,19 @@ class EnactPermissionScheduledChangeView(EnactScheduledChangeView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         return super(EnactPermissionScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+
+
+class PermissionScheduledChangeSignoffsView(SignoffsView):
+    def __init__(self):
+        super(PermissionScheduledChangeSignoffsView, self).__init__("permissions", dbo.permissions)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(PermissionScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
+
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(PermissionScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
 
 
 class PermissionScheduledChangeHistoryView(ScheduledChangeHistoryView):

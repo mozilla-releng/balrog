@@ -15,7 +15,8 @@ from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, Db
     ScheduledChangeNewReleaseForm, ScheduledChangeExistingReleaseForm, ScheduledChangeDeleteReleaseForm, \
     EditScheduledChangeNewReleaseForm, EditScheduledChangeExistingReleaseForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
-    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView
+    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
+    SignoffsView
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
@@ -574,6 +575,19 @@ class EnactReleaseScheduledChangeView(EnactScheduledChangeView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         return super(EnactReleaseScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+
+
+class ReleaseScheduledChangeSignoffsView(SignoffsView):
+    def __init__(self):
+        super(ReleaseScheduledChangeSignoffsView, self).__init__("releases", dbo.releases)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(ReleaseScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
+
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(ReleaseScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
 
 
 class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
