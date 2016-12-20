@@ -972,10 +972,6 @@ class ScheduledChangeTable(AUSTable):
         # (meaning we're validating an update to it), we must ensure that no
         # existing change with that PK is active before allowing it.
         if not sc_id and sc_table_where:
-            if base_columns["change_type"] == "delete":
-                current_scheduled_change = self.select(columns=[self.change_type], where=sc_table_where)
-                if current_scheduled_change[0]["change_type"] == "delete":
-                    raise ChangeScheduledError("Cannot scheduled multiple delitions for same row")
             sc_table_where.append(self.complete == False) # noqa because we need to use == for sqlalchemy operator overloading to work
             if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
                 raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
