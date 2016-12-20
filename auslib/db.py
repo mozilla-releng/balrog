@@ -968,6 +968,12 @@ class ScheduledChangeTable(AUSTable):
             if current_data_version and current_data_version[0]["data_version"] != base_columns.get("data_version"):
                 raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
 
+        if not sc_id:
+            if base_columns["change_type"] == "delete":
+                current_scheduled_change = self.select(columns=[self.change_type], where=sc_table_where)
+                if len(current_scheduled_change):
+                    raise ChangeScheduledError("Cannot scheduled multiple delitions for same row")
+
         # If the change has a PK in it and the change isn't already scheduled
         # (meaning we're validating an update to it), we must ensure that no
         # existing change with that PK is active before allowing it.
