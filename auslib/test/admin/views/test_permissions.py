@@ -476,9 +476,9 @@ class TestUserRolesAPI_JSON(ViewTest):
         got = set(json.loads(ret.data)["roles"])
         self.assertEquals(got, set(["releng", "qa"]))
 
-    def testGetRolesMissingUser(self):
+    def testGetRolesMissingUserReturnsEmptyList(self):
         ret = self.client.get("/users/dean/roles")
-        self.assertStatusCode(ret, 404)
+        self.assertStatusCode(ret, 200)
 
     def testGrantRole(self):
         ret = self._put("/users/ashanti/roles/dev")

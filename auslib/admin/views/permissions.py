@@ -177,10 +177,7 @@ class UserRolesView(AdminView):
 
     def get(self, username):
         roles = dbo.permissions.getUserRoles(username)
-        if roles:
-            return jsonify({"roles": roles})
-        else:
-            return Response(status=404, response="No roles found for user")
+        return jsonify({"roles": roles})
 
 
 class UserRoleView(AdminView):

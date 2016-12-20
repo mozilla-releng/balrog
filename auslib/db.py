@@ -971,6 +971,13 @@ class ScheduledChangeTable(AUSTable):
         base_table_where = []
         sc_table_where = []
 
+        if base_columns["change_type"] == "delete":
+            for pk in self.base_primary_key:
+                if pk not in base_columns:
+                    raise ValueError("Missing primary key column %s. PK values needed for deletion" % (pk))
+                if base_columns[pk] is None:
+                    raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
+
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
             if pk in base_columns:
@@ -1039,7 +1046,7 @@ class ScheduledChangeTable(AUSTable):
         if "change_type" not in base_columns:
             raise ValueError("Change type is required")
 
-        self.validate(base_columns, condition_columns, changed_by, transaction)
+        self.validate(base_columns=base_columns, condition_columns=condition_columns, changed_by=changed_by, transaction=transaction)
 
         base_columns = self._prefixColumns(base_columns)
         base_columns["scheduled_by"] = changed_by

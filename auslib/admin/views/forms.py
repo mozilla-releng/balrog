@@ -8,6 +8,7 @@ from auslib.util.comparison import get_op
 from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.util.versions import MozillaVersion
 
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -198,7 +199,7 @@ class PartialReleaseForm(Form):
 
 
 class RuleForm(Form):
-    backgroundRate = IntegerField('Background Rate', validators=[Required(), NumberRange(0, 100)])
+    backgroundRate = IntegerField('Background Rate', validators=[NumberRange(0, 100, "Background rate must be between 0 and 100")])
     priority = IntegerField('Priority', validators=[Required()])
     mapping = SelectField('Mapping', validators=[])
     fallbackMapping = NullableStringField('fallbackMapping', validators=[Optional()])

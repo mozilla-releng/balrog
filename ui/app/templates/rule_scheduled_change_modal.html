@@ -1,6 +1,8 @@
 <div class="modal-header">
-    <h3 class="modal-title" ng-show="is_edit">Edit Scheduled Change</h3>
-    <h3 class="modal-title" ng-show="!is_edit">Add Scheduled Change</h3>
+    <h3 class="modal-title" ng-show="is_edit && sc.rule_id">Edit Scheduled Change for Rule ID {{ sc.rule_id }}</h3>
+    <h3 class="modal-title" ng-show="!is_edit && sc.rule_id">Add Scheduled Change for Rule ID {{ sc.rule_id }}</h3>
+    <h3 class="modal-title" ng-show="is_edit && !sc.rule_id">Edit Scheduled Change</h3>
+    <h3 class="modal-title" ng-show="!is_edit && !sc.rule_id">Add Scheduled Change</h3>
 </div>
 <div class="modal-body">
   <form role="form">
@@ -74,7 +76,7 @@
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.channel}">
         <label for="id_channel">Channel</label>
-        <input type="text" class="form-control" id="id_product" ng-model="sc.channel"
+        <input type="text" class="form-control" id="id_channel" ng-model="sc.channel"
         typeahead="channel for channel in channels | filter:$viewValue | limitTo:16">
         <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(', ') }}</p>
         </div>
