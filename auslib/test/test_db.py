@@ -3388,12 +3388,50 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_not_called()
 
 
-class TestDBUpgrade(unittest.TestCase, NamedFileDatabaseMixin):
+class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
 
     def setUp(self):
         NamedFileDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.db.metadata.create_all()
+
+    def testAllTablesExist(self):
+        expected_tables = set([
+            "dockerflow",
+            # Migrate version only exists in production-like databases.
+            #"migrate_version", # noqa
+            "permissions",
+            "permissions_history",
+            "permissions_required_signoffs",
+            "permissions_required_signoffs_history",
+            "permissions_required_signoffs_scheduled_changes",
+            "permissions_required_signoffs_scheduled_changes_conditions",
+            "permissions_required_signoffs_scheduled_changes_conditions_history",
+            "permissions_required_signoffs_scheduled_changes_history",
+            "permissions_required_signoffs_scheduled_changes_signoffs",
+            "permissions_required_signoffs_scheduled_changes_signoffs_history",
+            "product_channel_required_signoffs",
+            "product_channel_required_signoffs_history",
+            "product_channel_required_signoffs_scheduled_changes",
+            "product_channel_required_signoffs_scheduled_changes_conditions",
+            "product_channel_required_signoffs_scheduled_changes_conditions_history",
+            "product_channel_required_signoffs_scheduled_changes_history",
+            "product_channel_required_signoffs_scheduled_changes_signoffs",
+            "product_channel_required_signoffs_scheduled_changes_signoffs_history",
+            "releases",
+            "releases_history",
+            "rules",
+            "rules_history",
+            "rules_scheduled_changes",
+            "rules_scheduled_changes_conditions",
+            "rules_scheduled_changes_conditions_history",
+            "rules_scheduled_changes_history",
+            "rules_scheduled_changes_signoffs",
+            "rules_scheduled_changes_signoffs_history",
+            "user_roles",
+            "user_roles_history",
+        ])
+        self.assertEquals(set(self.db.metadata.tables.keys()), expected_tables)
 
     def testModelIsSameAsRepository(self):
         db2 = AUSDatabase('sqlite:///' + self.getTempfile())
