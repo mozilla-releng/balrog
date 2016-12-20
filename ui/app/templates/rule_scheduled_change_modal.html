@@ -1,6 +1,8 @@
 <div class="modal-header">
-    <h3 class="modal-title" ng-show="is_edit">Edit Scheduled Change</h3>
-    <h3 class="modal-title" ng-show="!is_edit">Add Scheduled Change</h3>
+    <h3 class="modal-title" ng-show="is_edit && sc.rule_id">Edit Scheduled Change for Rule ID {{ sc.rule_id }}</h3>
+    <h3 class="modal-title" ng-show="!is_edit && sc.rule_id">Add Scheduled Change for Rule ID {{ sc.rule_id }}</h3>
+    <h3 class="modal-title" ng-show="is_edit && !sc.rule_id">Edit Scheduled Change</h3>
+    <h3 class="modal-title" ng-show="!is_edit && !sc.rule_id">Add Scheduled Change</h3>
 </div>
 <div class="modal-body">
   <form role="form">
