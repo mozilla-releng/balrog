@@ -165,6 +165,24 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
   /* End openUpdateModal */
+  $scope.openNewScheduledDeleteModal = function(rule) {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'rule_scheduled_delete_modal.html',
+      controller: 'NewRuleScheduledChangeCtrl',
+      size: 'lg',
+      resolve: {
+        scheduled_changes: function() {
+          return [];
+        },
+        sc: function() {
+          sc = angular.copy(rule);
+          sc["change_type"] = "delete";
+          return sc;
+        }
+      }
+    });
+  };
 
   $scope.openNewScheduledRuleChangeModal = function(rule) {
 
@@ -178,7 +196,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           return [];
         },
         sc: function() {
-          return angular.copy(rule);
+          sc = angular.copy(rule);
+          sc["change_type"] = "update";
+          return sc;
         }
       }
     });
