@@ -12,7 +12,7 @@ from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
     ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
     ScheduledChangeDeleteRuleForm, EditScheduledChangeNewRuleForm, \
-    EditScheduledChangeExistingRuleForm
+    EditScheduledChangeExistingRuleForm, EditScheduledChangeDeleteRuleForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
     SignoffsView
@@ -341,7 +341,10 @@ class RuleScheduledChangeView(ScheduledChangeView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         if request.json and request.json.get("data_version"):
-            form = EditScheduledChangeExistingRuleForm()
+            if request.json.get("change_type") == "delete":
+                form = EditScheduledChangeDeleteRuleForm()
+            else:
+                form = EditScheduledChangeExistingRuleForm()
         else:
             form = EditScheduledChangeNewRuleForm()
 
