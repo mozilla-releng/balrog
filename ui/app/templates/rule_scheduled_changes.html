@@ -91,7 +91,7 @@
       <dt ng-show="sc.data_version">Data Version:</dt>
       <dd>{{ sc.data_version }}</dd>
       <dt ng-show="sc.mapping">Mapping:</dt>
-      <dd>
+      <dd ng-show="sc.mapping">
         <span>{{ sc.mapping }}</span>
         <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(sc.mapping)">
           <i class="glyphicon glyphicon-eye-open"></i>
