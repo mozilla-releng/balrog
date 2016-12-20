@@ -997,11 +997,10 @@ class ScheduledChangeTable(AUSTable):
                 if base_columns[pk] is None:
                     raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
         elif base_columns["change_type"] == "update":
-            # If anything ended up in base_table_where, it means that the baseTable
-            # row should already exist. In these cases, we need to check to make sure
-            # that the scheduled change has the same data version as the base table,
-            # to ensure that a change is not being scheduled from an out of date version
-            # of the base table row.
+            # For updates, we need to make sure that the baseTable row already
+            # exists, and that the data version provided matches the current
+            # version to ensure that someone isn't trying to schedule a change
+            # against out-of-date data.
             current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction)
             if not current_data_version:
                 raise ValueError("Cannot create scheduled change with data_version for non-existent row")
@@ -1014,9 +1013,9 @@ class ScheduledChangeTable(AUSTable):
             if self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction):
                 raise ValueError("Cannot schedule change for duplicate PK")
 
-        # If the change has a PK in it and the change isn't already scheduled
-        # (meaning we're validating an update to it), we must ensure that no
-        # existing change with that PK is active before allowing it.
+        # If we're validating a new scheduled change (sc_id is None), we need
+        # to make sure that no other scheduled change already exists if a
+        # primary key for the base table was provided (sc_table_where is not empty).
         if not sc_id and sc_table_where:
             sc_table_where.append(self.complete == False) # noqa because we need to use == for sqlalchemy operator overloading to work
             if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
