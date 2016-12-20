@@ -906,11 +906,12 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         ret = self.client.get('/whizzybang')
         self.assertEqual(ret.headers.get("Cache-Control"), None)
 
-    def testCacheControlIsNotSetFor500(self):
+    def testCacheControlIsSetFor500(self):
         with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
             m.side_effect = Exception('I break!')
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
-            self.assertEqual(ret.headers.get("Cache-Control"), None)
+            with self.assertRaises(Exception) as exc:
+                self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+                self.assertEqual('I break!', exc.exception.value())
 
     def testEmptySnippetOn404(self):
         ret = self.client.get('/whizzybang')
@@ -919,22 +920,25 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
     def testEmptySnippetOn500(self):
         with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
             m.side_effect = Exception('I break!')
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
-            self.assertUpdatesAreEmpty(ret)
+            with self.assertRaises(Exception) as exc:
+                self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+                self.assertEqual('I break!', exc.exception.value())
 
     def testSentryBadDataError(self):
         with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
             m.side_effect = BadDataError("exterminate!")
-            with mock.patch("auslib.web.base.sentry") as sentry:
+            with mock.patch("auslib.web.base.sentry"), (
+                                    self.assertRaises(BadDataError)) as exc:
                 self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
-                self.assertFalse(sentry.captureException.called)
+                self.assertEqual('exterminate!', exc.exception.value())
 
     def testSentryRealError(self):
         with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
             m.side_effect = Exception("exterminate!")
-            with mock.patch("auslib.web.base.sentry") as sentry:
+            with mock.patch("auslib.web.base.sentry"), (
+                                        self.assertRaises(Exception)) as exc:
                 self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
-                self.assertTrue(sentry.captureException.called)
+                self.assertEqual('exterminate!', exc.exception.value())
 
     def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):
         request1 = '/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml'
