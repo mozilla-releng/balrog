@@ -873,7 +873,7 @@ class ScheduledChangeTable(AUSTable):
                            Column("complete", Boolean, default=False),
                            Column("change_type", String(50), nullable=False),
                            )
-        self.conditions = ConditionsTable(db, dialect, metadata, table_name, conditions)
+        self.conditions = ConditionsTable(db, dialect, metadata, table_name, conditions, history=history)
         # Signoffs are configurable at runtime, which means that we always need
         # a Signoffs table, even if it may not be used immediately.
         self.signoffs = SignoffsTable(db, metadata, dialect, table_name)
