@@ -92,12 +92,12 @@ class JSONColumn(sqlalchemy.types.TypeDecorator):
     impl = Text
 
     def process_bind_param(self, value, dialect):
-        if value is not None:
+        if value:
             value = json.dumps(value)
         return value
 
     def process_result_value(self, value, dialect):
-        if value is not None:
+        if value:
             value = json.loads(value)
         return value
 
@@ -111,12 +111,12 @@ def BlobColumn(impl=Text):
     class cls(sqlalchemy.types.TypeDecorator):
 
         def process_bind_param(self, value, dialect):
-            if value is not None:
+            if value:
                 value = value.getJSON()
             return value
 
         def process_result_value(self, value, dialect):
-            if value is not None:
+            if value:
                 value = createBlob(value)
             return value
 
