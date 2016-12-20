@@ -36,6 +36,17 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(r[0]['priority'], 33)
         self.assertEquals(r[0]['data_version'], 1)
 
+    def testBackgroundRateZero(self):
+        ret = self._post('/rules', data=dict(backgroundRate=0, mapping='c', priority=33,
+                                             product='Firefox', update_type='minor', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], 'c')
+        self.assertEquals(r[0]['backgroundRate'], 0)
+        self.assertEquals(r[0]['priority'], 33)
+        self.assertEquals(r[0]['data_version'], 1)
+
     def testNewRulePostJSON(self):
         data = dict(
             backgroundRate=31, mapping="c", priority=33, product="Firefox",
