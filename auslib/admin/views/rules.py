@@ -348,10 +348,11 @@ class RuleScheduledChangeView(ScheduledChangeView):
         else:
             form = EditScheduledChangeNewRuleForm()
 
-        releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+        if request.json.get("change_type") != "delete":
+            releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
 
-        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
-        form.mapping.choices.insert(0, ('', 'NULL'))
+            form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+            form.mapping.choices.insert(0, ('', 'NULL'))
 
         return super(RuleScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
 

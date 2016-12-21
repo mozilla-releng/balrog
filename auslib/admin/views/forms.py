@@ -245,27 +245,8 @@ class EditScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
     sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
 
 
-class EditScheduledChangeDeleteRuleForm(ScheduledChangeDeleteRuleForm):
+class EditScheduledChangeDeleteRuleForm(ScheduledChangeForm):
     sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
-    backgroundRate = NullableStringField('Background Rate', validators=[Optional()])
-    priority = NullableStringField('Priority', validators=[Optional()])
-    mapping = NullableStringField('Mapping', validators=[Optional()])
-    fallbackMapping = NullableStringField('fallbackMapping', validators=[Optional()])
-    alias = NullableStringField('Alias', validators=[Optional(), Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
-    product = NullableStringField('Product', validators=[Optional(), Length(0, 15)])
-    version = NullableStringField('Version', validators=[Optional(), Length(0, 10), version_validator()])
-    buildID = NullableStringField('BuildID', validators=[Optional(), Length(0, 20), operator_validator()])
-    channel = NullableStringField('Channel', validators=[Optional(), Length(0, 75)])
-    locale = NullableStringField('Locale', validators=[Optional(), Length(0, 200)])
-    distribution = NullableStringField('Distribution', validators=[Optional(), Length(0, 100)])
-    buildTarget = NullableStringField('Build Target', validators=[Optional(), Length(0, 75)])
-    osVersion = NullableStringField('OS Version', validators=[Optional(), Length(0, 1000)])
-    systemCapabilities = NullableStringField('SystemCapabilities', validators=[Optional(), Length(0, 1000)])
-    distVersion = NullableStringField('Dist Version', validators=[Optional(), Length(0, 100)])
-    whitelist = NullableStringField('Whitelist', validators=[Optional(), Length(0, 100)])
-    comment = NullableStringField('Comment', validators=[Optional(), Length(0, 500)])
-    update_type = NullableStringField('Update Type', validators=[Optional(), Length(0, 500)])
-    headerArchitecture = NullableStringField('Header Architecture', validators=[Optional(), Length(0, 10)])
 
 
 class SignoffForm(Form):
