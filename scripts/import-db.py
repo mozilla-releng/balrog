@@ -99,3 +99,5 @@ if __name__ == '__main__':
 
             setLocalDBTimestamp(prod_db_ts)
             setLocalDBPermissions()
+        else:
+            logging.info("Cached dump is up-to-date")
