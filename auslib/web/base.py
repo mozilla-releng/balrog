@@ -1,7 +1,7 @@
 import logging
 log = logging.getLogger(__name__)
 
-from flask import Flask, make_response, send_from_directory, request, abort
+from flask import Flask, make_response, send_from_directory, abort
 
 from raven.contrib.flask import Sentry
 
@@ -38,24 +38,13 @@ def fourohfour(error):
 def generic(error):
     """Deals with any unhandled exceptions. If the exception is not a
     BadDataError, it will be sent to Sentry. Regardless of the exception,
-    a 200 response with no updates is returned, because that's what the client
-    expects. See bugs 885173 and 1069454 for additional background."""
+    a 500 response is returned."""
 
     if not isinstance(error, BadDataError):
         if sentry.client:
             sentry.captureException()
 
-    # We don't want to eat exceptions from this special Dockerflow endpoint because
-    # it's used by CloudOps' infrastructure to see whether or not the app is
-    # functional. See https://github.com/mozilla-services/Dockerflow for additional
-    # details.
-    if request.path == "/__heartbeat__":
-        return error
-
-    log.debug('Hit exception, sending an empty response', exc_info=True)
-    response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
-    response.mimetype = 'text/xml'
-    return response
+    raise error
 
 
 @app.route('/robots.txt')
