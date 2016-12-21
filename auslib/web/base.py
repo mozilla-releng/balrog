@@ -44,7 +44,7 @@ def generic(error):
         if sentry.client:
             sentry.captureException()
 
-    raise Exception(error)
+    raise error
 
 
 @app.route('/robots.txt')
