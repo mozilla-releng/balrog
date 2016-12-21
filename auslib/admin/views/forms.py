@@ -3,7 +3,7 @@ import simplejson as json
 from flask_wtf import Form
 from wtforms import StringField, IntegerField, SelectField, BooleanField
 from wtforms.widgets import TextInput, FileInput, HiddenInput
-from wtforms.validators import Required, Optional, NumberRange, Length, Regexp, ValidationError
+from wtforms.validators import InputRequired, Optional, NumberRange, Length, Regexp, ValidationError
 from auslib.util.comparison import get_op
 from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.util.versions import MozillaVersion
@@ -137,7 +137,7 @@ def not_in_the_past():
 
 
 class DbEditableForm(Form):
-    data_version = IntegerField('data_version', validators=[Required()], widget=HiddenInput())
+    data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
 class ScheduledChangeForm(Form):
@@ -157,12 +157,12 @@ class ExistingPermissionForm(DbEditableForm):
 
 class PartialReleaseForm(Form):
     # Because we do implicit release creation in the Releases views, we can't
-    # have data_version be Required(). The views are responsible for checking
+    # have data_version be InputRequired(). The views are responsible for checking
     # for its existence in this case.
     data_version = IntegerField('data_version', widget=HiddenInput())
-    product = StringField('Product', validators=[Required()])
+    product = StringField('Product', validators=[InputRequired()])
     hashFunction = StringField('Hash Function')
-    data = JSONStringField({}, 'Data', validators=[Required()])
+    data = JSONStringField({}, 'Data', validators=[InputRequired()])
     schema_version = IntegerField('Schema Version')
     copyTo = JSONStringField({}, 'Copy To', default=list)
     alias = JSONStringField({}, 'Alias', default=list)
@@ -170,7 +170,7 @@ class PartialReleaseForm(Form):
 
 class RuleForm(Form):
     backgroundRate = IntegerField('Background Rate', validators=[NumberRange(0, 100, "Background rate must be between 0 and 100")])
-    priority = IntegerField('Priority', validators=[Required()])
+    priority = IntegerField('Priority', validators=[InputRequired()])
     mapping = SelectField('Mapping', validators=[])
     fallbackMapping = NullableStringField('fallbackMapping', validators=[Optional()])
     alias = NullableStringField('Alias', validators=[Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
@@ -222,7 +222,7 @@ class ScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
     # through URLs that contain scheduled change IDs, so we need to include
     # the rule_id in the form when editing scheduled changes for rules.
     change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
-    rule_id = IntegerField('Rule ID', validators=[Required()])
+    rule_id = IntegerField('Rule ID', validators=[InputRequired()])
 
 
 class ScheduledChangeDeleteRuleForm(ScheduledChangeForm):
@@ -230,34 +230,34 @@ class ScheduledChangeDeleteRuleForm(ScheduledChangeForm):
     ScheduledChangeDeletionForm includes all the PK columns ,ScheduledChangeForm columns and data version
     """
     change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
-    rule_id = IntegerField('Rule ID', validators=[Required()])
+    rule_id = IntegerField('Rule ID', validators=[InputRequired()])
     data_version = IntegerField('data_version', widget=HiddenInput())
 
 
 class EditScheduledChangeNewRuleForm(ScheduledChangeForm, RuleForm):
-    sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
 # Unlike when scheduling a new change to an existing rule, rule_id is not
 # required (or even allowed) when modifying a scheduled change for an
 # existing rule. Allowing it to be modified would be confusing.
 class EditScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
-    sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
 class SignoffForm(Form):
-    role = StringField('Role', validators=[Required()])
+    role = StringField('Role', validators=[InputRequired()])
 
 
 class CompleteReleaseForm(Form):
-    name = StringField('Name', validators=[Required()])
-    product = StringField('Product', validators=[Required()])
-    blob = JSONStringField({}, 'Data', validators=[Required()], widget=FileInput())
+    name = StringField('Name', validators=[InputRequired()])
+    product = StringField('Product', validators=[InputRequired()])
+    blob = JSONStringField({}, 'Data', validators=[InputRequired()], widget=FileInput())
     data_version = IntegerField('data_version', widget=HiddenInput())
 
 
 class ReadOnlyForm(Form):
-    name = StringField('Name', validators=[Required()])
-    product = StringField('Product', validators=[Required()])
+    name = StringField('Name', validators=[InputRequired()])
+    product = StringField('Product', validators=[InputRequired()])
     read_only = BooleanField('read_only')
     data_version = IntegerField('data_version', widget=HiddenInput())
