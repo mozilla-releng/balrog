@@ -1189,6 +1189,34 @@ class ScheduledChangeTable(AUSTable):
             self.log.debug("Merged %s into scheduled change '%s'", what, sc["sc_id"])
 
 
+class RequiredSignoffsTable(AUSTable):
+
+    def __init__(self, db, dialect):
+        self.table.append_column(Column("role", String(50), primary_key=True))
+        self.table.append_column(Column("signoffs_required", Integer, nullable=False))
+
+        super(RequiredSignoffsTable, self).__init__(db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
+
+
+class ProductRequiredSignoffsTable(RequiredSignoffsTable):
+
+    def __init__(self, db, metadata, dialect):
+        self.table = Table("product_channel_required_signoffs", metadata,
+                           Column("product", String(15), primary_key=True),
+                           Column("channel", String(75), primary_key=True),
+                           )
+        super(ProductRequiredSignoffsTable, self).__init__(db, dialect)
+
+
+class PermissionsRequiredSignoffsTable(RequiredSignoffsTable):
+
+    def __init__(self, db, metadata, dialect):
+        self.table = Table("permissions_required_signoffs", metadata,
+                           Column("product", String(15), primary_key=True),
+                           )
+        super(PermissionsRequiredSignoffsTable, self).__init__(db, dialect)
+
+
 class SignoffsTable(AUSTable):
 
     def __init__(self, db, metadata, dialect, baseName):
@@ -2172,6 +2200,8 @@ class AUSDatabase(object):
         self.releasesTable = Releases(self, self.metadata, dialect)
         self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
+        self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
+        self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -2248,6 +2278,14 @@ class AUSDatabase(object):
     @property
     def permissions(self):
         return self.permissionsTable
+
+    @property
+    def productRequiredSignoffs(self):
+        return self.productRequiredSignoffsTable
+
+    @property
+    def permissionsRequiredSignoffs(self):
+        return self.permissionsRequiredSignoffsTable
 
     @property
     def dockerflow(self):
