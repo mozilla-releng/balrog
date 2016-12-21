@@ -3,6 +3,7 @@
 from calendar import timegm
 from datetime import datetime
 from httplib import HTTPSConnection
+import logging
 import os
 from socket import gaierror
 import time
@@ -14,29 +15,40 @@ PATH = '/dump.sql.txt'
 LOCAL_DB_PATH = os.getenv('LOCAL_DUMP', '/app/scripts/prod_db_dump.sql')
 TIMEOUT = 10
 
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s: %(message)s')
+
 
 def getRemoteDBModifiedTS():
     """
     Performs a HEAD request to get the Last-Modified date-time
     of a database dump file and parses it into a UNIX timestamp.
-    Returns 0 on error.
     """
+    debug_msg = 'Unable to get timestamp of remote database dump - {0}'
+    logging.info("Getting timestamp of database dump at '%s'", HOST + PATH)
     try:
         # Removing the scheme from the URL
         conn = HTTPSConnection(HOST[8:], timeout=TIMEOUT)
         conn.request('HEAD', PATH)
-    except gaierror:
-        print 'Unable to check remote database dump timestamp, network error'
+    except gaierror as e:
+        logging.debug(
+            debug_msg.format(
+                "Cannot connect to '%s', error: %s"),
+            HOST + PATH, e)
         exit()
 
     rsp = conn.getresponse()
 
     if rsp.status != 200:
-        return 0
+        logging.debug(
+            debug_msg.format('Server responded with: %d %s'), rsp.status,
+            rsp.reason)
+        exit()
 
     last_modified = rsp.getheader('last-modified', None)
     if last_modified is None:
-        return 0
+        logging.debug(debug_msg.format(
+            'Response doesnt include Last-Modified Header'))
+        exit()
 
     last_m_dt = datetime.strptime(
         last_modified.split(', ')[1], '%d %b %Y %H:%M:%S %Z')
@@ -73,11 +85,13 @@ if __name__ == '__main__':
 
     if prod_db_ts > 0:
         if not os.path.exists(LOCAL_DB_PATH) or (prod_db_ts > local_db_ts):
-            print 'Downloading latest database'
+            logging.info("Downloading latest database dump to '%s'",
+                         LOCAL_DB_PATH)
             try:
                 rsp = urlopen(HOST + PATH, timeout=TIMEOUT)
             except (HTTPError, URLError) as e:
-                print 'Error when downloading latest db: {}'.format(e)
+                logging.debug('Downloading the latest database dump failed'
+                              'due to network error: %s', e)
                 exit()
 
             with open(LOCAL_DB_PATH, 'wb') as f:
