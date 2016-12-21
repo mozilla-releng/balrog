@@ -245,6 +245,10 @@ class EditScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
+class EditScheduledChangeDeleteRuleForm(ScheduledChangeForm):
+    sc_data_version = IntegerField('sc_data_version', validators=[Required()], widget=HiddenInput())
+
+
 class SignoffForm(Form):
     role = StringField('Role', validators=[InputRequired()])
 
