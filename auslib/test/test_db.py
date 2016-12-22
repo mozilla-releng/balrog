@@ -3398,6 +3398,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
     def testAllTablesExist(self):
         expected_tables = set([
             "dockerflow",
+            # TODO: dive into this more
             # Migrate version only exists in production-like databases.
             #"migrate_version", # noqa
             "permissions",
