@@ -14,7 +14,7 @@ from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
     ReadOnlyError, PermissionDeniedError, ChangeScheduledError, \
-    MismatchedDataVersionError, SignoffsTable, ProductRequiredSignoffsTable
+    MismatchedDataVersionError, SignoffsTable, SignoffRequiredError
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -1440,7 +1440,7 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.db.create()
         self.engine = self.db.engine
         self.metadata = self.db.metadata
-        self.rs = ProductRequiredSignoffsTable(self.db, self.metadata, "sqlite")
+        self.rs = self.db.productRequiredSignoffs
         self.metadata.create_all()
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
@@ -1454,7 +1454,7 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
     def testInsertNewRequiredSignoff(self):
         self.rs.insert(changed_by="bill", product="carrot", channel="celery", role="releng", signoffs_required=1)
         got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
-        self.assertEquals(got, [("carrot", "celery", "releng", 1)])
+        self.assertEquals(got, [("carrot", "celery", "releng", 1, 1)])
 
     def testCantDirectlyInsertRequiredSignoffForSomethingRequiringSignoff(self):
         self.assertRaises(SignoffRequiredError, self.rs.insert, changed_by="bill", product="apple", channel="orange", role="relman", signoffs_required=2)
@@ -1464,7 +1464,7 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
     def testCantDirectlyUpdateRequiredSignoff(self):
         self.assertRaises(SignoffRequiredError, self.rs.update, changed_by="bill", old_data_version=1,
-                          where={"product": "apple"}, what={"signoffs_required": 1}
+                          where={"product": "apple"}, what={"signoffs_required": 1})
 
     def testCantDirectlyDeleteRequiredSignoff(self):
         self.assertRaises(SignoffRequiredError, self.rs.delete, changed_by="bill", old_data_version=1, where={"product": "apple"})

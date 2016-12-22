@@ -53,6 +53,11 @@ class PermissionDeniedError(Exception):
     pass
 
 
+class SignoffRequiredError(Exception):
+    """Raised when someone attempts to directly modify an object that requires
+    signoff."""
+
+
 class TransactionError(SQLAlchemyError):
     """Raised when a transaction fails for any reason."""
 

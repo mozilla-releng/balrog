@@ -25,8 +25,8 @@ def upgrade(migrate_engine):
         Column("product", String(15), nullable=False),
         Column("channel", String(75), nullable=False),
         Column("role", String(50), nullable=False),
-        Column("signoffs_required", Integer, nullable=False),
-        Column("data_version", Integer, nullable=False),
+        Column("signoffs_required", Integer),
+        Column("data_version", Integer),
     )
     product_required_signoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
 
@@ -109,8 +109,8 @@ def upgrade(migrate_engine):
         Column("changed_by", String(100), nullable=False),
         Column("product", String(15), nullable=False),
         Column("role", String(50), nullable=False),
-        Column("signoffs_required", Integer, nullable=False),
-        Column("data_version", Integer, nullable=False),
+        Column("signoffs_required", Integer),
+        Column("data_version", Integer),
     )
     permissions_signoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
 
