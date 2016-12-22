@@ -75,6 +75,7 @@ tasks:
         env: true
         events:
           - push
+          - create
         branches:
           - master
     metadata:
@@ -154,6 +155,7 @@ tasks:
         env: true
         events:
           - push
+          - create
         branches:
           - master
     metadata:
