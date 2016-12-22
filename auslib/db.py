@@ -1202,6 +1202,35 @@ class RequiredSignoffsTable(AUSTable):
 
         super(RequiredSignoffsTable, self).__init__(db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
+    def validate(self, product, channel, role, signoffs_required, transaction=None):
+        users_with_role, = self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == role).execute().fetchone()
+        if users_with_role < signoffs_required:
+            raise ValueError("Cannot require {} signoffs for {}, {} - only {} users hold that role".format(signoffs_required, product, channel, role))
+
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        product = columns.get("product")
+        channel = columns.get("channel")
+        if not product or not channel:
+            raise ValueError("Product and channel are required.")
+
+        self.validate(product, channel, columns.get("role"), columns.get("signoffs_required"), transaction=transaction)
+
+        if not self.db.hasPermission(changed_by, "required_signoff", "modify", transaction=transaction):
+            raise PermissionDeniedError("{} is not allowed to modify Required Signoffs.".format(changed_by))
+
+        if self.select(where=[self.product == product, self.channel == channel], transaction=transaction):
+            raise SignoffRequiredError("{}, {} requires Signoff to modify, cannot be done directly. Use a Scheduled Change instead.".format(product, channel))
+        else:
+            return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+
+    def update(self, *args, **kwargs):
+        # TODO: we should only raise this if the update isn't a change being enacted. how can we detect that?
+        raise SignoffRequiredError("Required Signoffs cannot be directly modified. Use a Scheduled Change instead.")
+
+    def delete(self, *args, **kwargs):
+        # TODO: we should only raise this if the update isn't a change being enacted. how can we detect that?
+        raise SignoffRequiredError("Required Signoffs cannot be directly deleted. Use a Scheduled Change instead.")
+
 
 class ProductRequiredSignoffsTable(RequiredSignoffsTable):
 
@@ -1877,6 +1906,7 @@ class Permissions(AUSTable):
         "release_read_only": ["actions", "products"],
         "rule": ["actions", "products"],
         "permission": ["actions"],
+        "required_signoff": ["products"],
         "scheduled_change": ["actions"],
     }
 

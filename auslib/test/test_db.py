@@ -1433,6 +1433,7 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
 
 class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
+    # TODO: need tests around enacting already signed off on changes to required signoffs
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
@@ -1442,6 +1443,7 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.metadata = self.db.metadata
         self.rs = self.db.productRequiredSignoffs
         self.metadata.create_all()
+        self.db.permissions.t.insert().execute(username="bill", permission="required_signoff", action="modify", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="nancy", role="relman", data_version=1)
