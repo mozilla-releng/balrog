@@ -14,7 +14,7 @@ from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
     ReadOnlyError, PermissionDeniedError, ChangeScheduledError, \
-    MismatchedDataVersionError, SignoffsTable
+    MismatchedDataVersionError, SignoffsTable, ProductRequiredSignoffsTable
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -1431,35 +1431,43 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaisesRegexp(PermissionDeniedError, "Cannot revoke a signoff made by someone in a group you do not belong to",
                                 self.signoffs.delete, {"sc_id": 1, "username": "nancy"}, changed_by="bob")
 
-# In https://bugzilla.mozilla.org/show_bug.cgi?id=1284481, we changed the sampled data to be a true
-# production dump, which doesn't import properly into sqlite. We should uncomment this test in the
-# future, when we have the ability to run it againts a mysql database.
-# class TestSampleData(unittest.TestCase, MemoryDatabaseMixin):
-#     """Tests to ensure that the current sample data (used by Docker) is
-#     compatible with the current schema."""
-#     sample_data = path.join(path.dirname(__file__), "..", "..", "scripts", "sample-data.sql.bz2")
 
-#     def setUp(self):
-#         MemoryDatabaseMixin.setUp(self)
-#         self.db = AUSDatabase(self.dburi)
-#         self.db.create()
+class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
-#     def testSampleDataImport(self):
-#         with self.db.begin() as trans:
-#             with BZ2File(self.sample_data) as f:
-#                 for line in f:
-#                     s = []
-#                     for line in f:
-#                         a = line.strip().rstrip('/n')
-#                     if len(a) == 0:
-#                         continue
-#                     if a[-1] != ";":
-#                         s.append(a)
-#                     else:
-#                         s.append(a)
-#                         query = " ".join(s)
-#                         s = []
-#                         trans.execute(query)
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.engine = self.db.engine
+        self.metadata = self.db.metadata
+        self.rs = ProductRequiredSignoffsTable(self.db, self.metadata, "sqlite")
+        self.metadata.create_all()
+        self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="relman", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="qa", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="janet", role="relman", data_version=1)
+        self.rs.t.insert().execute(product="foo", channel="bar", role="releng", signoffs_required=1, data_version=1)
+        self.rs.t.insert().execute(product="foo", channel="bar", role="relman", signoffs_required=2, data_version=1)
+        self.rs.t.insert().execute(product="apple", channel="orange", role="releng", signoffs_required=2, data_version=1)
+
+    def testInsertNewRequiredSignoff(self):
+        self.rs.insert(changed_by="bill", product="carrot", channel="celery", role="releng", signoffs_required=1)
+        got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
+        self.assertEquals(got, [("carrot", "celery", "releng", 1)])
+
+    def testCantDirectlyInsertRequiredSignoffForSomethingRequiringSignoff(self):
+        self.assertRaises(SignoffRequiredError, self.rs.insert, changed_by="bill", product="apple", channel="orange", role="relman", signoffs_required=2)
+
+    def testCantInsertRequiredSignoffWithoutEnoughUsers(self):
+        self.assertRaises(ValueError, self.rs.insert, changed_by="bill", product="carrot", channel="celery", role="dev", signoffs_required=5)
+
+    def testCantDirectlyUpdateRequiredSignoff(self):
+        self.assertRaises(SignoffRequiredError, self.rs.update, changed_by="bill", old_data_version=1,
+                          where={"product": "apple"}, what={"signoffs_required": 1}
+
+    def testCantDirectlyDeleteRequiredSignoff(self):
+        self.assertRaises(SignoffRequiredError, self.rs.delete, changed_by="bill", old_data_version=1, where={"product": "apple"})
 
 
 class RulesTestMixin(object):
@@ -3040,6 +3048,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.db.create()
         self.permissions = self.db.permissions
         self.user_roles = self.db.permissions.user_roles
+        self.rs = self.db.productRequiredSignoffs
         self.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         self.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)
         self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["fake"]), data_version=1)
@@ -3054,6 +3063,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         self.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
         self.user_roles.t.insert().execute(username="cathy", role="releng", data_version=1)
+        self.rs.t.insert().execute(product="foo", channel="bar", role="dev", signoffs_required=1, data_version=1)
 
     def testPermissionsHasCorrectTablesAndColumns(self):
         columns = [c.name for c in self.permissions.t.get_children()]
@@ -3134,6 +3144,10 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(len(got), 0)
         got = self.user_roles.t.select().where(self.user_roles.username == "cathy").execute().fetchall()
         self.assertEquals(len(got), 0)
+
+    def testCannotRevokeRoleThatMakesRequiredSignoffImpossible(self):
+        self.assertRaisesExp(ValueError, "Revoking dev role would make it impossible for Required Signoffs for foo, bar to be fulfilled",
+                             self.permissions.revokeRole, "bob", "dev", "bill", old_data_version=1)
 
     def testGetAllUsers(self):
         self.assertEquals(set(self.permissions.getAllUsers()), set(["bill",
