@@ -1,6 +1,8 @@
 from distutils.version import StrictVersion
 import re
 
+from auslib.errors import BadDataError
+
 
 class ModernMozillaVersion(StrictVersion):
     """A version class that is slightly less restrictive than StrictVersion.
@@ -26,7 +28,10 @@ def MozillaVersion(version):
     try:
         return ModernMozillaVersion(version)
     except ValueError:
+        pass
+    try:
         if version.count('.') == 3:
             return AncientMozillaVersion(version)
-        else:
-            raise
+    except ValueError:
+        pass
+    raise BadDataError("Version number %s is invalid." % version)

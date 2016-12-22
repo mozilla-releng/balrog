@@ -1,5 +1,6 @@
 import unittest
 
+from auslib.errors import BadDataError
 from auslib.util.versions import MozillaVersion
 
 
@@ -32,11 +33,11 @@ class TestMozillaVersions(unittest.TestCase):
 
     def test_cmp_strict(self):
         versions = (('1.5.1', '1.5.2b2', -1),
-                    ('161', '3.10a', ValueError),
+                    ('161', '3.10a', BadDataError),
                     ('8.02', '8.02', 0),
-                    ('3.4j', '1996.07.12', ValueError),
-                    ('3.2.pl0', '3.1.1.6', ValueError),
-                    ('2g6', '11g', ValueError),
+                    ('3.4j', '1996.07.12', BadDataError),
+                    ('3.2.pl0', '3.1.1.6', BadDataError),
+                    ('2g6', '11g', BadDataError),
                     ('0.9', '2.2', -1),
                     ('1.2.1', '1.2', 1),
                     ('1.1', '1.2.2', -1),
@@ -45,17 +46,17 @@ class TestMozillaVersions(unittest.TestCase):
                     ('1.2.2', '1.2', 1),
                     ('1.2', '1.2.2', -1),
                     ('0.4.0', '0.4', 0),
-                    ('1.13++', '5.5.kw', ValueError))
+                    ('1.13++', '5.5.kw', BadDataError))
 
         for v1, v2, wanted in versions:
             try:
                 res = MozillaVersion(v1).__cmp__(MozillaVersion(v2))
-            except ValueError:
-                if wanted is ValueError:
+            except BadDataError:
+                if wanted is BadDataError:
                     continue
                 else:
                     raise AssertionError(("cmp(%s, %s) "
-                                          "shouldn't raise ValueError")
+                                          "shouldn't raise BadDataError")
                                          % (v1, v2))
             self.assertEqual(res, wanted,
                              'cmp(%s, %s) should be %s, got %s' %
