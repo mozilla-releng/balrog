@@ -423,7 +423,6 @@ class TestPermissionsScheduledChanges(ViewTest):
         base_row = dict(dbo.permissions.t.select().where(dbo.permissions.username == "janet")
                                                   .where(dbo.permissions.permission == "rule")
                                                   .execute().fetchall()[0])
-        base_row["options"] = base_row["options"]
         base_expected = {
             "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": 1
         }
