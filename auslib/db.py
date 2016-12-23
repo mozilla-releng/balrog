@@ -2141,6 +2141,7 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
                 table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
     return bleet
 
+
 # A helper that sets sql_mode. This should only be used with MySQL, and
 # lets us put the database in a stricter mode that will disallow things like
 # automatic data truncation.

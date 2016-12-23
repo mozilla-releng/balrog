@@ -65,6 +65,7 @@ def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     return response
 
+
 Compress(app)
 
 
@@ -100,14 +101,14 @@ app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/signoffs", view_func=Rule
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/revisions", view_func=RuleScheduledChangeHistoryView.as_view("scheduled_change_rules_history"))
 app.add_url_rule("/scheduled_changes/permissions", view_func=PermissionScheduledChangesView.as_view("scheduled_changes_permissions"))
 app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>", view_func=PermissionScheduledChangeView.as_view("scheduled_change_permissions"))
-app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/enact", view_func=EnactPermissionScheduledChangeView.as_view("ench_scheduled_change_permissions"))
+app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/enact", view_func=EnactPermissionScheduledChangeView.as_view("enact_scheduled_change_permissions"))
 app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/signoffs",
                  view_func=PermissionScheduledChangeSignoffsView.as_view("scheduled_change_permissions_signoffs"))
 app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/revisions",
                  view_func=PermissionScheduledChangeHistoryView.as_view("scheduled_change_permissions_history"))
 app.add_url_rule("/scheduled_changes/releases", view_func=ReleaseScheduledChangesView.as_view("scheduled_changes_releases"))
 app.add_url_rule("/scheduled_changes/releases/<int:sc_id>", view_func=ReleaseScheduledChangeView.as_view("scheduled_change_releases"))
-app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/enact", view_func=EnactReleaseScheduledChangeView.as_view("ench_scheduled_change_releases"))
+app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/enact", view_func=EnactReleaseScheduledChangeView.as_view("enact_scheduled_change_releases"))
 app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/signoffs", view_func=ReleaseScheduledChangeSignoffsView.as_view("scheduled_change_release_signoffs"))
 app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/revisions",
                  view_func=ReleaseScheduledChangeHistoryView.as_view("scheduled_change_releases_history"))
