@@ -140,11 +140,14 @@ class DbEditableForm(Form):
     data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
-class ScheduledChangeForm(Form):
+class ScheduledChangeTimeForm(Form):
+    when = IntegerField("When", validators=[Optional(), not_in_the_past()])
+
+
+class ScheduledChangeUptakeForm(Form):
     telemetry_product = NullableStringField("Telemetry Product")
     telemetry_channel = NullableStringField("Telemetry Channel")
     telemetry_uptake = NullableStringField("Telemetry Uptake")
-    when = IntegerField("When", validators=[Optional(), not_in_the_past()])
 
 
 class NewPermissionForm(Form):
@@ -153,6 +156,33 @@ class NewPermissionForm(Form):
 
 class ExistingPermissionForm(DbEditableForm):
     options = JSONStringField(None, 'Options')
+
+
+class ScheduledChangeNewPermissionForm(ScheduledChangeTimeForm, NewPermissionForm):
+    permission = StringField('Permission', validators=[Length(0, 50), InputRequired()])
+    username = StringField('Username', validators=[Length(0, 100), InputRequired()])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+
+
+class ScheduledChangeExistingPermissionForm(ScheduledChangeTimeForm, ExistingPermissionForm):
+    permission = StringField('Permission', validators=[Length(0, 50), InputRequired()])
+    username = StringField('Username', validators=[Length(0, 100), InputRequired()])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+
+
+class ScheduledChangeDeletePermissionForm(ScheduledChangeTimeForm):
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+    permission = StringField('Permission', validators=[Length(0, 50), InputRequired()])
+    username = StringField('Username', validators=[Length(0, 100), InputRequired()])
+    data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
+
+
+class EditScheduledChangeNewPermissionForm(ScheduledChangeTimeForm, NewPermissionForm):
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
+
+
+class EditScheduledChangeExistingPermissionForm(ScheduledChangeTimeForm, ExistingPermissionForm):
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
 class PartialReleaseForm(Form):
@@ -212,11 +242,11 @@ class EditRuleForm(DbEditableForm):
     headerArchitecture = NullableStringField('Header Architecture', validators=[Optional(), Length(0, 10)])
 
 
-class ScheduledChangeNewRuleForm(ScheduledChangeForm, RuleForm):
+class ScheduledChangeNewRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, RuleForm):
     change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
 
 
-class ScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
+class ScheduledChangeExistingRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, EditRuleForm):
     # EditRuleForm doesn't have rule_id in it because rules are edited through
     # URLs that contain them. Scheduled changes, on the other hand, are edited
     # through URLs that contain scheduled change IDs, so we need to include
@@ -225,27 +255,27 @@ class ScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
     rule_id = IntegerField('Rule ID', validators=[InputRequired()])
 
 
-class ScheduledChangeDeleteRuleForm(ScheduledChangeForm):
+class ScheduledChangeDeleteRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm):
     """
     ScheduledChangeDeletionForm includes all the PK columns ,ScheduledChangeForm columns and data version
     """
     change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
     rule_id = IntegerField('Rule ID', validators=[InputRequired()])
-    data_version = IntegerField('data_version', widget=HiddenInput())
+    data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
-class EditScheduledChangeNewRuleForm(ScheduledChangeForm, RuleForm):
+class EditScheduledChangeNewRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, RuleForm):
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
 # Unlike when scheduling a new change to an existing rule, rule_id is not
 # required (or even allowed) when modifying a scheduled change for an
 # existing rule. Allowing it to be modified would be confusing.
-class EditScheduledChangeExistingRuleForm(ScheduledChangeForm, EditRuleForm):
+class EditScheduledChangeExistingRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, EditRuleForm):
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
-class EditScheduledChangeDeleteRuleForm(ScheduledChangeForm):
+class EditScheduledChangeDeleteRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm):
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
@@ -265,3 +295,41 @@ class ReadOnlyForm(Form):
     product = StringField('Product', validators=[InputRequired()])
     read_only = BooleanField('read_only')
     data_version = IntegerField('data_version', widget=HiddenInput())
+
+
+class ScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
+    name = StringField('Name', validators=[InputRequired()])
+    product = StringField('Product', validators=[InputRequired()])
+    data = JSONStringField({}, 'Data', validators=[InputRequired()], widget=FileInput())
+    data_version = IntegerField('data_version', widget=HiddenInput())
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+
+
+class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
+    name = StringField('Name', validators=[InputRequired()])
+    product = StringField('Product', validators=[Optional()])
+    data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
+    data_version = IntegerField('data_version', widget=HiddenInput())
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+
+
+class ScheduledChangeDeleteReleaseForm(ScheduledChangeTimeForm):
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+    name = StringField('Name', validators=[InputRequired()])
+    data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
+
+
+class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
+    name = StringField('Name', validators=[InputRequired()])
+    product = StringField('Product', validators=[InputRequired()])
+    data = JSONStringField({}, 'Data', validators=[InputRequired()], widget=FileInput())
+    data_version = IntegerField('data_version', widget=HiddenInput())
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
+
+
+class EditScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
+    name = StringField('Name', validators=[InputRequired()])
+    product = StringField('Product', validators=[Optional()])
+    data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
+    data_version = IntegerField('data_version', widget=HiddenInput())
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())

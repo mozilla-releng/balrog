@@ -329,7 +329,7 @@ class RuleScheduledChangesView(ScheduledChangesView):
             form = ScheduledChangeDeleteRuleForm()
 
         else:
-            return Response(status=400, response="Change Type invalid or not entered")
+            return Response(status=400, response="Invalid or missing change_type")
 
         return super(RuleScheduledChangesView, self)._post(form, transaction, changed_by)
 

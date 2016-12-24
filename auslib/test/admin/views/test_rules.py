@@ -760,10 +760,10 @@ class TestRuleScheduledChanges(ViewTest):
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                    "change_type": "update",
                     "signoffs": {
                         "bill": "releng",
                     },
-                    "change_type": "update",
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
@@ -771,8 +771,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "signoffs": {},
-                    "change_type": "insert",
+                    "change_type": "insert", "signoffs": {},
                 },
                 {
                     "sc_id": 3, "when": 2900000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
@@ -780,8 +779,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "signoffs": {},
-                    "change_type": "insert",
+                    "change_type": "insert", "signoffs": {},
                 },
             ],
         }
@@ -798,10 +796,10 @@ class TestRuleScheduledChanges(ViewTest):
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                    "change_type": "update",
                     "signoffs": {
                         "bill": "releng",
                     },
-                    "change_type": "update",
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
@@ -809,8 +807,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "signoffs": {},
-                    "change_type": "insert",
+                    "change_type": "insert", "signoffs": {},
                 },
                 {
                     "sc_id": 3, "when": 2900000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
@@ -818,8 +815,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "signoffs": {},
-                    "change_type": "insert",
+                    "change_type": "insert", "signoffs": {},
                 },
                 {
                     "sc_id": 4, "when": 500000, "scheduled_by": "bill", "complete": True, "sc_data_version": 2, "rule_id": 5, "priority": 80,
@@ -827,8 +823,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "signoffs": {},
-                    "change_type": "update",
+                    "change_type": "update", "signoffs": {},
                 },
             ],
         }
@@ -1136,6 +1131,10 @@ class TestRuleScheduledChanges(ViewTest):
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/rules/2/signoffs", data=dict(role="qa"), username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        self.assertEquals(db_data, {"sc_id": 2, "username": "bill", "role": "qa"})
 
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/rules/2/signoffs", data=dict(role="relman"), username="bill")
@@ -1144,6 +1143,10 @@ class TestRuleScheduledChanges(ViewTest):
     def testSignoffASecondTimeWithSameRole(self):
         ret = self._post("/scheduled_changes/rules/1/signoffs", data=dict(role="releng"), username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        self.assertEquals(db_data, {"sc_id": 1, "username": "bill", "role": "releng"})
 
     def testSignoffWithSecondRole(self):
         ret = self._post("/scheduled_changes/rules/1/signoffs", data=dict(role="qa"), username="bill")
@@ -1152,6 +1155,8 @@ class TestRuleScheduledChanges(ViewTest):
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/rules/1/signoffs", username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 0)
 
     def testRevokeOtherUsersSignoff(self):
         ret = self._delete("/scheduled_changes/rules/1/signoffs", username="bob")

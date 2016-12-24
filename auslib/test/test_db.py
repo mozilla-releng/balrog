@@ -879,6 +879,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(MismatchedDataVersionError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertCreateExistingPK(self):
+        what = {"fooid": 3, "foo": "mine is better", "when": 99999999, "change_type": "insert"}
+        self.assertRaisesRegexp(ValueError, "Cannot schedule change for duplicate PK", self.sc_table.insert, changed_by="bob", **what)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testDeleteScheduledChangeWithoutPKColumns(self):
         class TestTable2(AUSTable):
             def __init__(self, db, metadata):
@@ -1311,7 +1316,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithEnabledCondition(self):
-        what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "when": 909000, "change_type": "insert"}
+        what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "when": 909000, "change_type": "update"}
         self.sc_table.insert(changed_by="bob", **what)
         row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 2).execute().fetchall()[0]
@@ -1499,6 +1504,14 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.paths.t.insert().execute(rule_id=10, priority=100, buildTarget="g", mapping="g", fallbackMapping='fallback', backgroundRate=100,
                                       update_type="z", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+
+    def testAllTablesCreated(self):
+        self.assertTrue(self.db.rules)
+        self.assertTrue(self.db.rules.history)
+        self.assertTrue(self.db.rules.scheduled_changes)
+        self.assertTrue(self.db.rules.scheduled_changes.history)
+        self.assertTrue(self.db.rules.scheduled_changes.conditions)
+        self.assertTrue(self.db.rules.scheduled_changes.conditions.history)
 
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
@@ -1916,6 +1929,14 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def tearDown(self):
         dbo.reset()
+
+    def testAllTablesCreated(self):
+        self.assertTrue(dbo.releases)
+        self.assertTrue(dbo.releases.history)
+        self.assertTrue(dbo.releases.scheduled_changes)
+        self.assertTrue(dbo.releases.scheduled_changes.history)
+        self.assertTrue(dbo.releases.scheduled_changes.conditions)
+        self.assertTrue(dbo.releases.scheduled_changes.conditions.history)
 
     def testGetReleases(self):
         self.assertEquals(len(self.releases.getReleases()), 4)
@@ -3054,6 +3075,14 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         self.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
         self.user_roles.t.insert().execute(username="cathy", role="releng", data_version=1)
+
+    def testAllTablesCreated(self):
+        self.assertTrue(self.db.permissions)
+        self.assertTrue(self.db.permissions.history)
+        self.assertTrue(self.db.permissions.scheduled_changes)
+        self.assertTrue(self.db.permissions.scheduled_changes.history)
+        self.assertTrue(self.db.permissions.scheduled_changes.conditions)
+        self.assertTrue(self.db.permissions.scheduled_changes.conditions.history)
 
     def testPermissionsHasCorrectTablesAndColumns(self):
         columns = [c.name for c in self.permissions.t.get_children()]
