@@ -55,7 +55,7 @@ application.config["VERSION_FILE"] = "/app/version.json"
 if os.environ.get('SENTRY_DSN'):
     application.config['SENTRY_DSN'] = os.environ.get('SENTRY_DSN')
     from auslib.web.base import sentry
-    sentry.init_app(application)
+    sentry.init_app(application, register_signal=False)
 
 if os.environ.get("CACHE_CONTROL"):
     application.config["CACHE_CONTROL"] = os.environ["CACHE_CONTROL"]
