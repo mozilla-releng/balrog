@@ -1785,27 +1785,27 @@ class Releases(AUSTable):
             return False
 
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
-        names = []
-        for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):
-            names.append(toDelete["name"])
-            self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
-            if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
-                raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
+        release = self.select(where=where, columns=[self.name, self.product], transaction=transaction)
+        if len(release) != 1:
+            raise ValueError("Where clause must match exactly one release to delete.")
+        release = release[0]
 
-        for name in names:
-            mapping_count = dbo.rules.t.count().where(dbo.rules.mapping == name).execute().fetchone()[0]
-            whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == name).execute().fetchone()[0]
-            fallbackMapping_count = dbo.rules.t.count().where(dbo.rules.fallbackMapping == name).execute().fetchone()[0]
+        self._proceedIfNotReadOnly(release["name"], transaction=transaction)
+        if not self.db.hasPermission(changed_by, "release", "delete", release["product"], transaction):
+            raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, release["product"]))
 
-            if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
-                msg = "%s has rules pointing to it. Hence it cannot be deleted." % (self.name)
-                raise ValueError(msg)
+        mapping_count = dbo.rules.t.count().where(dbo.rules.mapping == release["name"]).execute().fetchone()[0]
+        whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == release["name"]).execute().fetchone()[0]
+        fallbackMapping_count = dbo.rules.t.count().where(dbo.rules.fallbackMapping == release["name"]).execute().fetchone()[0]
+
+        if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
+            msg = "%s has rules pointing to it. Hence it cannot be deleted." % (release["name"])
+            raise ValueError(msg)
 
         super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
         if not dryrun:
-            for name in names:
-                cache.invalidate("blob", name)
-                cache.invalidate("blob_version", name)
+            cache.invalidate("blob", release["name"])
+            cache.invalidate("blob_version", release["name"])
 
     def isReadOnly(self, name, limit=None, transaction=None):
         where = [self.name == name]

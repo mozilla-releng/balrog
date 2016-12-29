@@ -2027,6 +2027,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         release = self.releases.t.select().where(self.releases.name == 'a').execute().fetchall()
         self.assertEquals(release, [])
 
+    def testDeleteReleaseDontAllowMultiple(self):
+        self.assertRaises(ValueError, self.releases.delete, {"product": "a"}, changed_by="bill", old_data_version=1)
+
     def testDeleteWithRuleMapping(self):
         self.releases.t.insert().execute(name='d', product='d', data=createBlob(dict(name="d", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
