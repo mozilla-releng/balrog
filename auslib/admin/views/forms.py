@@ -189,9 +189,10 @@ class ScheduledChangeDeletePermissionForm(ScheduledChangeTimeForm):
 
 
 class EditScheduledChangeNewPermissionForm(ScheduledChangeTimeForm):
-    """When editing an existing Scheduled Change for a Permission only options may be
-    provided. Because edits are identified by sc_id (in the URL), permission and username
-    are not required (nor allowed, because they are PK fields)."""
+    """When editing an existing Scheduled Change for a Permission, any field
+    may be changed."""
+    permission = StringField('Permission', validators=[Length(0, 50), Optional()])
+    username = StringField('Username', validators=[Length(0, 100), Optional()])
     options = JSONStringField(None, 'Options')
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 
@@ -347,7 +348,7 @@ class ScheduledChangeDeleteReleaseForm(ScheduledChangeTimeForm):
 
 
 class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
-    """Any Release may be changed when editing an Scheduled Change for a new
+    """Any Release field may be changed when editing an Scheduled Change for a new
     Release."""
     name = StringField('Name', validators=[Optional()])
     product = StringField('Product', validators=[Optional()])
