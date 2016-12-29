@@ -2285,7 +2285,7 @@ class Permissions(AUSTable):
 
 class Dockerflow(AUSTable):
     def __init__(self, db, metadata, dialect):
-        self.table = Table('dockerflow', metadata, Column('watchdog', Integer))
+        self.table = Table('dockerflow', metadata, Column('watchdog', Integer, nullable=False))
         AUSTable.__init__(self, db, dialect, history=False, versioned=False)
 
     def getDockerflowEntry(self, transaction=None):

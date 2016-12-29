@@ -4,6 +4,7 @@ import os
 import sys
 from tempfile import mkstemp
 import unittest
+import re
 
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
@@ -16,6 +17,7 @@ from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     ReadOnlyError, PermissionDeniedError, ChangeScheduledError, \
     MismatchedDataVersionError, SignoffsTable, SignoffRequiredError, \
     verify_signoffs
+import auslib.db
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -3864,11 +3866,107 @@ class TestChangeNotifiers(unittest.TestCase):
 
 
 class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
+    @classmethod
+    def setUpClass(cls):
+        cls.basic_tables = ('Dockerflow', 'Permissions', 'UserRoles', 'Releases', 'Rules',)
+        cls.properties = ('nullable',
+                          'primary_key',
+                          # 'autoincrement',
+                          'constraints',
+                          'foreign_keys',
+                          'index',
+                          'timetuple', )
+        cls.property_err_msg = ("Property '{property}' on '{table_name}.{column}' differs between model "
+                                "and migration: (model) {model_prop} != (reflected) {reflected_prop}")
 
     def setUp(self):
         NamedFileDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.db.metadata.create_all()
+        self.aus_db_tables = [self.db.rulesTable, self.db.releasesTable,
+                              self.db.permissionsTable, self.db.dockerflowTable]
+
+    def _collect_table_model_pairs(self, table, table_cls, reflected_tables, accumulator, create_fn):
+        if isinstance(table, table_cls):
+            accumulator.append((reflected_tables[table.table.name], table.table,))
+
+        possible_child_tables = ('signoffs', 'conditions', 'history', 'scheduled_changes',)
+
+        for child_table in possible_child_tables:
+            if hasattr(table, child_table) and getattr(table, child_table) is not None:
+                self._collect_table_model_pairs(getattr(table, child_table), table_cls, reflected_tables, accumulator, create_fn)
+
+    def _is_column_unique(self, col_obj):
+        col_engine = col_obj.table.metadata.bind
+        table_name = col_obj.table.name
+        res = col_engine.execute("SELECT sql FROM sqlite_master WHERE name = :table_name", table_name=table_name)
+        res = res.fetchone()[0]
+
+        if re.search(r'(?:CONSTRAINT (\w+) +)?UNIQUE *\({0}\)'.format(col_obj.name), res) is None:
+            return None
+        return True
+
+    def assert_column_attributes_for_model(self, subtable_cls, tbl_creator_fn):
+        tables = []
+
+        db = self._get_migrated_db()
+        meta_data = self._get_reflected_metadata(db)
+
+        for base_table in self.aus_db_tables:
+            self._collect_table_model_pairs(base_table, subtable_cls, meta_data.tables, tables, tbl_creator_fn)
+
+        self.assert_attributes_for_tables(tables)
+
+    def assert_attributes_for_tables(self, tables):
+        """
+        Expects and iterable of sqlalchemy (Table, Table,) pairs where
+        the first one is the result of running migrations and the second
+        one is the result of instantiating the model directly from db.py
+        """
+        for reflected_table, table_model_instance in tables:
+
+            for col_name in table_model_instance.c.keys():
+                db_py_col = table_model_instance.c[col_name]
+                reflected_db_col = reflected_table.c[col_name]
+
+                for col_property in self.properties:
+                    db_py_col_property = getattr(db_py_col, col_property)
+                    reflected_db_col_property = getattr(reflected_db_col, col_property)
+
+                    self.assertEqual(
+                        db_py_col_property, reflected_db_col_property,
+                        self.property_err_msg.format(
+                            property=col_property,
+                            table_name=table_model_instance.name,
+                            column=col_name,
+                            model_prop=db_py_col_property,
+                            reflected_prop=reflected_db_col_property))
+
+                # Testing 'unique' separately since Sqlalchemy < 1.0.0 can't reflect this attribute for this version of sqlite
+                ref_uniq = self._is_column_unique(reflected_db_col)
+                self.assertEqual(
+                    db_py_col.unique, ref_uniq,
+                    self.property_err_msg.format(
+                        property="unique",
+                        table_name=table_model_instance.name,
+                        column=col_name,
+                        model_prop=db_py_col.unique,
+                        reflected_prop=ref_uniq))
+
+    def _get_migrated_db(self):
+        db = AUSDatabase('sqlite:///' + self.getTempfile())
+        db.create()
+        return db
+
+    def _get_reflected_metadata(self, db):
+        """
+        @type db: AUSDatabase
+        """
+        mt = MetaData()
+        engine = create_engine(db.dburi)
+        mt.bind = engine
+        mt.reflect()
+        return mt
 
     def testAllTablesExist(self):
         expected_tables = set([
@@ -3922,8 +4020,50 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         self.assertEquals(set(self.db.metadata.tables.keys()), expected_tables)
 
     def testModelIsSameAsRepository(self):
-        db2 = AUSDatabase('sqlite:///' + self.getTempfile())
-        db2.create()
+        db2 = self._get_migrated_db()
         diff = migrate.versioning.api.compare_model_to_db(db2.engine, self.db.migrate_repo, self.db.metadata)
         if diff:
             self.fail(str(diff))
+
+    def testColumnAttributesAreSameAsDb(self):
+        table_instances = []
+
+        db = self._get_migrated_db()
+        meta_data = self._get_reflected_metadata(db)
+
+        for table_name in self.basic_tables:
+            table_class = getattr(auslib.db, table_name)
+            empty_meta = MetaData()
+            tbl_obj = table_class(None, empty_meta, 'sqlite')
+            reflected_table = meta_data.tables[tbl_obj.table.name]
+            table_instances.append((reflected_table, tbl_obj.table,))
+
+        self.assert_attributes_for_tables(table_instances)
+
+    def testScheduledChangeTableColumnAttributes(self):
+        def scheduled_change_table_creator(table):
+            return auslib.db.ScheduledChangeTable(None, 'sqlite', MetaData(), table.baseTable, ('time', 'uptake', ))
+
+        self.assert_column_attributes_for_model(auslib.db.ScheduledChangeTable, scheduled_change_table_creator)
+
+    def testConditionsTablesColumnAttributes(self):
+        def conditions_table_creator(table):
+            return auslib.db.ConditionsTable(None, 'sqlite', MetaData(), table.table.name.replace('_conditions', ''),
+                                             auslib.db.ConditionsTable.condition_groups.keys())
+
+        self.assert_column_attributes_for_model(auslib.db.ConditionsTable,
+                                                conditions_table_creator)
+
+    def testSignoffsTablesColumnAttributes(self):
+        def signoffs_table_creator(table):
+            return auslib.db.SignoffsTable(None, MetaData(), 'sqlite', table.table.name.replace('_signoffs', ''))
+
+        self.assert_column_attributes_for_model(auslib.db.SignoffsTable,
+                                                signoffs_table_creator)
+
+    def testHistoryTableColumnAttributes(self):
+        def history_table_creator(table):
+            return auslib.db.History(None, 'sqlite', MetaData(), table.baseTable)
+
+        self.assert_column_attributes_for_model(auslib.db.History,
+                                                history_table_creator)
