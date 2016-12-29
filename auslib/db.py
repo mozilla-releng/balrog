@@ -971,13 +971,6 @@ class ScheduledChangeTable(AUSTable):
         base_table_where = []
         sc_table_where = []
 
-        if base_columns["change_type"] == "delete":
-            for pk in self.base_primary_key:
-                if pk not in base_columns:
-                    raise ValueError("Missing primary key column %s. PK values needed for deletion" % (pk))
-                if base_columns[pk] is None:
-                    raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
-
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
             if pk in base_columns:
@@ -1020,7 +1013,6 @@ class ScheduledChangeTable(AUSTable):
             sc_table_where.append(self.complete == False) # noqa because we need to use == for sqlalchemy operator overloading to work
             if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
                 raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
-        self.log.debug("base_columns: %s" % (base_columns))
 
         self.conditions.validate(condition_columns)
         self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)

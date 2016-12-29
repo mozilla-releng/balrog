@@ -299,7 +299,6 @@ class TestPermissionsScheduledChanges(ViewTest):
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 4).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_options"] = db_data["base_options"]
         expected = {
             "sc_id": 4, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1,
             "base_permission": "release", "base_username": "jill", "base_options": {"products": ["a"]}, "base_data_version": None,
@@ -343,7 +342,6 @@ class TestPermissionsScheduledChanges(ViewTest):
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_options"] = db_data["base_options"]
         expected = {
             "sc_id": 2, "complete": False, "data_version": 2, "scheduled_by": "bill", "change_type": "update", "base_permission": "release_locale",
             "base_username": "ashanti", "base_options": {"products": ["Thunderbird"]}, "base_data_version": 1,
@@ -366,7 +364,6 @@ class TestPermissionsScheduledChanges(ViewTest):
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_options"] = db_data["base_options"]
         expected = {
             "sc_id": 1, "complete": False, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_permission": "rule",
             "base_username": "janet", "base_options": {"products": ["Firefox"]}, "base_data_version": None,
@@ -413,7 +410,6 @@ class TestPermissionsScheduledChanges(ViewTest):
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        db_data["base_options"] = db_data["base_options"]
         expected = {
             "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_permission": "rule",
             "base_username": "janet", "base_options": {"products": ["foo"]}, "base_data_version": None,
