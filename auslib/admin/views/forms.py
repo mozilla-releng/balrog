@@ -357,10 +357,10 @@ class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
 
 
 class EditScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
-    """Only non-PK Release fields (product, data) may be changed when editing
-    an existing Scheduled Change. Because edits are identified by sc_id, which
-    is in the URL, name is not required."""
-    product = StringField('Product', validators=[Optional()])
+    """Only data may be changed when editing an existing Scheduled Change for
+    a Release. Name cannot be changed because it is a PK field, and product
+    cannot be changed because it almost never makes sense to (and can be done
+    by deleting/recreating instead)."""
     data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
     data_version = IntegerField('data_version', widget=HiddenInput())
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())

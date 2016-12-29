@@ -1186,7 +1186,7 @@ class TestReleasesScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingRelease(self):
         data = {
-            "data": '{"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "c", "product": "c",
+            "data": '{"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "c",
             "data_version": 1, "sc_data_version": 1, "when": 78900000000,
         }
         ret = self._post("/scheduled_changes/releases/2", data=data)
