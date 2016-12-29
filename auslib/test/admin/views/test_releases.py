@@ -1231,6 +1231,30 @@ class TestReleasesScheduledChanges(ViewTest):
         cond_expected = {"sc_id": 1, "data_version": 2, "when": 4000000000}
         self.assertEquals(dict(cond[0]), cond_expected)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeNewReleaseChangeName(self):
+        data = {
+            "data": '{"name": "mm", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1}', "name": "mm", "product": "mm",
+            "sc_data_version": 1,
+        }
+        ret = self._post("/scheduled_changes/releases/1", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+
+        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 1, "complete": False, "change_type": "insert", "data_version": 2, "scheduled_by": "bill", "base_name": "mm", "base_product": "mm",
+            "base_read_only": False, "base_data": {"name": "mm", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1},
+            "base_data_version": None,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 1, "data_version": 2, "when": 4000000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/releases/2", qs={"data_version": 1})
         self.assertEquals(ret.status_code, 200, ret.data)

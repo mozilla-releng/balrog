@@ -347,9 +347,9 @@ class ScheduledChangeDeleteReleaseForm(ScheduledChangeTimeForm):
 
 
 class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
-    """Only non-PK Release fields (product, data) may be changed when editing
-    an existing Scheduled Change. Because edits are identified by sc_id, which
-    is in the URL, name is not required."""
+    """Any Release may be changed when editing an Scheduled Change for a new
+    Release."""
+    name = StringField('Name', validators=[Optional()])
     product = StringField('Product', validators=[Optional()])
     data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
