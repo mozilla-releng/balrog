@@ -318,6 +318,9 @@ class ReadOnlyForm(Form):
 
 
 class ScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
+    """All Release fields (name, product, data) are required when creating
+    a new Release, so they must be provided when Scheduling a Change that
+    does the same."""
     name = StringField('Name', validators=[InputRequired()])
     product = StringField('Product', validators=[InputRequired()])
     data = JSONStringField({}, 'Data', validators=[InputRequired()], widget=FileInput())
@@ -325,6 +328,9 @@ class ScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
 
 
 class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
+    """Name must be provided when Scheduling a Change that modifies an existing
+    Release so that we can identify it. Other Release fields (product, data) are
+    optional."""
     name = StringField('Name', validators=[InputRequired()])
     product = StringField('Product', validators=[Optional()])
     data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
@@ -333,18 +339,26 @@ class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
 
 
 class ScheduledChangeDeleteReleaseForm(ScheduledChangeTimeForm):
-    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+    """Name must be provided when Scheduling a Change that deletes an
+    existing Permission so that we can find it."""
     name = StringField('Name', validators=[InputRequired()])
     data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
 
 
 class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
+    """Only non-PK Release fields (product, data) may be changed when editing
+    an existing Scheduled Change. Because edits are identified by sc_id, which
+    is in the URL, name is not required."""
     product = StringField('Product', validators=[Optional()])
     data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
 class EditScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
+    """Only non-PK Release fields (product, data) may be changed when editing
+    an existing Scheduled Change. Because edits are identified by sc_id, which
+    is in the URL, name is not required."""
     product = StringField('Product', validators=[Optional()])
     data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
     data_version = IntegerField('data_version', widget=HiddenInput())
