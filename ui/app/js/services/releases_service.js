@@ -69,7 +69,46 @@ angular.module("app").factory('Releases', function($http, $q) {
       data.csrf_token = csrf_token;
       var url = '/api/releases/' + encodeURIComponent(name) + '/revisions';
       return $http.post(url, data);
-    }
+    },
+
+    getScheduledChanges: function() {
+      return $http.get("/api/scheduled_changes/releases?all=1");
+    },
+
+    getScheduledChange: function(sc_id) {
+      return $http.get("/api/scheduled_changes/releases/" + sc_id);
+    },
+
+    addScheduledChange: function(data, csrf_token) {
+      data = jQuery.extend({}, data);
+      if (data.when === null) {
+        data.when = "";
+      }
+      else {
+        data.when = data.when.getTime();
+      }
+      data.csrf_token = csrf_token;
+      return $http.post("/api/scheduled_changes/releases", data);
+    },
+
+    updateScheduledChange: function(sc_id, data, csrf_token) {
+      data = jQuery.extend({}, data);
+      if (data.when === null) {
+        data.when = "";
+      }
+      else {
+        data.when = data.when.getTime();
+      }
+      data.csrf_token = csrf_token;
+      return $http.post("/api/scheduled_changes/releases/" + sc_id, data);
+    },
+
+    deleteScheduledChange: function(sc_id, data, csrf_token) {
+      var url = "/api/scheduled_changes/releases/" + sc_id;
+      url += '?data_version=' + data.sc_data_version;
+      url += '&csrf_token=' + encodeURIComponent(csrf_token);
+      return $http.delete(url);
+     },
   };
   return service;
 
