@@ -1139,8 +1139,6 @@ class ScheduledChangeTable(AUSTable):
             transaction=transaction
         )
 
-        # If the scheduled change had a data version, it means the row already
-        # exists, and we need to use update() to enact it.
         if change_type == "delete":
             where = []
             for col in self.base_primary_key:
@@ -1784,6 +1782,17 @@ class Releases(AUSTable):
         except KeyError:
             return False
 
+    def isMappedTo(self, name, transaction=None):
+        if not transaction:
+            transaction = AUSTransaction(self.getEngine())
+        mapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.mapping == name)).fetchone()[0]
+        whitelist_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.whitelist == name)).fetchone()[0]
+        fallbackMapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.fallbackMapping == name)).fetchone()[0]
+        if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
+            return True
+
+        return False
+
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
         release = self.select(where=where, columns=[self.name, self.product], transaction=transaction)
         if len(release) != 1:
@@ -1794,11 +1803,7 @@ class Releases(AUSTable):
         if not self.db.hasPermission(changed_by, "release", "delete", release["product"], transaction):
             raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, release["product"]))
 
-        mapping_count = dbo.rules.t.count().where(dbo.rules.mapping == release["name"]).execute().fetchone()[0]
-        whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == release["name"]).execute().fetchone()[0]
-        fallbackMapping_count = dbo.rules.t.count().where(dbo.rules.fallbackMapping == release["name"]).execute().fetchone()[0]
-
-        if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
+        if self.isMappedTo(release["name"], transaction):
             msg = "%s has rules pointing to it. Hence it cannot be deleted." % (release["name"])
             raise ValueError(msg)
 
