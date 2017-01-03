@@ -85,7 +85,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           return $scope.scheduled_changes;
         },
         sc: function() {
-          // blank new default rule
+          // blank new default release
           return {
             name: '',
             product: '',
@@ -98,8 +98,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
 
   $scope.openUpdateModal = function(sc) {
     var modalInstance = $modal.open({
-      templateUrl: "rule_scheduled_change_modal.html",
-      controller: "EditRuleScheduledChangeCtrl",
+      templateUrl: "release_scheduled_change_modal.html",
+      controller: "EditReleaseScheduledChangeCtrl",
       size: 'lg',
       backdrop: 'static',
       resolve: {
@@ -113,8 +113,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
 
   $scope.openDeleteModal = function(sc) {
     var modalInstance = $modal.open({
-      templateUrl: "rule_scheduled_change_delete_modal.html",
-      controller: "DeleteRuleScheduledChangeCtrl",
+      templateUrl: "release_scheduled_change_delete_modal.html",
+      controller: "DeleteReleaseScheduledChangeCtrl",
       backdrop: 'static',
       resolve: {
         sc: function() {
