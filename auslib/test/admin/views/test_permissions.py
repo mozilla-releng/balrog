@@ -185,6 +185,9 @@ class TestPermissionsScheduledChanges(ViewTest):
             base_permission="rule", base_username="janet", base_options={"products": ["foo"]},
         )
         dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
+        dbo.permissions.scheduled_changes.signoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=30, sc_id=1, username="bill")
+        dbo.permissions.scheduled_changes.signoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=31, sc_id=1,
+                                                                              username="bill", role="releng")
         dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000, data_version=1)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
@@ -444,6 +447,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="qa"), username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -451,6 +455,11 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         self.assertEquals(db_data, {"sc_id": 2, "username": "bill", "role": "qa"})
+        r = dbo.permissions.scheduled_changes.signoffs.history.t.select()\
+            .where(dbo.permissions.scheduled_changes.signoffs.history.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 2)
+        self.assertEquals(dict(r[0]), {"change_id": 3, "changed_by": "bill", "timestamp": 99999, "sc_id": 2, "username": "bill", "role": None})
+        self.assertEquals(dict(r[1]), {"change_id": 4, "changed_by": "bill", "timestamp": 100000, "sc_id": 2, "username": "bill", "role": "qa"})
 
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="relman"), username="bill")
