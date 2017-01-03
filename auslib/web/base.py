@@ -1,7 +1,7 @@
 import logging
 log = logging.getLogger(__name__)
 
-from flask import Flask, make_response, send_from_directory, abort
+from flask import Flask, make_response, send_from_directory, abort, Response
 
 from raven.contrib.flask import Sentry
 
@@ -38,13 +38,15 @@ def fourohfour(error):
 @app.errorhandler(Exception)
 def generic(error):
     """Deals with any unhandled exceptions. If the exception is not a
-    BadDataError, it will be sent to Sentry. Regardless of the exception,
-    a 500 response is returned."""
+    BadDataError, it will be sent to Sentry, and a 400 will be returned,
+    because BadDataErrors are considered to be the client's fault.
+    Otherwise, the error is just re-raised (which causes a 500)."""
 
-    if not isinstance(error, BadDataError):
-        if sentry.client:
-            sentry.captureException()
+    if isinstance(error, BadDataError):
+        return Response(status=400, response=error.message)
 
+    if sentry.client:
+        sentry.captureException()
     raise error
 
 

@@ -918,12 +918,11 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual('I break!', str(exc.exception.message))
 
     def testSentryBadDataError(self):
-        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
+        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m, mock.patch("auslib.web.base.sentry") as sentry:
             m.side_effect = BadDataError("exterminate!")
-            with mock.patch("auslib.web.base.sentry") as sentry, self.assertRaises(Exception) as exc:
-                self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertFalse(sentry.captureException.called)
-            self.assertEqual('exterminate!', str(exc.exception.message))
+            self.assertEqual(ret.status_code, 400, ret.data)
 
     def testSentryRealError(self):
         with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
