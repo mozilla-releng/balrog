@@ -50,11 +50,10 @@
       <div style="float: right">
         <button class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
         <button class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
-        <a class="btn btn-default btn-xs" ng-href="/scheduled_changes/rules/{{ sc.sc_id }}">History</a>
+        <a class="btn btn-default btn-xs" ng-href="/scheduled_changes/release/{{ sc.sc_id }}">History</a>
       </div>
 
-      <i title="Product" ng-show="!sc.product">no product</i>
-      <b title="Product" ng-show="sc.product">{{ sc.product }}</b>
+      <i title="Product" ng-show="sc.name">{{ sc.name }}</i>
     </h3>
   </div>
   <div class="panel-body">
@@ -65,15 +64,7 @@
       <h5 ng-show="sc.when" title="When">
         When: <b><span ng-bind-html="formatMoment(sc.when)"></span></b>
       </h5>
-      <h5 ng-show="sc.telemetry_product" title="Telemetry Product">
-        Telemetry Product: <b>{{ sc.telemetry_product }}</b>
-      </h5>
-      <h5 ng-show="sc.telemetry_channel" title="Telemetry Channel">
-        Telemetry Channel: <b>{{ sc.telemetry_channel }}</b>
-      </h5>
-      <h5 ng-show="sc.telemetry_uptake" title="Telemetry Uptake">
-        Telemetry Uptake: <b>{{ sc.telemetry_uptake }}</b>
-      </h5>
+
       <h5 title="Scheduled Change ID">
         Scheduled Change ID: <b>{{ sc.sc_id }}</b>
       </h5>
@@ -93,6 +84,8 @@
       <dd>{{ sc.product }}</dd>
       <dt ng-show="sc.change_type">Change Type:</dt>
       <dd>{{ sc.change_type }}</dd>
+      <dt> Data:</dt>
+      <dd><button class="btn btn-default btn-xs" ng-click="openDataModal(sc)">View Data</button></dd>
     </dl>
 
   </div>

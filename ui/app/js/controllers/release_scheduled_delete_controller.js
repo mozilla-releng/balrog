@@ -1,4 +1,4 @@
-angular.module("app").controller("NewReleaseScheduledChangeCtrl",
+angular.module("app").controller("NewReleaseScheduledDeleteCtrl",
 function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
 
 
@@ -9,10 +9,6 @@ function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
   $scope.saving = false;
   $scope.calendar_is_open = false;
 
-  $scope.products = [];
-  Releases.getProducts().success(function(response) {
-    $scope.products = response.product;
-  });
 
 
   $scope.setWhen = function(newDate) {
@@ -34,79 +30,22 @@ function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
     $scope.sc.when = null;
     $scope.errors.when = null;
   };
-  $scope.fillName = function () {
-    var file = $scope.dataFile;
-    $scope.errors.data = [];
-    $scope.sc.name = "";
 
-    var reader = new FileReader();
-    reader.onloadend = function(evt) {
-      var blob = evt.target.result;
-      $scope.$apply( function() {
-        try{
-          var name = JSON.parse(blob).name;
-          if (name) {
-            $scope.sc.name = name;
-          }
-          else {
-            $scope.errors.data = ["Form submission error", "Missing name field in JSON blob.\n"];
-          }
-        }catch(err) {
-           $scope.errors.data = ["Form submission error", "Malformed JSON file.\n"];
-        }
-      });
-    };
-    if (typeof file !== 'undefined') {
-      // should work
-      reader.readAsText(file);
-    }
 
-  };
-
-  $scope.changeName = function () {
+ $scope.changeName = function () {
     //wait for actual file to be loaded
     setTimeout($scope.fillName, 0);
   };
 
   $scope.saveChanges = function () {
-    if (!$scope.sc.product.trim()) {
-      sweetAlert(
-        "Form Error",
-        "Product is required.",
-        "error"
-      );
-      return;
-    }
-    if (!$scope.dataFile) {
-      sweetAlert(
-        "Form Error",
-        "No file has been selected.",
-        "error"
-      );
-      return;
-    }
-
-    if (!$scope.sc.name.trim()) {
-      sweetAlert(
-        "Form Error",
-        "Name is required",
-        "error"
-      );
-      return;
-    }
 
     $scope.saving = true;
     $scope.errors = {};
 
-    var file = $scope.dataFile;
 
-    var reader = new FileReader();
-    reader.onload = function(evt) {
-      var blob = evt.target.result;
       CSRF.getToken()
       .then(function(csrf_token) {
         var data = $scope.sc;
-        data.data = blob;
         Releases.addScheduledChange(data, csrf_token)
         .success(function(response){
           $scope.sc.sc_data_version = 1;
@@ -138,9 +77,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
       });
     };
       // should work
-    reader.readAsText(file);
 
-  };
 
   $scope.cancel = function () {
     $modalInstance.dismiss('cancel');

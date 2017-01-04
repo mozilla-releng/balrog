@@ -33,19 +33,19 @@
 
     <hr>
     <h4 ng-show= "sc.change_type !== 'delete'">Releases Details</h4>
-    <div class="form-group" ng-class="{'has-error': errors.data}">
+    <div ng-show= "sc.change_type !== 'delete'" class="form-group" ng-class="{'has-error': errors.data}">
       <label for="id_data">Data</label>
       <input type="file" id="id_data" file-model="dataFile" onchange="angular.element(this).scope().changeName()">
       <ul class="help-block" style="padding: 0px" ng-show="errors.data">
         <li class="help-block" ng-repeat="error in errors.data">{{ error }}</li>
       </ul>
     </div>
-    <div class="form-group" ng-class="{'has-error': errors.name}">
+    <div ng-show= "sc.change_type !== 'delete'" class="form-group" ng-class="{'has-error': errors.name}">
       <label for="id_name">Name</label>
       <input type="text" class="form-control" id="id_name" ng-model="sc.name" ng-disabled="true">
       <p class="help-block" ng-show="errors.name">{{ errors.name.join(', ') }}</p>
     </div>
-    <div class="form-group" ng-class="{'has-error': errors.product}">
+    <div ng-show= "sc.change_type !== 'delete'" class="form-group" ng-class="{'has-error': errors.product}">
       <label for="id_product">Product</label>
       <input type="text" class="form-control" id="id_product" ng-model="sc.product"
       typeahead="product for product in products | filter:$viewValue | limitTo:16">

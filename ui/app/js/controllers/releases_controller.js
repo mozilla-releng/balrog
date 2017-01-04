@@ -177,6 +177,45 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
   };
   /* End openUpdateModal */
 
+    $scope.openNewScheduledDeleteModal = function(release) {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'release_scheduled_delete_modal.html',
+      controller: 'NewReleaseScheduledDeleteCtrl',
+      size: 'lg',
+      resolve: {
+        scheduled_changes: function() {
+          return [];
+        },
+        sc: function() {
+          sc = angular.copy(release);
+          sc["change_type"] = "delete";
+          return sc;
+        }
+      }
+    });
+  };
+
+  $scope.openNewScheduledReleaseChangeModal = function(release) {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'release_scheduled_change_modal.html',
+      controller: 'NewReleaseScheduledChangeCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        scheduled_changes: function() {
+          return [];
+        },
+        sc: function() {
+          sc = angular.copy(release);
+          sc["change_type"] = "update";
+          return sc;
+        }
+      }
+    });
+  };
+
   $scope.openDeleteModal = function(release) {
 
     var modalInstance = $modal.open({

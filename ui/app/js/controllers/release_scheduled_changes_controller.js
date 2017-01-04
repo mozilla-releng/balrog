@@ -126,32 +126,21 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       }
     });
   };
+  $scope.openDataModal = function(release) {
 
-  $scope.openReleaseDataModal = function(mapping) {
-    Releases.getRelease(mapping)
-    .success(function(response) {
-      // it's the same rule, but this works
-      var modalInstance = $modal.open({
-        templateUrl: 'release_data_modal.html',
-        controller: 'ReleaseDataCtrl',
-        size: 'lg',
-        backdrop: 'static',
-        resolve: {
-          release: function () {
-            return response;
-          },
-          diff: function() {
-            return false;
-          }
+    var modalInstance = $modal.open({
+      templateUrl: 'release_data_modal.html',
+      controller: 'ReleaseDataCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        release: function () {
+          return release;
+        },
+        diff: function() {
+          return false;
         }
-      });
-    })
-    .error(function() {
-      console.error(arguments);
-      $scope.failed = true;
-    })
-    .finally(function() {
-      $scope.loading = false;
+      }
     });
   };
 });
