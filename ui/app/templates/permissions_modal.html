@@ -22,26 +22,48 @@
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
     </form>
-
-    <h4>Existing permissions</h4>
-    <div class="panel panel-default" ng-show="!loading"
-         ng-repeat="permission in user.permissions">
-      <div class="panel-heading">
-        <div style="float: right">
-          <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="updatePermission(permission)">Save changes</button>
-          <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="deletePermission(permission)">Delete</button>
+    <div class="tabbable tabs-below">
+      <ul class="nav nav-pills" role="tablist">
+        <li ng-class="{active: currentItemTab == 1}">
+          <a href="#" ng-click="currentItemTab = 1;">Current permissions</a>
+        </li>
+        <li ng-class="{active: currentItemTab == 2}">
+          <a href="#" ng-click="currentItemTab = 2;">Current roles</a>
+        </li>
+      </ul>
+      <div class="tab-content" ng-show="currentItemTab == 1">
+        <div class="panel panel-default"
+             ng-repeat="permission in user.permissions">
+          <div class="panel-heading">
+            <div style="float: right">
+              <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="updatePermission(permission)">Save changes</button>
+              <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="deletePermission(permission)">Delete</button>
+            </div>
+            <h3 class="panel-title">
+              {{ permission.permission }}
+            </h3>
+          </div>
+          <div class="panel-body">
+            <textarea ng-model="permission.options_as_json" class="options-as-json"></textarea>
+            <p class="help-block" ng-show="errors.permissions[permission.permission]">{{ errors.permissions[permission.permission].options.join(', ') }}</p>
+          </div>
+          <div class="panel-footer" ng-show="rule_id">
+            <button class="btn btn-primary" ng-show="!saving" ng-click="updatePermissionChanges(permission)">Update</button>
+          </div>
         </div>
-        <h3 class="panel-title">
-          {{ permission.permission }}
-        </h3>
-        <!-- <small>data_version:{{ permission.data_version }}</small> -->
       </div>
-      <div class="panel-body">
-        <textarea ng-model="permission.options_as_json" class="options-as-json"></textarea>
-        <p class="help-block" ng-show="errors.permissions[permission.permission]">{{ errors.permissions[permission.permission].options.join(', ') }}</p>
-      </div>
-      <div class="panel-footer" ng-show="rule_id">
-        <button class="btn btn-primary" ng-show="!saving" ng-click="updatePermissionChanges(permission)">Update</button>
+      <div class="tab-content" ng-show="currentItemTab == 2">
+        <div class="panel panel-default"
+             ng-repeat="role in user.roles">
+          <div class="panel-heading">
+            <div style="float: right">
+              <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="revokeRole(role)">Revoke</button>
+            </div>
+            <h3 class="panel-title">
+              {{ role }}
+            </h3>
+          </div>
+        </div>
       </div>
     </div>
   </div>

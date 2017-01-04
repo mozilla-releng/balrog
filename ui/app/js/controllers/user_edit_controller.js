@@ -4,7 +4,7 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
 
   $scope.loading = true;
   $scope.users = users;
-
+  $scope.currentItemTab = 1;
   $scope.is_edit = true;
   $scope.original_user = user;
   $scope.user = angular.copy(user);
@@ -29,6 +29,15 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
     // console.log('$scope.user.permissions');
     // console.dbg($scope.user.permissions);
     $scope.loading = false;
+  });
+
+  $scope.user.roles = [];
+  Permissions.getUserRoles(user.username)
+  .success(function(response) {
+    $scope.user.roles = response.roles;
+  })
+  .error(function(response) {
+    console.error(response);
   });
 
   $scope.saving = false;
