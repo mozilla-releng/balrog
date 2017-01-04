@@ -55,9 +55,6 @@
 
       <i title="Product" ng-show="!sc.product">no product</i>
       <b title="Product" ng-show="sc.product">{{ sc.product }}</b>
-      :
-      <i title="Channel" ng-show="!sc.channel">no channel</i>
-      <b title="Channel" ng-show="sc.channel">{{ sc.channel }}</b>
     </h3>
   </div>
   <div class="panel-body">
@@ -86,30 +83,14 @@
     </div>
 
     <dl class="dl-horizontal" style="float:right">
-      <dt>Rule ID:</dt>
-      <dd ng-show="sc.rule_id">{{ sc.rule_id }}</dd>
-      <dd ng-show="!sc.rule_id">New!</dd>
+
       <dt ng-show="sc.data_version">Data Version:</dt>
       <dd>{{ sc.data_version }}</dd>
-      <dt ng-show="sc.mapping">Mapping:</dt>
-      <dd ng-show="sc.mapping">
-        <span>{{ sc.mapping }}</span>
-        <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(sc.mapping)">
-          <i class="glyphicon glyphicon-eye-open"></i>
-            View
-        </a>
+
       </dd>
-      <dt>Fallback Mapping:</dt>
-      <dd ng-show="sc.fallbackMapping"><span>{{ sc.fallbackMapping }}</span>
-        <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(sc.fallbackMapping)">
-          <i class="glyphicon glyphicon-eye-open"></i>
-            View
-        </a>
-      </dd>
+
       <dt ng-show="sc.product !== null">Product:</dt>
-      <dd>{{ sc.backgroundRate }}</dd>
-      <dt ng-show="sc.data_version !== null">Data Version:</dt>
-      <dd>{{ sc.priority }}</dd>
+      <dd>{{ sc.product }}</dd>
       <dt ng-show="sc.change_type">Change Type:</dt>
       <dd>{{ sc.change_type }}</dd>
     </dl>

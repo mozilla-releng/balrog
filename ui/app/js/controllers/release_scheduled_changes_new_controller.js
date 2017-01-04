@@ -8,7 +8,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
   $scope.errors = {};
   $scope.saving = false;
   $scope.calendar_is_open = false;
-  
+
   $scope.products = [];
   Releases.getProducts().success(function(response) {
     $scope.products = response.product;
@@ -105,8 +105,8 @@ function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
       var blob = evt.target.result;
       CSRF.getToken()
       .then(function(csrf_token) {
-        var data = angular.copy($scope.sc);
-        data.blob = blob;
+        var data = $scope.sc;
+        data.data = blob;
         Releases.addScheduledChange(data, csrf_token)
         .success(function(response){
           $scope.sc.sc_data_version = 1;
@@ -127,7 +127,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
             sweetAlert(
               "Form submission error",
               "Unable to submit successfully.\n" +
-              "(" + response+ ")",
+              "(" + response + ")",
               "error"
             );
           }
