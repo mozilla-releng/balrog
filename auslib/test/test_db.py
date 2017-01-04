@@ -610,6 +610,9 @@ class ScheduledChangesTableMixin(object):
                                    Column("bar", String(15)))
                 super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
+            def isSignedOff(self, sc_id, transaction=None):
+                return True
+
             def insert(self, changed_by, transaction=None, dryrun=False, **columns):
                 if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
                     raise PermissionDeniedError("fail")
@@ -1433,7 +1436,6 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
 
 class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
-    # TODO: need tests around enacting already signed off on changes to required signoffs
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
@@ -1443,15 +1445,35 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.metadata = self.db.metadata
         self.rs = self.db.productRequiredSignoffs
         self.metadata.create_all()
-        self.db.permissions.t.insert().execute(username="bill", permission="required_signoff", action="modify", data_version=1)
+        self.db.permissions.t.insert().execute(username="bill", permission="admin", data_version=1)
+        self.db.permissions.t.insert().execute(username="bob", permission="required_signoff", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="nancy", role="relman", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="nancy", role="qa", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="janet", role="relman", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="janet", role="releng", data_version=1)
         self.rs.t.insert().execute(product="foo", channel="bar", role="releng", signoffs_required=1, data_version=1)
         self.rs.t.insert().execute(product="foo", channel="bar", role="relman", signoffs_required=2, data_version=1)
         self.rs.t.insert().execute(product="apple", channel="orange", role="releng", signoffs_required=2, data_version=1)
+        self.rs.scheduled_changes.t.insert().execute(sc_id=1, scheduled_by="bob", complete=False, change_type="update", data_version=1,
+                                                     base_product="apple", base_channel="orange", base_role="releng", base_signoffs_required=1,
+                                                     base_data_version=1)
+        self.rs.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=300000, data_version=1)
+        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bob", role="releng")
+        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="janet", role="releng")
+        self.rs.scheduled_changes.t.insert().execute(sc_id=2, scheduled_by="bob", complete=False, change_type="delete", data_version=1,
+                                                     base_product="foo", base_channel="bar", base_role="releng", base_data_version=1)
+        self.rs.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=400000, data_version=1)
+        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="bob", role="releng")
+        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="janet", role="relman")
+        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="nancy", role="relman")
+        self.rs.scheduled_changes.t.insert().execute(sc_id=3, scheduled_by="bob", complete=False, change_type="insert", data_version=1,
+                                                     base_product="foo", base_channel="bar", base_role="qa", base_signoffs_required=1)
+        self.rs.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=300000, data_version=1)
+        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="bob", role="releng")
+        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="janet", role="relman")
+        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="nancy", role="relman")
 
     def testInsertNewRequiredSignoff(self):
         self.rs.insert(changed_by="bill", product="carrot", channel="celery", role="releng", signoffs_required=1)
@@ -1464,12 +1486,33 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
     def testCantInsertRequiredSignoffWithoutEnoughUsers(self):
         self.assertRaises(ValueError, self.rs.insert, changed_by="bill", product="carrot", channel="celery", role="dev", signoffs_required=5)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testCantDirectlyUpdateRequiredSignoff(self):
         self.assertRaises(SignoffRequiredError, self.rs.update, changed_by="bill", old_data_version=1,
                           where={"product": "apple"}, what={"signoffs_required": 1})
 
     def testCantDirectlyDeleteRequiredSignoff(self):
-        self.assertRaises(SignoffRequiredError, self.rs.delete, changed_by="bill", old_data_version=1, where={"product": "apple"})
+        self.assertRaises(SignoffRequiredError, self.rs.delete, changed_by="bill", old_data_version=1,
+                          where={"product": "foo", "channel": "bar", "role": "relman"})
+
+    # TODO: test to verify that updating a required signoff runs .validate
+    # TODO: add tests to rules, releases, permissions for if signoffs have
+    # been verified
+
+    def testInsertRequiredSignoffWithScheduledChange(self):
+        self.rs.scheduled_changes.enactChange(sc_id=3, enacted_by="bill")
+        got = self.rs.t.select().where(self.rs.product == "foo").where(self.rs.channel == "bar").where(self.rs.role == "qa").execute().fetchall()
+        self.assertEquals(got, [("foo", "bar", "qa", 1, 1)])
+
+    def testUpdateRequiredSignoffWithScheduledChange(self):
+        self.rs.scheduled_changes.enactChange(sc_id=1, enacted_by="bill")
+        got = self.rs.t.select().where(self.rs.product == "apple").execute().fetchall()
+        self.assertEquals(got, [("apple", "orange", "releng", 1, 2)])
+
+    def testDeleteRequiredSignoffWithScheduledChange(self):
+        self.rs.scheduled_changes.enactChange(sc_id=2, enacted_by="bill")
+        got = self.rs.t.select().where(self.rs.product == "foo").where(self.rs.channel == "bar").where(self.rs.role == "releng").execute().fetchall()
+        self.assertEquals(len(got), 0)
 
 
 class RulesTestMixin(object):
@@ -3148,8 +3191,8 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEquals(len(got), 0)
 
     def testCannotRevokeRoleThatMakesRequiredSignoffImpossible(self):
-        self.assertRaisesExp(ValueError, "Revoking dev role would make it impossible for Required Signoffs for foo, bar to be fulfilled",
-                             self.permissions.revokeRole, "bob", "dev", "bill", old_data_version=1)
+        self.assertRaisesRegexp(ValueError, "Revoking dev role would make it impossible for Required Signoffs for foo, bar to be fulfilled",
+                                self.permissions.revokeRole, "bob", "dev", "bill", old_data_version=1)
 
     def testGetAllUsers(self):
         self.assertEquals(set(self.permissions.getAllUsers()), set(["bill",

@@ -1124,7 +1124,10 @@ class ScheduledChangeTable(AUSTable):
             raise PermissionDeniedError("%s is not allowed to enact scheduled changes", enacted_by)
 
         sc = self.select(where=[self.sc_id == sc_id], transaction=transaction)[0]
-        what = {}
+        # HORRIBLE HACKY SHIT. sc_id is put into this so that baseTable insert/update/delete methods
+        # can ignore required signoffs when changes are being enacted. absolutely awful shite that needs
+        # to be removed.
+        what = {"sc_id": sc_id}
         change_type = sc["change_type"]
         for col in sc:
             if col.startswith("base_"):
@@ -1142,6 +1145,9 @@ class ScheduledChangeTable(AUSTable):
             where=[self.sc_id == sc_id], what={"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"],
             transaction=transaction
         )
+
+        if not self.baseTable.isSignedOff(sc_id=sc_id, transaction=transaction):
+            raise SignoffRequiredError("Cannot enact change %s because it does not have the necessary Signoffs.")
 
         # If the scheduled change had a data version, it means the row already
         # exists, and we need to use update() to enact it.
@@ -1202,6 +1208,20 @@ class RequiredSignoffsTable(AUSTable):
 
         super(RequiredSignoffsTable, self).__init__(db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
+    def isSignedOff(self, sc_id, transaction=None):
+        # maybe this can be getRequiredSignoffs, so that the signoff validation can be factored out?
+        sc = self.scheduled_changes.select(where={"sc_id": sc_id}, transaction=transaction)[0]
+        rs = self.select(where={"product": sc["base_product"], "channel": sc["base_channel"]}, transaction=transaction)[0]
+        required_signoffs = self.db.productRequiredSignoffs.select(where={"product": rs["product"], "channel": rs["channel"]}, transaction=transaction)
+        if required_signoffs:
+            signoffs_given = defaultdict(int)
+            for signoff in self.scheduled_changes.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
+                signoffs_given[signoff["role"]] += 1
+            for rs in required_signoffs:
+                if rs["signoffs_required"] < signoffs_given.get(rs["role"]):
+                    return False
+        return True
+
     def validate(self, product, channel, role, signoffs_required, transaction=None):
         users_with_role, = self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == role).execute().fetchone()
         if users_with_role < signoffs_required:
@@ -1218,17 +1238,19 @@ class RequiredSignoffsTable(AUSTable):
         if not self.db.hasPermission(changed_by, "required_signoff", "modify", transaction=transaction):
             raise PermissionDeniedError("{} is not allowed to modify Required Signoffs.".format(changed_by))
 
-        if self.select(where=[self.product == product, self.channel == channel], transaction=transaction):
-            raise SignoffRequiredError("{}, {} requires Signoff to modify, cannot be done directly. Use a Scheduled Change instead.".format(product, channel))
+        if "sc_id" in columns:
+            columns.pop("sc_id")
         else:
-            return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+            if self.select(where=[self.product == product, self.channel == channel], transaction=transaction):
+                raise SignoffRequiredError("{}, {} requires Signoff to modify, cannot be done directly. Use a Scheduled Change instead.".format(product, channel))
 
-    def update(self, *args, **kwargs):
-        # TODO: we should only raise this if the update isn't a change being enacted. how can we detect that?
+        return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+
+   def update(self, *args, **kwargs):
         raise SignoffRequiredError("Required Signoffs cannot be directly modified. Use a Scheduled Change instead.")
 
     def delete(self, *args, **kwargs):
-        # TODO: we should only raise this if the update isn't a change being enacted. how can we detect that?
+#        # TODO: we should only raise this if the update isn't a change being enacted. how can we detect that?
         raise SignoffRequiredError("Required Signoffs cannot be directly deleted. Use a Scheduled Change instead.")
 
 
@@ -1324,6 +1346,19 @@ class Rules(AUSTable):
 
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
+    def isSignedOff(self, sc_id, transaction=None):
+        sc = self.scheduled_changes.select(where={"sc_id": sc_id}, transaction=transaction)[0]
+        print sc
+        rule = self.select(where={"rule_id": sc["base_rule_id"]}, transaction=transaction)[0]
+        print rule
+        required_signoffs = self.scheduled_changes.required_signoffs.select(where={"product": rule["product"], "channel": rule["channel"]})
+        print required_signoffs
+        if required_signoffs:
+            signoffs = self.scheduled_changes.signoffs.select(where={"sc_id": sc_id})
+            print signoffs
+            return False
+        return True
+
     def _matchesRegex(self, foo, bar):
         # Expand wildcards and use ^/$ to make sure we don't succeed on partial
         # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
@@ -1403,6 +1438,15 @@ class Rules(AUSTable):
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
+
+        rs_where = {}
+        if columns.get("product"):
+            rs_where["product"] = columns["product"]
+        if columns.get("channel"):
+            rs_where["channel"] = columns["channel"]
+        if self.db.productRequiredSignoffs.select(where=rs_where, transaction=transaction):
+            raise SignoffRequiredError("Rules for product '%s' and channel '%s' cannot be directly modified.")
+
         ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
             return ret.inserted_primary_key[0]
@@ -1540,6 +1584,18 @@ class Rules(AUSTable):
         for current_rule in self.select(where=where, columns=[self.product], transaction=transaction):
             if not self.db.hasPermission(changed_by, "rule", "modify", current_rule["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_rule["product"]))
+
+            rs_where = {}
+            if current_rule.get("product"):
+                rs_where["product"] = current_rule["product"]
+            if current_rule.get("channel"):
+                rs_where["channel"] = current_rule["channel"]
+            if what.get("product"):
+                rs_where["product"] = what["product"]
+            if what.get("channel"):
+                rs_where["channel"] = what["channel"]
+            if self.db.productRequiredSignoffs.select(where=rs_where, transaction=transaction):
+                raise SignoffRequiredError("Rules for product '%s' and channel '%s' cannot be directly modified.")
 
         return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version,
                                          transaction=transaction, dryrun=dryrun)
@@ -2193,6 +2249,7 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
                            table, subj, body, use_tls)
                 table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
     return bleet
+
 
 # A helper that sets sql_mode. This should only be used with MySQL, and
 # lets us put the database in a stricter mode that will disallow things like
