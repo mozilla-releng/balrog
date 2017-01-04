@@ -116,8 +116,9 @@ def extract_active_data(url, dump_location='dump.sql'):
     ))
 
     popen(
-        _strip_multiple_spaces('%s %s dockerflow rules rules_history rules_scheduled_changes rules_scheduled_changes_history \
-        migrate_version  > %s' % (mysql_default_command, database, dump_location,))
+        _strip_multiple_spaces('%s %s dockerflow rules rules_history rules_scheduled_changes rules_scheduled_changes_conditions \
+        rules_scheduled_changes_conditions_history rules_scheduled_changes_signoffs rules_scheduled_changes_signoffs_history \
+        rules_scheduled_changes_history migrate_version  > %s' % (mysql_default_command, database, dump_location,))
     )
 
     popen(
