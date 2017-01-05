@@ -1241,12 +1241,7 @@ class RequiredSignoffsTable(AUSTable):
         if users_with_role < signoffs_required:
             raise ValueError("Cannot require {} signoffs for {}, {} - only {} users hold that role".format(signoffs_required, product, channel, role))
 
-    # CAN WE PASS SIGNOFFS IN HERE?!
-    # MAYBE THE WEB LAY SHOULD CHECK REQUIRED SIGNOFFS
-    # maybe call a different method from enactChange than from the web layer?
-    # maybe change the signature to include signoffs information?
-    # add a service layer just for Rules
-    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+    def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         product = columns.get("product")
         channel = columns.get("channel")
         if not product or not channel:
@@ -1254,10 +1249,29 @@ class RequiredSignoffsTable(AUSTable):
 
         self.validate(product, channel, columns.get("role"), columns.get("signoffs_required"), transaction=transaction)
 
+        if not self.db.hasPermission(changed_by, "required_signoff", "create", transaction=transaction):
+            raise PermissionDeniedError("{} is not allowed to create new Required Signoffs.".format(changed_by))
+
+        return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, signoffs=signoffs, **columns)
+
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
+        if "number_required" in what:
+            for rs in self.select(where=where, transaction=transaction):
+                rs.update(what)
+                self.validate(rs["product"], rs["channel"], rs["role"], rs["number_required"], transaction=transaction)
+
         if not self.db.hasPermission(changed_by, "required_signoff", "modify", transaction=transaction):
             raise PermissionDeniedError("{} is not allowed to modify Required Signoffs.".format(changed_by))
 
-        return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        return super(RequiredSignoffsTable, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
+                                                         transaction=transaction, dryrun=dryrun, signoffs=signoffs)
+
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+        if not self.db.hasPermission(changed_by, "required_signoff", "delete", transaction=transaction):
+            raise PermissionDeniedError("{} is not allowed to remove Required Signoffs.".format(changed_by))
+
+        return super(RequiredSignoffsTable, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version,
+                                                         transaction=transaction, dryrun=dryrun, signoffs=signoffs)
 
 
 class ProductRequiredSignoffsTable(RequiredSignoffsTable):

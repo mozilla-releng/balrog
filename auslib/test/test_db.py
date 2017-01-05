@@ -1480,16 +1480,32 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
         self.assertEquals(got, [("carrot", "celery", "releng", 1, 1)])
 
+    def testInsertNewRequiredSignoffWithoutPermission(self):
+        self.assertRaises(PermissionDeniedError, self.rs.insert, changed_by="chuck", product="carrot", channel="celery", role="releng",
+                          signoffs_required=1)
+
     def testCantDirectlyInsertRequiredSignoffForSomethingRequiringSignoff(self):
         self.assertRaises(SignoffRequiredError, self.rs.insert, changed_by="bill", product="apple", channel="orange", role="relman", signoffs_required=2)
 
     def testCantInsertRequiredSignoffWithoutEnoughUsers(self):
         self.assertRaises(ValueError, self.rs.insert, changed_by="bill", product="carrot", channel="celery", role="dev", signoffs_required=5)
 
+    def testUpdateRequiredSignoffWithoutPermission(self):
+        self.assertRaises(PermissionDeniedError, self.rs.update, changed_by="chuck", old_data_version=1,
+                          where={"product": "apple"}, what={"signoffs_required": 1})
+
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testCantDirectlyUpdateRequiredSignoff(self):
         self.assertRaises(SignoffRequiredError, self.rs.update, changed_by="bill", old_data_version=1,
                           where={"product": "apple"}, what={"signoffs_required": 1})
+
+    def testCantUpdateRequiredSignoffWithoutEnoughUsers(self):
+        self.assertRaises(ValueError, self.rs.update, {"product": "apple", "channel": "orange"}, {"number_required": 10}, changed_by="bill",
+                          old_data_version=1, dryrun=True)
+
+    def testDeleteRequiredSignoffWithoutPermission(self):
+        self.assertRaises(PermissionDeniedError, self.rs.delete, changed_by="chuck", old_data_version=1,
+                          where={"product": "foo", "channel": "bar", "role": "relman"})
 
     def testCantDirectlyDeleteRequiredSignoff(self):
         self.assertRaises(SignoffRequiredError, self.rs.delete, changed_by="bill", old_data_version=1,
