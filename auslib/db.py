@@ -125,6 +125,17 @@ def BlobColumn(impl=Text):
     return cls
 
 
+def verify_signoffs(required_signoffs, signoffs):
+    signoffs_given = defaultdict(int)
+    if not signoffs:
+        raise SignoffRequiredError("No Signoffs given")
+    for signoff in signoffs:
+        signoffs_given[signoff["role"]] += 1
+    for rs in required_signoffs:
+        if rs["signoffs_required"] < signoffs_given.get(rs["role"]):
+            raise SignoffRequiredError("Not enough signoffs for role '{}'".format(rs["role"]))
+
+
 class AUSTransaction(object):
     """Manages a single transaction. Requires a connection object.
 
@@ -265,6 +276,9 @@ class AUSTable(object):
     def getEngine(self):
         return self.t.metadata.bind
 
+    def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+        return None
+
     def _returnRowOrRaise(self, where, columns=None, transaction=None):
         """Return the row matching the where clause supplied. If no rows match or multiple rows match,
            a WrongNumberOfRowsError will be raised."""
@@ -330,7 +344,7 @@ class AUSTable(object):
         """
         return self.t.insert(values=columns)
 
-    def _prepareInsert(self, trans, changed_by, **columns):
+    def _prepareInsert(self, trans, changed_by, signoffs, **columns):
         """Prepare an INSERT statement for commit. If this table has versioning enabled,
            data_version will be set to 1. If this table has history enabled, two rows
            will be created in that table: one representing the current state (NULL),
@@ -346,13 +360,17 @@ class AUSTable(object):
         if self.onInsert:
             self.onInsert(self, "INSERT", changed_by, query, trans)
 
+        required_signoffs = self.getRequiredSignoffs(None, columns, transaction=trans)
+        if required_signoffs:
+            verify_signoffs(required_signoffs, signoffs)
+
         ret = trans.execute(query)
         if self.history:
             for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
                 trans.execute(q)
         return ret
 
-    def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
+    def insert(self, changed_by=None, transaction=None, dryrun=False, signoffs=None, **columns):
         """Perform an INSERT statement on this table. See AUSTable._insertStatement for
            a description of columns.
 
@@ -376,10 +394,10 @@ class AUSTable(object):
             return
 
         if transaction:
-            return self._prepareInsert(transaction, changed_by, **columns)
+            return self._prepareInsert(transaction, changed_by, signoffs, **columns)
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return self._prepareInsert(trans, changed_by, **columns)
+                return self._prepareInsert(trans, changed_by, signoffs, **columns)
 
     def _deleteStatement(self, where):
         """Create a DELETE statement for this table.
@@ -395,7 +413,7 @@ class AUSTable(object):
                 query = query.where(cond)
         return query
 
-    def _prepareDelete(self, trans, where, changed_by, old_data_version):
+    def _prepareDelete(self, trans, where, changed_by, old_data_version, signoffs):
         """Prepare a DELETE statament for commit. If this table has history enabled,
            a row will be created in that table representing the new state of the
            row being deleted (NULL). If versioning is enabled and old_data_version
@@ -415,6 +433,10 @@ class AUSTable(object):
         if self.onDelete:
             self.onDelete(self, "DELETE", changed_by, query, trans)
 
+        required_signoffs = self.getRequiredSignoffs(row, None, transaction=trans)
+        if required_signoffs:
+            verify_signoffs(required_signoffs, signoffs)
+
         ret = trans.execute(query)
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to delete row, old_data_version doesn't match current data_version")
@@ -430,7 +452,7 @@ class AUSTable(object):
 
         return ret
 
-    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
         """Perform a DELETE statement on this table. See AUSTable._deleteStatement for
            a description of `where'. To simplify versioning, this method can only
            delete a single row per invocation. If the where clause given would delete
@@ -469,10 +491,10 @@ class AUSTable(object):
             return
 
         if transaction:
-            return self._prepareDelete(transaction, where, changed_by, old_data_version)
+            return self._prepareDelete(transaction, where, changed_by, old_data_version, signoffs)
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return self._prepareDelete(trans, where, changed_by, old_data_version)
+                return self._prepareDelete(trans, where, changed_by, old_data_version, signoffs)
 
     def _updateStatement(self, where, what):
         """Create an UPDATE statement for this table
@@ -490,7 +512,7 @@ class AUSTable(object):
                 query = query.where(cond)
         return query
 
-    def _prepareUpdate(self, trans, where, what, changed_by, old_data_version):
+    def _prepareUpdate(self, trans, where, what, changed_by, old_data_version, signoffs):
         """Prepare an UPDATE statement for commit. If this table has versioning enabled,
            data_version will be increased by 1. If this table has history enabled, a
            row will be added to that table represent the new state of the data.
@@ -517,6 +539,11 @@ class AUSTable(object):
         if self.onUpdate:
             self.onUpdate(self, "UPDATE", changed_by, query, trans)
 
+        required_signoffs = self.getRequiredSignoffs(orig_row, new_row, transaction=trans)
+        self.log.debug("Required Signoffs: %s", required_signoffs)
+        if required_signoffs:
+            verify_signoffs(required_signoffs, signoffs)
+
         ret = trans.execute(query)
         if self.history:
             trans.execute(self.history.forUpdate(new_row, changed_by))
@@ -526,7 +553,7 @@ class AUSTable(object):
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
 
-    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
         """Perform an UPDATE statement on this stable. See AUSTable._updateStatement for
            a description of `where' and `what'. This method can only update a single row
            per invocation. If the where clause given would update zero or multiple rows, a
@@ -567,10 +594,10 @@ class AUSTable(object):
             return
 
         if transaction:
-            return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
+            return self._prepareUpdate(transaction, where, what, changed_by, old_data_version, signoffs)
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
+                return self._prepareUpdate(trans, where, what, changed_by, old_data_version, signoffs)
 
     def getRecentChanges(self, limit=10, transaction=None):
         return self.history.select(transaction=transaction,
@@ -1124,10 +1151,7 @@ class ScheduledChangeTable(AUSTable):
             raise PermissionDeniedError("%s is not allowed to enact scheduled changes", enacted_by)
 
         sc = self.select(where=[self.sc_id == sc_id], transaction=transaction)[0]
-        # HORRIBLE HACKY SHIT. sc_id is put into this so that baseTable insert/update/delete methods
-        # can ignore required signoffs when changes are being enacted. absolutely awful shite that needs
-        # to be removed.
-        what = {"sc_id": sc_id}
+        what = {}
         change_type = sc["change_type"]
         for col in sc:
             if col.startswith("base_"):
@@ -1146,8 +1170,7 @@ class ScheduledChangeTable(AUSTable):
             transaction=transaction
         )
 
-        if not self.baseTable.isSignedOff(sc_id=sc_id, transaction=transaction):
-            raise SignoffRequiredError("Cannot enact change %s because it does not have the necessary Signoffs.")
+        signoffs = self.signoffs.select(where=[self.signoffs.sc_id == sc_id], transaction=transaction)
 
         # If the scheduled change had a data version, it means the row already
         # exists, and we need to use update() to enact it.
@@ -1155,14 +1178,14 @@ class ScheduledChangeTable(AUSTable):
             where = []
             for col in self.base_primary_key:
                 where.append((getattr(self.baseTable, col) == sc["base_%s" % col]))
-            self.baseTable.delete(where, sc["scheduled_by"], sc["base_data_version"], transaction=transaction)
+            self.baseTable.delete(where, sc["scheduled_by"], sc["base_data_version"], transaction=transaction, signoffs=signoffs)
         elif change_type == "update":
             where = []
             for col in self.base_primary_key:
                 where.append((getattr(self.baseTable, col) == sc["base_%s" % col]))
-            self.baseTable.update(where, what, sc["scheduled_by"], sc["base_data_version"], transaction=transaction)
+            self.baseTable.update(where, what, sc["scheduled_by"], sc["base_data_version"], transaction=transaction, signoffs=signoffs)
         elif change_type == "insert":
-            self.baseTable.insert(sc["scheduled_by"], transaction=transaction, **what)
+            self.baseTable.insert(sc["scheduled_by"], transaction=transaction, signoffs=signoffs, **what)
         else:
             raise ValueError("Unknown Change Type")
 
@@ -1208,25 +1231,21 @@ class RequiredSignoffsTable(AUSTable):
 
         super(RequiredSignoffsTable, self).__init__(db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
-    def isSignedOff(self, sc_id, transaction=None):
-        # maybe this can be getRequiredSignoffs, so that the signoff validation can be factored out?
-        sc = self.scheduled_changes.select(where={"sc_id": sc_id}, transaction=transaction)[0]
-        rs = self.select(where={"product": sc["base_product"], "channel": sc["base_channel"]}, transaction=transaction)[0]
-        required_signoffs = self.db.productRequiredSignoffs.select(where={"product": rs["product"], "channel": rs["channel"]}, transaction=transaction)
-        if required_signoffs:
-            signoffs_given = defaultdict(int)
-            for signoff in self.scheduled_changes.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
-                signoffs_given[signoff["role"]] += 1
-            for rs in required_signoffs:
-                if rs["signoffs_required"] < signoffs_given.get(rs["role"]):
-                    return False
-        return True
+    def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+        if old_row:
+            return self.select(where={"product": old_row["product"], "channel": old_row["channel"]}, transaction=transaction)
+        return self.select(where={"product": new_row["product"], "channel": new_row["channel"]}, transaction=transaction)
 
     def validate(self, product, channel, role, signoffs_required, transaction=None):
         users_with_role, = self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == role).execute().fetchone()
         if users_with_role < signoffs_required:
             raise ValueError("Cannot require {} signoffs for {}, {} - only {} users hold that role".format(signoffs_required, product, channel, role))
 
+    # CAN WE PASS SIGNOFFS IN HERE?!
+    # MAYBE THE WEB LAY SHOULD CHECK REQUIRED SIGNOFFS
+    # maybe call a different method from enactChange than from the web layer?
+    # maybe change the signature to include signoffs information?
+    # add a service layer just for Rules
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         product = columns.get("product")
         channel = columns.get("channel")
@@ -1238,20 +1257,7 @@ class RequiredSignoffsTable(AUSTable):
         if not self.db.hasPermission(changed_by, "required_signoff", "modify", transaction=transaction):
             raise PermissionDeniedError("{} is not allowed to modify Required Signoffs.".format(changed_by))
 
-        if "sc_id" in columns:
-            columns.pop("sc_id")
-        else:
-            if self.select(where=[self.product == product, self.channel == channel], transaction=transaction):
-                raise SignoffRequiredError("{}, {} requires Signoff to modify, cannot be done directly. Use a Scheduled Change instead.".format(product, channel))
-
         return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
-
-   def update(self, *args, **kwargs):
-        raise SignoffRequiredError("Required Signoffs cannot be directly modified. Use a Scheduled Change instead.")
-
-    def delete(self, *args, **kwargs):
-#        # TODO: we should only raise this if the update isn't a change being enacted. how can we detect that?
-        raise SignoffRequiredError("Required Signoffs cannot be directly deleted. Use a Scheduled Change instead.")
 
 
 class ProductRequiredSignoffsTable(RequiredSignoffsTable):
@@ -1346,18 +1352,8 @@ class Rules(AUSTable):
 
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
-    def isSignedOff(self, sc_id, transaction=None):
-        sc = self.scheduled_changes.select(where={"sc_id": sc_id}, transaction=transaction)[0]
-        print sc
-        rule = self.select(where={"rule_id": sc["base_rule_id"]}, transaction=transaction)[0]
-        print rule
-        required_signoffs = self.scheduled_changes.required_signoffs.select(where={"product": rule["product"], "channel": rule["channel"]})
-        print required_signoffs
-        if required_signoffs:
-            signoffs = self.scheduled_changes.signoffs.select(where={"sc_id": sc_id})
-            print signoffs
-            return False
-        return True
+    def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+        raise NotImplementedError()
 
     def _matchesRegex(self, foo, bar):
         # Expand wildcards and use ^/$ to make sure we don't succeed on partial
@@ -1438,15 +1434,6 @@ class Rules(AUSTable):
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
-
-        rs_where = {}
-        if columns.get("product"):
-            rs_where["product"] = columns["product"]
-        if columns.get("channel"):
-            rs_where["channel"] = columns["channel"]
-        if self.db.productRequiredSignoffs.select(where=rs_where, transaction=transaction):
-            raise SignoffRequiredError("Rules for product '%s' and channel '%s' cannot be directly modified.")
-
         ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
             return ret.inserted_primary_key[0]
@@ -1584,18 +1571,6 @@ class Rules(AUSTable):
         for current_rule in self.select(where=where, columns=[self.product], transaction=transaction):
             if not self.db.hasPermission(changed_by, "rule", "modify", current_rule["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_rule["product"]))
-
-            rs_where = {}
-            if current_rule.get("product"):
-                rs_where["product"] = current_rule["product"]
-            if current_rule.get("channel"):
-                rs_where["channel"] = current_rule["channel"]
-            if what.get("product"):
-                rs_where["product"] = what["product"]
-            if what.get("channel"):
-                rs_where["channel"] = what["channel"]
-            if self.db.productRequiredSignoffs.select(where=rs_where, transaction=transaction):
-                raise SignoffRequiredError("Rules for product '%s' and channel '%s' cannot be directly modified.")
 
         return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version,
                                          transaction=transaction, dryrun=dryrun)
