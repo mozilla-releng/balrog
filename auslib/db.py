@@ -971,13 +971,6 @@ class ScheduledChangeTable(AUSTable):
         base_table_where = []
         sc_table_where = []
 
-        if base_columns["change_type"] == "delete":
-            for pk in self.base_primary_key:
-                if pk not in base_columns:
-                    raise ValueError("Missing primary key column %s. PK values needed for deletion" % (pk))
-                if base_columns[pk] is None:
-                    raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
-
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
             if pk in base_columns:
@@ -1020,7 +1013,6 @@ class ScheduledChangeTable(AUSTable):
             sc_table_where.append(self.complete == False) # noqa because we need to use == for sqlalchemy operator overloading to work
             if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
                 raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
-        self.log.debug("base_columns: %s" % (base_columns))
 
         self.conditions.validate(condition_columns)
         self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
@@ -1147,8 +1139,6 @@ class ScheduledChangeTable(AUSTable):
             transaction=transaction
         )
 
-        # If the scheduled change had a data version, it means the row already
-        # exists, and we need to use update() to enact it.
         if change_type == "delete":
             where = []
             for col in self.base_primary_key:
@@ -1792,28 +1782,35 @@ class Releases(AUSTable):
         except KeyError:
             return False
 
+
+    def isMappedTo(self, name, transaction=None):
+        if not transaction:
+            transaction = AUSTransaction(self.getEngine())
+        mapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.mapping == name)).fetchone()[0]
+        whitelist_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.whitelist == name)).fetchone()[0]
+        fallbackMapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.fallbackMapping == name)).fetchone()[0]
+        if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
+            return True
+
+        return False
+
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
-        names = []
-        for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):
-            names.append(toDelete["name"])
-            self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
-            if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
-                raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
+        release = self.select(where=where, columns=[self.name, self.product], transaction=transaction)
+        if len(release) != 1:
+            raise ValueError("Where clause must match exactly one release to delete.")
+        release = release[0]
 
-        for name in names:
-            mapping_count = dbo.rules.t.count().where(dbo.rules.mapping == name).execute().fetchone()[0]
-            whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == name).execute().fetchone()[0]
-            fallbackMapping_count = dbo.rules.t.count().where(dbo.rules.fallbackMapping == name).execute().fetchone()[0]
+        self._proceedIfNotReadOnly(release["name"], transaction=transaction)
+        if not self.db.hasPermission(changed_by, "release", "delete", release["product"], transaction):
+            raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, release["product"]))
 
-            if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
-                msg = "%s has rules pointing to it. Hence it cannot be deleted." % (self.name)
-                raise ValueError(msg)
-
+        if self.isMappedTo(release["name"], transaction):
+            msg = "%s has rules pointing to it. Hence it cannot be deleted." % (release["name"])
+            raise ValueError(msg)
         super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
         if not dryrun:
-            for name in names:
-                cache.invalidate("blob", name)
-                cache.invalidate("blob_version", name)
+            cache.invalidate("blob", release["name"])
+            cache.invalidate("blob_version", release["name"])
 
     def isReadOnly(self, name, limit=None, transaction=None):
         where = [self.name == name]

@@ -130,7 +130,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.removeFilterSearchWord = Search.removeFilterSearchWord;
 
   $scope.filterBySelect = function(rule) {
-    if ($scope.pr_ch_selected[0].toLowerCase() === "all rules") {
+    // Always return all entries if "all rules" is the filter
+    // or if $scope.rule_id is set (meaning we're on the history page).
+    if ($scope.pr_ch_selected[0].toLowerCase() === "all rules" || $scope.rule_id) {
       return true;
     }
     else if ($scope.pr_ch_selected && $scope.pr_ch_selected.length > 1) {

@@ -764,6 +764,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 7).execute().fetchall()[0]
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 7).execute().fetchall()[0]
         self.assertEquals(sc_row.scheduled_by, "bob")
+        self.assertEquals(sc_row.change_type, "update")
         self.assertEquals(sc_row.data_version, 1)
         self.assertEquals(sc_row.base_fooid, 3)
         self.assertEquals(sc_row.base_foo, "thing")
@@ -779,6 +780,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 7).execute().fetchall()[0]
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 7).execute().fetchall()[0]
         self.assertEquals(sc_row.scheduled_by, "bob")
+        self.assertEquals(sc_row.change_type, "insert")
         self.assertEquals(sc_row.data_version, 1)
         self.assertEquals(sc_row.base_fooid, None)
         self.assertEquals(sc_row.base_foo, "newthing1")
@@ -804,6 +806,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         sc_row = table.scheduled_changes.t.select().where(table.scheduled_changes.sc_id == 1).execute().fetchall()[0]
         cond_row = table.scheduled_changes.conditions.t.select().where(table.scheduled_changes.conditions.sc_id == 1).execute().fetchall()[0]
         self.assertEquals(sc_row.scheduled_by, "mary")
+        self.assertEquals(sc_row.change_type, "insert")
         self.assertEquals(sc_row.data_version, 1)
         self.assertEquals(sc_row.base_foo_name, "i'm a foo")
         self.assertEquals(sc_row.base_foo, "123")
@@ -913,6 +916,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1).execute().fetchall()[0]
         cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1).execute().fetchall()[0]
         self.assertEquals(sc_row.scheduled_by, "bob")
+        self.assertEquals(sc_row.change_type, "update")
         self.assertEquals(sc_row.data_version, 2)
         self.assertEquals(sc_row.base_fooid, 1)
         self.assertEquals(sc_row.base_foo, "bb")
@@ -920,6 +924,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(sc_row.base_data_version, 1)
         self.assertEquals(sc_history_row.changed_by, "bob")
         self.assertEquals(sc_history_row.scheduled_by, "bob")
+        self.assertEquals(sc_history_row.change_type, "update")
         self.assertEquals(sc_history_row.data_version, 2)
         self.assertEquals(sc_history_row.base_fooid, 1)
         self.assertEquals(sc_history_row.base_foo, "bb")
@@ -942,6 +947,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1).execute().fetchall()[0]
         cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1).execute().fetchall()[0]
         self.assertEquals(sc_row.scheduled_by, "bob")
+        self.assertEquals(sc_row.change_type, "update")
         self.assertEquals(sc_row.data_version, 2)
         self.assertEquals(sc_row.base_fooid, 1)
         self.assertEquals(sc_row.base_foo, "bb")
@@ -949,6 +955,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(sc_row.base_data_version, 1)
         self.assertEquals(sc_history_row.changed_by, "bob")
         self.assertEquals(sc_history_row.scheduled_by, "bob")
+        self.assertEquals(sc_history_row.change_type, "update")
         self.assertEquals(sc_history_row.data_version, 2)
         self.assertEquals(sc_history_row.base_fooid, 1)
         self.assertEquals(sc_history_row.base_foo, "bb")
@@ -971,6 +978,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1).execute().fetchall()[0]
         cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1).execute().fetchall()[0]
         self.assertEquals(sc_row.scheduled_by, "bob")
+        self.assertEquals(sc_row.change_type, "update")
         self.assertEquals(sc_row.data_version, 2)
         self.assertEquals(sc_row.base_fooid, 1)
         self.assertEquals(sc_row.base_foo, "bb")
@@ -978,6 +986,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(sc_row.base_data_version, 1)
         self.assertEquals(sc_history_row.changed_by, "bob")
         self.assertEquals(sc_history_row.scheduled_by, "bob")
+        self.assertEquals(sc_history_row.change_type, "update")
         self.assertEquals(sc_history_row.data_version, 2)
         self.assertEquals(sc_history_row.base_fooid, 1)
         self.assertEquals(sc_history_row.base_foo, "bb")
@@ -1075,6 +1084,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         # This should end up with the scheduled changed incorporating our new
         # value for "foo" as well as the new "bar" value.
         self.assertEquals(sc_row.scheduled_by, "bob")
+        self.assertEquals(sc_row.change_type, "update")
         self.assertEquals(sc_row.data_version, 2)
         self.assertEquals(sc_row.base_fooid, 2)
         self.assertEquals(sc_row.base_foo, "dd")
@@ -1083,6 +1093,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         # ...As well as a new history table entry.
         self.assertEquals(sc_history_row.changed_by, "bob")
         self.assertEquals(sc_history_row.scheduled_by, "bob")
+        self.assertEquals(sc_history_row.change_type, "update")
         self.assertEquals(sc_history_row.data_version, 2)
         self.assertEquals(sc_history_row.base_fooid, 2)
         self.assertEquals(sc_history_row.base_foo, "dd")
@@ -1112,12 +1123,14 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         cond_history_row = self.sc_table.conditions.history.t.select().where(
             self.sc_table.conditions.history.sc_id == 6).execute().fetchall()[0]
         self.assertEquals(sc_row.scheduled_by, "bob")
+        self.assertEquals(sc_row.change_type, "delete")
         self.assertEquals(sc_row.data_version, 2)
         self.assertEquals(sc_row.base_fooid, 1)
         self.assertEquals(sc_row.base_foo, "bb")
         self.assertEquals(sc_row.base_data_version, 1)
         self.assertEquals(sc_history_row.changed_by, "bob")
         self.assertEquals(sc_history_row.scheduled_by, "bob")
+        self.assertEquals(sc_history_row.change_type, "delete")
         self.assertEquals(sc_history_row.data_version, 2)
         self.assertEquals(sc_history_row.base_fooid, 1)
         self.assertEquals(sc_history_row.base_foo, "bb")
@@ -1321,6 +1334,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
         cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 2).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
+        self.assertEquals(row.change_type, "update")
         self.assertEquals(row.data_version, 1)
         self.assertEquals(row.base_fooid, 11)
         self.assertEquals(row.base_foo, "i")
@@ -1344,6 +1358,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
         cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1).execute().fetchall()[0]
         self.assertEquals(row.scheduled_by, "bob")
+        self.assertEquals(row.change_type, "update")
         self.assertEquals(row.data_version, 2)
         self.assertEquals(row.base_fooid, 10)
         self.assertEquals(row.base_foo, "h")
@@ -1351,6 +1366,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         self.assertEquals(row.base_data_version, 1)
         self.assertEquals(history_row.changed_by, "bob")
         self.assertEquals(history_row.scheduled_by, "bob")
+        self.assertEquals(history_row.change_type, "update")
         self.assertEquals(history_row.data_version, 2)
         self.assertEquals(history_row.base_fooid, 10)
         self.assertEquals(history_row.base_foo, "h")
@@ -2026,6 +2042,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.delete({"name": "a"}, changed_by="bill", old_data_version=1)
         release = self.releases.t.select().where(self.releases.name == 'a').execute().fetchall()
         self.assertEquals(release, [])
+
+    def testDeleteReleaseDontAllowMultiple(self):
+        self.assertRaises(ValueError, self.releases.delete, {"product": "a"}, changed_by="bill", old_data_version=1)
 
     def testDeleteWithRuleMapping(self):
         self.releases.t.insert().execute(name='d', product='d', data=createBlob(dict(name="d", schema_version=1, hashFunction="sha512")),
