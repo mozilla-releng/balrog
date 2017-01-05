@@ -1077,8 +1077,6 @@ class TestReleasesScheduledChanges(ViewTest):
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
             change_id=7, changed_by="bill", timestamp=25, sc_id=3, when=10000000, data_version=2
         )
-
-
         dbo.releases.scheduled_changes.t.insert().execute(
             sc_id=4, complete=False, scheduled_by="bill", change_type="delete", data_version=1, base_name="ab", base_data_version=1,
         )

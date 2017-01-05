@@ -158,7 +158,6 @@ class ExistingPermissionForm(DbEditableForm):
     options = JSONStringField(None, 'Options')
 
 
-
 class ScheduledChangeNewPermissionForm(ScheduledChangeTimeForm):
     """Permission and username are required when creating a new Permission, so they
     must be provided when Scheduled a Change that does the same. Options may also be
@@ -285,6 +284,7 @@ class ScheduledChangeDeleteRuleForm(ScheduledChangeTimeForm, ScheduledChangeUpta
     rule_id = IntegerField('Rule ID', validators=[InputRequired()])
     data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
     change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+
 
 class EditScheduledChangeNewRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, RuleForm):
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())

@@ -1782,7 +1782,6 @@ class Releases(AUSTable):
         except KeyError:
             return False
 
-
     def isMappedTo(self, name, transaction=None):
         if not transaction:
             transaction = AUSTransaction(self.getEngine())
