@@ -613,13 +613,13 @@ class ScheduledChangesTableMixin(object):
             def isSignedOff(self, sc_id, transaction=None):
                 return True
 
-            def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+            def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
                 if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
                     raise PermissionDeniedError("fail")
                 if not dryrun:
-                    super(TestTable, self).insert(changed_by, transaction, **columns)
+                    super(TestTable, self).insert(changed_by, transaction, dryrun, signoffs, **columns)
 
-            def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
+            def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
                 # Although our test table doesn't need it, real tables do some extra permission
                 # checks based on "where". To make sure we catch bugs around the "where" arg
                 # being broken, we use it similarly here.
@@ -627,14 +627,14 @@ class ScheduledChangesTableMixin(object):
                     if not self.db.hasPermission(changed_by, "test", "modify", transaction=transaction):
                         raise PermissionDeniedError("fail")
                 if not dryrun:
-                    super(TestTable, self).update(where, what, changed_by, old_data_version, transaction)
+                    super(TestTable, self).update(where, what, changed_by, old_data_version, transaction, dryrun, signoffs)
 
-            def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
+            def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
                 if not self.db.hasPermission(changed_by, "test", "delete", transaction=transaction):
                     raise PermissionDeniedError("fail")
 
                 if not dryrun:
-                    super(TestTable, self).delete(where, changed_by, old_data_version, transaction)
+                    super(TestTable, self).delete(where, changed_by, old_data_version, transaction, dryrun, signoffs)
 
         self.table = TestTable(self.db, self.metadata)
         self.sc_table = self.table.scheduled_changes
@@ -1510,10 +1510,6 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
     def testCantDirectlyDeleteRequiredSignoff(self):
         self.assertRaises(SignoffRequiredError, self.rs.delete, changed_by="bill", old_data_version=1,
                           where={"product": "foo", "channel": "bar", "role": "relman"})
-
-    # TODO: test to verify that updating a required signoff runs .validate
-    # TODO: add tests to rules, releases, permissions for if signoffs have
-    # been verified
 
     def testInsertRequiredSignoffWithScheduledChange(self):
         self.rs.scheduled_changes.enactChange(sc_id=3, enacted_by="bill")
