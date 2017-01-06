@@ -2113,8 +2113,8 @@ class Permissions(AUSTable):
         role_signoffs += self.db.productRequiredSignoffs.select(where={"role": role}, transaction=transaction)
         if role_signoffs:
             required = max([rs["signoffs_required"] for rs in role_signoffs])
-            have = len(self.user_roles.select(where={"role": role}, transaction=transaction))
-            if required > (have - 1):
+            users_with_role = len(self.user_roles.select(where={"role": role}, transaction=transaction))
+            if required > (users_with_role - 1):
                 raise ValueError("Revoking {} role would make it impossible for Required Signoffs to be fulfilled".format(role))
 
         return self.user_roles.delete({"username": username, "role": role}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
