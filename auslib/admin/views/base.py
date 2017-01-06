@@ -6,7 +6,8 @@ from flask.views import MethodView
 
 from auslib.global_state import dbo
 from auslib.util.timesince import timesince
-from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError
+from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
+                      SignoffRequiredError
 import logging
 
 
@@ -40,6 +41,11 @@ def handleGeneralExceptions(messages):
                 msg += e.message
                 logging.warning("Bad input: %s", msg)
                 logging.warning(e)
+                return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
+            except SignoffRequiredError as e:
+                # TODO: improve this message
+                msg = "Cannot modify object directly."
+                logging.warning(msg)
                 return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
             except PermissionDeniedError as e:
                 msg = "Permission denied to perform the request. {}".format(e.message)
