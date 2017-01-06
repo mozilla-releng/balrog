@@ -43,9 +43,9 @@ def handleGeneralExceptions(messages):
                 logging.warning(e)
                 return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
             except SignoffRequiredError as e:
-                # TODO: improve this message
-                msg = "Cannot modify object directly."
+                msg = "This change requires signoff, it cannot be done directly."
                 logging.warning(msg)
+                logging.warning(e)
                 return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
             except PermissionDeniedError as e:
                 msg = "Permission denied to perform the request. {}".format(e.message)
