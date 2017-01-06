@@ -1650,6 +1650,7 @@ class Releases(AUSTable):
         AUSTable.__init__(self, db, dialect)
 
     def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+        # TODO: need to check mappings from rules table for products+channels that may require signoff
         potential_signoffs = []
         required_signoffs = {}
         for row in (old_row, new_row):

@@ -19,7 +19,7 @@ class TestRulesAPI_JSON(ViewTest):
         got = json.loads(ret.data)
         expected = {
             "rule_id": 4, "product": "fake", "priority": 80, "buildTarget": "d", "backgroundRate": 100, "mapping": "a",
-            "update_type": "minor", "data_version": 1
+            "update_type": "minor", "channel": "a", "data_version": 1
         }
         self.assertEquals(got["count"], 1)
         for k, v in expected.iteritems():
@@ -97,7 +97,7 @@ class TestRulesAPI_JSON(ViewTest):
     def testVersionValidation(self):
         for op in operators:
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
-                             product='Firefox', update_type='minor', version='%s4.0' % op))
+                             product='Firefox', channel="nightly", update_type='minor', version='%s4.0' % op))
             self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" % (ret.status_code, ret.data, op))
             r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
             self.assertEquals(len(r), 1)
@@ -106,7 +106,7 @@ class TestRulesAPI_JSON(ViewTest):
     def testBuildIDValidation(self):
         for op in operators:
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
-                             product='Firefox', update_type='minor', buildID='%s20010101000000' % op))
+                             product='Firefox', channel="nightly", update_type='minor', buildID='%s20010101000000' % op))
             self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" % (ret.status_code, ret.data, op))
             r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
             self.assertEquals(len(r), 1)
@@ -115,20 +115,20 @@ class TestRulesAPI_JSON(ViewTest):
     def testVersionValidationBogusInput(self):
         for bogus in ('<= 4.0', ' <=4.0', '<>4.0', '<=-4.0', '=4.0', '> 4.0', '>= 4.0', ' >=4.0', ' 4.0 '):
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
-                             product='Firefox', update_type='minor', version=bogus))
+                             product='Firefox', channel="nightly", update_type='minor', version=bogus))
             self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.data, bogus))
             self.assertTrue('version' in ret.data, msg=ret.data)
 
     def testBuilIDValidationBogusInput(self):
         for bogus in ('<= 4120', ' <=4120', '<>4120', '<=-4120', '=41230', '> 41210', '>= 41220', ' >=41220', ' 41220 '):
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
-                             product='Firefox', update_type='minor', buildID=bogus))
+                             product='Firefox', channel="nightly", update_type='minor', buildID=bogus))
             self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.data, bogus))
             self.assertTrue('buildID' in ret.data, msg=ret.data)
 
     def testValidationEmptyInput(self):
         ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
-                         product='Firefox', update_type='minor', version='', buildID=''))
+                         product='Firefox', channel="nightly", update_type='minor', version='', buildID=''))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -145,10 +145,10 @@ class TestSingleRuleView_JSON(ViewTest):
             mapping="c",
             fallbackMapping=None,
             priority=100,
-            product=None,
+            product="a",
             version="3.5",
             buildID=None,
-            channel=None,
+            channel="a",
             locale=None,
             distribution=None,
             buildTarget="d",
@@ -172,10 +172,10 @@ class TestSingleRuleView_JSON(ViewTest):
             mapping="b",
             fallbackMapping=None,
             priority=100,
-            product=None,
+            product="a",
             version="3.3",
             buildID=None,
-            channel=None,
+            channel="a",
             locale=None,
             distribution=None,
             buildTarget="d",
@@ -363,7 +363,7 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r["backgroundRate"], 0)
         self.assertEquals(r["mapping"], "c")
         self.assertEquals(r["update_type"], "minor")
-        self.assertEquals(r["product"], None)
+        self.assertEquals(r["product"], "a")
 
     def testPost404(self):
         ret = self._post("/rules/555", data=dict(mapping="d"))
@@ -376,6 +376,11 @@ class TestSingleRuleView_JSON(ViewTest):
     def testPostWithBadAlias(self):
         ret = self._post("/rules/1", data=dict(alias="3", data_version=1))
         self.assertEquals(ret.status_code, 400)
+
+    def testPostWithRequiredSignoff(self):
+        ret = self._post("/rules/1", data=dict(product="c", channel="c", data_version=1))
+        self.assertEquals(ret.status_code, 400)
+        self.assertIn("This change requires signoff", ret.data)
 
     def testBadAuthPost(self):
         ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
@@ -690,6 +695,7 @@ class TestRuleScheduledChanges(ViewTest):
         dbo.rules.scheduled_changes.t.insert().execute(
             sc_id=1, scheduled_by="bill", data_version=1, base_rule_id=1, base_priority=100, base_version="3.5", base_buildTarget="d",
             base_backgroundRate=100, base_mapping="b", base_update_type="minor", base_data_version=1, change_type="update",
+            base_product="a", base_channel="a",
         )
         dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=1000000, data_version=1)
         dbo.rules.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
@@ -757,7 +763,7 @@ class TestRuleScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 1000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 1, "priority": 100,
                     "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "update_type": "minor",
-                    "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
+                    "data_version": 1, "alias": None, "product": "a", "channel": "a", "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "signoffs": {
@@ -795,7 +801,7 @@ class TestRuleScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 1000000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 1, "priority": 100,
                     "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "update_type": "minor",
-                    "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
+                    "data_version": 1, "alias": None, "product": "a", "channel": "a", "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "signoffs": {
@@ -995,7 +1001,7 @@ class TestRuleScheduledChanges(ViewTest):
             "sc_id": 1, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1,
             "base_priority": 100, "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100,
             "base_mapping": "c", "base_update_type": "minor", "base_data_version": 1, "base_alias": None,
-            "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None,
+            "base_product": "a", "base_channel": "a", "base_buildID": None, "base_locale": None, "base_osVersion": None,
             "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
             "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None, "base_systemCapabilities": None,
             "change_type": "update",
@@ -1050,7 +1056,7 @@ class TestRuleScheduledChanges(ViewTest):
         row = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()[0]
         expected = {
             "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "fallbackMapping": None,
-            "update_type": "minor", "data_version": 2, "alias": None, "product": None, "channel": None, "buildID": None,
+            "update_type": "minor", "data_version": 2, "alias": None, "product": "a", "channel": "a", "buildID": None,
             "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
             "comment": None, "whitelist": None, "systemCapabilities": None,
         }

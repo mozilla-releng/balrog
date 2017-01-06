@@ -340,6 +340,13 @@ class TestReleasesAPI_JSON(ViewTest):
         data = json.dumps(dict(uehont="uhetn", schema_version=1))
         ret = self._post("/releases/c", data=dict(data=data, product="c", data_version=1))
         self.assertStatusCode(ret, 400)
+        self.assertIn("Additional properties are not allowed", ret.data)
+
+    def testReleasePostWithSignoffRequired(self):
+        data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='c', hashFunction="sha512"))
+        ret = self._post("/releases/c", data=dict(data=data, product="c", data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 400)
+        self.assertIn("This change requires signoff", ret.data)
 
     def testReleasePostCreatesNewReleasev1(self):
         data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
