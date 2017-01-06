@@ -1369,13 +1369,23 @@ class Rules(AUSTable):
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
     def getRequiredSignoffs(self, old_row, new_row, transaction=None):
-        required_signoffs = {}
+        required_signoffs = defaultdict()
         if old_row:
-            for rs in self.db.productRequiredSignoffs.select(where={"product": old_row["product"], "channel": old_row["channel"]}, transaction=transaction):
-                required_signoffs[rs["role"]] = rs["number_required"]
+            where = {}
+            if old_row.get("product"):
+                where["product"] = old_row["product"]
+            if old_row.get("channel"):
+                where["channel"] = old_row["channel"]
+            for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
+                required_signoffs[rs["role"]] = rs["signoffs_required"]
         if new_row:
-            for rs in self.db.productRequiredSignoffs.select(where={"product": new_row.get("product"), "channel": new_row.get("channel")}, transaction=transaction):
-                required_signoffs[rs["role"]] = max(required_signoffs[rs["role"]], rs["number_required"])
+            where = {}
+            if new_row.get("product"):
+                where["product"] = new_row["product"]
+            if new_row.get("channel"):
+                where["channel"] = new_row["channel"]
+            for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
+                required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
         return required_signoffs
 
     def _matchesRegex(self, foo, bar):
