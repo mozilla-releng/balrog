@@ -1227,6 +1227,8 @@ class ScheduledChangeTable(AUSTable):
 
 class RequiredSignoffsTable(AUSTable):
 
+    decisionColumns = []
+
     def __init__(self, db, dialect):
         self.table.append_column(Column("role", String(50), primary_key=True))
         self.table.append_column(Column("signoffs_required", Integer, nullable=False))
@@ -1235,21 +1237,27 @@ class RequiredSignoffsTable(AUSTable):
 
     def getRequiredSignoffs(self, old_row, new_row, transaction=None):
         if old_row:
-            return self.select(where={"product": old_row["product"], "channel": old_row["channel"]}, transaction=transaction)
-        return self.select(where={"product": new_row["product"], "channel": new_row["channel"]}, transaction=transaction)
+            where = {col: old_row[col] for col in self.decisionColumns}
+            return self.select(where=where, transaction=transaction)
+        where = {col: new_row[col] for col in self.decisionColumns}
+        return self.select(where=where, transaction=transaction)
 
-    def validate(self, product, channel, role, signoffs_required, transaction=None):
-        users_with_role, = self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == role).execute().fetchone()
-        if users_with_role < signoffs_required:
-            raise ValueError("Cannot require {} signoffs for {}, {} - only {} users hold that role".format(signoffs_required, product, channel, role))
+    def validate(self, columns, transaction=None):
+        for col in self.decisionColumns:
+            if columns[col] is None:
+                raise ValueError("{} are required.".format(self.decisionColumns))
+
+        users_with_role, = self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"]).execute().fetchone()
+        print users_with_role
+        print columns
+        if users_with_role < columns["signoffs_required"]:
+            foo = ""
+            for col in self.decisionColumns:
+                foo += "{}, ".format(col)
+            raise ValueError("Cannot require {} signoffs for {} - only {} users hold that role".format(columns["signoffs_required"], foo, columns["role"]))
 
     def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
-        product = columns.get("product")
-        channel = columns.get("channel")
-        if not product or not channel:
-            raise ValueError("Product and channel are required.")
-
-        self.validate(product, channel, columns.get("role"), columns.get("signoffs_required"), transaction=transaction)
+        self.validate(columns, transaction=transaction)
 
         if not self.db.hasPermission(changed_by, "required_signoff", "create", transaction=transaction):
             raise PermissionDeniedError("{} is not allowed to create new Required Signoffs.".format(changed_by))
@@ -1257,10 +1265,10 @@ class RequiredSignoffsTable(AUSTable):
         return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, signoffs=signoffs, **columns)
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
-        if "number_required" in what:
+        if "signoffs_required" in what:
             for rs in self.select(where=where, transaction=transaction):
                 rs.update(what)
-                self.validate(rs["product"], rs["channel"], rs["role"], rs["number_required"], transaction=transaction)
+                self.validate(rs, transaction=transaction)
 
         if not self.db.hasPermission(changed_by, "required_signoff", "modify", transaction=transaction):
             raise PermissionDeniedError("{} is not allowed to modify Required Signoffs.".format(changed_by))
@@ -1278,6 +1286,8 @@ class RequiredSignoffsTable(AUSTable):
 
 class ProductRequiredSignoffsTable(RequiredSignoffsTable):
 
+    decisionColumns = ["product", "channel"]
+
     def __init__(self, db, metadata, dialect):
         self.table = Table("product_channel_required_signoffs", metadata,
                            Column("product", String(15), primary_key=True),
@@ -1287,6 +1297,8 @@ class ProductRequiredSignoffsTable(RequiredSignoffsTable):
 
 
 class PermissionsRequiredSignoffsTable(RequiredSignoffsTable):
+
+    decisionColumns = ["product"]
 
     def __init__(self, db, metadata, dialect):
         self.table = Table("permissions_required_signoffs", metadata,
