@@ -1386,18 +1386,16 @@ class Rules(AUSTable):
             where = {}
             if old_row.get("product"):
                 where["product"] = old_row["product"]
-            if old_row.get("channel"):
-                where["channel"] = old_row["channel"]
             for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
-                required_signoffs[rs["role"]] = rs["signoffs_required"]
+                if not old_row.get("channel") or self._matchesRegex(old_row["channel"], rs["channel"]):
+                    required_signoffs[rs["role"]] = rs["signoffs_required"]
         if new_row:
             where = {}
             if new_row.get("product"):
                 where["product"] = new_row["product"]
-            if new_row.get("channel"):
-                where["channel"] = new_row["channel"]
             for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
-                required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
+                if not new_row.get("channel") or self._matchesRegex(new_row["channel"], rs["channel"]):
+                    required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
         return required_signoffs
 
     def _matchesRegex(self, foo, bar):

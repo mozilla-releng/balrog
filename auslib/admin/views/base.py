@@ -7,7 +7,7 @@ from flask.views import MethodView
 from auslib.global_state import dbo
 from auslib.util.timesince import timesince
 from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
-                      SignoffRequiredError
+    SignoffRequiredError
 import logging
 
 

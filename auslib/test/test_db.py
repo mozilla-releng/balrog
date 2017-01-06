@@ -1657,7 +1657,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z',
             product="a", channel="a", data_version=1)
         self.paths.t.insert().execute(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z",
-                                      product="a", channel="a", data_version=1)
+                                      product="foo", channel="foo*", data_version=1)
         self.paths.t.insert().execute(rule_id=10, priority=100, buildTarget="g", mapping="g", fallbackMapping='fallback', backgroundRate=100,
                                       update_type="z", product="foo", channel="foo", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
@@ -1679,7 +1679,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z',
                  product="a", channel="a", data_version=1),
             dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z",
-                 product="a", channel="a", data_version=1),
+                 product="foo", channel="foo*", data_version=1),
             dict(rule_id=10, priority=100, buildTarget="g", mapping="g", fallbackMapping='fallback', backgroundRate=100, update_type="z",
                  product="foo", channel="foo", data_version=1),
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z',
@@ -1837,7 +1837,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def testGetRulesMatchingQuerySystemCapabilities(self):
         rules = self.paths.getRulesMatchingQuery(
-            dict(product="a", version="5.0", channel="a", buildTarget="f",
+            dict(product="foo", version="5.0", channel="foo", buildTarget="f",
                  buildID="", locale="", osVersion="", distribution="",
                  distVersion="", headerArchitecture="", force=False,
                  queryVersion=6, systemCapabilities="S"
@@ -1847,7 +1847,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         expected = [
             dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z",
-                 product="a", channel="a", data_version=1),
+                 product="foo", channel="foo*", data_version=1),
         ]
         self.assertEquals(rules, expected)
 
@@ -1952,6 +1952,15 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                     priority=60)
         self.assertRaises(SignoffRequiredError, self.paths.insert, changed_by="bill", **what)
 
+    def testAddRulesThatRequiresSignoffWithChannelGlob(self):
+        what = dict(backgroundRate=11,
+                    mapping='c',
+                    update_type='z',
+                    priority=60,
+                    product="foo",
+                    channel="foo*")
+        self.assertRaises(SignoffRequiredError, self.paths.insert, changed_by="bill", **what)
+
     def testUpdateRule(self):
         rules = self.paths.t.select().where(self.paths.rule_id == 1).execute().fetchall()
         what = dict(rules[0].items())
@@ -1985,6 +1994,9 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def testUpdateRuleThatRequiresSignoff(self):
         self.assertRaises(SignoffRequiredError, self.paths.update, where={"rule_id": 10}, what={"mapping": "g"}, changed_by="bill", old_data_version=1)
 
+    def testUpdateRuleThatRequiresSignoffWithChannelGlob(self):
+        self.assertRaises(SignoffRequiredError, self.paths.update, where={"rule_id": 9}, what={"mapping": "g"}, changed_by="bill", old_data_version=1)
+
     def testDeleteRule(self):
         self.paths.delete({"rule_id": 2}, changed_by="bill", old_data_version=1)
         rule = self.paths.t.select().where(self.paths.rule_id == 2).execute().fetchall()
@@ -1997,6 +2009,9 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def testDeleteRuleThatRequiresSignoff(self):
         self.assertRaises(SignoffRequiredError, self.paths.delete, {"rule_id": 10}, changed_by="bill", old_data_version=1)
+
+    def testDeleteRuleThatRequiresSignoffWithChannelGlob(self):
+        self.assertRaises(SignoffRequiredError, self.paths.delete, {"rule_id": 9}, changed_by="bill", old_data_version=1)
 
     def testGetNumberOfRules(self):
         self.assertEquals(self.paths.countRules(), 10)
