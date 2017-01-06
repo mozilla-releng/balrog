@@ -1474,6 +1474,10 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="bob", role="releng")
         self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="janet", role="relman")
         self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="nancy", role="relman")
+        self.rs.scheduled_changes.t.insert().execute(sc_id=4, scheduled_by="bob", complete=False, change_type="insert", data_version=1,
+                                                     base_product="foo", base_channel="bar", base_role="dev", base_signoffs_required=1)
+        self.rs.scheduled_changes.conditions.t.insert().execute(sc_id=4, when=300000, data_version=1)
+        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bob", role="releng")
 
     def testInsertNewRequiredSignoff(self):
         self.rs.insert(changed_by="bill", product="carrot", channel="celery", role="releng", signoffs_required=1)
@@ -1515,6 +1519,9 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.rs.scheduled_changes.enactChange(sc_id=3, enacted_by="bill")
         got = self.rs.t.select().where(self.rs.product == "foo").where(self.rs.channel == "bar").where(self.rs.role == "qa").execute().fetchall()
         self.assertEquals(got, [("foo", "bar", "qa", 1, 1)])
+
+    def testInsertRequiredSignoffWithoutEnoughSignoffs(self):
+        self.assertRaises(SignoffRequiredError, self.rs.scheduled_changes.enactChange, sc_id=4, enacted_by="bill")
 
     def testUpdateRequiredSignoffWithScheduledChange(self):
         self.rs.scheduled_changes.enactChange(sc_id=1, enacted_by="bill")
