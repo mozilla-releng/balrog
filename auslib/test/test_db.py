@@ -3303,7 +3303,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
                           old_data_version=1)
 
     def testCannotRevokeRoleThatMakesRequiredSignoffImpossible(self):
-        self.assertRaisesRegexp(ValueError, "Revoking dev role would make it impossible for Required Signoffs for foo, bar to be fulfilled",
+        self.assertRaisesRegexp(ValueError, "Revoking dev role would make it impossible for Required Signoffs to be fulfilled",
                                 self.permissions.revokeRole, "bob", "dev", "bill", old_data_version=1)
 
     def testGetAllUsers(self):
