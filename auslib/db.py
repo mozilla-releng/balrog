@@ -281,7 +281,7 @@ class AUSTable(object):
         # Releases and Permissions. Returning None here is a bad default,
         # but we can't raise this without breaking things until all
         # tables that support required signoffs also support scheduled changes.
-        #raise NotImplementedError()
+        # raise NotImplementedError()
         return None
 
     def _returnRowOrRaise(self, where, columns=None, transaction=None):
@@ -1253,8 +1253,6 @@ class RequiredSignoffsTable(AUSTable):
                 raise ValueError("{} are required.".format(self.decisionColumns))
 
         users_with_role, = self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"]).execute().fetchone()
-        print users_with_role
-        print columns
         if users_with_role < columns["signoffs_required"]:
             foo = ""
             for col in self.decisionColumns:
@@ -1270,10 +1268,9 @@ class RequiredSignoffsTable(AUSTable):
         return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, signoffs=signoffs, **columns)
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
-        if "signoffs_required" in what:
-            for rs in self.select(where=where, transaction=transaction):
-                rs.update(what)
-                self.validate(rs, transaction=transaction)
+        for rs in self.select(where=where, transaction=transaction):
+            rs.update(what)
+            self.validate(rs, transaction=transaction)
 
         if not self.db.hasPermission(changed_by, "required_signoff", "modify", transaction=transaction):
             raise PermissionDeniedError("{} is not allowed to modify Required Signoffs.".format(changed_by))
@@ -1386,21 +1383,19 @@ class Rules(AUSTable):
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
     def getRequiredSignoffs(self, old_row, new_row, transaction=None):
-        required_signoffs = defaultdict()
-        if old_row:
+        potential_signoffs = []
+        required_signoffs = {}
+        for row in (old_row, new_row):
+            if not row:
+                continue
             where = {}
-            if old_row.get("product"):
-                where["product"] = old_row["product"]
+            if row.get("product"):
+                where["product"] = row["product"]
             for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
-                if not old_row.get("channel") or self._matchesRegex(old_row["channel"], rs["channel"]):
-                    required_signoffs[rs["role"]] = rs["signoffs_required"]
-        if new_row:
-            where = {}
-            if new_row.get("product"):
-                where["product"] = new_row["product"]
-            for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
-                if not new_row.get("channel") or self._matchesRegex(new_row["channel"], rs["channel"]):
-                    required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
+                if not row.get("channel") or self._matchesRegex(row["channel"], rs["channel"]):
+                    potential_signoffs.append(rs)
+        for rs in potential_signoffs:
+            required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
         return required_signoffs
 
     def _matchesRegex(self, foo, bar):
@@ -1655,19 +1650,17 @@ class Releases(AUSTable):
         AUSTable.__init__(self, db, dialect)
 
     def getRequiredSignoffs(self, old_row, new_row, transaction=None):
-        required_signoffs = defaultdict()
-        if old_row:
+        potential_signoffs = []
+        required_signoffs = {}
+        for row in (old_row, new_row):
+            if not row:
+                continue
             where = {}
-            if old_row.get("product"):
-                where["product"] = old_row["product"]
-            for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
-                required_signoffs[rs["role"]] = rs["signoffs_required"]
-        if new_row:
-            where = {}
-            if new_row.get("product"):
-                where["product"] = new_row["product"]
-            for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
-                required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
+            if row.get("product"):
+                where["product"] = row["product"]
+            potential_signoffs.extend(self.db.productRequiredSignoffs.select(where=where, transaction=transaction))
+        for rs in potential_signoffs:
+            required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
         return required_signoffs
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -2017,20 +2010,16 @@ class Permissions(AUSTable):
         AUSTable.__init__(self, db, dialect)
 
     def getRequiredSignoffs(self, old_row, new_row, transaction=None):
-        required_signoffs = {}
         potential_signoffs = []
-        if old_row:
+        required_signoffs = {}
+        for row in (old_row, new_row):
+            if not row:
+                continue
             # XXX: This kindof sucks because it means that we don't have great control
             # over the signoffs required permissions that don't specify products, or
             # don't support them.
-            if "products" in self.allPermissions[old_row["permission"]] and old_row.get("options") and old_row["options"].get("products"):
-                for product in old_row["options"]["products"]:
-                    potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
-            else:
-                potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(transaction=transaction))
-        if new_row:
-            if "products" in self.allPermissions[new_row["permission"]] and new_row.get("options") and new_row["options"].get("products"):
-                for product in new_row["options"]["products"]:
+            if "products" in self.allPermissions[row["permission"]] and row.get("options") and row["options"].get("products"):
+                for product in row["options"]["products"]:
                     potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
             else:
                 potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(transaction=transaction))
