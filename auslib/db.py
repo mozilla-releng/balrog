@@ -1289,7 +1289,7 @@ class ProductRequiredSignoffsTable(RequiredSignoffsTable):
     decisionColumns = ["product", "channel"]
 
     def __init__(self, db, metadata, dialect):
-        self.table = Table("product_channel_required_signoffs", metadata,
+        self.table = Table("product_req_signoffs", metadata,
                            Column("product", String(15), primary_key=True),
                            Column("channel", String(75), primary_key=True),
                            )
@@ -1301,7 +1301,7 @@ class PermissionsRequiredSignoffsTable(RequiredSignoffsTable):
     decisionColumns = ["product"]
 
     def __init__(self, db, metadata, dialect):
-        self.table = Table("permissions_required_signoffs", metadata,
+        self.table = Table("permissions_req_signoffs", metadata,
                            Column("product", String(15), primary_key=True),
                            )
         super(PermissionsRequiredSignoffsTable, self).__init__(db, dialect)
