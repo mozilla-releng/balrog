@@ -2002,17 +2002,19 @@ class Permissions(AUSTable):
         AUSTable.__init__(self, db, dialect)
 
     def getRequiredSignoffs(self, old_row, new_row, transaction=None):
-        # TODO: don't look at product if the permission doesn't support it
         required_signoffs = {}
         potential_signoffs = []
         if old_row:
-            if old_row.get("options") and old_row["options"].get("products"):
+            # XXX: This kindof sucks because it means that we don't have great control
+            # over the signoffs required permissions that don't specify products, or
+            # don't support them.
+            if "products" in self.allPermissions[old_row["permission"]] and old_row.get("options") and old_row["options"].get("products"):
                 for product in old_row["options"]["products"]:
                     potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
             else:
                 potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(transaction=transaction))
         if new_row:
-            if new_row.get("options") and new_row["options"].get("products"):
+            if "products" in self.allPermissions[new_row["permission"]] and new_row.get("options") and new_row["options"].get("products"):
                 for product in new_row["options"]["products"]:
                     potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
             else:

@@ -3191,6 +3191,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.user_roles = self.db.permissions.user_roles
         self.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         self.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)
+        self.permissions.t.insert().execute(permission="permission", username="sean", data_version=1)
         self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["fake"]), data_version=1)
         self.permissions.t.insert().execute(permission="release", username="janet", options=dict(products=["fake"]), data_version=1)
         self.permissions.t.insert().execute(permission="rule", username="cathy", data_version=1)
@@ -3273,6 +3274,10 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         query = query.where(self.permissions.permission == "release")
         self.assertEquals(len(query.execute().fetchall()), 0)
 
+    def testRevokePermissionThatDoesntSupportProductOption(self):
+        self.assertRaises(SignoffRequiredError, self.permissions.delete, {"username": "sean", "permission": "permission"}, changed_by="bill",
+                          old_data_version=1)
+
     def testRevokeRoleWithPermission(self):
         self.permissions.revokeRole("bob", "releng", "bill", old_data_version=1)
         got = self.user_roles.t.select().where(self.user_roles.username == "bob").execute().fetchall()
@@ -3307,10 +3312,11 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
                                                                     "cathy",
                                                                     "fred",
                                                                     "george",
-                                                                    "janet"]))
+                                                                    "janet",
+                                                                    "sean"]))
 
     def testCountAllUsers(self):
-        self.assertEquals(self.permissions.countAllUsers(), 6)
+        self.assertEquals(self.permissions.countAllUsers(), 7)
 
     def testGetPermission(self):
         expected = {
