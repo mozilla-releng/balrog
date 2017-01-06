@@ -1639,6 +1639,22 @@ class Releases(AUSTable):
         self.table.append_column(Column('data', BlobColumn(dataType), nullable=False))
         AUSTable.__init__(self, db, dialect)
 
+    def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+        required_signoffs = defaultdict()
+        if old_row:
+            where = {}
+            if old_row.get("product"):
+                where["product"] = old_row["product"]
+            for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
+                required_signoffs[rs["role"]] = rs["signoffs_required"]
+        if new_row:
+            where = {}
+            if new_row.get("product"):
+                where["product"] = new_row["product"]
+            for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
+                required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
+        return required_signoffs
+
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
 

@@ -1570,8 +1570,8 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.paths.t.insert().execute(rule_id=10, priority=100, buildTarget="g", mapping="g", fallbackMapping='fallback', backgroundRate=100,
                                       update_type="z", product="foo", channel="foo", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        self.db.permissions.user_roles.t.insert(username="bill", role="baz", data_version=1)
-        self.db.permissions.user_roles.t.insert(username="jane", role="baz", data_version=1)
+        self.db.permissions.user_roles.t.insert(username="bill", role="bar", data_version=1)
+        self.db.permissions.user_roles.t.insert(username="jane", role="bar", data_version=1)
         self.db.productRequiredSignoffs.t.insert().execute(product="foo", channel="foo", role="bar", signoffs_required=2, data_version=1)
 
     def testGetOrderedRules(self):
@@ -2048,6 +2048,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
         self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["c"]), data_version=1)
+        self.permissions.user_roles.t.insert(username="bill", role="bar", data_version=1)
+        self.permissions.user_roles.t.insert(username="me", role="bar", data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="b", channel="b", role="bar", signoffs_required=2, data_version=1)
 
     def tearDown(self):
         dbo.reset()
@@ -2169,9 +2172,16 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertRaises(ReadOnlyError, self.releases.delete, {"name": "a"}, changed_by='me', old_data_version=2)
 
+    def testDeleteReleaseThatRequiresSignoff(self):
+        self.assertRaises(SignoffRequiredError, self.releases.delete, {"name": "b"}, changed_by="me", old_data_version=1)
+
     def testAddReleaseWithNameMismatch(self):
         blob = ReleaseBlobV1(name="f", schema_version=1, hashFunction="sha512")
         self.assertRaises(ValueError, self.releases.insert, "bill", name="g", product="g", data=blob)
+
+    def testAddReleaseThatRequiresSignoff(self):
+        blob = ReleaseBlobV1(name="f", schema_version=1, hashFunction="sha512")
+        self.assertRaises(SignoffRequiredError, self.releases.insert, "bill", name="f", product="b", data=blob)
 
     def testUpdateReleaseNoPermissionForNewProduct(self):
         self.assertRaises(PermissionDeniedError, self.releases.update, {"name": "c"}, {"product": "d"}, "bob", 1)
@@ -2186,6 +2196,10 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testUpdateReleaseNoPermissionToSetReadOnly(self):
         self.assertRaises(PermissionDeniedError, self.releases.update, {"name": "c"}, {"read_only": True}, "bob", 1)
+
+    def testUpdateReleasesThatRequiresSignoff(self):
+        newBlob = ReleaseBlobV1(name="b", schema_version=1, hashFunction="sha256")
+        self.assertRaises(SignoffRequiredError, self.releases.update, {"name": "b"}, {"data": newBlob}, "bill", 1)
 
     def testIsReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
