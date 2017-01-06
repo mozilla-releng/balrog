@@ -2001,6 +2001,26 @@ class Permissions(AUSTable):
         self.user_roles = UserRoles(db, metadata, dialect)
         AUSTable.__init__(self, db, dialect)
 
+    def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+        # TODO: don't look at product if the permission doesn't support it
+        required_signoffs = {}
+        potential_signoffs = []
+        if old_row:
+            if old_row.get("options") and old_row["options"].get("products"):
+                for product in old_row["options"]["products"]:
+                    potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
+            else:
+                potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(transaction=transaction))
+        if new_row:
+            if new_row.get("options") and new_row["options"].get("products"):
+                for product in new_row["options"]["products"]:
+                    potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
+            else:
+                potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(transaction=transaction))
+        for rs in potential_signoffs:
+            required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
+        return required_signoffs
+
     def assertPermissionExists(self, permission):
         if permission not in self.allPermissions.keys():
             raise ValueError('Unknown permission "%s"' % permission)
