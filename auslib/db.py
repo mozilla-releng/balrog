@@ -277,6 +277,11 @@ class AUSTable(object):
         return self.t.metadata.bind
 
     def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+        # TODO: uncomment this after scheduled changes are enabled for
+        # Releases and Permissions. Returning None here is a bad default,
+        # but we can't raise this without breaking things until all
+        # tables that support required signoffs also support scheduled changes.
+        #raise NotImplementedError()
         return None
 
     def _returnRowOrRaise(self, where, columns=None, transaction=None):
