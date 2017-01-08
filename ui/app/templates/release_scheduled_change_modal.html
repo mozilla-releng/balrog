@@ -1,5 +1,7 @@
 <div class="modal-header">
-    <h3 class="modal-title">Add Scheduled Change</h3>
+    <h3 class="modal-title" ng-show="!sc.name">Add Scheduled Change</h3>
+  <h3 class="modal-title" ng-show="sc.name && !sc.when">Add Scheduled Change for {{ sc.name }}</h3
+    <h3 class="modal-title" ng-show="sc.name && sc.when">Edit Scheduled Change for {{ sc.name }}</h3
 </div>
 <div class="modal-body">
   <form role="form">
@@ -32,7 +34,7 @@
     </div>
 
     <hr>
-    <h4 ng-show= "sc.change_type !== 'delete'">Releases Details</h4>
+    <h4 ng-show= "sc.change_type !== 'delete'">Release Details</h4>
     <div ng-show= "sc.change_type !== 'delete'" class="form-group" ng-class="{'has-error': errors.data}">
       <label for="id_data">Data</label>
       <input type="file" id="id_data" file-model="dataFile" onchange="angular.element(this).scope().changeName()">
