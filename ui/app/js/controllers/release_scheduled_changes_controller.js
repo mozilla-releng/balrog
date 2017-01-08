@@ -33,8 +33,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       value: "when"
     },
     {
-      text: "Product, Channel",
-      value: "product,channel"
+      text: "Product, Name",
+      value: "product, Name"
     },
   ];
 
@@ -126,7 +126,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       }
     });
   };
-  $scope.openDataModal = function(release) {
+  $scope.openDataModal = function(sc) {
 
     var modalInstance = $modal.open({
       templateUrl: 'release_data_modal.html',
@@ -135,7 +135,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       backdrop: 'static',
       resolve: {
         release: function () {
-          return release;
+          return sc;
         },
         diff: function() {
           return false;
