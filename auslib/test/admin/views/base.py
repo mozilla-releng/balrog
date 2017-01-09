@@ -35,9 +35,9 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.permissions.t.insert().execute(permission='permission', username='bob', data_version=1)
         dbo.permissions.t.insert().execute(permission='release', username='bob',
-                                           options=dict(products=['fake', 'b'], actions=["create", "modify"]), data_version=1)
-        dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=dict(actions=["set"]), data_version=1)
-        dbo.permissions.t.insert().execute(permission='rule', username='bob', options=dict(actions=["modify"], products=['a']), data_version=1)
+                                           options=dict(products=['fake', "a", 'b'], actions=["create", "modify"]), data_version=1)
+        dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=dict(actions=["set"], products=["a", "b"]), data_version=1)
+        dbo.permissions.t.insert().execute(permission='rule', username='bob', options=dict(actions=["modify"], products=['a', "b"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=dict(actions=["modify"], products=['a']), data_version=1)
         dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=dict(actions=["enact"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_locale', username='ashanti',
@@ -48,6 +48,7 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.user_roles.t.insert().execute(username="bill", role="qa", data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="bob", role="relman", data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="a", role="releng", signoffs_required=1, data_version=1)
+        dbo.permissionsRequiredSignoffs.t.insert().execute(product="fake", role="releng", signoffs_required=1, data_version=1)
         dbo.releases.t.insert().execute(
             name='a', product='a', data=createBlob(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(

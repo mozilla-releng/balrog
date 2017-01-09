@@ -1855,15 +1855,16 @@ class Releases(AUSTable):
             # make a special method on this class that only modifies read_only
             # (similar to addLocaleToRelease).
             if "read_only" in what:
+                product = what.get("product", current_release["product"])
                 # In addition to being able to modify the release overall, users
                 # need to be granted explicit access to manipulate the read_only
                 # flag. This lets us give out very granular access, which can be
                 # very helpful particularly in automation.
                 if what["read_only"] is False:
-                    if not self.db.hasPermission(changed_by, "release_read_only", "unset", what.get("product"), transaction):
+                    if not self.db.hasPermission(changed_by, "release_read_only", "unset", product, transaction):
                         raise PermissionDeniedError("%s is not allowed to mark %s products read write" % (changed_by, what.get("product")))
                 elif what["read_only"] is True:
-                    if not self.db.hasPermission(changed_by, "release_read_only", "set", what.get("product"), transaction):
+                    if not self.db.hasPermission(changed_by, "release_read_only", "set", product, transaction):
                         raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, what.get("product")))
 
             if blob:

@@ -1174,40 +1174,41 @@ class TestReadOnlyView(ViewTest):
         self.assertEqual(json.loads(ret.data)['read_only'], is_read_only)
 
     def testReadOnlySetTrueAdmin(self):
-        data = dict(name='b', read_only=True, product='Firefox', data_version=1)
-        self._put('/releases/b/read_only', username='bill', data=data)
+        data = dict(name='b', read_only=True, product='b', data_version=1)
+        ret = self._put('/releases/b/read_only', username='bill', data=data)
+        self.assertStatusCode(ret, 201)
         read_only = dbo.releases.isReadOnly(name='b')
         self.assertEqual(read_only, True)
 
     def testReadOnlySetTrueNonAdmin(self):
-        data = dict(name='b', read_only=True, product='Firefox', data_version=1)
-        self._put('/releases/b/read_only', username='bob', data=data)
-        read_only = dbo.releases.isReadOnly(name='b')
-        self.assertEqual(read_only, True)
+        data = dict(name='b', read_only=True, product='b', data_version=1)
+        ret = self._put('/releases/b/read_only', username='bob', data=data)
+        self.assertStatusCode(ret, 201)
         read_only = dbo.releases.isReadOnly(name='b')
         self.assertEqual(read_only, True)
 
     def testReadOnlySetFalseAdmin(self):
         dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
-        data = dict(name='b', read_only='', product='Firefox', data_version=2)
-        self._put('/releases/b/read_only', username='bill', data=data)
+        data = dict(name='b', read_only='', product='b', data_version=2)
+        ret = self._put('/releases/b/read_only', username='bill', data=data)
+        self.assertStatusCode(ret, 201)
         read_only = dbo.releases.isReadOnly(name='b')
         self.assertEqual(read_only, False)
 
     def testReadOnlyUnsetWithoutPermissionForProduct(self):
         dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
-        data = dict(name='b', read_only='', product='Firefox', data_version=2)
+        data = dict(name='b', read_only='', product='b', data_version=2)
         ret = self._put('/releases/b/read_only', username='me', data=data)
         self.assertStatusCode(ret, 403)
 
     def testReadOnlyAdminSetAndUnsetFlag(self):
         # Setting flag
-        data = dict(name='b', read_only=True, product='Firefox', data_version=1)
+        data = dict(name='b', read_only=True, product='b', data_version=1)
         ret = self._put('/releases/b/read_only', username='bill', data=data)
         self.assertStatusCode(ret, 201)
 
         # Resetting flag
-        data = dict(name='b', read_only='', product='Firefox', data_version=2)
+        data = dict(name='b', read_only='', product='b', data_version=2)
         ret = self._put('/releases/b/read_only', username='bill', data=data)
         self.assertStatusCode(ret, 201)
 
@@ -1217,7 +1218,7 @@ class TestReadOnlyView(ViewTest):
 
     def testReadOnlyNonAdminCanSetFlagButNotUnset(self):
         # Setting read only flag
-        data_set = dict(name='b', read_only=True, product='Firefox', data_version=1)
+        data_set = dict(name='b', read_only=True, product='b', data_version=1)
         ret = self._put('/releases/b/read_only', username='bob', data=data_set)
         self.assertStatusCode(ret, 201)
 
@@ -1226,7 +1227,7 @@ class TestReadOnlyView(ViewTest):
         self.assertEqual(read_only, True)
 
         # Resetting flag, which should fail with 403
-        data_unset = dict(name='b', read_only='', product='Firefox', data_version=2)
+        data_unset = dict(name='b', read_only='', product='b', data_version=2)
         ret = self._put('/releases/b/read_only', username='bob', data=data_unset)
         self.assertStatusCode(ret, 403)
 
