@@ -125,12 +125,15 @@ def BlobColumn(impl=Text):
     return cls
 
 
-def verify_signoffs(required_signoffs, signoffs):
+def verify_signoffs(potential_signoffs, signoffs):
     signoffs_given = defaultdict(int)
+    required_signoffs = {}
     if not signoffs:
         raise SignoffRequiredError("No Signoffs given")
     for signoff in signoffs:
         signoffs_given[signoff["role"]] += 1
+    for rs in potential_signoffs:
+        required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
     for role, signoffs_required in required_signoffs.iteritems():
         if signoffs_given[role] < signoffs_required:
             raise SignoffRequiredError("Not enough signoffs for role '{}'".format(role))
@@ -276,7 +279,7 @@ class AUSTable(object):
     def getEngine(self):
         return self.t.metadata.bind
 
-    def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+    def getPotentialSignoffs(self, old_row, new_row, transaction=None):
         # TODO: uncomment this after scheduled changes are enabled for
         # Releases and Permissions. Returning None here is a bad default,
         # but we can't raise this without breaking things until all
@@ -365,7 +368,7 @@ class AUSTable(object):
         if self.onInsert:
             self.onInsert(self, "INSERT", changed_by, query, trans)
 
-        required_signoffs = self.getRequiredSignoffs(None, columns, transaction=trans)
+        required_signoffs = self.getPotentialSignoffs(None, columns, transaction=trans)
         if required_signoffs:
             verify_signoffs(required_signoffs, signoffs)
 
@@ -439,7 +442,7 @@ class AUSTable(object):
         if self.onDelete:
             self.onDelete(self, "DELETE", changed_by, query, trans)
 
-        required_signoffs = self.getRequiredSignoffs(orig_row, None, transaction=trans)
+        required_signoffs = self.getPotentialSignoffs(orig_row, None, transaction=trans)
         if required_signoffs:
             verify_signoffs(required_signoffs, signoffs)
 
@@ -545,7 +548,7 @@ class AUSTable(object):
         if self.onUpdate:
             self.onUpdate(self, "UPDATE", changed_by, query, trans)
 
-        required_signoffs = self.getRequiredSignoffs(orig_row, new_row, transaction=trans)
+        required_signoffs = self.getPotentialSignoffs(orig_row, new_row, transaction=trans)
         self.log.debug("Required Signoffs: %s", required_signoffs)
         if required_signoffs:
             verify_signoffs(required_signoffs, signoffs)
@@ -1240,17 +1243,14 @@ class RequiredSignoffsTable(AUSTable):
 
         super(RequiredSignoffsTable, self).__init__(db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
-    def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+    def getPotentialSignoffs(self, old_row, new_row, transaction=None):
         potential_signoffs = []
-        required_signoffs = {}
         for row in (old_row, new_row):
             if not row:
                 continue
             where = {col: row[col] for col in self.decisionColumns}
             potential_signoffs.extend(self.select(where=where, transaction=transaction))
-        for rs in potential_signoffs:
-            required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
-        return required_signoffs
+        return potential_signoffs
 
     def validate(self, columns, transaction=None):
         for col in self.decisionColumns:
@@ -1387,9 +1387,8 @@ class Rules(AUSTable):
 
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
-    def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+    def getPotentialSignoffs(self, old_row, new_row, transaction=None):
         potential_signoffs = []
-        required_signoffs = {}
         for row in (old_row, new_row):
             if not row:
                 continue
@@ -1399,9 +1398,7 @@ class Rules(AUSTable):
             for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
                 if not row.get("channel") or self._matchesRegex(row["channel"], rs["channel"]):
                     potential_signoffs.append(rs)
-        for rs in potential_signoffs:
-            required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
-        return required_signoffs
+        return potential_signoffs
 
     def _matchesRegex(self, foo, bar):
         # Expand wildcards and use ^/$ to make sure we don't succeed on partial
@@ -1654,9 +1651,8 @@ class Releases(AUSTable):
         self.table.append_column(Column('data', BlobColumn(dataType), nullable=False))
         AUSTable.__init__(self, db, dialect)
 
-    def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+    def getPotentialSignoffs(self, old_row, new_row, transaction=None):
         potential_signoffs = []
-        required_signoffs = {}
         for row in (old_row, new_row):
             if not row:
                 continue
@@ -1676,9 +1672,7 @@ class Releases(AUSTable):
                         where["channel"] = rule["channel"]
                     # TODO: if you return potential signoffs instead of required signoffs, you can call rules.getrequiredsignoffs instead
                     potential_signoffs.extend(self.db.productRequiredSignoffs.select(where=where, transaction=transaction))
-        for rs in potential_signoffs:
-            required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
-        return required_signoffs
+        return potential_signoffs
 
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
@@ -1725,7 +1719,10 @@ class Releases(AUSTable):
         if not nameOnly:
             j = join(dbo.releases.t, dbo.rules.t, ((dbo.releases.name == dbo.rules.mapping) | (dbo.releases.name == dbo.rules.whitelist) |
                                                    (dbo.releases.name == dbo.rules.fallbackMapping)))
-            ref_list = select([dbo.releases.name, dbo.rules.rule_id]).select_from(j).execute().fetchall()
+            if transaction:
+                ref_list = transaction.execute(select([dbo.releases.name, dbo.rules.rule_id]).select_from(j)).fetchall()
+            else:
+                ref_list = select([dbo.releases.name, dbo.rules.rule_id]).select_from(j).execute().fetchall()
 
             for row in rows:
                 refs = [ref for ref in ref_list if ref[0] == row['name']]
@@ -2028,9 +2025,8 @@ class Permissions(AUSTable):
         self.user_roles = UserRoles(db, metadata, dialect)
         AUSTable.__init__(self, db, dialect)
 
-    def getRequiredSignoffs(self, old_row, new_row, transaction=None):
+    def getPotentialSignoffs(self, old_row, new_row, transaction=None):
         potential_signoffs = []
-        required_signoffs = {}
         for row in (old_row, new_row):
             if not row:
                 continue
@@ -2042,9 +2038,7 @@ class Permissions(AUSTable):
                     potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
             else:
                 potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(transaction=transaction))
-        for rs in potential_signoffs:
-            required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
-        return required_signoffs
+        return potential_signoffs
 
     def assertPermissionExists(self, permission):
         if permission not in self.allPermissions.keys():

@@ -2303,14 +2303,14 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     # Ideally we'd run these, but they end up raising a ValueError because they are mapped to,
     # so we never see a SignoffRequiredError
-    #def testDeleteReleaseWithRuleMappingThatRequiresSignoff(self):
-    #    self.assertRaises(SignoffRequiredError, self.releases.delete, {"name": "h"}, changed_by="me", old_data_version=1)
-
-    #def testDeleteReleaseWithRuleFallbackMappingAtItThatRequiresSignoff(self):
-    #    self.assertRaises(SignoffRequiredError, self.releases.delete, {"name": "h"}, changed_by="me", old_data_version=1)
-
-    #def testDeleteReleaseWithRuleWhitelistThatRequiresSignoff(self):
-    #    self.assertRaises(SignoffRequiredError, self.releases.delete, {"name": "h"}, changed_by="me", old_data_version=1)
+#    def testDeleteReleaseWithRuleMappingThatRequiresSignoff(self):
+#        self.assertRaises(SignoffRequiredError, self.releases.delete, {"name": "h"}, changed_by="me", old_data_version=1)
+#
+#    def testDeleteReleaseWithRuleFallbackMappingAtItThatRequiresSignoff(self):
+#        self.assertRaises(SignoffRequiredError, self.releases.delete, {"name": "h"}, changed_by="me", old_data_version=1)
+#
+#    def testDeleteReleaseWithRuleWhitelistThatRequiresSignoff(self):
+#        self.assertRaises(SignoffRequiredError, self.releases.delete, {"name": "h"}, changed_by="me", old_data_version=1)
 
     def testAddReleaseWithNameMismatch(self):
         blob = ReleaseBlobV1(name="f", schema_version=1, hashFunction="sha512")
