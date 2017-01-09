@@ -126,6 +126,15 @@ def BlobColumn(impl=Text):
 
 
 def verify_signoffs(potential_signoffs, signoffs):
+    """Determines whether or not something is signed off given:
+    * A list of potential required signoffs
+    * A list of signoffs that have been made
+
+    The real number of signoffs required is found by looking through the
+    potential signoffs and finding the highest number required for each
+    role. If there are not enough signoffs provided for one of the groups,
+    a SignoffRequiredError is raised."""
+
     signoffs_given = defaultdict(int)
     required_signoffs = {}
     if not signoffs:
@@ -368,9 +377,9 @@ class AUSTable(object):
         if self.onInsert:
             self.onInsert(self, "INSERT", changed_by, query, trans)
 
-        required_signoffs = self.getPotentialSignoffs(None, columns, transaction=trans)
-        if required_signoffs:
-            verify_signoffs(required_signoffs, signoffs)
+        potential_signoffs = self.getPotentialSignoffs(None, columns, transaction=trans)
+        if potential_signoffs:
+            verify_signoffs(potential_signoffs, signoffs)
 
         ret = trans.execute(query)
         if self.history:
@@ -442,9 +451,9 @@ class AUSTable(object):
         if self.onDelete:
             self.onDelete(self, "DELETE", changed_by, query, trans)
 
-        required_signoffs = self.getPotentialSignoffs(orig_row, None, transaction=trans)
-        if required_signoffs:
-            verify_signoffs(required_signoffs, signoffs)
+        potential_signoffs = self.getPotentialSignoffs(orig_row, None, transaction=trans)
+        if potential_signoffs:
+            verify_signoffs(potential_signoffs, signoffs)
 
         ret = trans.execute(query)
         if ret.rowcount != 1:
@@ -548,10 +557,9 @@ class AUSTable(object):
         if self.onUpdate:
             self.onUpdate(self, "UPDATE", changed_by, query, trans)
 
-        required_signoffs = self.getPotentialSignoffs(orig_row, new_row, transaction=trans)
-        self.log.debug("Required Signoffs: %s", required_signoffs)
-        if required_signoffs:
-            verify_signoffs(required_signoffs, signoffs)
+        potential_signoffs = self.getPotentialSignoffs(orig_row, new_row, transaction=trans)
+        if potential_signoffs:
+            verify_signoffs(potential_signoffs, signoffs)
 
         ret = trans.execute(query)
         if self.history:
