@@ -1655,7 +1655,6 @@ class Releases(AUSTable):
         AUSTable.__init__(self, db, dialect)
 
     def getRequiredSignoffs(self, old_row, new_row, transaction=None):
-        # TODO: need to check mappings from rules table for products+channels that may require signoff
         potential_signoffs = []
         required_signoffs = {}
         for row in (old_row, new_row):
@@ -1665,6 +1664,18 @@ class Releases(AUSTable):
             if row.get("product"):
                 where["product"] = row["product"]
             potential_signoffs.extend(self.db.productRequiredSignoffs.select(where=where, transaction=transaction))
+            info = self.getReleaseInfo(name=row["name"], transaction=transaction)
+            if info:
+                info = info[0]
+                for rule_id in info["rule_ids"]:
+                    rule = self.db.rules.select(where=[self.db.rules.rule_id == rule_id], transaction=transaction)[0]
+                    where = {}
+                    if rule.get("product"):
+                        where["product"] = rule["product"]
+                    if rule.get("channel"):
+                        where["channel"] = rule["channel"]
+                    # TODO: if you return potential signoffs instead of required signoffs, you can call rules.getrequiredsignoffs instead
+                    potential_signoffs.extend(self.db.productRequiredSignoffs.select(where=where, transaction=transaction))
         for rs in potential_signoffs:
             required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
         return required_signoffs
@@ -1695,9 +1706,11 @@ class Releases(AUSTable):
         count, = self.t.count().execute().fetchone()
         return count
 
-    def getReleaseInfo(self, product=None, limit=None,
+    def getReleaseInfo(self, name=None, product=None, limit=None,
                        transaction=None, nameOnly=False, name_prefix=None):
         where = []
+        if name:
+            where.append(self.name == name)
         if product:
             where.append(self.product == product)
         if name_prefix:

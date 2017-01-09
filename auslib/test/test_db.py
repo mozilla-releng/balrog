@@ -2150,6 +2150,12 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.rules = dbo.rules
         self.releases = dbo.releases
         self.permissions = dbo.permissions
+        self.rules.t.insert().execute(rule_id=1, product="h", channel="b", mapping="h", backgroundRate=100, priority=100, update_type="minor",
+                                      data_version=1)
+        self.rules.t.insert().execute(rule_id=2, product="h", channel="b", mapping="c", fallbackMapping="h", backgroundRate=100, priority=100,
+                                      update_type="minor", data_version=1)
+        self.rules.t.insert().execute(rule_id=3, product="h", channel="b", mapping="c", whitelist="h", backgroundRate=100, priority=100,
+                                      update_type="minor", data_version=1)
         self.releases.t.insert().execute(name='a', product='a', data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.releases.t.insert().execute(name='ab', product='a', data=createBlob(dict(name="ab", schema_version=1, hashFunction="sha512")),
@@ -2158,18 +2164,21 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                          data_version=1)
         self.releases.t.insert().execute(name='c', product='c', data=createBlob(dict(name="c", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
+        self.releases.t.insert().execute(name='h', product='c', data=createBlob(dict(name="h", schema_version=1, hashFunction="sha512")),
+                                         data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
         self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["c"]), data_version=1)
         self.permissions.user_roles.t.insert(username="bill", role="bar", data_version=1)
         self.permissions.user_roles.t.insert(username="me", role="bar", data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="b", channel="b", role="bar", signoffs_required=2, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="h", channel="b", role="bar", signoffs_required=2, data_version=1)
 
     def tearDown(self):
         dbo.reset()
 
     def testGetReleases(self):
-        self.assertEquals(len(self.releases.getReleases()), 4)
+        self.assertEquals(len(self.releases.getReleases()), 5)
 
     def testGetReleasesWithLimit(self):
         self.assertEquals(len(self.releases.getReleases(limit=1)), 1)
@@ -2190,7 +2199,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         expected = [dict(name='a', product='a', data_version=1, read_only=False, rule_ids=[]),
                     dict(name='ab', product='a', data_version=1, read_only=False, rule_ids=[]),
                     dict(name='b', product='b', data_version=1, read_only=False, rule_ids=[]),
-                    dict(name='c', product='c', data_version=1, read_only=False, rule_ids=[])]
+                    dict(name='c', product='c', data_version=1, read_only=False, rule_ids=[2, 3]),
+                    dict(name="h", product="c", data_version=1, read_only=False, rule_ids=[1, 2, 3]),
+                    ]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoProduct(self):
@@ -2203,10 +2214,10 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.t.insert().execute(name='fallback', product='e',
                                          data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.rules.t.insert().execute(rule_id=1, priority=100, fallbackMapping="fallback", version='3.5',
+        self.rules.t.insert().execute(rule_id=4, priority=100, fallbackMapping="fallback", version='3.5',
                                       whitelist='e', update_type='z', data_version=1)
         releases = self.releases.getReleaseInfo(product='e')
-        expected = [dict(name='fallback', product='e', data_version=1, read_only=False, rule_ids=[1])]
+        expected = [dict(name='fallback', product='e', data_version=1, read_only=False, rule_ids=[4])]
         self.assertEquals(releases, expected)
 
     def testGetReleaseInfoNoMatch(self):
@@ -2234,7 +2245,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         expected = [dict(name='a'),
                     dict(name='ab'),
                     dict(name='b'),
-                    dict(name='c')]
+                    dict(name='c'),
+                    dict(name='h'),
+                    ]
         self.assertEquals(releases, expected)
 
     def testGetReleaseNamesProduct(self):
@@ -2250,7 +2263,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetNumberOfReleases(self):
         # because 4 releases were set up in the setUp()
-        self.assertEquals(self.releases.countReleases(), 4)
+        self.assertEquals(self.releases.countReleases(), 5)
 
     def testDeleteRelease(self):
         self.releases.delete({"name": "a"}, changed_by="bill", old_data_version=1)
@@ -2260,14 +2273,14 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testDeleteWithRuleMapping(self):
         self.releases.t.insert().execute(name='d', product='d', data=createBlob(dict(name="d", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='d', update_type='z',
+        self.rules.t.insert().execute(rule_id=4, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='d', update_type='z',
                                       data_version=1)
         self.assertRaises(ValueError, self.releases.delete, {"name": "d"}, changed_by='me', old_data_version=1)
 
     def testDeleteWithRuleWhitelist(self):
         self.releases.t.insert().execute(name='e', product='e', data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='e', backgroundRate=100, whitelist='e', update_type='z',
+        self.rules.t.insert().execute(rule_id=4, priority=100, version='3.5', buildTarget='e', backgroundRate=100, whitelist='e', update_type='z',
                                       data_version=1)
         self.assertRaises(ValueError, self.releases.delete, {"name": "e"}, changed_by='me', old_data_version=1)
 
@@ -2275,7 +2288,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.t.insert().execute(name='fallback', product='e',
                                          data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
-        self.rules.t.insert().execute(rule_id=1, priority=100, fallbackMapping="fallback", version='3.5', buildTarget='e', backgroundRate=100,
+        self.rules.t.insert().execute(rule_id=4, priority=100, fallbackMapping="fallback", version='3.5', buildTarget='e', backgroundRate=100,
                                       whitelist='e', update_type='z',
                                       data_version=1)
 
@@ -2287,6 +2300,17 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testDeleteReleaseThatRequiresSignoff(self):
         self.assertRaises(SignoffRequiredError, self.releases.delete, {"name": "b"}, changed_by="me", old_data_version=1)
+
+    # Ideally we'd run these, but they end up raising a ValueError because they are mapped to,
+    # so we never see a SignoffRequiredError
+    #def testDeleteReleaseWithRuleMappingThatRequiresSignoff(self):
+    #    self.assertRaises(SignoffRequiredError, self.releases.delete, {"name": "h"}, changed_by="me", old_data_version=1)
+
+    #def testDeleteReleaseWithRuleFallbackMappingAtItThatRequiresSignoff(self):
+    #    self.assertRaises(SignoffRequiredError, self.releases.delete, {"name": "h"}, changed_by="me", old_data_version=1)
+
+    #def testDeleteReleaseWithRuleWhitelistThatRequiresSignoff(self):
+    #    self.assertRaises(SignoffRequiredError, self.releases.delete, {"name": "h"}, changed_by="me", old_data_version=1)
 
     def testAddReleaseWithNameMismatch(self):
         blob = ReleaseBlobV1(name="f", schema_version=1, hashFunction="sha512")
@@ -2313,6 +2337,18 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testUpdateReleasesThatRequiresSignoff(self):
         newBlob = ReleaseBlobV1(name="b", schema_version=1, hashFunction="sha256")
         self.assertRaises(SignoffRequiredError, self.releases.update, {"name": "b"}, {"data": newBlob}, "bill", 1)
+
+    def testUpdateReleaseWithRuleMappingThatRequiresSignoff(self):
+        newBlob = ReleaseBlobV1(name="h", schema_version=1, hashFunction="sha256")
+        self.assertRaises(SignoffRequiredError, self.releases.update, {"name": "h"}, {"data": newBlob}, "bill", 1)
+
+    def testUpdateReleaseWithRuleFallbackMappingAtItThatRequiresSignoff(self):
+        newBlob = ReleaseBlobV1(name="h", schema_version=1, hashFunction="sha256")
+        self.assertRaises(SignoffRequiredError, self.releases.update, {"name": "h"}, {"data": newBlob}, "bill", 1)
+
+    def testUpdateReleaseWithRuleWhitelistThatRequiresSignoff(self):
+        newBlob = ReleaseBlobV1(name="h", schema_version=1, hashFunction="sha256")
+        self.assertRaises(SignoffRequiredError, self.releases.update, {"name": "h"}, {"data": newBlob}, "bill", 1)
 
     def testIsReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
