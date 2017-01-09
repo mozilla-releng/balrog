@@ -99,6 +99,11 @@ class TestPermissionsAPI_JSON(ViewTest):
         query = query.where(dbo.permissions.permission == 'release_locale')
         self.assertEqual(query.execute().fetchone(), ('release_locale', 'bob', dict(products=['a']), 1))
 
+    def testPermissionPutThatRequiresSignoff(self):
+        ret = self._put("/users/nancy/permissions/admin")
+        self.assertStatusCode(ret, 400)
+        self.assertIn("This change requires signoff", ret.data)
+
     def testPermissionModify(self):
         ret = self._put('/users/bob/permissions/rule',
                         data=dict(options=json.dumps(dict(products=['a', 'b'])), data_version=1))
@@ -150,6 +155,11 @@ class TestPermissionsAPI_JSON(ViewTest):
     def testPermissionDeleteWithoutPermission(self):
         ret = self._delete("/users/bob/permissions/permission", qs=dict(data_version=1), username="anna")
         self.assertStatusCode(ret, 403)
+
+    def testPermissionDeleteRequiresSignoff(self):
+        ret = self._delete("/users/bob/permissions/release", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 400)
+        self.assertIn("This change requires signoff", ret.data)
 
 
 class TestUserRolesAPI_JSON(ViewTest):
