@@ -311,14 +311,14 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
     def testPostWithoutProduct(self):
-        ret = self._post('/rules/4', username='bob',
+        ret = self._post('/rules/2', username='bob',
                          data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
                                    channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
         # Assure the changes made it into the database
-        r = dbo.rules.t.select().where(dbo.rules.rule_id == 4).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'd')
         self.assertEquals(r[0]['backgroundRate'], 71)
@@ -328,24 +328,24 @@ class TestSingleRuleView_JSON(ViewTest):
         # And that we didn't modify other fields
         self.assertEquals(r[0]['update_type'], 'minor')
         self.assertEquals(r[0]['buildTarget'], 'd')
-        self.assertEquals(r[0]['product'], 'fake')
+        self.assertEquals(r[0]['product'], 'a')
 
     def testPostSetBackgroundRateTo0(self):
-        ret = self._post("/rules/4", data=dict(backgroundRate=0, data_version=1))
+        ret = self._post("/rules/3", data=dict(backgroundRate=0, data_version=1))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
         # Assure the changes made it into the database
-        r = dbo.rules.t.select().where(dbo.rules.rule_id == 4).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 3).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['backgroundRate'], 0)
         self.assertEquals(r[0]['data_version'], 2)
         # And that we didn't modify other fields
         self.assertEquals(r[0]['update_type'], 'minor')
         self.assertEquals(r[0]['mapping'], 'a')
-        self.assertEquals(r[0]['priority'], 80)
-        self.assertEquals(r[0]['buildTarget'], 'd')
-        self.assertEquals(r[0]['product'], 'fake')
+        self.assertEquals(r[0]['priority'], 100)
+        self.assertEquals(r[0]['buildTarget'], 'a')
+        self.assertEquals(r[0]['product'], 'a')
 
     def testPostRemoveRestriction(self):
         ret = self._post("/rules/5", data=dict(buildTarget="", data_version=1))
@@ -378,7 +378,7 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(ret.status_code, 400)
 
     def testPostWithRequiredSignoff(self):
-        ret = self._post("/rules/1", data=dict(product="c", channel="c", data_version=1))
+        ret = self._post("/rules/4", data=dict(product="c", channel="c", data_version=1))
         self.assertEquals(ret.status_code, 400)
         self.assertIn("This change requires signoff", ret.data)
 
@@ -407,7 +407,7 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r[0]['buildTarget'], 'd')
 
     def testNoPermissionToAlterExistingProduct(self):
-        ret = self._post('/rules/1', data=dict(backgroundRate=71, data_version=1), username='bob')
+        ret = self._post('/rules/4', data=dict(backgroundRate=71, data_version=1), username='bob')
         self.assertEquals(ret.status_code, 403)
 
     def testNoPermissionToAlterNewProduct(self):

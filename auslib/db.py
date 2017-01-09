@@ -132,7 +132,7 @@ def verify_signoffs(potential_signoffs, signoffs):
 
     The real number of signoffs required is found by looking through the
     potential signoffs and finding the highest number required for each
-    role. If there are not enough signoffs provided for one of the groups,
+    role. If there are not enough signoffs provided for any of the groups,
     a SignoffRequiredError is raised."""
 
     signoffs_given = defaultdict(int)
@@ -289,6 +289,11 @@ class AUSTable(object):
         return self.t.metadata.bind
 
     def getPotentialSignoffs(self, old_row, new_row, transaction=None):
+        """This function must be implemented by any subclass that enables
+        Scheduled Changes. It is responsible for looking at the old and new
+        rows given, and returning all Required Signoffs that apply to them.
+        Deduplication of multiple Required Signoffs for the same Role is not
+        necessary."""
         # TODO: uncomment this after scheduled changes are enabled for
         # Releases and Permissions. Returning None here is a bad default,
         # but we can't raise this without breaking things until all
@@ -399,7 +404,9 @@ class AUSTable(object):
                                If provided, you must commit the transaction yourself. If None, they will
                                be added to a locally-scoped transaction and committed.
            @param dryrun: If true, this insert statement will not actually be run.
-           @type dryrun bool
+           @type dryrun: bool
+           @param signoffs: The signoffs, if any, that have been given for this change.
+           @type signoffs: A list of dicts, each containing a "role" that has signed off on this change.
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
@@ -490,7 +497,9 @@ class AUSTable(object):
                                If provided, you must commit the transaction yourself. If None, they will
                                be added to a locally-scoped transaction and committed.
            @param dryrun: If true, this insert statement will not actually be run.
-           @type dryrun bool
+           @type dryrun: bool
+           @param signoffs: The signoffs, if any, that have been given for this change.
+           @type signoffs: A list of dicts, each containing a "role" that has signed off on this change.
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
@@ -592,7 +601,9 @@ class AUSTable(object):
                                If provided, you must commit the transaction yourself. If None, they will
                                be added to a locally-scoped transaction and committed.
            @param dryrun: If true, this insert statement will not actually be run.
-           @type dryrun bool
+           @type dryrun: bool
+           @param signoffs: The signoffs, if any, that have been given for this change.
+           @type signoffs: A list of dicts, each containing a "role" that has signed off on this change.
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
@@ -1242,6 +1253,12 @@ class ScheduledChangeTable(AUSTable):
 
 
 class RequiredSignoffsTable(AUSTable):
+    """RequiredSignoffsTables store and validate information about what types
+    and how many signoffs are required for the data provided in
+    `decisionColumns`. Subclasses are required to create a Table with the
+    necessary columns, and add those columns names to `decisionColumns`.
+    When changes are made to a RequiredSignoffsTable, it will look at its own
+    rows to determine whether or not that change needs signoff."""
 
     decisionColumns = []
 
@@ -1397,13 +1414,21 @@ class Rules(AUSTable):
 
     def getPotentialSignoffs(self, old_row, new_row, transaction=None):
         potential_signoffs = []
+        # The new row may change the product or channel, so we must look for
+        # Signoff for both.
         for row in (old_row, new_row):
             if not row:
                 continue
             where = {}
+            # If product isn't present, or is None, it means the Rule affects
+            # all products, and we must leave it out of the where clause. If
+            # we included it, the query would only match rows where product is
+            # NULL.
             if row.get("product"):
                 where["product"] = row["product"]
             for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
+                # Channel supports globbing, so we must take that into account
+                # before deciding whether or not this is a match.
                 if not row.get("channel") or self._matchesRegex(row["channel"], rs["channel"]):
                     potential_signoffs.append(rs)
         return potential_signoffs
@@ -1664,10 +1689,10 @@ class Releases(AUSTable):
         for row in (old_row, new_row):
             if not row:
                 continue
-            where = {}
-            if row.get("product"):
-                where["product"] = row["product"]
-            potential_signoffs.extend(self.db.productRequiredSignoffs.select(where=where, transaction=transaction))
+            # Releases do not affect live updates on their own, only the
+            # product+channel combinations specified in Rules that point
+            # to them. We need to find these Rules, and then return _their_
+            # Required Signoffs.
             info = self.getReleaseInfo(name=row["name"], transaction=transaction)
             if info:
                 info = info[0]
@@ -2035,6 +2060,7 @@ class Permissions(AUSTable):
             # XXX: This kindof sucks because it means that we don't have great control
             # over the signoffs required permissions that don't specify products, or
             # don't support them.
+            # TODO: select all required signoffs if product isn't specified
             if "products" in self.allPermissions[row["permission"]] and row.get("options") and row["options"].get("products"):
                 for product in row["options"]["products"]:
                     potential_signoffs.extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
