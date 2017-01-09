@@ -1,14 +1,15 @@
 <div loader ng-show="loading"></div>
 
 <h2>
-  <span>Scheduled Release Changes</span>
+  <span ng-show="!scheduled_changes_count">Scheduled Release Changes</span>
+  <span ng-show="scheduled_changes_count">Revision of Scheduled Release Change</span>
 
   <span class="count">
     ({{ filtered_items.length | number:0 }}
     <span>found)</span>
   </span>
 
-  <button class="btn btn-primary btn-xs" ng-click="openNewScheduledReleaseChangeModal()">
+  <button ng-show="!scheduled_changes_count" class="btn btn-primary btn-xs" ng-click="openNewScheduledReleaseChangeModal()">
     Add a new Scheduled Release Change
     <i class="glyphicon glyphicon-plus"></i>
   </button>
@@ -42,15 +43,17 @@
   </div>
 </div>
 
+
 <div class="panel panel-default" style="clear:right"
      ng-repeat="sc in filtered_items = (scheduled_changes | filter: filterBySelect) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
   <div class="panel-heading">
 
     <h3 class="panel-title">
       <div style="float: right">
-        <button class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
-        <button class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
-        <a class="btn btn-default btn-xs" ng-href="/scheduled_changes/release/{{ sc.sc_id }}">History</a>
+        <i ng-if="scheduled_changes_count && $first && (currentPage == 1)">Current</i>
+        <button ng-show="!scheduled_changes_count" class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
+        <button ng-show="!scheduled_changes_count" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
+        <a ng-show="!scheduled_changes_count" class="btn btn-default btn-xs" ng-href="/scheduled_changes/releases/{{ sc.sc_id }}">History</a>
       </div>
 
       <i title="Product" ng-show="sc.name">{{ sc.name }}</i>

@@ -78,6 +78,11 @@ angular.module("app").factory('Releases', function($http, $q) {
     getScheduledChange: function(sc_id) {
       return $http.get("/api/scheduled_changes/releases/" + sc_id);
     },
+    getScheduledChangeHistory: function(sc_id, limit, page) {
+      url = '/api/scheduled_changes/releases/' + encodeURIComponent(sc_id) + '/revisions';
+      url += '?limit=' + limit + '&page=' + page;
+      return $http.get(url);
+    },
 
     addScheduledChange: function(data, csrf_token) {
       data = jQuery.extend({}, data);
@@ -110,6 +115,7 @@ angular.module("app").factory('Releases', function($http, $q) {
       return $http.delete(url);
      },
   };
+
   return service;
 
 });

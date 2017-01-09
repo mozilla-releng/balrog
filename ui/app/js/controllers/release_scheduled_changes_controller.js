@@ -4,6 +4,30 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.loading = true;
   $scope.failed = false;
 
+  $scope.sc_id = $routeParams.sc_id;
+
+  function loadPage(newPage) {
+    Releases.getScheduledChangeHistory($scope.sc_id, $scope.pageSize, newPage)
+    .success(function(response) {
+      // it's the same release, but this works
+      $scope.scheduled_changes = response.revisions;
+      $scope.scheduled_changes_count = response.count;
+    })
+    .error(function() {
+      console.error(arguments);
+      $scope.failed = true;
+    })
+    .finally(function() {
+      $scope.loading = false;
+    });
+  }
+
+  if ($scope.sc_id) {
+    $scope.$watch("currentPage", function(newPage) {
+      loadPage(newPage);
+    });
+  } else {
+
   Releases.getScheduledChanges()
   .success(function(response) {
     // "when" is a unix timestamp, but it's much easier to work with Date objects,
@@ -22,7 +46,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   .finally(function() {
     $scope.loading = false;
   });
-
+}
   $scope.$watch("ordering_str", function(value) {
     $scope.ordering = value.value.split(",");
   });
