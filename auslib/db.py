@@ -1665,13 +1665,7 @@ class Releases(AUSTable):
                 info = info[0]
                 for rule_id in info["rule_ids"]:
                     rule = self.db.rules.select(where=[self.db.rules.rule_id == rule_id], transaction=transaction)[0]
-                    where = {}
-                    if rule.get("product"):
-                        where["product"] = rule["product"]
-                    if rule.get("channel"):
-                        where["channel"] = rule["channel"]
-                    # TODO: if you return potential signoffs instead of required signoffs, you can call rules.getrequiredsignoffs instead
-                    potential_signoffs.extend(self.db.productRequiredSignoffs.select(where=where, transaction=transaction))
+                    potential_signoffs.extend(self.db.rules.getPotentialSignoffs(None, rule, transaction=transaction))
         return potential_signoffs
 
     def setDomainWhitelist(self, domainWhitelist):
