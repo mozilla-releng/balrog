@@ -131,9 +131,9 @@ def verify_signoffs(required_signoffs, signoffs):
         raise SignoffRequiredError("No Signoffs given")
     for signoff in signoffs:
         signoffs_given[signoff["role"]] += 1
-    for rs in required_signoffs:
-        if rs["signoffs_required"] < signoffs_given.get(rs["role"]):
-            raise SignoffRequiredError("Not enough signoffs for role '{}'".format(rs["role"]))
+    for role, signoffs_required in required_signoffs.iteritems():
+        if signoffs_given[role] < signoffs_required:
+            raise SignoffRequiredError("Not enough signoffs for role '{}'".format(role))
 
 
 class AUSTransaction(object):
@@ -1241,11 +1241,16 @@ class RequiredSignoffsTable(AUSTable):
         super(RequiredSignoffsTable, self).__init__(db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def getRequiredSignoffs(self, old_row, new_row, transaction=None):
-        if old_row:
-            where = {col: old_row[col] for col in self.decisionColumns}
-            return self.select(where=where, transaction=transaction)
-        where = {col: new_row[col] for col in self.decisionColumns}
-        return self.select(where=where, transaction=transaction)
+        potential_signoffs = []
+        required_signoffs = {}
+        for row in (old_row, new_row):
+            if not row:
+                continue
+            where = {col: row[col] for col in self.decisionColumns}
+            potential_signoffs.extend(self.select(where=where, transaction=transaction))
+        for rs in potential_signoffs:
+            required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
+        return required_signoffs
 
     def validate(self, columns, transaction=None):
         for col in self.decisionColumns:
