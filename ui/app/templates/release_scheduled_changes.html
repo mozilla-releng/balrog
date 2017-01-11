@@ -29,7 +29,7 @@
     </div>
   </div>
   <div class="col-sm-6 text-right">
-    <div class="row">
+    <div ng-show="!scheduled_changes_count" class="row">
       <label>State:</label>
       <select ng-model="state_str" name="state_filter" ng-options="o.text for o in state_filter track by o.value">
       </select>

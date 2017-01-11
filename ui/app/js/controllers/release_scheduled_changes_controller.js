@@ -50,7 +50,14 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.$watch("ordering_str", function(value) {
     $scope.ordering = value.value.split(",");
   });
-
+  if ($scope.sc_id) {
+    $scope.ordering_options = [
+      {
+        text: "Data Version",
+        value: "-data_version"
+      },
+    ];
+  } else {
   $scope.ordering_options = [
     {
       text: "When",
@@ -61,6 +68,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       value: "product, Name"
     },
   ];
+  }
 
   $scope.ordering_str = $scope.ordering_options[0];
 
@@ -80,6 +88,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.state_str = $scope.state_filter[0];
 
   $scope.filterBySelect = function(sc) {
+    if($scope.sc_id) {
+      return true;
+    }
     if ($scope.state_str.value === "complete" && sc.complete) {
       return true;
     }

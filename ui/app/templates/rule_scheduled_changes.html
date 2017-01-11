@@ -1,17 +1,23 @@
 <div loader ng-show="loading"></div>
 
 <h2>
-  <span>Scheduled Rule Changes</span>
+  <span ng-show="!scheduled_changes_rules_count">Scheduled Rule Changes</span>
+  <span ng-show="scheduled_changes_rules_count">History for Scheduled Rule Change</span>
 
   <span class="count">
     ({{ filtered_items.length | number:0 }}
     <span>found)</span>
   </span>
 
-  <button class="btn btn-primary btn-xs" ng-click="openNewScheduledRuleChangeModal()">
+  <button ng-show="!scheduled_changes_rules_count" class="btn btn-primary btn-xs" ng-click="openNewScheduledRuleChangeModal()">
     Add a new Scheduled Rule Change
     <i class="glyphicon glyphicon-plus"></i>
   </button>
+  <a href="/rules/scheduled_changes" class="btn btn-primary btn-xs"
+          ng-show="scheduled_changes_rules_count">
+    All Scheduled Changes
+    <i class="glyphicon glyphicon-arrow-left"></i>
+  </a>
 
 </h2>
 
@@ -27,7 +33,7 @@
     </div>
   </div>
   <div class="col-sm-6 text-right">
-    <div class="row">
+    <div ng-show="!scheduled_changes_rules_count" class="row">
       <label>State:</label>
       <select ng-model="state_str" name="state_filter" ng-options="o.text for o in state_filter track by o.value">
       </select>
@@ -47,9 +53,10 @@
 
     <h3 class="panel-title">
       <div style="float: right">
-        <button class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
-        <button class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
-        <a class="btn btn-default btn-xs" ng-href="/scheduled_changes/rules/{{ sc.sc_id }}">History</a>
+        <i ng-if=" scheduled_changes_rules_count && $first && (currentPage == 1)">Current</i>
+        <button ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
+        <button ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
+        <a ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-href="/scheduled_changes/rules/{{ sc.sc_id }}">History</a>
       </div>
 
       <i title="Product" ng-show="!sc.product">no product</i>
@@ -140,7 +147,10 @@
     </dl>
 
   </div>
-
+<div class="panel-footer" ng-show="scheduled_changes_rules_count">
+    Changed by <code>{{ sc.changed_by }}</code>
+    <span moment="sc.timestamp"></span>
+  </div>
 </div>
 
 

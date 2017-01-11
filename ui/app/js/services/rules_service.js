@@ -53,6 +53,9 @@ angular.module("app").factory('Rules', function($http) {
       data.csrf_token = csrf_token;
       return $http.post("/api/scheduled_changes/rules", data);
     },
+    getScheduledChangeHistory: function(sc_id, limit, page) {
+      return $http.get('/api/scheduled_changes/rules/' + sc_id + '/revisions?limit=' + limit + '&page=' + page);
+    },
     updateScheduledChange: function(sc_id, data, csrf_token) {
       data = jQuery.extend({}, data);
       if (data.when === null) {
