@@ -150,21 +150,4 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       }
     });
   };
-  $scope.openDataModal = function(sc) {
-
-    var modalInstance = $modal.open({
-      templateUrl: 'release_data_modal.html',
-      controller: 'ReleaseDataCtrl',
-      size: 'lg',
-      backdrop: 'static',
-      resolve: {
-        release: function () {
-          return sc;
-        },
-        diff: function() {
-          return false;
-        }
-      }
-    });
-  };
 });
