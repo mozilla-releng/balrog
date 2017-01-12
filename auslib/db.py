@@ -111,10 +111,14 @@ def BlobColumn(impl=Text):
     class cls(sqlalchemy.types.TypeDecorator):
 
         def process_bind_param(self, value, dialect):
-            return value.getJSON()
+            if value:
+                value = value.getJSON()
+            return value
 
         def process_result_value(self, value, dialect):
-            return createBlob(value)
+            if value:
+                value = createBlob(value)
+            return value
 
     cls.impl = impl
     return cls
@@ -961,30 +965,17 @@ class ScheduledChangeTable(AUSTable):
         return True
 
     def validate(self, base_columns, condition_columns, changed_by, sc_id=None, transaction=None):
-        # We need to do additional checks for any changes that are modifying an
-        # existing row. These lists will have PK clauses in them at the end of
-        # the following loop, but only if the change contains a PK. This makes
-        # it easy to do the extra checks conditionally afterwards.
+        # Depending on the change type, we may do some additional checks
+        # against the base table PK columns. It's cleaner to build up these
+        # early than do it later.
         base_table_where = []
         sc_table_where = []
-
-        if base_columns["change_type"] == "delete":
-            for pk in self.base_primary_key:
-                if pk not in base_columns:
-                    raise ValueError("Missing primary key column %s. PK values needed for deletion" % (pk))
-                if base_columns[pk] is None:
-                    raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
 
         for pk in self.base_primary_key:
             base_column = getattr(self.baseTable, pk)
             if pk in base_columns:
                 sc_table_where.append(getattr(self, "base_%s" % pk) == base_columns[pk])
-                # If a non-null data_version was provided it implies that the
-                # base table row should already exist. This will be checked for
-                # after we finish basic checks on the individual parts of the
-                # PK.
-                if "data_version" in base_columns and base_columns["data_version"]:
-                    base_table_where.append(getattr(self.baseTable, pk) == base_columns[pk])
+                base_table_where.append(getattr(self.baseTable, pk) == base_columns[pk])
             # Non-Integer columns can have autoincrement set to True for some reason.
             # Any non-integer columns in the primary key are always required (because
             # autoincrement actually isn't a thing for them), and any Integer columns
@@ -992,27 +983,36 @@ class ScheduledChangeTable(AUSTable):
             elif not isinstance(base_column.type, (sqlalchemy.types.Integer,)) or not base_column.autoincrement:
                 raise ValueError("Missing primary key column '%s' which is not autoincrement", pk)
 
-        # If anything ended up in base_table_where, it means that the baseTable
-        # row should already exist. In these cases, we need to check to make sure
-        # that the scheduled change has the same data version as the base table,
-        # to ensure that a change is not being scheduled from an out of date version
-        # of the base table row.
-        if base_table_where:
+        if base_columns["change_type"] == "delete":
+            for pk in self.base_primary_key:
+                if pk not in base_columns:
+                    raise ValueError("Missing primary key column %s. PK values needed for deletion" % (pk))
+                if base_columns[pk] is None:
+                    raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
+        elif base_columns["change_type"] == "update":
+            # For updates, we need to make sure that the baseTable row already
+            # exists, and that the data version provided matches the current
+            # version to ensure that someone isn't trying to schedule a change
+            # against out-of-date data.
             current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction)
             if not current_data_version:
                 raise ValueError("Cannot create scheduled change with data_version for non-existent row")
 
             if current_data_version and current_data_version[0]["data_version"] != base_columns.get("data_version"):
                 raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
+        elif base_columns["change_type"] == "insert" and base_table_where:
+            # If the base table row shouldn't already exist, we need to make sure they don't
+            # to avoid getting an IntegrityError when the change is enacted.
+            if self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction):
+                raise ValueError("Cannot schedule change for duplicate PK")
 
-        # If the change has a PK in it and the change isn't already scheduled
-        # (meaning we're validating an update to it), we must ensure that no
-        # existing change with that PK is active before allowing it.
+        # If we're validating a new scheduled change (sc_id is None), we need
+        # to make sure that no other scheduled change already exists if a
+        # primary key for the base table was provided (sc_table_where is not empty).
         if not sc_id and sc_table_where:
             sc_table_where.append(self.complete == False) # noqa because we need to use == for sqlalchemy operator overloading to work
             if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
                 raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
-        self.log.debug("base_columns: %s" % (base_columns))
 
         self.conditions.validate(condition_columns)
         self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
@@ -1089,6 +1089,7 @@ class ScheduledChangeTable(AUSTable):
 
         base_what = self._prefixColumns(base_what)
         base_what["scheduled_by"] = changed_by
+
         super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
 
         for sc_id in affected_ids:
@@ -1138,8 +1139,6 @@ class ScheduledChangeTable(AUSTable):
             transaction=transaction
         )
 
-        # If the scheduled change had a data version, it means the row already
-        # exists, and we need to use update() to enact it.
         if change_type == "delete":
             where = []
             for col in self.base_primary_key:
@@ -1510,7 +1509,7 @@ class Releases(AUSTable):
         else:
             dataType = Text
         self.table.append_column(Column('data', BlobColumn(dataType), nullable=False))
-        AUSTable.__init__(self, db, dialect)
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
@@ -1783,27 +1782,35 @@ class Releases(AUSTable):
         except KeyError:
             return False
 
-    def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
-        names = []
-        mapping_count = dbo.rules.t.count().where(dbo.rules.mapping == where["name"]).execute().fetchone()[0]
-
-        whitelist_count = dbo.rules.t.count().where(dbo.rules.whitelist == where["name"]).execute().fetchone()[0]
-
-        fallbackMapping_count = dbo.rules.t.count().where(dbo.rules.fallbackMapping == where["name"]).execute().fetchone()[0]
-
+    def isMappedTo(self, name, transaction=None):
+        if not transaction:
+            transaction = AUSTransaction(self.getEngine())
+        mapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.mapping == name)).fetchone()[0]
+        whitelist_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.whitelist == name)).fetchone()[0]
+        fallbackMapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.fallbackMapping == name)).fetchone()[0]
         if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
-            msg = "%s has rules pointing to it. Hence it cannot be deleted." % (self.name)
+            return True
+
+        return False
+
+    def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False):
+        release = self.select(where=where, columns=[self.name, self.product], transaction=transaction)
+        if len(release) != 1:
+            raise ValueError("Where clause must match exactly one release to delete.")
+        release = release[0]
+
+        self._proceedIfNotReadOnly(release["name"], transaction=transaction)
+        if not self.db.hasPermission(changed_by, "release", "delete", release["product"], transaction):
+            raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, release["product"]))
+
+        if self.isMappedTo(release["name"], transaction):
+            msg = "%s has rules pointing to it. Hence it cannot be deleted." % (release["name"])
             raise ValueError(msg)
-        for toDelete in self.select(where=where, columns=[self.name, self.product], transaction=transaction):
-            names.append(toDelete["name"])
-            self._proceedIfNotReadOnly(toDelete["name"], transaction=transaction)
-            if not self.db.hasPermission(changed_by, "release", "delete", toDelete["product"], transaction):
-                raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, toDelete["product"]))
+
         super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
         if not dryrun:
-            for name in names:
-                cache.invalidate("blob", name)
-                cache.invalidate("blob_version", name)
+            cache.invalidate("blob", release["name"])
+            cache.invalidate("blob_version", release["name"])
 
     def isReadOnly(self, name, limit=None, transaction=None):
         where = [self.name == name]
@@ -1854,7 +1861,7 @@ class Permissions(AUSTable):
                            Column('options', JSONColumn)
                            )
         self.user_roles = UserRoles(db, metadata, dialect)
-        AUSTable.__init__(self, db, dialect)
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def assertPermissionExists(self, permission):
         if permission not in self.allPermissions.keys():
@@ -2130,6 +2137,7 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
                            table, subj, body, use_tls)
                 table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
     return bleet
+
 
 # A helper that sets sql_mode. This should only be used with MySQL, and
 # lets us put the database in a stricter mode that will disallow things like

@@ -4,7 +4,13 @@ from flask import request, Response, jsonify
 
 from auslib.global_state import dbo
 from auslib.admin.views.base import requirelogin, AdminView
-from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm, DbEditableForm
+from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm, DbEditableForm, \
+    ScheduledChangeNewPermissionForm, ScheduledChangeExistingPermissionForm, \
+    EditScheduledChangeNewPermissionForm, EditScheduledChangeExistingPermissionForm, \
+    ScheduledChangeDeletePermissionForm
+from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
+    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
+    SignoffsView
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 
@@ -95,6 +101,75 @@ class SpecificPermissionView(AdminView):
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=e.args)
+
+
+class PermissionScheduledChangesView(ScheduledChangesView):
+    def __init__(self):
+        super(PermissionScheduledChangesView, self).__init__("permissions", dbo.permissions)
+
+    @requirelogin
+    def _post(self, transaction, changed_by):
+        change_type = request.json.get("change_type")
+
+        if change_type == "update":
+            form = ScheduledChangeExistingPermissionForm()
+        elif change_type == "insert":
+            form = ScheduledChangeNewPermissionForm()
+        elif change_type == "delete":
+            form = ScheduledChangeDeletePermissionForm()
+        else:
+            return Response(status=400, response="Invalid or missing change_type")
+
+        return super(PermissionScheduledChangesView, self)._post(form, transaction, changed_by)
+
+
+class PermissionScheduledChangeView(ScheduledChangeView):
+    def __init__(self):
+        super(PermissionScheduledChangeView, self).__init__("permissions", dbo.permissions)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        if request.json and request.json.get("data_version"):
+            form = EditScheduledChangeExistingPermissionForm()
+        else:
+            form = EditScheduledChangeNewPermissionForm()
+
+        return super(PermissionScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(PermissionScheduledChangeView, self)._delete(sc_id, transaction, changed_by)
+
+
+class EnactPermissionScheduledChangeView(EnactScheduledChangeView):
+    def __init__(self):
+        super(EnactPermissionScheduledChangeView, self).__init__("permissions", dbo.permissions)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(EnactPermissionScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+
+
+class PermissionScheduledChangeSignoffsView(SignoffsView):
+    def __init__(self):
+        super(PermissionScheduledChangeSignoffsView, self).__init__("permissions", dbo.permissions)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(PermissionScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
+
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(PermissionScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
+
+
+class PermissionScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    def __init__(self):
+        super(PermissionScheduledChangeHistoryView, self).__init__("permissions", dbo.permissions)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(PermissionScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
 
 
 class UserRolesView(AdminView):

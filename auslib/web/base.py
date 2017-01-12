@@ -23,6 +23,7 @@ def heartbeat_database_function(dbo):
     # cause notable load, but will verify that the database works.
     return dbo.rules.countRules()
 
+
 create_dockerflow_endpoints(app, heartbeat_database_function)
 
 

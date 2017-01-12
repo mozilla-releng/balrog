@@ -47,7 +47,12 @@ class ScheduledChangesView(AdminView):
             return Response(status=400, response=json.dumps(form.errors))
 
         try:
-            sc_id = self.sc_table.insert(changed_by, transaction, **form.data)
+            # Forms can normally be accessed as a dict through form.data,
+            # but because some of the Forms we end up using have a Field
+            # called "data", this gets overridden, so we need to construct
+            # a dict ourselves.
+            columns = {k: v.data for k, v in form._fields.iteritems()}
+            sc_id = self.sc_table.insert(changed_by, transaction, **columns)
         except ValueError as e:
             self.log.warning("Bad input: %s", e)
             return Response(status=400, response=json.dumps({"exception": e.args}))
@@ -74,7 +79,7 @@ class ScheduledChangeView(AdminView):
         # We need to be able to support changing AND removing things
         # and because of how Flask's request object and WTForm's defaults work
         # this gets a little hairy.
-        for k, v in form.data.iteritems():
+        for k, v in form._fields.iteritems():
             # sc_data_version is a "special" column, in that it's not part of the
             # primary data, and shouldn't be updatable by the user.
             if k == "sc_data_version":
@@ -87,7 +92,7 @@ class ScheduledChangeView(AdminView):
             # will have already converted it to None, so we can treat it the
             # same as a modification here.
             if (request.json and k in request.json):
-                what[k] = v
+                what[k] = v.data
 
         try:
             self.sc_table.update({"sc_id": sc_id}, what, changed_by, form.sc_data_version.data, transaction)
