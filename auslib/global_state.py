@@ -22,6 +22,7 @@ class DbWrapper(object):
             raise RuntimeError("No database configured")
         return getattr(self.db, name)
 
+
 dbo = DbWrapper()
 
 # Similar to the above, we have a complication around having two separate
