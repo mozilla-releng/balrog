@@ -1343,8 +1343,8 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         self.assertEquals(db_data, expected)
 
-        base_row = dbo.releases.t.select().where(dbo.releases.name == "a").execute().fetchall()
-        self.assertEquals(len(base_row), 1)
+        base_row = dbo.releases.t.select().where(dbo.releases.name == "ab").execute().fetchall()
+        self.assertEquals(len(base_row), 0)
 
     def testGetScheduledChangeHistoryRevisions(self):
         ret = self._get("/scheduled_changes/releases/3/revisions")
