@@ -130,6 +130,9 @@ class TestTableMixin(object):
                                    Column('foo', Integer))
                 AUSTable.__init__(self, db, 'sqlite')
 
+            def getPotentialRequiredSignoffs(self, *args, **kwargs):
+                return None
+
         class TestAutoincrementTable(AUSTable):
 
             def __init__(self, db, metadata):
@@ -137,6 +140,10 @@ class TestTableMixin(object):
                                    Column('id', Integer, primary_key=True, autoincrement=True),
                                    Column('foo', Integer))
                 AUSTable.__init__(self, db, 'sqlite')
+
+            def getPotentialRequiredSignoffs(self, *args, **kwargs):
+                return None
+
         self.test = TestTable("fake", self.metadata)
         self.testAutoincrement = TestAutoincrementTable("fake", self.metadata)
         self.metadata.create_all()
@@ -158,6 +165,10 @@ class TestMultiplePrimaryTableMixin(object):
                                    Column('id2', Integer, primary_key=True),
                                    Column('foo', Integer))
                 AUSTable.__init__(self, db, 'sqlite')
+
+            def getPotentialRequiredSignoffs(self, *args, **kwargs):
+                return None
+
         self.test = TestTable("fake", self.metadata)
         self.metadata.create_all()
         self.test.t.insert().execute(id1=1, id2=1, foo=33, data_version=1)
@@ -610,8 +621,8 @@ class ScheduledChangesTableMixin(object):
                                    Column("bar", String(15)))
                 super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
-            def isSignedOff(self, sc_id, transaction=None):
-                return True
+            def getPotentialRequiredSignoffs(self, *args, **kwargs):
+                return None
 
             def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
                 if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
@@ -802,6 +813,9 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
                                    Column("bar", String(15)))
                 super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
+            def getPotentialRequiredSignoffs(self, *args, **kwargs):
+                return None
+
         table = TestTable2(self.db, self.metadata)
         self.metadata.create_all()
         what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876000, "change_type": "insert"}
@@ -839,6 +853,9 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
                                    Column("foo", String(15), primary_key=True),
                                    Column("bar", String(15)))
                 super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
+
+            def getPotentialRequiredSignoffs(self, *args, **kwargs):
+                return None
 
         table = TestTable2("fake", self.metadata)
         self.metadata.create_all()
@@ -898,6 +915,9 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
                                    Column("foo", String(15), primary_key=True),
                                    Column("bar", String(15)))
                 super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
+
+            def getPotentialRequiredSignoffs(self, *args, **kwargs):
+                return None
 
         table = TestTable2("fake", self.metadata)
         self.metadata.create_all()
@@ -1244,6 +1264,9 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
                 super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]},
                                                 history=True, versioned=True)
 
+            def getPotentialRequiredSignoffs(self, *args, **kwargs):
+                return None
+
         self.table = TestTable(self.db, self.metadata)
         self.sc_table = self.table.scheduled_changes
         self.metadata.create_all()
@@ -1301,6 +1324,9 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
                 super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": []},
                                                  history=True, versioned=True)
 
+            def getPotentialRequiredSignoffs(self, *args, **kwargs):
+                return None
+
         self.assertRaisesRegexp(ValueError, "No conditions enabled", TestTable2, self.db, self.metadata)
 
     def testSCTableWithBadConditions(self):
@@ -1312,6 +1338,9 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
                                    Column("bar", String(15)))
                 super(TestTable3, self).__init__(db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time", "blech"]},
                                                  history=True, versioned=True)
+
+            def getPotentialRequiredSignoffs(self, *args, **kwargs):
+                return None
 
         self.assertRaisesRegexp(ValueError, "Unknown conditions", TestTable3, self.db, self.metadata)
 

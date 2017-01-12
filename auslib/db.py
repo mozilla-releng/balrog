@@ -298,12 +298,7 @@ class AUSTable(object):
         rows given, and returning all Required Signoffs that apply to them.
         Deduplication of multiple Required Signoffs for the same Role is not
         necessary."""
-        # TODO: uncomment this after scheduled changes are enabled for
-        # Releases and Permissions. Returning None here is a bad default,
-        # but we can't raise this without breaking things until all
-        # tables that support required signoffs also support scheduled changes.
-        # raise NotImplementedError()
-        return None
+        raise NotImplementedError()
 
     def _returnRowOrRaise(self, where, columns=None, transaction=None):
         """Return the row matching the where clause supplied. If no rows match or multiple rows match,
@@ -676,6 +671,10 @@ class History(AUSTable):
             self.table.append_column(newcol)
         AUSTable.__init__(self, db, dialect, history=False, versioned=False)
 
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        # History tables do not require signoffs
+        return None
+
     def forInsert(self, insertedKeys, columns, changed_by):
         """Inserts cause two rows in the History table to be created. The first
            one records the primary key data and NULLs for other row data. This
@@ -891,6 +890,10 @@ class ConditionsTable(AUSTable):
 
         super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
 
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        # Scheduled Changes tables do not require signoffs
+        return None
+
     def validate(self, conditions):
         conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
         if not conditions:
@@ -970,6 +973,10 @@ class ScheduledChangeTable(AUSTable):
             self.table.append_column(newcol)
 
         super(ScheduledChangeTable, self).__init__(db, dialect, history=history, versioned=True)
+
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        # Scheduled Changes tables do not require signoffs
+        return None
 
     def _prefixColumns(self, columns):
         """Helper function which takes key/value pairs of columns for this
@@ -1348,6 +1355,10 @@ class SignoffsTable(AUSTable):
         # Because Signoffs cannot be modified, there's no possibility of an
         # update race, so they do not need to be versioned.
         super(SignoffsTable, self).__init__(db, dialect, versioned=False)
+
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        # Signoffs tables do not require signoffs
+        return None
 
     def insert(self, changed_by=None, transaction=None, dryrun=False, signoffs=None, **columns):
         if "sc_id" not in columns or "role" not in columns:
@@ -2027,6 +2038,10 @@ class UserRoles(AUSTable):
                            )
         super(UserRoles, self).__init__(db, dialect)
 
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        # User Roles do not require signoffs
+        return None
+
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
         raise AttributeError("User roles cannot be modified (only granted and revoked)")
 
@@ -2231,6 +2246,10 @@ class Dockerflow(AUSTable):
     def __init__(self, db, metadata, dialect):
         self.table = Table('dockerflow', metadata, Column('watchdog', Integer))
         AUSTable.__init__(self, db, dialect, history=False, versioned=False)
+
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        # The Dockerflow table does not require signoffs
+        return None
 
     def getDockerflowEntry(self, transaction=None):
         return self.select(transaction=transaction)[0]
