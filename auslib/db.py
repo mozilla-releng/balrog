@@ -1289,7 +1289,12 @@ class RequiredSignoffsTable(AUSTable):
             if columns[col] is None:
                 raise ValueError("{} are required.".format(self.decisionColumns))
 
-        users_with_role, = self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"]).execute().fetchone()
+        if transaction:
+            users_with_role, = transaction.execute(self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"]))\
+                                          .fetchone()
+        else:
+            users_with_role, = self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])\
+                                                                       .execute().fetchone()
         if users_with_role < columns["signoffs_required"]:
             msg = ", ".join(self.decisionColumns)
             raise ValueError("Cannot require {} signoffs for {} - only {} users hold that role".format(columns["signoffs_required"], msg, columns["role"]))

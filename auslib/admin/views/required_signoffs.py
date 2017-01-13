@@ -6,8 +6,12 @@ from auslib.admin.views.base import requirelogin, AdminView
 from auslib.admin.views.forms import ProductRequiredSignoffForm, \
     ScheduledChangeExistingProductRequiredSignoffForm, \
     ScheduledChangeNewProductRequiredSignoffForm, \
-    ScheduledChangeDeleteProductRequiredSignoffForm
-from auslib.admin.views.scheduled_changes import ScheduledChangesView
+    ScheduledChangeDeleteProductRequiredSignoffForm, \
+    EditScheduledChangeNewProductRequiredSignoffForm, \
+    EditScheduledChangeExistingProductRequiredSignoffForm
+from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
+    ScheduledChangeView, EnactScheduledChangeView, SignoffsView, \
+    ScheduledChangeHistoryView
 from auslib.db import SignoffRequiredError
 from auslib.global_state import dbo
 
@@ -55,7 +59,7 @@ class ProductRequiredSignoffsView(RequiredSignoffsView):
 
 class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
     def __init__(self):
-        super(ProductRequiredSignoffsScheduledChangesView, self).__init__("product_required_signoffs", dbo.productRequiredSignoffs)
+        super(ProductRequiredSignoffsScheduledChangesView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
 
     @requirelogin
     def _post(self, transaction, changed_by):
@@ -71,3 +75,52 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
             return Response(status=400, response="Invalid or missing change_type")
 
         return super(ProductRequiredSignoffsScheduledChangesView, self)._post(form, transaction, changed_by)
+
+
+class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
+    def __init__(self):
+        super(ProductRequiredSignoffScheduledChangeView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        if request.json and request.json.get("data_version"):
+            form = EditScheduledChangeExistingProductRequiredSignoffForm()
+        else:
+            form = EditScheduledChangeNewProductRequiredSignoffForm()
+
+        return super(ProductRequiredSignoffScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(ProductRequiredSignoffScheduledChangeView, self)._delete(sc_id, transaction, changed_by)
+
+
+class EnactProductRequiredSignoffScheduledChangeView(EnactScheduledChangeView):
+    def __init__(self):
+        super(EnactProductRequiredSignoffScheduledChangeView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(EnactProductRequiredSignoffScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+
+
+class ProductRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
+    def __init__(self):
+        super(ProductRequiredSignoffScheduledChangeSignoffsView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(ProductRequiredSignoffScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
+
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(ProductRequiredSignoffScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
+
+
+class ProductRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    def __init__(self):
+        super(ProductRequiredSignoffScheduledChangeHistoryView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(ProductRequiredSignoffScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)

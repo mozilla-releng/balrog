@@ -396,3 +396,17 @@ class ScheduledChangeDeleteProductRequiredSignoffForm(ScheduledChangeTimeForm):
     role = StringField('Role', validators=[InputRequired()])
     data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
     change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+
+
+class EditScheduledChangeNewProductRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Product', validators=[Length(0, 15), Optional()])
+    channel = StringField('Channel', validators=[Length(0, 75), Optional()])
+    role = StringField('Role', validators=[Optional()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[Optional()])
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
+
+
+class EditScheduledChangeExistingProductRequiredSignoffForm(ScheduledChangeTimeForm):
+    signoffs_required = IntegerField("Signoffs Required", validators=[Optional()])
+    data_version = IntegerField('data_version', widget=HiddenInput())
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())

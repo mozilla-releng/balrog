@@ -1,4 +1,5 @@
 import json
+import mock
 
 from auslib.global_state import dbo
 from auslib.test.admin.views.base import ViewTest
@@ -10,10 +11,12 @@ class TestProductRequiredSignoffs(ViewTest):
     def testGetRequiredSignoffs(self):
         ret = self._get("/required_signoffs/product")
         got = json.loads(ret.data)
-        self.assertEquals(got["count"], 2)
+        self.assertEquals(got["count"], 4)
         expected = [
             {"product": "fake", "channel": "a", "role": "releng", "signoffs_required": 1, "data_version": 1},
+            {"product": "fake", "channel": "e", "role": "releng", "signoffs_required": 1, "data_version": 1},
             {"product": "fake", "channel": "j", "role": "releng", "signoffs_required": 1, "data_version": 1},
+            {"product": "fake", "channel": "k", "role": "releng", "signoffs_required": 1, "data_version": 1},
         ]
         self.assertEquals(got["required_signoffs"], expected)
 
@@ -117,7 +120,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             change_id=6, changed_by="bill", timestamp=81, sc_id=3, when=300000000, data_version=1
         )
         dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=7, changed_by="bill", timestamp=81, sc_id=3, when=300000000, data_version=2
+            change_id=7, changed_by="bill", timestamp=100, sc_id=3, when=300000000, data_version=2
         )
 
         dbo.productRequiredSignoffs.scheduled_changes.t.insert().execute(
@@ -193,3 +196,234 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeExistingRequiredSignoff(self):
+        data = {
+            "when": 400000000, "product": "fake", "channel": "k", "role": "releng", "signoffs_required": 2, "data_version": 1, "change_type": "update",
+        }
+        ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 5, "scheduled_by": "bill", "change_type": "update", "complete": False, "data_version": 1,
+            "base_product": "fake", "base_channel": "k", "base_role": "releng", "base_signoffs_required": 2, "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()\
+            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeNewRequiredSignoff(self):
+        data = {
+            "when": 400000000, "product": "foo", "channel": "bar", "role": "relman", "signoffs_required": 1, "change_type": "insert",
+        }
+        ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 5, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1,
+            "base_product": "foo", "base_channel": "bar", "base_role": "relman", "base_signoffs_required": 1, "base_data_version": None,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()\
+            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeDeleteRequiredSignoff(self):
+        data = {
+            "when": 400000000, "product": "fake", "channel": "k", "role": "releng", "change_type": "delete", "data_version": 1,
+        }
+        ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 5, "scheduled_by": "bill", "change_type": "delete", "complete": False, "data_version": 1,
+            "base_product": "fake", "base_channel": "k", "base_role": "releng", "base_signoffs_required": None, "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()\
+            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeExistingRequiredSignoff(self):
+        data = {
+            "signoffs_required": 1, "data_version": 1, "sc_data_version": 1, "when": 200000000,
+        }
+        ret = self._post("/scheduled_changes/required_signoffs/product/2", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+
+        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 2, "complete": False, "data_version": 2, "scheduled_by": "bill", "change_type": "update", "base_product": "fake",
+            "base_channel": "a", "base_role": "releng", "base_signoffs_required": 1, "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()\
+            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 2, "data_version": 2, "when": 200000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeNewRequiredSignoff(self):
+        data = {
+            "signoffs_required": 2, "sc_data_version": 1, "when": 450000000,
+        }
+        ret = self._post("/scheduled_changes/required_signoffs/product/1", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+
+        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 1, "complete": False, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_product": "fake",
+            "base_channel": "c", "base_role": "releng", "base_signoffs_required": 2, "base_data_version": None,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()\
+            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 1, "data_version": 2, "when": 450000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
+    def testDeleteScheduledChange(self):
+        ret = self._delete("/scheduled_changes/required_signoffs/product/1", qs={"data_version": 1})
+        self.assertEquals(ret.status_code, 200, ret.data)
+        got = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1).execute().fetchall()
+        self.assertEquals(got, [])
+        cond_got = dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()\
+            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
+        self.assertEquals(cond_got, [])
+
+    def testEnactScheduledChangeExistingRequiredSignoff(self):
+        ret = self._post("/scheduled_changes/required_signoffs/product/2/enact")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 2, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "update", "base_product": "fake",
+            "base_channel": "a", "base_role": "releng", "base_signoffs_required": 2, "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+
+        base_row = dbo.productRequiredSignoffs.t.select().where(dbo.productRequiredSignoffs.channel == "a")\
+                                                         .where(dbo.productRequiredSignoffs.product == "fake")\
+                                                         .where(dbo.productRequiredSignoffs.role == "releng")\
+                                                         .execute().fetchall()[0]
+        base_expected = {
+            "product": "fake", "channel": "a", "role": "releng", "signoffs_required": 2, "data_version": 2
+        }
+        self.assertEquals(dict(base_row), base_expected)
+
+    def testEnactScheduledChangeNewRequiredSignoff(self):
+        ret = self._post("/scheduled_changes/required_signoffs/product/1/enact")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_product": "fake",
+            "base_channel": "c", "base_role": "releng", "base_signoffs_required": 1, "base_data_version": None,
+        }
+        self.assertEquals(db_data, expected)
+
+        base_row = dict(dbo.productRequiredSignoffs.t.select().where(dbo.productRequiredSignoffs.channel == "c")
+                                                              .where(dbo.productRequiredSignoffs.product == "fake")
+                                                              .where(dbo.productRequiredSignoffs.role == "releng")
+                                                              .execute().fetchall()[0])
+        base_expected = {
+            "product": "fake", "channel": "c", "role": "releng", "signoffs_required": 1, "data_version": 1
+        }
+        self.assertEquals(dict(base_row), base_expected)
+
+    def testEnactScheduledChangeDeleteRequiredSignoff(self):
+        ret = self._post("/scheduled_changes/required_signoffs/product/4/enact")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 4, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "delete", "base_product": "fake",
+            "base_channel": "j", "base_role": "releng", "base_signoffs_required": None, "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+
+        base_row = dbo.productRequiredSignoffs.t.select().where(dbo.productRequiredSignoffs.channel == "j")\
+                                                         .where(dbo.productRequiredSignoffs.product == "fake")\
+                                                         .where(dbo.productRequiredSignoffs.role == "releng")\
+                                                         .execute().fetchall()
+        self.assertEquals(len(base_row), 0)
+
+    def testGetScheduledChangeHistoryRevisions(self):
+        ret = self._get("/scheduled_changes/required_signoffs/product/3/revisions")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        expected = {
+            "count": 2,
+            "revisions": [
+                {
+                    "change_id": 7, "changed_by": "bill", "timestamp": 100, "sc_id": 3, "scheduled_by": "bill", "change_type": "insert",
+                    "data_version": None, "product": "fake", "channel": "e", "role": "releng", "signoffs_required": 1,
+                    "when": 300000000, "complete": True, "sc_data_version": 2,
+                },
+                {
+                    "change_id": 6, "changed_by": "bill", "timestamp": 81, "sc_id": 3, "scheduled_by": "bill", "change_type": "insert",
+                    "data_version": None, "product": "fake", "channel": "e", "role": "releng", "signoffs_required": 2,
+                    "when": 300000000, "complete": False, "sc_data_version": 1,
+                },
+            ],
+        }
+        self.assertEquals(json.loads(ret.data), expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=100))
+    def testSignoffWithPermission(self):
+        ret = self._post("/scheduled_changes/required_signoffs/product/2/signoffs", data=dict(role="relman"), username="bob")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.select()\
+            .where(dbo.productRequiredSignoffs.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 2)
+        self.assertEquals(dict(r[0]), {"sc_id": 2, "username": "bill", "role": "releng"})
+        self.assertEquals(dict(r[1]), {"sc_id": 2, "username": "bob", "role": "relman"})
+        r = dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.select()\
+            .where(dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 4)
+        self.assertEquals(dict(r[0]), {"change_id": 3, "changed_by": "bill", "timestamp": 60, "sc_id": 2, "username": "bill", "role": None})
+        self.assertEquals(dict(r[1]), {"change_id": 4, "changed_by": "bill", "timestamp": 61, "sc_id": 2, "username": "bill", "role": "releng"})
+        self.assertEquals(dict(r[2]), {"change_id": 10, "changed_by": "bob", "timestamp": 99999, "sc_id": 2, "username": "bob", "role": None})
+        self.assertEquals(dict(r[3]), {"change_id": 11, "changed_by": "bob", "timestamp": 100000, "sc_id": 2, "username": "bob", "role": "relman"})
+
+    def testSignoffWithoutPermission(self):
+        ret = self._post("/scheduled_changes/required_signoffs/product/2/signoffs", data=dict(role="relman"), username="bill")
+        self.assertEquals(ret.status_code, 403, ret.data)
+
+    def testRevokeSignoff(self):
+        ret = self._delete("/scheduled_changes/required_signoffs/product/1/signoffs", username="bill")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        r = dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.select()\
+            .where(dbo.productRequiredSignoffs.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 0)
