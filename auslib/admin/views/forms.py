@@ -364,3 +364,11 @@ class EditScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
     data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
     data_version = IntegerField('data_version', widget=HiddenInput())
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
+
+
+class ProductRequiredSignoffsForm(Form):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
+    data_version = IntegerField('data_version', widget=HiddenInput())
