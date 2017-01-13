@@ -366,9 +366,33 @@ class EditScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
-class ProductRequiredSignoffsForm(Form):
+class ProductRequiredSignoffForm(Form):
     product = StringField('Product', validators=[Length(0, 15), InputRequired()])
     channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
     role = StringField('Role', validators=[InputRequired()])
     signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
-    data_version = IntegerField('data_version', widget=HiddenInput())
+
+
+class ScheduledChangeNewProductRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+
+
+class ScheduledChangeExistingProductRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
+    data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+
+
+class ScheduledChangeDeleteProductRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])

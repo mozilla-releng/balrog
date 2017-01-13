@@ -23,7 +23,8 @@ from auslib.admin.views.releases import SingleLocaleView, \
     ReleaseScheduledChangesView, ReleaseScheduledChangeView, \
     EnactReleaseScheduledChangeView, ReleaseScheduledChangeHistoryView, \
     ReleaseScheduledChangeSignoffsView
-from auslib.admin.views.required_signoffs import ProductRequiredSignoffsView
+from auslib.admin.views.required_signoffs import ProductRequiredSignoffsView, \
+    ProductRequiredSignoffsScheduledChangesView
 from auslib.admin.views.rules import RulesAPIView, \
     SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView, \
     RuleScheduledChangesView, RuleScheduledChangeView, \
@@ -114,3 +115,4 @@ app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/enact", view_func=Enac
 app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/signoffs", view_func=ReleaseScheduledChangeSignoffsView.as_view("scheduled_change_release_signoffs"))
 app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/revisions",
                  view_func=ReleaseScheduledChangeHistoryView.as_view("scheduled_change_releases_history"))
+app.add_url_rule("/scheduled_changes/required_signoffs/product", view_func=ProductRequiredSignoffsScheduledChangesView.as_view("scheduled_changes_product_rs"))

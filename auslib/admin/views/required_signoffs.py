@@ -1,8 +1,13 @@
-from flask import jsonify, Response
 import json
 
+from flask import jsonify, Response, request
+
 from auslib.admin.views.base import requirelogin, AdminView
-from auslib.admin.views.forms import ProductRequiredSignoffsForm
+from auslib.admin.views.forms import ProductRequiredSignoffForm, \
+    ScheduledChangeExistingProductRequiredSignoffForm, \
+    ScheduledChangeNewProductRequiredSignoffForm, \
+    ScheduledChangeDeleteProductRequiredSignoffForm
+from auslib.admin.views.scheduled_changes import ScheduledChangesView
 from auslib.db import SignoffRequiredError
 from auslib.global_state import dbo
 
@@ -44,5 +49,25 @@ class ProductRequiredSignoffsView(RequiredSignoffsView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        form = ProductRequiredSignoffsForm()
+        form = ProductRequiredSignoffForm()
         return super(ProductRequiredSignoffsView, self)._post(form, transaction, changed_by)
+
+
+class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
+    def __init__(self):
+        super(ProductRequiredSignoffsScheduledChangesView, self).__init__("product_required_signoffs", dbo.productRequiredSignoffs)
+
+    @requirelogin
+    def _post(self, transaction, changed_by):
+        change_type = request.json.get("change_type")
+
+        if change_type == "update":
+            form = ScheduledChangeExistingProductRequiredSignoffForm()
+        elif change_type == "insert":
+            form = ScheduledChangeNewProductRequiredSignoffForm()
+        elif change_type == "delete":
+            form = ScheduledChangeDeleteProductRequiredSignoffForm()
+        else:
+            return Response(status=400, response="Invalid or missing change_type")
+
+        return super(ProductRequiredSignoffsScheduledChangesView, self)._post(form, transaction, changed_by)
