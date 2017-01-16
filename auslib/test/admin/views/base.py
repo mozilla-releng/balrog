@@ -51,7 +51,12 @@ class ViewTest(unittest.TestCase):
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="a", role="releng", signoffs_required=1, data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="e", role="releng", signoffs_required=1, data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="j", role="releng", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="k", role="releng", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="k", role="releng", signoffs_required=1, data_version=2)
+        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=10, product="fake", channel="k", role="releng")
+        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=11, product="fake", channel="k", role="releng",
+                                                               signoffs_required=2, data_version=1)
+        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=25, product="fake", channel="k", role="releng",
+                                                               signoffs_required=1, data_version=2)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="fake", role="releng", signoffs_required=1, data_version=1)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="bar", role="releng", signoffs_required=1, data_version=1)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="blah", role="releng", signoffs_required=1, data_version=1)

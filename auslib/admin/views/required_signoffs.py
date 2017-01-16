@@ -1,9 +1,12 @@
 import json
 
+from sqlalchemy.sql.expression import null
+
 from flask import jsonify, Response, request
 
-from auslib.admin.views.base import requirelogin, AdminView
+from auslib.admin.views.base import requirelogin, AdminView, HistoryAdminView
 from auslib.admin.views.forms import ProductRequiredSignoffForm, \
+    ProductRequiredSignoffHistoryForm, \
     ScheduledChangeExistingProductRequiredSignoffForm, \
     ScheduledChangeNewProductRequiredSignoffForm, \
     ScheduledChangeDeleteProductRequiredSignoffForm, \
@@ -38,9 +41,7 @@ class RequiredSignoffsView(AdminView):
             self.log.warning("Bad input: %s", form.errors)
             return Response(status=400, response=json.dumps(form.errors))
 
-        where = {}
-        for f in self.decisionFields:
-            where[f] = form[f].data
+        where = {f: form[f].data for f in self.decisionFields}
         if self.table.select(where=where, transaction=transaction):
             raise SignoffRequiredError("Required Signoffs cannot be directly modified")
         else:
@@ -55,6 +56,41 @@ class RequiredSignoffsView(AdminView):
         raise SignoffRequiredError("Required Signoffs cannot be directly deleted.")
 
 
+class RequiredSignoffsHistoryAPIView(HistoryAdminView):
+
+    def __init__(self, table, decisionFields):
+        self.table = table
+        self.decisionFields = decisionFields
+        super(RequiredSignoffsHistoryAPIView, self).__init__()
+
+    def get(self, form):
+        if not self.table.select({f: getattr(form, f).data for f in self.decisionFields}):
+            return Response(status=404, response="Requested Required Signoff does not exist")
+
+        try:
+            page = int(request.args.get('page', 1))
+            limit = int(request.args.get('limit', 100))
+            assert page >= 1
+        except (ValueError, AssertionError) as msg:
+            self.log.warning("Bad input: %s", msg)
+            return Response(status=400, response=str(msg))
+        offset = limit * (page - 1)
+
+        query = self.table.history.t.count().where(self.table.history.data_version != null())
+        for field in self.decisionFields:
+            query = query.where(getattr(self.table.history, field) == getattr(form, field).data)
+        total_count = query.execute().fetchone()[0]
+
+        where = [getattr(self.table.history, f) == getattr(form, f).data for f in self.decisionFields]
+        where.append(self.table.history.data_version != null())
+        revisions = self.table.history.select(
+            where=where, limit=limit, offset=offset,
+            order_by=[self.table.history.timestamp.desc()]
+        )
+
+        return jsonify(count=total_count, required_signoffs=revisions)
+
+
 class ProductRequiredSignoffsView(RequiredSignoffsView):
 
     def __init__(self):
@@ -64,6 +100,16 @@ class ProductRequiredSignoffsView(RequiredSignoffsView):
     def _post(self, transaction, changed_by):
         form = ProductRequiredSignoffForm()
         return super(ProductRequiredSignoffsView, self)._post(form, transaction, changed_by)
+
+
+class ProductRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
+
+    def __init__(self):
+        super(ProductRequiredSignoffsHistoryAPIView, self).__init__(dbo.productRequiredSignoffs, ["product", "channel", "role"])
+
+    def get(self):
+        form = ProductRequiredSignoffHistoryForm(request.args)
+        return super(ProductRequiredSignoffsHistoryAPIView, self).get(form)
 
 
 class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):

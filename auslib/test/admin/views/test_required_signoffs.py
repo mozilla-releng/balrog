@@ -15,7 +15,7 @@ class TestProductRequiredSignoffs(ViewTest):
             {"product": "fake", "channel": "a", "role": "releng", "signoffs_required": 1, "data_version": 1},
             {"product": "fake", "channel": "e", "role": "releng", "signoffs_required": 1, "data_version": 1},
             {"product": "fake", "channel": "j", "role": "releng", "signoffs_required": 1, "data_version": 1},
-            {"product": "fake", "channel": "k", "role": "releng", "signoffs_required": 1, "data_version": 1},
+            {"product": "fake", "channel": "k", "role": "releng", "signoffs_required": 1, "data_version": 2},
         ]
         self.assertEquals(got["required_signoffs"], expected)
 
@@ -53,6 +53,40 @@ class TestProductRequiredSignoffs(ViewTest):
         ret = self._delete("/required_signoffs/product", qs=dict(product="fake", channel="a", role="relman", data_version=1))
         self.assertStatusCode(ret, 400)
         self.assertIn("This change requires signoff", ret.data)
+
+
+class TestProductRequiredSignoffsHistoryView(ViewTest):
+    maxDiff = 1000
+
+    def testGetRevisions(self):
+        ret = self._get("/required_signoffs/product/revisions", qs={"product": "fake", "channel": "k", "role": "releng"})
+        self.assertStatusCode(ret, 200)
+
+        got = json.loads(ret.data)
+        expected = [
+            {
+                "change_id": 3,
+                "changed_by": "bill",
+                "timestamp": 25,
+                "product": "fake",
+                "channel": "k",
+                "role": "releng",
+                "signoffs_required": 1,
+                "data_version": 2,
+            },
+            {
+                "change_id": 2,
+                "changed_by": "bill",
+                "timestamp": 11,
+                "product": "fake",
+                "channel": "k",
+                "role": "releng",
+                "signoffs_required": 2,
+                "data_version": 1,
+            },
+        ]
+        self.assertEquals(got["count"], 2)
+        self.assertEquals(got["required_signoffs"], expected)
 
 
 class TestProductRequiredSignoffsScheduledChanges(ViewTest):
@@ -198,7 +232,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingRequiredSignoff(self):
         data = {
-            "when": 400000000, "product": "fake", "channel": "k", "role": "releng", "signoffs_required": 2, "data_version": 1, "change_type": "update",
+            "when": 400000000, "product": "fake", "channel": "k", "role": "releng", "signoffs_required": 2, "data_version": 2, "change_type": "update",
         }
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -208,7 +242,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 5, "scheduled_by": "bill", "change_type": "update", "complete": False, "data_version": 1,
-            "base_product": "fake", "base_channel": "k", "base_role": "releng", "base_signoffs_required": 2, "base_data_version": 1,
+            "base_product": "fake", "base_channel": "k", "base_role": "releng", "base_signoffs_required": 2, "base_data_version": 2,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()\
@@ -242,7 +276,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeDeleteRequiredSignoff(self):
         data = {
-            "when": 400000000, "product": "fake", "channel": "k", "role": "releng", "change_type": "delete", "data_version": 1,
+            "when": 400000000, "product": "fake", "channel": "k", "role": "releng", "change_type": "delete", "data_version": 2,
         }
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -252,7 +286,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 5, "scheduled_by": "bill", "change_type": "delete", "complete": False, "data_version": 1,
-            "base_product": "fake", "base_channel": "k", "base_role": "releng", "base_signoffs_required": None, "base_data_version": 1,
+            "base_product": "fake", "base_channel": "k", "base_role": "releng", "base_signoffs_required": None, "base_data_version": 2,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()\

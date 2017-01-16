@@ -373,6 +373,12 @@ class ProductRequiredSignoffForm(Form):
     signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
 
 
+class ProductRequiredSignoffHistoryForm(Form):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+
+
 class ScheduledChangeNewProductRequiredSignoffForm(ScheduledChangeTimeForm):
     product = StringField('Product', validators=[Length(0, 15), InputRequired()])
     channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
