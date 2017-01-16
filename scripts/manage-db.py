@@ -5,6 +5,7 @@ import logging
 from os import path, popen
 from sqlalchemy.engine.url import make_url
 import sys
+import json
 
 logging.basicConfig(level=logging.INFO)
 
@@ -86,7 +87,26 @@ def cleanup_releases_history(trans, dryrun=True):
     print "Total Deleted: %d" % total_deleted
 
 
-def extract_active_data(url, dump_location='dump.sql'):
+def _extract_partials(json_object):
+    """Returns a generator that contains \
+    all value objects having key as 'partials'"""
+    if isinstance(json_object, dict):
+        for key, value in json_object.iteritems():
+            if key == "partials":
+                yield value
+            else:
+                for child_val in _extract_partials(value):
+                    yield child_val
+
+    elif isinstance(json_object, list):
+        for item in json_object:
+            for value in _extract_partials(item):
+                yield value
+    else:
+        pass
+
+
+def extract_active_data(trans,url, dump_location='dump.sql'):
     """
     Stores sqldump data in the specified location. If not specified, stores it in current directory in file dump.sql
     If file already exists it will override that file and not append it.
@@ -118,7 +138,7 @@ def extract_active_data(url, dump_location='dump.sql'):
     popen(
         _strip_multiple_spaces('%s %s dockerflow rules rules_history rules_scheduled_changes rules_scheduled_changes_conditions \
         rules_scheduled_changes_conditions_history rules_scheduled_changes_signoffs rules_scheduled_changes_signoffs_history \
-        rules_scheduled_changes_history migrate_version  > %s' % (mysql_default_command, database, dump_location,))
+        rules_scheduled_changes_history migrate_version  > %s' % (mysql_default_command, database, dump_location))
     )
 
     popen(
@@ -130,12 +150,12 @@ def extract_active_data(url, dump_location='dump.sql'):
                OR releases.name = rules_scheduled_changes.base_mapping \
                OR releases.name = rules_scheduled_changes.base_whitelist \
             )" \
-        >> %s' % (mysql_default_command, database, dump_location,))
+        >> %s' % (mysql_default_command, database, dump_location))
     )
 
     popen(
         _strip_multiple_spaces('%s %s releases_history --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' \
-        AND 1 limit 50" >> %s' % (mysql_default_command, database, dump_location,))
+        limit 50" >> %s' % (mysql_default_command, database, dump_location))
     )
 
     popen(
@@ -143,8 +163,50 @@ def extract_active_data(url, dump_location='dump.sql'):
             SELECT rules.mapping \
             FROM rules \
             WHERE rules.alias=\'firefox-release\' \
-        ) LIMIT 50" >> %s' % (mysql_default_command, database, dump_location,))
+        ) LIMIT 50" >> %s' % (mysql_default_command, database, dump_location))
     )
+
+    query_release_mapping = """SELECT rules.mapping \
+            FROM rules \
+            WHERE rules.mapping IS NOT NULL \
+            UNION \
+            SELECT rules.fallbackMapping \
+            FROM rules \
+            WHERE rules.fallbackMapping IS NOT NULL \
+            UNION \
+            SELECT rules.whitelist \
+            FROM rules \
+            WHERE rules.whitelist IS NOT NULL"""
+
+    popen(_strip_multiple_spaces('''%s %s releases --where="releases.name IN (%s)" \
+        >> %s''' % (mysql_default_command, database, query_release_mapping, dump_location)))
+
+    query_release = """SELECT * \
+    FROM releases \
+    WHERE releases.name IN (%s)""" % query_release_mapping
+
+    result = trans.execute(query_release).fetchall()
+    partial_release_names = []
+    for row in result:
+        row_data = None
+        try:
+            row_data = json.loads(row['data'])
+        except ValueError:
+            continue
+        partials_generator = _extract_partials(row_data)
+        for item in partials_generator:
+            if isinstance(item, dict):
+                partial_release_names.extend(list(item.keys()))
+            elif isinstance(item, list):
+                for list_item in item:
+                    if 'from' in list_item:
+                        partial_release_names.append(str(list_item['from']))
+            else:
+                pass
+    if partial_release_names:
+        qry = ', '.join('"' + release_names + '"' for release_names in partial_release_names)
+        popen(_strip_multiple_spaces('''%s %s releases --where="releases.name IN (%s)" \
+                >> %s''' % (mysql_default_command, database, qry, dump_location)))
 
 
 def _strip_multiple_spaces(string):
@@ -183,11 +245,12 @@ if __name__ == "__main__":
     elif action == 'downgrade':
         db.downgrade(options.version)
     elif action == 'extract':
-        if len(args) < 2:
-            extract_active_data(options.db)
-        else:
-            location = args[1]
-            extract_active_data(options.db, location)
+        with db.begin() as trans:
+            if len(args) < 2:
+                extract_active_data(trans,options.db)
+            else:
+                location = args[1]
+                extract_active_data(trans,options.db, location)
     elif action.startswith("cleanup"):
         if len(args) < 2:
             parser.error("need to pass maximum nightly release age")
