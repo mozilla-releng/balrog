@@ -806,18 +806,18 @@ GET
 
 Returns an empty response with a valid CSRF token in the X-CSRF-Token header.
 
-**/history/view/<table>/<change_id>/<field>**
----------------------------------------------
+**/history/view/<object>/<change_id>/<field>**
+----------------------------------------------
 
 GET
 ***
 
-Returns the value of the named field from the named table at the specified change_id.
+Returns the value of the named field from the named object at the specified change_id.
 
-**/history/diff/<table>/<change_id>/<field>**
----------------------------------------------
+**/history/diff/<object>/<change_id>/<field>**
+----------------------------------------------
 
 GET
 ***
 
-Returns a diff of the value of the named field from the named table at the specified change_id vs. the previous change to that object.
+Returns a diff of the value of the named field from the named object at the specified change_id vs. the previous change to that object.
