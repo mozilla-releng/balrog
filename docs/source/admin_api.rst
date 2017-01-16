@@ -558,17 +558,110 @@ DELETE
 
 Revokes the given role from the given username. The "data_version" parameter must be provided.
 
------------------
-Scheduled Changes
------------------
 
-**/scheduled_changes/<table>**
+-------------------------
+Product Required Signoffs
+-------------------------
+
+Endpoints to view and create new :ref:`product_rs_table`. In most cases, these will be managed with :ref:`scheduledChangesApi` instead, because they themselves require signoff.
+
+**/required_signoffs/product**
 ------------------------------
 
 GET
 ***
 
-Returns the Scheduled Changes for the named table. If the query arg "all" evaluates to True, Scheduled Changes that have been enacted
+Returns all of the :ref:`product_rs_table`. Example response:
+
+::
+
+    {
+      "count": 2,
+      "required_signoffs": [
+        {
+          "product": "Firefox",
+          "channel": "release",
+          "role": "releng",
+          "signoffs_required": 2,
+          "data_version": 1
+        },
+        {
+          "product": "Firefox",
+          "channel": "release",
+          "role": "relman",
+          "signoffs_required": 1,
+          "data_version": 1
+        }
+      ]
+    }
+
+POST
+****
+
+Create a new Product Required Signoff. "product", "channel", "role", and "signoffs_required" are all required. If the product and channel provided already require signoff, a 400 will be returned (you must use a Scheduled Change and meet the existing signoff requirements to modify Required Signoffs for things that already require it).
+
+
+-----------------------------
+Permissions Required Signoffs
+-----------------------------
+
+Endpoints to view and create new :ref:`permissions_rs_table`. In most cases, these will be managed with :ref:`scheduledChangesApi` instead, because they themselves require signoff.
+
+**/required_signoffs/product**
+------------------------------
+
+GET
+***
+
+Returns all of the :ref:`permissions_rs_table`. Example response:
+
+::
+
+    {
+      "count": 2,
+      "required_signoffs": [
+        {
+          "product": "Firefox",
+          "role": "releng",
+          "signoffs_required": 3,
+          "data_version": 1
+        },
+        {
+          "product": "SystemAddons",
+          "role": "gofaster",
+          "signoffs_required": 2,
+          "data_version": 1
+        }
+      ]
+    }
+
+POST
+****
+
+Create a new Product Required Signoff. "product", "role", and "signoffs_required" are all required. If the product provided already require signoff, a 400 will be returned (you must use a Scheduled Change and meet the existing signoff requirements to modify Required Signoffs for things that already require it).
+
+
+.. _scheduledChangesApi:
+
+-----------------
+Scheduled Changes
+-----------------
+
+Endpoints to create and manage :ref:`scheduledChanges` and Signoffs. Each type of object that supports Scheduled Changes has its own set of endpoints. These objects are:
+
+- rules (:ref:`rulestable`)
+- releases (:ref:`releasestable`)
+- permissions (:ref:`permissionstable`)
+- required_signoffs/product (:ref:`product_rs_table`)
+- required_signoffs/permissions (:ref:`permissions_rs_table`)
+
+**/scheduled_changes/<object>**
+-------------------------------
+
+GET
+***
+
+Returns the Scheduled Changes for the named object. If the query arg "all" evaluates to True, Scheduled Changes that have been enacted
 will be returned along with active ones. If "all" evaluates to False, only active Scheduled Changes will be returned. Example response:
 
 ::
@@ -584,7 +677,7 @@ will be returned along with active ones. If "all" evaluates to False, only activ
             "signoffs": {
                 "janet": "relman"
             },
-            # base table columns follow...
+            # base attributes follow...
         },
         {
             "sc_id": 2,
@@ -595,7 +688,7 @@ will be returned along with active ones. If "all" evaluates to False, only activ
                 "charlie": "releng",
                 "janet": "relman"
             },
-            # base table columns follow...
+            # base attributes follow...
         }
         ]
     }
@@ -603,51 +696,51 @@ will be returned along with active ones. If "all" evaluates to False, only activ
 POST
 ****
 
-Creates a new Scheduled Change for the named table. The following parameters are supported:
+Creates a new Scheduled Change for the named object. The following parameters are supported:
 
 - when
 - telemetry_product
 - telemetry_channel
 - telemetry_uptake
 
-Either "when" or the full set of "telemetry" parameters must be provided as a condition. Details of a base table row to be created or modified are also required. Eg, "product", "channel", "priority", "backgroundRate" and "mapping" might be included if a Scheduled Change for a Rule was being created.
+Either "when" or the full set of "telemetry" parameters must be provided as a condition. Details of the object to be created or modified are also required. Eg, "product", "channel", "priority", "backgroundRate" and "mapping" might be included if a Scheduled Change for a Rule was being created.
 
-**/scheduled_changes/<table>/<sc_id>**
---------------------------------------
+**/scheduled_changes/<object>/<sc_id>**
+---------------------------------------
 
 POST
 ****
 
-Modifies an existing Scheduled Change for the named table. Supported parameters are the same as /scheduled_changes/<table> POST.
+Modifies an existing Scheduled Change for the named object. Supported parameters are the same as /scheduled_changes/<object> POST.
 
 DELETE
 ******
 
-Deletes the given Scheduled Change for the named table. "data_version" must be provided.
+Deletes the given Scheduled Change for the named object. "data_version" must be provided.
 
-**/scheduled_changes/<table>/<sc_id>/enact**
---------------------------------------------
-
-POST
-****
-
-Enacts the given Scheduled Change for the named table. This endpoint should only be used by the :ref:`balrog_agent`.
-
-**/scheduled_changes/<table>/<sc_id>/signoffs**
------------------------------------------------
+**/scheduled_changes/<object>/<sc_id>/enact**
+---------------------------------------------
 
 POST
 ****
 
-Signs off on the given Scheduled Change for the named table. "role" must be provided in the request body.
+Enacts the given Scheduled Change for the named object. This endpoint should only be used by the :ref:`balrog_agent`.
+
+**/scheduled_changes/<object>/<sc_id>/signoffs**
+------------------------------------------------
+
+POST
+****
+
+Signs off on the given Scheduled Change for the named object. "role" must be provided in the request body.
 
 DELETE
 ******
 
-Removes an existing Signoff from the Scheduled Change for the named table.
+Removes an existing Signoff from the Scheduled Change for the named object.
 
-**/scheduled_changes/<table>/<sc_id>/<id>/revisions**
------------------------------------------------------
+**/scheduled_changes/<object>/<sc_id>/<id>/revisions**
+------------------------------------------------------
 
 GET
 ***
@@ -670,7 +763,7 @@ Returns previous versions of the scheduled change identified by the id given in 
             "signoffs": {
                 "jane": "relman"
             },
-            # base table columns follow...
+            # base attributes follow...
         },
         {
             "change_id": 4,
@@ -683,7 +776,7 @@ Returns previous versions of the scheduled change identified by the id given in 
             "signoffs": {
                 "jane": "relman"
             },
-            # base table columns follow...
+            # base attributes follow...
         }
         ]
     }

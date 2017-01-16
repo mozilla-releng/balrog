@@ -8,7 +8,6 @@ Developer Documentation (Auslib Package)
     auslib.admin
     auslib.blobs
     auslib.db
-    auslib.test
     auslib.util
     auslib.web
 
