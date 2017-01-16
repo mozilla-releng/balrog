@@ -127,7 +127,6 @@ class EnactScheduledChangeView(AdminView):
 
     def _post(self, sc_id, transaction, changed_by):
         self.sc_table.enactChange(sc_id, changed_by, transaction)
-        print self.sc_table.select(transaction=transaction)
         return Response(status=200)
 
 
