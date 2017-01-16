@@ -424,6 +424,11 @@ class PermissionsRequiredSignoffForm(Form):
     signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
 
 
+class PermissionsRequiredSignoffHistoryForm(Form):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+
+
 class ScheduledChangeNewPermissionsRequiredSignoffForm(ScheduledChangeTimeForm):
     product = StringField('Permissions', validators=[Length(0, 15), InputRequired()])
     role = StringField('Role', validators=[InputRequired()])

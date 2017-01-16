@@ -472,7 +472,7 @@ class TestPermissionsRequiredSignoffs(ViewTest):
             {"product": "fake", "role": "releng", "signoffs_required": 1, "data_version": 1},
             {"product": "bar", "role": "releng", "signoffs_required": 1, "data_version": 1},
             {"product": "blah", "role": "releng", "signoffs_required": 1, "data_version": 1},
-            {"product": "doop", "role": "releng", "signoffs_required": 1, "data_version": 1},
+            {"product": "doop", "role": "releng", "signoffs_required": 1, "data_version": 2},
         ]
         self.assertEquals(got["required_signoffs"], expected)
 
@@ -509,6 +509,38 @@ class TestPermissionsRequiredSignoffs(ViewTest):
         ret = self._delete("/required_signoffs/permissions", qs=dict(product="fake", role="releng", data_version=1))
         self.assertStatusCode(ret, 400)
         self.assertIn("This change requires signoff", ret.data)
+
+
+class TestPermissionsRequiredSignoffsHistoryView(ViewTest):
+    maxDiff = 1000
+
+    def testGetRevisions(self):
+        ret = self._get("/required_signoffs/permissions/revisions", qs={"product": "doop", "role": "releng"})
+        self.assertStatusCode(ret, 200)
+
+        got = json.loads(ret.data)
+        expected = [
+            {
+                "change_id": 3,
+                "changed_by": "bill",
+                "timestamp": 25,
+                "product": "doop",
+                "role": "releng",
+                "signoffs_required": 1,
+                "data_version": 2,
+            },
+            {
+                "change_id": 2,
+                "changed_by": "bill",
+                "timestamp": 11,
+                "product": "doop",
+                "role": "releng",
+                "signoffs_required": 2,
+                "data_version": 1,
+            },
+        ]
+        self.assertEquals(got["count"], 2)
+        self.assertEquals(got["required_signoffs"], expected)
 
 
 class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
@@ -654,7 +686,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingRequiredSignoff(self):
         data = {
-            "when": 400000000, "product": "doop", "role": "releng", "signoffs_required": 2, "data_version": 1, "change_type": "update",
+            "when": 400000000, "product": "doop", "role": "releng", "signoffs_required": 2, "data_version": 2, "change_type": "update",
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -665,7 +697,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 5, "scheduled_by": "bill", "change_type": "update", "complete": False, "data_version": 1,
-            "base_product": "doop", "base_role": "releng", "base_signoffs_required": 2, "base_data_version": 1,
+            "base_product": "doop", "base_role": "releng", "base_signoffs_required": 2, "base_data_version": 2,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select()\
@@ -700,7 +732,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeDeleteRequiredSignoff(self):
         data = {
-            "when": 400000000, "product": "doop", "role": "releng", "change_type": "delete", "data_version": 1,
+            "when": 400000000, "product": "doop", "role": "releng", "change_type": "delete", "data_version": 2,
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -711,7 +743,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 5, "scheduled_by": "bill", "change_type": "delete", "complete": False, "data_version": 1,
-            "base_product": "doop", "base_role": "releng", "base_signoffs_required": None, "base_data_version": 1,
+            "base_product": "doop", "base_role": "releng", "base_signoffs_required": None, "base_data_version": 2,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select()\

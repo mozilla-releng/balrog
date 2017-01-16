@@ -13,6 +13,7 @@ from auslib.admin.views.forms import ProductRequiredSignoffForm, \
     EditScheduledChangeNewProductRequiredSignoffForm, \
     EditScheduledChangeExistingProductRequiredSignoffForm, \
     PermissionsRequiredSignoffForm, \
+    PermissionsRequiredSignoffHistoryForm, \
     ScheduledChangeExistingPermissionsRequiredSignoffForm, \
     ScheduledChangeNewPermissionsRequiredSignoffForm, \
     ScheduledChangeDeletePermissionsRequiredSignoffForm, \
@@ -190,6 +191,16 @@ class PermissionsRequiredSignoffsView(RequiredSignoffsView):
     def _post(self, transaction, changed_by):
         form = PermissionsRequiredSignoffForm()
         return super(PermissionsRequiredSignoffsView, self)._post(form, transaction, changed_by)
+
+
+class PermissionsRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
+
+    def __init__(self):
+        super(PermissionsRequiredSignoffsHistoryAPIView, self).__init__(dbo.permissionsRequiredSignoffs, ["product", "role"])
+
+    def get(self):
+        form = PermissionsRequiredSignoffHistoryForm(request.args)
+        return super(PermissionsRequiredSignoffsHistoryAPIView, self).get(form)
 
 
 class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):

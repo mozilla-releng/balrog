@@ -31,6 +31,7 @@ from auslib.admin.views.required_signoffs import ProductRequiredSignoffsView, \
     ProductRequiredSignoffScheduledChangeSignoffsView, \
     ProductRequiredSignoffScheduledChangeHistoryView, \
     PermissionsRequiredSignoffsView, \
+    PermissionsRequiredSignoffsHistoryAPIView, \
     PermissionsRequiredSignoffsScheduledChangesView, \
     PermissionsRequiredSignoffScheduledChangeView, \
     EnactPermissionsRequiredSignoffScheduledChangeView, \
@@ -108,6 +109,8 @@ app.add_url_rule("/releases/columns/<column>", view_func=SingleReleaseColumnView
 app.add_url_rule("/required_signoffs/product", view_func=ProductRequiredSignoffsView.as_view("product_required_signoffs"))
 app.add_url_rule("/required_signoffs/product/revisions", view_func=ProductRequiredSignoffsHistoryAPIView.as_view("product_required_signoffs_revisions"))
 app.add_url_rule("/required_signoffs/permissions", view_func=PermissionsRequiredSignoffsView.as_view("permissions_required_signoffs"))
+app.add_url_rule("/required_signoffs/permissions/revisions",
+                 view_func=PermissionsRequiredSignoffsHistoryAPIView.as_view("permissions_required_signoffs_revisions"))
 app.add_url_rule("/history/diff/<type_>/<change_id>/<field>", view_func=DiffView.as_view("diff"))
 app.add_url_rule("/history/view/<type_>/<change_id>/<field>", view_func=FieldView.as_view("field"))
 app.add_url_rule("/scheduled_changes/rules", view_func=RuleScheduledChangesView.as_view("scheduled_changes_rules"))

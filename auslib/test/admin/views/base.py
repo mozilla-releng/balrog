@@ -60,7 +60,12 @@ class ViewTest(unittest.TestCase):
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="fake", role="releng", signoffs_required=1, data_version=1)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="bar", role="releng", signoffs_required=1, data_version=1)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="blah", role="releng", signoffs_required=1, data_version=1)
-        dbo.permissionsRequiredSignoffs.t.insert().execute(product="doop", role="releng", signoffs_required=1, data_version=1)
+        dbo.permissionsRequiredSignoffs.t.insert().execute(product="doop", role="releng", signoffs_required=1, data_version=2)
+        dbo.permissionsRequiredSignoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=10, product="doop", role="releng")
+        dbo.permissionsRequiredSignoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=11, product="doop", role="releng",
+                                                                   signoffs_required=2, data_version=1)
+        dbo.permissionsRequiredSignoffs.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=25, product="doop", role="releng",
+                                                                   signoffs_required=1, data_version=2)
         dbo.releases.t.insert().execute(
             name='a', product='a', data=createBlob(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
