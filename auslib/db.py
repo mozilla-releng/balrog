@@ -1292,7 +1292,9 @@ class RequiredSignoffsTable(AUSTable):
         users_with_role, = self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"]).execute().fetchone()
         if users_with_role < columns["signoffs_required"]:
             msg = ", ".join(self.decisionColumns)
-            raise ValueError("Cannot require {} signoffs for {} - only {} users hold that role".format(columns["signoffs_required"], msg, columns["role"]))
+            raise ValueError("Cannot require {} signoffs for {} - only {} users hold the {} role".format(
+                columns["signoffs_required"], msg, users_with_role, columns["role"]
+            ))
 
     def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         self.validate(columns, transaction=transaction)
