@@ -8,7 +8,13 @@ from auslib.admin.views.forms import ProductRequiredSignoffForm, \
     ScheduledChangeNewProductRequiredSignoffForm, \
     ScheduledChangeDeleteProductRequiredSignoffForm, \
     EditScheduledChangeNewProductRequiredSignoffForm, \
-    EditScheduledChangeExistingProductRequiredSignoffForm
+    EditScheduledChangeExistingProductRequiredSignoffForm, \
+    PermissionsRequiredSignoffForm, \
+    ScheduledChangeExistingPermissionsRequiredSignoffForm, \
+    ScheduledChangeNewPermissionsRequiredSignoffForm, \
+    ScheduledChangeDeletePermissionsRequiredSignoffForm, \
+    EditScheduledChangeNewPermissionsRequiredSignoffForm, \
+    EditScheduledChangeExistingPermissionsRequiredSignoffForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, SignoffsView, \
     ScheduledChangeHistoryView
@@ -18,8 +24,9 @@ from auslib.global_state import dbo
 
 class RequiredSignoffsView(AdminView):
 
-    def __init__(self, table):
+    def __init__(self, table, decisionFields):
         self.table = table
+        self.decisionFields = decisionFields
         super(RequiredSignoffsView, self).__init__()
 
     def get(self):
@@ -31,7 +38,9 @@ class RequiredSignoffsView(AdminView):
             self.log.warning("Bad input: %s", form.errors)
             return Response(status=400, response=json.dumps(form.errors))
 
-        where = {"product": form.product.data, "channel": form.channel.data, "role": form.role.data}
+        where = {}
+        for f in self.decisionFields:
+            where[f] = form[f].data
         if self.table.select(where=where, transaction=transaction):
             raise SignoffRequiredError("Required Signoffs cannot be directly modified")
         else:
@@ -49,7 +58,7 @@ class RequiredSignoffsView(AdminView):
 class ProductRequiredSignoffsView(RequiredSignoffsView):
 
     def __init__(self):
-        super(ProductRequiredSignoffsView, self).__init__(dbo.productRequiredSignoffs)
+        super(ProductRequiredSignoffsView, self).__init__(dbo.productRequiredSignoffs, ["product", "channel", "role"])
 
     @requirelogin
     def _post(self, transaction, changed_by):
@@ -124,3 +133,83 @@ class ProductRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryVie
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         return super(ProductRequiredSignoffScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
+
+
+class PermissionsRequiredSignoffsView(RequiredSignoffsView):
+
+    def __init__(self):
+        super(PermissionsRequiredSignoffsView, self).__init__(dbo.permissionsRequiredSignoffs, ["product", "role"])
+
+    @requirelogin
+    def _post(self, transaction, changed_by):
+        form = PermissionsRequiredSignoffForm()
+        return super(PermissionsRequiredSignoffsView, self)._post(form, transaction, changed_by)
+
+
+class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
+    def __init__(self):
+        super(PermissionsRequiredSignoffsScheduledChangesView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
+
+    @requirelogin
+    def _post(self, transaction, changed_by):
+        change_type = request.json.get("change_type")
+
+        if change_type == "update":
+            form = ScheduledChangeExistingPermissionsRequiredSignoffForm()
+        elif change_type == "insert":
+            form = ScheduledChangeNewPermissionsRequiredSignoffForm()
+        elif change_type == "delete":
+            form = ScheduledChangeDeletePermissionsRequiredSignoffForm()
+        else:
+            return Response(status=400, response="Invalid or missing change_type")
+
+        return super(PermissionsRequiredSignoffsScheduledChangesView, self)._post(form, transaction, changed_by)
+
+
+class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):
+    def __init__(self):
+        super(PermissionsRequiredSignoffScheduledChangeView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        if request.json and request.json.get("data_version"):
+            form = EditScheduledChangeExistingPermissionsRequiredSignoffForm()
+        else:
+            form = EditScheduledChangeNewPermissionsRequiredSignoffForm()
+
+        return super(PermissionsRequiredSignoffScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(PermissionsRequiredSignoffScheduledChangeView, self)._delete(sc_id, transaction, changed_by)
+
+
+class EnactPermissionsRequiredSignoffScheduledChangeView(EnactScheduledChangeView):
+    def __init__(self):
+        super(EnactPermissionsRequiredSignoffScheduledChangeView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(EnactPermissionsRequiredSignoffScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+
+
+class PermissionsRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
+    def __init__(self):
+        super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
+
+    @requirelogin
+    def _delete(self, sc_id, transaction, changed_by):
+        return super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
+
+
+class PermissionsRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    def __init__(self):
+        super(PermissionsRequiredSignoffScheduledChangeHistoryView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
+
+    @requirelogin
+    def _post(self, sc_id, transaction, changed_by):
+        return super(PermissionsRequiredSignoffScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)

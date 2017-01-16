@@ -28,7 +28,13 @@ from auslib.admin.views.required_signoffs import ProductRequiredSignoffsView, \
     ProductRequiredSignoffScheduledChangeView, \
     EnactProductRequiredSignoffScheduledChangeView, \
     ProductRequiredSignoffScheduledChangeSignoffsView, \
-    ProductRequiredSignoffScheduledChangeHistoryView
+    ProductRequiredSignoffScheduledChangeHistoryView, \
+    PermissionsRequiredSignoffsView, \
+    PermissionsRequiredSignoffsScheduledChangesView, \
+    PermissionsRequiredSignoffScheduledChangeView, \
+    EnactPermissionsRequiredSignoffScheduledChangeView, \
+    PermissionsRequiredSignoffScheduledChangeSignoffsView, \
+    PermissionsRequiredSignoffScheduledChangeHistoryView
 from auslib.admin.views.rules import RulesAPIView, \
     SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView, \
     RuleScheduledChangesView, RuleScheduledChangeView, \
@@ -99,6 +105,7 @@ app.add_url_rule("/releases/<release>/builds/<platform>/<locale>", view_func=Sin
 app.add_url_rule("/releases/<release>/revisions", view_func=ReleaseHistoryView.as_view("release_revisions"))
 app.add_url_rule("/releases/columns/<column>", view_func=SingleReleaseColumnView.as_view("release_columns"))
 app.add_url_rule("/required_signoffs/product", view_func=ProductRequiredSignoffsView.as_view("product_required_signoffs"))
+app.add_url_rule("/required_signoffs/permissions", view_func=PermissionsRequiredSignoffsView.as_view("permissions_required_signoffs"))
 app.add_url_rule("/history/diff/<type_>/<change_id>/<field>", view_func=DiffView.as_view("diff"))
 app.add_url_rule("/history/view/<type_>/<change_id>/<field>", view_func=FieldView.as_view("field"))
 app.add_url_rule("/scheduled_changes/rules", view_func=RuleScheduledChangesView.as_view("scheduled_changes_rules"))
@@ -128,3 +135,13 @@ app.add_url_rule("/scheduled_changes/required_signoffs/product/<int:sc_id>/signo
                  view_func=ProductRequiredSignoffScheduledChangeSignoffsView.as_view("scheduled_change_product_rs_signoffs"))
 app.add_url_rule("/scheduled_changes/required_signoffs/product/<int:sc_id>/revisions",
                  view_func=ProductRequiredSignoffScheduledChangeHistoryView.as_view("scheduled_change_product_rs_history"))
+app.add_url_rule("/scheduled_changes/required_signoffs/permissions",
+                 view_func=PermissionsRequiredSignoffsScheduledChangesView.as_view("scheduled_changes_permissions_rs"))
+app.add_url_rule("/scheduled_changes/required_signoffs/permissions/<int:sc_id>",
+                 view_func=PermissionsRequiredSignoffScheduledChangeView.as_view("scheduled_change_permissions_rs"))
+app.add_url_rule("/scheduled_changes/required_signoffs/permissions/<int:sc_id>/enact",
+                 view_func=EnactPermissionsRequiredSignoffScheduledChangeView.as_view("enact_scheduled_change_permissions_rs"))
+app.add_url_rule("/scheduled_changes/required_signoffs/permissions/<int:sc_id>/signoffs",
+                 view_func=PermissionsRequiredSignoffScheduledChangeSignoffsView.as_view("scheduled_change_permissions_rs_signoffs"))
+app.add_url_rule("/scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions",
+                 view_func=PermissionsRequiredSignoffScheduledChangeHistoryView.as_view("scheduled_change_permissions_rs_history"))
