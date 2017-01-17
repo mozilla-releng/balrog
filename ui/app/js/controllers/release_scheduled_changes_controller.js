@@ -1,5 +1,5 @@
 angular.module("app").controller("ReleaseScheduledChangesController",
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases) {
+function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Releases) {
 
   $scope.loading = true;
   $scope.failed = false;
@@ -64,8 +64,12 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       value: "when"
     },
     {
-      text: "Product, Name",
-      value: "product, Name"
+      text: "Product",
+      value: "product"
+    },
+    {
+      text: "Name",
+      value: "name"
     },
   ];
   }
