@@ -1,9 +1,9 @@
 angular.module("app").controller('RequiredSignoffsController',
-function($scope, ProductRequiredSignoffs) {
+function($scope, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
   $scope.loading = true;
 
   $scope.required_signoffs = {};
-  $scope.state = "current";
+  $scope.selected_product = null;
 
   ProductRequiredSignoffs.getRequiredSignoffs()
   .success(function(response) {
@@ -23,9 +23,33 @@ function($scope, ProductRequiredSignoffs) {
         };
       });
     }
+
+    PermissionsRequiredSignoffs.getRequiredSignoffs()
+    .success(function(response) {
+      if (response["count"] > 0) {
+        response["required_signoffs"].forEach(function(rs) {
+          if (! (rs.product in $scope.required_signoffs)) {
+            $scope.required_signoffs[rs.product] = {"permissions": {}};
+          }
+          else if (! ("permissions" in $scope.required_signoffs[rs.product])) {
+            $scope.required_signoffs[rs.product]["permissions"] = {};
+          }
+        
+          $scope.required_signoffs[rs.product]["permissions"][rs.role] = {
+            "signoffs_required": rs.signoffs_required,
+            "data_version": rs.data_version,
+          };
+        });
+      }
+    })
+    // can a response be grabbed here?
+    .error(function(response) {
+      alert("error! " + response);
+    });
   })
   // can a response be grabbed here?
   .error(function(response) {
+    alert("error! " + response);
   })
   .finally(function() {
     $scope.loading = false;
