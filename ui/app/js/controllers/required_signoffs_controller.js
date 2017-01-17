@@ -46,6 +46,11 @@ function($scope, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
     .error(function(response) {
       alert("error! " + response);
     });
+
+    products = Object.keys($scope.required_signoffs);
+    if (products.length > 0) {
+      $scope.selected_product = products[0];
+    }
   })
   // can a response be grabbed here?
   .error(function(response) {
