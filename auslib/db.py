@@ -1806,6 +1806,7 @@ class Releases(AUSTable):
         if self.isMappedTo(release["name"], transaction):
             msg = "%s has rules pointing to it. Hence it cannot be deleted." % (release["name"])
             raise ValueError(msg)
+
         super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
         if not dryrun:
             cache.invalidate("blob", release["name"])

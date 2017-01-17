@@ -180,7 +180,6 @@ class ScheduledChangeExistingPermissionForm(ScheduledChangeTimeForm):
 
 
 class ScheduledChangeDeletePermissionForm(ScheduledChangeTimeForm):
-
     """Permissions and username are required when Scheduling a Change that deletes
     an existing Permission because they are needed to find that Permission."""
     permission = StringField('Permission', validators=[Length(0, 50), InputRequired()])

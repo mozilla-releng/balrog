@@ -189,7 +189,6 @@ class TestPermissionsScheduledChanges(ViewTest):
         dbo.permissions.scheduled_changes.signoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=30, sc_id=1, username="bill")
         dbo.permissions.scheduled_changes.signoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=31, sc_id=1,
                                                                               username="bill", role="releng")
-
         dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000, data_version=1)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
@@ -260,7 +259,6 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1, "signoffs": {},
                 },
-
                 {
                     "sc_id": 4, "when": 76000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1, "signoffs": {},
@@ -287,7 +285,6 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "sc_id": 3, "when": 30000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
                     "permission": "permission", "username": "bob", "options": None, "data_version": None, "signoffs": {},
                 },
-
                 {
                     "sc_id": 4, "when": 76000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1, "signoffs": {},
@@ -499,7 +496,6 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         self.assertEquals(db_data, {"sc_id": 2, "username": "bill", "role": "qa"})
-
         r = dbo.permissions.scheduled_changes.signoffs.history.t.select()\
             .where(dbo.permissions.scheduled_changes.signoffs.history.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 2)

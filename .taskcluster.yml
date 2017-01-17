@@ -75,7 +75,6 @@ tasks:
         env: true
         events:
           - push
-          - create
         branches:
           - master
     metadata:
@@ -155,11 +154,62 @@ tasks:
         env: true
         events:
           - push
-          - create
         branches:
           - master
     metadata:
       name: Balrog Docker Image Creation
       description: Balrog Docker Image Creation
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+
+# TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    scopes:
+      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+    payload:
+      maxRunTime: 3600
+      image: "taskcluster/image_builder:0.1.3"
+      features:
+        dind: true
+        taskclusterProxy: true
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog && scripts/push-dockerimage.sh"
+    extra:
+      github:
+        env: true
+        events:
+          - release
+    metadata:
+      name: Balrog Docker Image Creation
+      description: Balrog Docker Image Creation
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+
+# TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    scopes:
+      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+    payload:
+      maxRunTime: 3600
+      image: "taskcluster/image_builder:0.1.3"
+      features:
+        dind: true
+        taskclusterProxy: true
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog/agent && scripts/push-dockerimage.sh"
+    extra:
+      github:
+        env: true
+        events:
+          - release
+    metadata:
+      name: Balrog Agent Docker Image Creation
+      description: Balrog Agent Docker Image Creation
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"

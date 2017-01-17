@@ -1106,7 +1106,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "name": "c", "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
                     "read_only": False, "data_version": 1, "signoffs": {},
                 },
-
                 {
                     "sc_id": 4, "when": 230000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "name": "ab", "product": None, "data": None, "read_only": False, "data_version": 1, "signoffs": {},
@@ -1342,9 +1341,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "base_read_only": False, "base_data": None, "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
-
-        base_row = dbo.releases.t.select().where(dbo.releases.name == "a").execute().fetchall()
-        self.assertEquals(len(base_row), 1)
 
     def testGetScheduledChangeHistoryRevisions(self):
         ret = self._get("/scheduled_changes/releases/3/revisions")
