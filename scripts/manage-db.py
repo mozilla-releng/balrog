@@ -87,32 +87,53 @@ def cleanup_releases_history(trans, dryrun=True):
     print "Total Deleted: %d" % total_deleted
 
 
-def _extract_partials(json_object):
-    """Returns a generator that contains \
-    all value objects having key as 'partials'"""
+def _extract_partials_generator(json_object):
+    """
+    Returns a generator that contains all value objects having key as 'partials'
+    """
     if isinstance(json_object, dict):
         for key, value in json_object.iteritems():
-            if key == "partials":
+            if "partial" == key or "partials" == key:
                 yield value
             else:
-                for child_val in _extract_partials(value):
+                for child_val in _extract_partials_generator(value):
                     yield child_val
 
     elif isinstance(json_object, list):
         for item in json_object:
-            for value in _extract_partials(item):
+            for value in _extract_partials_generator(item):
                 yield value
     else:
         pass
 
 
-def extract_active_data(trans,url, dump_location='dump.sql'):
+def _extract_partial_release_names(release_data):
+    """
+    Extracts all partial release's names from the release_data.
+    :param release_data: input release data for processing
+    :return partial_release_names : a set of extracted partial release names
+    """
+    partial_release_names = set()
+    for item in _extract_partials_generator(release_data):
+        if isinstance(item, dict):
+            map(partial_release_names.add, list(item.keys()))
+        elif isinstance(item, list):
+            for list_item in item:
+                if 'from' in list_item:
+                    partial_release_names.add(str(list_item['from']))
+        else:
+            pass
+    return partial_release_names
+
+
+def extract_active_data(trans, url, dump_location='dump.sql'):
     """
     Stores sqldump data in the specified location. If not specified, stores it in current directory in file dump.sql
     If file already exists it will override that file and not append it.
 
     Function added in to enhance testing in Balrog's stage environment.
 
+    :param trans: Transaction Object for an SQL connection
     :param url: Database. eg : mysql://balrogadmin:balrogadmin@balrogdb/balrog
     :param dump_location: location where sqldump file must be created
     """
@@ -145,10 +166,13 @@ def extract_active_data(trans,url, dump_location='dump.sql'):
         _strip_multiple_spaces('%s %s releases --where="EXISTS ( \
             SELECT * \
             FROM rules, rules_scheduled_changes \
-            WHERE releases.name = rules.mapping \
-               OR releases.name = rules.whitelist \
-               OR releases.name = rules_scheduled_changes.base_mapping \
-               OR releases.name = rules_scheduled_changes.base_whitelist \
+            WHERE releases.name IN ( \
+                rules.mapping, \
+                rules.whitelist, \
+                rules.fallbackMapping, \
+                rules_scheduled_changes.base_mapping, \
+                rules_scheduled_changes.base_whitelist, \
+                rules_scheduled_changes.base_fallbackMapping) \
             )" \
         >> %s' % (mysql_default_command, database, dump_location))
     )
@@ -166,47 +190,30 @@ def extract_active_data(trans,url, dump_location='dump.sql'):
         ) LIMIT 50" >> %s' % (mysql_default_command, database, dump_location))
     )
 
-    query_release_mapping = """SELECT rules.mapping \
-            FROM rules \
-            WHERE rules.mapping IS NOT NULL \
-            UNION \
-            SELECT rules.fallbackMapping \
-            FROM rules \
-            WHERE rules.fallbackMapping IS NOT NULL \
-            UNION \
-            SELECT rules.whitelist \
-            FROM rules \
-            WHERE rules.whitelist IS NOT NULL"""
+    query_release_mapping = """SELECT DISTINCT releases.* \
+        FROM releases, rules, rules_scheduled_changes \
+        WHERE releases.name IN ( \
+            rules.mapping, \
+            rules.whitelist, \
+            rules.fallbackMapping, \
+            rules_scheduled_changes.base_mapping, \
+            rules_scheduled_changes.base_whitelist, \
+            rules_scheduled_changes.base_fallbackMapping \
+            )"""
 
-    popen(_strip_multiple_spaces('''%s %s releases --where="releases.name IN (%s)" \
-        >> %s''' % (mysql_default_command, database, query_release_mapping, dump_location)))
-
-    query_release = """SELECT * \
-    FROM releases \
-    WHERE releases.name IN (%s)""" % query_release_mapping
-
-    result = trans.execute(query_release).fetchall()
-    partial_release_names = []
+    result = trans.execute(query_release_mapping).fetchall()
+    partial_release_names = set()
     for row in result:
         row_data = None
         try:
             row_data = json.loads(row['data'])
         except ValueError:
             continue
-        partials_generator = _extract_partials(row_data)
-        for item in partials_generator:
-            if isinstance(item, dict):
-                partial_release_names.extend(list(item.keys()))
-            elif isinstance(item, list):
-                for list_item in item:
-                    if 'from' in list_item:
-                        partial_release_names.append(str(list_item['from']))
-            else:
-                pass
+        partial_release_names = _extract_partial_release_names(row_data)
     if partial_release_names:
-        qry = ', '.join('"' + release_names + '"' for release_names in partial_release_names)
-        popen(_strip_multiple_spaces('''%s %s releases --where="releases.name IN (%s)" \
-                >> %s''' % (mysql_default_command, database, qry, dump_location)))
+        qry = ", ".join("'" + release_names + "'" for release_names in partial_release_names)
+        popen(_strip_multiple_spaces('%s %s releases --where="releases.name IN (%s)" \
+               >> %s' % (mysql_default_command, database, qry, dump_location)))
 
 
 def _strip_multiple_spaces(string):
@@ -247,10 +254,10 @@ if __name__ == "__main__":
     elif action == 'extract':
         with db.begin() as trans:
             if len(args) < 2:
-                extract_active_data(trans,options.db)
+                extract_active_data(trans, options.db)
             else:
                 location = args[1]
-                extract_active_data(trans,options.db, location)
+                extract_active_data(trans, options.db, location)
     elif action.startswith("cleanup"):
         if len(args) < 2:
             parser.error("need to pass maximum nightly release age")

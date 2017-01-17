@@ -306,6 +306,21 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         may have been a pretty version for users to see"""
         return self.getExtv(platform, locale)
 
+    def getReferencingReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        referencedReleases = set()
+        if self.get('platforms'):
+            for locale in (platform['locales'] for platform in self['platforms']
+                           if platform.get('locales') is not None):
+
+                for fromRelease in (locale[update_type]['from'] for update_type in locale
+                                    if update_type == 'partial'):
+                    referencedReleases.add(fromRelease)
+        return referencedReleases
+
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
     # converted to unit tests.
     def createSnippets(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
