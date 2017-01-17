@@ -1,0 +1,48 @@
+<h2>
+  <span>Signoff Requirements</span>
+
+  <button class="btn btn-primary btn-xs" ng-click="addNewRequiredSignoff()">
+    Enable Signoffs for a new Product
+  </button>
+</h2>
+
+<div class="panel panel-default" ng-repeat="(product, rs) in required_signoffs">
+  <div class="panel-heading">
+    <h3 class="panel-title">
+      <div style="float:right">
+        <form role="form" class="state-form">
+          <label>SOMETHING:</label>
+          <select ng-model="state" name="state">
+            <option value="current" selected>Current</option>
+            <option value="pending">Pending</option>
+          </select>
+        </form>
+      </div>
+      <span>{{ product }}</span>
+    </h3>
+  </div>
+  <div class="panel-body">
+    <div class="panel panel-default" ng-show="rs.permissions">
+      <div="panel-heading">
+        <div style="float:right">
+          <button class="btn btn-xs btn-danger" ng-click="openEditRequiredSignoffModal(rs.permissions)">Edit</button>
+        </div>
+        <h3 class="panel-title">
+            <span>Permissions</span>
+        </h3>
+      </div>
+      <div class="panel-body">
+      </div>
+    </div>
+    <div class="panel panel-info" ng-repeat="(channel, roles) in rs.channels">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          <div style="float:right">
+            <button class="btn btn-xs btn-danger" ng-click="openEditRequiredSignoffModal(channel)">Edit</button>
+          </div>
+          <span>{{ channel }}</span>
+        </h3>
+      </div>
+    </div>
+  </div>
+</div>
