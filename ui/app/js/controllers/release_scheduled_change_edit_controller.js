@@ -76,7 +76,7 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
         return;
       }
       if (!$scope.dataFile) {
-        $scope.sc.data = $scope.original_sc.data;
+        $scope.sc.data = $scope.sc.data;
       } else {
         var file = $scope.dataFile;
 
@@ -105,7 +105,7 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
         var data = $scope.sc;
         Releases.updateScheduledChange($scope.sc.sc_id, data, csrf_token)
         .success(function(response) {
-          $scope.sc.data_version = response.new_data_version;
+          $scope.sc.sc_data_version = response.new_data_version;
           angular.copy($scope.sc, $scope.original_sc);
           $scope.saving = false;
           $modalInstance.close();
