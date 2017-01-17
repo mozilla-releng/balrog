@@ -66,43 +66,43 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
   };
 
   $scope.saveChanges = function () {
-    if (!$scope.sc.product.trim()) {
-      sweetAlert(
-        "Form Error",
-        "Product is required.",
-        "error"
-      );
-      return;
-    }
-    if (!$scope.dataFile) {
-      sweetAlert(
-        "Form Error",
-        "No file has been selected.",
-        "error"
-      );
-      return;
-    }
-    if (!$scope.sc.name.trim()) {
-      sweetAlert(
-        "Form Error",
-        "Name is required",
-        "error"
-      );
-      return;
-    }
+    if($scope.sc.change_type!=="delete") {
+      if (!$scope.sc.product.trim()) {
+        sweetAlert(
+          "Form Error",
+          "Product is required.",
+          "error"
+        );
+        return;
+      }
+      if (!$scope.dataFile) {
+        $scope.sc.data = $scope.sc.data;
+      } else {
+        var file = $scope.dataFile;
+
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+        $scope.sc.data = evt.target.result;
+        };
+      // should work
+      reader.readAsText(file);
+      }
+      if (!$scope.sc.name.trim()) {
+        sweetAlert(
+          "Form Error",
+          "Name is required",
+          "error"
+        );
+        return;
+      }
+    } 
 
     $scope.saving = true;
 
-    var file = $scope.dataFile;
-
-    var reader = new FileReader();
-    reader.onload = function(evt) {
-      var blob = evt.target.result;
 
       CSRF.getToken()
       .then(function(csrf_token) {
         var data = $scope.sc;
-        data.data = blob;
         Releases.updateScheduledChange($scope.sc.sc_id, data, csrf_token)
         .success(function(response) {
           $scope.sc.data_version = response.new_data_version;
@@ -132,9 +132,8 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
           $scope.saving = false;
         });
       });
-    };
-    // should work
-    reader.readAsText(file);
+    
+
 
   }; // /saveChanges
 
