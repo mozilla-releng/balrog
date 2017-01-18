@@ -1,3 +1,0 @@
-<!ELEMENT update (addons) >
-<!ELEMENT addons (addon+) >
-<!ELEMENT addon (id, URL, hashFunction, hashValue, size, version)
