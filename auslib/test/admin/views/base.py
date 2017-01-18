@@ -47,8 +47,10 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.user_roles.t.insert().execute(username="bill", role="releng", data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="bill", role="qa", data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="bob", role="relman", data_version=1)
+        dbo.permissions.user_roles.t.insert().execute(username="mary", role="relman", data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="a", role="releng", signoffs_required=1, data_version=1)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="fake", role="releng", signoffs_required=1, data_version=1)
+        dbo.permissionsRequiredSignoffs.t.insert().execute(product="superfake", role="relman", signoffs_required=1, data_version=1)
         dbo.releases.t.insert().execute(
             name='a', product='a', data=createBlob(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
