@@ -197,7 +197,8 @@ class UserRoleView(AdminView):
 
     @requirelogin
     def _delete(self, username, role, changed_by, transaction):
-        if role not in dbo.permissions.getUserRoles(username):
+        roles_list = [r['role'] for r in dbo.permissions.getUserRoles(username)]
+        if role not in roles_list:
             return Response(status=404)
 
         form = DbEditableForm(request.args)
