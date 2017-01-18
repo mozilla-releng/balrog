@@ -40,11 +40,54 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
     console.error(response);
   });
 
+  $scope.roles_list = [];
+  Permissions.getAllRoles()
+  .success(function(response) {
+    $scope.roles_list = response.roles_list;
+  })
+  .error(function(response) {
+    console.error(response);
+  });
+
   $scope.saving = false;
 
   $scope.$watchCollection('permission', function(value) {
     value.options = value.options_as_json;
   });
+
+  $scope.grantRole = function() {
+    $scope.saving = true;
+    CSRF.getToken()
+    .then(function(csrf_token) {
+      Permissions.grantRole($scope.user.username, $scope.role.role, $scope.role.data_version, csrf_token)
+      .success(function(response) {
+        sweetAlert("Saved", "Role granted.", "success");
+        $scope.user.roles.push()
+      })
+      .error(function(response) {
+        if (typeof response === 'object') {
+          $scope.errors = response;
+          sweetAlert(
+            "Form submission error",
+            "See fields highlighted in red.",
+            "error"
+          );
+        } else if (typeof response === 'string') {
+          // quite possibly an error in the blob validation
+          sweetAlert(
+            "Form submission error",
+            "Unable to submit successfully.\n" +
+            "(" + response+ ")",
+            "error"
+          );
+        }
+      })
+      .finally(function() {
+        $scope.saving = false;
+      });
+    });
+
+  };
 
   $scope.addPermission = function() {
     // $scope.permission.options = $scope.permission.options_as_json;
@@ -128,6 +171,24 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
 
     });
 
+  };
+
+  $scope.revokeRole = function(role) {
+    $scope.saving = true;
+    CSRF.getToken()
+    .then(function(csrf_token) {
+      Permissions.revokeRole($scope.user.username, role, csrf_token)
+      .success(function(response) {
+        sweetAlert("Deleted", "Role deleted.", "success");
+      })
+      .error(function(response) {
+        console.error(response);
+      })
+      .finally(function() {
+        $scope.saving = false;
+      });
+    });
+    $scope.saving = false;
   };
 
   $scope.updatePermission = function(permission) {

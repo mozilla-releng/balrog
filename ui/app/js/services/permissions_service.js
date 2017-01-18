@@ -51,6 +51,21 @@ angular.module("app").factory('Permissions', function($http, $q) {
       var url = '/api/users/' + encodeURIComponent(username) + '/roles';
       return $http.get(url);
     },
+    getAllRoles: function() {
+      return $http.get('/api/users/roles');
+    },
+    grantRole: function(username, role, data_version, csrf_token) {
+      var url = '/api/users/' + encodeURIComponent(username) + '/roles/';
+      url += encodeURIComponent(role);
+      return $http.put(url);
+    },
+    revokeRole: function(username, role, csrf_token) {
+      var url = '/api/users/' + encodeURIComponent(username) + '/roles/';
+      url += encodeURIComponent(role.role);
+      url += '?data_version=' + role.data_version;
+      url += '&csrf_token=' + encodeURIComponent(csrf_token);
+      return $http.delete(url);
+    },
 
   };
   return service;
