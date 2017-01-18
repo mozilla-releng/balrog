@@ -232,7 +232,7 @@ Required Signoffs
 
 Some types of changes to Balrog's database require more than one person to approve them before they can be done. The Required Signoffs tables specify how many signoffs are needed from different Roles for each type of change. For example, a change may required 3 signoffs from users that hold the "releng" Role as well as 1 signoff from a user that holds the "relman" role.
 
-Changes to Required Signoffs tables them generally require signoff as well. If you are adding, modifying, or removing signoff requirements for something that already has signoff requirements, you must obtain signoff to do so. For example, if a change requires 2 signoffs from users who hold the "releng" Role, and you want to also require signoff from 1 user who holds the "relman" Role, you must get signoff from 2 "releng" users first. The one exception to this is that if you are adding a new signoff requirement for something that doesn't require any signoff yet, you do not need any signoff to do so.
+Changes to Required Signoffs tables generally require signoff as well. If you are adding, modifying, or removing signoff requirements for something that already has signoff requirements, you must obtain signoff to do so. For example, if a change requires 2 signoffs from users who hold the "releng" Role, and you want to also require signoff from 1 user who holds the "relman" Role, you must get signoff from 2 "releng" users first. The one exception to this is that if you are adding a new signoff requirement for something that doesn't require any signoff yet, you do not need any signoff to do so.
 
 You cannot require more signoffs than a Role has users. Eg: if only 3 users hold the "releng" Role, you cannot require 4 "releng" signoffs for anything. Similarly, if 3 "releng" signoffs are currently required for something, and 3 users hold that Role, you cannot remove that Role from any user.
 
@@ -247,9 +247,9 @@ Changes that directly affect updates that clients receive (the Rules and Release
 
 Any changes to a Rule that would affect a product and channel combination specified in this table will require signoff. This includes Rules that don't specify a product or channel at all (because that is treated as a wildcard).
 
-Any changes to a Release that is mapped to be a Rule that affects a product and channel combination specified that table will also require signoff. Releases that are not mapped to by a Rule never require any signoff. An important implication of this is that a newly added Release will not have ever gone through extra signoff in Balrog, and extra care should be taken when pointing a Rule to it for the first time.
+Releases which are mapped to be a Rule's mapping, fallbackingMapping, or whitelist field require the same signoffs as the Rule. Releases that are not mapped to by a rule never require any signoff. It's important that they are inspected before mapping to them for the first time.
 
-If a change affects more than one product and channel combination, *all* affected combinations' required signoffs will be combined to find the full set of required. For example, if Firefox's release channel requires 3 signoffs from "relman" and Firefox's beta channel requires 2 signoffs from "releng", a change to a Rule that affects both channels will require 3 signoffs from "relman" and 2 from "releng".
+If a change affects more than one product and channel combination, *all* affected combinations' required signoffs will be combined to find the full set of required. For example, if Firefox's release channel requires 3 signoffs from "relman" and Firefox's beta channel requires 2 signoffs from "releng", a change to a Rule that affects both channels will require 3 signoffs from "relman" and 2 from "releng". Changing a Release that is mapped to by Rules on the "release" and "beta" channel would also require the same signoffs.
 
 
 *****************************
