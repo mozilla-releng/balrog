@@ -180,6 +180,14 @@ class UserRolesView(AdminView):
         return jsonify({"roles": roles})
 
 
+class AllRolesView(AdminView):
+    """/users/roles"""
+
+    def get(self):
+        roles_list = dbo.permissions.getAllRoles()
+        return jsonify({"roles_list": roles_list})
+
+
 class UserRoleView(AdminView):
     """/users/:username/roles/:role"""
 

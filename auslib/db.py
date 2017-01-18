@@ -2237,8 +2237,14 @@ class Permissions(AUSTable):
             raise ValueError('Permission "%s" doesn\'t exist' % permission)
 
     def getUserRoles(self, username, transaction=None):
-        res = self.user_roles.select(where=[self.user_roles.username == username], columns=[self.user_roles.role, self.user_roles.data_version], distinct=True, transaction=transaction)
+        res = self.user_roles.select(where=[self.user_roles.username == username],
+                                     columns=[self.user_roles.role, self.user_roles.data_version],
+                                     distinct=True, transaction=transaction)
         return [{"role": r["role"], "data_version": r["data_version"]} for r in res]
+
+    def getAllRoles(self, transaction=None):
+        res = self.user_roles.select(columns=[self.user_roles.role], distinct=True, transaction=transaction)
+        return [r["role"] for r in res]
 
     def isAdmin(self, username, transaction=None):
         return bool(self.getPermission(username, "admin", transaction))
@@ -2271,7 +2277,8 @@ class Permissions(AUSTable):
         return False
 
     def hasRole(self, username, role, transaction=None):
-        return role in self.getUserRoles(username, transaction)
+        roles_list = [r['role'] for r in self.getUserRoles(username, transaction)]
+        return role in roles_list
 
 
 class Dockerflow(AUSTable):
