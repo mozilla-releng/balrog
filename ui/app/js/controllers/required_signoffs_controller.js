@@ -1,10 +1,11 @@
 angular.module("app").controller('RequiredSignoffsController',
-function($scope, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
+function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
   $scope.loading = true;
 
   $scope.required_signoffs = {};
   $scope.selected_product = null;
 
+  // Grabbing initial data from the server
   ProductRequiredSignoffs.getRequiredSignoffs()
   .success(function(response) {
     if (response["count"] > 0) {
@@ -59,4 +60,18 @@ function($scope, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
   .finally(function() {
     $scope.loading = false;
   });
+
+  // Setting up dialogs the page uses
+  $scope.addNewRequiredSignoff = function() {
+    $modal.open({
+      templateUrl: "required_signoff_modal.html",
+      controller: "NewRequiredSignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        required_signoffs: function() {
+          return $scope.required_signoffs;
+        },
+      }
+    });
+  };
 });

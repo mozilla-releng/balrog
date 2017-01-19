@@ -1,0 +1,35 @@
+<div class="modal-header">
+  <h3 class="modal-title" ng-bind="'Signoff Requirements for the ' + product + ' ' + channel + ' channel'"></h3>
+</div>
+<div class="modal-body">
+  <form role="form">
+    <label for="id_product">Product</label>
+    <input type="text" class="form-control" id="id_product" ng-model="product">
+    <label for="id_channel">Channel</label>
+    <input type="text" class="form-control" id="id_channel" ng-model="channel">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Role</th>
+          <th>Signoffs Required</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="(role, signoffs_required) in required_signoffs[product][channel]">
+          <td>{{ role }}<button class="btn btn-danger btn-xs" ng-click="delete required_signoffs[product][channel][role]"></td>
+          <td><input type="text" class="form-control" ng-model="required_signoffs[product][channel][role]"></td>
+        </tr>
+        <tr>
+          <td><input type="text" class="form-control" ng-model="new_role"></td>
+          <td><input type="text" class="form-control" ng-model="new_signoffs_required"></td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+</div>
+
+<div class="modal-footer">
+  <div ng-show="saving" small-loader></div>
+  <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Save Changes</button>
+  <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
+</div>

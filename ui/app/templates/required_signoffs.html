@@ -18,7 +18,7 @@
   <div class="panel-heading">
     <h3 class="panel-title">
       <span>
-        Permissions
+        To change {{ selected_product}} permissions you must have signoff from...
         <button class="btn btn-xs btn-danger" ng-click="openEditRequiredSignoffModal(required_signoffs[selected_product]['permissions'])">Edit</button>
       </span>
     </h3>
@@ -27,7 +27,7 @@
     <ul class="list-group">
       <li class="list-group-item" ng-repeat="(role, details) in required_signoffs[selected_product]['permissions']">
         <!-- add link to user roles ui here, when it exists -->
-        {{ details.signoffs_required }} Signoff from {{ role }}
+        {{ details.signoffs_required }} members of {{ role }}
       </li>
     </ul>
   </div>
@@ -36,7 +36,7 @@
   <div class="panel-heading">
     <h3 class="panel-title">
       <span>
-        {{ channel }} channel
+        To change Rules or Releases on the {{ selected_product }} {{ channel }} channel, you must have signoff from...
         <button class="btn btn-xs btn-danger" ng-click="openEditRequiredSignoffModal('something')">Edit</button>
       </span>
     </h3>
@@ -45,7 +45,7 @@
     <ul class="list-group">
       <li class="list-group-item" ng-repeat="(role, details) in roles">
         <!-- add link to user roles ui here, when it exists -->
-        {{ details.signoffs_required }} Signoff from {{ role }}
+        {{ details.signoffs_required }} members of {{ role }}
       </li>
     </ul>
   </div>
