@@ -1525,6 +1525,11 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
         self.assertEquals(got, [("carrot", "celery", "releng", 1, 1)])
 
+    def testInsertNewRequiredSignoffWithSpecificPermission(self):
+        self.rs.insert(changed_by="bob", product="carrot", channel="celery", role="releng", signoffs_required=1)
+        got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
+        self.assertEquals(got, [("carrot", "celery", "releng", 1, 1)])
+
     def testInsertNewRequiredSignoffWithoutPermission(self):
         self.assertRaises(PermissionDeniedError, self.rs.insert, changed_by="chuck", product="carrot", channel="celery", role="releng",
                           signoffs_required=1)
@@ -1617,6 +1622,11 @@ class TestPermissionsRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixi
 
     def testInsertNewRequiredSignoff(self):
         self.rs.insert(changed_by="bill", product="carrot", role="releng", signoffs_required=1)
+        got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
+        self.assertEquals(got, [("carrot", "releng", 1, 1)])
+
+    def testInsertNewRequiredSignoffWithSpecificPermission(self):
+        self.rs.insert(changed_by="bob", product="carrot", role="releng", signoffs_required=1)
         got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
         self.assertEquals(got, [("carrot", "releng", 1, 1)])
 
