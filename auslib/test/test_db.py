@@ -130,9 +130,6 @@ class TestTableMixin(object):
                                    Column('foo', Integer))
                 AUSTable.__init__(self, db, 'sqlite')
 
-            def getPotentialRequiredSignoffs(self, *args, **kwargs):
-                return None
-
         class TestAutoincrementTable(AUSTable):
 
             def __init__(self, db, metadata):
@@ -140,9 +137,6 @@ class TestTableMixin(object):
                                    Column('id', Integer, primary_key=True, autoincrement=True),
                                    Column('foo', Integer))
                 AUSTable.__init__(self, db, 'sqlite')
-
-            def getPotentialRequiredSignoffs(self, *args, **kwargs):
-                return None
 
         self.test = TestTable("fake", self.metadata)
         self.testAutoincrement = TestAutoincrementTable("fake", self.metadata)
@@ -165,9 +159,6 @@ class TestMultiplePrimaryTableMixin(object):
                                    Column('id2', Integer, primary_key=True),
                                    Column('foo', Integer))
                 AUSTable.__init__(self, db, 'sqlite')
-
-            def getPotentialRequiredSignoffs(self, *args, **kwargs):
-                return None
 
         self.test = TestTable("fake", self.metadata)
         self.metadata.create_all()
@@ -628,7 +619,7 @@ class ScheduledChangesTableMixin(object):
                 if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
                     raise PermissionDeniedError("fail")
                 if not dryrun:
-                    super(TestTable, self).insert(changed_by, transaction, dryrun, signoffs, **columns)
+                    super(TestTable, self).insert(changed_by, transaction, dryrun, **columns)
 
             def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
                 # Although our test table doesn't need it, real tables do some extra permission
@@ -638,14 +629,14 @@ class ScheduledChangesTableMixin(object):
                     if not self.db.hasPermission(changed_by, "test", "modify", transaction=transaction):
                         raise PermissionDeniedError("fail")
                 if not dryrun:
-                    super(TestTable, self).update(where, what, changed_by, old_data_version, transaction, dryrun, signoffs)
+                    super(TestTable, self).update(where, what, changed_by, old_data_version, transaction, dryrun)
 
             def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
                 if not self.db.hasPermission(changed_by, "test", "delete", transaction=transaction):
                     raise PermissionDeniedError("fail")
 
                 if not dryrun:
-                    super(TestTable, self).delete(where, changed_by, old_data_version, transaction, dryrun, signoffs)
+                    super(TestTable, self).delete(where, changed_by, old_data_version, transaction, dryrun)
 
         self.table = TestTable(self.db, self.metadata)
         self.sc_table = self.table.scheduled_changes
