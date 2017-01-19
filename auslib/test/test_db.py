@@ -14,7 +14,8 @@ from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
     ReadOnlyError, PermissionDeniedError, ChangeScheduledError, \
-    MismatchedDataVersionError, SignoffsTable, SignoffRequiredError
+    MismatchedDataVersionError, SignoffsTable, SignoffRequiredError, \
+    verify_signoffs
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -50,6 +51,93 @@ class NamedFileDatabaseMixin(object):
         fd, t = mkstemp()
         self.tmpfiles.append((fd, t))
         return t
+
+
+class TestVerifySignoffs(unittest.TestCase):
+
+    def testNoRequiredSignoffs(self):
+        verify_signoffs({}, {})
+
+    def testNoRequiredSignoffsWithSignoffs(self):
+        verify_signoffs({}, [{"role": "releng"}, {"role": "relman"}])
+
+    def testNoSignoffsGiven(self):
+        required = [
+            {"role": "releng", "signoffs_required": 1},
+        ]
+        signoffs = []
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+
+    def testMissingSignoffFromOneRole(self):
+        required = [
+            {"role": "releng", "signoffs_required": 1},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+        ]
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+
+    def testNotEnoughSignoffsFromOneRole(self):
+        required = [
+            {"role": "releng", "signoffs_required": 2},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+            {"role": "relman", "username": "jane"},
+        ]
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+
+    def testExactlyEnoughSignoffsGiven(self):
+        required = [
+            {"role": "releng", "signoffs_required": 2},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+            {"role": "releng", "username": "jane"},
+            {"role": "relman", "username": "nick"},
+        ]
+        verify_signoffs(required, signoffs)
+
+    def testMoreThanEnoughSignoffsGiven(self):
+        required = [
+            {"role": "releng", "signoffs_required": 2},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+            {"role": "releng", "username": "jane"},
+            {"role": "relman", "username": "nick"},
+            {"role": "relman", "username": "matt"},
+        ]
+        verify_signoffs(required, signoffs)
+
+    def testMultiplePotentialSignoffsForOneGroupWithoutEnoughSignoffs(self):
+        required = [
+            {"role": "releng", "signoffs_required": 2},
+            {"role": "releng", "signoffs_required": 1},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+            {"role": "relman", "username": "nick"},
+        ]
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+
+    def testMultiplePotentialSignoffsForOneGroupWithEnoughSignoffs(self):
+        required = [
+            {"role": "releng", "signoffs_required": 2},
+            {"role": "releng", "signoffs_required": 1},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+            {"role": "releng", "username": "jane"},
+            {"role": "relman", "username": "nick"},
+        ]
+        verify_signoffs(required, signoffs)
 
 
 class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
