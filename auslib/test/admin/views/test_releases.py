@@ -1232,6 +1232,7 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+
     def testUpdateScheduledChangeExistingDeleteRelease(self):
         data = {
             "name": "c",
@@ -1246,6 +1247,7 @@ class TestReleasesScheduledChanges(ViewTest):
             "data": '{"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1}', "name": "m", "product": "m",
             "sc_data_version": 1, "change_type": "insert",
         }
+        
         ret = self._post("/scheduled_changes/releases/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
         self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
@@ -1269,6 +1271,7 @@ class TestReleasesScheduledChanges(ViewTest):
         data = {
             "data": '{"name": "mm", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1}', "name": "mm", "product": "mm",
             "sc_data_version": 1, "change_type": "insert",
+
         }
         ret = self._post("/scheduled_changes/releases/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -1350,6 +1353,9 @@ class TestReleasesScheduledChanges(ViewTest):
             "base_read_only": False, "base_data": None, "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
+
+        base_row = dbo.releases.t.select().where(dbo.releases.name == "ab").execute().fetchall()
+        self.assertEquals(len(base_row), 0)
 
     def testGetScheduledChangeHistoryRevisions(self):
         ret = self._get("/scheduled_changes/releases/3/revisions")
