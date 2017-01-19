@@ -76,7 +76,7 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
         return;
       }
       if (!$scope.dataFile) {
-        $scope.sc.data = $scope.sc.data;
+        $scope.sc.data = null;
       } else {
         var file = $scope.dataFile;
 

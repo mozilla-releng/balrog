@@ -559,7 +559,6 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
 
         if change_type == "update":
             form = EditScheduledChangeExistingReleaseForm()
-            form.data.data = createBlob(form.data.data)
         elif change_type == "insert":
             form = EditScheduledChangeNewReleaseForm()
             form.data.data = createBlob(form.data.data)
