@@ -1299,8 +1299,8 @@ class RequiredSignoffsTable(AUSTable):
         if not self.db.hasPermission(changed_by, "required_signoff", "delete", transaction=transaction):
             raise PermissionDeniedError("{} is not allowed to remove Required Signoffs.".format(changed_by))
 
-        for rs in self.select(where=where, transaction=transaction):
-            if not dryrun:
+        if not dryrun:
+            for rs in self.select(where=where, transaction=transaction):
                 potential_required_signoffs = self.getPotentialRequiredSignoffs([rs], transaction=transaction)
                 verify_signoffs(potential_required_signoffs, signoffs)
 
@@ -1668,8 +1668,8 @@ class Rules(AUSTable):
         if not self.db.hasPermission(changed_by, "rule", "delete", product, transaction):
             raise PermissionDeniedError("%s is not allowed to delete rules for product %s" % (changed_by, product))
 
-        for current_rule in self.select(where=where, transaction=transaction):
-            if not dryrun:
+        if not dryrun:
+            for current_rule in self.select(where=where, transaction=transaction):
                 potential_required_signoffs = self.getPotentialRequiredSignoffs([current_rule], transaction=transaction)
                 verify_signoffs(potential_required_signoffs, signoffs)
 
