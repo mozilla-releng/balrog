@@ -16,6 +16,7 @@ sys.path.append(path.join(path.dirname(__file__), path.join("..", "vendor", "lib
 from auslib.db import AUSDatabase
 from auslib.blobs.base import createBlob
 
+
 def cleanup_releases(trans, nightly_age, dryrun=True):
     # This and the subsequent queries use "%%%%%" because we end up going
     # through two levels of Python string formatting. The first is here,
