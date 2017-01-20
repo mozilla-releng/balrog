@@ -230,6 +230,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
             change_id=7, changed_by="bill", timestamp=100, sc_id=3, when=30000000, data_version=2
         )
+        
         dbo.permissions.scheduled_changes.t.insert().execute(
             sc_id=4, scheduled_by="bill", change_type="delete", data_version=1, base_permission="scheduled_change", base_username="mary",
             complete=False, base_data_version=1,

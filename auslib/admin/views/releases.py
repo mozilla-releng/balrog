@@ -555,6 +555,7 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
+
         change_type = request.json.get("change_type")
 
         if change_type == "update":

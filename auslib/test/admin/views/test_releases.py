@@ -1077,6 +1077,7 @@ class TestReleasesScheduledChanges(ViewTest):
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
             change_id=7, changed_by="bill", timestamp=25, sc_id=3, when=10000000, data_version=2
         )
+        
         dbo.releases.scheduled_changes.t.insert().execute(
             sc_id=4, complete=False, scheduled_by="bill", change_type="delete", data_version=1, base_name="ab", base_data_version=1,
         )
@@ -1212,6 +1213,7 @@ class TestReleasesScheduledChanges(ViewTest):
         data = {
             "data": '{"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "c",
             "data_version": 1, "sc_data_version": 1, "when": 78900000000, "change_type": "update",
+
         }
         ret = self._post("/scheduled_changes/releases/2", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -1245,6 +1247,7 @@ class TestReleasesScheduledChanges(ViewTest):
         data = {
             "data": '{"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1}', "name": "m", "product": "m",
             "sc_data_version": 1, "change_type": "insert",
+
         }
         ret = self._post("/scheduled_changes/releases/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -1269,6 +1272,7 @@ class TestReleasesScheduledChanges(ViewTest):
         data = {
             "data": '{"name": "mm", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1}', "name": "mm", "product": "mm",
             "sc_data_version": 1, "change_type": "insert",
+
         }
         ret = self._post("/scheduled_changes/releases/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -1350,6 +1354,10 @@ class TestReleasesScheduledChanges(ViewTest):
             "base_read_only": False, "base_data": None, "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
+
+        base_row = dbo.releases.t.select().where(dbo.releases.name == "ab").execute().fetchall()
+        self.assertEquals(len(base_row), 0)
+
 
     def testGetScheduledChangeHistoryRevisions(self):
         ret = self._get("/scheduled_changes/releases/3/revisions")
