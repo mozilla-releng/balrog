@@ -48,16 +48,18 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
           else if (name !== $scope.sc.name) {
             $scope.errors.data = ["Form submission error", "Name differs compared to name in blob.\n"];
           }
-        }catch(err) {
+        } catch(err) {
           $scope.errors.data = ["Form submission error", "Malformed JSON file.\n"];
         }
       });
+      if ($scope.errors.data.length === 0) {
+        $scope.sc.data = blob;
+      }
     };
     if (typeof file !== 'undefined') {
       // should work
       reader.readAsText(file);
     }
-
   };
 
   $scope.changeName = function () {
@@ -66,11 +68,7 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
   };
 
   $scope.saveChanges = function () {
-    if (!$scope.dataFile) {
-      //no need to post data if dataFile is not uploaded i.e. there is no change in data
-        delete $scope.sc.data;
-      } 
-    if($scope.sc.change_type!=="delete") {
+    if ($scope.sc.change_type !== "delete") {
       if (!$scope.sc.product.trim()) {
         sweetAlert(
           "Form Error",
@@ -79,22 +77,7 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
         );
         return;
       }
-      
-      if ($scope.dataFile) 
-      {
-        var file = $scope.dataFile;
 
-        var reader = new FileReader();
-        reader.onload = function(evt) {
-          $scope.sc.data = evt.target.result;
-        };
-        if (typeof file !== 'undefined') {
-      // should work
-      reader.readAsText(file);
-        }
-
-      }
-      
       if (!$scope.sc.name.trim()) {
         sweetAlert(
           "Form Error",
@@ -103,46 +86,46 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
         );
         return;
       }
+
+      if (!$scope.dataFile) {
+        delete $scope.sc.data;
+      }
     } 
 
     $scope.saving = true;
 
-
-      CSRF.getToken()
-      .then(function(csrf_token) {
-        var data = $scope.sc;
-        Releases.updateScheduledChange($scope.sc.sc_id, data, csrf_token)
-        .success(function(response) {
-          $scope.sc.sc_data_version = response.new_data_version;
-          angular.copy($scope.sc, $scope.original_sc);
-          $scope.saving = false;
-          $modalInstance.close();
-        })
-        .error(function(response) {
-          if (typeof response === 'object') {
-            $scope.errors = response;
-            sweetAlert(
-              "Form submission error",
-              "See fields highlighted in red.",
-              "error"
-            );
-          } else if (typeof response === 'string') {
-            // quite possibly an error in the blob validation
-            sweetAlert(
-              "Form submission error",
-              "Unable to submit successfully.\n" +
-              "(" + response+ ")",
-              "error"
-            );
-          }
-        })
-        .finally(function() {
-          $scope.saving = false;
-        });
+    CSRF.getToken()
+    .then(function(csrf_token) {
+      Releases.updateScheduledChange($scope.sc.sc_id, $scope.sc, csrf_token)
+      .success(function(response) {
+        $scope.sc.sc_data_version = response.new_data_version;
+        angular.copy($scope.sc, $scope.original_sc);
+        $scope.saving = false;
+        $modalInstance.close();
+      })
+      .error(function(response) {
+        if (typeof response === 'object') {
+          $scope.errors = response;
+          sweetAlert(
+            "Form submission error",
+            "See fields highlighted in red.",
+            "error"
+          );
+        }
+        else if (typeof response === 'string') {
+        // quite possibly an error in the blob validation
+          sweetAlert(
+            "Form submission error",
+            "Unable to submit successfully.\n" +
+            "(" + response+ ")",
+            "error"
+          );
+        }
+      })
+      .finally(function() {
+        $scope.saving = false;
       });
-    
-
-
+    });
   }; // /saveChanges
 
   $scope.cancel = function () {
