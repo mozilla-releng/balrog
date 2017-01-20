@@ -85,7 +85,7 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
         var reader = new FileReader();
         reader.onload = function(evt) {
           $scope.sc.data = evt.target.result;
-        }
+        };
       }
       
       if (!$scope.sc.name.trim()) {
