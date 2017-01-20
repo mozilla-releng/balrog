@@ -37,16 +37,44 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
     $scope.user.roles = response.roles;
   })
   .error(function(response) {
-    console.error(response);
+    if (typeof response === 'object') {
+      $scope.errors = response;
+      sweetAlert(
+        "Form submission error",
+        "See fields highlighted in red.",
+        "error"
+      );
+    } else if (typeof response === 'string') {
+      sweetAlert(
+        "Form submission error",
+        "Unable to submit successfully.\n" +
+        "(" + response+ ")",
+        "error"
+      );
+    }
   });
 
   $scope.roles_list = [];
   Permissions.getAllRoles()
   .success(function(response) {
-    $scope.roles_list = response.roles_list;
+    $scope.roles_list = response.roles;
   })
   .error(function(response) {
-    console.error(response);
+    if (typeof response === 'object') {
+      $scope.errors = response;
+      sweetAlert(
+        "Form submission error",
+        "See fields highlighted in red.",
+        "error"
+      );
+    } else if (typeof response === 'string') {
+      sweetAlert(
+        "Form submission error",
+        "Unable to submit successfully.\n" +
+        "(" + response+ ")",
+        "error"
+      );
+    }
   });
 
   $scope.saving = false;
@@ -61,8 +89,13 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
     .then(function(csrf_token) {
       Permissions.grantRole($scope.user.username, $scope.role.role, $scope.role.data_version, csrf_token)
       .success(function(response) {
+        $scope.user.roles.push($scope.role);
+        // reset the add form
+        $scope.role = {
+          role: '',
+          data_version: ''
+        };
         sweetAlert("Saved", "Role granted.", "success");
-        $scope.user.roles.push()
       })
       .error(function(response) {
         if (typeof response === 'object') {
@@ -73,7 +106,6 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
             "error"
           );
         } else if (typeof response === 'string') {
-          // quite possibly an error in the blob validation
           sweetAlert(
             "Form submission error",
             "Unable to submit successfully.\n" +
@@ -179,10 +211,25 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
     .then(function(csrf_token) {
       Permissions.revokeRole($scope.user.username, role, csrf_token)
       .success(function(response) {
+        $scope.user.roles.splice($scope.user.roles.indexOf(role), 1);
         sweetAlert("Deleted", "Role deleted.", "success");
       })
       .error(function(response) {
-        console.error(response);
+        if (typeof response === 'object') {
+          $scope.errors = response;
+          sweetAlert(
+            "Form submission error",
+            "See fields highlighted in red.",
+            "error"
+          );
+        } else if (typeof response === 'string') {
+          sweetAlert(
+            "Form submission error",
+            "Unable to submit successfully.\n" +
+            "(" + response+ ")",
+            "error"
+          );
+        }
       })
       .finally(function() {
         $scope.saving = false;

@@ -184,8 +184,8 @@ class AllRolesView(AdminView):
     """/users/roles"""
 
     def get(self):
-        roles_list = dbo.permissions.getAllRoles()
-        return jsonify({"roles_list": roles_list})
+        roles = dbo.permissions.getAllRoles()
+        return jsonify({"roles": roles})
 
 
 class UserRoleView(AdminView):
@@ -205,8 +205,8 @@ class UserRoleView(AdminView):
 
     @requirelogin
     def _delete(self, username, role, changed_by, transaction):
-        roles_list = [r['role'] for r in dbo.permissions.getUserRoles(username)]
-        if role not in roles_list:
+        roles = [r['role'] for r in dbo.permissions.getUserRoles(username)]
+        if role not in roles:
             return Response(status=404)
 
         form = DbEditableForm(request.args)
