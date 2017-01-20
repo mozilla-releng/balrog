@@ -77,7 +77,9 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
       }
       if (!$scope.dataFile) {
         $scope.sc.data = null;
-      } else {
+      } 
+      else 
+      {
         var file = $scope.dataFile;
 
         var reader = new FileReader();
