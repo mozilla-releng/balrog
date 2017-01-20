@@ -89,7 +89,12 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
     .then(function(csrf_token) {
       Permissions.grantRole($scope.user.username, $scope.role.role, $scope.role.data_version, csrf_token)
       .success(function(response) {
+        $scope.role.data_version = response.new_data_version;
         $scope.user.roles.push($scope.role);
+
+        if (!($scope.role.role in $scope.roles_list)) {
+          $scope.roles_list.push($scope.role.role);
+        }
         // reset the add form
         $scope.role = {
           role: '',
