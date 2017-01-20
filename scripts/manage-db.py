@@ -5,7 +5,6 @@ import logging
 from os import path, popen
 from sqlalchemy.engine.url import make_url
 import sys
-import json
 
 logging.basicConfig(level=logging.INFO)
 
@@ -15,7 +14,7 @@ sys.path.append(path.join(path.dirname(__file__), ".."))
 sys.path.append(path.join(path.dirname(__file__), path.join("..", "vendor", "lib", "python")))
 
 from auslib.db import AUSDatabase
-
+from auslib.blobs.base import createBlob
 
 def cleanup_releases(trans, nightly_age, dryrun=True):
     # This and the subsequent queries use "%%%%%" because we end up going
@@ -85,45 +84,6 @@ def cleanup_releases_history(trans, dryrun=True):
                 total_deleted += results.rowcount
 
     print "Total Deleted: %d" % total_deleted
-
-
-def _extract_partials_generator(json_object):
-    """
-    Returns a generator that contains all value objects having key as 'partials'
-    """
-    if isinstance(json_object, dict):
-        for key, value in json_object.iteritems():
-            if "partial" == key or "partials" == key:
-                yield value
-            else:
-                for child_val in _extract_partials_generator(value):
-                    yield child_val
-
-    elif isinstance(json_object, list):
-        for item in json_object:
-            for value in _extract_partials_generator(item):
-                yield value
-    else:
-        pass
-
-
-def _extract_partial_release_names(release_data):
-    """
-    Extracts all partial release's names from the release_data.
-    :param release_data: input release data for processing
-    :return partial_release_names : a set of extracted partial release names
-    """
-    partial_release_names = set()
-    for item in _extract_partials_generator(release_data):
-        if isinstance(item, dict):
-            map(partial_release_names.add, list(item.keys()))
-        elif isinstance(item, list):
-            for list_item in item:
-                if 'from' in list_item:
-                    partial_release_names.add(str(list_item['from']))
-        else:
-            pass
-    return partial_release_names
 
 
 def extract_active_data(trans, url, dump_location='dump.sql'):
@@ -204,12 +164,11 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
     result = trans.execute(query_release_mapping).fetchall()
     partial_release_names = set()
     for row in result:
-        row_data = None
         try:
-            row_data = json.loads(row['data'])
-        except ValueError:
+            release_blob = createBlob(row['data'])
+            partial_release_names = partial_release_names.union(release_blob.getReferencedReleases())
+        except:
             continue
-        partial_release_names = _extract_partial_release_names(row_data)
     if partial_release_names:
         qry = ", ".join("'" + release_names + "'" for release_names in partial_release_names)
         popen(_strip_multiple_spaces('%s %s releases --where="releases.name IN (%s)" \

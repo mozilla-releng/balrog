@@ -162,7 +162,7 @@ class Blob(dict):
         footer = '</updates>'
         return footer
 
-    def getReferencingReleases(self):
+    def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
         release references

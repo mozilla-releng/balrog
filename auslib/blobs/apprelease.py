@@ -306,19 +306,20 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         may have been a pretty version for users to see"""
         return self.getExtv(platform, locale)
 
-    def getReferencingReleases(self):
+    def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
         release references
         """
         referencedReleases = set()
         if self.get('platforms'):
-            for locale in (platform['locales'] for platform in self['platforms']
-                           if platform.get('locales') is not None):
-
-                for fromRelease in (locale[update_type]['from'] for update_type in locale
-                                    if update_type == 'partial'):
-                    referencedReleases.add(fromRelease)
+            for platform in self['platforms']:
+                if self['platforms'][platform].get('locales'):
+                    for locale in self['platforms'][platform]['locales']:
+                        if self['platforms'][platform]['locales'][locale].get('partial'):
+                            referencedReleases.add(
+                                self['platforms'][platform]['locales'][locale]['partial']['from']
+                            )
         return referencedReleases
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
@@ -551,6 +552,22 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
             self.log.debug('%s\n%s' % (s, snippets[s].rstrip()))
         return snippets
 
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        referencedReleases = set()
+        if self.get('platforms'):
+            for platform in self['platforms']:
+                if self['platforms'][platform].get('locales'):
+                    for locale in self['platforms'][platform]['locales']:
+                        if self['platforms'][platform]['locales'][locale].get('partial'):
+                            referencedReleases.add(
+                                self['platforms'][platform]['locales'][locale]['partial']['from']
+                            )
+        return referencedReleases
+
 
 class MultipleUpdatesXMLMixin(object):
 
@@ -599,6 +616,23 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     def createSnippets(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         # We have no tests that require this, probably not worthwhile to implement.
         return {}
+
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        referencedReleases = set()
+        if self.get('platforms'):
+            for platform in self['platforms']:
+                if self['platforms'][platform].get('locales'):
+                    for locale in self['platforms'][platform]['locales']:
+                        if self['platforms'][platform]['locales'][locale].get('partials'):
+                            for partials in self['platforms'][platform]['locales'][locale]['partials']:
+                                referencedReleases.add(
+                                    partials['from']
+                                )
+        return referencedReleases
 
 
 class UnifiedFileUrlsMixin(object):
@@ -711,6 +745,30 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
         return v4Blob
 
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        referencedReleases = set()
+        if self.get('platforms'):
+            for platform in self['platforms']:
+                if self['platforms'][platform].get('locales'):
+                    for locale in self['platforms'][platform]['locales']:
+                        if self['platforms'][platform]['locales'][locale].get('partials'):
+                            for partials in self['platforms'][platform]['locales'][locale]['partials']:
+                                referencedReleases.add(
+                                    partials['from']
+                                )
+
+        if self.get('fileUrls'):
+            for fileUrlKey in self['fileUrls']:
+                if self['fileUrls'][fileUrlKey].get('partials'):
+                    for partials in self['fileUrls'][fileUrlKey]['partials']:
+                        referencedReleases.add(partials)
+
+        return referencedReleases
+
 
 class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
     """ Compatible with Gecko 19.0 and above, ie Firefox/Thunderbird 19.0 and above.
@@ -735,6 +793,30 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 5
+
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        referencedReleases = set()
+        if self.get('platforms'):
+            for platform in self['platforms']:
+                if self['platforms'][platform].get('locales'):
+                    for locale in self['platforms'][platform]['locales']:
+                        if self['platforms'][platform]['locales'][locale].get('partials'):
+                            for partials in self['platforms'][platform]['locales'][locale]['partials']:
+                                referencedReleases.add(
+                                    partials['from']
+                                )
+
+        if self.get('fileUrls'):
+            for fileUrlKey in self['fileUrls']:
+                if self['fileUrls'][fileUrlKey].get('partials'):
+                    for partials in self['fileUrls'][fileUrlKey]['partials']:
+                        referencedReleases.add(partials)
+
+        return referencedReleases
 
 
 class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
@@ -762,6 +844,30 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         if 'schema_version' not in self.keys():
             self['schema_version'] = 6
 
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        referencedReleases = set()
+        if self.get('platforms'):
+            for platform in self['platforms']:
+                if self['platforms'][platform].get('locales'):
+                    for locale in self['platforms'][platform]['locales']:
+                        if self['platforms'][platform]['locales'][locale].get('partials'):
+                            for partials in self['platforms'][platform]['locales'][locale]['partials']:
+                                referencedReleases.add(
+                                    partials['from']
+                                )
+
+        if self.get('fileUrls'):
+            for fileUrlKey in self['fileUrls']:
+                if self['fileUrls'][fileUrlKey].get('partials'):
+                    for partials in self['fileUrls'][fileUrlKey]['partials']:
+                        referencedReleases.add(partials)
+
+        return referencedReleases
+
 
 class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
     """  Compatible with Gecko 50.0 and above, ie Firefox/Thunderbird 50.0 and above.
@@ -787,6 +893,30 @@ class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 7
+
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        referencedReleases = set()
+        if self.get('platforms'):
+            for platform in self['platforms']:
+                if self['platforms'][platform].get('locales'):
+                    for locale in self['platforms'][platform]['locales']:
+                        if self['platforms'][platform]['locales'][locale].get('partials'):
+                            for partials in self['platforms'][platform]['locales'][locale]['partials']:
+                                referencedReleases.add(
+                                    partials['from']
+                                )
+
+        if self.get('fileUrls'):
+            for fileUrlKey in self['fileUrls']:
+                if self['fileUrls'][fileUrlKey].get('partials'):
+                    for partials in self['fileUrls'][fileUrlKey]['partials']:
+                        referencedReleases.add(partials)
+
+        return referencedReleases
 
 
 class DesupportBlob(Blob):
