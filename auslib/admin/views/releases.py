@@ -559,15 +559,14 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
 
         if change_type == "update":
             form = EditScheduledChangeExistingReleaseForm()
-            form.data.data = createBlob(form.data.data)
         elif change_type == "insert":
             form = EditScheduledChangeNewReleaseForm()
-            form.data.data = createBlob(form.data.data)
         elif change_type == "delete":
             form = EditScheduledChangeExistingReleaseForm()
         else:
             return Response(status=400, response="Invalid or missing change_type")
-
+        if form.data.data:
+            form.data.data = createBlob(form.data.data)
         return super(ReleaseScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
 
     @requirelogin
