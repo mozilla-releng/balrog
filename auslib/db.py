@@ -2116,8 +2116,10 @@ class Permissions(AUSTable):
                 raise ValueError('Unknown option "%s" for permission "%s"' % (opt, permission))
 
     def getAllUsers(self, transaction=None):
-        res = self.select(columns=[self.username], distinct=True, transaction=transaction)
-        return [r['username'] for r in res]
+        res_permissions = self.select(columns=[self.username], distinct=True, transaction=transaction)
+        res_roles = self.user_roles.select(columns=[self.user_roles.username], transaction=transaction)
+        res = res_roles + res_permissions
+        return list(set([r['username'] for r in res]))
 
     def getAllPermissions(self, transaction=None):
         ret = defaultdict(dict)
