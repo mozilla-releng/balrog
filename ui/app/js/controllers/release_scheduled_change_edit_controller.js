@@ -86,6 +86,11 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
         reader.onload = function(evt) {
           $scope.sc.data = evt.target.result;
         };
+        if (typeof file !== 'undefined') {
+      // should work
+      reader.readAsText(file);
+        }
+
       }
       
       if (!$scope.sc.name.trim()) {
