@@ -644,6 +644,9 @@ class History(AUSTable):
                 newcol.primary_key = False
             else:
                 newcol.nullable = True
+                # Setting unique to None because SQLAlchemy marks column attribute as None
+                # unless they have been explicitely set to True or False.
+                newcol.unique = None
             self.table.append_column(newcol)
         AUSTable.__init__(self, db, dialect, history=False, versioned=False)
 
@@ -928,16 +931,26 @@ class ScheduledChangeTable(AUSTable):
             # See https://github.com/zzzeek/sqlalchemy/blob/rel_0_7/lib/sqlalchemy/schema.py#L781
             # for background.
             newcol.key = newcol.name = "base_%s" % col.name
-            # 2) Primary keys on the base table are normal columns here,
-            # and are allowed to be null (because we support adding new rows
-            # to tables with autoincrementing keys via scheduled changes).
-            # The base table's data version may also be null for the same reason.
-            if col.primary_key or newcol.name == "base_data_version":
+            # 2) Primary Key Integer Autoincrement columns from the baseTable become normal nullable
+            # columns in ScheduledChanges because we can schedule changes that insert into baseTable
+            # and the DB will handle inserting the correct value. However, nulls aren't allowed when
+            # we schedule updates or deletes -this is enforced in self.validate().
+            # For Primary Key columns that aren't Integer or Autoincrement but are nullable, we preserve
+            # this non-nullability because we need a value to insert into the baseTable when the
+            # scheduled change gets executed.
+            # Non-Primary Key columns from the baseTable become nullable and non-unique in ScheduledChanges
+            # because they aren't part of the ScheduledChanges business logic and become simple data storage.
+            if col.primary_key:
                 newcol.primary_key = False
+
+                # Only integer columns can be AUTOINCREMENT. The isinstance statement guards
+                # against false positives from SQLAlchemy.
+                if col.autoincrement and isinstance(col.type, Integer):
+                    newcol.nullable = True
+            else:
+                newcol.unique = None
                 newcol.nullable = True
-            # Notable because of its abscence, other columns retain their
-            # nullability because whether or not we're adding a new row or
-            # modifying an existing one, those NOT NULL columns are required.
+
             self.table.append_column(newcol)
 
         super(ScheduledChangeTable, self).__init__(db, dialect, history=history, versioned=True)

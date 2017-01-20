@@ -1,3 +1,4 @@
+import logging
 import mock
 import os
 from tempfile import mkstemp
@@ -9,6 +10,11 @@ from auslib.global_state import dbo
 from auslib.web.base import app
 from auslib.web.views.client import ClientRequestView
 from auslib.errors import BadDataError
+
+
+def setUpModule():
+    # Silence SQLAlchemy-Migrate's debugging logger
+    logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
 class ClientTestCommon(unittest.TestCase):

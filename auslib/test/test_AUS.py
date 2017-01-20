@@ -1,9 +1,15 @@
+import logging
 import mock
 import unittest
 
 from auslib.global_state import dbo
 from auslib.AUS import AUS
 from auslib.blobs.base import createBlob
+
+
+def setUpModule():
+    # Silence SQLAlchemy-Migrate's debugging logger
+    logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
 def RandomAUSTestWithoutFallback(AUS, backgroundRate, force, mapping):
