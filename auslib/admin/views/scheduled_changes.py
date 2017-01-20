@@ -82,7 +82,7 @@ class ScheduledChangeView(AdminView):
         for k, v in form._fields.iteritems():
             # sc_data_version is a "special" column, in that it's not part of the
             # primary data, and shouldn't be updatable by the user.
-            if k == "sc_data_version":
+            if k == "sc_data_version" or v.data is None:
                 continue
             # If the key is not present in the request we treat it as a no-op
             # and shouldn't modify the data for that key.
