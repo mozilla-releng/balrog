@@ -66,6 +66,10 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
   };
 
   $scope.saveChanges = function () {
+    if (!$scope.dataFile) {
+      //no need to post data if dataFile is not uploaded i.e. there is no change in data
+        delete $scope.sc.data;
+      } 
     if($scope.sc.change_type!=="delete") {
       if (!$scope.sc.product.trim()) {
         sweetAlert(
@@ -75,10 +79,8 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
         );
         return;
       }
-      if (!$scope.dataFile) {
-        $scope.sc.data = null;
-      } 
-      else 
+      
+      if ($scope.dataFile) 
       {
         var file = $scope.dataFile;
 
