@@ -312,14 +312,12 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         release references
         """
         referencedReleases = set()
-        if self.get('platforms'):
-            for platform in self['platforms']:
-                if self['platforms'][platform].get('locales'):
-                    for locale in self['platforms'][platform]['locales']:
-                        if self['platforms'][platform]['locales'][locale].get('partial'):
-                            referencedReleases.add(
-                                self['platforms'][platform]['locales'][locale]['partial']['from']
-                            )
+        for platform in self.get('platforms', {}):
+            for locale in self['platforms'][platform].get('locales', {}):
+                if self['platforms'][platform]['locales'][locale].get('partial'):
+                    referencedReleases.add(
+                        self['platforms'][platform]['locales'][locale]['partial']['from']
+                    )
         return referencedReleases
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
@@ -558,14 +556,12 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         release references
         """
         referencedReleases = set()
-        if self.get('platforms'):
-            for platform in self['platforms']:
-                if self['platforms'][platform].get('locales'):
-                    for locale in self['platforms'][platform]['locales']:
-                        if self['platforms'][platform]['locales'][locale].get('partial'):
-                            referencedReleases.add(
-                                self['platforms'][platform]['locales'][locale]['partial']['from']
-                            )
+        for platform in self.get('platforms', {}):
+            for locale in self['platforms'][platform].get('locales', {}):
+                if self['platforms'][platform]['locales'][locale].get('partial'):
+                    referencedReleases.add(
+                        self['platforms'][platform]['locales'][locale]['partial']['from']
+                    )
         return referencedReleases
 
 
@@ -623,15 +619,12 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         release references
         """
         referencedReleases = set()
-        if self.get('platforms'):
-            for platform in self['platforms']:
-                if self['platforms'][platform].get('locales'):
-                    for locale in self['platforms'][platform]['locales']:
-                        if self['platforms'][platform]['locales'][locale].get('partials'):
-                            for partials in self['platforms'][platform]['locales'][locale]['partials']:
-                                referencedReleases.add(
-                                    partials['from']
-                                )
+        for platform in self.get('platforms', {}):
+            for locale in self['platforms'][platform].get('locales', {}):
+                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
+                    referencedReleases.add(
+                        partial['from']
+                    )
         return referencedReleases
 
 
@@ -751,21 +744,15 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         release references
         """
         referencedReleases = set()
-        if self.get('platforms'):
-            for platform in self['platforms']:
-                if self['platforms'][platform].get('locales'):
-                    for locale in self['platforms'][platform]['locales']:
-                        if self['platforms'][platform]['locales'][locale].get('partials'):
-                            for partials in self['platforms'][platform]['locales'][locale]['partials']:
-                                referencedReleases.add(
-                                    partials['from']
-                                )
-
-        if self.get('fileUrls'):
-            for fileUrlKey in self['fileUrls']:
-                if self['fileUrls'][fileUrlKey].get('partials'):
-                    for partials in self['fileUrls'][fileUrlKey]['partials']:
-                        referencedReleases.add(partials)
+        for platform in self.get('platforms', {}):
+            for locale in self['platforms'][platform].get('locales', {}):
+                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
+                    referencedReleases.add(
+                        partial['from']
+                    )
+        for fileUrlKey in self.get('fileUrls', {}):
+            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+                referencedReleases.add(partial)
 
         return referencedReleases
 
@@ -800,21 +787,15 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         release references
         """
         referencedReleases = set()
-        if self.get('platforms'):
-            for platform in self['platforms']:
-                if self['platforms'][platform].get('locales'):
-                    for locale in self['platforms'][platform]['locales']:
-                        if self['platforms'][platform]['locales'][locale].get('partials'):
-                            for partials in self['platforms'][platform]['locales'][locale]['partials']:
-                                referencedReleases.add(
-                                    partials['from']
-                                )
-
-        if self.get('fileUrls'):
-            for fileUrlKey in self['fileUrls']:
-                if self['fileUrls'][fileUrlKey].get('partials'):
-                    for partials in self['fileUrls'][fileUrlKey]['partials']:
-                        referencedReleases.add(partials)
+        for platform in self.get('platforms', {}):
+            for locale in self['platforms'][platform].get('locales', {}):
+                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
+                    referencedReleases.add(
+                        partial['from']
+                    )
+        for fileUrlKey in self.get('fileUrls', {}):
+            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+                referencedReleases.add(partial)
 
         return referencedReleases
 
@@ -850,21 +831,15 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         release references
         """
         referencedReleases = set()
-        if self.get('platforms'):
-            for platform in self['platforms']:
-                if self['platforms'][platform].get('locales'):
-                    for locale in self['platforms'][platform]['locales']:
-                        if self['platforms'][platform]['locales'][locale].get('partials'):
-                            for partials in self['platforms'][platform]['locales'][locale]['partials']:
-                                referencedReleases.add(
-                                    partials['from']
-                                )
-
-        if self.get('fileUrls'):
-            for fileUrlKey in self['fileUrls']:
-                if self['fileUrls'][fileUrlKey].get('partials'):
-                    for partials in self['fileUrls'][fileUrlKey]['partials']:
-                        referencedReleases.add(partials)
+        for platform in self.get('platforms', {}):
+            for locale in self['platforms'][platform].get('locales', {}):
+                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
+                    referencedReleases.add(
+                        partial['from']
+                    )
+        for fileUrlKey in self.get('fileUrls', {}):
+            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+                referencedReleases.add(partial)
 
         return referencedReleases
 
@@ -900,21 +875,15 @@ class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         release references
         """
         referencedReleases = set()
-        if self.get('platforms'):
-            for platform in self['platforms']:
-                if self['platforms'][platform].get('locales'):
-                    for locale in self['platforms'][platform]['locales']:
-                        if self['platforms'][platform]['locales'][locale].get('partials'):
-                            for partials in self['platforms'][platform]['locales'][locale]['partials']:
-                                referencedReleases.add(
-                                    partials['from']
-                                )
-
-        if self.get('fileUrls'):
-            for fileUrlKey in self['fileUrls']:
-                if self['fileUrls'][fileUrlKey].get('partials'):
-                    for partials in self['fileUrls'][fileUrlKey]['partials']:
-                        referencedReleases.add(partials)
+        for platform in self.get('platforms', {}):
+            for locale in self['platforms'][platform].get('locales', {}):
+                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
+                    referencedReleases.add(
+                        partial['from']
+                    )
+        for fileUrlKey in self.get('fileUrls', {}):
+            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+                referencedReleases.add(partial)
 
         return referencedReleases
 

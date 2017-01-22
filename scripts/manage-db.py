@@ -87,6 +87,14 @@ def cleanup_releases_history(trans, dryrun=True):
     print "Total Deleted: %d" % total_deleted
 
 
+def chunk_list(list_object, n):
+    """
+    Yield successive n-sized chunks from list_object.
+    """
+    for i in xrange(0, len(list_object), n):
+        yield list_object[i:i + n]
+
+
 def extract_active_data(trans, url, dump_location='dump.sql'):
     """
     Stores sqldump data in the specified location. If not specified, stores it in current directory in file dump.sql
@@ -167,13 +175,15 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
     for row in result:
         try:
             release_blob = createBlob(row['data'])
-            partial_release_names = partial_release_names.union(release_blob.getReferencedReleases())
-        except:
+            partial_release_names.update(release_blob.getReferencedReleases())
+        except ValueError:
             continue
     if partial_release_names:
-        qry = ", ".join("'" + release_names + "'" for release_names in partial_release_names)
-        popen(_strip_multiple_spaces('%s %s releases --where="releases.name IN (%s)" \
-               >> %s' % (mysql_default_command, database, qry, dump_location)))
+        batch_generator = chunk_list(list(partial_release_names), 30)
+        for batched_partial_release_list in batch_generator:
+            qry = ", ".join("'" + release_names + "'" for release_names in batched_partial_release_list)
+            popen(_strip_multiple_spaces('%s %s releases --where="releases.name IN (%s)" \
+                   >> %s' % (mysql_default_command, database, qry, dump_location)))
 
 
 def _strip_multiple_spaces(string):

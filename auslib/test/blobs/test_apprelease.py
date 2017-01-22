@@ -190,8 +190,9 @@ class TestReleaseBlobV1(unittest.TestCase):
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        for item in (['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4']):
-            self.assertTrue(item in partial_releases)
+        self.assertEquals(sorted(partial_releases),
+                          ['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4']
+                          )
 
     def testGetPartialReleaseReferences_Empty_Locales_Case(self):
         sample_release_JSON = """
@@ -790,8 +791,9 @@ class TestSchema2Blob(unittest.TestCase):
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        for item in ['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4']:
-            self.assertTrue(item in partial_releases)
+        self.assertEquals(sorted(partial_releases),
+                          ['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4']
+                          )
 
     def testIsValid(self):
         # Raises on error
@@ -1263,8 +1265,7 @@ class TestSchema3Blob(unittest.TestCase):
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlobV3.getReferencedReleases()
         self.assertTrue(3, len(partial_releases))
-        for item in (['g1', 'e3', 'd4']):
-            self.assertTrue(item in partial_releases)
+        self.assertEquals(sorted(partial_releases), ['d4', 'e3', 'g1'])
 
     def testGetPartialReleaseReferences_Empty_Partials(self):
         sampleReleaseDataJSON = """
@@ -1757,8 +1758,7 @@ class TestSchema4Blob(unittest.TestCase):
         """)
         partial_releases = sample_release_blob_v4.getReferencedReleases()
         self.assertTrue(5, len(partial_releases))
-        for item in ['h0', 'h1', 'h2', 'h3', 'h4']:
-            self.assertTrue(item in partial_releases)
+        self.assertEquals(sorted(partial_releases), ['h0', 'h1', 'h2', 'h3', 'h4'])
 
     def testGetPartialReleaseReferences_Empty_Partials_Case(self):
         sample_release_blob_v4 = ReleaseBlobV4()
@@ -1843,8 +1843,7 @@ class TestSchema4Blob(unittest.TestCase):
         """)
         partial_releases = sample_release_blob_v4.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        for item in ['h0', 'h1', 'h2', 'h3']:
-            self.assertTrue(item in partial_releases)
+        self.assertEquals(sorted(partial_releases), ['h0', 'h1', 'h2', 'h3'])
 
     def testIsValid(self):
         # Raises on error
@@ -2302,8 +2301,7 @@ class TestSchema5Blob(unittest.TestCase):
         """)
         partial_releases = sample_release_blob_v5.getReferencedReleases()
         self.assertTrue(2, len(partial_releases))
-        for item in ['h1', 'h2']:
-            self.assertTrue(item in partial_releases)
+        self.assertEquals(sorted(partial_releases), ['h1', 'h2'])
 
     def testGetPartialReleaseReferences_Empty_fileUrls_Case(self):
         sample_release_blob_v5 = ReleaseBlobV5()
@@ -2392,8 +2390,7 @@ class TestSchema5Blob(unittest.TestCase):
         """)
         partial_releases = sample_release_blob_v5.getReferencedReleases()
         self.assertTrue(3, len(partial_releases))
-        for item in ['h1', 'h2', 'h3']:
-            self.assertTrue(item in partial_releases)
+        self.assertEquals(sorted(partial_releases), ['h1', 'h2', 'h3'])
 
     def testIsValid(self):
         # Raises on error
@@ -2577,8 +2574,7 @@ class TestSchema6Blob(unittest.TestCase):
         """)
         partial_releases = sample_release_blob_v6.getReferencedReleases()
         self.assertTrue(2, len(partial_releases))
-        for item in ['h1', 'h2']:
-            self.assertTrue(item in partial_releases)
+        self.assertEquals(sorted(partial_releases), ['h1', 'h2'])
 
     def testGetPartialReleaseReferences_Empty_Partials_Case(self):
         sample_release_blob_v6 = ReleaseBlobV6()
@@ -2848,8 +2844,7 @@ class TestSchema7Blob(unittest.TestCase):
         """)
         partial_releases = sample_release_blob_v7.getReferencedReleases()
         self.assertTrue(2, len(partial_releases))
-        for item in ['h1', 'h2']:
-            self.assertTrue(item in partial_releases)
+        self.assertEquals(sorted(partial_releases), ['h1', 'h2'])
 
     def testIsValid(self):
         # Raises on error
