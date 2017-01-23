@@ -19,6 +19,13 @@ describe("controller: PermissionsController", function() {
     }
   };
 
+  var sample_roles = {
+    'roles': [
+      {'role':'qa', 'data_version': 1},
+      {'role':'releng', 'data_version':1}
+    ]};
+  var sample_all_roles = {'roles': ['qa', 'releng']};
+
   beforeEach(inject(function($controller, $rootScope, $location, Permissions, $httpBackend) {
     this.$location = $location;
     this.$httpBackend = $httpBackend;
@@ -110,6 +117,10 @@ describe("controller: PermissionsController", function() {
       .respond(200, JSON.stringify(sample_users));
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
+      this.$httpBackend.expectGET('/api/users/peterbe/roles')
+      .respond(200, JSON.stringify(sample_roles));
+      this.$httpBackend.expectGET('/api/users/roles')
+      .respond(200, JSON.stringify(sample_all_roles));
       this.scope.openUpdateModal({username: "peterbe"});
     });
   });
