@@ -1,0 +1,45 @@
+<div class="modal-body">
+  <div class="modal-header">
+    <h3 class="modal-title">Schedule a Deletion of Release {{ sc.name }}</h3>
+  </div>
+  <form role="form">
+    <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+      <label for="id_when">When</label>
+      <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': errors.when}">
+        <div class="input-group">
+          <span class="input-group-btn">
+            <button class="btn btn-secondary dropdown-toggle" type="button"><i class="glyphicon glyphicon-calendar"></i></button>
+          </span>
+          <!-- Manual edits of this field throw deprecation warnings, but no errors. This is because the
+               way we display dates is not an ISO format, and Moment.js will be removing support for parsing
+               those directly in the near future. We will probably have to handle ng-change when we upgrade moment
+               to have this continue to work. https://github.com/moment/moment/issues/1407 has more details. -->
+          <input type="text" id="id_when" class="form-control" data-ng-model="sc.when" ng-blur="setWhen()">
+          <span class="input-group-btn">
+            <button class="btn btn-secondary" type="button" ng-click="clearWhen()">Clear</button>
+          </span>
+        </div>
+        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+          <datetimepicker data-ng-model="sc.when" data-datetimepicker-config="{ minuteStep: 5 }"
+                          data-on-set-time="setWhen(newDate)" />
+        </ul>
+        <p class="help-block" ng-show="errors.when">{{ errors.when.join(', ') }}</p>
+      </div>
+    </div>
+    </div>
+
+    <div class="form-group" ng-class="{'has-error': errors.exception}">
+      <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>
+    </div>
+
+    <input type="hidden" name="sc_data_version" ng-model="sc.sc_data_version">
+    <input type="hidden" name="data_version" ng-model="sc.data_version">
+  </form>
+</div>
+<div class="modal-footer">
+  <div ng-show="saving" small-loader></div>
+  <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Save Changes</button>
+  <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
+</div>
+
