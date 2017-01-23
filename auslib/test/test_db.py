@@ -2197,6 +2197,8 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.rules.t.insert().execute(rule_id=1, priority=100, version='>=4.0b1', backgroundRate=100, update_type='z', data_version=1)
         self.rules.t.insert().execute(rule_id=2, priority=100, channel='release*', backgroundRate=100, update_type='z', data_version=1)
         self.rules.t.insert().execute(rule_id=3, priority=100, buildID='>=20010101222222', backgroundRate=100, update_type='z', data_version=1)
+        self.rules.t.insert().execute(rule_id=4, priority=90, version='3.0.1,3.0.2,3.0b3', backgroundRate=100, update_type='z',
+                                      data_version=1)
 
     def testGetRulesMatchingQueryVersionComparison(self):
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='>=4.0b1', update_type='z', data_version=1)]
@@ -2235,6 +2237,33 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='3.0', channel='',
+                 buildTarget='', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, [])
+
+    def testGetRulesMatchingQueryListOfVersionsComparison(self):
+        expected = [dict(rule_id=4, priority=90, backgroundRate=100,
+                         version='3.0.1,3.0.2,3.0b3', update_type='z', data_version=1)]
+        for version in ['3.0.1', '3.0.2', '3.0b3']:
+            rules = self.rules.getRulesMatchingQuery(
+                dict(name='', product='', version=version, channel='',
+                     buildTarget='', buildID='', locale='', osVersion='',
+                     distribution='', distVersion='', headerArchitecture='',
+                     force=False, queryVersion=3,
+                     ),
+                fallbackChannel=''
+            )
+            rules = self._stripNullColumns(rules)
+            self.assertEquals(rules, expected)
+
+        # version number isn't present in the list of version numbers.
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0.3', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,

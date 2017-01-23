@@ -1,4 +1,5 @@
 import simplejson as json
+import re
 
 from flask_wtf import Form
 from wtforms import StringField, IntegerField, SelectField, BooleanField
@@ -103,6 +104,14 @@ def operator_validator():
     return _validator
 
 
+def _has_op(pattern):
+    # only alphanumeric characters means no operator in version.
+    if re.match('\w+', pattern):
+        return False
+    else:
+        return True
+
+
 def version_validator():
     log.debug('starting in version_validator for version')
 
@@ -111,16 +120,27 @@ def version_validator():
         # empty input
         if field.data is None:
             return
-        try:
-            op, operand = get_op(field.data)
-            version = MozillaVersion(operand)
-        except ValueError:
-            raise ValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value" % (field.name, field.name))
-        except:
-            raise ValidationError('Invalid input for %s . No Operator or Match found.' % field.name)
-        # MozillaVersion doesn't error on empty strings
-        if not hasattr(version, 'version'):
-            raise ValidationError("Couldn't parse the version for %s. No attribute 'version' was detected." % field.name)
+        rulesVersionList = field.data.split(",")
+        has_more_than_one_version = 1 < len(rulesVersionList)
+
+        for rule_version in rulesVersionList:
+            try:
+                op, operand = get_op(rule_version)
+                version = MozillaVersion(operand)
+            except ValueError:
+                raise ValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value"
+                                      % (field.name, field.name))
+            except:
+                raise ValidationError('Invalid input for %s . No Operator or Match found.' % field.name)
+            # MozillaVersion doesn't error on empty strings
+            if not hasattr(version, 'version'):
+                raise ValidationError("Couldn't parse the version for %s. No attribute 'version' was detected."
+                                      % field.name)
+
+            # If more than one version number present , then all versions must be alphanumeric only.
+            if has_more_than_one_version and _has_op(rule_version):
+                raise ValidationError('Invalid input for %s . All versions must have alphanumeric characters only.'
+                                      % field.name)
 
     return _validator
 
