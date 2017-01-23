@@ -437,6 +437,10 @@ class TestReleasesAPI_JSON(ViewTest):
         dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "d").execute()
         ret = self._delete("/releases/d", username="bill", qs=dict(data_version=2))
         self.assertStatusCode(ret, 403)
+        
+    def testDeleteWithRules(self):
+        ret = self._delete("/releases/d", qs=dict(name='ab', data_version=1))
+        self.assertStatusCode(ret, 403)
 
     def testLocalePut(self):
         data = json.dumps({
