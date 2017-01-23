@@ -119,6 +119,26 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal)
   };
   /* End openNewModal */
 
+  $scope.openNewScheduledPermissionChangeModal = function(permission) {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'release_scheduled_change_modal.html',
+      controller: 'NewReleaseScheduledChangeCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        scheduled_changes: function() {
+          return [];
+        },
+        sc: function() {
+          sc = angular.copy(permission);
+          sc["change_type"] = "update";
+          return sc;
+        }
+      }
+    });
+  };
+
 
 
 });

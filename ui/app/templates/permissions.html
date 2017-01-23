@@ -48,6 +48,8 @@
     <h3 class="panel-title">
       <div style="float: right">
         <i ng-show="username && $first">Current</i>
+        <button ng-show="!username" class="btn btn-default btn-xs" ng-click="openNewScheduledPermissionChangeModal(permission)">Schedule an Update</button>
+        <button ng-show="!username" class="btn btn-default btn-xs" ng-click="openNewScheduledDeleteModal(release)">Schedule for Deletion</button>
         <button ng-show="!username" class="btn btn-default btn-xs" ng-click="openUpdateModal(user)">Update</button>
       </div>
       <span title="Username" ng-bind-html="highlightSearch(user.username, 'username')"></span>

@@ -42,6 +42,9 @@ angular.module("app").factory('Permissions', function($http, $q) {
       url += '&csrf_token=' + encodeURIComponent(csrf_token);
       return $http.delete(url);
     },
+    getScheduledChanges: function() {
+      return $http.get("/api/scheduled_changes/permissions?all=1");
+    },
   };
   return service;
 
