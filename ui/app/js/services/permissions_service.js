@@ -42,6 +42,31 @@ angular.module("app").factory('Permissions', function($http, $q) {
       url += '&csrf_token=' + encodeURIComponent(csrf_token);
       return $http.delete(url);
     },
+    getUserRoles: function(username) {
+      // What comes back from the server is a dict like this:
+      //  {'roles': ['role1', 'role2'...]} if the user has roles
+      // otherwise the value of the dict will be an empty array:
+      //  {'roles': []}
+      // when the user has no roles
+      var url = '/api/users/' + encodeURIComponent(username) + '/roles';
+      return $http.get(url);
+    },
+    getAllRoles: function() {
+      return $http.get('/api/users/roles');
+    },
+    grantRole: function(username, role, data_version, csrf_token) {
+      var url = '/api/users/' + encodeURIComponent(username) + '/roles/';
+      url += encodeURIComponent(role);
+      return $http.put(url);
+    },
+    revokeRole: function(username, role, csrf_token) {
+      var url = '/api/users/' + encodeURIComponent(username) + '/roles/';
+      url += encodeURIComponent(role.role);
+      url += '?data_version=' + role.data_version;
+      url += '&csrf_token=' + encodeURIComponent(csrf_token);
+      return $http.delete(url);
+    },
+
   };
   return service;
 

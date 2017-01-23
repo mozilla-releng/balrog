@@ -39,7 +39,7 @@ class TestHistoryView(ViewTest):
         self.assertStatusCode(ret, 200)
 
     def testFieldViewBadValuesBadField(self):
-        ret = self._put('/users/bob/permissions/admin')
+        ret = self._put('/users/bob/permissions/admin', data=dict(options=json.dumps(dict(products=["a"]))))
         self.assertStatusCode(ret, 201)
 
         table = dbo.permissions.history
@@ -177,7 +177,7 @@ class TestHistoryView(ViewTest):
 
     def testFieldViewPermission(self):
         # Add a permission
-        ret = self._put('/users/bob/permissions/admin')
+        ret = self._put('/users/bob/permissions/admin', data=dict(options=json.dumps(dict(products=["a"]))))
         self.assertStatusCode(ret, 201)
         table = dbo.permissions.history
         row, = table.select(order_by=[table.timestamp.desc()], limit=1)
@@ -186,4 +186,4 @@ class TestHistoryView(ViewTest):
         url = '/history/view/permission/%d/options' % change_id
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
-        self.assertEqual(ret.data, 'NULL')
+        self.assertEqual(json.loads(ret.data), {"products": ["a"]})

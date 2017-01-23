@@ -16,6 +16,13 @@ describe("controller: UserPermissionsCtrl", function() {
     }
   };
 
+  var sample_roles = {
+    'roles': [
+      {'role':'qa', 'data_version': 1},
+      {'role':'releng', 'data_version':1}
+    ]};
+  var sample_all_roles = {'roles': ['qa', 'releng']};
+
   beforeEach(inject(function($controller, $rootScope, $location, $modal, Permissions, $httpBackend) {
     this.$location = $location;
     this.$httpBackend = $httpBackend;
@@ -39,11 +46,15 @@ describe("controller: UserPermissionsCtrl", function() {
     this.$httpBackend.verifyNoOutstandingExpectation();
   });
 
-  describe("opening the edit rule modal", function() {
+  describe("opening the edit user modal", function() {
 
     it("should should all defaults", function() {
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
+      this.$httpBackend.expectGET('/api/users/peterbe/roles')
+      .respond(200, JSON.stringify(sample_roles));
+      this.$httpBackend.expectGET('/api/users/roles')
+      .respond(200, JSON.stringify(sample_all_roles));
       this.$httpBackend.flush();
       expect(this.scope.errors).toEqual({permissions:{}});
       expect(this.scope.saving).toEqual(false);
@@ -61,6 +72,10 @@ describe("controller: UserPermissionsCtrl", function() {
           //   options: null,
           //   data_version: 1
           // }
+        ],
+        roles : [
+          {'role':'qa', 'data_version': 1},
+          {'role':'releng', 'data_version':1}
         ]
       });
       // expect(this.scope.user.username).toEqual('peterbe');
@@ -70,6 +85,10 @@ describe("controller: UserPermissionsCtrl", function() {
     it("should should be able add a permission", function() {
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
+      this.$httpBackend.expectGET('/api/users/peterbe/roles')
+      .respond(200, JSON.stringify(sample_roles));
+      this.$httpBackend.expectGET('/api/users/roles')
+      .respond(200, JSON.stringify(sample_all_roles));
       this.$httpBackend.flush();
       this.$httpBackend.expectGET('/api/csrf_token')
       .respond(200, 'token');
@@ -89,6 +108,10 @@ describe("controller: UserPermissionsCtrl", function() {
     it("should should be able update a permission", function() {
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
+      this.$httpBackend.expectGET('/api/users/peterbe/roles')
+      .respond(200, JSON.stringify(sample_roles));
+      this.$httpBackend.expectGET('/api/users/roles')
+      .respond(200, JSON.stringify(sample_all_roles));
       this.$httpBackend.flush();
       this.$httpBackend.expectGET('/api/csrf_token')
       .respond(200, 'token');
@@ -107,6 +130,31 @@ describe("controller: UserPermissionsCtrl", function() {
       expect(this.scope.saving).toEqual(false);
       expect(this.scope.errors).toEqual({permissions:{}});
     });
+
+    it("should should be able add a role", function() {
+      this.$httpBackend.expectGET('/api/users/peterbe/permissions')
+      .respond(200, JSON.stringify(sample_permissions));
+      this.$httpBackend.expectGET('/api/users/peterbe/roles')
+      .respond(200, JSON.stringify(sample_roles));
+      this.$httpBackend.expectGET('/api/users/roles')
+      .respond(200, JSON.stringify(sample_all_roles));
+      this.$httpBackend.flush();
+      this.$httpBackend.expectGET('/api/csrf_token')
+      .respond(200, 'token');
+      this.$httpBackend.expectPUT('/api/users/peterbe/roles/new_role')
+      .respond(201, JSON.stringify({new_data_version: 2}));
+
+      new_role = {'role': 'new_role', 'data_version': 2};
+      this.scope.role = new_role;
+      this.scope.grantRole();
+      expect(this.scope.saving).toEqual(true);
+      expect(this.scope.user.roles).toEqual(sample_roles.roles);
+      this.$httpBackend.flush();
+      expect(this.scope.saving).toEqual(false);
+      sample_roles.roles.push(new_role);
+      expect(this.scope.user.roles).toEqual(sample_roles.roles);
+    });
+
 
   });
 

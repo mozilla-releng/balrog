@@ -341,6 +341,13 @@ class TestReleasesAPI_JSON(ViewTest):
         data = json.dumps(dict(uehont="uhetn", schema_version=1))
         ret = self._post("/releases/c", data=dict(data=data, product="c", data_version=1))
         self.assertStatusCode(ret, 400)
+        self.assertIn("Additional properties are not allowed", ret.data)
+
+    def testReleasePostWithSignoffRequired(self):
+        data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='a', hashFunction="sha512"))
+        ret = self._post("/releases/a", data=dict(data=data, product="a", data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 400)
+        self.assertIn("This change requires signoff", ret.data)
 
     def testReleasePostCreatesNewReleasev1(self):
         data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
@@ -385,7 +392,7 @@ class TestReleasesAPI_JSON(ViewTest):
 
     def testReleasePostInvalidKey(self):
         data = json.dumps(dict(foo=1))
-        ret = self._post('/releases/a', data=dict(data=data))
+        ret = self._post('/releases/ab', data=dict(data=data))
         self.assertStatusCode(ret, 400)
 
     def testReleasePostRejectedURL(self):
@@ -439,13 +446,13 @@ class TestReleasesAPI_JSON(ViewTest):
                 "hashValue": "abc",
             }
         })
-        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        ret = select([dbo.releases.data]).where(dbo.releases.name == 'a').execute().fetchone()[0]
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'ab').execute().fetchone()[0]
         self.assertEqual(ret, createBlob("""
 {
-    "name": "a",
+    "name": "ab",
     "schema_version": 1,
     "hashFunction": "sha512",
     "platforms": {
@@ -472,13 +479,13 @@ class TestReleasesAPI_JSON(ViewTest):
                 "hashValue": "abc",
             }
         })
-        ret = self._put('/releases/a/builds/p/l', username="ashanti", data=dict(data=data, product='a', data_version=1, schema_version=1))
+        ret = self._put('/releases/ab/builds/p/l', username="ashanti", data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        ret = select([dbo.releases.data]).where(dbo.releases.name == 'a').execute().fetchone()[0]
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'ab').execute().fetchone()[0]
         self.assertEqual(ret, createBlob("""
 {
-    "name": "a",
+    "name": "ab",
     "schema_version": 1,
     "hashFunction": "sha512",
     "platforms": {
@@ -499,17 +506,17 @@ class TestReleasesAPI_JSON(ViewTest):
 
     def testLocalePutWithBadHashFunction(self):
         data = json.dumps(dict(complete=dict(filesize='435')))
-        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 400)
 
     def testLocalePutWithoutPermission(self):
         data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
-        ret = self._put('/releases/a/builds/p/l', username='liu', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        ret = self._put('/releases/ab/builds/p/l', username='liu', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 403)
 
     def testLocalePutWithoutPermissionForProduct(self):
         data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
-        ret = self._put('/releases/a/builds/p/l', username='bob', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        ret = self._put('/releases/ab/builds/p/l', username='bob', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 403)
 
     def testLocalePutForNewRelease(self):
@@ -684,31 +691,10 @@ class TestReleasesAPI_JSON(ViewTest):
                 "hashValue": "abc",
             }
         })
-        data = dict(data=data, product='a', copyTo=json.dumps(['ab']), data_version=1, schema_version=1)
-        ret = self._put('/releases/a/builds/p/l', data=data)
+        data = dict(data=data, product='a', copyTo=json.dumps(['b']), data_version=1, schema_version=1)
+        ret = self._put('/releases/ab/builds/p/l', data=data)
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.data, json.dumps(dict(new_data_version=2)), "Data: %s" % ret.data)
-        ret = select([dbo.releases.data]).where(dbo.releases.name == 'a').execute().fetchone()[0]
-        self.assertEqual(ret, createBlob("""
-{
-    "name": "a",
-    "schema_version": 1,
-    "hashFunction": "sha512",
-    "platforms": {
-        "p": {
-            "locales": {
-                "l": {
-                    "partial": {
-                        "filesize": 123,
-                        "from": "b",
-                        "hashValue": "abc"
-                    }
-                }
-            }
-        }
-    }
-}
-"""))
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'ab').execute().fetchone()[0]
         self.assertEqual(ret, createBlob("""
 {
@@ -730,14 +716,35 @@ class TestReleasesAPI_JSON(ViewTest):
     }
 }
 """))
+        ret = select([dbo.releases.data]).where(dbo.releases.name == 'b').execute().fetchone()[0]
+        self.assertEqual(ret, createBlob("""
+{
+    "name": "b",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "partial": {
+                        "filesize": 123,
+                        "from": "b",
+                        "hashValue": "abc"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
 
     def testLocalePutBadJSON(self):
-        ret = self._put('/releases/a/builds/p/l', data=dict(data='a', product='a'))
+        ret = self._put('/releases/ab/builds/p/l', data=dict(data='a', product='a'))
         self.assertStatusCode(ret, 400)
 
     def testLocaleRejectedURL(self):
         data = json.dumps(dict(complete=dict(fileUrl='http://evil.com')))
-        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', data_version=1))
+        ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1))
         self.assertStatusCode(ret, 400)
 
     def testLocaleGet(self):
@@ -759,7 +766,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 401)
 
     def testLocalePutReadOnlyRelease(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "ab").execute()
         data = json.dumps({
             "complete": {
                 "filesize": 435,
@@ -767,7 +774,7 @@ class TestReleasesAPI_JSON(ViewTest):
                 "hashValue": "abc",
             }
         })
-        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 403)
 
     def testLocalePutWithProductAdmin(self):
@@ -778,7 +785,7 @@ class TestReleasesAPI_JSON(ViewTest):
                 "hashValue": "abc",
             }
         })
-        ret = self._put('/releases/a/builds/p/l', username='billy',
+        ret = self._put('/releases/ab/builds/p/l', username='billy',
                         data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
 
@@ -796,7 +803,7 @@ class TestReleasesAPI_JSON(ViewTest):
 
     def testLocalePutCantChangeProduct(self):
         data = json.dumps(dict(complete=dict(filesize=435)))
-        ret = self._put('/releases/a/builds/p/l', data=dict(data=data, product='b', schema_version=1))
+        ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='b', schema_version=1))
         self.assertStatusCode(ret, 400)
 
     def testLocaleGet404(self):
@@ -1537,40 +1544,41 @@ class TestReadOnlyView(ViewTest):
         self.assertEqual(json.loads(ret.data)['read_only'], is_read_only)
 
     def testReadOnlySetTrueAdmin(self):
-        data = dict(name='b', read_only=True, product='Firefox', data_version=1)
-        self._put('/releases/b/read_only', username='bill', data=data)
+        data = dict(name='b', read_only=True, product='b', data_version=1)
+        ret = self._put('/releases/b/read_only', username='bill', data=data)
+        self.assertStatusCode(ret, 201)
         read_only = dbo.releases.isReadOnly(name='b')
         self.assertEqual(read_only, True)
 
     def testReadOnlySetTrueNonAdmin(self):
-        data = dict(name='b', read_only=True, product='Firefox', data_version=1)
-        self._put('/releases/b/read_only', username='bob', data=data)
-        read_only = dbo.releases.isReadOnly(name='b')
-        self.assertEqual(read_only, True)
+        data = dict(name='b', read_only=True, product='b', data_version=1)
+        ret = self._put('/releases/b/read_only', username='bob', data=data)
+        self.assertStatusCode(ret, 201)
         read_only = dbo.releases.isReadOnly(name='b')
         self.assertEqual(read_only, True)
 
     def testReadOnlySetFalseAdmin(self):
         dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
-        data = dict(name='b', read_only='', product='Firefox', data_version=2)
-        self._put('/releases/b/read_only', username='bill', data=data)
+        data = dict(name='b', read_only='', product='b', data_version=2)
+        ret = self._put('/releases/b/read_only', username='bill', data=data)
+        self.assertStatusCode(ret, 201)
         read_only = dbo.releases.isReadOnly(name='b')
         self.assertEqual(read_only, False)
 
     def testReadOnlyUnsetWithoutPermissionForProduct(self):
         dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
-        data = dict(name='b', read_only='', product='Firefox', data_version=2)
+        data = dict(name='b', read_only='', product='b', data_version=2)
         ret = self._put('/releases/b/read_only', username='me', data=data)
         self.assertStatusCode(ret, 403)
 
     def testReadOnlyAdminSetAndUnsetFlag(self):
         # Setting flag
-        data = dict(name='b', read_only=True, product='Firefox', data_version=1)
+        data = dict(name='b', read_only=True, product='b', data_version=1)
         ret = self._put('/releases/b/read_only', username='bill', data=data)
         self.assertStatusCode(ret, 201)
 
         # Resetting flag
-        data = dict(name='b', read_only='', product='Firefox', data_version=2)
+        data = dict(name='b', read_only='', product='b', data_version=2)
         ret = self._put('/releases/b/read_only', username='bill', data=data)
         self.assertStatusCode(ret, 201)
 
@@ -1580,7 +1588,7 @@ class TestReadOnlyView(ViewTest):
 
     def testReadOnlyNonAdminCanSetFlagButNotUnset(self):
         # Setting read only flag
-        data_set = dict(name='b', read_only=True, product='Firefox', data_version=1)
+        data_set = dict(name='b', read_only=True, product='b', data_version=1)
         ret = self._put('/releases/b/read_only', username='bob', data=data_set)
         self.assertStatusCode(ret, 201)
 
@@ -1589,7 +1597,7 @@ class TestReadOnlyView(ViewTest):
         self.assertEqual(read_only, True)
 
         # Resetting flag, which should fail with 403
-        data_unset = dict(name='b', read_only='', product='Firefox', data_version=2)
+        data_unset = dict(name='b', read_only='', product='b', data_version=2)
         ret = self._put('/releases/b/read_only', username='bob', data=data_unset)
         self.assertStatusCode(ret, 403)
 
