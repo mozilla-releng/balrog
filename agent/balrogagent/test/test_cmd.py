@@ -117,3 +117,15 @@ class TestRunAgent(asynctest.TestCase):
         self.assertEquals(telemetry_is_ready.call_count, 1)
         self.assertEquals(time_is_ready.call_count, 0)
         self.assertEquals(request.call_count, 4)
+
+    @asynctest.patch("time.time")
+    async def testMultipleEndpointsAtOnce(self, time, time_is_ready, telemetry_is_ready, request):
+        time.return_value = 999999999
+        time_is_ready.return_value = True
+        sc = {'releases': [{"sc_id": 4, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}],
+              'rules': [{"sc_id": 5, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}],
+              'permissions': [{"sc_id": 6, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}]}
+        await self._runAgent(sc, request)
+        self.assertEquals(telemetry_is_ready.call_count, 0)
+        self.assertEquals(time_is_ready.call_count, 3)
+        self.assertEquals(request.call_count, 6)
