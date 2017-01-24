@@ -12,7 +12,7 @@ class TestUsersAPI_JSON(ViewTest):
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         data['users'] = set(data['users'])
-        self.assertEqual(data, dict(users=set(['bill', 'billy', 'bob', 'ashanti', 'mary'])))
+        self.assertEqual(data, dict(users=set(['bill', 'billy', 'bob', 'ashanti', 'mary', 'julie'])))
 
 
 class TestPermissionsAPI_JSON(ViewTest):
@@ -178,6 +178,7 @@ class TestPermissionsScheduledChanges(ViewTest):
             base_permission="rule", base_username="janet", base_options={"products": ["foo"]},
         )
         dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
+
         dbo.permissions.scheduled_changes.signoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=30, sc_id=1, username="bill")
         dbo.permissions.scheduled_changes.signoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=31, sc_id=1,
                                                                               username="bill", role="releng")
@@ -202,6 +203,7 @@ class TestPermissionsScheduledChanges(ViewTest):
             change_id=4, changed_by="bill", timestamp=41, sc_id=2, when=20000000, data_version=1
         )
         dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="bill", role="releng")
+        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="mary", role="relman")
 
         dbo.permissions.scheduled_changes.t.insert().execute(
             sc_id=3, scheduled_by="bill", change_type="insert", data_version=2, base_permission="permission", base_username="bob", complete=True
@@ -223,7 +225,6 @@ class TestPermissionsScheduledChanges(ViewTest):
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
             change_id=7, changed_by="bill", timestamp=100, sc_id=3, when=30000000, data_version=2
         )
-
         dbo.permissions.scheduled_changes.t.insert().execute(
             sc_id=4, scheduled_by="bill", change_type="delete", data_version=1, base_permission="scheduled_change", base_username="mary",
             complete=False, base_data_version=1,
@@ -239,6 +240,7 @@ class TestPermissionsScheduledChanges(ViewTest):
             change_id=9, changed_by="bill", timestamp=201, sc_id=4, when=76000000, data_version=1
         )
         dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="releng")
+        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="mary", role="relman")
 
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/permissions")
@@ -252,11 +254,13 @@ class TestPermissionsScheduledChanges(ViewTest):
                 },
                 {
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
-                    "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1, "signoffs": {"bill": "releng"},
+                    "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
+                    "signoffs": {"bill": "releng", "mary": "relman"},
                 },
                 {
                     "sc_id": 4, "when": 76000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
-                    "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1, "signoffs": {"bill": "releng"},
+                    "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1,
+                    "signoffs": {"bill": "releng", "mary": "relman"},
                 },
             ],
         }
@@ -274,7 +278,8 @@ class TestPermissionsScheduledChanges(ViewTest):
                 },
                 {
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
-                    "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1, "signoffs": {"bill": "releng"},
+                    "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
+                    "signoffs": {"bill": "releng", "mary": "relman"},
                 },
                 {
                     "sc_id": 3, "when": 30000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
@@ -282,7 +287,8 @@ class TestPermissionsScheduledChanges(ViewTest):
                 },
                 {
                     "sc_id": 4, "when": 76000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
-                    "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1, "signoffs": {"bill": "releng"},
+                    "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1,
+                    "signoffs": {"bill": "releng", "mary": "relman"},
                 },
             ],
         }
@@ -488,9 +494,11 @@ class TestPermissionsScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="relman"), username="bob")
         self.assertEquals(ret.status_code, 200, ret.data)
         r = dbo.permissions.scheduled_changes.signoffs.t.select().where(dbo.permissions.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
-        self.assertEquals(len(r), 2)
-        self.assertEquals(dict(r[0]), {"sc_id": 2, "username": "bill", "role": "releng"})
-        self.assertEquals(dict(r[1]), {"sc_id": 2, "username": "bob", "role": "relman"})
+        r = [dict(rs) for rs in r]
+        self.assertEquals(len(r), 3)
+        self.assertIn({"sc_id": 2, "username": "bill", "role": "releng"}, r)
+        self.assertIn({"sc_id": 2, "username": "mary", "role": "relman"}, r)
+        self.assertIn({"sc_id": 2, "username": "bob", "role": "relman"}, r)
         r = dbo.permissions.scheduled_changes.signoffs.history.t.select()\
             .where(dbo.permissions.scheduled_changes.signoffs.history.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 2)
@@ -507,14 +515,73 @@ class TestPermissionsScheduledChanges(ViewTest):
         r = dbo.permissions.scheduled_changes.signoffs.t.select().where(dbo.permissions.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 0)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddNewFullAdminPermission(self):
+        """Tests the entire process of adding a new full fledged admin, which requires
+        creating a Scheduled Change, signoffs happening, and enacting the change."""
+        # Scheduled Change creation
+        data = {
+            "when": 400000000, "permission": "admin", "username": "jill", "options": None, "change_type": "insert",
+        }
+        ret = self._post("/scheduled_changes/permissions", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 5).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 5, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1,
+            "base_permission": "admin", "base_username": "jill", "base_options": None, "base_data_version": None,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
+        # Signoffs, which require signoff from role in permissionsRequiredSignoffs
+        # regardless of product (because a full fledged admin can mange all products).
+        ret = self._post("/scheduled_changes/permissions/5/signoffs", data=dict(role="relman"), username="bob")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        ret = self._post("/scheduled_changes/permissions/5/signoffs", data=dict(role="releng"), username="bill")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        # Enacting!
+        ret = self._post("/scheduled_changes/permissions/5/enact")
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 5).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 5, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_permission": "admin",
+            "base_username": "jill", "base_options": None, "base_data_version": None,
+        }
+        self.assertEquals(db_data, expected)
+
+        base_row = dict(dbo.permissions.t.select().where(dbo.permissions.username == "jill")
+                                                  .where(dbo.permissions.permission == "admin")
+                                                  .execute().fetchall()[0])
+        base_expected = {
+            "permission": "admin", "username": "jill", "options": None, "data_version": 1
+        }
+        self.assertEquals(dict(base_row), base_expected)
+
 
 class TestUserRolesAPI_JSON(ViewTest):
 
     def testGetRoles(self):
         ret = self._get("/users/bill/roles")
         self.assertStatusCode(ret, 200)
-        got = set(json.loads(ret.data)["roles"])
-        self.assertEquals(got, set(["releng", "qa"]))
+        got = json.loads(ret.data)["roles"]
+        self.assertEquals(got, [{"role": "qa", "data_version": 1},
+                          {"role": "releng", "data_version": 1}])
+
+    def testGetAllRoles(self):
+        ret = self._get("/users/roles")
+        self.assertStatusCode(ret, 200)
+        got = json.loads(ret.data)["roles"]
+        self.assertEqual(got, ['releng', 'qa', 'relman'])
 
     def testGetRolesMissingUserReturnsEmptyList(self):
         ret = self.client.get("/users/dean/roles")

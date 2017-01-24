@@ -14,7 +14,8 @@ from auslib.global_state import cache, dbo
 from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
     ReadOnlyError, PermissionDeniedError, ChangeScheduledError, \
-    MismatchedDataVersionError, SignoffsTable, SignoffRequiredError
+    MismatchedDataVersionError, SignoffsTable, SignoffRequiredError, \
+    verify_signoffs
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
 
@@ -50,6 +51,93 @@ class NamedFileDatabaseMixin(object):
         fd, t = mkstemp()
         self.tmpfiles.append((fd, t))
         return t
+
+
+class TestVerifySignoffs(unittest.TestCase):
+
+    def testNoRequiredSignoffs(self):
+        verify_signoffs({}, {})
+
+    def testNoRequiredSignoffsWithSignoffs(self):
+        verify_signoffs({}, [{"role": "releng"}, {"role": "relman"}])
+
+    def testNoSignoffsGiven(self):
+        required = [
+            {"role": "releng", "signoffs_required": 1},
+        ]
+        signoffs = []
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+
+    def testMissingSignoffFromOneRole(self):
+        required = [
+            {"role": "releng", "signoffs_required": 1},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+        ]
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+
+    def testNotEnoughSignoffsFromOneRole(self):
+        required = [
+            {"role": "releng", "signoffs_required": 2},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+            {"role": "relman", "username": "jane"},
+        ]
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+
+    def testExactlyEnoughSignoffsGiven(self):
+        required = [
+            {"role": "releng", "signoffs_required": 2},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+            {"role": "releng", "username": "jane"},
+            {"role": "relman", "username": "nick"},
+        ]
+        verify_signoffs(required, signoffs)
+
+    def testMoreThanEnoughSignoffsGiven(self):
+        required = [
+            {"role": "releng", "signoffs_required": 2},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+            {"role": "releng", "username": "jane"},
+            {"role": "relman", "username": "nick"},
+            {"role": "relman", "username": "matt"},
+        ]
+        verify_signoffs(required, signoffs)
+
+    def testMultiplePotentialSignoffsForOneGroupWithoutEnoughSignoffs(self):
+        required = [
+            {"role": "releng", "signoffs_required": 2},
+            {"role": "releng", "signoffs_required": 1},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+            {"role": "relman", "username": "nick"},
+        ]
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+
+    def testMultiplePotentialSignoffsForOneGroupWithEnoughSignoffs(self):
+        required = [
+            {"role": "releng", "signoffs_required": 2},
+            {"role": "releng", "signoffs_required": 1},
+            {"role": "relman", "signoffs_required": 1},
+        ]
+        signoffs = [
+            {"role": "releng", "username": "joe"},
+            {"role": "releng", "username": "jane"},
+            {"role": "relman", "username": "nick"},
+        ]
+        verify_signoffs(required, signoffs)
 
 
 class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
@@ -130,9 +218,6 @@ class TestTableMixin(object):
                                    Column('foo', Integer))
                 AUSTable.__init__(self, db, 'sqlite')
 
-            def getPotentialRequiredSignoffs(self, *args, **kwargs):
-                return None
-
         class TestAutoincrementTable(AUSTable):
 
             def __init__(self, db, metadata):
@@ -140,9 +225,6 @@ class TestTableMixin(object):
                                    Column('id', Integer, primary_key=True, autoincrement=True),
                                    Column('foo', Integer))
                 AUSTable.__init__(self, db, 'sqlite')
-
-            def getPotentialRequiredSignoffs(self, *args, **kwargs):
-                return None
 
         self.test = TestTable("fake", self.metadata)
         self.testAutoincrement = TestAutoincrementTable("fake", self.metadata)
@@ -165,9 +247,6 @@ class TestMultiplePrimaryTableMixin(object):
                                    Column('id2', Integer, primary_key=True),
                                    Column('foo', Integer))
                 AUSTable.__init__(self, db, 'sqlite')
-
-            def getPotentialRequiredSignoffs(self, *args, **kwargs):
-                return None
 
         self.test = TestTable("fake", self.metadata)
         self.metadata.create_all()
@@ -628,7 +707,7 @@ class ScheduledChangesTableMixin(object):
                 if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
                     raise PermissionDeniedError("fail")
                 if not dryrun:
-                    super(TestTable, self).insert(changed_by, transaction, dryrun, signoffs, **columns)
+                    super(TestTable, self).insert(changed_by, transaction, dryrun, **columns)
 
             def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
                 # Although our test table doesn't need it, real tables do some extra permission
@@ -638,14 +717,14 @@ class ScheduledChangesTableMixin(object):
                     if not self.db.hasPermission(changed_by, "test", "modify", transaction=transaction):
                         raise PermissionDeniedError("fail")
                 if not dryrun:
-                    super(TestTable, self).update(where, what, changed_by, old_data_version, transaction, dryrun, signoffs)
+                    super(TestTable, self).update(where, what, changed_by, old_data_version, transaction, dryrun)
 
             def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
                 if not self.db.hasPermission(changed_by, "test", "delete", transaction=transaction):
                     raise PermissionDeniedError("fail")
 
                 if not dryrun:
-                    super(TestTable, self).delete(where, changed_by, old_data_version, transaction, dryrun, signoffs)
+                    super(TestTable, self).delete(where, changed_by, old_data_version, transaction, dryrun)
 
         self.table = TestTable(self.db, self.metadata)
         self.sc_table = self.table.scheduled_changes
@@ -1534,6 +1613,11 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
         self.assertEquals(got, [("carrot", "celery", "releng", 1, 1)])
 
+    def testInsertNewRequiredSignoffWithSpecificPermission(self):
+        self.rs.insert(changed_by="bob", product="carrot", channel="celery", role="releng", signoffs_required=1)
+        got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
+        self.assertEquals(got, [("carrot", "celery", "releng", 1, 1)])
+
     def testInsertNewRequiredSignoffWithoutPermission(self):
         self.assertRaises(PermissionDeniedError, self.rs.insert, changed_by="chuck", product="carrot", channel="celery", role="releng",
                           signoffs_required=1)
@@ -1629,6 +1713,11 @@ class TestPermissionsRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixi
         got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
         self.assertEquals(got, [("carrot", "releng", 1, 1)])
 
+    def testInsertNewRequiredSignoffWithSpecificPermission(self):
+        self.rs.insert(changed_by="bob", product="carrot", role="releng", signoffs_required=1)
+        got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
+        self.assertEquals(got, [("carrot", "releng", 1, 1)])
+
     def testInsertNewRequiredSignoffWithoutPermission(self):
         self.assertRaises(PermissionDeniedError, self.rs.insert, changed_by="chuck", product="carrot", role="releng", signoffs_required=1)
 
@@ -1700,13 +1789,13 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.paths.t.insert().execute(rule_id=2, priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='z',
                                       product="a", channel="a", data_version=1)
         self.paths.t.insert().execute(rule_id=3, priority=100, version='3.5', buildTarget='a', backgroundRate=100, mapping='a', update_type='z',
-                                      product="a", channel="a", data_version=1)
+                                      product="a", data_version=1)
         self.paths.t.insert().execute(rule_id=4, alias="gandalf", priority=80, buildTarget='d', backgroundRate=100, mapping='a', update_type='z',
-                                      product="a", channel="a", data_version=1)
+                                      channel="a", data_version=1)
         self.paths.t.insert().execute(rule_id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='z',
-                                      product="a", channel="a", data_version=1)
-        self.paths.t.insert().execute(rule_id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
-                                      product="a", channel="a", data_version=1)
+                                      data_version=1)
+        self.paths.t.insert().execute(rule_id=6, alias="radagast", priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1',
+                                      update_type='z', product="a", channel="a", data_version=1)
         self.paths.t.insert().execute(
             rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z',
             product="a", channel="a", data_version=1)
@@ -1734,10 +1823,10 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
         expected = [
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
-                 product="a", channel="a", data_version=1),
+                 channel="a", data_version=1),
             dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z',
-                 product="a", channel="a", data_version=1),
-            dict(rule_id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
+                 data_version=1),
+            dict(rule_id=6, alias="radagast", priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
                  product="a", channel="a", data_version=1),
             dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z',
                  product="a", channel="a", data_version=1),
@@ -1750,7 +1839,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z',
                  product="a", channel="a", data_version=1),
             dict(rule_id=3, priority=100, backgroundRate=100, version='3.5', buildTarget='a', mapping='a', update_type='z',
-                 product="a", channel="a", data_version=1),
+                 product="a", data_version=1),
             dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z',
                  product="a", channel="a", data_version=1),
         ]
@@ -1760,10 +1849,10 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(self.paths.getOrderedRules(where=[self.paths.buildTarget == "d"]))
         expected = [
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
-                 product="a", channel="a", data_version=1),
+                 channel="a", data_version=1),
             dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z',
-                 product="a", channel="a", data_version=1),
-            dict(rule_id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
+                 data_version=1),
+            dict(rule_id=6, alias="radagast", priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
                  product="a", channel="a", data_version=1),
             dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z',
                  product="a", channel="a", data_version=1),
@@ -1785,7 +1874,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         expected = [dict(rule_id=3, priority=100, backgroundRate=100, version='3.5', buildTarget='a', mapping='a', update_type='z',
-                         product="a", channel="a", data_version=1)]
+                         product="a", data_version=1)]
         self.assertEquals(rules, expected)
 
     def testGetRulesMatchingQueryWithNullColumn(self):
@@ -1802,7 +1891,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z',
                  product="a", channel="a", data_version=1),
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
-                 product="a", channel="a", data_version=1),
+                 channel="a", data_version=1),
         ]
         self.assertEquals(rules, expected)
 
@@ -1820,9 +1909,9 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z',
                  product="a", channel="a", data_version=1),
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
-                 product="a", channel="a", data_version=1),
+                 channel="a", data_version=1),
             dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z',
-                 product="a", channel="a", data_version=1),
+                 data_version=1),
         ]
         self.assertEquals(rules, expected)
 
@@ -1840,9 +1929,9 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z',
                  product="a", channel="a", data_version=1),
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
-                 product="a", channel="a", data_version=1),
+                 channel="a", data_version=1),
             dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z',
-                 product="a", channel="a", data_version=1),
+                 data_version=1),
         ]
         self.assertEquals(rules, expected)
 
@@ -1858,8 +1947,8 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         expected = [
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
-                 product="a", channel="a", data_version=1),
-            dict(rule_id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
+                 channel="a", data_version=1),
+            dict(rule_id=6, alias="radagast", priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
                  product="a", channel="a", data_version=1),
         ]
         self.assertEquals(rules, expected)
@@ -1876,8 +1965,8 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         expected = [
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
-                 product="a", channel="a", data_version=1),
-            dict(rule_id=6, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
+                 channel="a", data_version=1),
+            dict(rule_id=6, alias="radagast", priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
                  product="a", channel="a", data_version=1),
         ]
         self.assertEquals(rules, expected)
@@ -1894,7 +1983,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         expected = [
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
-                 product="a", channel="a", data_version=1),
+                 channel="a", data_version=1),
             dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z',
                  product="a", channel="a", data_version=1),
         ]
@@ -1982,7 +2071,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def testGetRuleByAlias(self):
         rule = self._stripNullColumns([self.paths.getRule(4)])
         expected = [dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
-                         product="a", channel="a", data_version=1)]
+                         channel="a", data_version=1)]
         self.assertEquals(rule, expected)
 
     def testAddRule(self):
@@ -2042,18 +2131,18 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEquals(rule, expected)
 
     def testUpdateRuleByAlias(self):
-        rules = self.paths.t.select().where(self.paths.rule_id == 4).execute().fetchall()
+        rules = self.paths.t.select().where(self.paths.rule_id == 6).execute().fetchall()
         what = dict(rules[0].items())
 
         what['mapping'] = 'd'
-        self.paths.update(where={"rule_id": "gandalf"}, what=what, changed_by="bill", old_data_version=1)
+        self.paths.update(where={"rule_id": "radagast"}, what=what, changed_by="bill", old_data_version=1)
 
-        rules = self.paths.t.select().where(self.paths.rule_id == 4).execute().fetchall()
+        rules = self.paths.t.select().where(self.paths.rule_id == 6).execute().fetchall()
         copy_rule = dict(rules[0].items())
         rule = self._stripNullColumns([copy_rule])
 
-        expected = [dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='d', update_type='z',
-                         product="a", channel="a", data_version=2)]
+        expected = [dict(rule_id=6, alias="radagast", priority=100, backgroundRate=100, buildTarget='d', mapping='d', update_type='z',
+                         osVersion="foo 1", product="a", channel="a", data_version=2)]
         self.assertEquals(rule, expected)
 
     def testUpdateRuleThatRequiresSignoff(self):
@@ -3594,7 +3683,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetUserRoles(self):
         got = self.permissions.getUserRoles("bob")
-        self.assertEquals(set(got), set(["releng", "dev"]))
+        self.assertEquals(sorted(got), sorted([{'data_version': 1, 'role': u'releng'}, {'data_version': 1, 'role': u'dev'}]))
 
     def testGetUserRolesNonExistantUser(self):
         got = self.permissions.getUserRoles("kirk")
