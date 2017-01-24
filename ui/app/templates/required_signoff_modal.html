@@ -24,19 +24,19 @@
       <thead>
         <tr>
           <th>Role
-            <button class="btn btn-primary btn-xs" ng-click="addRole()">Add another Role</button>
+            <button class="btn btn-primary btn-xs" ng-click="new_roles = new_roles + 1">Add another Role</button>
           </th>
           <th>Signoffs Required</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="new_roles">
  <!--       <tr ng-repeat="(role, signoffs_required) in required_signoffs[product][channel]">
           <td>{{ role }}<button class="btn btn-danger btn-xs" ng-click="delete required_signoffs[product][channel][role]"></td>
           <td><input type="text" class="form-control" ng-model="required_signoffs[product][channel][role]"></td>
         </tr>-->
         <tr ng-repeat="n in [].constructor(new_roles) track by $index">
-          <td><input type="text" class="form-control"></td>
-          <td><input type="text" class="form-control"></td>
+          <td><input name="role" type="text" class="form-control"></td>
+          <td><input name="signoffs_required" type="text" class="form-control"></td>
         </tr>
       </tbody>
     </table>
