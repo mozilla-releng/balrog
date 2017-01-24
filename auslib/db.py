@@ -141,6 +141,8 @@ def verify_signoffs(potential_required_signoffs, signoffs):
 
     signoffs_given = defaultdict(int)
     required_signoffs = {}
+    if not potential_required_signoffs:
+        return
     if not signoffs:
         raise SignoffRequiredError("No Signoffs given")
     for signoff in signoffs:
@@ -292,14 +294,6 @@ class AUSTable(object):
     def getEngine(self):
         return self.t.metadata.bind
 
-    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        """This function must be implemented by any subclass that enables
-        Scheduled Changes. It is responsible for looking at the old and new
-        rows given, and returning all Required Signoffs that apply to them.
-        Deduplication of multiple Required Signoffs for the same Role is not
-        necessary."""
-        raise NotImplementedError()
-
     def _returnRowOrRaise(self, where, columns=None, transaction=None):
         """Return the row matching the where clause supplied. If no rows match or multiple rows match,
            a WrongNumberOfRowsError will be raised."""
@@ -353,7 +347,8 @@ class AUSTable(object):
         if transaction:
             return transaction.execute(query).fetchall()
         else:
-            return query.execute().fetchall()
+            with AUSTransaction(self.getEngine()) as trans:
+                return trans.execute(query).fetchall()
 
     def _insertStatement(self, **columns):
         """Create an INSERT statement for this table
@@ -365,7 +360,7 @@ class AUSTable(object):
         """
         return self.t.insert(values=columns)
 
-    def _prepareInsert(self, trans, changed_by, signoffs, **columns):
+    def _prepareInsert(self, trans, changed_by, **columns):
         """Prepare an INSERT statement for commit. If this table has versioning enabled,
            data_version will be set to 1. If this table has history enabled, two rows
            will be created in that table: one representing the current state (NULL),
@@ -381,17 +376,13 @@ class AUSTable(object):
         if self.onInsert:
             self.onInsert(self, "INSERT", changed_by, query, trans)
 
-        potential_required_signoffs = self.getPotentialRequiredSignoffs([columns], transaction=trans)
-        if potential_required_signoffs:
-            verify_signoffs(potential_required_signoffs, signoffs)
-
         ret = trans.execute(query)
         if self.history:
             for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
                 trans.execute(q)
         return ret
 
-    def insert(self, changed_by=None, transaction=None, dryrun=False, signoffs=None, **columns):
+    def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
         """Perform an INSERT statement on this table. See AUSTable._insertStatement for
            a description of columns.
 
@@ -404,8 +395,6 @@ class AUSTable(object):
                                be added to a locally-scoped transaction and committed.
            @param dryrun: If true, this insert statement will not actually be run.
            @type dryrun: bool
-           @param signoffs: The signoffs, if any, that have been given for this change.
-           @type signoffs: A list of dicts, each containing a "role" that has signed off on this change.
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
@@ -417,10 +406,10 @@ class AUSTable(object):
             return
 
         if transaction:
-            return self._prepareInsert(transaction, changed_by, signoffs, **columns)
+            return self._prepareInsert(transaction, changed_by, **columns)
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return self._prepareInsert(trans, changed_by, signoffs, **columns)
+                return self._prepareInsert(trans, changed_by, **columns)
 
     def _deleteStatement(self, where):
         """Create a DELETE statement for this table.
@@ -436,7 +425,7 @@ class AUSTable(object):
                 query = query.where(cond)
         return query
 
-    def _prepareDelete(self, trans, where, changed_by, old_data_version, signoffs):
+    def _prepareDelete(self, trans, where, changed_by, old_data_version):
         """Prepare a DELETE statament for commit. If this table has history enabled,
            a row will be created in that table representing the new state of the
            row being deleted (NULL). If versioning is enabled and old_data_version
@@ -445,7 +434,6 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
-        orig_row = self._returnRowOrRaise(where=where, transaction=trans)
         row = self._returnRowOrRaise(where=where, columns=self.primary_key, transaction=trans)
 
         if self.versioned:
@@ -456,10 +444,6 @@ class AUSTable(object):
 
         if self.onDelete:
             self.onDelete(self, "DELETE", changed_by, query, trans)
-
-        potential_required_signoffs = self.getPotentialRequiredSignoffs([orig_row], transaction=trans)
-        if potential_required_signoffs:
-            verify_signoffs(potential_required_signoffs, signoffs)
 
         ret = trans.execute(query)
         if ret.rowcount != 1:
@@ -476,7 +460,7 @@ class AUSTable(object):
 
         return ret
 
-    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         """Perform a DELETE statement on this table. See AUSTable._deleteStatement for
            a description of `where'. To simplify versioning, this method can only
            delete a single row per invocation. If the where clause given would delete
@@ -497,8 +481,6 @@ class AUSTable(object):
                                be added to a locally-scoped transaction and committed.
            @param dryrun: If true, this insert statement will not actually be run.
            @type dryrun: bool
-           @param signoffs: The signoffs, if any, that have been given for this change.
-           @type signoffs: A list of dicts, each containing a "role" that has signed off on this change.
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
@@ -517,10 +499,10 @@ class AUSTable(object):
             return
 
         if transaction:
-            return self._prepareDelete(transaction, where, changed_by, old_data_version, signoffs)
+            return self._prepareDelete(transaction, where, changed_by, old_data_version)
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return self._prepareDelete(trans, where, changed_by, old_data_version, signoffs)
+                return self._prepareDelete(trans, where, changed_by, old_data_version)
 
     def _updateStatement(self, where, what):
         """Create an UPDATE statement for this table
@@ -538,7 +520,7 @@ class AUSTable(object):
                 query = query.where(cond)
         return query
 
-    def _prepareUpdate(self, trans, where, what, changed_by, old_data_version, signoffs):
+    def _prepareUpdate(self, trans, where, what, changed_by, old_data_version):
         """Prepare an UPDATE statement for commit. If this table has versioning enabled,
            data_version will be increased by 1. If this table has history enabled, a
            row will be added to that table represent the new state of the data.
@@ -565,10 +547,6 @@ class AUSTable(object):
         if self.onUpdate:
             self.onUpdate(self, "UPDATE", changed_by, query, trans)
 
-        potential_required_signoffs = self.getPotentialRequiredSignoffs([orig_row, new_row], transaction=trans)
-        if potential_required_signoffs:
-            verify_signoffs(potential_required_signoffs, signoffs)
-
         ret = trans.execute(query)
         if self.history:
             trans.execute(self.history.forUpdate(new_row, changed_by))
@@ -578,7 +556,7 @@ class AUSTable(object):
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
 
-    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+    def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         """Perform an UPDATE statement on this stable. See AUSTable._updateStatement for
            a description of `where' and `what'. This method can only update a single row
            per invocation. If the where clause given would update zero or multiple rows, a
@@ -601,8 +579,6 @@ class AUSTable(object):
                                be added to a locally-scoped transaction and committed.
            @param dryrun: If true, this insert statement will not actually be run.
            @type dryrun: bool
-           @param signoffs: The signoffs, if any, that have been given for this change.
-           @type signoffs: A list of dicts, each containing a "role" that has signed off on this change.
 
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
@@ -621,10 +597,10 @@ class AUSTable(object):
             return
 
         if transaction:
-            return self._prepareUpdate(transaction, where, what, changed_by, old_data_version, signoffs)
+            return self._prepareUpdate(transaction, where, what, changed_by, old_data_version)
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return self._prepareUpdate(trans, where, what, changed_by, old_data_version, signoffs)
+                return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
 
     def getRecentChanges(self, limit=10, transaction=None):
         return self.history.select(transaction=transaction,
@@ -670,10 +646,6 @@ class History(AUSTable):
                 newcol.nullable = True
             self.table.append_column(newcol)
         AUSTable.__init__(self, db, dialect, history=False, versioned=False)
-
-    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        # History tables do not require signoffs
-        return None
 
     def forInsert(self, insertedKeys, columns, changed_by):
         """Inserts cause two rows in the History table to be created. The first
@@ -890,10 +862,6 @@ class ConditionsTable(AUSTable):
 
         super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
 
-    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        # Scheduled Changes tables do not require signoffs
-        return None
-
     def validate(self, conditions):
         conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
         if not conditions:
@@ -973,10 +941,6 @@ class ScheduledChangeTable(AUSTable):
             self.table.append_column(newcol)
 
         super(ScheduledChangeTable, self).__init__(db, dialect, history=history, versioned=True)
-
-    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        # Scheduled Changes tables do not require signoffs
-        return None
 
     def _prefixColumns(self, columns):
         """Helper function which takes key/value pairs of columns for this
@@ -1099,7 +1063,7 @@ class ScheduledChangeTable(AUSTable):
             ret.append(row)
         return ret
 
-    def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         base_columns, condition_columns = self._splitColumns(columns)
         if "change_type" not in base_columns:
             raise ValueError("Change type is required")
@@ -1109,7 +1073,7 @@ class ScheduledChangeTable(AUSTable):
         base_columns = self._prefixColumns(base_columns)
         base_columns["scheduled_by"] = changed_by
 
-        ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, signoffs=signoffs, **base_columns)
+        ret = super(ScheduledChangeTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **base_columns)
         if not dryrun:
             sc_id = ret.inserted_primary_key[0]
             self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
@@ -1117,7 +1081,7 @@ class ScheduledChangeTable(AUSTable):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s", sc_id)
             return sc_id
 
-    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         base_what, condition_what = self._splitColumns(what)
 
         affected_ids = []
@@ -1153,17 +1117,17 @@ class ScheduledChangeTable(AUSTable):
             self.validate(base_columns, condition_columns, changed_by, sc_id=sc_columns["sc_id"], transaction=transaction)
 
             self.conditions.update([self.conditions.sc_id == sc_columns["sc_id"]], condition_columns, changed_by, old_data_version, transaction,
-                                   dryrun=dryrun, signoffs=signoffs)
+                                   dryrun=dryrun)
 
         base_what = self._prefixColumns(base_what)
         base_what["scheduled_by"] = changed_by
-        super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun, signoffs=signoffs)
+        super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
 
         for sc_id in affected_ids:
             if not self._dataVersionsAreSynced(sc_id, transaction):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s" % sc_id)
 
-    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         conditions_where = []
         for row in self.select(where=where, transaction=transaction):
             conditions_where.append(self.conditions.sc_id == row["sc_id"])
@@ -1176,8 +1140,8 @@ class ScheduledChangeTable(AUSTable):
             # something broader should be required?
             self._checkBaseTablePermissions(base_table_where, base_row, changed_by, transaction)
 
-        ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction, dryrun=dryrun, signoffs=signoffs)
-        self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun=dryrun, signoffs=signoffs)
+        ret = super(ScheduledChangeTable, self).delete(where, changed_by, old_data_version, transaction, dryrun=dryrun)
+        self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun=dryrun)
         return ret
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
@@ -1290,11 +1254,13 @@ class RequiredSignoffsTable(AUSTable):
                 raise ValueError("{} are required.".format(self.decisionColumns))
 
         if transaction:
-            users_with_role, = transaction.execute(self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"]))\
-                                          .fetchone()
+            users_with_role, = transaction.execute(
+                self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])
+            ).fetchone()
         else:
-            users_with_role, = self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])\
-                                                                       .execute().fetchone()
+            users_with_role, = self.getEngine().execute(
+                self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])
+            ).fetchone()
         if users_with_role < columns["signoffs_required"]:
             msg = ", ".join(self.decisionColumns)
             raise ValueError("Cannot require {} signoffs for {} - only {} users hold the {} role".format(
@@ -1307,25 +1273,39 @@ class RequiredSignoffsTable(AUSTable):
         if not self.db.hasPermission(changed_by, "required_signoff", "create", transaction=transaction):
             raise PermissionDeniedError("{} is not allowed to create new Required Signoffs.".format(changed_by))
 
-        return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, signoffs=signoffs, **columns)
+        if not dryrun:
+            potential_required_signoffs = self.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            verify_signoffs(potential_required_signoffs, signoffs)
+
+        return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
         for rs in self.select(where=where, transaction=transaction):
-            rs.update(what)
-            self.validate(rs, transaction=transaction)
+            new_rs = rs.copy()
+            new_rs.update(what)
+            self.validate(new_rs, transaction=transaction)
 
-        if not self.db.hasPermission(changed_by, "required_signoff", "modify", transaction=transaction):
-            raise PermissionDeniedError("{} is not allowed to modify Required Signoffs.".format(changed_by))
+            if not self.db.hasPermission(changed_by, "required_signoff", "modify", transaction=transaction):
+                raise PermissionDeniedError("{} is not allowed to modify Required Signoffs.".format(changed_by))
+
+            if not dryrun:
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([rs, new_rs], transaction=transaction)
+                verify_signoffs(potential_required_signoffs, signoffs)
 
         return super(RequiredSignoffsTable, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
-                                                         transaction=transaction, dryrun=dryrun, signoffs=signoffs)
+                                                         transaction=transaction, dryrun=dryrun)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
         if not self.db.hasPermission(changed_by, "required_signoff", "delete", transaction=transaction):
             raise PermissionDeniedError("{} is not allowed to remove Required Signoffs.".format(changed_by))
 
+        if not dryrun:
+            for rs in self.select(where=where, transaction=transaction):
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([rs], transaction=transaction)
+                verify_signoffs(potential_required_signoffs, signoffs)
+
         return super(RequiredSignoffsTable, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version,
-                                                         transaction=transaction, dryrun=dryrun, signoffs=signoffs)
+                                                         transaction=transaction, dryrun=dryrun)
 
 
 class ProductRequiredSignoffsTable(RequiredSignoffsTable):
@@ -1363,11 +1343,7 @@ class SignoffsTable(AUSTable):
         # update race, so they do not need to be versioned.
         super(SignoffsTable, self).__init__(db, dialect, versioned=False)
 
-    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        # Signoffs tables do not require signoffs
-        return None
-
-    def insert(self, changed_by=None, transaction=None, dryrun=False, signoffs=None, **columns):
+    def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
         if "sc_id" not in columns or "role" not in columns:
             raise ValueError("sc_id and role must be provided when signing off")
         if "username" in columns and columns["username"] != changed_by:
@@ -1387,17 +1363,17 @@ class SignoffsTable(AUSTable):
             return
 
         columns["username"] = changed_by
-        super(SignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, signoffs=signoffs, **columns)
+        super(SignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
 
-    def update(self, where, what, changed_by=None, transaction=None, dryrun=False, signoffs=None):
+    def update(self, where, what, changed_by=None, transaction=None, dryrun=False):
         raise AttributeError("Signoffs cannot be modified (only granted and revoked)")
 
-    def delete(self, where, changed_by=None, transaction=None, dryrun=False, signoffs=None):
+    def delete(self, where, changed_by=None, transaction=None, dryrun=False):
         for row in self.select(where, transaction):
             if not self.db.hasRole(changed_by, row["role"], transaction=transaction) and not self.db.isAdmin(changed_by, transaction=transaction):
                 raise PermissionDeniedError("Cannot revoke a signoff made by someone in a group you do not belong to")
 
-        super(SignoffsTable, self).delete(where, changed_by=changed_by, transaction=transaction, dryrun=dryrun, signoffs=signoffs)
+        super(SignoffsTable, self).delete(where, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
 
 class Rules(AUSTable):
@@ -1528,7 +1504,12 @@ class Rules(AUSTable):
     def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
-        ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, signoffs=signoffs, **columns)
+
+        if not dryrun:
+            potential_required_signoffs = self.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            verify_signoffs(potential_required_signoffs, signoffs)
+
+        ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
             return ret.inserted_primary_key[0]
 
@@ -1538,7 +1519,10 @@ class Rules(AUSTable):
 
     def countRules(self, transaction=None):
         """Returns a number of the count of rules"""
-        count, = self.t.count().execute().fetchone()
+        if transaction:
+            count, = transaction.execute(self.t.count()).fetchone()
+        else:
+            count, = self.getEngine().execute(self.t.count()).fetchone()
         return count
 
     def getRulesMatchingQuery(self, updateQuery, fallbackChannel, transaction=None):
@@ -1666,8 +1650,14 @@ class Rules(AUSTable):
             if not self.db.hasPermission(changed_by, "rule", "modify", current_rule["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_rule["product"]))
 
+            new_rule = current_rule.copy()
+            new_rule.update(what)
+            if not dryrun:
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_rule, new_rule], transaction=transaction)
+                verify_signoffs(potential_required_signoffs, signoffs)
+
         return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version,
-                                         transaction=transaction, dryrun=dryrun, signoffs=signoffs)
+                                         transaction=transaction, dryrun=dryrun)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
         if "rule_id" in where and self._isAlias(where["rule_id"]):
@@ -1678,8 +1668,12 @@ class Rules(AUSTable):
         if not self.db.hasPermission(changed_by, "rule", "delete", product, transaction):
             raise PermissionDeniedError("%s is not allowed to delete rules for product %s" % (changed_by, product))
 
-        super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun,
-                                  signoffs=signoffs)
+        if not dryrun:
+            for current_rule in self.select(where=where, transaction=transaction):
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_rule], transaction=transaction)
+                verify_signoffs(potential_required_signoffs, signoffs)
+
+        super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
 
 class Releases(AUSTable):
@@ -1740,7 +1734,10 @@ class Releases(AUSTable):
 
     def countReleases(self, transaction=None):
         """Returns a number of the count of releases"""
-        count, = self.t.count().execute().fetchone()
+        if transaction:
+            count, = transaction.execute(self.t.count()).fetchone()
+        else:
+            count, = self.getEngine().execute(self.t.count()).fetchone()
         return count
 
     def getReleaseInfo(self, name=None, product=None, limit=None,
@@ -1765,7 +1762,7 @@ class Releases(AUSTable):
             if transaction:
                 ref_list = transaction.execute(select([dbo.releases.name, dbo.rules.rule_id]).select_from(j)).fetchall()
             else:
-                ref_list = select([dbo.releases.name, dbo.rules.rule_id]).select_from(j).execute().fetchall()
+                ref_list = self.getEngine().execute(select([dbo.releases.name, dbo.rules.rule_id]).select_from(j)).fetchall()
 
             for row in rows:
                 refs = [ref for ref in ref_list if ref[0] == row['name']]
@@ -1833,14 +1830,18 @@ class Releases(AUSTable):
 
         blob = columns["data"]
 
-        if not self.db.hasPermission(changed_by, "release", "create", columns["product"], transaction):
-            raise PermissionDeniedError("%s is not allowed to create releases for product %s" % (changed_by, columns["product"]))
-
         blob.validate(columns["product"], self.domainWhitelist)
         if columns["name"] != blob["name"]:
             raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
 
-        ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, signoffs=signoffs, **columns)
+        if not self.db.hasPermission(changed_by, "release", "create", columns["product"], transaction):
+            raise PermissionDeniedError("%s is not allowed to create releases for product %s" % (changed_by, columns["product"]))
+
+        if not dryrun:
+            potential_required_signoffs = self.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            verify_signoffs(potential_required_signoffs, signoffs)
+
+        ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
             cache.put("blob", columns["name"], {"data_version": 1, "blob": blob})
             cache.put("blob_version", columns["name"], 1)
@@ -1854,6 +1855,13 @@ class Releases(AUSTable):
             name = current_release["name"]
             if "product" in what or "data" in what:
                 self._proceedIfNotReadOnly(current_release["name"], transaction=transaction)
+
+            if blob:
+                blob.validate(what.get("product", current_release["product"]),
+                              self.domainWhitelist)
+                name = what.get("name", name)
+                if name != blob["name"]:
+                    raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
 
             if not self.db.hasPermission(changed_by, "release", "modify", current_release["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, current_release["product"]))
@@ -1883,19 +1891,18 @@ class Releases(AUSTable):
                     if not self.db.hasPermission(changed_by, "release_read_only", "set", product, transaction):
                         raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, what.get("product")))
 
-            if blob:
-                blob.validate(what.get("product", current_release["product"]),
-                              self.domainWhitelist)
-                name = what.get("name", name)
-                if name != blob["name"]:
-                    raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
+            new_release = current_release.copy()
+            new_release.update(what)
+            if not dryrun:
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_release, new_release], transaction=transaction)
+                verify_signoffs(potential_required_signoffs, signoffs)
 
         for release in current_releases:
             name = current_release["name"]
             new_data_version = old_data_version + 1
             try:
                 super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version,
-                                             transaction=transaction, dryrun=dryrun, signoffs=signoffs)
+                                             transaction=transaction, dryrun=dryrun)
             except OutdatedDataError as e:
                 self.log.debug("trying to update older data_version %s for release %s" % (old_data_version, name))
                 if blob is not None:
@@ -1923,7 +1930,7 @@ class Releases(AUSTable):
                         # more than that of the latest blob
                         tip_data_version = tip_release['data_version']
                         super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
-                                                     transaction=transaction, dryrun=dryrun, signoffs=signoffs)
+                                                     transaction=transaction, dryrun=dryrun)
                         # cache will have a data_version of one plus the tip
                         # data_version
                         new_data_version = tip_data_version + 1
@@ -1995,11 +2002,14 @@ class Releases(AUSTable):
             return False
 
     def isMappedTo(self, name, transaction=None):
-        if not transaction:
-            transaction = AUSTransaction(self.getEngine())
-        mapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.mapping == name)).fetchone()[0]
-        whitelist_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.whitelist == name)).fetchone()[0]
-        fallbackMapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.fallbackMapping == name)).fetchone()[0]
+        if transaction:
+            mapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.mapping == name)).fetchone()[0]
+            whitelist_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.whitelist == name)).fetchone()[0]
+            fallbackMapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.fallbackMapping == name)).fetchone()[0]
+        else:
+            mapping_count = self.getEngine().execute(dbo.rules.t.count().where(dbo.rules.mapping == name)).fetchone()[0]
+            whitelist_count = self.getEngine().execute(dbo.rules.t.count().where(dbo.rules.whitelist == name)).fetchone()[0]
+            fallbackMapping_count = self.getEngine().execute(dbo.rules.t.count().where(dbo.rules.fallbackMapping == name)).fetchone()[0]
         if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
             return True
 
@@ -2011,16 +2021,20 @@ class Releases(AUSTable):
             raise ValueError("Where clause must match exactly one release to delete.")
         release = release[0]
 
-        self._proceedIfNotReadOnly(release["name"], transaction=transaction)
-        if not self.db.hasPermission(changed_by, "release", "delete", release["product"], transaction):
-            raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, release["product"]))
-
         if self.isMappedTo(release["name"], transaction):
             msg = "%s has rules pointing to it. Hence it cannot be deleted." % (release["name"])
             raise ValueError(msg)
 
+        self._proceedIfNotReadOnly(release["name"], transaction=transaction)
+        if not self.db.hasPermission(changed_by, "release", "delete", release["product"], transaction):
+            raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, release["product"]))
+
+        if not dryrun:
+            potential_required_signoffs = self.getPotentialRequiredSignoffs([release], transaction=transaction)
+            verify_signoffs(potential_required_signoffs, signoffs)
+
         super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction,
-                                     dryrun=dryrun, signoffs=signoffs)
+                                     dryrun=dryrun)
         if not dryrun:
             cache.invalidate("blob", release["name"])
             cache.invalidate("blob_version", release["name"])
@@ -2045,11 +2059,7 @@ class UserRoles(AUSTable):
                            )
         super(UserRoles, self).__init__(db, dialect)
 
-    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        # User Roles do not require signoffs
-        return None
-
-    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         raise AttributeError("User roles cannot be modified (only granted and revoked)")
 
 
@@ -2130,9 +2140,13 @@ class Permissions(AUSTable):
         if not self.db.hasPermission(changed_by, "permission", "create", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
 
+        if not dryrun:
+            potential_required_signoffs = self.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            verify_signoffs(potential_required_signoffs, signoffs)
+
         self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
                        columns.get("options"))
-        super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, signoffs=signoffs, **columns)
+        super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
                        columns["username"], columns.get("options"))
 
@@ -2147,9 +2161,6 @@ class Permissions(AUSTable):
         return self.user_roles.insert(changed_by, transaction, username=username, role=role)
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
-        if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):
-            raise PermissionDeniedError("%s is not allowed to modify permissions" % changed_by)
-
         if "permission" in what:
             self.assertPermissionExists(what["permission"])
 
@@ -2157,17 +2168,31 @@ class Permissions(AUSTable):
             if what.get("options"):
                 self.assertOptionsExist(what.get("permission", current_permission["permission"]), what["options"])
 
+            if not self.db.hasPermission(changed_by, "permission", "modify", transaction=transaction):
+                raise PermissionDeniedError("%s is not allowed to modify permissions" % changed_by)
+
+            new_permission = current_permission.copy()
+            new_permission.update(what)
+            if not dryrun:
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_permission, new_permission], transaction=transaction)
+                verify_signoffs(potential_required_signoffs, signoffs)
+
         super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
-                                        transaction=transaction, dryrun=dryrun, signoffs=signoffs)
+                                        transaction=transaction, dryrun=dryrun)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
         if not self.db.hasPermission(changed_by, "permission", "delete", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to revoke permissions", changed_by)
 
-        usernames = [r["username"] for r in self.select(where=where, transaction=transaction)]
+        usernames = set()
+        for current_permission in self.select(where=where, transaction=transaction):
+            usernames.add(current_permission["username"])
+            if not dryrun:
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_permission], transaction=transaction)
+                verify_signoffs(potential_required_signoffs, signoffs)
+
         if not dryrun:
-            super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction,
-                                            signoffs=signoffs)
+            super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
             for u in usernames:
                 if len(self.getUserPermissions(u, transaction)) == 0:
@@ -2253,10 +2278,6 @@ class Dockerflow(AUSTable):
     def __init__(self, db, metadata, dialect):
         self.table = Table('dockerflow', metadata, Column('watchdog', Integer))
         AUSTable.__init__(self, db, dialect, history=False, versioned=False)
-
-    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        # The Dockerflow table does not require signoffs
-        return None
 
     def getDockerflowEntry(self, transaction=None):
         return self.select(transaction=transaction)[0]

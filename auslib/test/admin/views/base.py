@@ -48,6 +48,7 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.user_roles.t.insert().execute(username="bill", role="qa", data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="bob", role="relman", data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="julie", role="releng", data_version=1)
+        dbo.permissions.user_roles.t.insert().execute(username="mary", role="relman", data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="a", role="releng", signoffs_required=1, data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="e", role="releng", signoffs_required=1, data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="j", role="releng", signoffs_required=1, data_version=1)
@@ -61,6 +62,7 @@ class ViewTest(unittest.TestCase):
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="bar", role="releng", signoffs_required=1, data_version=1)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="blah", role="releng", signoffs_required=1, data_version=1)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="doop", role="releng", signoffs_required=1, data_version=2)
+        dbo.permissionsRequiredSignoffs.t.insert().execute(product="superfake", role="relman", signoffs_required=1, data_version=1)
         dbo.permissionsRequiredSignoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=10, product="doop", role="releng")
         dbo.permissionsRequiredSignoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=11, product="doop", role="releng",
                                                                    signoffs_required=2, data_version=1)

@@ -467,12 +467,13 @@ class TestPermissionsRequiredSignoffs(ViewTest):
     def testGetRequiredSignoffs(self):
         ret = self._get("/required_signoffs/permissions")
         got = json.loads(ret.data)
-        self.assertEquals(got["count"], 4)
+        self.assertEquals(got["count"], 5)
         expected = [
             {"product": "fake", "role": "releng", "signoffs_required": 1, "data_version": 1},
             {"product": "bar", "role": "releng", "signoffs_required": 1, "data_version": 1},
             {"product": "blah", "role": "releng", "signoffs_required": 1, "data_version": 1},
             {"product": "doop", "role": "releng", "signoffs_required": 1, "data_version": 2},
+            {"product": "superfake", "role": "relman", "signoffs_required": 1, "data_version": 1},
         ]
         self.assertEquals(got["required_signoffs"], expected)
 
