@@ -83,10 +83,7 @@ so it's possible to have failures that aren't related to Balrog code or your cha
 Finding Bugs to Solve
 ---------------------
 
-You can take look at the bugs filed at bugzilla for
-`Balrog Backend <https://bugzilla.mozilla.org/buglist.cgi?product=Release%20Engineering&component=Balrog%3A%20Backend&resolution=---&list_id=13281625>`_
-and
-`Balrog Frontend <https://bugzilla.mozilla.org/buglist.cgi?product=Release%20Engineering&component=Balrog%3A%20Frontend&resolution=---&list_id=13281632>`_.
+To start with, it's recommended that you look at a `Good First Bug <https://bugzilla.mozilla.org/buglist.cgi?list_id=13406850&emailtype1=exact&status_whiteboard_type=allwordssubstr&emailassigned_to1=1&status_whiteboard=%5Bgood%20first%20bug%5D&email1=nobody%40mozilla.org&resolution=---&query_format=advanced&component=Balrog%3A%20Backend&component=Balrog%3A%20Frontend>`_. Once you're more comfortable with Balrog, we've got a long list of `other bugs ready to be worked on <https://bugzilla.mozilla.org/buglist.cgi?list_id=13406852&emailtype1=exact&status_whiteboard_type=allwordssubstr&emailassigned_to1=1&status_whiteboard=%5Bready%5D&email1=nobody%40mozilla.org&resolution=---&query_format=advanced&component=Balrog%3A%20Backend&component=Balrog%3A%20Frontend>`_.
 
 Once you have decided the work a bug you can comment on the Bug about any questions you have related to it.
 You can also ask in irc://irc.mozilla.org/#balrog for help.
