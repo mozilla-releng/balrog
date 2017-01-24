@@ -915,6 +915,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             m.side_effect = Exception('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.status_code, 500)
+            self.assertEqual(ret.mimetype, "text/plain")
             self.assertEqual('I break!', ret.data)
 
     def testEscapedOutputOn500(self):
@@ -922,6 +923,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             m.side_effect = Exception('50.1.0zibj5<img src%3da onerror%3dalert(document.domain)>')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.status_code, 500)
+            self.assertEqual(ret.mimetype, "text/plain")
             self.assertEqual('50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;', ret.data)
 
     def testEscapedOutputOn400(self):
@@ -929,6 +931,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             m.side_effect = BadDataError('Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.')
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 400, ret.data)
+            self.assertEqual(ret.mimetype, "text/plain")
             self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", ret.data)
 
     def testSentryBadDataError(self):
@@ -937,12 +940,14 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertFalse(sentry.captureException.called)
             self.assertEqual(ret.status_code, 400, ret.data)
+            self.assertEqual(ret.mimetype, "text/plain")
 
     def testSentryRealError(self):
         with mock.patch("auslib.web.views.client.ClientRequestView.get") as m, mock.patch("auslib.web.base.sentry") as sentry:
             m.side_effect = Exception("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
+            self.assertEqual(ret.mimetype, "text/plain")
             self.assertTrue(sentry.captureException.called)
             self.assertEqual('exterminate!', ret.data)
 

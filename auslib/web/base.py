@@ -48,12 +48,12 @@ def generic(error):
     import cgi
     error.message = cgi.escape(error.message)
     if isinstance(error, BadDataError):
-        return Response(status=400, response=error.message)
+        return Response(status=400, mimetype="text/plain", response=error.message)
 
     if sentry.client:
         sentry.captureException()
 
-    return Response(status=500, response=error.message)
+    return Response(status=500, mimetype="text/plain", response=error.message)
 
 
 @app.route('/robots.txt')
