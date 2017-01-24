@@ -352,7 +352,7 @@ class EditScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
     Release."""
     name = StringField('Name', validators=[Optional()])
     product = StringField('Product', validators=[Optional()])
-    data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
+    data = JSONStringField(None, 'Data', validators=[Optional()], widget=FileInput())
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 
 
@@ -361,7 +361,7 @@ class EditScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
     a Release. Name cannot be changed because it is a PK field, and product
     cannot be changed because it almost never makes sense to (and can be done
     by deleting/recreating instead)."""
-    data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
+    data = JSONStringField(None, 'Data', validators=[Optional()], widget=FileInput())
     data_version = IntegerField('data_version', widget=HiddenInput())
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
 

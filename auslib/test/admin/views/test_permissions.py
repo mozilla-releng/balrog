@@ -12,7 +12,7 @@ class TestUsersAPI_JSON(ViewTest):
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         data['users'] = set(data['users'])
-        self.assertEqual(data, dict(users=set(['bill', 'billy', 'bob', 'ashanti', 'mary'])))
+        self.assertEqual(data, dict(users=set(['bill', 'billy', 'bob', 'ashanti', 'mary', 'julie'])))
 
 
 class TestPermissionsAPI_JSON(ViewTest):
@@ -178,6 +178,7 @@ class TestPermissionsScheduledChanges(ViewTest):
             base_permission="rule", base_username="janet", base_options={"products": ["foo"]},
         )
         dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
+
         dbo.permissions.scheduled_changes.signoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=30, sc_id=1, username="bill")
         dbo.permissions.scheduled_changes.signoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=31, sc_id=1,
                                                                               username="bill", role="releng")
@@ -224,7 +225,6 @@ class TestPermissionsScheduledChanges(ViewTest):
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
             change_id=7, changed_by="bill", timestamp=100, sc_id=3, when=30000000, data_version=2
         )
-
         dbo.permissions.scheduled_changes.t.insert().execute(
             sc_id=4, scheduled_by="bill", change_type="delete", data_version=1, base_permission="scheduled_change", base_username="mary",
             complete=False, base_data_version=1,
@@ -573,8 +573,15 @@ class TestUserRolesAPI_JSON(ViewTest):
     def testGetRoles(self):
         ret = self._get("/users/bill/roles")
         self.assertStatusCode(ret, 200)
-        got = set(json.loads(ret.data)["roles"])
-        self.assertEquals(got, set(["releng", "qa"]))
+        got = json.loads(ret.data)["roles"]
+        self.assertEquals(got, [{"role": "qa", "data_version": 1},
+                          {"role": "releng", "data_version": 1}])
+
+    def testGetAllRoles(self):
+        ret = self._get("/users/roles")
+        self.assertStatusCode(ret, 200)
+        got = json.loads(ret.data)["roles"]
+        self.assertEqual(got, ['releng', 'qa', 'relman'])
 
     def testGetRolesMissingUserReturnsEmptyList(self):
         ret = self.client.get("/users/dean/roles")

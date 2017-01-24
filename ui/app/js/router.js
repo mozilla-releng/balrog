@@ -26,6 +26,18 @@ angular.module("app").config(function($routeProvider, $locationProvider) {
     reloadOnSearch: false
   })
 
+  .when("/releases/scheduled_changes", {
+    templateUrl: "release_scheduled_changes.html",
+    controller: "ReleaseScheduledChangesController",
+    reloadOnSearch: false
+  })
+
+  .when("/scheduled_changes/releases/:sc_id", {
+    templateUrl: "release_scheduled_changes.html",
+    controller: "ReleaseScheduledChangesController",
+    reloadOnSearch: false
+  })
+
   .when('/releases/:name', {
     templateUrl: 'releases.html',
     controller: 'ReleasesController',
