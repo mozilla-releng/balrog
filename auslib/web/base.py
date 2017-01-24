@@ -27,6 +27,15 @@ def heartbeat_database_function(dbo):
 create_dockerflow_endpoints(app, heartbeat_database_function)
 
 
+# There's no use cases for content served by Balrog to load additional content
+# nor be embedded elsewhere, so we apply a strict Content Security Policy.
+# See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829#c4 for background.
+@app.after_request
+def apply_csp(response):
+    response.headers["Content-Security-Policy"] = app.config.get("CSP", "default-src 'none'; frame-ancestors 'none'")
+    return response
+
+
 @app.errorhandler(404)
 def fourohfour(error):
     """We don't return 404s in AUS. Instead, we return empty XML files"""
