@@ -42,11 +42,17 @@ def generic(error):
     because BadDataErrors are considered to be the client's fault.
     Otherwise, the error is just re-raised (which causes a 500)."""
 
+    # Escape exception messages before replying with them, because they may
+    # contain user input.
+    # See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829 for background.
+    import cgi
+    error.message = cgi.escape(error.message)
     if isinstance(error, BadDataError):
         return Response(status=400, response=error.message)
 
     if sentry.client:
         sentry.captureException()
+
     raise error
 
 

@@ -910,12 +910,26 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         ret = self.client.get('/whizzybang')
         self.assertUpdatesAreEmpty(ret)
 
-    def testEmptySnippetOn500(self):
+    def testErrorMessageOn500(self):
         with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
             m.side_effect = Exception('I break!')
             with self.assertRaises(Exception) as exc:
                 self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual('I break!', str(exc.exception.message))
+
+    def testEscapedOutputOn500(self):
+        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+            m.side_effect = Exception('50.1.0zibj5<img src%3da onerror%3dalert(document.domain)>')
+            with self.assertRaises(Exception) as exc:
+                self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual('50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;', exc.exception.message)
+
+    def testEscapedOutputOn400(self):
+        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
+            m.side_effect = BadDataError('Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.')
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
+            self.assertEqual(ret.status_code, 400, ret.data)
+            self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", ret.data)
 
     def testSentryBadDataError(self):
         with mock.patch("auslib.web.views.client.ClientRequestView.get") as m, mock.patch("auslib.web.base.sentry") as sentry:
