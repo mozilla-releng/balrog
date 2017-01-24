@@ -1,15 +1,25 @@
 <div class="modal-header">
-  <h3 class="modal-title"
-    ng-bind="'Signoff Requirements ' +
-             ((product && channel) ? 'for the ' + product + ' ' + channel + ' channel' : '')">
+  <h3 class="modal-title" ng-bind="getTitle()">
   </h3>
 </div>
 <div class="modal-body">
   <form role="form">
-    <label for="id_product">Product</label>
+    <label for="id_product">Product:</label>
     <input type="text" class="form-control" id="id_product" ng-model="product">
-    <label for="id_channel">Channel</label>
-    <input type="text" class="form-control" id="id_channel" ng-model="channel">
+    <!-- TODO: IMPROVE THE LAYOUT!" -->
+    <div class="tabbable tabs-below">
+      <ul class="nav nav-pills" role="tablist">
+        <li ng-class="{active: mode === 'channel'}">
+          <a href="#" ng-click="mode = 'channel'">Channel</a>
+        </li>
+        <li ng-class="{active: mode === 'permissions'}">
+          <a href="#" ng-click="mode = 'permissions'">Permissions</a>
+        </li>
+      </ul>
+      <div class="tab-content" ng-show="mode === 'channel'">
+        <input type="text" class="form-control" id="id_channel" ng-model="channel" ng-show="mode === 'channel'">
+      </div>
+    </div>
     <table class="table">
       <thead>
         <tr>
