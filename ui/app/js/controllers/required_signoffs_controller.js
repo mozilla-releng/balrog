@@ -42,13 +42,6 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
           };
         });
       }
-      var products = Object.keys($scope.required_signoffs);
-      console.log(products);
-      console.log($scope.required_signoffs);
-      if (products.length > 0) {
-        $scope.selected_product = products[0];
-        console.log($scope.selected_product);
-      }
     })
     // can a response be grabbed here?
     .error(function(response) {
@@ -57,6 +50,10 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
     .finally(function() {
     });
 
+    var products = Object.keys($scope.required_signoffs);
+    if (products.length > 0) {
+      $scope.selected_product = products[0];
+    }
   })
   // can a response be grabbed here?
   .error(function(response) {
