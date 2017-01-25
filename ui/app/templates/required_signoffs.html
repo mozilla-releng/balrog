@@ -1,7 +1,7 @@
 <div style="float:right">
 <form role="form" class="state-form">
     <label>Product:</label>
-    <select ng-model="selected_product" ng-options="product as product for (product, rs) in required_signoffs" name="product">
+    <select ng-model="selected_product" ng-options="product for product in required_signoffs" name="product">
     </select>
 </form>
 </div>

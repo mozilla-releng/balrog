@@ -1,5 +1,5 @@
 angular.module("app").controller("NewRequiredSignoffCtrl",
-function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
+function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, required_signoffs) {
   $scope.saving = false;
   $scope.errors = {};
 
@@ -25,23 +25,21 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
     $scope.saving = true;
     $scope.errors = {};
 
-    var required_signoffs = {};
+    console.log(required_signoffs);
+    var new_required_signoffs = {};
 
     // Collect all of the new roles and signoff requirements
     $("#new_roles").find("tr").each(function(index, rs) {
       rs = $(rs);
       var role = rs.find("input[name='role']")[0].value;
       var signoffs_required = rs.find("input[name='signoffs_required']")[0].value;
-      if (role in required_signoffs) {
+      if (role in new_required_signoffs) {
         $scope.errors["role"] = "Cannot specify any Role more than once.";
       }
       else {
-        required_signoffs[role] = signoffs_required;
+        new_required_signoffs[role] = signoffs_required;
       }
     });
-
-    console.log($scope.errors);
-    console.log(required_signoffs);
 
     if (Object.keys($scope.errors).length === 0) {
       CSRF.getToken()
@@ -60,15 +58,37 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
           $scope.saving = false;
         }
 
-        var successCallback = function(response) {
-          // TODO
+        var successCallback = function(data) {
+          return function(response) {
+            var data_version = response["new_data_version"];
+            // todo: maybe required_signoffs should be an object with methods
+            // so we don't have to duplicate this from the main controller
+            if (! (data["product"] in required_signoffs)) {
+              required_signoffs[data["product"]] = {"channels": {}};
+            }
+
+            // TODO: this isn't updating the page properly. also need to close the modal
+            if ($scope.mode === "channel") {
+              if (! (data["channel"] in required_signoffs[data["product"]]["channels"])) {
+                required_signoffs[data["product"]]["channels"][data["channel"]] = {};
+              }
+              required_signoffs[data["product"]]["channels"][data["channel"]][data["role"]] = {
+                "signoffs_required": data["signoffs_required"],
+                "data_version": data_version,
+              };
+            }
+            else if ($scope.mode === "permissions") {
+            }
+    console.log(required_signoffs);
+          };
         };
-        var errorCallback = function(response, status) {
-          // TODO
+        var errorCallback = function(data) {
+          return function(response, status) {
+          };
         };
 
-        for (var role in required_signoffs) {
-          var data = {"product": $scope.product, "role": role, "signoffs_required": required_signoffs[role], "csrf_token": csrf_token};
+        for (var role in new_required_signoffs) {
+          var data = {"product": $scope.product, "role": role, "signoffs_required": new_required_signoffs[role], "csrf_token": csrf_token};
           if ($scope.mode === "channel") {
             data["channel"] = $scope.channel;
           }
@@ -76,19 +96,22 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
             first = false;
 
             service.addRequiredSignoff(data)
-            .success(successCallback)
-            .error(errorCallback);
+            .success(successCallback(data))
+            .error(errorCallback(data));
           }
           else {
             // todo: add rs stuff to data
             service.addScheduledChange(data)
-            .success(successCallback)
-            .error(errorCallback);
+            .success(successCallback(data))
+            .error(errorCallback(data));
           }
         }
       });
     }
     // todo: this probably isn't getting set in exception cases
+    if (Object.keys($scope.errors).length === 0) {
+        $modalInstance.close();
+    }
     $scope.saving = false;
   };
 
