@@ -28,7 +28,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
 
     // Collect all of the new roles and signoff requirements
     $("#new_roles > .new_role").each(function(index, rs) {
-      console.log(rs);
       rs = $(rs);
       var role = rs.find("input[name='role']")[0].value;
       var signoffs_required = rs.find("input[name='signoffs_required']")[0].value;
@@ -67,7 +66,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           $scope.saving = false;
         }
 
-        var successCallback = function(data) {
+        var successCallback = function(data, deferred) {
           return function(response) {
             var data_version = response["new_data_version"];
             // todo: maybe required_signoffs should be an object with methods
@@ -88,12 +87,11 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             }
             else if ($scope.mode === "permissions") {
             }
+            deferred.resolve();
           };
         };
-        var errorCallback = function(data) {
+        var errorCallback = function(data, deferred) {
           return function(response, status) {
-            console.log("got error");
-            console.log(response);
             if (typeof response === "object") {
               $scope.errors = response;
             }
@@ -103,39 +101,37 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             else {
               sweetAlert("Unknown error occurred");
             }
-            console.log($scope.errors);
+            deferred.resolve();
           };
         };
 
         for (var role in new_required_signoffs) {
-          var d = $q.defer();
+          var deferred = $q.defer();
+          promises.push(deferred.promise);
           var data = {"product": $scope.product, "role": role, "signoffs_required": new_required_signoffs[role], "csrf_token": csrf_token};
           if ($scope.mode === "channel") {
             data["channel"] = $scope.channel;
           }
           if (first) {
             service.addRequiredSignoff(data)
-            .success(successCallback(data))
-            .error(errorCallback(data))
-            .finally(function() { d.resolve(); });
-            promises.push(d.promise);
+            .success(successCallback(data, deferred))
+            .error(errorCallback(data, deferred));
           }
           else {
             // todo: add rs stuff to data
             service.addScheduledChange(data)
-            .success(successCallback(data))
-            .error(errorCallback(data));
+            .success(successCallback(data, deferred))
+            .error(errorCallback(data, deferred));
           }
         }
 
-$q.all(promises)
-.then(function() {
-    console.log("firing");
-    if (Object.keys($scope.errors).length === 0) {
-      $modalInstance.close();
-    }
-    $scope.saving = false;
-});
+        $q.all(promises)
+        .then(function() {
+          if (Object.keys($scope.errors).length === 0) {
+            $modalInstance.close();
+          }
+          $scope.saving = false;
+        });
       });
     }
   };
