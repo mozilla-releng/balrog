@@ -1,5 +1,5 @@
 angular.module("app").controller("NewRequiredSignoffCtrl",
-function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, required_signoffs) {
+function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, required_signoffs) {
   $scope.saving = false;
   $scope.errors = {};
 
@@ -22,33 +22,39 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
   };
 
   $scope.saveChanges = function() {
-    $scope.saving = true;
     $scope.errors = {};
 
     var new_required_signoffs = {};
 
     // Collect all of the new roles and signoff requirements
-    $("#new_roles > .new_role").find("tr").each(function(index, rs) {
+    $("#new_roles > .new_role").each(function(index, rs) {
+      console.log(rs);
       rs = $(rs);
       var role = rs.find("input[name='role']")[0].value;
       var signoffs_required = rs.find("input[name='signoffs_required']")[0].value;
-      if (role in new_required_signoffs) {
-        $scope.errors["role"] = "Cannot specify any Role more than once.";
-      }
-      else {
-        new_required_signoffs[role] = signoffs_required;
+      if (role !== "") {
+        if (role in new_required_signoffs) {
+          $scope.errors["role"] = "Cannot specify any Role more than once.";
+        }
+        else {
+          new_required_signoffs[role] = signoffs_required;
+        }
       }
     });
 
     if (Object.keys(new_required_signoffs).length === 0) {
-      $scope.errors["exception"] = "New new roles found!";
+      $scope.errors["exception"] = "No new roles found!";
     }
 
     if (Object.keys($scope.errors).length === 0) {
+      $scope.saving = true;
+
       CSRF.getToken()
       .then(function(csrf_token) {
         var service = null;
         var first = true;
+
+        var promises = [];
 
         if ($scope.mode === "channel") {
           service = ProductRequiredSignoffs;
@@ -86,6 +92,8 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
         };
         var errorCallback = function(data) {
           return function(response, status) {
+            console.log("got error");
+            console.log(response);
             if (typeof response === "object") {
               $scope.errors = response;
             }
@@ -95,10 +103,12 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
             else {
               sweetAlert("Unknown error occurred");
             }
+            console.log($scope.errors);
           };
         };
 
         for (var role in new_required_signoffs) {
+          var d = $q.defer();
           var data = {"product": $scope.product, "role": role, "signoffs_required": new_required_signoffs[role], "csrf_token": csrf_token};
           if ($scope.mode === "channel") {
             data["channel"] = $scope.channel;
@@ -106,7 +116,9 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
           if (first) {
             service.addRequiredSignoff(data)
             .success(successCallback(data))
-            .error(errorCallback(data));
+            .error(errorCallback(data))
+            .finally(function() { d.resolve(); });
+            promises.push(d.promise);
           }
           else {
             // todo: add rs stuff to data
@@ -115,14 +127,19 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
             .error(errorCallback(data));
           }
         }
-      });
-    }
-    // todo: this probably isn't getting set in exception cases
+
+$q.all(promises)
+.then(function() {
+    console.log("firing");
     if (Object.keys($scope.errors).length === 0) {
-        $modalInstance.close();
+      $modalInstance.close();
     }
     $scope.saving = false;
+});
+      });
+    }
   };
+
 
   $scope.cancel = function() {
     $modalInstance.dismiss("cancel");

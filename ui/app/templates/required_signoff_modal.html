@@ -41,11 +41,11 @@
           <td><input name="role" type="text" class="form-control"></td>
           <td><input name="signoffs_required" type="text" class="form-control"></td>
         </tr>
-        <tr ng-class="{'has-error': errors.role || errors.signoffs_required}" ng-show="errors.role || errors.signoffs_required">
+        <tr ng-class="{'has-error': errors.role || errors.signoffs_required}" ng-if="errors.role || errors.signoffs_required">
           <td class="help-block">{{ errors.role }}</td>
           <td class="help-block">{{ errors.signoffs_required }}</td>
         </tr>
-        <tr ng-class="{'has-error': errors.exception}" ng-show="errors.exception">
+        <tr ng-class="{'has-error': errors.exception}" ng-if="errors.exception">
           <td class="help-block" colspan="2">{{ errors.exception }}</td>
         </tr>
       </tbody>
