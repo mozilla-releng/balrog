@@ -35,6 +35,7 @@
                     <li><a href="/releases/scheduled_changes">Scheduled Changes</a></li>
                 </ul>
             </li>
+
             <li class="dropdown nav" ng-class="{active: isOn('/permissions')}">
                 <a href="/permissions">Permissions <span class="caret"></span></a>
                 <ul class="dropdown-menu dropdown-menu-left">

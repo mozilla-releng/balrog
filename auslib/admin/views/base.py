@@ -6,7 +6,8 @@ from flask.views import MethodView
 
 from auslib.global_state import dbo
 from auslib.util.timesince import timesince
-from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError
+from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
+    SignoffRequiredError
 import logging
 
 
@@ -39,6 +40,11 @@ def handleGeneralExceptions(messages):
                 msg = "Couldn't perform the request %s due a conflict with a scheduled change. " % messages
                 msg += e.message
                 logging.warning("Bad input: %s", msg)
+                logging.warning(e)
+                return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
+            except SignoffRequiredError as e:
+                msg = "This change requires signoff, it cannot be done directly."
+                logging.warning(msg)
                 logging.warning(e)
                 return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
             except PermissionDeniedError as e:

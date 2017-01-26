@@ -199,6 +199,12 @@ The table below describe all possible permissions:
   |                        | unset               |                                   |                               |
   +------------------------+---------------------+                                   |                               |
   | release_locale         | modify              |                                   |                               |
+  +------------------------+---------------------+                                   |                               |
+  | required_signoff       | create              |                                   |                               |
+  |                        +---------------------+                                   |                               |
+  |                        | modify              |                                   |                               |
+  |                        +---------------------+                                   |                               |
+  |                        | delete              |                                   |                               |
   +------------------------+---------------------+-----------------------------------+                               |
   | permission             | create              | No supported options.             |                               |
   |                        +---------------------+                                   |                               |
@@ -219,11 +225,45 @@ Users may hold any number of Roles. Roles are used when signing off on Scheduled
 
 Roles and Permissions are not directly related - assigning a User a Role does not inherently grant them any Permissions.
 
+
+-----------------
+Required Signoffs
+-----------------
+
+Some types of changes to Balrog's database require more than one person to approve them before they can be done. The Required Signoffs tables specify how many signoffs are needed from different Roles for each type of change. For example, a change may required 3 signoffs from users that hold the "releng" Role as well as 1 signoff from a user that holds the "relman" role.
+
+Changes to Required Signoffs tables generally require signoff as well. If you are adding, modifying, or removing signoff requirements for something that already has signoff requirements, you must obtain signoff to do so. For example, if a change requires 2 signoffs from users who hold the "releng" Role, and you want to also require signoff from 1 user who holds the "relman" Role, you must get signoff from 2 "releng" users first. The one exception to this is that if you are adding a new signoff requirement for something that doesn't require any signoff yet, you do not need any signoff to do so.
+
+You cannot require more signoffs than a Role has users. Eg: if only 3 users hold the "releng" Role, you cannot require 4 "releng" signoffs for anything. Similarly, if 3 "releng" signoffs are currently required for something, and 3 users hold that Role, you cannot remove that Role from any user.
+
+Changes that require signoff will either be Product changes or Permissions changes. Required Signoffs for each are managed independently, and described in more detail below.
+
+
+*************************
+Product Required Signoffs
+*************************
+
+Changes that directly affect updates that clients receive (the Rules and Releases tables) are considered Product changes. Our paranoia level for changes to these varies greatly depending on the Product and Channel. Eg: we're far more concerned about changes to Firefox's release channel than we are about Thunderbird's nightly channel. Because of this, we specify Required Signoffs for these with a product and channel combination.
+
+Any changes to a Rule that would affect a product and channel combination specified in this table will require signoff. This includes Rules that don't specify a product or channel at all (because that is treated as a wildcard).
+
+Releases which are mapped to be a Rule's mapping, fallbackingMapping, or whitelist field require the same signoffs as the Rule. Releases that are not mapped to by a rule never require any signoff. It's important that they are inspected before mapping to them for the first time.
+
+If a change affects more than one product and channel combination, *all* affected combinations' required signoffs will be combined to find the full set of required. For example, if Firefox's release channel requires 3 signoffs from "relman" and Firefox's beta channel requires 2 signoffs from "releng", a change to a Rule that affects both channels will require 3 signoffs from "relman" and 2 from "releng". Changing a Release that is mapped to by Rules on the "release" and "beta" channel would also require the same signoffs.
+
+
+*****************************
+Permissions Required Signoffs
+*****************************
+
+Changes to the Permissions table may also require signoff. These Required Signoffs are specified by product, which most Permissions support as an option. Changing a Permission that affects the named product wil require the signoffs from the Roles specified in this table. Changing a Permission that does not specify a product will require signoff the signoffs from *all* Roles specified in this table, because such Permissions grant access to all products. This includes the "admin" Permission and "permission" Permission, which are often used without a product specified.
+
+
 --------------
 History Tables
 --------------
 Change attribution and recording is embedded deeply into Balrog.
-The rules, releases, and permissions tables all have a corresponding history table that records the time a change was made and who made it.
+The rules, releases, permissions, required signoffs, and all associated scheduled changes tables have a corresponding history table that records the time a change was made and who made it.
 This allows us to look back in time when debugging issues, attribute changes to people (aka blame), and quickly roll back bad changes.
 
   .. _scheduledChanges:

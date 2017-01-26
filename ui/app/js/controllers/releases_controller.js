@@ -178,7 +178,6 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
   /* End openUpdateModal */
 
   $scope.openNewScheduledDeleteModal = function(release) {
-
     var modalInstance = $modal.open({
       templateUrl: 'release_scheduled_delete_modal.html',
       controller: 'NewReleaseScheduledDeleteCtrl',

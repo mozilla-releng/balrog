@@ -1,3 +1,6 @@
+from auslib.log import configure_logging
+configure_logging()
+
 import logging
 log = logging.getLogger(__name__)
 
