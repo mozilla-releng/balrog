@@ -1,5 +1,6 @@
 import simplejson as json
 import re
+import operator
 
 from flask_wtf import Form
 from wtforms import StringField, IntegerField, SelectField, BooleanField
@@ -121,11 +122,14 @@ def version_validator():
         if field.data is None:
             return
         rulesVersionList = field.data.split(",")
-        has_more_than_one_version = 1 < len(rulesVersionList)
-
+        isListOfVersions = len(rulesVersionList) > 1
+        has_relational_op = False
         for rule_version in rulesVersionList:
             try:
                 op, operand = get_op(rule_version)
+                if isListOfVersions and op != operator.eq:
+                    has_relational_op = True
+                    break
                 version = MozillaVersion(operand)
             except ValueError:
                 raise ValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value"
@@ -136,12 +140,9 @@ def version_validator():
             if not hasattr(version, 'version'):
                 raise ValidationError("Couldn't parse the version for %s. No attribute 'version' was detected."
                                       % field.name)
-
-            # If more than one version number present , then all versions must be alphanumeric only.
-            if has_more_than_one_version and _has_op(rule_version):
-                raise ValidationError('Invalid input for %s . All versions must have alphanumeric characters only.'
-                                      % field.name)
-
+        if has_relational_op:
+            raise ValidationError('Invalid input for %s .Relational Operators are not allowed'
+                                  ' when providing a list of versions.' % field.name)
     return _validator
 
 

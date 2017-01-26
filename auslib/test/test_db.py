@@ -2199,6 +2199,9 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.rules.t.insert().execute(rule_id=3, priority=100, buildID='>=20010101222222', backgroundRate=100, update_type='z', data_version=1)
         self.rules.t.insert().execute(rule_id=4, priority=90, version='3.0.1,3.0.2,3.0b3', backgroundRate=100, update_type='z',
                                       data_version=1)
+        self.rules.t.insert().execute(rule_id=5, priority=80, version='2.0.1,2.0.2,2.0.3', backgroundRate=100,
+                                      update_type='z',
+                                      data_version=1)
 
     def testGetRulesMatchingQueryVersionComparison(self):
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='>=4.0b1', update_type='z', data_version=1)]
@@ -2261,9 +2264,22 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             rules = self._stripNullColumns(rules)
             self.assertEquals(rules, expected)
 
-        # version number isn't present in the list of version numbers.
+    def testGetRulesMatchingQueryIfVersionNotPresentInListOfVersions(self):
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='3.0.3', channel='',
+                 buildTarget='', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, [])
+
+    def testGetRulesMatchingQueryPartialVersionDoesNotMatchLongerVersion(self):
+        # 2.0 does not match any version in [ 2.0.1, 2.0.2, 2.0.3] for rule_id: 5
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='2.0', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
