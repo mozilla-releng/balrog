@@ -14,7 +14,6 @@ sys.path.append(path.join(path.dirname(__file__), ".."))
 sys.path.append(path.join(path.dirname(__file__), path.join("..", "vendor", "lib", "python")))
 
 from auslib.db import AUSDatabase
-from auslib.blobs.base import createBlob
 
 
 def cleanup_releases(trans, nightly_age, dryrun=True):
@@ -87,22 +86,13 @@ def cleanup_releases_history(trans, dryrun=True):
     print "Total Deleted: %d" % total_deleted
 
 
-def chunk_list(list_object, n):
-    """
-    Yield successive n-sized chunks from list_object.
-    """
-    for i in xrange(0, len(list_object), n):
-        yield list_object[i:i + n]
-
-
-def extract_active_data(trans, url, dump_location='dump.sql'):
+def extract_active_data(url, dump_location='dump.sql'):
     """
     Stores sqldump data in the specified location. If not specified, stores it in current directory in file dump.sql
     If file already exists it will override that file and not append it.
 
     Function added in to enhance testing in Balrog's stage environment.
 
-    :param trans: Transaction Object for an SQL connection
     :param url: Database. eg : mysql://balrogadmin:balrogadmin@balrogdb/balrog
     :param dump_location: location where sqldump file must be created
     """
@@ -128,27 +118,24 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
     popen(
         _strip_multiple_spaces('%s %s dockerflow rules rules_history rules_scheduled_changes rules_scheduled_changes_conditions \
         rules_scheduled_changes_conditions_history rules_scheduled_changes_signoffs rules_scheduled_changes_signoffs_history \
-        rules_scheduled_changes_history migrate_version  > %s' % (mysql_default_command, database, dump_location))
+        rules_scheduled_changes_history migrate_version  > %s' % (mysql_default_command, database, dump_location,))
     )
 
     popen(
         _strip_multiple_spaces('%s %s releases --where="EXISTS ( \
             SELECT * \
             FROM rules, rules_scheduled_changes \
-            WHERE releases.name IN ( \
-                rules.mapping, \
-                rules.whitelist, \
-                rules.fallbackMapping, \
-                rules_scheduled_changes.base_mapping, \
-                rules_scheduled_changes.base_whitelist, \
-                rules_scheduled_changes.base_fallbackMapping) \
+            WHERE releases.name = rules.mapping \
+               OR releases.name = rules.whitelist \
+               OR releases.name = rules_scheduled_changes.base_mapping \
+               OR releases.name = rules_scheduled_changes.base_whitelist \
             )" \
-        >> %s' % (mysql_default_command, database, dump_location))
+        >> %s' % (mysql_default_command, database, dump_location,))
     )
 
     popen(
         _strip_multiple_spaces('%s %s releases_history --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' \
-        limit 50" >> %s' % (mysql_default_command, database, dump_location))
+        AND 1 limit 50" >> %s' % (mysql_default_command, database, dump_location,))
     )
 
     popen(
@@ -156,35 +143,8 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
             SELECT rules.mapping \
             FROM rules \
             WHERE rules.alias=\'firefox-release\' \
-        ) LIMIT 50" >> %s' % (mysql_default_command, database, dump_location))
+        ) LIMIT 50" >> %s' % (mysql_default_command, database, dump_location,))
     )
-
-    query_release_mapping = """SELECT DISTINCT releases.* \
-        FROM releases, rules, rules_scheduled_changes \
-        WHERE releases.name IN ( \
-            rules.mapping, \
-            rules.whitelist, \
-            rules.fallbackMapping, \
-            rules_scheduled_changes.base_mapping, \
-            rules_scheduled_changes.base_whitelist, \
-            rules_scheduled_changes.base_fallbackMapping \
-            )"""
-
-    result = trans.execute(query_release_mapping).fetchall()
-    partial_release_names = set()
-    for row in result:
-        try:
-            release_blob = createBlob(row['data'])
-            partial_release_names.update(release_blob.getReferencedReleases())
-        except ValueError:
-            continue
-    if partial_release_names:
-        batch_generator = chunk_list(list(partial_release_names), 30)
-        for batched_partial_release_list in batch_generator:
-            qry = ", ".join("'" + release_names + "'" for release_names in batched_partial_release_list)
-            popen(_strip_multiple_spaces('%s --skip-add-drop-table --no-create-info %s '
-                                         'releases --where="releases.name IN (%s)" \
-                   >> %s' % (mysql_default_command, database, qry, dump_location)))
 
 
 def _strip_multiple_spaces(string):
@@ -223,12 +183,11 @@ if __name__ == "__main__":
     elif action == 'downgrade':
         db.downgrade(options.version)
     elif action == 'extract':
-        with db.begin() as trans:
-            if len(args) < 2:
-                extract_active_data(trans, options.db)
-            else:
-                location = args[1]
-                extract_active_data(trans, options.db, location)
+        if len(args) < 2:
+            extract_active_data(options.db)
+        else:
+            location = args[1]
+            extract_active_data(options.db, location)
     elif action.startswith("cleanup"):
         if len(args) < 2:
             parser.error("need to pass maximum nightly release age")
