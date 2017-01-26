@@ -6,7 +6,7 @@
   <form role="form">
     <label for="id_product">Product:</label>
     <!-- TODO: implement typeahead for product and channel, see rules modal -->
-    <input type="text" class="form-control" id="id_product" ng-model="product">
+    <input tabindex="1" type="text" class="form-control" id="id_product" ng-model="product">
     <p class="help-block" ng-show="errors.product">{{ errors.product.join(", ") }}</p>
     <!-- TODO: IMPROVE THE LAYOUT!" -->
     <div class="tabbable tabs-below">
@@ -19,7 +19,7 @@
         </li>
       </ul>
       <div class="tab-content" ng-show="mode === 'channel'">
-        <input type="text" class="form-control" id="id_channel" ng-model="channel" ng-show="mode === 'channel'">
+        <input tabindex="2" type="text" class="form-control" id="id_channel" ng-model="channel" ng-show="mode === 'channel'">
         <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(", ") }}</p>
       </div>
     </div>
@@ -33,13 +33,9 @@
         </tr>
       </thead>
       <tbody id="new_roles">
- <!--       <tr ng-repeat="(role, signoffs_required) in required_signoffs[product][channel]">
-          <td>{{ role }}<button class="btn btn-danger btn-xs" ng-click="delete required_signoffs[product][channel][role]"></td>
-          <td><input type="text" class="form-control" ng-model="required_signoffs[product][channel][role]"></td>
-        </tr>-->
         <tr class="new_role" ng-repeat="n in [].constructor(new_roles) track by $index">
-          <td><input name="role" type="text" class="form-control"></td>
-          <td><input name="signoffs_required" type="text" class="form-control"></td>
+          <td><input tabindex="{{ ($index * 2) + 3 }}" name="role" type="text" class="form-control"></td>
+          <td><input tabindex="{{ ($index * 2) + 4 }}" name="signoffs_required" type="text" class="form-control"></td>
         </tr>
         <tr ng-class="{'has-error': errors.role || errors.signoffs_required}" ng-if="errors.role || errors.signoffs_required">
           <td class="help-block">{{ errors.role }}</td>
