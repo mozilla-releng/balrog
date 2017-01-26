@@ -5,7 +5,9 @@
 <div class="modal-body">
   <form role="form">
     <label for="id_product">Product:</label>
+    <!-- TODO: implement typeahead for product and channel, see rules modal -->
     <input type="text" class="form-control" id="id_product" ng-model="product">
+    <p class="help-block" ng-show="errors.product">{{ errors.product.join(", ") }}</p>
     <!-- TODO: IMPROVE THE LAYOUT!" -->
     <div class="tabbable tabs-below">
       <ul class="nav nav-pills" role="tablist">
@@ -18,6 +20,7 @@
       </ul>
       <div class="tab-content" ng-show="mode === 'channel'">
         <input type="text" class="form-control" id="id_channel" ng-model="channel" ng-show="mode === 'channel'">
+        <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(", ") }}</p>
       </div>
     </div>
     <table class="table">
@@ -34,9 +37,16 @@
           <td>{{ role }}<button class="btn btn-danger btn-xs" ng-click="delete required_signoffs[product][channel][role]"></td>
           <td><input type="text" class="form-control" ng-model="required_signoffs[product][channel][role]"></td>
         </tr>-->
-        <tr ng-repeat="n in [].constructor(new_roles) track by $index">
+        <tr class="new_role" ng-repeat="n in [].constructor(new_roles) track by $index">
           <td><input name="role" type="text" class="form-control"></td>
           <td><input name="signoffs_required" type="text" class="form-control"></td>
+        </tr>
+        <tr ng-class="{'has-error': errors.role || errors.signoffs_required}" ng-show="errors.role || errors.signoffs_required">
+          <td class="help-block">{{ errors.role }}</td>
+          <td class="help-block">{{ errors.signoffs_required }}</td>
+        </tr>
+        <tr ng-class="{'has-error': errors.exception}" ng-show="errors.exception">
+          <td class="help-block" colspan="2">{{ errors.exception }}</td>
         </tr>
       </tbody>
     </table>

@@ -25,11 +25,10 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
     $scope.saving = true;
     $scope.errors = {};
 
-    console.log(required_signoffs);
     var new_required_signoffs = {};
 
     // Collect all of the new roles and signoff requirements
-    $("#new_roles").find("tr").each(function(index, rs) {
+    $("#new_roles > .new_role").find("tr").each(function(index, rs) {
       rs = $(rs);
       var role = rs.find("input[name='role']")[0].value;
       var signoffs_required = rs.find("input[name='signoffs_required']")[0].value;
@@ -40,6 +39,10 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
         new_required_signoffs[role] = signoffs_required;
       }
     });
+
+    if (Object.keys(new_required_signoffs).length === 0) {
+      $scope.errors["exception"] = "New new roles found!";
+    }
 
     if (Object.keys($scope.errors).length === 0) {
       CSRF.getToken()
@@ -79,11 +82,19 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
             }
             else if ($scope.mode === "permissions") {
             }
-    console.log(required_signoffs);
           };
         };
         var errorCallback = function(data) {
           return function(response, status) {
+            if (typeof response === "object") {
+              $scope.errors = response;
+            }
+            else if (typeof response === "string"){
+              $scope.errors["exception"] = response;
+            }
+            else {
+              sweetAlert("Unknown error occurred");
+            }
           };
         };
 
@@ -93,8 +104,6 @@ function($scope, $modalInstance, CSRF, ProductRequiredSignoffs, PermissionsRequi
             data["channel"] = $scope.channel;
           }
           if (first) {
-            first = false;
-
             service.addRequiredSignoff(data)
             .success(successCallback(data))
             .error(errorCallback(data));
