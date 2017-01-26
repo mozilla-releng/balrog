@@ -4,10 +4,12 @@
 </div>
 <div class="modal-body">
   <form role="form">
-    <label for="id_product">Product:</label>
-    <!-- TODO: implement typeahead for product and channel, see rules modal -->
-    <input tabindex="1" type="text" class="form-control" id="id_product" ng-model="product">
-    <p class="help-block" ng-show="errors.product">{{ errors.product.join(", ") }}</p>
+    <div class="form-group" ng-class="{'has-error': errors.product}">
+      <label for="id_product">Product:</label>
+      <!-- TODO: implement typeahead for product and channel, see rules modal -->
+      <input tabindex="1" type="text" class="form-control" id="id_product" ng-model="product">
+      <p class="help-block" ng-show="errors.product">{{ errors.product.join(", ") }}</p>
+    </div>
     <!-- TODO: IMPROVE THE LAYOUT!" -->
     <div class="tabbable tabs-below">
       <ul class="nav nav-pills" role="tablist">
@@ -19,8 +21,10 @@
         </li>
       </ul>
       <div class="tab-content" ng-show="mode === 'channel'">
-        <input tabindex="2" type="text" class="form-control" id="id_channel" ng-model="channel" ng-show="mode === 'channel'">
-        <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(", ") }}</p>
+        <div class="form-group" ng-class="{'has-error': errors.channel}">
+          <input tabindex="2" type="text" class="form-control" id="id_channel" ng-model="channel" ng-show="mode === 'channel'">
+          <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(", ") }}</p>
+        </div>
       </div>
     </div>
     <table class="table">
@@ -42,7 +46,8 @@
           <td class="help-block">{{ errors.signoffs_required }}</td>
         </tr>
         <tr ng-class="{'has-error': errors.exception}" ng-if="errors.exception">
-          <td class="help-block" colspan="2">{{ errors.exception }}</td>
+          <!-- display needs to be overriden to make colspan work -->
+          <td class="help-block" colspan="2" style="display: table-cell">{{ errors.exception }}</td>
         </tr>
       </tbody>
     </table>
