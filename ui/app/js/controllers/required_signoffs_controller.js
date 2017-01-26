@@ -5,6 +5,14 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
   $scope.required_signoffs = {};
   $scope.selected_product = null;
 
+  $scope.$watch("required_signoffs", function() {
+    if ($scope.selected_product === null) {
+      var products = Object.keys($scope.required_signoffs);
+      if (products.length > 0) {
+        $scope.selected_product = products[0];
+      }
+    }
+  }, true);
   // Grabbing initial data from the server
   ProductRequiredSignoffs.getRequiredSignoffs()
   .success(function(response) {
@@ -49,11 +57,6 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
     })
     .finally(function() {
     });
-
-    var products = Object.keys($scope.required_signoffs);
-    if (products.length > 0) {
-      $scope.selected_product = products[0];
-    }
   })
   // can a response be grabbed here?
   .error(function(response) {
