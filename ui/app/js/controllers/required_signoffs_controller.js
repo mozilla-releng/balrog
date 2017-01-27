@@ -119,7 +119,7 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
     });
   };
 
-  $scope.editRequiredSignoffs = function(required_signoffs) {
+  $scope.editRequiredSignoffs = function(required_signoffs, mode, channel = "") {
     $modal.open({
       templateUrl: "required_signoff_modal.html",
       controller: "EditRequiredSignoffsCtrl",
@@ -127,6 +127,15 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
       resolve: {
         required_signoffs: function() {
           return required_signoffs;
+        },
+        mode: function() {
+          return mode;
+        },
+        product: function() {
+          return $scope.selected_product;
+        },
+        channel: function() {
+          return channel;
         },
       }
     });

@@ -23,6 +23,12 @@ module.exports = function(lineman) {
     //   }
     // }
 
+    jshint: {
+      options: {
+        esnext: true
+      },
+    },
+
     server: {
       pushState: true,
       // API Proxying

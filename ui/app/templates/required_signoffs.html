@@ -25,7 +25,7 @@
       <span>
         <div ng-show="state === 'current'">
           <span >To change {{ selected_product}} permissions you must have signoff from...</span>
-          <button class="btn btn-xs btn-danger" ng-click="editRequiredSignoffs(required_signoffs[selected_product]['permissions'])">Edit</button>
+          <button class="btn btn-xs btn-danger" ng-click="editRequiredSignoffs(required_signoffs[selected_product]['permissions'], 'permissions')">Edit</button>
         </div>
         <span ng-show="state === 'pending'">Proposed Required Signoffs for {{ selected_product }} permissions</span>
       </span>
@@ -50,7 +50,7 @@
         <span ng-show="state === 'pending'">
           Proposed Required Signoffs for {{ selected_product }} {{ channel }} channel changes
         </span>
-        <button class="btn btn-xs btn-danger" ng-click="editRequiredSignoffs(required_signoffs[selected_product]['channels'])">Edit</button>
+        <button class="btn btn-xs btn-danger" ng-click="editRequiredSignoffs(required_signoffs[selected_product]['channels'], 'channel', channel)">Edit</button>
       </span>
     </h3>
   </div>

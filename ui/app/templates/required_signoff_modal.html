@@ -30,15 +30,23 @@
     <table class="table">
       <thead>
         <tr>
-          <th>Role
-            <button class="btn btn-primary btn-xs" ng-click="new_roles = new_roles + 1" type="button">Add another Role</button>
+          <th>
+            <button class="btn btn-primary btn-xs" ng-click="new_roles = new_roles + 1" type="button">Add</button>
           </th>
+          <th>Role</th>
           <th>Signoffs Required</th>
         </tr>
       </thead>
       <tbody id="new_roles">
         <tr class="new_role" ng-repeat="n in [].constructor(new_roles) track by $index">
-          <td><input tabindex="{{ ($index * 2) + 3 }}" name="role" type="text" class="form-control"></td>
+          <th>
+            <button type="button" class="btn btn-default btn-xs" ng-click="removeRole($index)">
+              <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+            </button>
+          </th>
+          <td>
+            <input tabindex="{{ ($index * 2) + 3 }}" name="role" type="text" class="form-control">
+          </td>
           <td><input tabindex="{{ ($index * 2) + 4 }}" name="signoffs_required" type="text" class="form-control"></td>
         </tr>
         <tr ng-class="{'has-error': errors.role || errors.signoffs_required}" ng-if="errors.role || errors.signoffs_required">
