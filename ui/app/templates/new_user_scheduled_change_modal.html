@@ -10,7 +10,6 @@
     <div class="tabbable tabs-below">
 
       <div class="tab-content" ng-show="currentItemTab == 1">
-        <h4>Add a new User+Permission</h4>
         <form role="form" ng-submit="addScheduledUser()">
           <div class="form-group" ng-class="{'has-error': errors.username}">
             <label for="id_username">Username</label>
@@ -30,7 +29,6 @@
 
           <div style="text-align: right">
             <input type="hidden" name="data_version" ng-model="permission.data_version">
-            <button type="submit" class="btn btn-primary">Scheduled Permission</button>
           </div>
         </form>
 
@@ -45,5 +43,6 @@
 </div>
 <div class="modal-footer">
   <div ng-show="saving" small-loader></div>
+  <button type="submit" class="btn btn-primary" ng-click="addScheduledUser()">Save Changes</button>
   <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
 </div>

@@ -1,15 +1,13 @@
 <div class="modal-header">
 
-    <h3 class="modal-title" ng-show="sc.username && !sc.when">Create Scheduled Change for {{ sc.username }}</h3>
-    <h3 class="modal-title" ng-show="sc.username && sc.when">Edit Scheduled Change for {{ sc.username }}</h3>
+    <h3 class="modal-title" ng-show="sc.username && !sc.when">Create Scheduled Change for {{ sc.username }}'s Permission</h3>
+    <h3 class="modal-title" ng-show="sc.username && sc.when">Edit Scheduled Change for {{ sc.username }}s Permission</h3>
 </div>
 <div class="modal-body">
 
   <div ng-show="!loading">
     <div class="tabbable tabs-below">
 
-        <h4 ng-show="!sc.when">Scheduled a new Permission</h4>
-        <h4 ng-show="sc.when">Edit Scheduled Permission</h4>
 
         <form role="form" ng-submit="addScheduledPermission()">
           <div class="form-group" ng-class="{'has-error': errors.permission}">
