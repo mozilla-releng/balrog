@@ -118,4 +118,17 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
       }
     });
   };
+
+  $scope.editRequiredSignoffs = function(required_signoffs) {
+    $modal.open({
+      templateUrl: "required_signoff_modal.html",
+      controller: "EditRequiredSignoffsCtrl",
+      backdrop: "static",
+      resolve: {
+        required_signoffs: function() {
+          return required_signoffs;
+        },
+      }
+    });
+  };
 });
