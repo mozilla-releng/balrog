@@ -30,3 +30,10 @@ angular.module("app").factory("ProductRequiredSignoffs", function($http) {
   service.http = $http;
   return service;
 });
+
+angular.module("app").factory("PermissionsRequiredSignoffs", function($http) {
+  var service = Object.create(RequiredSignoffBase);
+  service.base_uri = "/required_signoffs/permissions";
+  service.http = $http;
+  return service;
+});
