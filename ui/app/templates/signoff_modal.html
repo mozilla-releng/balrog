@@ -1,0 +1,16 @@
+<div class="modal-header">
+    <h3 class="modal-title">Signoff on XXXXXXXXXXXXX</h3>
+</div>
+<div class="modal-body">
+
+  <!-- print more details about the thing being signed off on -->
+  <!-- dropdown with list of user roles -->
+  <label for="id_role">Signoff with Role:</label>
+  <select id="id_role"></select>
+
+</div>
+<div class="modal-footer">
+  <div ng-show="saving" small-loader></div>
+  <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Signoff!</button>
+  <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
+</div>

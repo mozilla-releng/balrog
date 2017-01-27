@@ -140,4 +140,15 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
       }
     });
   };
+
+  $scope.signoff = function(mode, sc_id) {
+    // need to bail if user has already signed off
+    $modal.open({
+      templateUrl: "signoff_modal.html",
+      controller: "SignoffCtrl",
+      backdrop: "static",
+      resolve: {
+      }
+    });
+  };
 });

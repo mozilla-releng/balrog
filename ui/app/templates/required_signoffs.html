@@ -61,7 +61,7 @@
           <!-- add link to user roles ui here, when it exists -->
           <span>{{ details["signoffs_required"] }} members of {{ role }}</span>
           <div style="float: right" ng-show="state === 'pending'">
-            <button class="btn btn-xs btn-primary" ng-click="signoff(details['sc_id'])">Signoff as...</button>
+            <button class="btn btn-xs btn-primary" ng-click="signoff('channel', details['sc_id'])">Signoff as...</button>
           </div>
         </h4>
       </div>
