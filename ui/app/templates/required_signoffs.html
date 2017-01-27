@@ -44,27 +44,28 @@
   <div class="panel-heading">
     <h3 class="panel-title">
       <span>
-        <div ng-show="state === 'current'">
-          <span>To change Rules or Releases on the {{ selected_product }} {{ channel }} channel, you must have signoff from...</span>
-          <button class="btn btn-xs btn-danger" ng-click="openEditRequiredSignoffModal('something')">Edit</button>
-        </div>
-        <div ng-show="state === 'pending'">
-          <span>Proposed Required Signoffs for {{ selected_product }} {{ channel }} channel changes</span>
-        </div>
+        <span ng-show="state === 'current'">
+          To change Rules or Releases on the {{ selected_product }} {{ channel }} channel, you must have signoff from...
+        </span>
+        <span ng-show="state === 'pending'">
+          Proposed Required Signoffs for {{ selected_product }} {{ channel }} channel changes
+        </span>
+        <button class="btn btn-xs btn-danger" ng-click="openEditRequiredSignoffModal('something')">Edit</button>
       </span>
     </h3>
   </div>
   <div class="panel-body">
-    <ul class="list-group">
-      <li class="list-group-item" ng-repeat="(role, details) in roles">
-        <!-- add link to user roles ui here, when it exists -->
-        <span>{{ details["signoffs_required"] }} members of {{ role }}</span>
-        <div style="float: right" ng-show="state === 'pending'">
-          <button class="btn btn-xs btn-default" ng-click="signoff(details['sc_id'])">Signoff</button>
-          <button class="btn btn-xs btn-danger" ng-click="deletePending(details['sc_id'])">Delete</button>
-        </div>
-        <span>Requires signoff from 2 releng, 1 relman.</span>
-      </li>
-    </ul>
+    <div class="panel panel-default" ng-repeat="(role, details) in roles">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          <!-- add link to user roles ui here, when it exists -->
+          <span>{{ details["signoffs_required"] }} members of {{ role }}</span>
+          <div style="float: right" ng-show="state === 'pending'">
+            <button class="btn btn-xs btn-primary" ng-click="signoff(details['sc_id'])">Signoff as...</button>
+          </div>
+        </h4>
+      </div>
+      <div class="panel-body">stuff stuff</div>
+    </div>
   </div>
 </div>
