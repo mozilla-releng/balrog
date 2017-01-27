@@ -86,12 +86,13 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
         if (! (rs.channel in $scope.pending_required_signoffs[rs.product]["channels"])) {
           $scope.pending_required_signoffs[rs.product]["channels"][rs.channel] = {};
         }
-    
+
         $scope.pending_required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
           "sc_id": rs.sc_id,
           "sc_data_version": rs.sc_data_version,
+          "signoffs": rs.signoffs,
         };
       });
     }
@@ -146,6 +147,16 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
     $modal.open({
       templateUrl: "signoff_modal.html",
       controller: "SignoffCtrl",
+      backdrop: "static",
+      resolve: {
+      }
+    });
+  };
+
+  $scope.deletePending = function(mode, sc_id) {
+    $modal.open({
+      templateUrl: "required_signoff_delete_modal.html",
+      controller: "RequiredSignoffDeleteModal",
       backdrop: "static",
       resolve: {
       }

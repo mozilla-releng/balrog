@@ -69,7 +69,12 @@
           <!-- add link to user roles ui here, when it exists -->
           <span>{{ details["signoffs_required"] }} members of {{ role }}</span>
           <div style="float: right" ng-show="state === 'pending'">
+            <!-- show revoke button if user has already signed off - can't do this because we can't access REMOTE_USER
+                 maybe we can guess it by making a request on first page load and sniffing the Authentication header
+            -->
             <button class="btn btn-xs btn-primary" ng-click="signoff('channel', details['sc_id'])">Signoff as...</button>
+            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('channel', details[sc_id'])">Revoke your Signoff</button>
+            <button class="btn btn-xs btn-danger" ng-click="deletePending('channel', details['sc_id'])">Delete</button>
           </div>
         </h4>
       </div>
