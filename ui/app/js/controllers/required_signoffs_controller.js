@@ -41,8 +41,8 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
         }
     
         $scope.current_required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
-            "signoffs_required": rs.signoffs_required,
-            "data_version": rs.data_version,
+          "signoffs_required": rs.signoffs_required,
+          "data_version": rs.data_version,
         };
       });
     }
@@ -88,10 +88,10 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
         }
     
         $scope.pending_required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
-            "signoffs_required": rs.signoffs_required,
-            "data_version": rs.data_version,
-            "sc_id": rs.sc_id,
-            "sc_data_version": rs.sc_data_version,
+          "signoffs_required": rs.signoffs_required,
+          "data_version": rs.data_version,
+          "sc_id": rs.sc_id,
+          "sc_data_version": rs.sc_data_version,
         };
       });
     }
