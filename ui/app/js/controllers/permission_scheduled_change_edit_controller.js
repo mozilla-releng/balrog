@@ -9,6 +9,8 @@ function ($scope, $modalInstance, CSRF, Permissions, sc) {
   $scope.currentItemTab = 1;
   $scope.is_edit = true;
 
+  $scope.saving = false;
+
 
 
 
@@ -17,23 +19,31 @@ function ($scope, $modalInstance, CSRF, Permissions, sc) {
 
     $scope.date = new Date();
 
-    sc.when=$scope.date.getTime()+100;
+    $scope.sc.when=$scope.date.getTime()+100;
     $scope.saving = true;
     CSRF.getToken()
     .then(function(csrf_token) {
-      Permissions.updateScheduledChange(sc.sc_id, sc, csrf_token)
+      Permissions.updateScheduledChange(sc.sc_id, $scope.sc, csrf_token)
       .success(function(response) {
         $scope.sc.sc_data_version = response.new_data_version;
         angular.copy($scope.sc, $scope.original_sc);
         $scope.saving = false;
         $modalInstance.close();
       })
-      .error(function(response, status) {
+        .error(function(response) {
         if (typeof response === 'object') {
           $scope.errors = response;
           sweetAlert(
             "Form submission error",
             "See fields highlighted in red.",
+            "error"
+          );
+        } else if (typeof response === 'string') {
+          // quite possibly an error in the blob validation
+          sweetAlert(
+            "Form submission error",
+            "Unable to submit successfully.\n" +
+            "(" + response+ ")",
             "error"
           );
         }

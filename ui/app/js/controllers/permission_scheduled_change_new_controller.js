@@ -29,50 +29,7 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
     // console.dbg($scope.sc.permissions);
     $scope.loading = false;
   });
-  $scope.sc.roles = [];
-  Permissions.getUserRoles(sc.username)
-  .success(function(response) {
-    $scope.sc.roles = response.roles;
-  })
-  .error(function(response) {
-    if (typeof response === 'object') {
-      $scope.errors = response;
-      sweetAlert(
-        "Form submission error",
-        "See fields highlighted in red.",
-        "error"
-      );
-    } else if (typeof response === 'string') {
-      sweetAlert(
-        "Form submission error",
-        "Unable to submit successfully.\n" +
-        "(" + response+ ")",
-        "error"
-      );
-    }
-  });
-  $scope.roles_list = [];
-  Permissions.getAllRoles()
-  .success(function(response) {
-    $scope.roles_list = response.roles;
-  })
-  .error(function(response) {
-    if (typeof response === 'object') {
-      $scope.errors = response;
-      sweetAlert(
-        "Form submission error",
-        "See fields highlighted in red.",
-        "error"
-      );
-    } else if (typeof response === 'string') {
-      sweetAlert(
-        "Form submission error",
-        "Unable to submit successfully.\n" +
-        "(" + response+ ")",
-        "error"
-      );
-    }
-  });
+  
 
   $scope.saving = false;
 
@@ -128,9 +85,9 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
   $scope.addScheduledUser = function() {
 
 
-    $scope.date = new Date();
+    date = new Date();
 
-    $scope.permission.when=$scope.date.getTime()+100;
+    $scope.permission.when = date.getTime()+100;
     $scope.permission.change_type = "insert";
     $scope.saving = true;
     CSRF.getToken()
@@ -142,12 +99,20 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
         $scope.scheduled_changes.push($scope.sc);
         $modalInstance.close();
       })
-      .error(function(response, status) {
+      .error(function(response) {
         if (typeof response === 'object') {
-          $scope.errors = response;
+        $scope.errors = response;
           sweetAlert(
             "Form submission error",
             "See fields highlighted in red.",
+            "error"
+          );
+        } else if (typeof response === 'string') {
+          // quite possibly an error in the blob validation
+          sweetAlert(
+            "Form submission error",
+            "Unable to submit successfully.\n" +
+            "(" + response+ ")",
             "error"
           );
         }
@@ -178,7 +143,7 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
       })
       .error(function(response) {
         if (typeof response === 'object') {
-          $scope.errors.permissions[permission.permission] = response;
+        $scope.errors = response;
           sweetAlert(
             "Form submission error",
             "See fields highlighted in red.",
@@ -224,8 +189,23 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
           $scope.cancel();
         })
         .error(function(response) {
-          console.error(response);
-        })
+        if (typeof response === 'object') {
+           $scope.errors = response;
+          sweetAlert(
+            "Form submission error",
+            "See fields highlighted in red.",
+            "error"
+          );
+        } else if (typeof response === 'string') {
+          // quite possibly an error in the blob validation
+          sweetAlert(
+            "Form submission error",
+            "Unable to submit successfully.\n" +
+            "(" + response+ ")",
+            "error"
+          );
+        }
+      })
         .finally(function() {
           $scope.saving = false;
         });

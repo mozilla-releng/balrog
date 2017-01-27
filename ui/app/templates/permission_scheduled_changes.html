@@ -27,7 +27,7 @@
     <h3 class="panel-title">
       <div style="float: right">
         <i ng-if=" scheduled_changes_rules_count && $first && (currentPage == 1)">Current</i>
-        <button ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-click="openSchduledUpdateModal(sc)">Update</button>
+        <button ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-click="openScheduledUpdateModal(sc)">Update</button>
         <button ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
       </div>
 
@@ -52,8 +52,8 @@
       <h5 title="Change Type">
         change_type: <b>{{ sc.change_type }}</b>
       </h5>
-      <h5 ng-show="sc.option_as_json" title="Change Type">
-        option_as_json: <b>{{ sc.option_as_json }}</b>
+      <h5 title="Options">
+        Options: <b>{{ sc.options }}</b>
       </h5>
     </dl>
 

@@ -4,29 +4,8 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
   $scope.loading = true;
   $scope.failed = false;
 
-  $scope.sc_id = parseInt($routeParams.sc_id, 10);
 
-  function loadPage(newPage) {
-    Permissions.getScheduledChangeHistory($scope.sc_id, $scope.pageSize, newPage)
-    .success(function(response) {
-      $scope.scheduled_changes = response.revisions;
-      $scope.scheduled_changes_permission_count = response.count;
-    })
-    .error(function() {
-      console.error(arguments);
-      $scope.failed = true;
-    })
-    .finally(function() {
-      $scope.loading = false;
-    });
-  }
 
-  if ($scope.sc_id) {
-    // history of a specific rule
-    $scope.$watch("currentPage", function(newPage) {
-      loadPage(newPage);
-    });
-  } else {
   Permissions.getScheduledChanges()
   .success(function(response) {
     // "when" is a unix timestamp, but it's much easier to work with Date objects,
@@ -45,7 +24,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
   .finally(function() {
     $scope.loading = false;
   });
-  }
+
 
   $scope.$watch("ordering_str", function(value) {
     $scope.ordering = value.value.split(",");
@@ -185,7 +164,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
     });
   };
 
-  $scope.openSchduledUpdateModal = function(sc) {
+  $scope.openScheduledUpdateModal = function(sc) {
     var modalInstance = $modal.open({
       templateUrl: "permission_scheduled_change_update_modal.html",
       controller: "EditPermissionScheduledChangeCtrl",
@@ -193,7 +172,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
       backdrop: 'static',
       resolve: {
         sc: function() {
-          sc.when = new Date(sc.when);
+          sc.when = new Date(sc.when) + 100;
           return sc;
         }
       }
