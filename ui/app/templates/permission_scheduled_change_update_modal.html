@@ -1,0 +1,43 @@
+<div class="modal-header">
+    <h3 class="modal-title">  Edit Scheduled Change for {{ sc.username }}</h3>
+</div>
+<div class="modal-body">
+
+ <h4>Scheduled Change Details</h4>
+<form role="form">
+<div class="row">
+      <div class="col-md-6">
+        <div class="form-group" ng-class="{'has-error': errors.username}">
+        <label for="id_username">Username</label>
+        <input type="text" class="form-control" id="id_username" ng-model="sc.username">
+        <p class="help-block" ng-show="errors.username">{{ errors.username.join(', ') }}</p>
+        </div>
+      </div>
+      <div class="col-md-6" >
+        <div class="form-group" ng-class="{'has-error': errors.permission}">
+        <label for="id_permission">permission</label>
+        <input type="text" class="form-control" id="id_permission" ng-model="sc.permission">
+        <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
+        </div>
+      </div>
+    <div class="col-md-12">
+     <div class="form-group" ng-class="{'has-error': errors.options_as_json}">
+            <label for="id_options">Options</label>
+            <textarea ng-model="permission.options_as_json" class="options-as-json"></textarea>
+            <p class="help-block" ng-show="errors.options">{{ errors.options.join(', ') }}</p>
+       </div>
+    <div>
+    </div>
+    <input type="hidden" name="sc_data_version" ng-model="sc.sc_data_version">
+    <input type="hidden" name="data_version" ng-model="sc.data_version">
+</form>
+</div>
+
+
+
+</div>
+<div class="modal-footer">
+  <div ng-show="saving" small-loader></div>
+  <button class="btn btn-primary" ng-show="!saving" ng-click="updateScheduledPermission()">Save Changes</button>
+  <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
+</div>

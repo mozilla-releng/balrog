@@ -1,0 +1,63 @@
+<div class="modal-header">
+
+    <h3 class="modal-title" ng-show="sc.username && !sc.when">Create Scheduled Change for {{ sc.username }}</h3>
+    <h3 class="modal-title" ng-show="sc.username && sc.when">Edit Scheduled Change for {{ sc.username }}</h3>
+</div>
+<div class="modal-body">
+
+  <div ng-show="!loading">
+    <div class="tabbable tabs-below">
+
+        <h4 ng-show="!sc.when">Scheduled a new Permission</h4>
+        <h4 ng-show="sc.when">Edit Scheduled Permission</h4>
+
+        <form role="form" ng-submit="addScheduledPermission()">
+          <div class="form-group" ng-class="{'has-error': errors.permission}">
+            <label for="id_permission">Permission</label>
+            <input type="text" class="form-control" id="id_permission" ng-model="permission.permission">
+            <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
+          </div>
+          <div class="form-group" ng-class="{'has-error': errors.options_as_json}">
+            <label for="id_options">Options</label>
+            <textarea id="id_options" ng-model="permission.options_as_json" class="options-as-json"></textarea>
+            <p class="help-block" ng-show="errors.options">{{ errors.options.join(', ') }}</p>
+          </div>
+
+          <div style="text-align: right">
+            <input type="hidden" name="data_version" ng-model="permission.data_version">
+            <button type="submit" class="btn btn-primary">Scheduled Permission</button>
+          </div>
+        </form>
+
+        <hr>
+        <h4>Current Permissions</h4>
+        <div class="panel panel-default"
+             ng-repeat="permission in sc.permissions">
+          <div class="panel-heading">
+            <div style="float: right">
+              <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="scheduledUpdatePermission(permission)">Schedule Update</button>
+              <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="scheduledDeletePermission(permission)">Schedule Deletion</button>
+            </div>
+            <h3 class="panel-title">
+              {{ permission.permission }}
+            </h3>
+          </div>
+          <div class="panel-body">
+            <textarea ng-model="permission.options_as_json" class="options-as-json"></textarea>
+            <p class="help-block" ng-show="errors.permissions[permission.permission]">{{ errors.permissions[permission.permission].options.join(', ') }}</p>
+          </div>
+          <div class="panel-footer" ng-show="rule_id">
+            <button class="btn btn-primary" ng-show="!saving" ng-click="updatePermissionChanges(permission)">Update</button>
+          </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div loader ng-show="loading"></div>
+
+</div>
+<div class="modal-footer">
+  <div ng-show="saving" small-loader></div>
+  <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
+</div>

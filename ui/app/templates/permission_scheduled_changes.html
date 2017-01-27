@@ -19,3 +19,48 @@
     <i class="glyphicon glyphicon-arrow-left"></i>
 </a>
 </h2>
+
+<div class="panel panel-default" style="clear:right"
+     ng-repeat="sc in filtered_items = (scheduled_changes | filter: filterBySelect) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
+  <div class="panel-heading">
+
+    <h3 class="panel-title">
+      <div style="float: right">
+        <i ng-if=" scheduled_changes_rules_count && $first && (currentPage == 1)">Current</i>
+        <button ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-click="openSchduledUpdateModal(sc)">Update</button>
+        <button ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
+      </div>
+
+
+
+      <b title="Product" ng-show="sc.username">{{ sc.username }}</b>
+      :
+      <b title="Product" ng-show="sc.permission">{{ sc.permission }}</b>
+    </h3>
+  </div>
+  <div class="panel-body">
+    <div class="left" style="float: left">
+      <h5 title="Scheduled By">
+        Scheduled By: <b>{{ sc.scheduled_by }}</b>
+      </h5>
+      <h5 title="Data Version">
+        Data Version: <b>{{ sc.sc_data_version }}</b>
+      </h5>
+      <h5 title="SC ID">
+        sc_id: <b>{{ sc.sc_id }}</b>
+      </h5>
+      <h5 title="Change Type">
+        change_type: <b>{{ sc.change_type }}</b>
+      </h5>
+      <h5 ng-show="sc.option_as_json" title="Change Type">
+        option_as_json: <b>{{ sc.option_as_json }}</b>
+      </h5>
+    </dl>
+
+  </div>
+<div class="panel-footer" ng-show="scheduled_changes_rules_count">
+    Changed by <code>{{ sc.changed_by }}</code>
+    <span moment="sc.timestamp"></span>
+  </div>
+</div>
+

@@ -119,11 +119,12 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal)
   };
   /* End openNewModal */
 
-  $scope.openNewScheduledPermissionChangeModal = function(permission) {
+
+  $scope.openNewScheduledPermissionChangeModal = function(user) {
 
     var modalInstance = $modal.open({
-      templateUrl: 'release_scheduled_change_modal.html',
-      controller: 'NewReleaseScheduledChangeCtrl',
+      templateUrl: 'permissions_scheduled_change_modal.html',
+      controller: 'NewPermissionScheduledChangeCtrl',
       size: 'lg',
       backdrop: 'static',
       resolve: {
@@ -131,8 +132,8 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal)
           return [];
         },
         sc: function() {
-          sc = angular.copy(permission);
-          sc["change_type"] = "update";
+          sc = angular.copy(user);
+          sc["change_type"] = "insert";
           return sc;
         }
       }

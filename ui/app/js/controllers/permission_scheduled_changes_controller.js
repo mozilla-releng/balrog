@@ -146,6 +146,59 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
     return '<time title="' + date.format('dddd, MMMM D, YYYY HH:mm:ss ') + 'GMT' + date.format('ZZ') + '">' + date.fromNow() + '</time>';
   };
 
+   $scope.openDeleteModal = function(sc) {
+    var modalInstance = $modal.open({
+      templateUrl: "permission_scheduled_change_delete_modal.html",
+      controller: "DeletePermissionRuleScheduledChangeCtrl",
+      backdrop: 'static',
+      resolve: {
+        sc: function() {
+          return sc;
+        },
+        scheduled_changes: function() {
+          return $scope.scheduled_changes;
+        }
+      }
+    });
+  };
+
+  $scope.openNewScheduledPermissionChangeModal = function() {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'new_user_scheduled_change_modal.html',
+      controller: 'NewPermissionScheduledChangeCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        scheduled_changes: function() {
+          return $scope.scheduled_changes;
+        },
+        sc: function() {
+          // blank new default release
+          return {
+            name: '',
+            product: '',
+            change_type: 'insert',
+          };
+        }
+      }
+    });
+  };
+
+  $scope.openSchduledUpdateModal = function(sc) {
+    var modalInstance = $modal.open({
+      templateUrl: "permission_scheduled_change_update_modal.html",
+      controller: "EditPermissionScheduledChangeCtrl",
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        sc: function() {
+          sc.when = new Date(sc.when);
+          return sc;
+        }
+      }
+    });
+  };
 
 
 });
