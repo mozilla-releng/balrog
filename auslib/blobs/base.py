@@ -161,3 +161,10 @@ class Blob(dict):
         """
         footer = '</updates>'
         return footer
+
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        return set()
