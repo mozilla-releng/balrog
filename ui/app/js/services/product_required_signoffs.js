@@ -5,11 +5,15 @@
 var RequiredSignoffBase = (function() {
   var service = {
     getRequiredSignoffs: function() {
-      var uri = this.base_uri;
+      var uri = "/api" + this.base_uri;
       return this.http.get(uri);
     },
     addRequiredSignoff: function(data) {
-      var uri = this.base_uri;
+      var uri = "/api" + this.base_uri;
+      return this.http.post(uri, data);
+    },
+    addScheduledChange: function(data) {
+      var uri = "/api/scheduled_changes" + this.base_uri;
       return this.http.post(uri, data);
     },
   };
@@ -18,7 +22,7 @@ var RequiredSignoffBase = (function() {
 
 angular.module("app").factory("ProductRequiredSignoffs", function($http) {
   var service = Object.create(RequiredSignoffBase);
-  service.base_uri = "/api/required_signoffs/product";
+  service.base_uri = "/required_signoffs/product";
   service.http = $http;
   return service;
 });

@@ -68,6 +68,8 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
 
         var successCallback = function(data, deferred) {
           return function(response) {
+            // TODO: We need to change this so that Required Signoffs that are still
+            // in a Scheduled state don't show up the same as others.
             var data_version = response["new_data_version"];
             // todo: maybe required_signoffs should be an object with methods
             // so we don't have to duplicate this from the main controller
@@ -75,7 +77,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               required_signoffs[data["product"]] = {"channels": {}};
             }
 
-            // TODO: this isn't updating the page properly. also need to close the modal
             if ($scope.mode === "channel") {
               if (! (data["channel"] in required_signoffs[data["product"]]["channels"])) {
                 required_signoffs[data["product"]]["channels"][data["channel"]] = {};
@@ -113,12 +114,20 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             data["channel"] = $scope.channel;
           }
           if (first) {
+            first = false;
             service.addRequiredSignoff(data)
             .success(successCallback(data, deferred))
             .error(errorCallback(data, deferred));
           }
+          // There's probably a race condition here if this completes
+          // before addRequiredSignoff from the first time through this loop.
           else {
-            // todo: add rs stuff to data
+            data["change_type"] = "insert";
+            // There's no use case for users to pick a specific time for these
+            // to be enacted, so we just schedule them for 30 seconds in the future.
+            // They'll still end up waiting for any necessary Required Signoffs
+            // before being enacted, however.
+            data["when"] = new Date().getTime() + 30000;
             service.addScheduledChange(data)
             .success(successCallback(data, deferred))
             .error(errorCallback(data, deferred));
