@@ -3,6 +3,11 @@
     <label>Product:</label>
     <select ng-model="selected_product" ng-options="product as product for (product, rs) in required_signoffs" name="product">
     </select>
+    <label>State:</label>
+    <select ng-model="state" name="state">
+      <option value="current">Current</option>
+      <option value="pending">Pending</option>
+    </select>
 </form>
 </div>
 <h2>
@@ -27,7 +32,7 @@
     <ul class="list-group">
       <li class="list-group-item" ng-repeat="(role, details) in required_signoffs[selected_product]['permissions']">
         <!-- add link to user roles ui here, when it exists -->
-        {{ details.signoffs_required }} members of {{ role }}
+        {{ details.signoffs_required }} member(s) of {{ role }}
       </li>
     </ul>
   </div>

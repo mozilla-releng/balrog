@@ -12,6 +12,10 @@ var RequiredSignoffBase = (function() {
       var uri = "/api" + this.base_uri;
       return this.http.post(uri, data);
     },
+    getScheduledChanges: function() {
+      var uri = "/api/scheduled_changes" + this.base_uri;
+      return this.http.get(uri);
+    },
     addScheduledChange: function(data) {
       var uri = "/api/scheduled_changes" + this.base_uri;
       return this.http.post(uri, data);
