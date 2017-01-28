@@ -1,3 +1,4 @@
+import difflib
 import simplejson as json
 
 from sqlalchemy.sql.expression import null
@@ -17,6 +18,8 @@ from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, Db
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
     SignoffsView
+from auslib.admin.views.history import FieldView
+
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
@@ -603,3 +606,50 @@ class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         return super(ReleaseScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
+
+
+class ReleaseFieldView(FieldView):
+    """/diff/:id/:field"""
+
+    def __init__(self):
+        super(ReleaseFieldView, self).__init__(dbo.releases)
+
+
+class ReleaseDiffView(ReleaseFieldView):
+    """/diff/:id/:field"""
+
+    def get_prev_id(self, value, change_id):
+        release_name = value['name']
+        table = self.table.history
+        old_revision = table.select(
+            where=[
+                table.name == release_name,
+                table.change_id < change_id,
+                table.data_version != null()
+            ],
+            limit=1,
+            order_by=[table.timestamp.desc()],
+        )
+
+        return old_revision[0]['change_id']
+
+    def get(self, change_id, field):
+        value = self.get_value(change_id, field)
+        data_version = self.get_value(change_id, "data_version")
+
+        prev_id = self.get_prev_id(value, change_id)
+        previous = self.get_value(prev_id, field)
+        prev_data_version = self.get_value(prev_id, "data_version")
+
+        value = self.format_value(value)
+        previous = self.format_value(previous)
+
+        result = difflib.unified_diff(
+            previous.splitlines(),
+            value.splitlines(),
+            fromfile="Data Version {}".format(prev_data_version),
+            tofile="Data Version {}".format(data_version),
+            lineterm=""
+        )
+
+        return Response('\n'.join(result), content_type='text/plain')

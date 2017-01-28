@@ -9,14 +9,12 @@ class TestHistoryView(ViewTest):
     def testFieldViewBadValuesBadTable(self):
         url = '/history/view/notatable/1/whatever'
         ret = self.client.get(url)
-        self.assertStatusCode(ret, 400)
-        self.assertTrue('Bad table' in ret.data)
+        self.assertStatusCode(ret, 404)
 
     def testFieldViewBadValuesBadChangeId(self):
-        url = '/history/view/permission/9999/whatever'
+        url = '/history/view/release/9999/whatever'
         ret = self.client.get(url)
         self.assertStatusCode(ret, 404)
-        self.assertTrue('Bad change_id' in ret.data)
 
     def testFieldViewCheckIntegerValue(self):
         data = json.dumps(dict(detailsUrl='InbhalInt', fakePartials=True, schema_version=1, name="d", hashFunction="sha512"))
@@ -37,19 +35,6 @@ class TestHistoryView(ViewTest):
         url = '/history/view/release/%d/data_version' % change_id
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
-
-    def testFieldViewBadValuesBadField(self):
-        ret = self._put('/users/bob/permissions/admin', data=dict(options=json.dumps(dict(products=["a"]))))
-        self.assertStatusCode(ret, 201)
-
-        table = dbo.permissions.history
-        row, = table.select(order_by=[table.change_id.desc()], limit=1)
-        change_id = row['change_id']
-
-        url = '/history/view/permission/%d/notafield' % change_id
-        ret = self.client.get(url)
-        self.assertStatusCode(ret, 400)
-        self.assertTrue('Bad field' in ret.data)
 
     def testFieldViewRelease(self):
         # add a release
@@ -174,16 +159,3 @@ class TestHistoryView(ViewTest):
         self.assertFalse('"detailsUrl": "blahblahblah"' in ret.data)
         self.assertTrue('"fakePartials": true' in ret.data)
         self.assertTrue('"fakePartials": false' in ret.data)
-
-    def testFieldViewPermission(self):
-        # Add a permission
-        ret = self._put('/users/bob/permissions/admin', data=dict(options=json.dumps(dict(products=["a"]))))
-        self.assertStatusCode(ret, 201)
-        table = dbo.permissions.history
-        row, = table.select(order_by=[table.timestamp.desc()], limit=1)
-        change_id = row['change_id']
-
-        url = '/history/view/permission/%d/options' % change_id
-        ret = self.client.get(url)
-        self.assertStatusCode(ret, 200)
-        self.assertEqual(json.loads(ret.data), {"products": ["a"]})
