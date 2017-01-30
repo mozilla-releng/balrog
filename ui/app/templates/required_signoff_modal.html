@@ -5,12 +5,11 @@
 <div class="modal-body">
   <form role="form">
     <div class="form-group" ng-class="{'has-error': errors.product}">
-      <label for="id_product">Product:</label>
+      <label for="id_product">Product</label>
       <input tabindex="1" type="text" class="form-control" id="id_product" ng-model="product" autocomplete="off"
              typeahead="product for product in products | filter:$viewValue | limitTo:16">
       <p class="help-block" ng-show="errors.product">{{ errors.product.join(", ") }}</p>
     </div>
-    <!-- TODO: IMPROVE THE LAYOUT!" -->
     <!-- TODO: don't show the channel and permissions switcher for edits -->
     <div class="tabbable tabs-below">
       <ul class="nav nav-pills" role="tablist">
@@ -33,24 +32,24 @@
       <thead>
         <tr>
           <th>
-            <button class="btn btn-default btn-xs" ng-click="new_roles = new_roles + 1" type="button">Add</button>
+            <button class="btn btn-default btn-xs" ng-click="addRole()" type="button">Add</button>
           </th>
           <th>Role</th>
           <th>Signoffs Required</th>
         </tr>
       </thead>
       <tbody id="new_roles">
-        <tr class="new_role" ng-repeat="n in [].constructor(new_roles) track by $index">
+        <tr class="new_role" ng-repeat="rs in new_roles track by $index">
           <th>
             <!-- TODO: make this button work -->
-            <button type="button" class="btn btn-default btn-xs" ng-click="removeRole($index)">
+            <button type="button" class="btn btn-default btn-xs" ng-click="removeRole($index)" ng-show="$index > 0">
               <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
             </button>
           </th>
           <td>
-            <input tabindex="{{ ($index * 2) + 3 }}" name="role" type="text" class="form-control">
+            <input tabindex="{{ ($index * 2) + 3 }}" name="role" type="text" class="form-control" ng-model="rs['role']">
           </td>
-          <td><input tabindex="{{ ($index * 2) + 4 }}" name="signoffs_required" type="text" class="form-control"></td>
+          <td><input tabindex="{{ ($index * 2) + 4 }}" name="signoffs_required" type="text" class="form-control" ng-model="rs['signoffs_required']"></td>
         </tr>
         <tr ng-class="{'has-error': errors.role || errors.signoffs_required}" ng-if="errors.role || errors.signoffs_required">
           <td class="help-block">{{ errors.role }}</td>

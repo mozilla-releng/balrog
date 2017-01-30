@@ -7,7 +7,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   $scope.mode = "channel";
   $scope.product = "";
   $scope.channel = "";
-  $scope.new_roles = 1;
+  $scope.new_roles = [{"role": "", "signoffs_required": null}];
 
   $scope.products = [];
   Rules.getProducts().success(function(response) {
@@ -31,25 +31,29 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
     return title;
   };
 
+  $scope.addRole = function() {
+    $scope.new_roles.push({"role": "", "signoffs_required": null});
+  };
+
+  $scope.removeRole = function(index) {
+    $scope.new_roles.splice(index, 1);
+  };
+
   $scope.saveChanges = function() {
     $scope.errors = {};
 
     var new_required_signoffs = {};
 
-    // Collect all of the new roles and signoff requirements
-    $("#new_roles > .new_role").each(function(index, rs) {
-      rs = $(rs);
-      var role = rs.find("input[name='role']")[0].value;
-      var signoffs_required = rs.find("input[name='signoffs_required']")[0].value;
-      if (role !== "") {
-        if (role in new_required_signoffs) {
+    for (let rs of $scope.new_roles) {
+      if (rs["role"] !== "") {
+        if (rs["role"] in new_required_signoffs) {
           $scope.errors["role"] = "Cannot specify any Role more than once.";
         }
         else {
-          new_required_signoffs[role] = signoffs_required;
+          new_required_signoffs[rs["role"]] = rs["signoffs_required"];
         }
       }
-    });
+    }
 
     if (Object.keys(new_required_signoffs).length === 0) {
       $scope.errors["exception"] = "No new roles found!";
