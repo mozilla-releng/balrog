@@ -15,9 +15,9 @@
             <input type="text" class="form-control" id="id_permission" ng-model="permission.permission">
             <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
           </div>
-          <div class="form-group" ng-class="{'has-error': errors.options_as_json}">
+          <div class="form-group" ng-class="{'has-error': errors.options}">
             <label for="id_options">Options</label>
-            <textarea id="id_options" ng-model="permission.options_as_json" class="options-as-json"></textarea>
+            <textarea id="id_options" ng-model="permission.options" class="options-as-json"></textarea>
             <p class="help-block" ng-show="errors.options">{{ errors.options.join(', ') }}</p>
           </div>
         <div class="form-group" ng-class="{'has-error': errors.exception}">
@@ -44,11 +44,8 @@
             </h3>
           </div>
           <div class="panel-body">
-            <textarea ng-model="permission.options_as_json" class="options-as-json"></textarea>
+            <textarea ng-model="permission.options" class="options-as-json"></textarea>
             <p class="help-block" ng-show="errors.permissions[permission.permission]">{{ errors.permissions[permission.permission].options.join(', ') }}</p>
-          </div>
-          <div class="panel-footer" ng-show="rule_id">
-            <button class="btn btn-primary" ng-show="!saving" ng-click="updatePermissionChanges(permission)">Update</button>
           </div>
       </div>
 

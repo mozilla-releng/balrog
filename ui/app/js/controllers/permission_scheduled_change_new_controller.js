@@ -10,7 +10,7 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
   $scope.sc = angular.copy(sc);
   $scope.permission = {
     permission: '',
-    options_as_json: ''
+    options: ''
   };
   $scope.errors = {
     permissions: {}
@@ -21,7 +21,7 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
   .then(function(permissions) {
     _.forEach(permissions, function(p) {
       if (p.options) {
-        p.options_as_json = JSON.stringify(p['options']);
+        p.options = JSON.stringify(p['options']);
       }
     });
     $scope.sc.permissions = permissions;
@@ -29,13 +29,10 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
     // console.dbg($scope.sc.permissions);
     $scope.loading = false;
   });
-  
+
 
   $scope.saving = false;
 
-  $scope.$watchCollection('permission', function(value) {
-    value.options = value.options_as_json;
-  });
 
 
 
@@ -48,7 +45,6 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
     permission_sc.permission = $scope.permission.permission;
     permission_sc.data_version = $scope.permission.data_version;
     permission_sc.options = $scope.permission.options;
-    permission_sc.options_as_json = $scope.permission.options_as_json;
     permission_sc.when=date.getTime()+100;
     $scope.saving = true;
     CSRF.getToken()
@@ -77,7 +73,7 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
 
      $scope.permission = {
           permission: '',
-          options_as_json: ''
+          options: ''
         };
     }
   };
@@ -129,7 +125,6 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
     CSRF.getToken()
     .then(function(csrf_token) {
       date = new Date();
-      permission.options = permission.options_as_json;
       permission.when = date.getTime()+100;
       permission.username = $scope.sc.username;
       permission.change_type = "update";
