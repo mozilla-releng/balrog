@@ -426,7 +426,7 @@ class AUSTable(object):
         return query
 
     def _prepareDelete(self, trans, where, changed_by, old_data_version):
-        """Prepare a DELETE statament for commit. If this table has history enabled,
+        """Prepare a DELETE statement for commit. If this table has history enabled,
            a row will be created in that table representing the new state of the
            row being deleted (NULL). If versioning is enabled and old_data_version
            doesn't match the current version of the row to be deleted, an OutdatedDataError
@@ -485,7 +485,7 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
-        # clauses before porceeding.
+        # clauses before proceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 

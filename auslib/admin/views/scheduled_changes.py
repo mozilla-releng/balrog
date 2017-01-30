@@ -94,13 +94,18 @@ class ScheduledChangeView(AdminView):
             if (request.json and k in request.json):
                 what[k] = v.data
 
+        where = {"sc_id": sc_id}
         try:
-            self.sc_table.update({"sc_id": sc_id}, what, changed_by, form.sc_data_version.data, transaction)
+            self.sc_table.update(where, what, changed_by, form.sc_data_version.data, transaction)
+            signOffs = self.sc_table.signoffs.select(where=where, transaction=transaction, columns=["sc_id", "username"])
+            for signOff in signOffs:
+                self.sc_table.signoffs.delete(where={"sc_id": sc_id, "username": signOff["username"]},
+                                              changed_by=changed_by, transaction=transaction)
         except ValueError as e:
             self.log.warning("Bad input: %s", e)
             return Response(status=400, response=json.dumps({"exception": e.args}))
 
-        sc = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["data_version"])[0]
+        sc = self.sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
         return jsonify(new_data_version=sc["data_version"])
 
     def _delete(self, sc_id, transaction, changed_by):
