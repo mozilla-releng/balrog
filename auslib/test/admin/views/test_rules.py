@@ -112,8 +112,17 @@ class TestRulesAPI_JSON(ViewTest):
             self.assertEquals(len(r), 1)
             self.assertEquals(r[0]['buildID'], '%s20010101000000' % op)
 
+    def testVersionListValidInput(self):
+        for validVersionList in ('3.3,4.2', '3.1.3,4.2'):
+            ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
+                                                 product='Firefox', channel="nightly",
+                                                 update_type='minor', version=validVersionList))
+            self.assertEquals(ret.status_code, 200,
+                              "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.data, validVersionList))
+
     def testVersionValidationBogusInput(self):
-        for bogus in ('<= 4.0', ' <=4.0', '<>4.0', '<=-4.0', '=4.0', '> 4.0', '>= 4.0', ' >=4.0', ' 4.0 '):
+        for bogus in ('<= 4.0', ' <=4.0', '<>4.0', '<=-4.0', '=4.0', '> 4.0', '>= 4.0', ' >=4.0', ' 4.0 ',
+                      '<=4.0,3.0', '>=4.0,3.0', '4.0,<3.0', '4.0,>3.0', '=4.0,3.0', '=4.0,=3.0', '4.0,=3.0'):
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                              product='Firefox', channel="nightly", update_type='minor', version=bogus))
             self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.data, bogus))

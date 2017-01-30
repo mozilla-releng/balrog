@@ -1478,7 +1478,11 @@ class Rules(AUSTable):
         self.log.debug('ruleVersion: %s, queryVersion: %s', ruleVersion, queryVersion)
         if ruleVersion is None:
             return True
-        return version_compare(queryVersion, ruleVersion)
+        rulesVersionList = ruleVersion.split(",")
+        for rule in rulesVersionList:
+            if version_compare(queryVersion, rule):
+                return True
+        return False
 
     def _buildIDMatchesRule(self, ruleBuildID, queryBuildID):
         """Decides whether a buildID from the rules matches an incoming one.
