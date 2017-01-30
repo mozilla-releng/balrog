@@ -1,4 +1,4 @@
-angular.module("app").controller("NewRequiredSignoffCtrl",
+angular.module("app").controller("BaseRequiredSignoffCtrl",
 function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, required_signoffs) {
   $scope.saving = false;
   $scope.errors = {};
@@ -149,4 +149,17 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   $scope.cancel = function() {
     $modalInstance.dismiss("cancel");
   };
+});
+
+angular.module("app").controller("NewRequiredSignoffCtrl",
+function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, required_signoffs) {
+  $controller("BaseRequiredSignoffCtrl", {
+    $scope: $scope,
+    $modalInstance: $modalInstance,
+    $q: $q,
+    CSRF: CSRF,
+    ProductRequiredSignoffs: ProductRequiredSignoffs,
+    PermissionsRequiredSignoffs: PermissionsRequiredSignoffs,
+    required_signoffs: required_signoffs,
+  });
 });
