@@ -23,7 +23,7 @@
       <div class="tab-content" ng-show="mode === 'channel'">
         <div class="form-group" ng-class="{'has-error': errors.channel}">
           <input tabindex="2" type="text" class="form-control" id="id_channel" ng-model="channel" ng-show="mode === 'channel'",
-                 autocomplete="off" typeahead="channel for channel in channels | filter:$viewValue | limitTo:16">
+                 autocomplete="off" typeahead="channel for channel in channels | filter:$viewValue | limitTo:16 | orderBy:length">
           <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(", ") }}</p>
         </div>
       </div>

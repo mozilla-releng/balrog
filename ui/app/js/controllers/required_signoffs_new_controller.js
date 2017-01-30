@@ -18,6 +18,10 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
     $scope.channels = response.channel;
   });
 
+  $scope.length = function(item) {
+    return item.length;
+  };
+
   $scope.getTitle = function () {
     var title = "Signoff Requirements";
     if ($scope.product !== "") {
