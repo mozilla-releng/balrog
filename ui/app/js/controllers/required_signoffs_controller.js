@@ -39,7 +39,6 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     }
   });
 
-  // Grabbing initial data from the server
   ProductRequiredSignoffs.getRequiredSignoffs()
   .success(function(response) {
     if (response["count"] > 0) {
@@ -59,9 +58,11 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
       });
     }
   })
-  // can a response be grabbed here?
   .error(function(response) {
-    alert("error! " + response);
+    sweetAlert(
+      "Failed to load Product Required Signoffs:",
+      response
+    );
   })
   .finally(function() {
     loading_deferreds["product"].resolve();
@@ -85,9 +86,11 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
       });
     }
   })
-  // can a response be grabbed here?
   .error(function(response) {
-    alert("error! " + response);
+    sweetAlert(
+      "Failed to load Permissions Required Signoffs:",
+      response
+    );
   })
   .finally(function() {
     loading_deferreds["permissions"].resolve();
@@ -115,9 +118,11 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
       });
     }
   })
-  // can a response be grabbed here?
   .error(function(response) {
-    alert("error! " + response);
+    sweetAlert(
+      "Failed to load pending Product Required Signoffs:",
+      response
+    );
   })
   .finally(function() {
     loading_deferreds["product_sc"].resolve();
@@ -141,15 +146,16 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
       });
     }
   })
-  // can a response be grabbed here?
   .error(function(response) {
-    alert("error! " + response);
+    sweetAlert(
+      "Failed to load pending Permissions Required Signoffs:",
+      response
+    );
   })
   .finally(function() {
     loading_deferreds["permissions_sc"].resolve();
   });
 
-  // Setting up dialogs the page uses
   $scope.addNewRequiredSignoff = function() {
     $modal.open({
       templateUrl: "required_signoff_modal.html",
