@@ -1,6 +1,4 @@
-from auslib.log import configure_logging
-configure_logging()
-
+import cgi
 import logging
 log = logging.getLogger(__name__)
 
@@ -30,6 +28,17 @@ def heartbeat_database_function(dbo):
 create_dockerflow_endpoints(app, heartbeat_database_function)
 
 
+@app.after_request
+def apply_security_headers(response):
+    # There's no use cases for content served by Balrog to load additional content
+    # nor be embedded elsewhere, so we apply a strict Content Security Policy.
+    # We also need to set X-Content-Type-Options to nosniff for Firefox to obey this.
+    # See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829#c4 for background.
+    response.headers["Content-Security-Policy"] = app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
+    response.headers["X-Content-Type-Options"] = app.config.get("CONTENT_TYPE_OPTIONS", "nosniff")
+    return response
+
+
 @app.errorhandler(404)
 def fourohfour(error):
     """We don't return 404s in AUS. Instead, we return empty XML files"""
@@ -45,12 +54,17 @@ def generic(error):
     because BadDataErrors are considered to be the client's fault.
     Otherwise, the error is just re-raised (which causes a 500)."""
 
+    # Escape exception messages before replying with them, because they may
+    # contain user input.
+    # See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829 for background.
+    error.message = cgi.escape(error.message)
     if isinstance(error, BadDataError):
-        return Response(status=400, response=error.message)
+        return Response(status=400, mimetype="text/plain", response=error.message)
 
     if sentry.client:
         sentry.captureException()
-    raise error
+
+    return Response(status=500, mimetype="text/plain", response=error.message)
 
 
 @app.route('/robots.txt')

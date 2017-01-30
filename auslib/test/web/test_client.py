@@ -906,16 +906,73 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         ret = self.client.get('/whizzybang')
         self.assertEqual(ret.headers.get("Cache-Control"), None)
 
+    def testContentSecurityPolicyIsSet(self):
+        ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
+        self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
+
+    def testContentSecurityPolicyIsSetFor404(self):
+        ret = self.client.get('/whizzybang')
+        self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
+
+    def testContentSecurityPolicyIsSetFor400(self):
+        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+            m.side_effect = BadDataError('I break!')
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
+
+    def testContentSecurityPolicyIsSetFor500(self):
+        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+            m.side_effect = Exception('I break!')
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
+
+    def testXContentTypeOptionsIsSet(self):
+        ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
+        self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
+
+    def testXContentTypeOptionsIsSetFor404(self):
+        ret = self.client.get('/whizzybang')
+        self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
+
+    def testXContentTypeOptionsIsSetFor400(self):
+        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+            m.side_effect = BadDataError('I break!')
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
+
+    def testXContentTypeOptionsIsSetFor500(self):
+        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+            m.side_effect = Exception('I break!')
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
+
     def testEmptySnippetOn404(self):
         ret = self.client.get('/whizzybang')
         self.assertUpdatesAreEmpty(ret)
 
-    def testEmptySnippetOn500(self):
+    def testErrorMessageOn500(self):
         with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
             m.side_effect = Exception('I break!')
-            with self.assertRaises(Exception) as exc:
-                self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
-            self.assertEqual('I break!', str(exc.exception.message))
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.status_code, 500)
+            self.assertEqual(ret.mimetype, "text/plain")
+            self.assertEqual('I break!', ret.data)
+
+    def testEscapedOutputOn500(self):
+        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+            m.side_effect = Exception('50.1.0zibj5<img src%3da onerror%3dalert(document.domain)>')
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.status_code, 500)
+            self.assertEqual(ret.mimetype, "text/plain")
+            self.assertEqual('50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;', ret.data)
+
+    def testEscapedOutputOn400(self):
+        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
+            m.side_effect = BadDataError('Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.')
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
+            self.assertEqual(ret.status_code, 400, ret.data)
+            self.assertEqual(ret.mimetype, "text/plain")
+            self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", ret.data)
 
     def testSentryBadDataError(self):
         with mock.patch("auslib.web.views.client.ClientRequestView.get") as m, mock.patch("auslib.web.base.sentry") as sentry:
@@ -923,14 +980,16 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertFalse(sentry.captureException.called)
             self.assertEqual(ret.status_code, 400, ret.data)
+            self.assertEqual(ret.mimetype, "text/plain")
 
     def testSentryRealError(self):
-        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
+        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m, mock.patch("auslib.web.base.sentry") as sentry:
             m.side_effect = Exception("exterminate!")
-            with mock.patch("auslib.web.base.sentry") as sentry, self.assertRaises(Exception) as exc:
-                self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
+            self.assertEqual(ret.status_code, 500)
+            self.assertEqual(ret.mimetype, "text/plain")
             self.assertTrue(sentry.captureException.called)
-            self.assertEqual('exterminate!', str(exc.exception.message))
+            self.assertEqual('exterminate!', ret.data)
 
     def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):
         request1 = '/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml'
