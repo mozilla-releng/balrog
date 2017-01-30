@@ -8,10 +8,9 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
   $scope.selected_product = null;
   $scope.state = "current";
 
-  // TODO: make work for pending
   $scope.$watch("current_required_signoffs", function() {
     if ($scope.selected_product === null) {
-      var products = Object.keys($scope.current_required_signoffs);
+      var products = Object.keys($scope.required_signoffs);
       if (products.length > 0) {
         $scope.selected_product = products[0];
       }
