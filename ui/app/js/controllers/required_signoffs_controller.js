@@ -1,5 +1,5 @@
 angular.module("app").controller('RequiredSignoffsController',
-function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
+function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
   $scope.loading = true;
 
   $scope.current_required_signoffs = {};
@@ -8,7 +8,20 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
   $scope.selected_product = null;
   $scope.state = "current";
 
-  $scope.$watch("current_required_signoffs", function() {
+  var loading_deferreds = {
+    "product": $q.defer(),
+    "permissions": $q.defer(),
+    "product_sc": $q.defer(),
+    "permissions_sc": $q.defer(),
+  };
+
+  $q.all([loading_deferreds["product"].promise, loading_deferreds["permissions"].promise,
+          loading_deferreds["product_sc"].promise, loading_deferreds["permissions_sc"].promise])
+  .then(function() {
+    $scope.loading = false;
+  });
+
+  $scope.$watch("required_signoffs", function() {
     if ($scope.selected_product === null) {
       var products = Object.keys($scope.required_signoffs);
       if (products.length > 0) {
@@ -45,33 +58,39 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
         };
       });
     }
-
-    PermissionsRequiredSignoffs.getRequiredSignoffs()
-    .success(function(response) {
-      if (response["count"] > 0) {
-        response["required_signoffs"].forEach(function(rs) {
-          if (! (rs.product in $scope.current_required_signoffs)) {
-            $scope.current_required_signoffs[rs.product] = {"permissions": {}};
-          }
-          else if (! ("permissions" in $scope.current_required_signoffs[rs.product])) {
-            $scope.current_required_signoffs[rs.product]["permissions"] = {};
-          }
-        
-          $scope.current_required_signoffs[rs.product]["permissions"][rs.role] = {
-            "signoffs_required": rs.signoffs_required,
-            "data_version": rs.data_version,
-          };
-        });
-      }
-    })
-    // can a response be grabbed here?
-    .error(function(response) {
-      alert("error! " + response);
-    });
   })
   // can a response be grabbed here?
   .error(function(response) {
     alert("error! " + response);
+  })
+  .finally(function() {
+    loading_deferreds["product"].resolve();
+  });
+
+  PermissionsRequiredSignoffs.getRequiredSignoffs()
+  .success(function(response) {
+    if (response["count"] > 0) {
+      response["required_signoffs"].forEach(function(rs) {
+        if (! (rs.product in $scope.current_required_signoffs)) {
+          $scope.current_required_signoffs[rs.product] = {"permissions": {}};
+        }
+        else if (! ("permissions" in $scope.current_required_signoffs[rs.product])) {
+          $scope.current_required_signoffs[rs.product]["permissions"] = {};
+        }
+      
+        $scope.current_required_signoffs[rs.product]["permissions"][rs.role] = {
+          "signoffs_required": rs.signoffs_required,
+          "data_version": rs.data_version,
+        };
+      });
+    }
+  })
+  // can a response be grabbed here?
+  .error(function(response) {
+    alert("error! " + response);
+  })
+  .finally(function() {
+    loading_deferreds["permissions"].resolve();
   });
 
   ProductRequiredSignoffs.getScheduledChanges()
@@ -101,8 +120,33 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
     alert("error! " + response);
   })
   .finally(function() {
-    // todo: probably should use $q and defer until all loads are done.
-    $scope.loading = false;
+    loading_deferreds["product_sc"].resolve();
+  });
+
+  PermissionsRequiredSignoffs.getScheduledChanges()
+  .success(function(response) {
+    if (response["count"] > 0) {
+      response["required_signoffs"].forEach(function(rs) {
+        if (! (rs.product in $scope.pending_required_signoffs)) {
+          $scope.pending_required_signoffs[rs.product] = {"permissions": {}};
+        }
+        else if (! ("permissions" in $scope.pending_required_signoffs[rs.product])) {
+          $scope.pending_required_signoffs[rs.product]["permissions"] = {};
+        }
+      
+        $scope.pending_required_signoffs[rs.product]["permissions"][rs.role] = {
+          "signoffs_required": rs.signoffs_required,
+          "data_version": rs.data_version,
+        };
+      });
+    }
+  })
+  // can a response be grabbed here?
+  .error(function(response) {
+    alert("error! " + response);
+  })
+  .finally(function() {
+    loading_deferreds["permissions_sc"].resolve();
   });
 
   // Setting up dialogs the page uses
