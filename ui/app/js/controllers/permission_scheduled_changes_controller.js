@@ -172,7 +172,6 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
       backdrop: 'static',
       resolve: {
         sc: function() {
-          sc.when = new Date(sc.when) + 100;
           return sc;
         }
       }
