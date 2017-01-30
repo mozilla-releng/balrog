@@ -58,7 +58,7 @@
         <form role="form" ng-submit="grantRole()">
           <div class="form-group" ng-class="{'has-error': errors.role}">
             <label for="id_role">Role</label>
-            <input type="text" class="form-control" id="id_role" ng-model="role.role"
+            <input type="text" class="form-control" id="id_role" ng-model="role.role" autocomplete="off"
             typeahead="role for role in roles_list | filter:$viewValue | limitTo:16">
             <p class="help-block" ng-show="errors.role">{{ errors.role.join(', ') }}</p>
           </div>

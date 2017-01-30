@@ -1,5 +1,5 @@
 angular.module("app").controller("BaseRequiredSignoffCtrl",
-function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs,
+function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Rules,
          current_required_signoffs, pending_required_signoffs) {
   $scope.saving = false;
   $scope.errors = {};
@@ -8,6 +8,15 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   $scope.product = "";
   $scope.channel = "";
   $scope.new_roles = 1;
+
+  $scope.products = [];
+  Rules.getProducts().success(function(response) {
+    $scope.products = response.product;
+  });
+  $scope.channels = [];
+  Rules.getChannels().success(function(response) {
+    $scope.channels = response.channel;
+  });
 
   $scope.getTitle = function () {
     var title = "Signoff Requirements";
@@ -118,8 +127,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             .success(successCallback(data, current_required_signoffs, deferred))
             .error(errorCallback(data, deferred));
           }
-          // There's probably a race condition here if this completes
-          // before addRequiredSignoff from the first time through this loop.
           else {
             data["change_type"] = "insert";
             // There's no use case for users to pick a specific time for these

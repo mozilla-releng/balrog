@@ -6,8 +6,8 @@
   <form role="form">
     <div class="form-group" ng-class="{'has-error': errors.product}">
       <label for="id_product">Product:</label>
-      <!-- TODO: implement typeahead for product and channel, see rules modal -->
-      <input tabindex="1" type="text" class="form-control" id="id_product" ng-model="product">
+      <input tabindex="1" type="text" class="form-control" id="id_product" ng-model="product" autocomplete="off"
+             typeahead="product for product in products | filter:$viewValue | limitTo:16">
       <p class="help-block" ng-show="errors.product">{{ errors.product.join(", ") }}</p>
     </div>
     <!-- TODO: IMPROVE THE LAYOUT!" -->
@@ -23,7 +23,8 @@
       </ul>
       <div class="tab-content" ng-show="mode === 'channel'">
         <div class="form-group" ng-class="{'has-error': errors.channel}">
-          <input tabindex="2" type="text" class="form-control" id="id_channel" ng-model="channel" ng-show="mode === 'channel'">
+          <input tabindex="2" type="text" class="form-control" id="id_channel" ng-model="channel" ng-show="mode === 'channel'",
+                 autocomplete="off" typeahead="channel for channel in channels | filter:$viewValue | limitTo:16">
           <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(", ") }}</p>
         </div>
       </div>
