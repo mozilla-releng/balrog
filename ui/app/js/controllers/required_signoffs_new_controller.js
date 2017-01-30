@@ -1,5 +1,6 @@
 angular.module("app").controller("BaseRequiredSignoffCtrl",
-function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, required_signoffs) {
+function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs,
+         current_required_signoffs, pending_required_signoffs) {
   $scope.saving = false;
   $scope.errors = {};
 
@@ -66,10 +67,8 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           $scope.saving = false;
         }
 
-        var successCallback = function(data, deferred) {
+        var successCallback = function(data, required_signoffs, deferred) {
           return function(response) {
-            // TODO: We need to change this so that Required Signoffs that are still
-            // in a Scheduled state don't show up the same as others.
             var data_version = response["new_data_version"];
             // todo: maybe required_signoffs should be an object with methods
             // so we don't have to duplicate this from the main controller
@@ -116,7 +115,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           if (first) {
             first = false;
             service.addRequiredSignoff(data)
-            .success(successCallback(data, deferred))
+            .success(successCallback(data, current_required_signoffs, deferred))
             .error(errorCallback(data, deferred));
           }
           // There's probably a race condition here if this completes
@@ -129,7 +128,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             // before being enacted, however.
             data["when"] = new Date().getTime() + 30000;
             service.addScheduledChange(data)
-            .success(successCallback(data, deferred))
+            .success(successCallback(data, pending_required_signoffs, deferred))
             .error(errorCallback(data, deferred));
           }
         }
@@ -152,7 +151,8 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
 });
 
 angular.module("app").controller("NewRequiredSignoffCtrl",
-function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, required_signoffs) {
+function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs,
+         current_required_signoffs, pending_required_signoffs) {
   $controller("BaseRequiredSignoffCtrl", {
     $scope: $scope,
     $modalInstance: $modalInstance,
@@ -160,6 +160,7 @@ function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs,
     CSRF: CSRF,
     ProductRequiredSignoffs: ProductRequiredSignoffs,
     PermissionsRequiredSignoffs: PermissionsRequiredSignoffs,
-    required_signoffs: required_signoffs,
+    current_required_signoffs: current_required_signoffs,
+    pending_required_signoffs: pending_required_signoffs,
   });
 });

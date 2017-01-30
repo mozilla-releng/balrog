@@ -113,8 +113,11 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
       controller: "NewRequiredSignoffCtrl",
       backdrop: "static",
       resolve: {
-        required_signoffs: function() {
+        current_required_signoffs: function() {
           return $scope.current_required_signoffs;
+        },
+        pending_required_signoffs: function() {
+          return $scope.pending_required_signoffs;
         },
       }
     });
