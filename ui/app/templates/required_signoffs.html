@@ -73,7 +73,7 @@
                  maybe we can guess it by making a request on first page load and sniffing the Authentication header
             -->
             <button class="btn btn-xs btn-primary" ng-click="signoff('channel', details['sc_id'])">Signoff as...</button>
-            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('channel', details[sc_id'])">Revoke your Signoff</button>
+            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('channel', details['sc_id'])">Revoke your Signoff</button>
             <button class="btn btn-xs btn-danger" ng-click="deletePending('channel', details['sc_id'])">Delete</button>
           </div>
         </h4>

@@ -11,6 +11,7 @@
       <p class="help-block" ng-show="errors.product">{{ errors.product.join(", ") }}</p>
     </div>
     <!-- TODO: IMPROVE THE LAYOUT!" -->
+    <!-- TODO: don't show the channel and permissions switcher for edits -->
     <div class="tabbable tabs-below">
       <ul class="nav nav-pills" role="tablist">
         <li ng-class="{active: mode === 'channel'}">
@@ -40,6 +41,7 @@
       <tbody id="new_roles">
         <tr class="new_role" ng-repeat="n in [].constructor(new_roles) track by $index">
           <th>
+            <!-- TODO: make this button work -->
             <button type="button" class="btn btn-default btn-xs" ng-click="removeRole($index)">
               <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
             </button>

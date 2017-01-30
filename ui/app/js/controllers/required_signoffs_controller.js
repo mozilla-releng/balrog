@@ -153,6 +153,16 @@ function($scope, $modal, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
     });
   };
 
+  $scope.revokeSignoff = function(mode, sc_id) {
+    $modal.open({
+      templateUrl: "revoke_signoff_modal.html",
+      controller: "RevokeSignoffCtrl",
+      backdrop: "static",
+      resolve: {
+      }
+    });
+  };
+
   $scope.deletePending = function(mode, sc_id) {
     $modal.open({
       templateUrl: "required_signoff_delete_modal.html",
