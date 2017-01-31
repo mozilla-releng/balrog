@@ -6,7 +6,9 @@ function ($scope, $modalInstance, CSRF, Permissions, sc) {
 
   $scope.original_sc = sc;
   $scope.sc = angular.copy(sc);
-  $scope.sc.options = JSON.stringify(sc.options);
+  if(sc.options){
+    $scope.sc.options = JSON.stringify(sc.options);
+  }
   $scope.currentItemTab = 1;
   $scope.is_edit = true;
 

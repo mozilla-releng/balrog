@@ -92,7 +92,7 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
       .success(function(response) {
         $scope.sc.sc_data_version = 1;
         $scope.sc.sc_id = response.sc_id;
-        $scope.scheduled_changes.push($scope.sc);
+        $scope.scheduled_changes.push($scope.permission);
         $modalInstance.close();
       })
       .error(function(response) {

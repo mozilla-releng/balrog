@@ -19,7 +19,31 @@
     <i class="glyphicon glyphicon-arrow-left"></i>
 </a>
 </h2>
-
+<div class="row">
+  <div class="col-sm-6">
+    <div class="pagination-container" ng-show="filtered_items.length > pageSize">
+      <pagination
+        class="pagination-sm"
+        total-items="filtered_items.length"
+        ng-model="currentPage"
+        items-per-page="pageSize"
+      ></pagination>
+    </div>
+  </div>
+  <div class="col-sm-6 text-right">
+    <div ng-show="!scheduled_changes_count" class="row">
+      <label>State:</label>
+      <select ng-model="state_str" name="state_filter" ng-options="o.text for o in state_filter track by o.value">
+      </select>
+    </div>
+    <div class="row">
+      <label>Order by:</label>
+      <select ng-model="ordering_str" name="ordering_str"
+        ng-options="o.text for o in ordering_options track by o.value">
+      </select>
+    </div>
+  </div>
+</div>
 <div class="panel panel-default" style="clear:right"
      ng-repeat="sc in filtered_items = (scheduled_changes | filter: filterBySelect) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
   <div class="panel-heading">

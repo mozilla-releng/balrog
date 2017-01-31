@@ -40,13 +40,10 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
     ];
   } else {
     $scope.ordering_options = [
+
     {
-      text: "When",
-      value: "when"
-    },
-    {
-      text: "username",
-      value: "username"
+      text: "sc_id",
+      value: "sc_id"
     },
   ];
   }
