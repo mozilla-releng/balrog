@@ -89,11 +89,11 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             var data_version = response["new_data_version"];
             // todo: maybe required_signoffs should be an object with methods
             // so we don't have to duplicate this from the main controller
-            if (! (data["product"] in required_signoffs)) {
-              required_signoffs[data["product"]] = {"channels": {}};
-            }
-
             if ($scope.mode === "channel") {
+              if (! (data["product"] in required_signoffs)) {
+                required_signoffs[data["product"]] = {"channels": {}};
+              }
+
               if (! (data["channel"] in required_signoffs[data["product"]]["channels"])) {
                 required_signoffs[data["product"]]["channels"][data["channel"]] = {};
               }
@@ -103,6 +103,17 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               };
             }
             else if ($scope.mode === "permissions") {
+              if (! (data["product"] in required_signoffs)) {
+                required_signoffs[data["product"]] = {"permissions": {}};
+              }
+              else if (! ("permissions" in required_signoffs[data["product"]])) {
+                required_signoffs[data["product"]]["permissions"] = {};
+              }
+          
+              required_signoffs[data["product"]]["permissions"][data["role"]] = {
+                "signoffs_required": data["signoffs_required"],
+                "data_version": data_version,
+              };
             }
             deferred.resolve();
           };
