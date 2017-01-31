@@ -1408,7 +1408,7 @@ class Rules(AUSTable):
                            Column('backgroundRate', Integer),
                            Column('update_type', String(15), nullable=False),
                            Column('product', String(15)),
-                           Column('version', String(10)),
+                           Column('version', String(75)),
                            Column('channel', String(75)),
                            Column('buildTarget', String(75)),
                            Column('buildID', String(20)),
