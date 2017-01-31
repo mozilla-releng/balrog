@@ -26,16 +26,15 @@
     <h3 class="panel-title">
       <span>
         <span ng-show="state === 'current'">To change {{ selected_product}} permissions you must have signoff from...</span>
-        <span ng-show="state === 'pending'">Proposed Required Signoffs for {{ selected_product}} permissions changes...</span>
+        <span ng-show="state === 'pending'">Proposed Required Signoffs for {{ selected_product}} permissions</span>
           <button class="btn btn-xs btn-warning"
-                  ng-click="editRequiredSignoffs(required_signoffs[selected_product]['permissions'], 'permissions')">
+                  ng-click="editRequiredSignoffs('permissions')">
             Edit
           </button>
           <button class="btn btn-xs btn-danger"
-                  ng-click="deleteRequiredSignoffs(required_signoffs[selected_product]['permissions'], 'permissions')">
+                  ng-click="deleteRequiredSignoffs(required_signoffs, 'permissions')">
             Delete
           </button>
-        <span ng-show="state === 'pending'">Proposed Required Signoffs for {{ selected_product }} permissions</span>
       </span>
     </h3>
   </div>
@@ -69,11 +68,11 @@
           Proposed Required Signoffs for {{ selected_product }} {{ channel }} channel changes
         </span>
         <button class="btn btn-xs btn-warning"
-                ng-click="editRequiredSignoffs(required_signoffs[selected_product]['channels'], 'channel', channel)">
+                ng-click="editRequiredSignoffs('channel', channel)">
           Edit
         </button>
         <button class="btn btn-xs btn-danger"
-                ng-click="deleteRequiredSignoffs(required_signoffs[selected_product]['channels'], 'channel', channel)">
+                ng-click="deleteRequiredSignoffs(required_signoffs, 'channel', channel)">
           Delete
         </button>
       </span>

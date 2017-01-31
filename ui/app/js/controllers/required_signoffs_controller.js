@@ -172,23 +172,26 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     });
   };
 
-  $scope.editRequiredSignoffs = function(required_signoffs, mode, channel = "") {
+  $scope.editRequiredSignoffs = function(mode, channel = "") {
     $modal.open({
       templateUrl: "required_signoff_modal.html",
       controller: "EditRequiredSignoffsCtrl",
       backdrop: "static",
       resolve: {
-        required_signoffs: function() {
-          return required_signoffs;
-        },
         mode: function() {
           return mode;
+        },
+        channel: function() {
+          return channel;
         },
         product: function() {
           return $scope.selected_product;
         },
-        channel: function() {
-          return channel;
+        current_required_signoffs: function() {
+          return $scope.current_required_signoffs;
+        },
+        pending_required_signoffs: function() {
+          return $scope.pending_required_signoffs;
         },
       }
     });
@@ -231,16 +234,6 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     $modal.open({
       templateUrl: "revoke_signoff_modal.html",
       controller: "RevokeSignoffCtrl",
-      backdrop: "static",
-      resolve: {
-      }
-    });
-  };
-
-  $scope.deletePending = function(mode, sc_id) {
-    $modal.open({
-      templateUrl: "required_signoff_delete_modal.html",
-      controller: "DeleteRequiredSignoffsCtrl",
       backdrop: "static",
       resolve: {
       }

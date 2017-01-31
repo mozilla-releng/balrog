@@ -1,5 +1,6 @@
 angular.module("app").controller("EditRequiredSignoffsCtrl",
-function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, required_signoffs) {
+function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs,
+         current_required_signoffs, pending_required_signoffs) {
   $controller("BaseRequiredSignoffCtrl", {
     $scope: $scope,
     $modalInstance: $modalInstance,
@@ -7,6 +8,7 @@ function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs,
     CSRF: CSRF,
     ProductRequiredSignoffs: ProductRequiredSignoffs,
     PermissionsRequiredSignoffs: PermissionsRequiredSignoffs,
-    required_signoffs: required_signoffs,
+    current_required_signoffs: current_required_signoffs,
+    pending_required_signoffs: pending_required_signoffs,
   });
 });
