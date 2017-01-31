@@ -90,8 +90,8 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
     .then(function(csrf_token) {
       Permissions.addScheduledChange($scope.permission, csrf_token)
       .success(function(response) {
-        $scope.sc.sc_data_version = 1;
-        $scope.sc.sc_id = response.sc_id;
+        $scope.permission.sc_data_version = 1;
+        $scope.permission.sc_id = response.sc_id;
         $scope.scheduled_changes.push($scope.permission);
         $modalInstance.close();
       })
