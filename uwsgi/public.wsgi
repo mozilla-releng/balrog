@@ -2,7 +2,6 @@ import logging
 import os
 
 from auslib.log import configure_logging
-from auslib.web.base import sentry
 
 
 SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "b2gbld", "stage-ffxbld", "stage-tbirdbld", "stage-b2gbld"]
@@ -29,7 +28,7 @@ if os.environ.get("LOG_FORMAT") == "plain":
 configure_logging(**logging_kwargs)
 
 from auslib.global_state import cache, dbo
-from auslib.web.base import app as application
+from auslib.web.base import app as application, sentry
 
 cache.make_cache("blob", 500, 3600)
 # There's probably no no need to ever expire items in the blob schema cache
