@@ -44,7 +44,11 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     if (response["count"] > 0) {
       response["required_signoffs"].forEach(function(rs) {
         if (! (rs.product in $scope.current_required_signoffs)) {
-          $scope.current_required_signoffs[rs.product] = {"channels": {}};
+          $scope.current_required_signoffs[rs.product] = {};
+        }
+    
+        if (! ("channels" in $scope.current_required_signoffs[rs.product])) {
+          $scope.current_required_signoffs[rs.product]["channels"] = {};
         }
     
         if (! (rs.channel in $scope.current_required_signoffs[rs.product]["channels"])) {
@@ -73,8 +77,13 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     if (response["count"] > 0) {
       response["required_signoffs"].forEach(function(rs) {
         if (! (rs.product in $scope.current_required_signoffs)) {
-          $scope.current_required_signoffs[rs.product] = {"permissions": {}};
+          $scope.current_required_signoffs[rs.product] = {};
         }
+
+        if (! ("permissions" in $scope.current_required_signoffs[rs.product])) {
+          $scope.current_required_signoffs[rs.product]["permissions"] = {};
+        }
+
         else if (! ("permissions" in $scope.current_required_signoffs[rs.product])) {
           $scope.current_required_signoffs[rs.product]["permissions"] = {};
         }
@@ -101,11 +110,13 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     if (response["count"] > 0) {
       response["scheduled_changes"].forEach(function(rs) {
         if (! (rs.product in $scope.pending_required_signoffs)) {
-          $scope.pending_required_signoffs[rs.product] = {"channels": {}};
+          $scope.pending_required_signoffs[rs.product] = {};
+        }
+
+        if (! ("channels" in $scope.pending_required_signoffs[rs.product])) {
+          $scope.pending_required_signoffs[rs.product]["channels"] = {};
         }
     
-        // seems to be a race condition here somewhere, sometimes get:
-        // Error: invalid 'in' operand $scope.pending_required_signoffs[rs.product].channels
         if (! (rs.channel in $scope.pending_required_signoffs[rs.product]["channels"])) {
           $scope.pending_required_signoffs[rs.product]["channels"][rs.channel] = {};
         }
@@ -135,8 +146,13 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     if (response["count"] > 0) {
       response["scheduled_changes"].forEach(function(rs) {
         if (! (rs.product in $scope.pending_required_signoffs)) {
-          $scope.pending_required_signoffs[rs.product] = {"permissions": {}};
+          $scope.pending_required_signoffs[rs.product] = {};
         }
+
+        if (! ("permissions" in $scope.pending_required_signoffs[rs.product])) {
+          $scope.pending_required_signoffs[rs.product]["permissions"] = {};
+        }
+    
         else if (! ("permissions" in $scope.pending_required_signoffs[rs.product])) {
           $scope.pending_required_signoffs[rs.product]["permissions"] = {};
         }
