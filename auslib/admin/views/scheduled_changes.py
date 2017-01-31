@@ -97,10 +97,6 @@ class ScheduledChangeView(AdminView):
         where = {"sc_id": sc_id}
         try:
             self.sc_table.update(where, what, changed_by, form.sc_data_version.data, transaction)
-            signOffs = self.sc_table.signoffs.select(where=where, transaction=transaction, columns=["sc_id", "username"])
-            for signOff in signOffs:
-                self.sc_table.signoffs.delete(where={"sc_id": sc_id, "username": signOff["username"]},
-                                              changed_by=changed_by, transaction=transaction)
         except ValueError as e:
             self.log.warning("Bad input: %s", e)
             return Response(status=400, response=json.dumps({"exception": e.args}))

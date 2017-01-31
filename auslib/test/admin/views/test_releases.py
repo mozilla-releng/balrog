@@ -1243,8 +1243,7 @@ class TestReleasesScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingReleaseResetSignOffs(self):
         data = {
-            "data": '{"name": "ab", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "ab",
-            "data_version": 1, "sc_data_version": 1, "when": 78900000000, "change_type": "delete",
+            "name": "ab", "data_version": 1, "sc_data_version": 1, "when": 88900000000, "change_type": "delete"
         }
         rows = dbo.releases.scheduled_changes.signoffs.t.select().\
             where(dbo.releases.scheduled_changes.signoffs.sc_id == 4).execute().fetchall()
@@ -1261,7 +1260,7 @@ class TestReleasesScheduledChanges(ViewTest):
             "sc_id": 4, "complete": False, "change_type": "delete", "data_version": 2, "scheduled_by": "bill",
             "base_name": "ab", "base_product": None,
             "base_read_only": False,
-            "base_data": {"name": "ab", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1},
+            "base_data": None,
             "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
