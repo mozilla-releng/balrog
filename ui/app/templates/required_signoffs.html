@@ -25,25 +25,37 @@
   <div class="panel-heading">
     <h3 class="panel-title">
       <span>
-        <div ng-show="state === 'current'">
-          <span >To change {{ selected_product}} permissions you must have signoff from...</span>
-            <button class="btn btn-xs btn-warning"
-                    ng-show="state === 'current'"
-                    ng-click="editRequiredSignoffs(required_signoffs[selected_product]['permissions'], 'permissions')">
-              Edit
-            </button>
-        </div>
+        <span ng-show="state === 'current'">To change {{ selected_product}} permissions you must have signoff from...</span>
+        <span ng-show="state === 'pending'">Proposed Required Signoffs for {{ selected_product}} permissions changes...</span>
+          <button class="btn btn-xs btn-warning"
+                  ng-click="editRequiredSignoffs(required_signoffs[selected_product]['permissions'], 'permissions')">
+            Edit
+          </button>
+          <button class="btn btn-xs btn-danger"
+                  ng-click="deleteRequiredSignoffs(required_signoffs[selected_product]['permissions'], 'permissions')">
+            Delete
+          </button>
         <span ng-show="state === 'pending'">Proposed Required Signoffs for {{ selected_product }} permissions</span>
       </span>
     </h3>
   </div>
   <div class="panel-body">
-    <ul class="list-group">
-      <li class="list-group-item" ng-repeat="(role, details) in required_signoffs[selected_product]['permissions']">
-        <!-- add link to user roles ui here, when it exists -->
-        {{ details.signoffs_required }} member(s) of {{ role }}
-      </li>
-    </ul>
+    <div class="panel panel-default" ng-repeat="(role, details) in required_signoffs[selected_product]['permissions']">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          <!-- add link to user roles ui here, when it exists -->
+          <span>{{ details["signoffs_required"] }} members of {{ role }}</span>
+          <div style="float: right" ng-show="state === 'pending'">
+            <!-- show revoke button if user has already signed off - can't do this because we can't access REMOTE_USER
+                 maybe we can guess it by making a request on first page load and sniffing the Authentication header
+            -->
+            <button class="btn btn-xs btn-primary" ng-click="signoff('permission', details['sc_id'])">Signoff as...</button>
+            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('permission', details['sc_id'])">Revoke your Signoff</button>
+          </div>
+        </h4>
+      </div>
+      <div class="panel-body">stuff stuff</div>
+    </div>
   </div>
 </div>
 <div class="panel panel-default" ng-repeat="(channel, roles) in required_signoffs[selected_product]['channels']">
@@ -57,9 +69,12 @@
           Proposed Required Signoffs for {{ selected_product }} {{ channel }} channel changes
         </span>
         <button class="btn btn-xs btn-warning"
-                ng-show="state === 'current'"
                 ng-click="editRequiredSignoffs(required_signoffs[selected_product]['channels'], 'channel', channel)">
           Edit
+        </button>
+        <button class="btn btn-xs btn-danger"
+                ng-click="deleteRequiredSignoffs(required_signoffs[selected_product]['channels'], 'channel', channel)">
+          Delete
         </button>
       </span>
     </h3>
@@ -76,7 +91,6 @@
             -->
             <button class="btn btn-xs btn-primary" ng-click="signoff('channel', details['sc_id'])">Signoff as...</button>
             <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('channel', details['sc_id'])">Revoke your Signoff</button>
-            <button class="btn btn-xs btn-danger" ng-click="deletePending('channel', details['sc_id'])">Delete</button>
           </div>
         </h4>
       </div>

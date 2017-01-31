@@ -131,7 +131,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   PermissionsRequiredSignoffs.getScheduledChanges()
   .success(function(response) {
     if (response["count"] > 0) {
-      response["required_signoffs"].forEach(function(rs) {
+      response["scheduled_changes"].forEach(function(rs) {
         if (! (rs.product in $scope.pending_required_signoffs)) {
           $scope.pending_required_signoffs[rs.product] = {"permissions": {}};
         }
@@ -194,6 +194,28 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     });
   };
 
+  $scope.deleteRequiredSignoffs = function(required_signoffs, mode, channel = "") {
+    $modal.open({
+      templateUrl: "required_signoff_delete_modal.html",
+      controller: "DeleteRequiredSignoffsCtrl",
+      backdrop: "static",
+      resolve: {
+        required_signoffs: function() {
+          return required_signoffs;
+        },
+        mode: function() {
+          return mode;
+        },
+        product: function() {
+          return $scope.selected_product;
+        },
+        channel: function() {
+          return channel;
+        },
+      }
+    });
+  };
+
   $scope.signoff = function(mode, sc_id) {
     // need to bail if user has already signed off
     $modal.open({
@@ -218,7 +240,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   $scope.deletePending = function(mode, sc_id) {
     $modal.open({
       templateUrl: "required_signoff_delete_modal.html",
-      controller: "RequiredSignoffDeleteModal",
+      controller: "DeleteRequiredSignoffsCtrl",
       backdrop: "static",
       resolve: {
       }

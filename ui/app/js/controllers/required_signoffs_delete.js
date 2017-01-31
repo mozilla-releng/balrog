@@ -1,4 +1,4 @@
-angular.module("app").controller("RequiredSignoffDeleteModal",
+angular.module("app").controller("DeleteRequiredSignoffsCtrl",
 function ($scope, $modalInstance, CSRF) {
 
   $scope.saving = false;
