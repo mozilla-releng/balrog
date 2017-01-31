@@ -5,8 +5,9 @@ from sqlalchemy.sql.expression import null
 from flask import jsonify, request, Response
 from flask_wtf import Form
 
-from auslib.admin.views.base import AdminView, HistoryAdminView
+from auslib.admin.views.base import AdminView
 from auslib.admin.views.forms import DbEditableForm, SignoffForm
+from auslib.admin.views.history import HistoryView
 
 
 class ScheduledChangesView(AdminView):
@@ -168,60 +169,32 @@ class SignoffsView(AdminView):
         return Response(status=200)
 
 
-class ScheduledChangeHistoryView(HistoryAdminView):
+class ScheduledChangeHistoryView(HistoryView):
     """/scheduled_changes/:namespace/revisions"""
 
     def __init__(self, namespace, table, *args, **kwargs):
         self.namespace = namespace
         self.path = "/scheduled_changes/%s/revisions" % namespace
-        self.table = table
-        super(ScheduledChangeHistoryView, self).__init__(*args, **kwargs)
+        super(ScheduledChangeHistoryView, self).__init__(table.scheduled_changes, *args, **kwargs)
 
-    def get(self, sc_id):
-        if not self.table.scheduled_changes.select({"sc_id": sc_id}):
-            return Response(status=404, response="Scheduled change does not exist")
-
-        try:
-            page = int(request.args.get('page', 1))
-            limit = int(request.args.get('limit', 100))
-            assert page >= 1
-        except (ValueError, AssertionError) as msg:
-            self.log.warning("Bad input: %s", msg)
-            return Response(status=400, response=json.dumps({"exception": msg}))
-
-        offset = limit * (page - 1)
-        total_count = self.table.scheduled_changes.history.t.count()\
-            .where(self.table.scheduled_changes.history.sc_id == sc_id)\
-            .where(self.table.scheduled_changes.history.data_version != null())\
-            .execute()\
-            .fetchone()[0]
-
+    def _process_revisions(self, revisions):
         # Although Scheduled Changes are stored across two tables, we don't
         # expose that through the API. Because of this, we need to look up
         # history in both and return the combined version.
         # This is done by the database layer for non-history parts of Scheduled Changes, but
         # that's not feasible for History due to the inheritance structure of the tables,
         # so we do it here instead.
-        revisions = self.table.scheduled_changes.history.select(
-            where=[self.table.scheduled_changes.history.sc_id == sc_id,
-                   self.table.scheduled_changes.history.data_version != null()],
-            limit=limit,
-            offset=offset,
-            order_by=[self.table.scheduled_changes.history.timestamp.desc()],
-        )
+
         # There's a big 'ol assumption here that the primary Scheduled Changes
         # table and the conditions table always keep their data version in sync.
         for r in revisions:
-            cond = self.table.scheduled_changes.conditions.history.select(
-                where=[self.table.scheduled_changes.conditions.history.sc_id == r["sc_id"],
-                       self.table.scheduled_changes.conditions.history.data_version == r["data_version"]],
+            cond = self.table.conditions.history.select(
+                where=[self.table.conditions.history.sc_id == r["sc_id"],
+                       self.table.conditions.history.data_version == r["data_version"]],
             )
             r.update(cond[0])
 
-        ret = {
-            "count": total_count,
-            "revisions": [],
-        }
+        _revisions = []
 
         for rev in revisions:
             r = {}
@@ -230,34 +203,21 @@ class ScheduledChangeHistoryView(HistoryAdminView):
                     r["sc_data_version"] = v
                 else:
                     r[k.replace("base_", "")] = v
-            ret["revisions"].append(r)
+            _revisions.append(r)
 
-        return jsonify(ret)
+        return _revisions
 
-    def _post(self, sc_id, transaction, changed_by):
-        change_id = None
-        if request.json:
-            change_id = request.json.get('change_id')
-        if not change_id:
-            self.log.warning("Bad input: %s", "no change_id")
-            return Response(status=400, response=json.dumps({"exception": "no change_id"}))
-        change = self.table.scheduled_changes.history.getChange(change_id=change_id, transaction=transaction)
-        if change is None:
-            return Response(status=400, response=json.dumps({"exception": "bad change_id"}))
-        if change['sc_id'] != sc_id:
-            return Response(status=400, response=json.dumps({"exception": "bad sc_id"}))
-        sc = self.table.scheduled_changes.select({"sc_id": sc_id}, transaction=transaction)[0]
-        if sc is None:
-            return Response(status=400, response=json.dumps({"exception": "bad sc_id"}))
-        old_data_version = sc['data_version']
+    def _get_filters(self, sc):
+        return [self.history_table.sc_id == sc['sc_id'],
+                self.history_table.data_version != null()]
 
+    def _get_what(self, change, changed_by, transaction):
         # There's a big 'ol assumption here that the primary Scheduled Changes
         # table and the conditions table always keep their data version in sync.
-        cond_change = self.table.scheduled_changes.conditions.history.getChange(
+        cond_change = self.table.conditions.history.getChange(
             data_version=change["data_version"],
             column_values={"sc_id": change["sc_id"]},
-            transaction=transaction,
-        )
+            transaction=transaction)
         what = dict(
             # One could argue that we should restore scheduled_by to its value from the change,
             # but since the person who is reverting could be different, it's probably best to
@@ -270,10 +230,37 @@ class ScheduledChangeHistoryView(HistoryAdminView):
             telemetry_uptake=cond_change["telemetry_uptake"],
         )
         # Copy in all the base table columns, too.
-        for col in self.table.scheduled_changes.t.get_children():
+        for col in self.table.t.get_children():
             if col.name.startswith("base_"):
                 what[col.name] = change[col.name]
 
-        self.table.scheduled_changes.update(changed_by=changed_by, where={"sc_id": sc_id}, what=what,
-                                            old_data_version=old_data_version, transaction=transaction)
-        return Response("Success")
+        return what
+
+    def _get_sc(self, sc_id):
+        sc = self.table.select(where=[self.table.sc_id == sc_id])
+        return sc[0] if sc else None
+
+    def get(self, sc_id):
+        try:
+            return self.get_revisions(
+                get_object_callback=lambda: self._get_sc(sc_id),
+                history_filters_callback=self._get_filters,
+                process_revisions_callback=self._process_revisions,
+                revisions_order_by=[self.history_table.timestamp.desc()],
+                obj_not_found_msg='Scheduled change does not exist')
+        except (ValueError, AssertionError) as msg:
+            self.log.warning("Bad input: %s", msg)
+            return Response(status=400,
+                            response=json.dumps({"exception": msg}))
+
+    def _post(self, sc_id, transaction, changed_by):
+        return self.revert_to_revision(
+            get_object_callback=lambda: self._get_sc(sc_id),
+            change_field='sc_id',
+            get_what_callback=lambda change: self._get_what(change,
+                                                            changed_by,
+                                                            transaction),
+            changed_by=changed_by,
+            response_message='Success',
+            transaction=transaction,
+            obj_not_found_msg=json.dumps({"exception": "bad sc_id"}))
