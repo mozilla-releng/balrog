@@ -104,6 +104,8 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           $scope.pending_required_signoffs[rs.product] = {"channels": {}};
         }
     
+        // seems to be a race condition here somewhere, sometimes get:
+        // Error: invalid 'in' operand $scope.pending_required_signoffs[rs.product].channels
         if (! (rs.channel in $scope.pending_required_signoffs[rs.product]["channels"])) {
           $scope.pending_required_signoffs[rs.product]["channels"][rs.channel] = {};
         }
