@@ -39,6 +39,7 @@
         </tr>
       </thead>
       <tbody id="new_roles">
+        <!-- todo: do we need to show a pending indicator in here for edits? -->
         <tr class="new_role" ng-repeat="rs in new_roles track by $index">
           <th>
             <button type="button" class="btn btn-default btn-xs" ng-click="removeRole($index)" ng-show="$index > 0">

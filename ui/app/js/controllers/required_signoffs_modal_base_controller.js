@@ -1,14 +1,38 @@
 angular.module("app").controller("BaseRequiredSignoffCtrl",
 function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Rules,
-         current_required_signoffs, pending_required_signoffs, roles, mode, product, channel, editing) {
+         required_signoffs, mode, product, channel, editing) {
   $scope.saving = false;
   $scope.errors = {};
 
   $scope.mode = mode;
   $scope.product = product;
   $scope.channel = channel;
-  $scope.new_roles = roles;
+  $scope.new_roles = [];
   $scope.editing = editing;
+
+  if ($scope.editing) {
+    if ($scope.mode === "channel") {
+      for (let role of Object.keys(required_signoffs[product]["channels"][channel])) {
+        $scope.new_roles.push({
+          "role": role,
+          "signoffs_required": required_signoffs[product]["channels"][channel][role]["signoffs_required"],
+          "sc_id": required_signoffs[product]["channels"][channel][role]["sc_id"],
+        });
+      }
+    }
+    else if ($scope.mode === "permissions") {
+      for (let role of Object.keys(required_signoffs[product]["permissions"])) {
+        $scope.new_roles.push({
+          "role": role,
+          "signoffs_required": required_signoffs[product]["permissions"][role]["signoffs_required"],
+          "sc_id": required_signoffs[product]["permissions"][role]["sc_id"],
+        });
+      }
+    }
+  }
+  else {
+    $scope.new_roles = [{"role": "", "signoffs_required": null, "sc_id": null}];
+  } 
 
   $scope.products = [];
   Rules.getProducts().success(function(response) {
@@ -85,8 +109,9 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           $scope.saving = false;
         }
 
-        var successCallback = function(data, required_signoffs, deferred) {
+        var successCallback = function(data, deferred) {
           return function(response) {
+            // todo: add sc_id and other sc info here
             var data_version = response["new_data_version"];
             // todo: maybe required_signoffs should be an object with methods
             // so we don't have to duplicate this from the main controller
@@ -144,7 +169,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           if (first) {
             first = false;
             service.addRequiredSignoff(data)
-            .success(successCallback(data, current_required_signoffs, deferred))
+            .success(successCallback(data, required_signoffs, deferred))
             .error(errorCallback(data, deferred));
           }
           else {
@@ -155,7 +180,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             // before being enacted, however.
             data["when"] = new Date().getTime() + 30000;
             service.addScheduledChange(data)
-            .success(successCallback(data, pending_required_signoffs, deferred))
+            .success(successCallback(data, required_signoffs, deferred))
             .error(errorCallback(data, deferred));
           }
         }
@@ -170,7 +195,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
       });
     }
   };
-
 
   $scope.cancel = function() {
     $modalInstance.dismiss("cancel");

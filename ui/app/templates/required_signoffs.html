@@ -5,11 +5,6 @@
     <label>Product:</label>
     <select ng-model="selected_product" ng-options="product as product for (product, rs) in required_signoffs" name="product">
     </select>
-    <label>State:</label>
-    <select ng-model="state" name="state">
-      <option value="current">Current</option>
-      <option value="pending">Pending</option>
-    </select>
 </form>
 </div>
 <h2>
@@ -26,7 +21,6 @@
     <h3 class="panel-title">
       <span>
         <span ng-show="state === 'current'">To change {{ selected_product}} permissions you must have signoff from...</span>
-        <span ng-show="state === 'pending'">Proposed Required Signoffs for {{ selected_product}} permissions</span>
           <button class="btn btn-xs btn-warning"
                   ng-click="editRequiredSignoffs('permissions')">
             Edit
@@ -39,12 +33,14 @@
     </h3>
   </div>
   <div class="panel-body">
+    <!-- todo: try to find a way to sort this by non-pending first -->
     <div class="panel panel-default" ng-repeat="(role, details) in required_signoffs[selected_product]['permissions']">
       <div class="panel-heading">
         <h4 class="panel-title">
           <!-- add link to user roles ui here, when it exists -->
           <span>{{ details["signoffs_required"] }} members of {{ role }}</span>
-          <div style="float: right" ng-show="state === 'pending'">
+          <span class="badge" ng-show="details['sc_id'] !== null">Pending</span>
+          <div style="float: right" ng-show="details['sc_id'] !== null">
             <!-- show revoke button if user has already signed off - can't do this because we can't access REMOTE_USER
                  maybe we can guess it by making a request on first page load and sniffing the Authentication header
             -->
@@ -64,9 +60,6 @@
         <span ng-show="state === 'current'">
           To change Rules or Releases on the {{ selected_product }} {{ channel }} channel, you must have signoff from...
         </span>
-        <span ng-show="state === 'pending'">
-          Proposed Required Signoffs for {{ selected_product }} {{ channel }} channel changes
-        </span>
         <button class="btn btn-xs btn-warning"
                 ng-click="editRequiredSignoffs('channel', channel)">
           Edit
@@ -84,6 +77,7 @@
         <h4 class="panel-title">
           <!-- add link to user roles ui here, when it exists -->
           <span>{{ details["signoffs_required"] }} members of {{ role }}</span>
+          <span class="badge" ng-show="details['sc_id'] !== null">>Pending</span>
           <div style="float: right" ng-show="state === 'pending'">
             <!-- show revoke button if user has already signed off - can't do this because we can't access REMOTE_USER
                  maybe we can guess it by making a request on first page load and sniffing the Authentication header

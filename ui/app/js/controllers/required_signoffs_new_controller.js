@@ -1,8 +1,6 @@
 angular.module("app").controller("NewRequiredSignoffCtrl",
 function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs,
-         current_required_signoffs, pending_required_signoffs) {
-  var roles = [{"role": "", "signoffs_required": null}];
-
+         required_signoffs) {
   $controller("BaseRequiredSignoffCtrl", {
     $scope: $scope,
     $modalInstance: $modalInstance,
@@ -10,9 +8,7 @@ function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs,
     CSRF: CSRF,
     ProductRequiredSignoffs: ProductRequiredSignoffs,
     PermissionsRequiredSignoffs: PermissionsRequiredSignoffs,
-    current_required_signoffs: current_required_signoffs,
-    pending_required_signoffs: pending_required_signoffs,
-    roles: roles,
+    required_signoffs: required_signoffs,
     // For some reason, setting these as defaults in BaseRequiredSignoffCtrl
     // doesn't work (we're unable to override them). Maybe something to do
     // with magical dependency injection.
