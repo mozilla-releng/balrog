@@ -1,23 +1,18 @@
 <div loader ng-show="loading"></div>
 
 <h2>
-  <span ng-show="!scheduled_changes_permissions_count">Scheduled Permissions Changes</span>
-  <span ng-show="scheduled_changes_permissions_count">History for Scheduled Permissions Change</span>
+  <span >Scheduled Permissions Changes</span>
 
   <span class="count">
     ({{ filtered_items.length | number:0 }}
     <span>found)</span>
   </span>
 
-  <button ng-show="!scheduled_changes_permissions_count" class="btn btn-primary btn-xs" ng-click="openNewScheduledPermissionChangeModal()">
+  <button class="btn btn-primary btn-xs" ng-click="openNewScheduledPermissionChangeModal()">
     Add a new Scheduled Permission Change
     <i class="glyphicon glyphicon-plus"></i>
   </button>
-  <a href="/permissions/scheduled_changes" class="btn btn-primary btn-xs"
-          ng-show="scheduled_changes_permissions_count">
-    All Scheduled Changes
-    <i class="glyphicon glyphicon-arrow-left"></i>
-</a>
+
 </h2>
 
 <div class="row">
