@@ -169,7 +169,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           if (first) {
             first = false;
             service.addRequiredSignoff(data)
-            .success(successCallback(data, required_signoffs, deferred))
+            .success(successCallback(data, deferred))
             .error(errorCallback(data, deferred));
           }
           else {
@@ -180,7 +180,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             // before being enacted, however.
             data["when"] = new Date().getTime() + 30000;
             service.addScheduledChange(data)
-            .success(successCallback(data, required_signoffs, deferred))
+            .success(successCallback(data, deferred))
             .error(errorCallback(data, deferred));
           }
         }
