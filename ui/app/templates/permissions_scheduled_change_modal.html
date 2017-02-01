@@ -9,7 +9,7 @@
     <div class="tabbable tabs-below">
 
 
-        <form role="form" ng-submit="addScheduledPermission()">
+        <form role="form">
           <div class="form-group" ng-class="{'has-error': errors.permission}">
             <label for="id_permission">Permission</label>
             <input type="text" class="form-control" id="id_permission" ng-model="permission.permission">
@@ -25,7 +25,7 @@
         </div>
           <div style="text-align: right">
             <input type="hidden" name="data_version" ng-model="permission.data_version">
-            <button type="submit" class="btn btn-primary">Scheduled Permission</button>
+            <button type="submit" class="btn btn-primary" ng-click="addScheduledPermission()">Scheduled Permission</button>
           </div>
 
         </form>

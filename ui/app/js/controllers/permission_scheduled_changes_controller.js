@@ -4,8 +4,6 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
   $scope.loading = true;
   $scope.failed = false;
 
-
-
   Permissions.getScheduledChanges()
   .success(function(response) {
     // "when" is a unix timestamp, but it's much easier to work with Date objects,
@@ -30,25 +28,10 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
     $scope.ordering = value.value.split(",");
   });
 
-
-   if ($scope.sc_id) {
-    $scope.ordering_options = [
-      {
-        text: "Data Version",
-        value: "-data_version"
-      },
-    ];
-  } else {
-    $scope.ordering_options = [
-
-    {
+  $scope.ordering_str = {
       text: "sc_id",
       value: "sc_id"
-    },
-  ];
-  }
-
-  $scope.ordering_str = $scope.ordering_options[0];
+    };
 
   $scope.currentPage = 1;
   $scope.pageSize = 10;
@@ -73,33 +56,6 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
     return !!(false || $scope.filters.search.length);
   };
 
-  $scope.$watchCollection('filters.search', function(value) {
-    $location.hash(value);
-    Search.noticeSearchChange(
-      value,
-      ['username']
-    );
-  });
-
-  $scope.filterBySearch = function(item) {
-    // basically, look for a reason to NOT include this
-    if (Search.word_regexes.length) {
-      // every word in the word_regexes array needs to have some match
-      var matches = 0;
-      _.each(Search.word_regexes, function(each) {
-        var regex = each[0];
-        var on = each[1];
-        // console.log(regex, on);
-        if ((on === '*' || on === 'username') && item.username && item.username.match(regex)) {
-          matches++;
-          return;
-        }
-      });
-      return matches === Search.word_regexes.length;
-    }
-
-    return true;  // include it
-  };
 
   $scope.filterBySelect = function(sc) {
     if($scope.sc_id) {
@@ -114,15 +70,10 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
     return false;
   };
 
-  $scope.formatMoment = function(when) {
-    date = moment(when);
-    // This is copied from app/js/directives/moment_directive.js
-    // We can't use that for this page, because it doesn't re-render when
-    // values change.
-    return '<time title="' + date.format('dddd, MMMM D, YYYY HH:mm:ss ') + 'GMT' + date.format('ZZ') + '">' + date.fromNow() + '</time>';
-  };
+
 
    $scope.openDeleteModal = function(sc) {
+
     var modalInstance = $modal.open({
       templateUrl: "permission_scheduled_change_delete_modal.html",
       controller: "DeletePermissionRuleScheduledChangeCtrl",
@@ -162,6 +113,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
   };
 
   $scope.openScheduledUpdateModal = function(sc) {
+
     var modalInstance = $modal.open({
       templateUrl: "permission_scheduled_change_update_modal.html",
       controller: "EditPermissionScheduledChangeCtrl",

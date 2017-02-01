@@ -19,8 +19,9 @@
     <i class="glyphicon glyphicon-arrow-left"></i>
 </a>
 </h2>
+
 <div class="row">
-  <div class="col-sm-6">
+   <div class="col-sm-6">
     <div class="pagination-container" ng-show="filtered_items.length > pageSize">
       <pagination
         class="pagination-sm"
@@ -36,14 +37,9 @@
       <select ng-model="state_str" name="state_filter" ng-options="o.text for o in state_filter track by o.value">
       </select>
     </div>
-    <div class="row">
-      <label>Order by:</label>
-      <select ng-model="ordering_str" name="ordering_str"
-        ng-options="o.text for o in ordering_options track by o.value">
-      </select>
-    </div>
   </div>
 </div>
+
 <div class="panel panel-default" style="clear:right"
      ng-repeat="sc in filtered_items = (scheduled_changes | filter: filterBySelect) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
   <div class="panel-heading">
@@ -51,8 +47,8 @@
     <h3 class="panel-title">
       <div style="float: right">
         <i ng-if=" scheduled_changes_rules_count && $first && (currentPage == 1)">Current</i>
-        <button ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-click="openScheduledUpdateModal(sc)">Update</button>
-        <button ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
+        <button class="btn btn-default btn-xs" ng-click="openScheduledUpdateModal(sc)">Update</button>
+        <button class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
       </div>
 
 
@@ -80,11 +76,18 @@
         Options: <b>{{ sc.options }}</b>
       </h5>
     </dl>
-
-  </div>
-<div class="panel-footer" ng-show="scheduled_changes_rules_count">
-    Changed by <code>{{ sc.changed_by }}</code>
-    <span moment="sc.timestamp"></span>
+    </div>
   </div>
 </div>
+
+<div class="col-sm-6">
+    <div class="pagination-container" ng-show="filtered_items.length > pageSize">
+      <pagination
+        class="pagination-sm"
+        total-items="filtered_items.length"
+        ng-model="currentPage"
+        items-per-page="pageSize"
+      ></pagination>
+    </div>
+  </div>
 

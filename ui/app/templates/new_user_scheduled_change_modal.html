@@ -9,7 +9,7 @@
   <div ng-show="!loading">
 
       <div class="tab-content" ng-show="currentItemTab == 1">
-        <form role="form" ng-submit="addScheduledUser()">
+        <form role="form">
           <div class="form-group" ng-class="{'has-error': errors.username}">
             <label for="id_username">Username</label>
             <input type="text" class="form-control" id="id_username" ng-model="permission.username">
@@ -46,6 +46,6 @@
 </div>
 <div class="modal-footer">
   <div ng-show="saving" small-loader></div>
-  <button type="submit" class="btn btn-primary" ng-click="addScheduledUser()">Save Changes</button>
+  <button type="submit" class="btn btn-primary" ng-click="addScheduledPermission()">Save Changes</button>
   <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
 </div>

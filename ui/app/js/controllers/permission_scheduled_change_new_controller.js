@@ -4,9 +4,9 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
 
   $scope.loading = true;
   $scope.scheduled_changes = scheduled_changes;
-  $scope.scheduledpermissions = [];
   $scope.currentItemTab = 1;
   $scope.is_edit = true;
+  $scope.saving = false;
   $scope.sc = angular.copy(sc);
   $scope.permission = {
     permission: '',
@@ -25,75 +25,35 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
       }
     });
     $scope.sc.permissions = permissions;
-    // console.log('$scope.sc.permissions');
-    // console.dbg($scope.sc.permissions);
     $scope.loading = false;
   });
 
 
-  $scope.saving = false;
-
-
-
-
   $scope.addScheduledPermission = function() {
-  if($scope.permission.permission) {
-
     date = new Date();
-
-    permission_sc = angular.copy($scope.sc);
-    permission_sc.permission = $scope.permission.permission;
-    permission_sc.data_version = $scope.permission.data_version;
-    permission_sc.options = $scope.permission.options;
-    permission_sc.when=date.getTime()+100;
+    permission_sc = angular.copy($scope.permission);
+    permission_sc.when = date.getTime() + 5000;
+    permission_sc.change_type = "insert";
     $scope.saving = true;
+    if($scope.sc.username) {
+    permission_sc.username = $scope.sc.username;
+    }
     CSRF.getToken()
     .then(function(csrf_token) {
       Permissions.addScheduledChange(permission_sc, csrf_token)
       .success(function(response) {
-        $scope.sc.sc_data_version = 1;
-        $scope.sc.sc_id = response.sc_id;
-        $scope.scheduled_changes.push($scope.sc);
-        $modalInstance.close();
-      })
-      .error(function(response, status) {
-        if (typeof response === 'object') {
-          $scope.errors = response;
-          sweetAlert(
-            "Form submission error",
-            "See fields highlighted in red.",
-            "error"
-          );
+        permission_sc.sc_data_version = 1;
+        permission_sc.sc_id = response.sc_id;
+        if(permission_sc.options){
+          permission_sc.options = JSON.parse(permission_sc.options);
         }
-      })
-      .finally(function() {
-        $scope.saving = false;
-      });
-    });
-
-     $scope.permission = {
-          permission: '',
-          options: ''
-        };
-    }
-  };
-
-  $scope.addScheduledUser = function() {
-
-
-    date = new Date();
-
-    $scope.permission.when = date.getTime()+100;
-    $scope.permission.change_type = "insert";
-    $scope.saving = true;
-    CSRF.getToken()
-    .then(function(csrf_token) {
-      Permissions.addScheduledChange($scope.permission, csrf_token)
-      .success(function(response) {
-        $scope.permission.sc_data_version = 1;
-        $scope.permission.sc_id = response.sc_id;
-        $scope.scheduled_changes.push($scope.permission);
+        $scope.scheduled_changes.push(permission_sc);
+        if($scope.sc.username) {
+        sweetAlert("Permission Scheduled", "success");
+        }
+        else {
         $modalInstance.close();
+        }
       })
       .error(function(response) {
         if (typeof response === 'object') {
@@ -118,14 +78,21 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
       });
     });
 
+     $scope.permission = {
+          permission: '',
+          options: ''
+        };
   };
 
-   $scope.scheduledUpdatePermission = function(permission) {
+
+
+  $scope.scheduledUpdatePermission = function(permission) {
     $scope.saving = true;
+
     CSRF.getToken()
     .then(function(csrf_token) {
       date = new Date();
-      permission.when = date.getTime()+100;
+      permission.when = date.getTime() + 5000;
       permission.username = $scope.sc.username;
       permission.change_type = "update";
       Permissions.addScheduledChange(permission, csrf_token)
@@ -160,7 +127,8 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
     });
   };
 
-   $scope.scheduledDeletePermission = function(permission) {
+  $scope.scheduledDeletePermission = function(permission) {
+
     sweetAlert({
       title: "Are you sure?",
       text: "This will scheduled delete for the permission.",
@@ -172,9 +140,10 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
     }, function(){
       $scope.saving = true;
       date = new Date();
-      permission.when = date.getTime()+100;
+      permission.when = date.getTime()+5000;
       permission.change_type = "delete";
       permission.username = $scope.sc.username;
+
       CSRF.getToken()
       .then(function(csrf_token) {
         Permissions.addScheduledChange(permission, csrf_token)

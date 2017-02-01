@@ -6,7 +6,9 @@ function ($scope, $modalInstance, CSRF, Permissions, sc, scheduled_changes) {
   $scope.saving = false;
 
   $scope.saveChanges = function () {
+
     $scope.saving = true;
+
     CSRF.getToken()
     .then(function(csrf_token) {
       Permissions.deleteScheduledChange($scope.sc.sc_id, $scope.sc, csrf_token)

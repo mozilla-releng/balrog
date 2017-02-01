@@ -11,19 +11,15 @@ function ($scope, $modalInstance, CSRF, Permissions, sc) {
   }
   $scope.currentItemTab = 1;
   $scope.is_edit = true;
-
   $scope.saving = false;
-
-
 
 
   $scope.updateScheduledPermission = function() {
 
-
     $scope.date = new Date();
-
-    $scope.sc.when=$scope.date.getTime()+100;
+    $scope.sc.when = $scope.date.getTime() + 5000;
     $scope.saving = true;
+
     CSRF.getToken()
     .then(function(csrf_token) {
       Permissions.updateScheduledChange(sc.sc_id, $scope.sc, csrf_token)
@@ -55,11 +51,7 @@ function ($scope, $modalInstance, CSRF, Permissions, sc) {
         $scope.saving = false;
       });
     });
-
-
-
   };
-
 
   $scope.cancel = function () {
     $modalInstance.dismiss('cancel');
