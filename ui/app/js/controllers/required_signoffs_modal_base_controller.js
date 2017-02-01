@@ -71,6 +71,20 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   $scope.saveChanges = function() {
     $scope.errors = {};
 
+    // TODO: Make this work for editing
+    // Try this:
+    // 1) Get rid of new_required_signoffs (its basically the same data structure as new_roles)
+    // 2) Store current roles somewhere (so we can compare the state of things when the modal
+    //    opened to the state of things when saveChanges is called
+    // 3) Move things that are specific to new required signoffs into that controller
+    // 4) Implement saving of edits by comparing current roles to new roles
+    //    - If current role and new role are the same, noop
+    //    - If new role is not an already scheduled change:
+    //      - If role is in current but not in new, need to delete it
+    //      - If role is in new but not in current, need to add it. If product+channel already has roles, need to use sc
+    //      - If role is in both, but signoffs_required are different, need to update it. Must use SC.
+    //    - If new role *is* an already scheduled change (this can happen when editing roles that are pending)
+    //      we take the same actions as above, except acting on the existing scheduled change (which will never need signoff)
     var new_required_signoffs = {};
 
     for (let rs of $scope.new_roles) {
