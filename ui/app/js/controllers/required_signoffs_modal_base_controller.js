@@ -111,8 +111,14 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
 
         var successCallback = function(data, deferred) {
           return function(response) {
-            // todo: add sc_id and other sc info here
-            var data_version = response["new_data_version"];
+            var data_version = 1;
+            var sc_id = null;
+            if (response.hasOwnProperty("new_data_version")) {
+              data_version = response["new_data_version"];
+            }
+            if (response.hasOwnProperty("sc_id")) {
+              sc_id = response["sc_id"];
+            }
             // todo: maybe required_signoffs should be an object with methods
             // so we don't have to duplicate this from the main controller
             if ($scope.mode === "channel") {
@@ -126,6 +132,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               required_signoffs[data["product"]]["channels"][data["channel"]][data["role"]] = {
                 "signoffs_required": data["signoffs_required"],
                 "data_version": data_version,
+                "sc_id": sc_id,
               };
             }
             else if ($scope.mode === "permissions") {
@@ -139,6 +146,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               required_signoffs[data["product"]]["permissions"][data["role"]] = {
                 "signoffs_required": data["signoffs_required"],
                 "data_version": data_version,
+                "sc_id": sc_id,
               };
             }
             deferred.resolve();
