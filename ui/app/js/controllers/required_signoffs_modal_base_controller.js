@@ -1,6 +1,6 @@
 angular.module("app").controller("BaseRequiredSignoffCtrl",
 function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Rules,
-         current_required_signoffs, pending_required_signoffs, roles, mode = "channel", product = "", channel = "") {
+         current_required_signoffs, pending_required_signoffs, roles, mode, product, channel, editing) {
   $scope.saving = false;
   $scope.errors = {};
 
@@ -8,6 +8,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   $scope.product = product;
   $scope.channel = channel;
   $scope.new_roles = roles;
+  $scope.editing = editing;
 
   $scope.products = [];
   Rules.getProducts().success(function(response) {

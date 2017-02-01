@@ -4,14 +4,14 @@
 </div>
 <div class="modal-body">
   <form role="form">
-    <div class="form-group" ng-class="{'has-error': errors.product}">
+    <div class="form-group" ng-class="{'has-error': errors.product}" ng-show="!editing">
       <label for="id_product">Product</label>
       <input tabindex="1" type="text" class="form-control" id="id_product" ng-model="product" autocomplete="off"
              typeahead="product for product in products | filter:$viewValue | limitTo:16">
       <p class="help-block" ng-show="errors.product">{{ errors.product.join(", ") }}</p>
     </div>
     <!-- TODO: don't show the channel and permissions switcher for edits -->
-    <div class="tabbable tabs-below">
+    <div class="tabbable tabs-below" ng-show="!editing">
       <ul class="nav nav-pills" role="tablist">
         <li ng-class="{active: mode === 'channel'}">
           <a href="#" ng-click="mode = 'channel'">Channel</a>

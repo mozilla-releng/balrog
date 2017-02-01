@@ -3,10 +3,17 @@ function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs,
          current_required_signoffs, pending_required_signoffs, mode, product, channel) {
   var roles = [];
   // how to detect pending vs. current ?
-  for (let role of Object.keys(current_required_signoffs[product]["channels"][channel])) {
+  var i = null;
+  if (mode === "channel") {
+    i = current_required_signoffs[product]["channels"][channel];
+  }
+  else if (mode === "permissions") {
+    i = current_required_signoffs[product]["permissions"];
+  }
+  for (let role of Object.keys(i)) {
     roles.push({
         "role": role,
-        "signoffs_required": current_required_signoffs[product]["channels"][channel][role]["signoffs_required"],
+        "signoffs_required": i[role]["signoffs_required"],
     });
   }
 
@@ -23,5 +30,6 @@ function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs,
     mode: mode,
     product: product,
     channel: channel,
+    editing: true,
   });
 });
