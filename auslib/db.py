@@ -1140,8 +1140,8 @@ class ScheduledChangeTable(AUSTable):
             if not self._dataVersionsAreSynced(sc_id, transaction):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s" % sc_id)
 
-        if type(where) == dict and where.get("sc_id", None):
-            where_signOff = {"sc_id": where.get("sc_id")}
+        for sc_id in affected_ids:
+            where_signOff = {"sc_id": sc_id}
             signOffs = self.signoffs.select(where=where_signOff, transaction=transaction, columns=["sc_id", "username"])
             for signOff in signOffs:
                 where_signOff.update({"username": signOff["username"]})
