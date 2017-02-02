@@ -1,6 +1,7 @@
 angular.module("app").controller("NewRequiredSignoffCtrl",
 function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs,
          required_signoffs) {
+  var current_roles = [{"role": "", "signoffs_required": null, "sc_id": null}];
   $controller("BaseRequiredSignoffCtrl", {
     $scope: $scope,
     $modalInstance: $modalInstance,
@@ -15,6 +16,7 @@ function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs,
     mode: "channel",
     product: "",
     channel: "",
+    current_roles: current_roles,
     editing: false,
   });
 });

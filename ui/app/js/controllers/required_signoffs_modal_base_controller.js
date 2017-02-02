@@ -1,43 +1,17 @@
 angular.module("app").controller("BaseRequiredSignoffCtrl",
 function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Rules,
-         required_signoffs, mode, product, channel, editing) {
+         required_signoffs, mode, product, channel, current_roles, editing) {
   $scope.saving = false;
   $scope.errors = {};
 
   $scope.mode = mode;
   $scope.product = product;
   $scope.channel = channel;
-  $scope.new_roles = [];
-  $scope.editing = editing;
-
-  if ($scope.editing) {
-    if ($scope.mode === "channel") {
-      for (let role of Object.keys(required_signoffs[product]["channels"][channel])) {
-        $scope.new_roles.push({
-          "role": role,
-          "signoffs_required": required_signoffs[product]["channels"][channel][role]["signoffs_required"],
-          "sc_id": required_signoffs[product]["channels"][channel][role]["sc_id"],
-        });
-      }
-    }
-    else if ($scope.mode === "permissions") {
-      for (let role of Object.keys(required_signoffs[product]["permissions"])) {
-        $scope.new_roles.push({
-          "role": role,
-          "signoffs_required": required_signoffs[product]["permissions"][role]["signoffs_required"],
-          "sc_id": required_signoffs[product]["permissions"][role]["sc_id"],
-        });
-      }
-    }
-  }
-  else {
-    $scope.new_roles = [{"role": "", "signoffs_required": null, "sc_id": null}];
-  } 
-
   // When saveChanges is called, new_roles contains whatever the user has entered.
   // We need the original version as well, so we can compare the two and figure
   // out how to move from the current state to the new state.
-  var current_roles = $.extend(true, [], $scope.new_roles);
+  $scope.new_roles = $.extend(true, [], current_roles);
+  $scope.editing = editing;
 
   $scope.products = [];
   Rules.getProducts().success(function(response) {
