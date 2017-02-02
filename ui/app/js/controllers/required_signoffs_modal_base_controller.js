@@ -81,19 +81,19 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
     CSRF.getToken()
     .then(function(csrf_token) {
       var promises = [];
+      var first = true;
 
-      // should probably convert new and old to dicts first. or not? who the fuck knows.
       var current_role_names = [];
       var new_role_names = [];
       var all_role_names = [];
       current_roles.forEach(function(rs) {
-        if (rs["roles"] !== "") {
+        if (rs["role"] !== "") {
           current_role_names.push(rs["role"]);
           all_role_names.push(rs["role"]);
         }
       });
       $scope.new_roles.forEach(function(rs) {
-        if (rs["roles"] !== "") {
+        if (rs["role"] !== "") {
           new_role_names.push(rs["role"]);
           if (all_role_names.indexOf(rs["role"]) === -1) {
             all_role_names.push(rs["role"]);
@@ -101,13 +101,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         }
       });
 
-      var first = true;
-
       all_role_names.forEach(function(role_name) {
-        if (role_name === "") {
-          return;
-        }
-
         // todo: probably handle this further down
         //var is_sc = new_rs["sc_id"] ? false : true;
         // There's no real safe default for create_sc, but we set it in each path below...
