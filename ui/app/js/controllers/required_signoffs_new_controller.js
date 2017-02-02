@@ -1,7 +1,7 @@
 angular.module("app").controller("NewRequiredSignoffCtrl",
 function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs,
          required_signoffs) {
-  var current_roles = [{"role": "", "signoffs_required": null, "sc_id": null}];
+  var current_roles = [{"role": "", "data_version": null, "signoffs_required": null, "sc_id": null, "sc_data_version": null}];
   $controller("BaseRequiredSignoffCtrl", {
     $scope: $scope,
     $modalInstance: $modalInstance,

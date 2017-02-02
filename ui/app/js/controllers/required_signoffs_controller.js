@@ -49,6 +49,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
           "sc_id": null,
+          "sc_data_version": null,
         };
       });
     }
@@ -83,6 +84,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
           "sc_id": null,
+          "sc_data_version": null,
         };
       });
     }
@@ -152,6 +154,9 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         $scope.required_signoffs[rs.product]["permissions"][rs.role] = {
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
+          "sc_id": rs.sc_id,
+          "sc_data_version": rs.sc_data_version,
+          "signoffs": rs.signoffs,
         };
       });
     }

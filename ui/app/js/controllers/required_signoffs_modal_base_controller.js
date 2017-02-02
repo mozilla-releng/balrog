@@ -67,6 +67,8 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
     }
 
     $scope.saving = true;
+    console.log(current_roles);
+    console.log($scope.new_roles);
     CSRF.getToken()
     .then(function(csrf_token) {
       var promises = [];
@@ -90,6 +92,8 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         }
       });
 
+      // TODO: create_sc needs to be false if a thing is already a scheduled change. we should only
+      // create for things that aren't scheduled
       all_role_names.forEach(function(role_name) {
         // todo: probably handle this further down
         //var is_sc = new_rs["sc_id"] ? false : true;
@@ -153,6 +157,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         var successCallback = function(data, deferred) {
           return function(response) {
             var data_version = 1;
+            // how do we know if this is for data_version or sc_data_version?
             if (response.hasOwnProperty("new_data_version")) {
               data_version = response["new_data_version"];
             }
@@ -174,8 +179,11 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             }
             console.log(namespace);
 
+            // need to remove rather than add for deletes
             namespace[data["role"]] = {
               "signoffs_required": data["signoffs_required"],
+              // should this be sc_data_version? we can never update required signoffs directly, so maybe no point in storing
+              // regular data_version?
               "data_version": data_version,
               "sc_id": sc_id,
             };
@@ -200,19 +208,30 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
 
         var deferred = $q.defer();
         promises.push(deferred.promise);
-        var data = {"product": $scope.product, "role": role_name, "signoffs_required": role["signoffs_required"], "csrf_token": csrf_token};
+        var data = {"product": $scope.product, "role": role_name, "signoffs_required": role["signoffs_required"], "csrf_token": csrf_token,
+                    "data_version": role["data_version"], "sc_data_version": role["sc_data_version"]};
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
         }
         if (create_sc) {
           data["change_type"] = action;
-          if (action === "insert") {
-            // There's no use case for users to pick a specific time for these
-            // to be enacted, so we just schedule them for 5 seconds in the future.
-            // They'll still end up waiting for any necessary Required Signoffs
-            // before being enacted, however.
-            data["when"] = new Date().getTime() + 5000;
-            service.addScheduledChange(data)
+          // There's no use case for users to pick a specific time for these
+          // to be enacted, so we just schedule them for 5 seconds in the future.
+          // They'll still end up waiting for any necessary Required Signoffs
+          // before being enacted, however.
+          data["when"] = new Date().getTime() + 5000;
+          service.addScheduledChange(data)
+          .success(successCallback(data, deferred))
+          .error(errorCallback(data, deferred));
+        }
+        else if (role["sc_id"] !== null) {
+          if (action === "delete") {
+            service.deleteScheduledChange(role["sc_id"], data)
+            .success(successCallback(data, deferred))
+            .error(errorCallback(data, deferred));
+          }
+          else {
+            service.updateScheduledChange(role["sc_id"], data)
             .success(successCallback(data, deferred))
             .error(errorCallback(data, deferred));
           }
@@ -223,6 +242,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             .success(successCallback(data, deferred))
             .error(errorCallback(data, deferred));
           }
+          // updates and deletes aren't supported outside of scheduled changes
         }
       });
 
