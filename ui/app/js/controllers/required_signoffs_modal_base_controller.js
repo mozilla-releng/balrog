@@ -102,7 +102,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         // todo: need to pull actual role detail sout of correct data structure
         // If the role is only in the new Roles, we'll need to create it.
         if (current_role_names.indexOf(role_name) === -1 && new_role_names.indexOf(role_name) !== -1) {
-          action = "create";
+          action = "insert";
           // If we're creating a new role, and there was already at least one before, we must use an SC.
           if (current_role_names.length === 0 && first) {
             create_sc = false;
@@ -143,117 +143,88 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           }
         }
 
+        first = false;
         console.log("Role: " + role_name);
         console.log("Action: " + action);
         console.log("Create SC: " + create_sc);
         console.log("object: ");
         console.log(role);
-        first = false;
-      });
 
-      $scope.saving = false;
-
-
-/*      var service = null;
-      var first = true;
-
-      var promises = [];
-
-      if ($scope.mode === "channel") {
-        service = ProductRequiredSignoffs;
-      }
-      else if ($scope.mode === "permissions") {
-        service = PermissionsRequiredSignoffs;
-      }
-      else {
-        $scope.errors["exception"] = "Couldn't detect mode";
-        $scope.saving = false;
-      }
-
-      var successCallback = function(data, deferred) {
-        return function(response) {
-          var data_version = 1;
-          var sc_id = null;
-          if (response.hasOwnProperty("new_data_version")) {
-            data_version = response["new_data_version"];
-          }
-          if (response.hasOwnProperty("sc_id")) {
-            sc_id = response["sc_id"];
-          }
-          // todo: maybe required_signoffs should be an object with methods
-          // so we don't have to duplicate this from the main controller
-          if ($scope.mode === "channel") {
-            if (! (data["product"] in required_signoffs)) {
-              required_signoffs[data["product"]] = {"channels": {}};
+        var successCallback = function(data, deferred) {
+          return function(response) {
+            var data_version = 1;
+            if (response.hasOwnProperty("new_data_version")) {
+              data_version = response["new_data_version"];
+            }
+            // need to set this to whatever is in new_roles for the role
+            var sc_id = null;
+            if (response.hasOwnProperty("sc_id")) {
+              sc_id = response["sc_id"];
             }
 
-            if (! (data["channel"] in required_signoffs[data["product"]]["channels"])) {
-              required_signoffs[data["product"]]["channels"][data["channel"]] = {};
+            if (! (required_signoffs.hasOwnProperty(data["product"]))) {
+              required_signoffs[data["product"]] = {"channels": {}, "permissions": {}};
             }
-            required_signoffs[data["product"]]["channels"][data["channel"]][data["role"]] = {
+            var namespace = required_signoffs[data["product"]]["permissions"];
+            if ($scope.mode === "channel") {
+              if (! (required_signoffs[data["product"]]["channels"].hasOwnProperty(data["channel"]))) {
+                required_signoffs[data["product"]]["channels"][data["channel"]] = {};
+              }
+              namespace = required_signoffs[data["product"]]["channels"][data["channel"]];
+            }
+            console.log(namespace);
+
+            namespace[data["role"]] = {
               "signoffs_required": data["signoffs_required"],
               "data_version": data_version,
               "sc_id": sc_id,
             };
-          }
-          else if ($scope.mode === "permissions") {
-            if (! (data["product"] in required_signoffs)) {
-              required_signoffs[data["product"]] = {"permissions": {}};
-            }
-            else if (! ("permissions" in required_signoffs[data["product"]])) {
-              required_signoffs[data["product"]]["permissions"] = {};
-            }
-        
-            required_signoffs[data["product"]]["permissions"][data["role"]] = {
-              "signoffs_required": data["signoffs_required"],
-              "data_version": data_version,
-              "sc_id": sc_id,
-            };
-          }
-          deferred.resolve();
-        };
-      };
-      var errorCallback = function(data, deferred) {
-        return function(response, status) {
-          if (typeof response === "object") {
-            $scope.errors = response;
-          }
-          else if (typeof response === "string"){
-            $scope.errors["exception"] = response;
-          }
-          else {
-            sweetAlert("Unknown error occurred");
-          }
-          deferred.resolve();
-        };
-      };
 
-      for (let rs of $scope.new_roles) {
+            deferred.resolve();
+          };
+        };
+        var errorCallback = function(data, deferred) {
+          return function(response, status) {
+            if (typeof response === "object") {
+              $scope.errors = response;
+            }
+            else if (typeof response === "string"){
+              $scope.errors["exception"] = response;
+            }
+            else {
+              sweetAlert("Unknown error occurred");
+            }
+            deferred.resolve();
+          };
+        };
+
         var deferred = $q.defer();
         promises.push(deferred.promise);
-        var data = {"product": $scope.product, "role": rs["role"], "signoffs_required": rs["signoffs_required"],
-                    "csrf_token": csrf_token};
+        var data = {"product": $scope.product, "role": role_name, "signoffs_required": role["signoffs_required"], "csrf_token": csrf_token};
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
         }
-        if (first) {
-          first = false;
-          service.addRequiredSignoff(data)
-          .success(successCallback(data, deferred))
-          .error(errorCallback(data, deferred));
+        if (create_sc) {
+          data["change_type"] = action;
+          if (action === "insert") {
+            // There's no use case for users to pick a specific time for these
+            // to be enacted, so we just schedule them for 5 seconds in the future.
+            // They'll still end up waiting for any necessary Required Signoffs
+            // before being enacted, however.
+            data["when"] = new Date().getTime() + 5000;
+            service.addScheduledChange(data)
+            .success(successCallback(data, deferred))
+            .error(errorCallback(data, deferred));
+          }
         }
         else {
-          data["change_type"] = "insert";
-          // There's no use case for users to pick a specific time for these
-          // to be enacted, so we just schedule them for 30 seconds in the future.
-          // They'll still end up waiting for any necessary Required Signoffs
-          // before being enacted, however.
-          data["when"] = new Date().getTime() + 30000;
-          service.addScheduledChange(data)
-          .success(successCallback(data, deferred))
-          .error(errorCallback(data, deferred));
+          if (action === "insert") {
+            service.addRequiredSignoff(data)
+            .success(successCallback(data, deferred))
+            .error(errorCallback(data, deferred));
+          }
         }
-      }
+      });
 
       $q.all(promises)
       .then(function() {
@@ -261,7 +232,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           $modalInstance.close();
         }
         $scope.saving = false;
-      });*/
+      });
     });
   };
 
