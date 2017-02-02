@@ -66,10 +66,85 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
       return;
     }
 
+    if ($scope.mode === "channel") {
+      service = ProductRequiredSignoffs;
+    }
+    else if ($scope.mode === "permissions") {
+      service = PermissionsRequiredSignoffs;
+    }
+    else {
+      $scope.errors["exception"] = "Couldn't detect mode";
+      return;
+    }
+
     $scope.saving = true;
     CSRF.getToken()
     .then(function(csrf_token) {
-      var service = null;
+      var promises = [];
+
+      // should probably convert new and old to dicts first. or not? who the fuck knows.
+      var current_role_names = [];
+      var new_role_names = [];
+      var all_role_names = [];
+      current_roles.forEach(function(rs) {
+        if (rs["roles"] !== "") {
+          current_role_names.push(rs["role"]);
+          all_role_names.push(rs["role"]);
+        }
+      });
+      $scope.new_roles.forEach(function(rs) {
+        if (rs["roles"] !== "") {
+          new_role_names.push(rs["role"]);
+          if (all_role_names.indexOf(rs["role"]) === -1) {
+            all_role_names.push(rs["role"]);
+          }
+        }
+      });
+
+      var first = true;
+
+      all_role_names.forEach(function(role_name) {
+        if (role_name === "") {
+          return;
+        }
+
+        // todo: probably handle this further down
+        //var is_sc = new_rs["sc_id"] ? false : true;
+        // There's no real safe default for create_sc, but we set it in each path below...
+        var create_sc = false;
+        var action = null;
+
+        // todo: need to pull actual role detail sout of correct data structure
+        // If the role is only in the new Roles, we'll need to create it.
+        if (current_role_names.indexOf(role_name) === -1 && new_role_names.indexOf(role_name) !== -1) {
+          action = "create";
+          // If we're creating a new role, and there was already at least one before, we must use an SC.
+          if (current_role_names.length !== 0 && !first) {
+            create_sc = true;
+          }
+        }
+        // If the role is only in the current Roles, we'll be deleting it
+        else if (current_role_names.indexOf(role_name) !== -1 && new_role_names.indexOf(role_name) === -1) {
+          action = "delete";
+          // Updates will always require signoff
+          create_sc = true;
+        }
+        else {
+          action = "update";
+          // Updates will always require signoff
+          create_sc = true;
+        }
+
+        console.log("Role: " + role_name);
+        console.log("Action: " + action);
+        console.log("Create SC: " + create_sc);
+        first = false;
+      });
+
+      $scope.saving = false;
+
+
+/*      var service = null;
       var first = true;
 
       var promises = [];
@@ -176,7 +251,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           $modalInstance.close();
         }
         $scope.saving = false;
-      });
+      });*/
     });
   };
 

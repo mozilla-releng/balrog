@@ -39,8 +39,13 @@
         </tr>
       </thead>
       <tbody id="new_roles">
-        <!-- todo: do we need to show a pending indicator in here for edits? -->
+        <!-- It would be realllllllllly nice to use an Object here to avoid dupes
+             and make decisions in saveChanges easier. Haven't found a way to make it work
+             with ngRepeat in the template, though. Specifically, ng-bind doesn't seem to work
+             with object keys (changes never get reflected).
+        -->
         <tr class="new_role" ng-repeat="rs in new_roles track by $index">
+        <!-- todo: do we need to show a pending indicator in here for edits? -->
           <th>
             <button type="button" class="btn btn-default btn-xs" ng-click="removeRole($index)" ng-show="$index > 0">
               <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
