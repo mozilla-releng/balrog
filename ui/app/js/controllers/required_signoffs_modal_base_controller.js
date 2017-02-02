@@ -34,6 +34,11 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
     $scope.new_roles = [{"role": "", "signoffs_required": null, "sc_id": null}];
   } 
 
+  // When saveChanges is called, new_roles contains whatever the user has entered.
+  // We need the original version as well, so we can compare the two and figure
+  // out how to move from the current state to the new state.
+  var current_roles = $.extend(true, [], $scope.new_roles);
+
   $scope.products = [];
   Rules.getProducts().success(function(response) {
     $scope.products = response.product;
@@ -73,8 +78,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
 
     // TODO: Make this work for editing
     // Try this:
-    // 2) Store current roles somewhere (so we can compare the state of things when the modal
-    //    opened to the state of things when saveChanges is called
     // 3) Move things that are specific to new required signoffs into that controller
     // 4) Implement saving of edits by comparing current roles to new roles
     //    - If current role and new role are the same, noop
