@@ -132,7 +132,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                 if (r["role"] === r2["role"]) {
                   if (r["signoffs_required"] === r2["signoffs_required"]) {
                     console.log("No change to " + role_name + ", skipping...");
-                    break;
+                    return; // exit forEach
                   }
                   else {
                     role = r;
