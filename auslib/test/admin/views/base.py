@@ -1,3 +1,4 @@
+import logging
 import os
 import simplejson as json
 from tempfile import mkstemp
@@ -6,6 +7,11 @@ import unittest
 from auslib.global_state import dbo, cache
 from auslib.admin.base import app
 from auslib.blobs.base import createBlob
+
+
+def setUpModule():
+    # Silence SQLAlchemy-Migrate's debugging logger
+    logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
 class ViewTest(unittest.TestCase):

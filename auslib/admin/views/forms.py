@@ -1,4 +1,5 @@
 import simplejson as json
+import operator
 
 from flask_wtf import Form
 from wtforms import StringField, IntegerField, SelectField, BooleanField
@@ -111,17 +112,26 @@ def version_validator():
         # empty input
         if field.data is None:
             return
-        try:
-            op, operand = get_op(field.data)
-            version = MozillaVersion(operand)
-        except ValueError:
-            raise ValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value" % (field.name, field.name))
-        except:
-            raise ValidationError('Invalid input for %s . No Operator or Match found.' % field.name)
-        # MozillaVersion doesn't error on empty strings
-        if not hasattr(version, 'version'):
-            raise ValidationError("Couldn't parse the version for %s. No attribute 'version' was detected." % field.name)
-
+        rulesVersionList = field.data.split(",")
+        isListOfVersions = len(rulesVersionList) > 1
+        for rule_version in rulesVersionList:
+            try:
+                op, operand = get_op(rule_version)
+                if isListOfVersions and op != operator.eq:
+                    raise ValidationError('Invalid input for %s .Relational Operators are not allowed'
+                                          ' when providing a list of versions.' % field.name)
+                version = MozillaVersion(operand)
+            except ValidationError:
+                raise
+            except ValueError:
+                raise ValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value"
+                                      % (field.name, field.name))
+            except:
+                raise ValidationError('Invalid input for %s . No Operator or Match found.' % field.name)
+            # MozillaVersion doesn't error on empty strings
+            if not hasattr(version, 'version'):
+                raise ValidationError("Couldn't parse the version for %s. No attribute 'version' was detected."
+                                      % field.name)
     return _validator
 
 

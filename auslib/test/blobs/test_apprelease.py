@@ -4,6 +4,7 @@ except ImportError:
     # so you're in python <2.7
     from ordereddict import OrderedDict
 
+import logging
 import mock
 import unittest
 
@@ -14,6 +15,11 @@ from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV7, DesupportBlob, \
     UnifiedFileUrlsMixin
+
+
+def setUpModule():
+    # Silence SQLAlchemy-Migrate's debugging logger
+    logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
 class SimpleBlob(ReleaseBlobBase):

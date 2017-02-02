@@ -4,6 +4,7 @@ import os
 import sys
 from tempfile import mkstemp
 import unittest
+import re
 
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
@@ -18,6 +19,12 @@ from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     verify_signoffs
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
+
+
+def setUpModule():
+    # This is meant to silence the debug information coming from SQLAlchemy-Migrate since
+    # AUSDatabase provides decent debugging logs by itself.
+    logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
 class MemoryDatabaseMixin(object):
@@ -912,10 +919,19 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(cond_row.data_version, 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
-    def testInsertWithNonNullableColumn(self):
-        what = {"bar": "abc", "when": 34567000, "change_type": "insert"}
-        # TODO: we should really be checking directly for IntegrityError, but AUSTransaction eats it.
-        self.assertRaisesRegexp(TransactionError, "IntegrityError", self.sc_table.insert, changed_by="bob", **what)
+    def testInsertWithNonNullablePKColumn(self):
+        class TestTable(AUSTable):
+            def __init__(self, db, metadata):
+                self.table = Table('test_table_null_pk', metadata,
+                                   Column('foo_id', Integer, primary_key=True),
+                                   Column('bar', String(15), primary_key=True, nullable=False),
+                                   Column('baz', String(15)))
+                super(TestTable, self).__init__(db, 'sqlite', scheduled_changes=True, history=False, versioned=True)
+        table = TestTable(self.db, self.metadata)
+        self.metadata.create_all()
+        table_sc = table.scheduled_changes
+        what = {'baz': 'baz', 'change_type': 'insert', 'when': 876000}
+        self.assertRaisesRegexp(ValueError, 'Missing primary key column ', table_sc.insert, changed_by="alice", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertForExistingNoSuchRow(self):
@@ -2181,6 +2197,11 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.rules.t.insert().execute(rule_id=1, priority=100, version='>=4.0b1', backgroundRate=100, update_type='z', data_version=1)
         self.rules.t.insert().execute(rule_id=2, priority=100, channel='release*', backgroundRate=100, update_type='z', data_version=1)
         self.rules.t.insert().execute(rule_id=3, priority=100, buildID='>=20010101222222', backgroundRate=100, update_type='z', data_version=1)
+        self.rules.t.insert().execute(rule_id=4, priority=90, version='3.0.1,3.0.2,3.0b3', backgroundRate=100, update_type='z',
+                                      data_version=1)
+        self.rules.t.insert().execute(rule_id=5, priority=80, version='2.0.1,2.0.2,2.0.3', backgroundRate=100,
+                                      update_type='z',
+                                      data_version=1)
 
     def testGetRulesMatchingQueryVersionComparison(self):
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='>=4.0b1', update_type='z', data_version=1)]
@@ -2219,6 +2240,46 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='3.0', channel='',
+                 buildTarget='', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, [])
+
+    def testGetRulesMatchingQueryListOfVersionsComparison(self):
+        expected = [dict(rule_id=4, priority=90, backgroundRate=100,
+                         version='3.0.1,3.0.2,3.0b3', update_type='z', data_version=1)]
+        for version in ['3.0.1', '3.0.2', '3.0b3']:
+            rules = self.rules.getRulesMatchingQuery(
+                dict(name='', product='', version=version, channel='',
+                     buildTarget='', buildID='', locale='', osVersion='',
+                     distribution='', distVersion='', headerArchitecture='',
+                     force=False, queryVersion=3,
+                     ),
+                fallbackChannel=''
+            )
+            rules = self._stripNullColumns(rules)
+            self.assertEquals(rules, expected)
+
+    def testGetRulesMatchingQueryIfVersionNotPresentInListOfVersions(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0.3', channel='',
+                 buildTarget='', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, [])
+
+    def testGetRulesMatchingQueryPartialVersionDoesNotMatchLongerVersion(self):
+        # 2.0 does not match any version in [ 2.0.1, 2.0.2, 2.0.3] for rule_id: 5
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='2.0', channel='',
                  buildTarget='', buildID='', locale='', osVersion='',
                  distribution='', distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
@@ -3864,18 +3925,13 @@ class TestChangeNotifiers(unittest.TestCase):
 
 
 class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
-
-    def setUp(self):
-        NamedFileDatabaseMixin.setUp(self)
-        self.db = AUSDatabase(self.dburi)
-        self.db.metadata.create_all()
-
-    def testAllTablesExist(self):
-        expected_tables = set([
+    @classmethod
+    def setUpClass(cls):
+        cls.db_tables = set([
             "dockerflow",
             # TODO: dive into this more
             # Migrate version only exists in production-like databases.
-            #"migrate_version", # noqa
+            # "migrate_version", # noqa
             "permissions",
             "permissions_history",
             "permissions_scheduled_changes",
@@ -3919,11 +3975,109 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             "user_roles",
             "user_roles_history",
         ])
-        self.assertEquals(set(self.db.metadata.tables.keys()), expected_tables)
+
+        # autoincrement isn't tested as Sqlite does not support this outside of INTEGER PRIMARY KEYS.
+        # If the testing db is ever switched to mysql, this should be revisited.
+        cls.properties = ('nullable',
+                          'primary_key',
+                          # 'autoincrement',
+                          'constraints',
+                          'foreign_keys',
+                          'index',
+                          'timetuple', )
+        cls.property_err_msg = ("Property '{property}' on '{table_name}.{column}' differs between model "
+                                "and migration: (model) {model_prop} != (migration) {reflected_prop}")
+
+    def setUp(self):
+        NamedFileDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.metadata.create_all()
+
+    def _is_column_unique(self, col_obj):
+        """
+        Check to see if a column is unique using a Sqlite-specific query.
+        """
+        col_engine = col_obj.table.metadata.bind
+        table_name = col_obj.table.name
+        res = col_engine.execute("SELECT sql FROM sqlite_master WHERE name = :table_name", table_name=table_name)
+        res = res.fetchone()[0]
+
+        # Return None instead of False in order to adhere to SQLAlchemy's style: Column.unique returns None
+        # if it hasn't been explicitly set.
+        if re.search(r'(?:CONSTRAINT (\w+) +)?UNIQUE *\({0}\)'.format(col_obj.name), res) is None:
+            return None
+        return True
+
+    def _get_migrated_db(self):
+        db = AUSDatabase('sqlite:///' + self.getTempfile())
+        db.create()
+        return db
+
+    def _get_reflected_metadata(self, db):
+        """
+        @type db: AUSDatabase
+        """
+        mt = MetaData()
+        engine = create_engine(db.dburi)
+        mt.bind = engine
+        mt.reflect()
+        return mt
+
+    def assert_attributes_for_tables(self, tables):
+        """
+        Expects an iterable of sqlalchemy (Table, Table) pairs. The first table
+        should be the result of migrations, the second should be the model
+        taken directly from db.py.
+        """
+        failures = []
+        for reflected_table, table_model_instance in tables:
+
+            for col_name in table_model_instance.c.keys():
+                db_py_col = table_model_instance.c[col_name]
+                reflected_db_col = reflected_table.c[col_name]
+
+                for col_property in self.properties:
+                    db_py_col_property = getattr(db_py_col, col_property)
+                    reflected_db_col_property = getattr(reflected_db_col, col_property)
+
+                    if db_py_col_property != reflected_db_col_property:
+                        failures.append(
+                            self.property_err_msg.format(
+                                property=col_property,
+                                table_name=table_model_instance.name,
+                                column=col_name,
+                                model_prop=db_py_col_property,
+                                reflected_prop=reflected_db_col_property))
+
+                # Testing 'unique' separately since Sqlalchemy < 1.0.0 can't reflect this attribute for this version of sqlite
+                ref_uniq = self._is_column_unique(reflected_db_col)
+                if db_py_col.unique != ref_uniq:
+                    failures.append(
+                        self.property_err_msg.format(
+                            property="unique",
+                            table_name=table_model_instance.name,
+                            column=col_name,
+                            model_prop=db_py_col.unique,
+                            reflected_prop=ref_uniq))
+
+        self.assertEqual(failures, [], 'Column properties different between models and migrations:\n' + '\n'.join(failures))
+
+    def testAllTablesExist(self):
+        self.assertEquals(set(self.db.metadata.tables.keys()), self.db_tables)
 
     def testModelIsSameAsRepository(self):
-        db2 = AUSDatabase('sqlite:///' + self.getTempfile())
-        db2.create()
+        db2 = self._get_migrated_db()
         diff = migrate.versioning.api.compare_model_to_db(db2.engine, self.db.migrate_repo, self.db.metadata)
         if diff:
             self.fail(str(diff))
+
+    def testColumnAttributesAreSameAsDb(self):
+        table_instances = []
+
+        db = self._get_migrated_db()
+        meta_data = self._get_reflected_metadata(db)
+
+        for table_name in self.db_tables:
+            table_instances.append((meta_data.tables[table_name], self.db.metadata.tables[table_name]))
+
+        self.assert_attributes_for_tables(table_instances)

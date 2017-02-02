@@ -172,17 +172,21 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
 
     result = trans.execute(query_release_mapping).fetchall()
     partial_release_names = set()
+    release_names = set()
     for row in result:
         try:
+            release_names.add(str(row['name']))
             release_blob = createBlob(row['data'])
             partial_release_names.update(release_blob.getReferencedReleases())
         except ValueError:
             continue
+    partial_release_names.difference_update(release_names)
     if partial_release_names:
         batch_generator = chunk_list(list(partial_release_names), 30)
         for batched_partial_release_list in batch_generator:
             qry = ", ".join("'" + release_names + "'" for release_names in batched_partial_release_list)
-            popen(_strip_multiple_spaces('%s %s releases --where="releases.name IN (%s)" \
+            popen(_strip_multiple_spaces('%s --skip-add-drop-table --no-create-info %s '
+                                         'releases --where="releases.name IN (%s)" \
                    >> %s' % (mysql_default_command, database, qry, dump_location)))
 
 
