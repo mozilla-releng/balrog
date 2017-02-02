@@ -104,8 +104,9 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
       all_role_names.forEach(function(role_name) {
         // todo: probably handle this further down
         //var is_sc = new_rs["sc_id"] ? false : true;
-        // There's no real safe default for create_sc, but we set it in each path below...
-        var create_sc = false;
+        // The safe thing to do is default to creating a scheduled change.
+        // This will get overridden below in the one case where we shouldn't.
+        var create_sc = true;
         var action = null;
 
         // todo: need to pull actual role detail sout of correct data structure
@@ -113,20 +114,16 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         if (current_role_names.indexOf(role_name) === -1 && new_role_names.indexOf(role_name) !== -1) {
           action = "create";
           // If we're creating a new role, and there was already at least one before, we must use an SC.
-          if (current_role_names.length !== 0 && !first) {
-            create_sc = true;
+          if (current_role_names.length === 0 && first) {
+            create_sc = false;
           }
         }
         // If the role is only in the current Roles, we'll be deleting it
         else if (current_role_names.indexOf(role_name) !== -1 && new_role_names.indexOf(role_name) === -1) {
           action = "delete";
-          // Updates will always require signoff
-          create_sc = true;
         }
         else {
           action = "update";
-          // Updates will always require signoff
-          create_sc = true;
         }
 
         console.log("Role: " + role_name);
