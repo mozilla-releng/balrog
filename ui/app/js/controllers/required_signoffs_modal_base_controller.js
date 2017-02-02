@@ -73,7 +73,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
 
     // TODO: Make this work for editing
     // Try this:
-    // 1) Get rid of new_required_signoffs (its basically the same data structure as new_roles)
     // 2) Store current roles somewhere (so we can compare the state of things when the modal
     //    opened to the state of things when saveChanges is called
     // 3) Move things that are specific to new required signoffs into that controller
@@ -85,137 +84,123 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
     //      - If role is in both, but signoffs_required are different, need to update it. Must use SC.
     //    - If new role *is* an already scheduled change (this can happen when editing roles that are pending)
     //      we take the same actions as above, except acting on the existing scheduled change (which will never need signoff)
-    var new_required_signoffs = {};
+    if (Object.keys($scope.new_roles).length === 0) {
+      $scope.errors["exception"] = "No roles found!";
+      return;
+    }
 
-    for (let rs of $scope.new_roles) {
-      if (rs["role"] !== "") {
-        if (rs["role"] in new_required_signoffs) {
-          $scope.errors["role"] = "Cannot specify any Role more than once.";
-        }
-        else {
-          new_required_signoffs[rs["role"]] = rs["signoffs_required"];
-        }
+    $scope.saving = true;
+    CSRF.getToken()
+    .then(function(csrf_token) {
+      var service = null;
+      var first = true;
+
+      var promises = [];
+
+      if ($scope.mode === "channel") {
+        service = ProductRequiredSignoffs;
       }
-    }
+      else if ($scope.mode === "permissions") {
+        service = PermissionsRequiredSignoffs;
+      }
+      else {
+        $scope.errors["exception"] = "Couldn't detect mode";
+        $scope.saving = false;
+      }
 
-    if (Object.keys(new_required_signoffs).length === 0) {
-      $scope.errors["exception"] = "No new roles found!";
-    }
-
-    if (Object.keys($scope.errors).length === 0) {
-      $scope.saving = true;
-
-      CSRF.getToken()
-      .then(function(csrf_token) {
-        var service = null;
-        var first = true;
-
-        var promises = [];
-
-        if ($scope.mode === "channel") {
-          service = ProductRequiredSignoffs;
-        }
-        else if ($scope.mode === "permissions") {
-          service = PermissionsRequiredSignoffs;
-        }
-        else {
-          $scope.errors["exception"] = "Couldn't detect mode";
-          $scope.saving = false;
-        }
-
-        var successCallback = function(data, deferred) {
-          return function(response) {
-            var data_version = 1;
-            var sc_id = null;
-            if (response.hasOwnProperty("new_data_version")) {
-              data_version = response["new_data_version"];
-            }
-            if (response.hasOwnProperty("sc_id")) {
-              sc_id = response["sc_id"];
-            }
-            // todo: maybe required_signoffs should be an object with methods
-            // so we don't have to duplicate this from the main controller
-            if ($scope.mode === "channel") {
-              if (! (data["product"] in required_signoffs)) {
-                required_signoffs[data["product"]] = {"channels": {}};
-              }
-
-              if (! (data["channel"] in required_signoffs[data["product"]]["channels"])) {
-                required_signoffs[data["product"]]["channels"][data["channel"]] = {};
-              }
-              required_signoffs[data["product"]]["channels"][data["channel"]][data["role"]] = {
-                "signoffs_required": data["signoffs_required"],
-                "data_version": data_version,
-                "sc_id": sc_id,
-              };
-            }
-            else if ($scope.mode === "permissions") {
-              if (! (data["product"] in required_signoffs)) {
-                required_signoffs[data["product"]] = {"permissions": {}};
-              }
-              else if (! ("permissions" in required_signoffs[data["product"]])) {
-                required_signoffs[data["product"]]["permissions"] = {};
-              }
-          
-              required_signoffs[data["product"]]["permissions"][data["role"]] = {
-                "signoffs_required": data["signoffs_required"],
-                "data_version": data_version,
-                "sc_id": sc_id,
-              };
-            }
-            deferred.resolve();
-          };
-        };
-        var errorCallback = function(data, deferred) {
-          return function(response, status) {
-            if (typeof response === "object") {
-              $scope.errors = response;
-            }
-            else if (typeof response === "string"){
-              $scope.errors["exception"] = response;
-            }
-            else {
-              sweetAlert("Unknown error occurred");
-            }
-            deferred.resolve();
-          };
-        };
-
-        for (var role in new_required_signoffs) {
-          var deferred = $q.defer();
-          promises.push(deferred.promise);
-          var data = {"product": $scope.product, "role": role, "signoffs_required": new_required_signoffs[role], "csrf_token": csrf_token};
-          if ($scope.mode === "channel") {
-            data["channel"] = $scope.channel;
+      var successCallback = function(data, deferred) {
+        return function(response) {
+          var data_version = 1;
+          var sc_id = null;
+          if (response.hasOwnProperty("new_data_version")) {
+            data_version = response["new_data_version"];
           }
-          if (first) {
-            first = false;
-            service.addRequiredSignoff(data)
-            .success(successCallback(data, deferred))
-            .error(errorCallback(data, deferred));
+          if (response.hasOwnProperty("sc_id")) {
+            sc_id = response["sc_id"];
+          }
+          // todo: maybe required_signoffs should be an object with methods
+          // so we don't have to duplicate this from the main controller
+          if ($scope.mode === "channel") {
+            if (! (data["product"] in required_signoffs)) {
+              required_signoffs[data["product"]] = {"channels": {}};
+            }
+
+            if (! (data["channel"] in required_signoffs[data["product"]]["channels"])) {
+              required_signoffs[data["product"]]["channels"][data["channel"]] = {};
+            }
+            required_signoffs[data["product"]]["channels"][data["channel"]][data["role"]] = {
+              "signoffs_required": data["signoffs_required"],
+              "data_version": data_version,
+              "sc_id": sc_id,
+            };
+          }
+          else if ($scope.mode === "permissions") {
+            if (! (data["product"] in required_signoffs)) {
+              required_signoffs[data["product"]] = {"permissions": {}};
+            }
+            else if (! ("permissions" in required_signoffs[data["product"]])) {
+              required_signoffs[data["product"]]["permissions"] = {};
+            }
+        
+            required_signoffs[data["product"]]["permissions"][data["role"]] = {
+              "signoffs_required": data["signoffs_required"],
+              "data_version": data_version,
+              "sc_id": sc_id,
+            };
+          }
+          deferred.resolve();
+        };
+      };
+      var errorCallback = function(data, deferred) {
+        return function(response, status) {
+          if (typeof response === "object") {
+            $scope.errors = response;
+          }
+          else if (typeof response === "string"){
+            $scope.errors["exception"] = response;
           }
           else {
-            data["change_type"] = "insert";
-            // There's no use case for users to pick a specific time for these
-            // to be enacted, so we just schedule them for 30 seconds in the future.
-            // They'll still end up waiting for any necessary Required Signoffs
-            // before being enacted, however.
-            data["when"] = new Date().getTime() + 30000;
-            service.addScheduledChange(data)
-            .success(successCallback(data, deferred))
-            .error(errorCallback(data, deferred));
+            sweetAlert("Unknown error occurred");
           }
-        }
+          deferred.resolve();
+        };
+      };
 
-        $q.all(promises)
-        .then(function() {
-          if (Object.keys($scope.errors).length === 0) {
-            $modalInstance.close();
-          }
-          $scope.saving = false;
-        });
+      for (let rs of $scope.new_roles) {
+        var deferred = $q.defer();
+        promises.push(deferred.promise);
+        var data = {"product": $scope.product, "role": rs["role"], "signoffs_required": rs["signoffs_required"],
+                    "csrf_token": csrf_token};
+        if ($scope.mode === "channel") {
+          data["channel"] = $scope.channel;
+        }
+        if (first) {
+          first = false;
+          service.addRequiredSignoff(data)
+          .success(successCallback(data, deferred))
+          .error(errorCallback(data, deferred));
+        }
+        else {
+          data["change_type"] = "insert";
+          // There's no use case for users to pick a specific time for these
+          // to be enacted, so we just schedule them for 30 seconds in the future.
+          // They'll still end up waiting for any necessary Required Signoffs
+          // before being enacted, however.
+          data["when"] = new Date().getTime() + 30000;
+          service.addScheduledChange(data)
+          .success(successCallback(data, deferred))
+          .error(errorCallback(data, deferred));
+        }
+      }
+
+      $q.all(promises)
+      .then(function() {
+        if (Object.keys($scope.errors).length === 0) {
+          $modalInstance.close();
+        }
+        $scope.saving = false;
       });
-    }
+    });
   };
 
   $scope.cancel = function() {
