@@ -40,7 +40,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   };
 
   $scope.addRole = function() {
-    $scope.new_roles.push({"role": "", "signoffs_required": null});
+    $scope.new_roles.push({"role": "", "signoffs_required": null, "sc_id": null});
   };
 
   $scope.removeRole = function(index) {
@@ -50,17 +50,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   $scope.saveChanges = function() {
     $scope.errors = {};
 
-    // TODO: Make this work for editing
-    // Try this:
-    // 3) Move things that are specific to new required signoffs into that controller
-    // 4) Implement saving of edits by comparing current roles to new roles
-    //    - If current role and new role are the same, noop
-    //    - If new role is not an already scheduled change:
-    //      - If role is in current but not in new, need to delete it
-    //      - If role is in new but not in current, need to add it. If product+channel already has roles, need to use sc
-    //      - If role is in both, but signoffs_required are different, need to update it. Must use SC.
-    //    - If new role *is* an already scheduled change (this can happen when editing roles that are pending)
-    //      we take the same actions as above, except acting on the existing scheduled change (which will never need signoff)
     if (Object.keys($scope.new_roles).length === 0) {
       $scope.errors["exception"] = "No roles found!";
       return;
@@ -108,6 +97,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         // This will get overridden below in the one case where we shouldn't.
         var create_sc = true;
         var action = null;
+        var role = null;
 
         // todo: need to pull actual role detail sout of correct data structure
         // If the role is only in the new Roles, we'll need to create it.
@@ -117,18 +107,47 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           if (current_role_names.length === 0 && first) {
             create_sc = false;
           }
+          for (let r of $scope.new_roles) {
+            if (r["role"] === role_name) {
+              role = r;
+              break;
+            }
+          }
         }
         // If the role is only in the current Roles, we'll be deleting it
         else if (current_role_names.indexOf(role_name) !== -1 && new_role_names.indexOf(role_name) === -1) {
           action = "delete";
+          for (let r of current_roles) {
+            if (r["role"] === role_name) {
+              role = r;
+              break;
+            }
+          }
         }
         else {
           action = "update";
+          for (let r of $scope.new_roles) {
+            if (r["role"] === role_name) {
+              for (let r2 of current_roles) {
+                if (r["role"] === r2["role"]) {
+                  if (r["signoffs_required"] === r2["signoffs_required"]) {
+                    console.log("No change to " + role_name + ", skipping...");
+                    break;
+                  }
+                  else {
+                    role = r;
+                  }
+                }
+              }
+            }
+          }
         }
 
         console.log("Role: " + role_name);
         console.log("Action: " + action);
         console.log("Create SC: " + create_sc);
+        console.log("object: ");
+        console.log(role);
         first = false;
       });
 
