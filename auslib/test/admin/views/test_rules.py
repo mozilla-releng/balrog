@@ -1017,6 +1017,36 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeResetSignOffs(self):
+        data = {
+            "when": 2000000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d",
+            "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
+        }
+        rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
+            dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(rows), 1)
+        ret = self._post("/scheduled_changes/rules/1", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 1, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1,
+            "base_priority": 100, "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100,
+            "base_mapping": "c", "base_update_type": "minor", "base_data_version": 1, "base_alias": None,
+            "base_product": "a", "base_channel": "a", "base_buildID": None, "base_locale": None, "base_osVersion": None,
+            "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
+            "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,
+            "base_systemCapabilities": None,
+            "change_type": "update",
+        }
+        self.assertEquals(db_data, expected)
+        rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
+            dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(rows), 0)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeCantRemoveProductWithoutPermission(self):
         data = {"data_version": 1, "product": None, "sc_data_version": 1}
         ret = self._post("/scheduled_changes/rules/2", username="bob", data=data)

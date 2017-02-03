@@ -426,7 +426,7 @@ class AUSTable(object):
         return query
 
     def _prepareDelete(self, trans, where, changed_by, old_data_version):
-        """Prepare a DELETE statament for commit. If this table has history enabled,
+        """Prepare a DELETE statement for commit. If this table has history enabled,
            a row will be created in that table representing the new state of the
            row being deleted (NULL). If versioning is enabled and old_data_version
            doesn't match the current version of the row to be deleted, an OutdatedDataError
@@ -485,7 +485,7 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
-        # clauses before porceeding.
+        # clauses before proceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
@@ -1139,6 +1139,13 @@ class ScheduledChangeTable(AUSTable):
         for sc_id in affected_ids:
             if not self._dataVersionsAreSynced(sc_id, transaction):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s" % sc_id)
+
+        for sc_id in affected_ids:
+            where_signOff = {"sc_id": sc_id}
+            signOffs = self.signoffs.select(where=where_signOff, transaction=transaction, columns=["sc_id", "username"])
+            for signOff in signOffs:
+                where_signOff.update({"username": signOff["username"]})
+                self.signoffs.delete(where=where_signOff, changed_by=changed_by, transaction=transaction)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         conditions_where = []
