@@ -91,10 +91,14 @@ class ScheduledChangeView(AdminView):
             # from the rule (aka, set as NULL in the db). The underlying Form
             # will have already converted it to None, so we can treat it the
             # same as a modification here.
-            if (request.json and k in request.json):
+            if request.json and k in request.json:
                 what[k] = v.data
 
         where = {"sc_id": sc_id}
+        completed_scheduled_change = self.sc_table.select(where=where, transaction=transaction, columns=["complete"])
+        if completed_scheduled_change and completed_scheduled_change[0].get("complete"):
+            return Response(status=403, response="Scheduled change already completed. Cannot modify now.")
+
         try:
             self.sc_table.update(where, what, changed_by, form.sc_data_version.data, transaction)
         except ValueError as e:
@@ -111,6 +115,10 @@ class ScheduledChangeView(AdminView):
             return Response(status=404, response="Scheduled change does not exist")
 
         form = DbEditableForm(request.args)
+
+        completed_scheduled_change = self.sc_table.select(where=where, transaction=transaction, columns=["complete"])
+        if completed_scheduled_change and completed_scheduled_change[0].get("complete"):
+            return Response(status=403, response="Scheduled change already completed. Cannot delete now.")
 
         self.sc_table.delete(where, changed_by, form.data_version.data, transaction)
         return Response(status=200)
