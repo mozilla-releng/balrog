@@ -438,6 +438,10 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._delete("/releases/d", username="bill", qs=dict(data_version=2))
         self.assertStatusCode(ret, 403)
 
+    def testDeleteWithRules(self):
+        ret = self._delete("/releases/a", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 400)
+
     def testLocalePut(self):
         data = json.dumps({
             "complete": {

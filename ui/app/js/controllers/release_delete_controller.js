@@ -17,7 +17,7 @@ function ($scope, $modalInstance, CSRF, Releases, release, releases) {
       })
       .error(function(response) {
          if (typeof response === 'object') {
-          message = '';
+          message = response.exception;
           if (release.read_only) {
             message = 'Product is read only';
           }
