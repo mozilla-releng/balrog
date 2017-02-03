@@ -54,7 +54,7 @@ def handleGeneralExceptions(messages):
             except ValueError as e:
                 msg = "Error. {}".format(e.message)
                 logging.warning(msg)
-                return Response(status=403, response=json.dumps({"exception": msg}), mimetype="application/json")
+                return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
         return decorated
     return wrap
 
