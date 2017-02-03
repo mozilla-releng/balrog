@@ -231,7 +231,7 @@ class PartialReleaseForm(Form):
 
 class RuleForm(Form):
     backgroundRate = IntegerField('Background Rate', validators=[NumberRange(0, 100, "Background rate must be between 0 and 100")])
-    priority = IntegerField('Priority', validators=[InputRequired()])
+    priority = IntegerField('Priority', validators=[NumberRange(min=0, message="Priority must be a non-negative integer")])
     mapping = SelectField('Mapping', validators=[])
     fallbackMapping = NullableStringField('fallbackMapping', validators=[Optional()])
     alias = NullableStringField('Alias', validators=[Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
