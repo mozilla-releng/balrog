@@ -4,6 +4,7 @@ import os
 from tempfile import mkstemp
 import unittest
 from xml.dom import minidom
+import json
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
@@ -737,6 +738,12 @@ class ClientTest(ClientTestBase):
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/plain')
         self.assertTrue('User-agent' in ret.data)
+
+    def testContributeJsonExists(self):
+        ret = self.client.get('/contribute.json')
+        self.assertEqual(ret.status_code, 200)
+        self.assertTrue(json.loads(ret.data))
+        self.assertEqual(ret.mimetype, 'application/json')
 
     def testBadAvastURLsFromBug1125231(self):
         # Some versions of Avast have a bug in them that prepends "x86 "
