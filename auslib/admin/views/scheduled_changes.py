@@ -7,6 +7,7 @@ from flask_wtf import Form
 
 from auslib.admin.views.base import AdminView, HistoryAdminView
 from auslib.admin.views.forms import DbEditableForm, SignoffForm
+from auslib.db import PermissionDeniedError
 
 
 class ScheduledChangesView(AdminView):
@@ -95,12 +96,10 @@ class ScheduledChangeView(AdminView):
                 what[k] = v.data
 
         where = {"sc_id": sc_id}
-        completed_scheduled_change = self.sc_table.select(where=where, transaction=transaction, columns=["complete"])
-        if completed_scheduled_change and completed_scheduled_change[0].get("complete"):
-            return Response(status=403, response="Scheduled change already completed. Cannot modify now.")
-
         try:
             self.sc_table.update(where, what, changed_by, form.sc_data_version.data, transaction)
+        except PermissionDeniedError as e:
+            return Response(status=403, response=str(e))
         except ValueError as e:
             self.log.warning("Bad input: %s", e)
             return Response(status=400, response=json.dumps({"exception": e.args}))
@@ -116,11 +115,10 @@ class ScheduledChangeView(AdminView):
 
         form = DbEditableForm(request.args)
 
-        completed_scheduled_change = self.sc_table.select(where=where, transaction=transaction, columns=["complete"])
-        if completed_scheduled_change and completed_scheduled_change[0].get("complete"):
-            return Response(status=403, response="Scheduled change already completed. Cannot delete now.")
-
-        self.sc_table.delete(where, changed_by, form.data_version.data, transaction)
+        try:
+            self.sc_table.delete(where, changed_by, form.data_version.data, transaction)
+        except PermissionDeniedError as e:
+            return Response(status=403, response=str(e))
         return Response(status=200)
 
 
