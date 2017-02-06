@@ -72,6 +72,11 @@ def robots():
     return send_from_directory(app.static_folder, "robots.txt")
 
 
+@app.route('/contribute.json')
+def contributejson():
+    return send_from_directory(app.static_folder, "contribute.json")
+
+
 @app.route('/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml')
 @app.route('/update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml')
 @app.route('/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml')
