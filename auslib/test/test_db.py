@@ -1334,7 +1334,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testMergeUpateScheduledby(self):
         self.table.update([self.table.fooid == 2], what={"bar": "bar1"}, changed_by="mary", old_data_version=2)
-        new_row =self.sc_table.select(where=[self.sc_table.sc_id == 4])[0]
+        new_row = self.sc_table.select(where=[self.sc_table.sc_id == 4])[0]
         self.assertEquals(new_row["scheduled_by"], "bob")
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
