@@ -4050,15 +4050,15 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
                                 reflected_prop=reflected_db_col_property))
 
                 # Testing 'unique' separately since Sqlalchemy < 1.0.0 can't reflect this attribute for this version of sqlite
-                ref_uniq = self._is_column_unique(reflected_db_col)
-                if db_py_col.unique != ref_uniq:
-                    failures.append(
-                        self.property_err_msg.format(
-                            property="unique",
-                            table_name=table_model_instance.name,
-                            column=col_name,
-                            model_prop=db_py_col.unique,
-                            reflected_prop=ref_uniq))
+                # ref_uniq = self._is_column_unique(reflected_db_col)
+                # if db_py_col.unique != ref_uniq:
+                #    failures.append(
+                #        self.property_err_msg.format(
+                #            property="unique",
+                #            table_name=table_model_instance.name,
+                #            column=col_name,
+                #            model_prop=db_py_col.unique,
+                #            reflected_prop=ref_uniq))
 
         self.assertEqual(failures, [], 'Column properties different between models and migrations:\n' + '\n'.join(failures))
 
