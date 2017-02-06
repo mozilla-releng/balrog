@@ -1239,7 +1239,8 @@ class ScheduledChangeTable(AUSTable):
                     raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
 
             # If we get here, the change is safely mergeable
-            self.update(where=[self.sc_id == sc["sc_id"]], what=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=transaction)
+            self.update(where=[self.sc_id == sc["sc_id"]], what=what, changed_by=sc["scheduled_by"],
+                        old_data_version=sc["data_version"], transaction=transaction)
             self.log.debug("Merged %s into scheduled change '%s'", what, sc["sc_id"])
 
 

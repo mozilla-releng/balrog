@@ -1332,6 +1332,12 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, what, changed_by="bob")
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testMergeDontChangeScheduledby(self):
+        self.table.update([self.table.fooid == 2], what={"bar": "bar1"}, changed_by="mary", old_data_version=2)
+        new_row = self.sc_table.select(where=[self.sc_table.sc_id == 4])[0]
+        self.assertEquals(new_row["scheduled_by"], "bob")
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testMergeUpdateForDeleteScheduledChange(self):
         old_row = self.table.select(where=[self.table.fooid == 4])[0]
         what = {"fooid": 4, "bar": "abc", "data_version": 2}
