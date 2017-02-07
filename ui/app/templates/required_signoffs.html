@@ -40,7 +40,8 @@
         <h4 class="panel-title">
           <!-- add link to user roles ui here, when it exists -->
           <span>{{ details["signoffs_required"] }} members of {{ role }}</span>
-          <span class="label label-info" ng-show="details['sc_id'] !== null">Pending</span>
+          <span class="label label-info" ng-show="details['sc_id'] !== null && details['change_type'] !== 'delete'">Pending</span>
+          <span class="label label-danger" ng-show="details['sc_id'] !== null && details['change_type'] === 'delete'">Pending Delete</span>
           <div style="float: right" ng-show="details['sc_id'] !== null">
             <!-- show revoke button if user has already signed off - can't do this because we can't access REMOTE_USER
                  maybe we can guess it by making a request on first page load and sniffing the Authentication header
@@ -78,7 +79,8 @@
         <h4 class="panel-title">
           <!-- add link to user roles ui here, when it exists -->
           <span>{{ details["signoffs_required"] }} members of {{ role }}</span>
-          <span class="label label-info" ng-show="details['sc_id'] !== null">Pending</span>
+          <span class="label label-info" ng-show="details['sc_id'] !== null && details['change_type'] !== 'delete'">Pending</span>
+          <span class="label label-danger" ng-show="details['sc_id'] !== null && details['change_type'] === 'delete'">Pending Delete</span>
           <div style="float: right" ng-show="details['sc_id'] !== null">
             <!-- show revoke button if user has already signed off - can't do this because we can't access REMOTE_USER
                  maybe we can guess it by making a request on first page load and sniffing the Authentication header

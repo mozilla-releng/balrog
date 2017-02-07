@@ -18,6 +18,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           loading_deferreds["product_sc"].promise, loading_deferreds["permissions_sc"].promise])
   .then(function() {
     $scope.loading = false;
+    console.log($scope.required_signoffs);
   });
 
   $scope.$watch("required_signoffs", function() {
@@ -50,6 +51,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "data_version": rs.data_version,
           "sc_id": null,
           "sc_data_version": null,
+          "change_type": null,
         };
       });
     }
@@ -85,6 +87,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "data_version": rs.data_version,
           "sc_id": null,
           "sc_data_version": null,
+          "change_type": null,
         };
       });
     }
@@ -121,6 +124,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "sc_id": rs.sc_id,
           "sc_data_version": rs.sc_data_version,
           "signoffs": rs.signoffs,
+          "change_type": rs.change_type,
         };
       });
     }
@@ -157,6 +161,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "sc_id": rs.sc_id,
           "sc_data_version": rs.sc_data_version,
           "signoffs": rs.signoffs,
+          "change_type": rs.change_type,
         };
       });
     }
