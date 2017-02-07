@@ -97,19 +97,20 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
       all_role_names.forEach(function(role_name) {
         // todo: probably handle this further down
         //var is_sc = new_rs["sc_id"] ? false : true;
-        // The safe thing to do is default to creating a scheduled change.
+        // The safe thing to do is to assume signoff is required.
         // This will get overridden below in the one case where we shouldn't.
-        var create_sc = true;
+        var requires_signoff = true;
         var action = null;
+        var pending = false;
         var role = null;
 
-        // todo: need to pull actual role detail sout of correct data structure
+        // todo: need to pull actual role details out of correct data structure
         // If the role is only in the new Roles, we'll need to create it.
         if (current_role_names.indexOf(role_name) === -1 && new_role_names.indexOf(role_name) !== -1) {
           action = "insert";
-          // If we're creating a new role, and there was already at least one before, we must use an SC.
+          // If we're creating a new role, and there wasn't any already, signoff won't be required
           if (current_role_names.length === 0 && first) {
-            create_sc = false;
+            requires_signoff = false;
           }
           for (let r of $scope.new_roles) {
             if (r["role"] === role_name) {
@@ -123,6 +124,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           action = "delete";
           for (let r of current_roles) {
             if (r["role"] === role_name) {
+              pending = r["sc_id"] ? true : false;
               role = r;
               break;
             }
@@ -139,6 +141,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                     return; // exit forEach
                   }
                   else {
+                    pending = r["sc_id"] ? true : false;
                     role = r;
                   }
                 }
@@ -150,7 +153,8 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         first = false;
         console.log("Role: " + role_name);
         console.log("Action: " + action);
-        console.log("Create SC: " + create_sc);
+        console.log("Requires: " + requires_signoff);
+        console.log("Pending: " + pending);
         console.log("object: ");
         console.log(role);
 
@@ -213,36 +217,43 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
         }
-        if (create_sc) {
-          data["change_type"] = action;
-          // There's no use case for users to pick a specific time for these
-          // to be enacted, so we just schedule them for 5 seconds in the future.
-          // They'll still end up waiting for any necessary Required Signoffs
-          // before being enacted, however.
-          data["when"] = new Date().getTime() + 5000;
-          service.addScheduledChange(data)
-          .success(successCallback(data, deferred))
-          .error(errorCallback(data, deferred));
-        }
-        else if (role["sc_id"] !== null) {
-          if (action === "delete") {
-            service.deleteScheduledChange(role["sc_id"], data)
-            .success(successCallback(data, deferred))
-            .error(errorCallback(data, deferred));
-          }
-          else {
-            service.updateScheduledChange(role["sc_id"], data)
-            .success(successCallback(data, deferred))
-            .error(errorCallback(data, deferred));
-          }
-        }
-        else {
+
+        // If there's no signoffs required yet, we can just create it directly!
+        if (! requires_signoff) {
           if (action === "insert") {
             service.addRequiredSignoff(data)
             .success(successCallback(data, deferred))
             .error(errorCallback(data, deferred));
           }
-          // updates and deletes aren't supported outside of scheduled changes
+        }
+        // Otherwise, we need to use Scheduled Changes
+        else {
+          // There's no use case for users to pick a specific time for these
+          // to be enacted, so we just schedule them for 5 seconds in the future.
+          // They'll still end up waiting for any necessary Required Signoffs
+          // before being enacted, however.
+          data["when"] = new Date().getTime() + 5000;
+          // If we're working with an already pending change we just need to
+          // update or delete it.
+          if (pending) {
+            if (action === "delete") {
+              service.deleteScheduledChange(role["sc_id"], data)
+              .success(successCallback(data, deferred))
+              .error(errorCallback(data, deferred));
+            }
+            else {
+              service.updateScheduledChange(role["sc_id"], data)
+              .success(successCallback(data, deferred))
+              .error(errorCallback(data, deferred));
+            }
+          }
+          // Otherwise, we'll create a new Scheduled Change.
+          else {
+            data["change_type"] = action;
+            service.addScheduledChange(data)
+            .success(successCallback(data, deferred))
+            .error(errorCallback(data, deferred));
+          }
         }
       });
 
