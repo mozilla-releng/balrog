@@ -224,13 +224,38 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     });
   };
 
-  $scope.signoff = function(mode, sc_id) {
+  $scope.signoff = function(mode, sc_id, role, details, channel = "") {
     // need to bail if user has already signed off
     $modal.open({
       templateUrl: "signoff_modal.html",
       controller: "SignoffCtrl",
       backdrop: "static",
       resolve: {
+        title: function() {
+          return "required signoff";
+        },
+        service: function() {
+          if (mode === "channel") {
+            return ProductRequiredSignoffs;
+          }
+          else if (mode === "permission") {
+            return PermissionsRequiredSignoffs;
+          }
+        },
+        sc_id: function() {
+          return sc_id;
+        },
+        pk: function() {
+          pk = {"product": $scope.select_product, "role": role};
+          if (mode === "channel") {
+            pk["channel"] = channel;
+          }
+          return pk;
+        },
+        details: function() {
+          // maybe should filter this ?
+          return details;
+        },
       }
     });
   };

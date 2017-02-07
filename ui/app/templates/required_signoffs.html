@@ -46,7 +46,7 @@
             <!-- show revoke button if user has already signed off - can't do this because we can't access REMOTE_USER
                  maybe we can guess it by making a request on first page load and sniffing the Authentication header
             -->
-            <button class="btn btn-xs btn-primary" ng-click="signoff('permission', details['sc_id'])">Signoff as...</button>
+            <button class="btn btn-xs btn-primary" ng-click="signoff('permission', details['sc_id'], role, details)">Signoff as...</button>
             <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('permission', details['sc_id'])">Revoke your Signoff</button>
           </div>
         </h4>
@@ -85,7 +85,7 @@
             <!-- show revoke button if user has already signed off - can't do this because we can't access REMOTE_USER
                  maybe we can guess it by making a request on first page load and sniffing the Authentication header
             -->
-            <button class="btn btn-xs btn-primary" ng-click="signoff('channel', details['sc_id'])">Signoff as...</button>
+            <button class="btn btn-xs btn-primary" ng-click="signoff('channel', details['sc_id'], role, details, channel)">Signoff as...</button>
             <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('channel', details['sc_id'])">Revoke your Signoff</button>
           </div>
         </h4>

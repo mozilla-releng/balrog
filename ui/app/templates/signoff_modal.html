@@ -1,12 +1,15 @@
 <div class="modal-header">
-    <h3 class="modal-title">Signoff on XXXXXXXXXXXXX</h3>
+    <h3 class="modal-title">{{ title }}</h3>
 </div>
 <div class="modal-body">
 
   <!-- print more details about the thing being signed off on -->
   <!-- dropdown with list of user roles -->
-  <label for="id_role">Signoff with Role:</label>
-  <select id="id_role"></select>
+  <label >Signoff with Role:</label>
+  <select ng-model="signoff_role" ng-options="role for role in current_user_roles"></select>
+  <div>{{ pk }}</div>
+  <div>{{ details }}</div>
+  <div>{{ sc_id }}</div>
 
 </div>
 <div class="modal-footer">
