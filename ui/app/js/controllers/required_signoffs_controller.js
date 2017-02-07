@@ -17,7 +17,6 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           loading_deferreds["product_sc"].promise, loading_deferreds["permissions_sc"].promise])
   .then(function() {
     $scope.loading = false;
-    console.log($scope.required_signoffs);
   });
 
   $scope.$watch("required_signoffs", function() {

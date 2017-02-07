@@ -6,7 +6,7 @@
   <!-- print more details about the thing being signed off on -->
   <!-- dropdown with list of user roles -->
   <label >Signoff with Role:</label>
-  <select ng-model="signoff_role" ng-options="role for role in current_user_roles"></select>
+  <select ng-model="signoff_role" ng-options="role as role for role in current_user_roles"></select>
   <div>{{ pk }}</div>
   <div>{{ details }}</div>
   <div>{{ sc_id }}</div>
