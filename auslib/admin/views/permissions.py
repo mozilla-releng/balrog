@@ -26,6 +26,22 @@ class UsersView(AdminView):
         return jsonify(dict(users=users))
 
 
+class CurrentUserView(AdminView):
+    """Returns all of the details about the logged in user. The UI needs this
+    method to know things about the current user because it does not have
+    access to REMOTE_USER, so it cannot query directly by name."""
+
+    def get(self):
+        username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
+        if not username:
+            return Response(status=401)
+        permissions = dbo.permissions.getUserPermissions(username)
+        roles = {}
+        for r in dbo.permissions.getUserRoles(username):
+            roles[r["role"]] = {"data_version": r["data_version"]}
+        return jsonify({"permissions": permissions, "roles": roles})
+
+
 class PermissionsView(AdminView):
     """/users/:username/permissions"""
 

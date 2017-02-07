@@ -16,7 +16,7 @@ from auslib.admin.views.permissions import UsersView, PermissionsView, \
     SpecificPermissionView, UserRolesView, UserRoleView, AllRolesView, \
     PermissionScheduledChangesView, PermissionScheduledChangeView, \
     EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, \
-    PermissionScheduledChangeSignoffsView
+    PermissionScheduledChangeSignoffsView, CurrentUserView
 from auslib.admin.views.releases import SingleLocaleView, \
     SingleReleaseView, ReleaseHistoryView, \
     ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView, \
@@ -91,6 +91,7 @@ Compress(app)
 # hosted at "/api", which is stripped away by the web server before we see
 # these requests.
 app.add_url_rule("/csrf_token", view_func=CSRFView.as_view("csrf"))
+app.add_url_rule("/current_user", view_func=CurrentUserView.as_view("current_user"))
 app.add_url_rule("/users", view_func=UsersView.as_view("users"))
 app.add_url_rule("/users/roles", view_func=AllRolesView.as_view("all_users_roles"))
 app.add_url_rule("/users/<username>/permissions", view_func=PermissionsView.as_view("user_permissions"))

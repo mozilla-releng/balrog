@@ -15,6 +15,51 @@ class TestUsersAPI_JSON(ViewTest):
         self.assertEqual(data, dict(users=set(['bill', 'billy', 'bob', 'ashanti', 'mary', 'julie'])))
 
 
+class TestCurrentUserAPI_JSON(ViewTest):
+
+    def testGetCurrentUser(self):
+        ret = self._get("/current_user", username="bill")
+        self.assertEqual(ret.status_code, 200)
+        data = json.loads(ret.data)
+        expected = {
+            "permissions": {
+                "admin": {
+                    "options": None, "data_version": 1,
+                },
+            },
+            "roles": {
+                "releng": {
+                    "data_version": 1,
+                },
+                "qa": {
+                    "data_version": 1,
+                },
+            },
+        }
+        self.assertEqual(data, expected)
+
+    def testGetCurrentUserWithoutRoles(self):
+        ret = self._get("/current_user", username="billy")
+        self.assertEqual(ret.status_code, 200)
+        data = json.loads(ret.data)
+        expected = {
+            "permissions": {
+                "admin": {
+                    "options": {
+                        "products": ["a"]
+                    },
+                    "data_version": 1,
+                }
+            },
+            "roles": {},
+        }
+        self.assertEqual(data, expected)
+
+    def testGetCurrentUserWithoutSpecifying(self):
+        ret = self._get("/current_user", username=None)
+        self.assertEqual(ret.status_code, 401)
+
+
 class TestPermissionsAPI_JSON(ViewTest):
 
     def testPermissionsCollection(self):

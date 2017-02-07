@@ -138,14 +138,14 @@ class ViewTest(unittest.TestCase):
     def _getAuth(self, username):
         return {'REMOTE_USER': username}
 
-    def _get(self, url, qs={}):
+    def _get(self, url, qs={}, username="bill"):
         headers = {
             "Accept-Encoding": "application/json",
             "Accept": "application/json"
         }
         if "format" not in qs:
             qs["format"] = "json"
-        ret = self.client.get(url, query_string=qs, headers=headers)
+        ret = self.client.get(url, query_string=qs, headers=headers, environ_base=self._getAuth(username))
         return ret
 
     def _post(self, url, data={}, username='bill', **kwargs):
