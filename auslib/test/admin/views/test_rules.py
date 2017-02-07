@@ -1067,7 +1067,7 @@ class TestRuleScheduledChanges(ViewTest):
             "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
         }
         ret = self._post("/scheduled_changes/rules/4", data=data)
-        self.assertEquals(ret.status_code, 403, ret.data)
+        self.assertEquals(ret.status_code, 400, ret.data)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChange(self):
@@ -1190,7 +1190,7 @@ class TestRuleScheduledChanges(ViewTest):
 
     def testDeleteCompletedScheduledChange(self):
         ret = self._delete("/scheduled_changes/rules/4", qs=dict(data_version=1))
-        self.assertEquals(ret.status_code, 403, msg=ret.data)
+        self.assertEquals(ret.status_code, 400, msg=ret.data)
 
     def testDeleteScheduledChangeWrongDataVersion(self):
         ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=5))
