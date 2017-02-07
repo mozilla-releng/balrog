@@ -1020,6 +1020,12 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(ValueError, table.scheduled_changes.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testDeleteCompletedScheduledChange(self):
+        where = [self.sc_table.sc_id == 5]
+        self.assertRaises(ValueError, self.table.scheduled_changes.delete, where=where,
+                          changed_by="bob", old_data_version=1)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testRaisesErrorForMultipleDeletion(self):
         what = {"fooid": 4, "foo": "d", "data_version": 2, "when": 929000, "change_type": "delete"}
         self.assertRaises(ChangeScheduledError, self.sc_table.insert, changed_by="bob", **what)
