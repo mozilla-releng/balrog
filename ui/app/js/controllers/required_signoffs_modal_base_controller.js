@@ -49,6 +49,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
 
   $scope.saveChanges = function() {
     $scope.errors = {};
+    var service = null;
 
     if (Object.keys($scope.new_roles).length === 0) {
       $scope.errors["exception"] = "No roles found!";
@@ -90,11 +91,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         }
       });
 
-      // TODO: create_sc needs to be false if a thing is already a scheduled change. we should only
-      // create for things that aren't scheduled
       all_role_names.forEach(function(role_name) {
-        // todo: probably handle this further down
-        //var is_sc = new_rs["sc_id"] ? false : true;
         // The safe thing to do is to assume signoff is required.
         // This will get overridden below in the one case where we shouldn't.
         var requires_signoff = true;
@@ -102,7 +99,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         var pending = false;
         var role = null;
 
-        // todo: need to pull actual role details out of correct data structure
         // If the role is only in the new Roles, we'll need to create it.
         if (current_role_names.indexOf(role_name) === -1 && new_role_names.indexOf(role_name) !== -1) {
           action = "insert";
@@ -149,12 +145,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         }
 
         first = false;
-        console.log("Role: " + role_name);
-        console.log("Action: " + action);
-        console.log("Requires: " + requires_signoff);
-        console.log("Pending: " + pending);
-        console.log("object: ");
-        console.log(role);
 
         var successCallback = function(data, deferred, action, sc_id = null) {
           return function(response) {
@@ -194,16 +184,12 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               namespace = required_signoffs[data["product"]]["permissions"];
             }
 
-            // need to remove rather than add for deletes
-            // but pending deletes still need to show up
             if (action === "delete") {
               delete namespace[data["role"]];
             }
             else {
               namespace[data["role"]] = {
                 "signoffs_required": data["signoffs_required"],
-                // should this be sc_data_version? we can never update required signoffs directly, so maybe no point in storing
-                // regular data_version?
                 "data_version": data_version,
                 "sc_id": sc_id,
                 "sc_data_version": sc_data_version,

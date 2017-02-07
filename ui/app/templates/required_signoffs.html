@@ -39,7 +39,7 @@
       <div class="panel-heading">
         <h4 class="panel-title">
           <!-- add link to user roles ui here, when it exists -->
-          <span>{{ details["signoffs_required"] }} members of {{ role }}</span>
+          <span>{{ details["signoffs_required"] }} member(s) of {{ role }}</span>
           <span class="label label-info" ng-show="details['sc_id'] !== null && details['change_type'] !== 'delete'">Pending</span>
           <span class="label label-danger" ng-show="details['sc_id'] !== null && details['change_type'] === 'delete'">Pending Delete</span>
           <div style="float: right" ng-show="details['sc_id'] !== null">
@@ -78,7 +78,7 @@
       <div class="panel-heading">
         <h4 class="panel-title">
           <!-- add link to user roles ui here, when it exists -->
-          <span>{{ details["signoffs_required"] }} members of {{ role }}</span>
+          <span>{{ details["signoffs_required"] }} member(s) of {{ role }}</span>
           <span class="label label-info" ng-show="details['sc_id'] !== null && details['change_type'] !== 'delete'">Pending</span>
           <span class="label label-danger" ng-show="details['sc_id'] !== null && details['change_type'] === 'delete'">Pending Delete</span>
           <div style="float: right" ng-show="details['sc_id'] !== null">
