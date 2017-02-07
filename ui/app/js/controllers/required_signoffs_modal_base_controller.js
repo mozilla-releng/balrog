@@ -67,8 +67,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
     }
 
     $scope.saving = true;
-    console.log(current_roles);
-    console.log($scope.new_roles);
     CSRF.getToken()
     .then(function(csrf_token) {
       var promises = [];
@@ -158,17 +156,23 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         console.log("object: ");
         console.log(role);
 
-        var successCallback = function(data, deferred) {
+        var successCallback = function(data, deferred, action, sc_id = null) {
           return function(response) {
-            var data_version = 1;
-            // how do we know if this is for data_version or sc_data_version?
+            var data_version = null;
+            var sc_data_version = null;
+            // This only exists for direct updates (ie: not scheduled changes)
             if (response.hasOwnProperty("new_data_version")) {
-              data_version = response["new_data_version"];
+              if (sc_id === null) {
+                data_version = response["new_data_version"];
+              }
+              else {
+                sc_data_version = response["new_data_version"];
+              }
             }
-            // need to set this to whatever is in new_roles for the role
-            var sc_id = null;
             if (response.hasOwnProperty("sc_id")) {
               sc_id = response["sc_id"];
+              // We have to assume this, because the server doesn't tell us.
+              sc_data_version = 1;
             }
 
             if (! (required_signoffs.hasOwnProperty(data["product"]))) {
@@ -181,16 +185,22 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               }
               namespace = required_signoffs[data["product"]]["channels"][data["channel"]];
             }
-            console.log(namespace);
 
             // need to remove rather than add for deletes
-            namespace[data["role"]] = {
-              "signoffs_required": data["signoffs_required"],
-              // should this be sc_data_version? we can never update required signoffs directly, so maybe no point in storing
-              // regular data_version?
-              "data_version": data_version,
-              "sc_id": sc_id,
-            };
+            // but pending deletes still need to show up
+            if (action === "delete") {
+              delete namespace[data["role"]];
+            }
+            else {
+              namespace[data["role"]] = {
+                "signoffs_required": data["signoffs_required"],
+                // should this be sc_data_version? we can never update required signoffs directly, so maybe no point in storing
+                // regular data_version?
+                "data_version": data_version,
+                "sc_id": sc_id,
+                "sc_data_version": sc_data_version,
+              };
+            }
 
             deferred.resolve();
           };
@@ -222,7 +232,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         if (! requires_signoff) {
           if (action === "insert") {
             service.addRequiredSignoff(data)
-            .success(successCallback(data, deferred))
+            .success(successCallback(data, deferred, action))
             .error(errorCallback(data, deferred));
           }
         }
@@ -238,12 +248,12 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           if (pending) {
             if (action === "delete") {
               service.deleteScheduledChange(role["sc_id"], data)
-              .success(successCallback(data, deferred))
+              .success(successCallback(data, deferred, action, role["sc_id"]))
               .error(errorCallback(data, deferred));
             }
             else {
               service.updateScheduledChange(role["sc_id"], data)
-              .success(successCallback(data, deferred))
+              .success(successCallback(data, deferred, action, role["sc_id"]))
               .error(errorCallback(data, deferred));
             }
           }
@@ -251,7 +261,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           else {
             data["change_type"] = action;
             service.addScheduledChange(data)
-            .success(successCallback(data, deferred))
+            .success(successCallback(data, deferred, action))
             .error(errorCallback(data, deferred));
           }
         }

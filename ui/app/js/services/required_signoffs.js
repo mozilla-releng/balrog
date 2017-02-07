@@ -22,13 +22,13 @@ var RequiredSignoffBase = (function() {
     },
     updateScheduledChange: function(sc_id, data) {
       var url = "/api/scheduled_changes" + this.base_url + "/" + sc_id;
-      return $http.post(url, data);
+      return this.http.post(url, data);
     },
     deleteScheduledChange: function(sc_id, data) {
       var url = "/api/scheduled_changes" + this.base_url + "/" + sc_id;
       url += "?data_version=" + data["sc_data_version"];
       url += "&csrf_token=" + encodeURIComponent(data["csrf_token"]);
-      return $http.delete(url);
+      return this.http.delete(url);
     },
   };
   return service;
