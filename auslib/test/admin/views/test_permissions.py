@@ -380,6 +380,32 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeExistingPermissionResetSignOffs(self):
+        data = {
+            "options": '{"products": ["Thunderbird"]}', "data_version": 1, "sc_data_version": 1, "when": 200000000,
+        }
+        rows = dbo.permissions.scheduled_changes.signoffs.t.select().where(
+            dbo.permissions.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(rows), 2)
+        ret = self._post("/scheduled_changes/permissions/2", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+
+        r = dbo.permissions.scheduled_changes.t.select().where(
+            dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 2, "complete": False, "data_version": 2, "scheduled_by": "bill", "change_type": "update",
+            "base_permission": "release_locale",
+            "base_username": "ashanti", "base_options": {"products": ["Thunderbird"]}, "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+        rows = dbo.permissions.scheduled_changes.signoffs.t.select().where(
+            dbo.releases.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(rows), 0)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeNewPermission(self):
         data = {
             "options": '{"products": ["Firefox"]}', "sc_data_version": 1, "when": 450000000,
