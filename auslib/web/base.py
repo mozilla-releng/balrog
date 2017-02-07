@@ -35,6 +35,7 @@ def apply_security_headers(response):
     # We also need to set X-Content-Type-Options to nosniff for Firefox to obey this.
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829#c4 for background.
     response.headers["Content-Security-Policy"] = app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
+    response.headers["Strict-Transport-Security"] = app.config.get("STRICT_TRANSPORT_SECURITY", "max-age=31536000;")
     response.headers["X-Content-Type-Options"] = app.config.get("CONTENT_TYPE_OPTIONS", "nosniff")
     return response
 

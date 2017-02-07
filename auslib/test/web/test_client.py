@@ -939,6 +939,26 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
 
+    def testStrictTransportSecurityIsSet(self):
+        ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
+        self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
+
+    def testStrictTransportSecurityIsSetFor404(self):
+        ret = self.client.get('/whizzybang')
+        self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
+
+    def testStrictTransportSecurityIsSetFor400(self):
+        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+            m.side_effect = BadDataError('I break!')
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
+
+    def testStrictTransportSecurityIsSetFor500(self):
+        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+            m.side_effect = Exception('I break!')
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
+
     def testXContentTypeOptionsIsSet(self):
         ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
         self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
