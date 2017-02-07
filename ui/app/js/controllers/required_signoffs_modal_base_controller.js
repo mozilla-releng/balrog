@@ -176,14 +176,22 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             }
 
             if (! (required_signoffs.hasOwnProperty(data["product"]))) {
-              required_signoffs[data["product"]] = {"channels": {}, "permissions": {}};
+              required_signoffs[data["product"]] = {};
             }
-            var namespace = required_signoffs[data["product"]]["permissions"];
             if ($scope.mode === "channel") {
-              if (! (required_signoffs[data["product"]]["channels"].hasOwnProperty(data["channel"]))) {
+              if (! ("channels" in required_signoffs[data["product"]])) {
+                required_signoffs[data["product"]]["channels"] = {};
+              }
+              if (! (data["channel"] in required_signoffs[data["product"]]["channels"])) {
                 required_signoffs[data["product"]]["channels"][data["channel"]] = {};
               }
               namespace = required_signoffs[data["product"]]["channels"][data["channel"]];
+            }
+            else {
+              if (! ("permissions" in required_signoffs[data["product"]])) {
+                required_signoffs[data["product"]]["permissions"] = {};
+              }
+              namespace = required_signoffs[data["product"]]["permissions"];
             }
 
             // need to remove rather than add for deletes

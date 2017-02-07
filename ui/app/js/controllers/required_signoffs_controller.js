@@ -2,7 +2,6 @@ angular.module("app").controller('RequiredSignoffsController',
 function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
   $scope.loading = true;
 
-  // TODO: turn these into one data structure
   $scope.required_signoffs = {};
   $scope.selected_product = null;
   $scope.state = "current";
@@ -78,10 +77,6 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           $scope.required_signoffs[rs.product]["permissions"] = {};
         }
 
-        else if (! ("permissions" in $scope.required_signoffs[rs.product])) {
-          $scope.required_signoffs[rs.product]["permissions"] = {};
-        }
-      
         $scope.required_signoffs[rs.product]["permissions"][rs.role] = {
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
@@ -151,10 +146,6 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           $scope.required_signoffs[rs.product]["permissions"] = {};
         }
     
-        else if (! ("permissions" in $scope.required_signoffs[rs.product])) {
-          $scope.required_signoffs[rs.product]["permissions"] = {};
-        }
-      
         $scope.required_signoffs[rs.product]["permissions"][rs.role] = {
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
