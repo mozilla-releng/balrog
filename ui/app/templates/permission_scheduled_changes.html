@@ -1,0 +1,88 @@
+<div loader ng-show="loading"></div>
+
+<h2>
+  <span >Scheduled Permissions Changes</span>
+
+  <span class="count">
+    ({{ filtered_items.length | number:0 }}
+    <span>found)</span>
+  </span>
+
+  <button class="btn btn-primary btn-xs" ng-click="openNewScheduledPermissionChangeModal()">
+    Add a new Scheduled Permission Change
+    <i class="glyphicon glyphicon-plus"></i>
+  </button>
+
+</h2>
+
+<div class="row">
+   <div class="col-sm-6">
+    <div class="pagination-container" ng-show="filtered_items.length > pageSize">
+      <pagination
+        class="pagination-sm"
+        total-items="filtered_items.length"
+        ng-model="currentPage"
+        items-per-page="pageSize"
+      ></pagination>
+    </div>
+  </div>
+  <div class="col-sm-6 text-right">
+    <div ng-show="!scheduled_changes_count" class="row">
+      <label>State:</label>
+      <select ng-model="state_str" name="state_filter" ng-options="o.text for o in state_filter track by o.value">
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default" style="clear:right"
+     ng-repeat="sc in filtered_items = (scheduled_changes | filter: filterBySelect) | orderBy:ordering | startFrom:(currentPage - 1)*pageSize | limitTo:pageSize">
+  <div class="panel-heading">
+
+    <h3 class="panel-title">
+      <div style="float: right">
+        <i ng-if=" scheduled_changes_rules_count && $first && (currentPage == 1)">Current</i>
+        <button class="btn btn-default btn-xs" ng-click="openScheduledUpdateModal(sc)">Update</button>
+        <button class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
+      </div>
+
+
+
+      <b title="Product" ng-show="sc.username">{{ sc.username }}</b>
+      :
+      <b title="Product" ng-show="sc.permission">{{ sc.permission }}</b>
+    </h3>
+  </div>
+  <div class="panel-body">
+    <div class="left" style="float: left">
+      <h5 title="Scheduled By">
+        Scheduled By: <b>{{ sc.scheduled_by }}</b>
+      </h5>
+      <h5 title="Data Version">
+        Data Version: <b>{{ sc.sc_data_version }}</b>
+      </h5>
+      <h5 title="SC ID">
+        sc_id: <b>{{ sc.sc_id }}</b>
+      </h5>
+      <h5 title="Change Type">
+        change_type: <b>{{ sc.change_type }}</b>
+      </h5>
+      <h5 title="Options">
+        Options: <b>{{ sc.options }}</b>
+      </h5>
+    </dl>
+    </div>
+  </div>
+</div>
+
+<div class="col-sm-6">
+    <div class="pagination-container" ng-show="filtered_items.length > pageSize">
+      <pagination
+        class="pagination-sm"
+        total-items="filtered_items.length"
+        ng-model="currentPage"
+        items-per-page="pageSize"
+      ></pagination>
+    </div>
+  </div>
+

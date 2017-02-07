@@ -42,6 +42,15 @@ angular.module("app").factory('Permissions', function($http, $q) {
       url += '&csrf_token=' + encodeURIComponent(csrf_token);
       return $http.delete(url);
     },
+    getScheduledChanges: function() {
+      return $http.get("/api/scheduled_changes/permissions?all=1");
+    },
+    addScheduledChange: function(data, csrf_token) {
+      data = jQuery.extend({}, data);
+      data.csrf_token = csrf_token;
+      return $http.post("/api/scheduled_changes/permissions", data);
+    },
+
     getUserRoles: function(username) {
       // What comes back from the server is a dict like this:
       //  {'roles': ['role1', 'role2'...]} if the user has roles
@@ -65,6 +74,17 @@ angular.module("app").factory('Permissions', function($http, $q) {
       url += '?data_version=' + role.data_version;
       url += '&csrf_token=' + encodeURIComponent(csrf_token);
       return $http.delete(url);
+    },
+     deleteScheduledChange: function(sc_id, data, csrf_token) {
+      var url = "/api/scheduled_changes/permissions/" + sc_id;
+      url += '?data_version=' + data.sc_data_version;
+      url += '&csrf_token=' + encodeURIComponent(csrf_token);
+      return $http.delete(url);
+     },
+     updateScheduledChange: function(sc_id, data, csrf_token) {
+      data = jQuery.extend({}, data);
+      data.csrf_token = csrf_token;
+      return $http.post("/api/scheduled_changes/permissions/" + sc_id, data);
     },
 
   };

@@ -15,6 +15,12 @@ angular.module("app").config(function($routeProvider, $locationProvider) {
     reloadOnSearch: false
   })
 
+  .when('/permissions/scheduled_changes', {
+    templateUrl: "permission_scheduled_changes.html",
+    controller: "PermissionScheduledChangesController",
+    reloadOnSearch: false
+  })
+
   .when('/permissions/:username', {
     templateUrl: 'permissions.html',
     controller: 'PermissionsController'

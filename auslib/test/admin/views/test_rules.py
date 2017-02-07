@@ -47,6 +47,47 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(r[0]['priority'], 33)
         self.assertEquals(r[0]['data_version'], 1)
 
+    def testPriorityZero(self):
+        ret = self._post('/rules', data=dict(backgroundRate=33, mapping='c', priority=0,
+                                             product='Firefox', update_type='minor', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], 'c')
+        self.assertEquals(r[0]['backgroundRate'], 33)
+        self.assertEquals(r[0]['priority'], 0)
+        self.assertEquals(r[0]['data_version'], 1)
+
+    def testVersionMaxFieldLength(self):
+        # Max field length of rules.version is 75
+        version = '3.3,3.4,3.5,3.6,3.8,3.9,3.10,3.11,3.12,3.13,3.14,3.15'
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                backgroundRate=71,
+                mapping='d',
+                version='{}'.format(version),
+                priority=73,
+                data_version=1,
+                product='Firefox',
+                update_type='minor',
+                channel='nightly',
+                buildID='1234',
+                osVersion='10.5',
+                headerArchitecture='INTEL',
+                distVersion='19',
+                buildTarget='MAC',
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
+        ret = dbo.rules.select(where={"rule_id": 1}, columns=["version"])
+        self.assertEquals(ret[0].get("version"), version)
+        self.assertEquals(len(ret[0].get("version")), len(version))
+
     def testNewRulePostJSON(self):
         data = dict(
             backgroundRate=31, mapping="c", priority=33, product="Firefox",
@@ -522,6 +563,36 @@ class TestRuleHistoryView(ViewTest):
         self.assertEquals(got["count"], 2)
         self.assertTrue(u"rule_id" in got["rules"][0])
         self.assertTrue(u"backgroundRate" in got["rules"][0])
+
+    def testVersionMaxFieldLength(self):
+        # Max field length of rules.version is 75
+        version = '3.3,3.4,3.5,3.6,3.8,3.9,3.10,3.11'
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                backgroundRate=71,
+                mapping='d',
+                version='{}'.format(version),
+                priority=73,
+                data_version=1,
+                product='Firefox',
+                update_type='minor',
+                channel='nightly',
+                buildID='1234',
+                osVersion='10.5',
+                headerArchitecture='INTEL',
+                distVersion='19',
+                buildTarget='MAC',
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
+        ret = dbo.rules.history.select(where={"rule_id": 1}, columns=["version"])
+        self.assertEquals(ret[0].get("version"), version)
+        self.assertEquals(len(ret[0].get("version")), len(version))
 
     def testPostRevisionRollback(self):
         # Make some changes to a rule
@@ -1015,6 +1086,77 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(len(cond), 1)
         cond_expected = {"sc_id": 1, "data_version": 2, "when": 2000000, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None}
         self.assertEquals(dict(cond[0]), cond_expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeVersionFieldLength(self):
+        version = '3.3,3.4,3.5,3.6,3.8,3.9,3.10,3.11'
+        data = {
+            "when": 2000000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "{}".format(version),
+            "buildTarget": "d", "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
+        }
+        ret = self._post("/scheduled_changes/rules/1", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        ret = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(ret), 1)
+        db_data = dict(ret[0])
+        expected = {
+            "sc_id": 1, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1,
+            "base_priority": 100, "base_version": "{}".format(version), "base_buildTarget": "d",
+            "base_backgroundRate": 100, "base_mapping": "c", "base_update_type": "minor", "base_data_version": 1,
+            "base_alias": None, "base_product": "a", "base_channel": "a", "base_buildID": None, "base_locale": None,
+            "base_osVersion": None, "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
+            "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,
+            "base_systemCapabilities": None, "change_type": "update",
+        }
+        self.assertEquals(db_data, expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeHistoryVersionFieldLength(self):
+        version = '3.3,3.4,3.5,3.6,3.8,3.9,3.10,3.11'
+        data = {
+            "when": 2000000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "{}".format(version),
+            "buildTarget": "d", "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
+        }
+        ret = self._post("/scheduled_changes/rules/1", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        ret = dbo.rules.scheduled_changes.history.t.select().where(dbo.rules.scheduled_changes.history.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(ret), 1)
+        db_data = dict(ret[0])
+        expected = {"base_version": "{}".format(version)}
+        self.assertEquals(db_data["base_version"], expected["base_version"])
+        self.assertEquals(len(db_data["base_version"]), len(expected["base_version"]))
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeResetSignOffs(self):
+        data = {
+            "when": 2000000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d",
+            "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
+        }
+        rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
+            dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(rows), 1)
+        ret = self._post("/scheduled_changes/rules/1", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+        r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 1, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1,
+            "base_priority": 100, "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100,
+            "base_mapping": "c", "base_update_type": "minor", "base_data_version": 1, "base_alias": None,
+            "base_product": "a", "base_channel": "a", "base_buildID": None, "base_locale": None, "base_osVersion": None,
+            "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
+            "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,
+            "base_systemCapabilities": None,
+            "change_type": "update",
+        }
+        self.assertEquals(db_data, expected)
+        rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
+            dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        self.assertEquals(len(rows), 0)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeCantRemoveProductWithoutPermission(self):

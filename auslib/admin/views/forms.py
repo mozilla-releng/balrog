@@ -231,12 +231,12 @@ class PartialReleaseForm(Form):
 
 class RuleForm(Form):
     backgroundRate = IntegerField('Background Rate', validators=[NumberRange(0, 100, "Background rate must be between 0 and 100")])
-    priority = IntegerField('Priority', validators=[InputRequired()])
+    priority = IntegerField('Priority', validators=[NumberRange(min=0, message="Priority must be a non-negative integer")])
     mapping = SelectField('Mapping', validators=[])
     fallbackMapping = NullableStringField('fallbackMapping', validators=[Optional()])
     alias = NullableStringField('Alias', validators=[Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Length(0, 15)])
-    version = NullableStringField('Version', validators=[Length(0, 10), version_validator()])
+    version = NullableStringField('Version', validators=[Length(0, 75), version_validator()])
     buildID = NullableStringField('BuildID', validators=[Length(0, 20), operator_validator()])
     channel = NullableStringField('Channel', validators=[Length(0, 75)])
     locale = NullableStringField('Locale', validators=[Length(0, 200)])
@@ -258,7 +258,7 @@ class EditRuleForm(DbEditableForm):
     fallbackMapping = NullableStringField('fallbackMapping', validators=[Optional()])
     alias = NullableStringField('Alias', validators=[Optional(), Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Optional(), Length(0, 15)])
-    version = NullableStringField('Version', validators=[Optional(), Length(0, 10), version_validator()])
+    version = NullableStringField('Version', validators=[Optional(), Length(0, 75), version_validator()])
     buildID = NullableStringField('BuildID', validators=[Optional(), Length(0, 20), operator_validator()])
     channel = NullableStringField('Channel', validators=[Optional(), Length(0, 75)])
     locale = NullableStringField('Locale', validators=[Optional(), Length(0, 200)])

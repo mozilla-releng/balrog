@@ -36,10 +36,10 @@
         <div class="panel panel-default"
              ng-repeat="permission in user.permissions">
           <div class="panel-heading">
-            <div style="float: right">
-              <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="updatePermission(permission)">Save changes</button>
-              <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="deletePermission(permission)">Delete</button>
-            </div>
+              <div style="float: right">
+                <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="updatePermission(permission)">Save changes</button>
+                <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="deletePermission(permission)">Delete</button>
+              </div>
             <h3 class="panel-title">
               {{ permission.permission }}
             </h3>
