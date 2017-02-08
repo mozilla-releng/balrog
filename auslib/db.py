@@ -1095,7 +1095,16 @@ class ScheduledChangeTable(AUSTable):
             sc_id = ret.inserted_primary_key[0]
             self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
             if not self._dataVersionsAreSynced(sc_id, transaction):
-                raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s", sc_id)
+                raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s",
+                                                 sc_id)
+
+            # - If the User scheduling a change only holds one Required Role, record a signoff with it.
+            # - If the User scheduling a change holds more than one Required Role, do not record any signoffs.
+            # When UI for signing off on changes is ready, users can do it with a specific Role with that.
+            user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
+            if len(user_roles) == 1:
+                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
+                                     sc_id=sc_id, role=user_roles[0].get("role"))
             return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
@@ -2525,6 +2534,9 @@ class AUSDatabase(object):
 
     def hasRole(self, *args, **kwargs):
         return self.permissions.hasRole(*args, **kwargs)
+
+    def getUserRoles(self, *args, **kwargs):
+        return self.permissions.getUserRoles(*args, **kwargs)
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,

@@ -691,7 +691,6 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
 
 
 class ScheduledChangesTableMixin(object):
-
     def setUp(self):
         self.db = AUSDatabase(self.dburi)
         self.db.create()
@@ -761,6 +760,9 @@ class ScheduledChangesTableMixin(object):
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
         self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options={"actions": ["enact"]}, data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="mary", role="releng", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="mary", role="dev", data_version=1)
 
 
 class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, MemoryDatabaseMixin):
@@ -888,6 +890,23 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(sc_row.base_data_version, None)
         self.assertEquals(cond_row.when, 888000)
         self.assertEquals(cond_row.data_version, 1)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertRecordSignOffForUserHavingSingleRole(self):
+        what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
+        self.sc_table.insert(changed_by="bob", **what)
+        user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "bob", "sc_id": 7})
+        self.assertEquals(len(user_role_rows), 1)
+        self.assertEquals(user_role_rows[0].get("username"), "bob")
+        self.assertEquals(user_role_rows[0].get("role"), "releng")
+        self.assertEquals(user_role_rows[0].get("sc_id"), 7)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertRecordSignOffForUserHavingMultipleRoles(self):
+        what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
+        self.sc_table.insert(changed_by="mary", **what)
+        user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "nancy", "sc_id": 7})
+        self.assertEquals(len(user_role_rows), 0)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithNonAutoincrement(self):
