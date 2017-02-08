@@ -1235,7 +1235,7 @@ class ScheduledChangeTable(AUSTable):
                 # be modifying the row when enacted. If the update to the row
                 # ("what") is also modifying the same column, this is a conflict
                 # that the server cannot resolve.
-                if sc["base_%s" % col] != old_row.get(col) and sc["base_%s" % col] != what.get(col):
+                if sc["base_%s" % col] != old_row.get(col) and old_row.get(col) != what.get(col):
                     raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
 
             # If we get here, the change is safely mergeable

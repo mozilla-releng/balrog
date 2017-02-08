@@ -1346,6 +1346,14 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertEquals(new_row["base_data_version"], 2)
         self.assertEquals(new_row["base_bar"], "abc")
 
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testMergeUpdateWithConflictWhenSameValAndCol(self):
+        # This is from bug #1333874 - if an update and scheduled change update
+        # the same column with the same value, mergeUpdate should throw an exception.
+        old_row = self.table.select(where=[self.table.fooid == 1])[0]
+        what = {"fooid": 1, "bar": "barbar", "data_version": 1}
+        self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, what, changed_by="bob")
+
 
 class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDatabaseMixin):
 
