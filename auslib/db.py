@@ -1098,9 +1098,10 @@ class ScheduledChangeTable(AUSTable):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s",
                                                  sc_id)
 
-            # - If the User scheduling a change only holds one Required Role, record a signoff with it.
-            # - If the User scheduling a change holds more than one Required Role, do not record any signoffs.
-            # When UI for signing off on changes is ready, users can do it with a specific Role with that.
+            # - If the User scheduling a change only holds one Role, record a signoff with it.
+            # - If the User scheduling a change holds more than one Role, we cannot a Signoff, because
+            #   we don't know which Role we'd want to signoff with. The user will need to signoff
+            #   manually in these cases.
             user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
             if len(user_roles) == 1:
                 self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
