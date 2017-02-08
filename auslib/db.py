@@ -1107,9 +1107,7 @@ class ScheduledChangeTable(AUSTable):
         for row in self.select(where=where, transaction=transaction):
             # verify whether the scheduled change has already been completed or not. If completed,
             # then cannot modify the scheduled change anymore.
-            completed_scheduled_change = self.select(where={"sc_id": row["sc_id"]},
-                                                     transaction=transaction, columns=["complete"])
-            if completed_scheduled_change and completed_scheduled_change[0].get("complete"):
+            if row.get("complete"):
                 raise ValueError("Scheduled change already completed. Cannot update now.")
 
             affected_ids.append(row["sc_id"])
@@ -1163,9 +1161,7 @@ class ScheduledChangeTable(AUSTable):
         for row in self.select(where=where, transaction=transaction):
             # verify whether the scheduled change has already been completed or not. If completed,
             # then cannot modify the scheduled change anymore.
-            completed_scheduled_change = self.select(where={"sc_id": row["sc_id"]},
-                                                     transaction=transaction, columns=["complete"])
-            if completed_scheduled_change and completed_scheduled_change[0].get("complete"):
+            if row.get("complete"):
                 raise ValueError("Scheduled change already completed. Cannot delete now.")
 
             conditions_where.append(self.conditions.sc_id == row["sc_id"])
