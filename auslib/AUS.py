@@ -88,6 +88,9 @@ class AUS:
                 if fallbackReleaseName:
                     release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1)[0]
                     blob = release['data']
+                    if not blob.shouldServeUpdate(updateQuery):
+                        return None, None
+                    self.log.debug("Returning fallback release %s", release['name'])
                     return blob, rule['update_type']
 
                 self.log.debug("No fallback releases. Request was dropped")
