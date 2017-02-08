@@ -46,17 +46,12 @@ class ScheduledChangesView(AdminView):
             self.log.warning("Bad input: %s", form.errors)
             return Response(status=400, response=json.dumps(form.errors))
 
-        try:
-            # Forms can normally be accessed as a dict through form.data,
-            # but because some of the Forms we end up using have a Field
-            # called "data", this gets overridden, so we need to construct
-            # a dict ourselves.
-            columns = {k: v.data for k, v in form._fields.iteritems()}
-            sc_id = self.sc_table.insert(changed_by, transaction, **columns)
-        except ValueError as e:
-            self.log.warning("Bad input: %s", e)
-            return Response(status=400, response=json.dumps({"exception": e.args}))
-
+        # Forms can normally be accessed as a dict through form.data,
+        # but because some of the Forms we end up using have a Field
+        # called "data", this gets overridden, so we need to construct
+        # a dict ourselves.
+        columns = {k: v.data for k, v in form._fields.iteritems()}
+        sc_id = self.sc_table.insert(changed_by, transaction, **columns)
         return jsonify(sc_id=sc_id)
 
 
@@ -91,16 +86,11 @@ class ScheduledChangeView(AdminView):
             # from the rule (aka, set as NULL in the db). The underlying Form
             # will have already converted it to None, so we can treat it the
             # same as a modification here.
-            if (request.json and k in request.json):
+            if request.json and k in request.json:
                 what[k] = v.data
 
         where = {"sc_id": sc_id}
-        try:
-            self.sc_table.update(where, what, changed_by, form.sc_data_version.data, transaction)
-        except ValueError as e:
-            self.log.warning("Bad input: %s", e)
-            return Response(status=400, response=json.dumps({"exception": e.args}))
-
+        self.sc_table.update(where, what, changed_by, form.sc_data_version.data, transaction)
         sc = self.sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
         return jsonify(new_data_version=sc["data_version"])
 
@@ -111,7 +101,6 @@ class ScheduledChangeView(AdminView):
             return Response(status=404, response="Scheduled change does not exist")
 
         form = DbEditableForm(request.args)
-
         self.sc_table.delete(where, changed_by, form.data_version.data, transaction)
         return Response(status=200)
 
@@ -146,12 +135,7 @@ class SignoffsView(AdminView):
             self.log.warning("Bad input: %s", form.errors)
             return Response(status=400, response=json.dumps(form.errors))
 
-        try:
-            self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **form.data)
-        except ValueError as e:
-            self.log.warning("Bad input: %s", e)
-            return Response(status=400, response=json.dumps({"exception": e.args}))
-
+        self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **form.data)
         return Response(status=200)
 
     def _delete(self, sc_id, transaction, changed_by):

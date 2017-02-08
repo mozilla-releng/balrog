@@ -335,11 +335,15 @@ class AUSTable(object):
            @param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
            @type where: list of clauses or key/value pairs.
 
+           @param transaction: A transaction object to add the update statement (and history changes) to.
+                               If provided, you must commit the transaction yourself. If None, they will
+                               be added to a locally-scoped transaction and committed.
+
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
 
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
-        # clauses before porceeding.
+        # clauses before proceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
@@ -583,7 +587,7 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
-        # clauses before porceeding.
+        # clauses before proceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
@@ -1101,6 +1105,11 @@ class ScheduledChangeTable(AUSTable):
         # We need to check each Scheduled Change that would be affected by this
         # to ensure the new row will be valid.
         for row in self.select(where=where, transaction=transaction):
+            # verify whether the scheduled change has already been completed or not. If completed,
+            # then cannot modify the scheduled change anymore.
+            if row.get("complete"):
+                raise ValueError("Scheduled change already completed. Cannot update now.")
+
             affected_ids.append(row["sc_id"])
             # Before validation, we need to create the new version of the
             # Scheduled Change by combining the old one with the new data.
@@ -1150,6 +1159,11 @@ class ScheduledChangeTable(AUSTable):
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         conditions_where = []
         for row in self.select(where=where, transaction=transaction):
+            # verify whether the scheduled change has already been completed or not. If completed,
+            # then cannot modify the scheduled change anymore.
+            if row.get("complete"):
+                raise ValueError("Scheduled change already completed. Cannot delete now.")
+
             conditions_where.append(self.conditions.sc_id == row["sc_id"])
             base_row = {col[5:]: row[col] for col in row if col.startswith("base_")}
             # we also need change_type in base_row to check permission
