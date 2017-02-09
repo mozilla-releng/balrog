@@ -17,8 +17,14 @@
     <dd ng-repeat-end>{{ value }}</dd>
   </dl>
   <!-- todo: should show when/telemetry info in here -->
-  <span>Please sign off on this change with one of your Roles:</span>
-  <select ng-model="signoff_role" ng-options="role as role for role in user_roles"></select>
+  <hr>
+  <h4>Please sign off on this change with one of your Roles:</h4>
+  <form>
+  <div ng-repeat="role in user_roles">
+    <input id="id_{{ role }}" type="radio" name="role" ng-model="$parent.signoff_role" ng-value="role">
+    <label for="id_{{ role }}">{{ role }}</label>
+  </div>
+  </form>
 
   <div class="form-group" ng-class="{'has-error': errors.exception}">
     <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>

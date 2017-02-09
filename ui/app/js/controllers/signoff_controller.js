@@ -5,21 +5,12 @@ function ($scope, $modalInstance, CSRF, Permissions, object_name, service, sc_id
   $scope.object_name = object_name;
   $scope.sc_id = sc_id;
   $scope.pk = pk;
-  // todo: if details goes unused, rename data to details
   $scope.data = data;
   $scope.details = details;
   $scope.signoff_role = null;
 
   $scope.current_user = null;
   $scope.user_roles = [];
-
-  $scope.$watch("user_roles", function() {
-    if ($scope.signoff_role === null) {
-      if ($scope.user_roles.length > 0) {
-        $scope.signoff_role = $scope.user_roles[0];
-      }
-    }
-  }, true);
 
   Permissions.getCurrentUser()
   .success(function(response) {
@@ -34,6 +25,11 @@ function ($scope, $modalInstance, CSRF, Permissions, object_name, service, sc_id
   });
 
   $scope.saveChanges = function () {
+    console.log($scope.signoff_role);
+    if ($scope.signoff_role === null) {
+      $scope.errors["exception"] = "No Role selected!";
+      return;
+    }
     $scope.saving = true;
     CSRF.getToken()
     .then(function(csrf_token) {
