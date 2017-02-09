@@ -34,6 +34,11 @@ var RequiredSignoffBase = (function() {
       var url = "/api/scheduled_changes" + this.base_url + "/" + sc_id + "/signoffs";
       return this.http.post(url, data);
     },
+    revokeSignoffOnScheduledChange: function(sc_id, data) {
+      var url = "/api/scheduled_changes" + this.base_url + "/" + sc_id + "/signoffs";
+      url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
+      return this.http.delete(url, data);
+    },
   };
   return service;
 }());

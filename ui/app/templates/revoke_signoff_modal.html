@@ -1,13 +1,21 @@
 <div class="modal-header">
-    <h3 class="modal-title">Revoke Signoff on XXXXXXXXXXXXX</h3>
+    <h3 class="modal-title">Revoke Signoff from {{ object_name }}</h3>
 </div>
 <div class="modal-body">
-
-  more info here!
-
+  <h4>You previously signed off on a change to:</h4>
+  <dl class="dl-horizontal">
+    <dt class="text-capitalize" ng-repeat-start="(key, value) in pk">{{ key }}:</dt>
+    <dd ng-repeat-end>{{ value }}</dd>
+  </dl>
+  <h4>That would set its values to:</h4>
+  <dl class="dl-horizontal">
+    <dt ng-repeat-start="(key, value) in data">{{ key }}:</dt>
+    <dd ng-repeat-end>{{ value }}</dd>
+  </dl>
+  <h4>Are you sure you want to revoke your signoff as a member of <strong>{{ role }}</strong>?</h4>
 </div>
 <div class="modal-footer">
   <div ng-show="saving" small-loader></div>
-  <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Signoff!</button>
+  <button class="btn btn-danger" ng-show="!saving" ng-click="saveChanges()">Revoke it!</button>
   <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
 </div>

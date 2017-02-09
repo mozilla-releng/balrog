@@ -6,6 +6,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   $scope.selected_product = null;
   $scope.state = "current";
   $scope.current_user = null;
+  $scope.user_roles = [];
 
   var loading_deferreds = {
     "product": $q.defer(),
@@ -175,6 +176,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   Permissions.getCurrentUser()
   .success(function(response) {
     $scope.current_user = response["username"];
+    $scope.user_roles = Object.keys(response["roles"]);
   })
   .error(function(response) {
     sweetAlert(
@@ -262,6 +264,12 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
             return PermissionsRequiredSignoffs;
           }
         },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        user_roles: function() {
+          return $scope.user_roles;
+        },
         sc_id: function() {
           return sc_id;
         },
@@ -279,17 +287,47 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           // maybe should filter this ?
           return details;
         },
-
       }
     });
   };
 
-  $scope.revokeSignoff = function(mode, sc_id) {
+  $scope.revokeSignoff = function(mode, sc_id, role, details, channel = "") {
     $modal.open({
       templateUrl: "revoke_signoff_modal.html",
       controller: "RevokeSignoffCtrl",
       backdrop: "static",
       resolve: {
+        object_name: function() {
+          return "Required Signoff";
+        },
+        service: function() {
+          if (mode === "channel") {
+            return ProductRequiredSignoffs;
+          }
+          else if (mode === "permission") {
+            return PermissionsRequiredSignoffs;
+          }
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        sc_id: function() {
+          return sc_id;
+        },
+        pk: function() {
+          pk = {"product": $scope.selected_product, "role": role};
+          if (mode === "channel") {
+            pk["channel"] = channel;
+          }
+          return pk;
+        },
+        data: function() {
+          return {"signoffs_required": details["signoffs_required"]};
+        },
+        details: function() {
+          // maybe should filter this ?
+          return details;
+        },
       }
     });
   };

@@ -1,5 +1,5 @@
 angular.module('app').controller('SignoffCtrl',
-function ($scope, $modalInstance, CSRF, Permissions, object_name, service, sc_id, pk, data, details) {
+function ($scope, $modalInstance, CSRF, Permissions, object_name, service, current_user, user_roles, sc_id, pk, data, details) {
   $scope.saving = false;
   $scope.errors = {};
   $scope.object_name = object_name;
@@ -7,22 +7,9 @@ function ($scope, $modalInstance, CSRF, Permissions, object_name, service, sc_id
   $scope.pk = pk;
   $scope.data = data;
   $scope.details = details;
+  $scope.current_user = current_user;
   $scope.signoff_role = null;
-
-  $scope.current_user = null;
-  $scope.user_roles = [];
-
-  Permissions.getCurrentUser()
-  .success(function(response) {
-    $scope.user_roles = Object.keys(response["roles"]);
-    $scope.current_user = response["username"];
-  })
-  .error(function(response) {
-    sweetAlert(
-      "Failed to load current user Roles:",
-      response
-    );
-  });
+  $scope.user_roles = user_roles;
 
   $scope.saveChanges = function () {
     console.log($scope.signoff_role);
