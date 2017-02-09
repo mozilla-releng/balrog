@@ -39,7 +39,7 @@ class CurrentUserView(AdminView):
         roles = {}
         for r in dbo.permissions.getUserRoles(username):
             roles[r["role"]] = {"data_version": r["data_version"]}
-        return jsonify({"permissions": permissions, "roles": roles})
+        return jsonify({"username": username, "permissions": permissions, "roles": roles})
 
 
 class PermissionsView(AdminView):
