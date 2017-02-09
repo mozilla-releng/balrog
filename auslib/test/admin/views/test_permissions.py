@@ -406,6 +406,14 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEquals(len(rows), 0)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateCompletedScheduledChangeExistingPermission(self):
+        data = {
+            "options": '{"products": ["Thunderbird"]}', "data_version": 1, "sc_data_version": 1, "when": 200000000,
+        }
+        ret = self._post("/scheduled_changes/permissions/3", data=data)
+        self.assertEquals(ret.status_code, 400, ret.data)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeNewPermission(self):
         data = {
             "options": '{"products": ["Firefox"]}', "sc_data_version": 1, "when": 450000000,
@@ -434,6 +442,10 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEquals(got, [])
         cond_got = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
         self.assertEquals(cond_got, [])
+
+    def testDeleteCompletedScheduledChange(self):
+        ret = self._delete("/scheduled_changes/permissions/3", qs={"data_version": 1})
+        self.assertEquals(ret.status_code, 400, ret.data)
 
     def testEnactScheduledChangeExistingPermission(self):
         ret = self._post("/scheduled_changes/permissions/2/enact")

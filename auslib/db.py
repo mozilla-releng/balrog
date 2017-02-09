@@ -335,11 +335,15 @@ class AUSTable(object):
            @param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
            @type where: list of clauses or key/value pairs.
 
+           @param transaction: A transaction object to add the update statement (and history changes) to.
+                               If provided, you must commit the transaction yourself. If None, they will
+                               be added to a locally-scoped transaction and committed.
+
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
 
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
-        # clauses before porceeding.
+        # clauses before proceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
@@ -583,7 +587,7 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
-        # clauses before porceeding.
+        # clauses before proceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
@@ -1091,7 +1095,17 @@ class ScheduledChangeTable(AUSTable):
             sc_id = ret.inserted_primary_key[0]
             self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
             if not self._dataVersionsAreSynced(sc_id, transaction):
-                raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s", sc_id)
+                raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s",
+                                                 sc_id)
+
+            # - If the User scheduling a change only holds one Role, record a signoff with it.
+            # - If the User scheduling a change holds more than one Role, we cannot a Signoff, because
+            #   we don't know which Role we'd want to signoff with. The user will need to signoff
+            #   manually in these cases.
+            user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
+            if len(user_roles) == 1:
+                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
+                                     sc_id=sc_id, role=user_roles[0].get("role"))
             return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
@@ -1101,6 +1115,11 @@ class ScheduledChangeTable(AUSTable):
         # We need to check each Scheduled Change that would be affected by this
         # to ensure the new row will be valid.
         for row in self.select(where=where, transaction=transaction):
+            # verify whether the scheduled change has already been completed or not. If completed,
+            # then cannot modify the scheduled change anymore.
+            if row.get("complete"):
+                raise ValueError("Scheduled change already completed. Cannot update now.")
+
             affected_ids.append(row["sc_id"])
             # Before validation, we need to create the new version of the
             # Scheduled Change by combining the old one with the new data.
@@ -1150,6 +1169,11 @@ class ScheduledChangeTable(AUSTable):
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         conditions_where = []
         for row in self.select(where=where, transaction=transaction):
+            # verify whether the scheduled change has already been completed or not. If completed,
+            # then cannot modify the scheduled change anymore.
+            if row.get("complete"):
+                raise ValueError("Scheduled change already completed. Cannot delete now.")
+
             conditions_where.append(self.conditions.sc_id == row["sc_id"])
             base_row = {col[5:]: row[col] for col in row if col.startswith("base_")}
             # we also need change_type in base_row to check permission
@@ -2511,6 +2535,9 @@ class AUSDatabase(object):
 
     def hasRole(self, *args, **kwargs):
         return self.permissions.hasRole(*args, **kwargs)
+
+    def getUserRoles(self, *args, **kwargs):
+        return self.permissions.getUserRoles(*args, **kwargs)
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,

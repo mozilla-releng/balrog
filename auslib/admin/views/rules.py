@@ -308,8 +308,8 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
             releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
 
-            self.log.debug("releaseNames: %s" % (releaseNames))
-            self.log.debug("transaction: %s" % (transaction))
+            self.log.debug("releaseNames: %s" % releaseNames)
+            self.log.debug("transaction: %s" % transaction)
 
             form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
             form.mapping.choices.insert(0, ('', 'NULL'))
@@ -319,8 +319,8 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
             releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
 
-            self.log.debug("releaseNames: %s" % (releaseNames))
-            self.log.debug("transaction: %s" % (transaction))
+            self.log.debug("releaseNames: %s" % releaseNames)
+            self.log.debug("transaction: %s" % transaction)
 
             form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
             form.mapping.choices.insert(0, ('', 'NULL'))

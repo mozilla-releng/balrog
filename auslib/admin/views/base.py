@@ -52,7 +52,7 @@ def handleGeneralExceptions(messages):
                 logging.warning(msg)
                 return Response(status=403, response=json.dumps({"exception": msg}), mimetype="application/json")
             except ValueError as e:
-                msg = "Error. {}".format(e.message)
+                msg = "Bad input: {}".format(e.message)
                 logging.warning(msg)
                 return Response(status=400, response=json.dumps({"exception": msg}), mimetype="application/json")
         return decorated

@@ -1282,6 +1282,24 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(ret.status_code, 200, ret.data)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateCompletedScheduledChangeDeleteRelease(self):
+        data = {
+            "name": "c",
+            "data_version": 1, "sc_data_version": 1, "when": 78900000000, "change_type": "delete"
+        }
+        ret = self._post("/scheduled_changes/releases/3", data=data)
+        self.assertEquals(ret.status_code, 400, ret.data)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateCompletedScheduledChangeUpdatingTheRelease(self):
+        data = {
+            "data": '{"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "c",
+            "data_version": 1, "sc_data_version": 1, "when": 78900000000, "change_type": "update",
+        }
+        ret = self._post("/scheduled_changes/releases/3", data=data)
+        self.assertEquals(ret.status_code, 400, ret.data)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeNewRelease(self):
         data = {
             "data": '{"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1}', "name": "m", "product": "m",
