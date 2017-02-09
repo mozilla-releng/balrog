@@ -1,16 +1,18 @@
 angular.module("app").controller('RequiredSignoffsController',
-function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs) {
+function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions) {
   $scope.loading = true;
 
   $scope.required_signoffs = {};
   $scope.selected_product = null;
   $scope.state = "current";
+  $scope.current_user = null;
 
   var loading_deferreds = {
     "product": $q.defer(),
     "permissions": $q.defer(),
     "product_sc": $q.defer(),
     "permissions_sc": $q.defer(),
+    "current_user": $q.defer(),
   };
 
   $q.all([loading_deferreds["product"].promise, loading_deferreds["permissions"].promise,
@@ -169,6 +171,21 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   .finally(function() {
     loading_deferreds["permissions_sc"].resolve();
   });
+
+  Permissions.getCurrentUser()
+  .success(function(response) {
+    $scope.current_user = response["username"];
+  })
+  .error(function(response) {
+    sweetAlert(
+      "Failed to load current user Roles:",
+      response
+    );
+  })
+  .finally(function() {
+    loading_deferreds["current_user"].resolve();
+  });
+
 
   $scope.addNewRequiredSignoff = function() {
     $modal.open({

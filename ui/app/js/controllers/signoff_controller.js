@@ -56,7 +56,7 @@ function ($scope, $modalInstance, CSRF, Permissions, object_name, service, sc_id
             "Unknown error:",
             response
           );
-        };
+        }
       });
     });
   };

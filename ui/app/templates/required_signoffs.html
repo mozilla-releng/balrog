@@ -47,8 +47,14 @@
                  maybe we can guess it by making a request on first page load and sniffing the Authentication header
                  don't show signoff button if user has already signed off
             -->
-            <button class="btn btn-xs btn-primary" ng-click="signoff('permission', details['sc_id'], role, details)">Signoff as...</button>
-            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('permission', details['sc_id'])">Revoke your Signoff</button>
+            <button class="btn btn-xs btn-primary" ng-click="signoff('permission', details['sc_id'], role, details)"
+                    ng-show="! current_user in details['signoffs']">
+              Signoff as...
+            </button>
+            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('permission', details['sc_id'])"
+                    ng-show="current_user in details['signoffs']">
+              Revoke your Signoff
+            </button>
           </div>
         </h4>
       </div>
@@ -90,8 +96,14 @@
             <!-- show revoke button if user has already signed off - can't do this because we can't access REMOTE_USER
                  maybe we can guess it by making a request on first page load and sniffing the Authentication header
             -->
-            <button class="btn btn-xs btn-primary" ng-click="signoff('channel', details['sc_id'], role, details, channel)">Signoff as...</button>
-            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('channel', details['sc_id'])">Revoke your Signoff</button>
+            <button class="btn btn-xs btn-primary" ng-click="signoff('channel', details['sc_id'], role, details, channel)"
+                    ng-show="! details['signoffs'].hasOwnProperty(current_user)">
+              Signoff as...
+            </button>
+            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('channel', details['sc_id'])"
+                    ng-show="details['signoffs'].hasOwnProperty(current_user)">
+              Revoke your Signoff
+            </button>
           </div>
         </h4>
       </div>
