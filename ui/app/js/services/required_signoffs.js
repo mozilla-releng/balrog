@@ -31,7 +31,7 @@ var RequiredSignoffBase = (function() {
       return this.http.delete(url);
     },
     signoffOnScheduledChange: function(sc_id, data) {
-      var url = "/api/scheduled_changes" + this.base_url + "/" + sc_id + "signoffs";
+      var url = "/api/scheduled_changes" + this.base_url + "/" + sc_id + "/signoffs";
       return this.http.post(url, data);
     },
   };

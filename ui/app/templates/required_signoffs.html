@@ -52,7 +52,11 @@
           </div>
         </h4>
       </div>
-      <div class="panel-body">show which signoffs are required for pending stuff</div>
+      <div class="panel-body">show which signoffs are required for pending stuff and which have been made
+        <span ng-repeat="(username, role) in details['signoffs']">
+          {{ username }} {{ role }}
+        </span>
+      </div>
     </div>
   </div>
 </div>
@@ -91,7 +95,11 @@
           </div>
         </h4>
       </div>
-      <div class="panel-body">stuff stuff</div>
+      <div class="panel-body">show which signoffs are required for pending stuff and which have been made
+        <span ng-repeat="(username, role) in details['signoffs']">
+          {{ username }} {{ role }}
+        </span>
+      </div>
     </div>
   </div>
 </div>

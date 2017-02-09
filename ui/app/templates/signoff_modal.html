@@ -19,8 +19,10 @@
   <!-- todo: should show when/telemetry info in here -->
   <span>Please sign off on this change with one of your Roles:</span>
   <select ng-model="signoff_role" ng-options="role as role for role in user_roles"></select>
-  <div>{{ details }}</div>
 
+  <div class="form-group" ng-class="{'has-error': errors.exception}">
+    <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>
+  </div>
 </div>
 <div class="modal-footer">
   <div ng-show="saving" small-loader></div>

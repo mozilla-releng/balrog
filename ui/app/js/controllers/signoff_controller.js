@@ -1,6 +1,7 @@
 angular.module('app').controller('SignoffCtrl',
 function ($scope, $modalInstance, CSRF, Permissions, object_name, service, sc_id, pk, data, details) {
   $scope.saving = false;
+  $scope.errors = {};
   $scope.object_name = object_name;
   $scope.sc_id = sc_id;
   $scope.pk = pk;
@@ -39,11 +40,27 @@ function ($scope, $modalInstance, CSRF, Permissions, object_name, service, sc_id
       var data = {"role": $scope.signoff_role, "csrf_token": csrf_token};
       service.signoffOnScheduledChange($scope.sc_id, data)
       .success(function(response) {
+        $scope.saving = false;
         // update list of signoffs that have been made
-        $scope.details["signoffs"]["username"] = $scope.current_user;
-        //$modalInstance.close();
+        $scope.details["signoffs"][$scope.current_user] = $scope.signoff_role;
+        $modalInstance.close();
       })
-      .error(function(response, status) {
+      .error(function(response) {
+        $scope.saving = false;
+        if (typeof response === "object") {
+          $scope.errors = response;
+          sweetAlert(
+            "Form submission error",
+            "See fields highlighted in red.",
+            "error"
+          );
+        }
+        else {
+          sweetAlert(
+            "Unknown error:",
+            response
+          );
+        };
       });
     });
   };
