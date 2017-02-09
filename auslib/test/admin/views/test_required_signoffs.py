@@ -184,17 +184,17 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 100000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "c", "role": "releng", "signoffs_required": 1, "data_version": None,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "a", "role": "releng", "signoffs_required": 2, "data_version": 1,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
                 {
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "j", "role": "releng", "signoffs_required": None, "data_version": 1,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
             ],
         }
@@ -208,22 +208,22 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 100000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "c", "role": "releng", "signoffs_required": 1, "data_version": None,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "a", "role": "releng", "signoffs_required": 2, "data_version": 1,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
                 {
                     "sc_id": 3, "when": 300000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
                     "product": "fake", "channel": "e", "role": "releng", "signoffs_required": 1, "data_version": None,
-                    "signoffs": {},
+                    "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "j", "role": "releng", "signoffs_required": None, "data_version": 1,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
             ],
         }
@@ -639,17 +639,17 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 100000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "product": "super", "role": "releng", "signoffs_required": 1, "data_version": None,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "role": "releng", "signoffs_required": 2, "data_version": 1,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
                 {
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "blah", "role": "releng", "signoffs_required": None, "data_version": 1,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
             ],
         }
@@ -663,22 +663,22 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 100000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "product": "super", "role": "releng", "signoffs_required": 1, "data_version": None,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "role": "releng", "signoffs_required": 2, "data_version": 1,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
                 {
                     "sc_id": 3, "when": 300000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
                     "product": "bar", "role": "releng", "signoffs_required": 1, "data_version": None,
-                    "signoffs": {},
+                    "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "blah", "role": "releng", "signoffs_required": None, "data_version": 1,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
             ],
         }
