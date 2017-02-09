@@ -26,18 +26,26 @@ class ScheduledChangesView(AdminView):
             rows = self.sc_table.select(where={"complete": False})
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
-            # TODO: Probably need to return signoffs still required after
-            # that's been implemented. That + existing signoffs may end up
-            # in the same data structure.
-            r = {"signoffs": {}}
-            for signoff in self.sc_table.signoffs.select({"sc_id": row["sc_id"]}):
-                r["signoffs"][signoff["username"]] = signoff["role"]
+            r = {"signoffs": {}, "required_signoffs": {}}
+            base_row = {}
 
             for k, v in row.iteritems():
                 if k == "data_version":
                     r["sc_data_version"] = v
                 else:
-                    r[k.replace("base_", "")] = v
+                    if k.startswith("base_"):
+                        k = k.replace("base_", "")
+                        base_row[k] = v
+                    r[k] = v
+
+            for signoff in self.sc_table.signoffs.select({"sc_id": row["sc_id"]}):
+                r["signoffs"][signoff["username"]] = signoff["role"]
+
+            # No point in retrieving this for completed scheduled changes...
+            if not row["complete"]:
+                for rs in self.table.getPotentialRequiredSignoffs([base_row]):
+                    r["required_signoffs"][rs["role"]] = max(r["required_signoffs"].get(rs["role"], 0), rs["signoffs_required"])
+
             ret["scheduled_changes"].append(r)
         return jsonify(ret)
 

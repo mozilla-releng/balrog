@@ -22,6 +22,7 @@ class TestCurrentUserAPI_JSON(ViewTest):
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         expected = {
+            "username": "bill",
             "permissions": {
                 "admin": {
                     "options": None, "data_version": 1,
@@ -43,6 +44,7 @@ class TestCurrentUserAPI_JSON(ViewTest):
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         expected = {
+            "username": "billy",
             "permissions": {
                 "admin": {
                     "options": {
@@ -295,17 +297,17 @@ class TestPermissionsScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
-                    "signoffs": {"bill": "releng", "mary": "relman"},
+                    "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
                 },
                 {
                     "sc_id": 4, "when": 76000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1,
-                    "signoffs": {"bill": "releng", "mary": "relman"},
+                    "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
                 },
             ],
         }
@@ -319,21 +321,22 @@ class TestPermissionsScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "permission": "rule", "username": "janet", "options": {"products": ["foo"]}, "data_version": None,
-                    "signoffs": {"bill": "releng"},
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
-                    "signoffs": {"bill": "releng", "mary": "relman"},
+                    "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
                 },
                 {
                     "sc_id": 3, "when": 30000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
                     "permission": "permission", "username": "bob", "options": None, "data_version": None, "signoffs": {},
+                    "required_signoffs": {},
                 },
                 {
                     "sc_id": 4, "when": 76000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1,
-                    "signoffs": {"bill": "releng", "mary": "relman"},
+                    "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
                 },
             ],
         }
