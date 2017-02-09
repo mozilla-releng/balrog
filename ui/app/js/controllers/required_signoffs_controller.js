@@ -48,6 +48,8 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         }
     
         $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
+          // todo: backend needs to implement this
+          "required_signoffs": {},
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
           "sc_id": null,
@@ -81,6 +83,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         }
 
         $scope.required_signoffs[rs.product]["permissions"][rs.role] = {
+          "required_signoffs": {},
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
           "scheduled_by": null,
@@ -118,6 +121,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         }
 
         $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
+          "required_signoffs": {},
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
           "sc_id": rs.sc_id,
@@ -152,6 +156,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         }
     
         $scope.required_signoffs[rs.product]["permissions"][rs.role] = {
+          "required_signoffs": {},
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
           "sc_id": rs.sc_id,

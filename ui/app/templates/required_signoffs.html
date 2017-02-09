@@ -58,10 +58,19 @@
           </div>
         </h4>
       </div>
-      <div class="panel-body">show which signoffs are required for pending stuff and which have been made
-        <span ng-repeat="(username, role) in details['signoffs']">
-          {{ username }} {{ role }}
-        </span>
+      <div class="panel-body" ng-show="details['sc_id'] !== null">
+        <h4>Before it can be enacted, this change must be signed off on by:</h4>
+        <ul>
+          <li ng-repeat="(role, signoffs_required) in details['required_signoffs']">
+            {{ signoffs_required }} members of {{ role }}
+          </li>
+        </ul>
+        <h4>This change has already been signed off by:</h4>
+        <ul>
+          <li ng-repeat="(username, role) in details['signoffs']">
+            {{ username }} ({{ role }})
+          </li>
+        </ul>
       </div>
     </div>
   </div>
@@ -107,10 +116,19 @@
           </div>
         </h4>
       </div>
-      <div class="panel-body">show which signoffs are required for pending stuff and which have been made
-        <span ng-repeat="(username, role) in details['signoffs']">
-          {{ username }} {{ role }}
-        </span>
+      <div class="panel-body" ng-show="details['sc_id'] !== null">
+        <h4>Before it can be enacted, this change must be signed off on by:</h4>
+        <ul>
+          <li ng-repeat="(role, signoffs_required) in details['required_signoffs']">
+            {{ signoffs_required }} members of {{ role }}
+          </li>
+        </ul>
+        <h4>This change has already been signed off by:</h4>
+        <ul>
+          <li ng-repeat="(username, role) in details['signoffs']">
+            {{ username }} ({{ role }})
+          </li>
+        </ul>
       </div>
     </div>
   </div>
