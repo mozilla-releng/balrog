@@ -48,6 +48,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
           "sc_id": null,
+          "scheduled_by": null,
           "sc_data_version": null,
           "change_type": null,
         };
@@ -79,6 +80,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         $scope.required_signoffs[rs.product]["permissions"][rs.role] = {
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
+          "scheduled_by": null,
           "sc_id": null,
           "sc_data_version": null,
           "change_type": null,
@@ -116,6 +118,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
           "sc_id": rs.sc_id,
+          "scheduled_by": rs.scheduled_by,
           "sc_data_version": rs.sc_data_version,
           "signoffs": rs.signoffs,
           "change_type": rs.change_type,
@@ -149,6 +152,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
           "sc_id": rs.sc_id,
+          "scheduled_by": rs.scheduled_by,
           "sc_data_version": rs.sc_data_version,
           "signoffs": rs.signoffs,
           "change_type": rs.change_type,
@@ -230,8 +234,8 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
       controller: "SignoffCtrl",
       backdrop: "static",
       resolve: {
-        title: function() {
-          return "required signoff";
+        object_name: function() {
+          return "Required Signoff";
         },
         service: function() {
           if (mode === "channel") {
@@ -245,16 +249,20 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           return sc_id;
         },
         pk: function() {
-          pk = {"product": $scope.select_product, "role": role};
+          pk = {"product": $scope.selected_product, "role": role};
           if (mode === "channel") {
             pk["channel"] = channel;
           }
           return pk;
         },
+        data: function() {
+          return {"signoffs_required": details["signoffs_required"]};
+        },
         details: function() {
           // maybe should filter this ?
           return details;
         },
+
       }
     });
   };

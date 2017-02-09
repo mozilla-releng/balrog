@@ -1,15 +1,25 @@
 <div class="modal-header">
-    <h3 class="modal-title">{{ title }}</h3>
+    <h3 class="modal-title">Sign off on Change to {{ object_name }}</h3>
 </div>
 <div class="modal-body">
 
   <!-- print more details about the thing being signed off on -->
   <!-- dropdown with list of user roles -->
-  <label >Signoff with Role:</label>
+  <h4><strong>{{ details["scheduled_by"] }}</strong> wants to change the {{ object_name }} identified by:</h4>
+  <dl class="dl-horizontal">
+    <dt class="text-capitalize" ng-repeat-start="(key, value) in pk">{{ key }}:</dt>
+    <dd ng-repeat-end>{{ value }}</dd>
+  </dl>
+  <h4>The new values will be:</h4>
+  <!-- todo: highlight values that are actually changing compared to be the base would be lovely -->
+  <dl class="dl-horizontal">
+    <dt ng-repeat-start="(key, value) in data">{{ key }}:</dt>
+    <dd ng-repeat-end>{{ value }}</dd>
+  </dl>
+  <!-- todo: should show when/telemetry info in here -->
+  <span>Please sign off on this change with one of your Roles:</span>
   <select ng-model="signoff_role" ng-options="role as role for role in user_roles"></select>
-  <div>{{ pk }}</div>
   <div>{{ details }}</div>
-  <div>{{ sc_id }}</div>
 
 </div>
 <div class="modal-footer">
