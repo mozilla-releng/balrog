@@ -292,6 +292,8 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         }
       });
 
+      // this doesn't seem to be working. maybe the promises array isn't filled up yet, beacuse the above forEach is async?
+      // maybe a two stage deferred will help....dunno
       $q.all(promises)
       .then(function() {
         if (Object.keys($scope.errors).length === 0) {
