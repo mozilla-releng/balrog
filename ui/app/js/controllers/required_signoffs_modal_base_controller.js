@@ -197,7 +197,9 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                 delete namespace[data["role"]];
               }
               if (! (data["role"] in namespace)) {
-                namespace[data["role"]] = {};
+                namespace[data["role"]] = {
+                    "signoffs_required": 0,
+                };
               }
               if (! ("sc" in namespace[data["role"]])) {
                 namespace[data["role"]]["sc"] = {};
