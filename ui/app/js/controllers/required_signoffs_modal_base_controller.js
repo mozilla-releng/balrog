@@ -70,7 +70,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
     $scope.saving = true;
     CSRF.getToken()
     .then(function(csrf_token) {
-      var promises = [];
+      var deferreds = {};
       var first = true;
 
       var current_role_names = [];
@@ -207,7 +207,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                     "signoffs_required": 0,
                 };
               }
-              if (! ("sc" in namespace[data["role"]]) || namespace[data["role"]]["sc"] === null) {
+              if (! ("sc" in namespace[data["role"]])) {
                 namespace[data["role"]]["sc"] = {};
               }
               // how to set required signoffs correctly? backend doesn't return it
@@ -238,8 +238,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           };
         };
 
-        var deferred = $q.defer();
-        promises.push(deferred.promise);
+        deferreds[role_name] = $q.defer();
         var data = {"product": $scope.product, "role": role_name, "csrf_token": csrf_token, "data_version": role["data_version"]};
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
@@ -250,8 +249,27 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           data["signoffs_required"] = role["signoffs_required"];
           if (action === "insert") {
             service.addRequiredSignoff(data)
-            .success(successCallback(data, deferred, pending, action))
-            .error(errorCallback(data, deferred));
+            .success(function(response) {
+              if ($scope.mode === "channel") {
+                required_signoffs[$scope.product] = {"channels": {}};
+                required_signoffs[$scope.product]["channels"][$scope.channel] = {};
+                required_signoffs[$scope.product]["channels"][$scope.channel][role_name] = {
+                    "signoffs_required": role["signoffs_required"],
+                    "data_version": response["new_data_version"],
+                    "sc": null,
+                };
+              }
+              else {
+                required_signoffs[$scope.product] = {"permissions": {}};
+                required_signoffs[$scope.product]["permissions"][role_name] = {
+                    "signoffs_required": role["signoffs_required"],
+                    "data_version": response["new_data_version"],
+                    "sc": null,
+                };
+              }
+              deferreds[role_name].resolve();
+            })
+            .error(errorCallback(data, deferreds[role_name].deferred));
           }
         }
         // Otherwise, we need to use Scheduled Changes
@@ -267,27 +285,38 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             data["sc_data_version"] = role["sc_data_version"];
             if (action === "delete") {
               service.deleteScheduledChange(role["sc"]["sc_id"], data)
-              .success(successCallback(data, deferred, pending, action, role["sc"]["sc_id"]))
-              .error(errorCallback(data, deferred));
+              .success(function(response) {
+                if ($scope.mode === "channel") {
+                  delete required_signoffs[$scope.product]["channels"][$scope.channel][role_name];
+                }
+                else {
+                  delete required_signoffs[$scope.product]["permissions"][role_name];
+                }
+              })
+              .error(errorCallback(data, deferreds[role_name].deferred));
             }
             else {
               data["signoffs_required"] = role["sc"]["signoffs_required"];
-              service.updateScheduledChange(role["sc"]["sc_id"], data)
-              .success(successCallback(data, deferred, pending, action, role["sc"]["sc_id"]))
-              .error(errorCallback(data, deferred));
+              service.updateScheduledChange(role["sc"]["sc_id"], data);
+            //  .success(successCallback(data, deferred, pending, action, role["sc"]["sc_id"]))
+              //.error(errorCallback(data, deferred));
             }
           }
           // Otherwise, we'll create a new Scheduled Change.
           else {
             data["change_type"] = action;
             data["signoffs_required"] = role["signoffs_required"];
-            service.addScheduledChange(data)
-            .success(successCallback(data, deferred, pending, action))
-            .error(errorCallback(data, deferred));
+            service.addScheduledChange(data);
+         //   .success(successCallback(data, deferred, pending, action))
+            //.error(errorCallback(data, deferred));
           }
         }
       });
 
+      var promises = [];
+      for (let d in Object.values(deferreds)) {
+        promises.push(d.promise);
+      }
       $q.all(promises)
       .then(function() {
         if (Object.keys($scope.errors).length === 0) {
