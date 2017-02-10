@@ -1,6 +1,6 @@
 angular.module("app").controller("BaseRequiredSignoffCtrl",
 function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Rules,
-         required_signoffs, mode, product, channel, current_roles, editing) {
+         required_signoffs, mode, product, channel, current_user, current_roles, editing) {
   $scope.saving = false;
   $scope.errors = {};
 
@@ -146,7 +146,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
 
         first = false;
 
-        var successCallback = function(data, deferred, action, sc_id = null) {
+        var successCallback = function(data, deferred, pending, action, sc_id = null) {
           return function(response) {
             var data_version = null;
             var sc_data_version = null;
@@ -184,16 +184,32 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               namespace = required_signoffs[data["product"]]["permissions"];
             }
 
-            if (action === "delete") {
-              delete namespace[data["role"]];
-            }
-            else {
+            if (sc_id === null) {
+              // action will always be insert here
               namespace[data["role"]] = {
                 "signoffs_required": data["signoffs_required"],
                 "data_version": data_version,
-                "sc_id": sc_id,
-                "sc_data_version": sc_data_version,
+                "sc": null,
               };
+            }
+            else {
+              if (pending && action === "delete") {
+                delete namespace[data["role"]];
+              }
+              if (! (data["role"] in namespace)) {
+                namespace[data["role"]] = {};
+              }
+              if (! ("sc" in namespace[data["role"]])) {
+                namespace[data["role"]]["sc"] = {};
+              }
+              // how to fix this?
+              namespace[data["role"]]["sc"]["required_signoffs"] = {};
+              namespace[data["role"]]["sc"]["signoffs_required"] = data["signoffs_required"];
+              namespace[data["role"]]["sc"]["sc_id"] = sc_id;
+              namespace[data["role"]]["sc"]["scheduled_by"] = current_user;
+              namespace[data["role"]]["sc"]["sc_data_version"] = sc_data_version;
+              namespace[data["role"]]["sc"]["signoffs"] = {};
+              namespace[data["role"]]["sc"]["change_type"] = action;
             }
 
             deferred.resolve();
@@ -226,7 +242,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         if (! requires_signoff) {
           if (action === "insert") {
             service.addRequiredSignoff(data)
-            .success(successCallback(data, deferred, action))
+            .success(successCallback(data, deferred, pending, action))
             .error(errorCallback(data, deferred));
           }
         }
@@ -242,12 +258,12 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           if (pending) {
             if (action === "delete") {
               service.deleteScheduledChange(role["sc_id"], data)
-              .success(successCallback(data, deferred, action, role["sc_id"]))
+              .success(successCallback(data, deferred, pending, action, role["sc_id"]))
               .error(errorCallback(data, deferred));
             }
             else {
               service.updateScheduledChange(role["sc_id"], data)
-              .success(successCallback(data, deferred, action, role["sc_id"]))
+              .success(successCallback(data, deferred, pending, action, role["sc_id"]))
               .error(errorCallback(data, deferred));
             }
           }
@@ -255,7 +271,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           else {
             data["change_type"] = action;
             service.addScheduledChange(data)
-            .success(successCallback(data, deferred, action))
+            .success(successCallback(data, deferred, pending, action))
             .error(errorCallback(data, deferred));
           }
         }

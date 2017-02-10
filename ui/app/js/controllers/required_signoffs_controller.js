@@ -58,6 +58,10 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
         };
+
+        if (! ("sc" in $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role])) {
+          $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role]["sc"] = null;
+        }
       });
     }
   })
@@ -87,6 +91,10 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
         };
+
+        if (! ("sc" in $scope.required_signoffs[rs.product]["permissions"][rs.role])) {
+          $scope.required_signoffs[rs.product]["permissions"][rs.role]["sc"] = null;
+        }
       });
     }
   })
@@ -114,6 +122,10 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     
         if (! (rs.channel in $scope.required_signoffs[rs.product]["channels"])) {
           $scope.required_signoffs[rs.product]["channels"][rs.channel] = {};
+        }
+
+        if (! (rs.role in $scope.required_signoffs[rs.product]["channels"][rs.channel])) {
+          $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {};
         }
 
         $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role]["sc"] = {
@@ -196,6 +208,9 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
       resolve: {
         required_signoffs: function() {
           return $scope.required_signoffs;
+        },
+        current_user: function() {
+          return $scope.current_user;
         },
       }
     });
@@ -322,4 +337,5 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
       }
     });
   };
+  console.log($scope.required_signoffs);
 });
