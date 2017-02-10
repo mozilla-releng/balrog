@@ -2,7 +2,9 @@ angular.module("app").controller('RequiredSignoffsController',
 function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions) {
   $scope.loading = true;
 
-  $scope.required_signoffs = {};
+  $scope.current_required_signoffs = {};
+  $scope.pending_required_signoffs = {};
+  $scope.all_products = [];
   $scope.selected_product = null;
   $scope.state = "current";
   $scope.current_user = null;
@@ -29,32 +31,37 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     $scope.loading = false;
   });
 
-  $scope.$watch("required_signoffs", function() {
-    if ($scope.selected_product === null) {
-      var products = Object.keys($scope.required_signoffs);
-      if (products.length > 0) {
-        $scope.selected_product = products[0];
+  var update_products = function(obj) {
+    obj.forEach(function(product) {
+      if (! $scope.all_products.includes(product)) {
+        $scope.all_products.push(product);
       }
-    }
+    });
+  }
+  $scope.$watch("current_required_signoffs", function() {
+    update_products($scope.current_required_signoffs);
+  }, true);
+  $scope.$watch("pending_required_signoffs", function() {
+    update_products($scope.pending_required_signoffs);
   }, true);
 
   ProductRequiredSignoffs.getRequiredSignoffs()
   .success(function(response) {
     if (response["count"] > 0) {
       response["required_signoffs"].forEach(function(rs) {
-        if (! (rs.product in $scope.required_signoffs)) {
-          $scope.required_signoffs[rs.product] = {};
+        if (! (rs.product in $scope.current_required_signoffs)) {
+          $scope.current_required_signoffs[rs.product] = {};
         }
     
-        if (! ("channels" in $scope.required_signoffs[rs.product])) {
-          $scope.required_signoffs[rs.product]["channels"] = {};
+        if (! ("channels" in $scope.current_required_signoffs[rs.product])) {
+          $scope.current_required_signoffs[rs.product]["channels"] = {};
         }
     
-        if (! (rs.channel in $scope.required_signoffs[rs.product]["channels"])) {
-          $scope.required_signoffs[rs.product]["channels"][rs.channel] = {};
+        if (! (rs.channel in $scope.current_required_signoffs[rs.product]["channels"])) {
+          $scope.current_required_signoffs[rs.product]["channels"][rs.channel] = {};
         }
     
-        $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
+        $scope.current_required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
           "required_signoffs": {},
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
@@ -81,15 +88,15 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   .success(function(response) {
     if (response["count"] > 0) {
       response["required_signoffs"].forEach(function(rs) {
-        if (! (rs.product in $scope.required_signoffs)) {
-          $scope.required_signoffs[rs.product] = {};
+        if (! (rs.product in $scope.current_required_signoffs)) {
+          $scope.current_required_signoffs[rs.product] = {};
         }
 
-        if (! ("permissions" in $scope.required_signoffs[rs.product])) {
-          $scope.required_signoffs[rs.product]["permissions"] = {};
+        if (! ("permissions" in $scope.current_required_signoffs[rs.product])) {
+          $scope.current_required_signoffs[rs.product]["permissions"] = {};
         }
 
-        $scope.required_signoffs[rs.product]["permissions"][rs.role] = {
+        $scope.current_required_signoffs[rs.product]["permissions"][rs.role] = {
           "required_signoffs": {},
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
@@ -116,19 +123,19 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   .success(function(response) {
     if (response["count"] > 0) {
       response["scheduled_changes"].forEach(function(rs) {
-        if (! (rs.product in $scope.required_signoffs)) {
-          $scope.required_signoffs[rs.product] = {};
+        if (! (rs.product in $scope.pending_required_signoffs)) {
+          $scope.pending_required_signoffs[rs.product] = {};
         }
 
-        if (! ("channels" in $scope.required_signoffs[rs.product])) {
-          $scope.required_signoffs[rs.product]["channels"] = {};
+        if (! ("channels" in $scope.pending_required_signoffs[rs.product])) {
+          $scope.pending_required_signoffs[rs.product]["channels"] = {};
         }
     
-        if (! (rs.channel in $scope.required_signoffs[rs.product]["channels"])) {
-          $scope.required_signoffs[rs.product]["channels"][rs.channel] = {};
+        if (! (rs.channel in $scope.pending_required_signoffs[rs.product]["channels"])) {
+          $scope.pending_required_signoffs[rs.product]["channels"][rs.channel] = {};
         }
 
-        $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
+        $scope.pending_required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
           "required_signoffs": rs.required_signoffs,
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
@@ -155,15 +162,15 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   .success(function(response) {
     if (response["count"] > 0) {
       response["scheduled_changes"].forEach(function(rs) {
-        if (! (rs.product in $scope.required_signoffs)) {
-          $scope.required_signoffs[rs.product] = {};
+        if (! (rs.product in $scope.pending_required_signoffs)) {
+          $scope.pending_required_signoffs[rs.product] = {};
         }
 
-        if (! ("permissions" in $scope.required_signoffs[rs.product])) {
-          $scope.required_signoffs[rs.product]["permissions"] = {};
+        if (! ("permissions" in $scope.pending_required_signoffs[rs.product])) {
+          $scope.pending_required_signoffs[rs.product]["permissions"] = {};
         }
     
-        $scope.required_signoffs[rs.product]["permissions"][rs.role] = {
+        $scope.pending_required_signoffs[rs.product]["permissions"][rs.role] = {
           "required_signoffs": rs.required_signoffs,
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
@@ -208,8 +215,11 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
       controller: "NewRequiredSignoffCtrl",
       backdrop: "static",
       resolve: {
-        required_signoffs: function() {
-          return $scope.required_signoffs;
+        current_required_signoffs: function() {
+          return $scope.current_required_signoffs;
+        },
+        pending_required_signoffs: function() {
+          return $scope.pending_required_signoffs;
         },
       }
     });
@@ -230,21 +240,27 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         product: function() {
           return $scope.selected_product;
         },
-        required_signoffs: function() {
-          return $scope.required_signoffs;
+        current_required_signoffs: function() {
+          return $scope.current_required_signoffs;
+        },
+        pending_required_signoffs: function() {
+          return $scope.pending_required_signoffs;
         },
       }
     });
   };
 
-  $scope.deleteRequiredSignoffs = function(required_signoffs, mode, channel = "") {
+  $scope.deleteRequiredSignoffs = function(mode, channel = "") {
     $modal.open({
       templateUrl: "required_signoff_delete_modal.html",
       controller: "DeleteRequiredSignoffsCtrl",
       backdrop: "static",
       resolve: {
-        required_signoffs: function() {
-          return required_signoffs;
+        current_required_signoffs: function() {
+          return current_required_signoffs;
+        },
+        pending_required_signoffs: function() {
+          return pending_required_signoffs;
         },
         mode: function() {
           return mode;
