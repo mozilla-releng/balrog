@@ -300,7 +300,14 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             else {
               data["signoffs_required"] = role["sc"]["signoffs_required"];
               service.updateScheduledChange(role["sc"]["sc_id"], data)
-            //  .success(successCallback(data, deferred, pending, action, role["sc"]["sc_id"]))
+              .success(function(response) {
+                if ($scope.mode === "channel") {
+                  required_signoffs[$scope.product]["channels"][$scope.channel][role_name]["sc"]["signoffs_required"] = role["sc"]["signoffs_required"];
+                }
+                else {
+                  required_signoffs[$scope.product]["permissions"][role_name]["sc"]["signoffs_required"] = role["sc"]["signoffs_required"];
+                }
+              })
               .error(errorCallback(data, deferreds[role_name].deferred));
             }
           }
