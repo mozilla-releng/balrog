@@ -8,6 +8,13 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   $scope.current_user = null;
   $scope.user_roles = [];
 
+  $scope.isEmpty = function(obj) {
+    if (Object.keys(obj).length === 0) {
+      return true;
+    }
+    return false;
+  };
+
   var loading_deferreds = {
     "product": $q.defer(),
     "permissions": $q.defer(),
@@ -54,6 +61,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "sc_id": null,
           "scheduled_by": null,
           "sc_data_version": null,
+          "signoffs": {},
           "change_type": null,
         };
       });
@@ -88,6 +96,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
           "scheduled_by": null,
           "sc_id": null,
           "sc_data_version": null,
+          "signoffs": {},
           "change_type": null,
         };
       });

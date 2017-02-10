@@ -108,8 +108,6 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
 
       $q.all(promises)
       .then(function() {
-    console.log(required_signoffs);
-    console.log($scope.to_delete);
         if (Object.keys($scope.errors).length === 0) {
           $modalInstance.close();
         }
