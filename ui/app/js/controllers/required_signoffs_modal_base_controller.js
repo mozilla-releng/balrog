@@ -229,6 +229,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           return function(response) {
             if ($scope.mode === "channel") {
               if (data["change_type"] === "insert") {
+                // this may not work if the first direct add doesn't happen first.
                 required_signoffs[$scope.product]["channels"][$scope.channel][data["role"]] = {
                   "signoffs_required": 0,
                   "data_version": null,
@@ -242,6 +243,18 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                     "signoffs": {},
                     "change_type": data["change_type"],
                   },
+                };
+              }
+              else {
+                required_signoffs[$scope.product]["channels"][$scope.channel][data["role"]]["sc"] = {
+                  // how to set required signoffs correctly? backend doesn't return it
+                  "required_signoffs": {},
+                  "signoffs_required": data["signoffs_required"],
+                  "sc_id": response["sc_id"],
+                  "scheduled_by": current_user,
+                  "sc_data_version": 1,
+                  "signoffs": {},
+                  "change_type": data["change_type"],
                 };
               }
             }
@@ -339,7 +352,9 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           // Otherwise, we'll create a new Scheduled Change.
           else {
             data["change_type"] = action;
-            data["signoffs_required"] = role["signoffs_required"];
+            if (action !== "delete") {
+              data["signoffs_required"] = role["signoffs_required"];
+            }
             service.addScheduledChange(data)
             .success(addScheduledChangeCallback(data, deferreds[role_name].deferred))
             .error(errorCallback(data, deferreds[role_name].deferred));
