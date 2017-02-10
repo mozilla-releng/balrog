@@ -35,37 +35,37 @@
   </div>
   <div class="panel-body">
     <!-- todo: try to find a way to sort this by non-pending first -->
-    <div class="panel panel-default" ng-repeat="(role, details) in required_signoffs[selected_product]['permissions']">
+    <div class="panel panel-default" ng-repeat="role in required_signoffs[selected_product]['permissions'] | toArray | orderBy: details.sc">
       <div class="panel-heading">
         <h4 class="panel-title">
-          <!-- show current + pending required signoffs -->
-          <span ng-show="details['sc'] === null">{{ details["signoffs_required"] }} member(s) of {{ role }}</span>
-          <span ng-show="details['sc'] !== null">{{ details["sc"]["signoffs_required"] }} member(s) of {{ role }} (currently: {{ details["signoffs_required"] }})</span>
-          <span class="label label-info" ng-show="details['sc'] !== null && details['sc']['change_type'] !== 'delete'">Pending</span>
-          <span class="label label-danger" ng-show="details['sc'] !== null && details['sc']['change_type'] === 'delete'">Pending Delete</span>
-          <div style="float: right" ng-show="details['sc'] !== null">
-            <button class="btn btn-xs btn-primary" ng-click="signoff('permission', details['sc'], role)"
-                    ng-show="! details['sc']['signoffs'].hasOwnProperty(current_user)">
+          <!-- copy this shite to channels -->
+          <span ng-show="role['sc'] === null">{{ role["signoffs_required"] }} member(s) of {{ role.$key }}</span>
+          <span ng-show="role['sc'] !== null">{{ role["sc"]["signoffs_required"] }} member(s) of {{ role.$key }} (currently: {{ role["signoffs_required"] }})</span>
+          <span class="label label-info" ng-show="role['sc'] !== null && role['sc']['change_type'] !== 'delete'">Pending</span>
+          <span class="label label-danger" ng-show="role['sc'] !== null && role['sc']['change_type'] === 'delete'">Pending Delete</span>
+          <div style="float: right" ng-show="role['sc'] !== null">
+            <button class="btn btn-xs btn-primary" ng-click="signoff('permission', role['sc'], role.$key)"
+                    ng-show="! role['sc']['signoffs'].hasOwnProperty(current_user)">
               Signoff as...
             </button>
-            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('permission', details['sc'], role)"
-                    ng-show="details['sc']['signoffs'].hasOwnProperty(current_user)">
+            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('permission', role['sc'], role.$key)"
+                    ng-show="role['sc']['signoffs'].hasOwnProperty(current_user)">
               Revoke your Signoff
             </button>
           </div>
         </h4>
       </div>
-      <div class="panel-body" ng-show="details['sc'] !== null">
+      <div class="panel-body" ng-show="role['sc'] !== null">
         <h4>Before it can be enacted, this change must be signed off on by:</h4>
         <ul>
-          <li ng-repeat="(role, signoffs_required) in details['sc']['required_signoffs']">
-            {{ signoffs_required }} members of {{ role }}
+          <li ng-repeat="(rs_role, signoffs_required) in role['sc']['required_signoffs']">
+            {{ signoffs_required }} members of {{ rs_role }}
           </li>
         </ul>
-        <h4 ng-show="details['sc'] !== null && ! isEmpty(details['sc']['signoffs'])">This change has already been signed off by:</h4>
+        <h4 ng-show="role['sc'] !== null && ! isEmpty(role['sc']['signoffs'])">This change has already been signed off by:</h4>
         <ul>
-          <li ng-repeat="(username, role) in details['sc']['signoffs']">
-            {{ username }} ({{ role }})
+          <li ng-repeat="(username, signoff_role) in role['sc']['signoffs']">
+            {{ username }} ({{ signoff_role }})
           </li>
         </ul>
       </div>
@@ -91,7 +91,7 @@
     </h3>
   </div>
   <div class="panel-body">
-    <div class="panel panel-default" ng-repeat="(role, details) in roles">
+    <div class="panel panel-default" ng-repeat="(role, details) in roles | toArray | orderBy: details.sc">
       <div class="panel-heading">
         <h4 class="panel-title">
           <!-- add link to user roles ui here, when it exists -->
