@@ -3,16 +3,19 @@
 </div>
 <div class="modal-body">
 
-  <!-- print more details about the thing being signed off on -->
-  <!-- dropdown with list of user roles -->
-  <h4><strong>{{ details["scheduled_by"] }}</strong> wants to change the {{ object_name }} identified by:</h4>
+  <h4 ng-show="sc['change_type'] === 'delete'">
+    <strong>{{ sc["scheduled_by"] }}</strong> wants to <strong>remove</strong> the {{ object_name }} identified by:
+  </h4>
+  <h4 ng-show="sc['change_type'] !== 'delete'">
+    <strong>{{ sc["scheduled_by"] }}</strong> wants to change the {{ object_name }} identified by:
+  </h4>
   <dl class="dl-horizontal">
     <dt class="text-capitalize" ng-repeat-start="(key, value) in pk">{{ key }}:</dt>
     <dd ng-repeat-end>{{ value }}</dd>
   </dl>
-  <h4>The new values will be:</h4>
+  <h4 ng-show="sc['change_type'] !== 'delete'">The new values will be:</h4>
   <!-- todo: highlight values that are actually changing compared to be the base would be lovely -->
-  <dl class="dl-horizontal">
+  <dl class="dl-horizontal" ng-show="sc['change_type'] !== 'delete'">
     <dt ng-repeat-start="(key, value) in data">{{ key }}:</dt>
     <dd ng-repeat-end>{{ value }}</dd>
   </dl>

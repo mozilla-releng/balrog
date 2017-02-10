@@ -38,36 +38,32 @@
     <div class="panel panel-default" ng-repeat="(role, details) in required_signoffs[selected_product]['permissions']">
       <div class="panel-heading">
         <h4 class="panel-title">
-          <!-- add link to user roles ui here, when it exists -->
+          <!-- show current + pending required signoffs -->
           <span>{{ details["signoffs_required"] }} member(s) of {{ role }}</span>
-          <span class="label label-info" ng-show="details['sc_id'] !== null && details['change_type'] !== 'delete'">Pending</span>
-          <span class="label label-danger" ng-show="details['sc_id'] !== null && details['change_type'] === 'delete'">Pending Delete</span>
-          <div style="float: right" ng-show="details['sc_id'] !== null">
-            <!-- show revoke button if user has already signed off - can't do this because we can't access REMOTE_USER
-                 maybe we can guess it by making a request on first page load and sniffing the Authentication header
-                 don't show signoff button if user has already signed off
-            -->
-            <button class="btn btn-xs btn-primary" ng-click="signoff('permission', details['sc_id'], role, details)"
-                    ng-show="! current_user in details['signoffs']">
+          <span class="label label-info" ng-show="details['sc'] !== null && details['sc']['change_type'] !== 'delete'">Pending</span>
+          <span class="label label-danger" ng-show="details['sc'] !== null && details['sc']['change_type'] === 'delete'">Pending Delete</span>
+          <div style="float: right" ng-show="details['sc'] !== null">
+            <button class="btn btn-xs btn-primary" ng-click="signoff('permission', details['sc'], role)"
+                    ng-show="! details['sc']['signoffs'].hasOwnProperty(current_user)">
               Signoff as...
             </button>
-            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('permission', details['sc_id'], role, details)"
-                    ng-show="current_user in details['signoffs']">
+            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('permission', details['sc'], role)"
+                    ng-show="details['sc']['signoffs'].hasOwnProperty(current_user)">
               Revoke your Signoff
             </button>
           </div>
         </h4>
       </div>
-      <div class="panel-body" ng-show="details['sc_id'] !== null">
+      <div class="panel-body" ng-show="details['sc']['sc_id'] !== null">
         <h4>Before it can be enacted, this change must be signed off on by:</h4>
         <ul>
-          <li ng-repeat="(role, signoffs_required) in details['required_signoffs']">
+          <li ng-repeat="(role, signoffs_required) in details['sc']['required_signoffs']">
             {{ signoffs_required }} members of {{ role }}
           </li>
         </ul>
-        <h4>This change has already been signed off by:</h4>
+        <h4 ng-show="details['sc'] && ! isEmpty(details['sc']['signoffs'])">This change has already been signed off by:</h4>
         <ul>
-          <li ng-repeat="(username, role) in details['signoffs']">
+          <li ng-repeat="(username, role) in details['sc']['signoffs']">
             {{ username }} ({{ role }})
           </li>
         </ul>
@@ -99,33 +95,30 @@
         <h4 class="panel-title">
           <!-- add link to user roles ui here, when it exists -->
           <span>{{ details["signoffs_required"] }} member(s) of {{ role }}</span>
-          <span class="label label-info" ng-show="details['sc_id'] !== null && details['change_type'] !== 'delete'">Pending</span>
-          <span class="label label-danger" ng-show="details['sc_id'] !== null && details['change_type'] === 'delete'">Pending Delete</span>
-          <div style="float: right" ng-show="details['sc_id'] !== null">
-            <!-- show revoke button if user has already signed off - can't do this because we can't access REMOTE_USER
-                 maybe we can guess it by making a request on first page load and sniffing the Authentication header
-            -->
-            <button class="btn btn-xs btn-primary" ng-click="signoff('channel', details['sc_id'], role, details, channel)"
-                    ng-show="! details['signoffs'].hasOwnProperty(current_user)">
+          <span class="label label-info" ng-show="details['sc']['sc_id'] !== null && details['sc']['change_type'] !== 'delete'">Pending</span>
+          <span class="label label-danger" ng-show="details['sc']['sc_id'] !== null && details['sc']['change_type'] === 'delete'">Pending Delete</span>
+          <div style="float: right" ng-show="details['sc']['sc_id'] !== null">
+            <button class="btn btn-xs btn-primary" ng-click="signoff('channel', details['sc'], role, channel)"
+                    ng-show="! details['sc']['signoffs'].hasOwnProperty(current_user)">
               Signoff as...
             </button>
-            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('channel', details['sc_id'], role, details, channel)"
-                    ng-show="details['signoffs'].hasOwnProperty(current_user)">
+            <button class="btn btn-xs btn-danger" ng-click="revokeSignoff('channel', details['sc'], role, channel)"
+                    ng-show="details['sc']['signoffs'].hasOwnProperty(current_user)">
               Revoke your Signoff
             </button>
           </div>
         </h4>
       </div>
-      <div class="panel-body" ng-show="details['sc_id'] !== null">
+      <div class="panel-body" ng-show="details['sc']['sc_id'] !== null">
         <h4>Before it can be enacted, this change must be signed off on by:</h4>
         <ul>
-          <li ng-repeat="(role, signoffs_required) in details['required_signoffs']">
+          <li ng-repeat="(role, signoffs_required) in details['sc']['required_signoffs']">
             {{ signoffs_required }} members of {{ role }}
           </li>
         </ul>
-        <h4 ng-show="! isEmpty(details['signoffs'])">This change has already been signed off by:</h4>
+        <h4 ng-show="details['sc'] && ! isEmpty(details['sc']['signoffs'])">This change has already been signed off by:</h4>
         <ul>
-          <li ng-repeat="(username, role) in details['signoffs']">
+          <li ng-repeat="(username, role) in details['sc']['signoffs']">
             {{ username }} ({{ role }})
           </li>
         </ul>

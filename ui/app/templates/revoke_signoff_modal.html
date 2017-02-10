@@ -7,8 +7,9 @@
     <dt class="text-capitalize" ng-repeat-start="(key, value) in pk">{{ key }}:</dt>
     <dd ng-repeat-end>{{ value }}</dd>
   </dl>
-  <h4>That would set its values to:</h4>
-  <dl class="dl-horizontal">
+  <h4 ng-show="sc.change_type === 'delete'">That would <strong>remove it entirely</strong>.</h4>
+  <h4 ng-show="sc.change_type !== 'delete'">That would set its values to:</h4>
+  <dl class="dl-horizontal" ng-show="sc.change_type !== 'delete'">
     <dt ng-repeat-start="(key, value) in data">{{ key }}:</dt>
     <dd ng-repeat-end>{{ value }}</dd>
   </dl>
