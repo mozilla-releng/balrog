@@ -154,77 +154,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
 
         first = false;
 
-        var successCallback = function(data, deferred, pending, action, sc_id = null) {
-          return function(response) {
-            var data_version = null;
-            var sc_data_version = null;
-            // This only exists for direct updates (ie: not scheduled changes)
-            if (response.hasOwnProperty("new_data_version")) {
-              if (sc_id === null) {
-                data_version = response["new_data_version"];
-              }
-              else {
-                sc_data_version = response["new_data_version"];
-              }
-            }
-            if (response.hasOwnProperty("sc_id")) {
-              sc_id = response["sc_id"];
-              // We have to assume this, because the server doesn't tell us.
-              sc_data_version = 1;
-            }
-
-            if (! (required_signoffs.hasOwnProperty(data["product"]))) {
-              required_signoffs[data["product"]] = {};
-            }
-            if ($scope.mode === "channel") {
-              if (! ("channels" in required_signoffs[data["product"]])) {
-                required_signoffs[data["product"]]["channels"] = {};
-              }
-              if (! (data["channel"] in required_signoffs[data["product"]]["channels"])) {
-                required_signoffs[data["product"]]["channels"][data["channel"]] = {};
-              }
-              namespace = required_signoffs[data["product"]]["channels"][data["channel"]];
-            }
-            else {
-              if (! ("permissions" in required_signoffs[data["product"]])) {
-                required_signoffs[data["product"]]["permissions"] = {};
-              }
-              namespace = required_signoffs[data["product"]]["permissions"];
-            }
-
-            if (sc_id === null) {
-              // action will always be insert here
-              namespace[data["role"]] = {
-                "signoffs_required": data["signoffs_required"],
-                "data_version": data_version,
-              };
-            }
-            else {
-              if (pending && action === "delete") {
-                delete namespace[data["role"]];
-              }
-              if (! (data["role"] in namespace)) {
-                namespace[data["role"]] = {
-                    "signoffs_required": 0,
-                };
-              }
-              if (! ("sc" in namespace[data["role"]])) {
-                namespace[data["role"]]["sc"] = {};
-              }
-              // how to set required signoffs correctly? backend doesn't return it
-              namespace[data["role"]]["sc"]["required_signoffs"] = {};
-              namespace[data["role"]]["sc"]["signoffs_required"] = data["signoffs_required"];
-              namespace[data["role"]]["sc"]["sc_id"] = sc_id;
-              namespace[data["role"]]["sc"]["scheduled_by"] = current_user;
-              namespace[data["role"]]["sc"]["sc_data_version"] = sc_data_version;
-              namespace[data["role"]]["sc"]["signoffs"] = {};
-              namespace[data["role"]]["sc"]["change_type"] = action;
-            }
-
-            //deferred.resolve();
-          };
-        };
-
         var addScheduledChangeCallback = function(data, deferred) {
           return function(response) {
             if ($scope.mode === "channel") {
@@ -258,6 +187,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                 };
               }
             }
+            deferred.resolve();
           };
         };
         var errorCallback = function(data, deferred) {
