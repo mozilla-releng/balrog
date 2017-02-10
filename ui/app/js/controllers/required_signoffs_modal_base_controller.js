@@ -71,6 +71,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
     CSRF.getToken()
     .then(function(csrf_token) {
       var deferreds = {};
+      var promises = [];
       var first = true;
 
       var current_role_names = [];
@@ -220,7 +221,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               namespace[data["role"]]["sc"]["change_type"] = action;
             }
 
-            deferred.resolve();
+            //deferred.resolve();
           };
         };
         var errorCallback = function(data, deferred) {
@@ -234,11 +235,12 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             else {
               sweetAlert("Unknown error occurred");
             }
-            deferred.resolve();
+            //deferred.resolve();
           };
         };
 
         deferreds[role_name] = $q.defer();
+        promises.push(deferreds[role_name].deferred);
         var data = {"product": $scope.product, "role": role_name, "csrf_token": csrf_token, "data_version": role["data_version"]};
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
@@ -282,7 +284,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           // If we're working with an already pending change we just need to
           // update or delete it.
           if (pending) {
-            data["sc_data_version"] = role["sc_data_version"];
+            data["sc_data_version"] = role["sc"]["sc_data_version"];
             if (action === "delete") {
               service.deleteScheduledChange(role["sc"]["sc_id"], data)
               .success(function(response) {
@@ -297,9 +299,9 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             }
             else {
               data["signoffs_required"] = role["sc"]["signoffs_required"];
-              service.updateScheduledChange(role["sc"]["sc_id"], data);
+              service.updateScheduledChange(role["sc"]["sc_id"], data)
             //  .success(successCallback(data, deferred, pending, action, role["sc"]["sc_id"]))
-              //.error(errorCallback(data, deferred));
+              .error(errorCallback(data, deferreds[role_name].deferred));
             }
           }
           // Otherwise, we'll create a new Scheduled Change.
@@ -313,10 +315,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         }
       });
 
-      var promises = [];
-      for (let d in Object.values(deferreds)) {
-        promises.push(d.promise);
-      }
       $q.all(promises)
       .then(function() {
         if (Object.keys($scope.errors).length === 0) {
