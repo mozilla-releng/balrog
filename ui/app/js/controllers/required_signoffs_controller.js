@@ -125,7 +125,9 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         }
 
         if (! (rs.role in $scope.required_signoffs[rs.product]["channels"][rs.channel])) {
-          $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {};
+          $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
+            "signoffs_required": 0,
+          };
         }
 
         $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role]["sc"] = {
@@ -160,6 +162,12 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
 
         if (! ("permissions" in $scope.required_signoffs[rs.product])) {
           $scope.required_signoffs[rs.product]["permissions"] = {};
+        }
+
+        if (! (rs.role in $scope.required_signoffs[rs.product]["permissions"])) {
+          $scope.required_signoffs[rs.product]["permissions"][rs.role] = {
+            "signoffs_required": 0,
+          };
         }
     
         $scope.required_signoffs[rs.product]["permissions"][rs.role]["sc"] = {
