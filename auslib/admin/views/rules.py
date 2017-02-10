@@ -6,7 +6,7 @@ from flask import Response, request, jsonify
 
 from auslib.global_state import dbo
 from auslib.admin.views.base import (
-    requirelogin, AdminView, HistoryAdminView,
+    requirelogin, AdminView
 )
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
@@ -14,8 +14,9 @@ from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
     ScheduledChangeDeleteRuleForm, EditScheduledChangeNewRuleForm, \
     EditScheduledChangeExistingRuleForm, EditScheduledChangeDeleteRuleForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
-    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
+    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
+from auslib.admin.views.history import HistoryView
 
 
 class RulesAPIView(AdminView):
@@ -157,39 +158,13 @@ class SingleRuleView(AdminView):
         return Response(status=200)
 
 
-class RuleHistoryAPIView(HistoryAdminView):
+class RuleHistoryAPIView(HistoryView):
     """/rules/:id/revisions"""
 
-    def get(self, rule_id):
-        rule = dbo.rules.getRule(rule_id)
-        if not rule:
-            return Response(status=404,
-                            response='Requested rule does not exist')
+    def __init__(self):
+        super(RuleHistoryAPIView, self).__init__(dbo.rules)
 
-        table = dbo.rules.history
-
-        try:
-            page = int(request.args.get('page', 1))
-            limit = int(request.args.get('limit', 100))
-            assert page >= 1
-        except (ValueError, AssertionError) as msg:
-            self.log.warning("Bad input: %s", msg)
-            return Response(status=400, response=str(msg))
-        offset = limit * (page - 1)
-        total_count = table.t.count()\
-            .where(table.rule_id == rule_id)\
-            .where(table.data_version != null())\
-            .execute()\
-            .fetchone()[0]
-
-        revisions = table.select(
-            where=[table.rule_id == rule_id,
-                   table.data_version != null()],
-            limit=limit,
-            offset=offset,
-            order_by=[table.timestamp.desc()],
-        )
-        _rules = []
+    def _process_revisions(self, revisions):
         _mapping = {
             # return : db name
             'rule_id': 'rule_id',
@@ -218,33 +193,22 @@ class RuleHistoryAPIView(HistoryAdminView):
             'timestamp': 'timestamp',
             'changed_by': 'changed_by',
         }
+
+        _rules = []
+
         for rule in revisions:
             _rules.append(dict(
                 (key, rule[db_key])
                 for key, db_key in _mapping.items()
             ))
 
-        return jsonify(count=total_count, rules=_rules)
+        return _rules
 
-    @requirelogin
-    def _post(self, rule_id, transaction, changed_by):
-        rule = dbo.rules.getRule(rule_id)
-        if rule is None:
-            return Response(status=404, response='bad rule_id')
-        change_id = None
-        if request.json:
-            change_id = request.json.get('change_id')
-        if not change_id:
-            self.log.warning("Bad input: %s", "no change_id")
-            return Response(status=400, response='no change_id')
-        change = dbo.rules.history.getChange(change_id=change_id)
-        if change is None:
-            return Response(status=400, response='bad change_id')
-        if change['rule_id'] != rule_id:
-            return Response(status=400, response='bad rule_id')
-        old_data_version = rule['data_version']
+    def _get_filters(self, rule):
+        return [self.history_table.rule_id == rule['rule_id'],
+                self.history_table.data_version != null()]
 
-        # now we're going to make a new insert based on this
+    def _get_what(self, change):
         what = dict(
             backgroundRate=change['backgroundRate'],
             mapping=change['mapping'],
@@ -266,11 +230,31 @@ class RuleHistoryAPIView(HistoryAdminView):
             update_type=change['update_type'],
             headerArchitecture=change['headerArchitecture'],
         )
+        return what
 
-        dbo.rules.update(changed_by=changed_by, where={"rule_id": rule_id}, what=what,
-                         old_data_version=old_data_version, transaction=transaction)
+    def get(self, rule_id):
+        try:
+            return self.get_revisions(
+                get_object_callback=lambda: self.table.getRule(rule_id),
+                history_filters_callback=self._get_filters,
+                process_revisions_callback=self._process_revisions,
+                revisions_order_by=[self.history_table.timestamp.desc()],
+                obj_not_found_msg='Requested rule does not exist',
+                response_key='rules')
+        except (ValueError, AssertionError) as msg:
+            self.log.warning("Bad input: %s", msg)
+            return Response(status=400, response=str(msg))
 
-        return Response("Excellent!")
+    @requirelogin
+    def _post(self, rule_id, transaction, changed_by):
+        return self.revert_to_revision(
+            get_object_callback=lambda: self.table.getRule(rule_id),
+            change_field='rule_id',
+            get_what_callback=self._get_what,
+            changed_by=changed_by,
+            response_message='Excellent!',
+            transaction=transaction,
+            obj_not_found_msg='bad rule_id')
 
 
 class SingleRuleColumnView(AdminView):
