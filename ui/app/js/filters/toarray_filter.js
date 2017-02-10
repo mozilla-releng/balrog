@@ -1,6 +1,8 @@
 angular.module('app').filter('toArray', function () {
   return function (obj, addKey) {
-    if (!angular.isObject(obj)) return obj;
+    if (!angular.isObject(obj)) {
+      return obj;
+    }
     if ( addKey === false ) {
       return Object.keys(obj).map(function(key) {
         return obj[key];

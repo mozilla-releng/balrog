@@ -99,7 +99,7 @@
           <span ng-show="role['sc'] !== null">{{ role["sc"]["signoffs_required"] }} member(s) of {{ role.$key }} (currently: {{ role["signoffs_required"] }})</span>
           <span class="label label-info" ng-show="role['sc'] !== null && role['sc']['change_type'] !== 'delete'">Pending</span>
           <span class="label label-danger" ng-show="role['sc'] !== null && role['sc']['change_type'] === 'delete'">Pending Delete</span>
-          <div style="float: right" ng-show="role['sc']['sc_id'] !== null">
+          <div style="float: right" ng-show="role['sc'] !== null">
             <button class="btn btn-xs btn-primary" ng-click="signoff('channel', role['sc'], role.$key, channel)"
                     ng-show="! role['sc']['signoffs'].hasOwnProperty(current_user)">
               Signoff as...

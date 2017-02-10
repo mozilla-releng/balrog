@@ -264,6 +264,9 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         channel: function() {
           return channel;
         },
+        current_user: function() {
+          return $scope.current_user;
+        },
       }
     });
   };

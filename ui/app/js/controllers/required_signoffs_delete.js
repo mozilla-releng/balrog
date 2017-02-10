@@ -1,6 +1,6 @@
 angular.module("app").controller("DeleteRequiredSignoffsCtrl",
 function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs,
-          required_signoffs, mode, product, channel) {
+          required_signoffs, mode, product, channel, current_user) {
   $scope.saving = false;
   $scope.errors = {};
 
@@ -54,10 +54,16 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
           }
 
           // Required Signoff wasn't pending, so a deletion will be a new Scheduled Change
-          if (namespace[data["role"]]["sc_id"] === null) {
-            namespace[data["role"]]["sc_id"] = response["sc_id"];
-            namespace[data["role"]]["sc_data_version"] = 1;
-            namespace[data["role"]]["change_type"] = "delete";
+          if (namespace[data["role"]]["sc"] === null) {
+            namespace[data["role"]]["sc"] = {
+              "required_signoffs": {},
+              "signoffs_required": null,
+              "sc_id": response["sc_id"],
+              "scheduled_by": current_user,
+              "sc_data_version": 1,
+              "signoffs": {},
+              "change_type": "delete",
+            };
           }
           // Required Signoff was previously pending, so it was directly removed
           else {
@@ -86,12 +92,12 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
         var deferred = $q.defer();
         promises.push(deferred.promise);
         var data = {"product": $scope.product, "role": role_name, "data_version": $scope.to_delete[role_name]["data_version"],
-                    "csrf_token": csrf_token, "sc_data_version": $scope.to_delete[role_name]["sc_data_version"]};
+                    "csrf_token": csrf_token};
                     
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
         }
-        if ($scope.to_delete[role_name]["sc_id"] === null) {
+        if ($scope.to_delete[role_name]["sc"] === null) {
           data["when"] = new Date().getTime() + 5000;
           data["change_type"] = "delete";
 
@@ -100,7 +106,8 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
           .error(errorCallback(data, deferred));
         }
         else {
-          service.deleteScheduledChange($scope.to_delete[role_name]["sc_id"], data)
+          data["sc_data_version"] = $scope.to_delete[role_name]["sc"]["sc_data_version"];
+          service.deleteScheduledChange($scope.to_delete[role_name]["sc"]["sc_id"], data)
           .success(successCallback(data, deferred))
           .error(errorCallback(data, deferred));
         }
