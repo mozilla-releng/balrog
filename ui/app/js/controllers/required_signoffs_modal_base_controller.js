@@ -224,6 +224,29 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             //deferred.resolve();
           };
         };
+
+        var addScheduledChangeCallback = function(data, deferred) {
+          return function(response) {
+            if ($scope.mode === "channel") {
+              if (data["change_type"] === "insert") {
+                required_signoffs[$scope.product]["channels"][$scope.channel][data["role"]] = {
+                  "signoffs_required": 0,
+                  "data_version": null,
+                  "sc": {
+                    // how to set required signoffs correctly? backend doesn't return it
+                    "required_signoffs": {},
+                    "signoffs_required": data["signoffs_required"],
+                    "sc_id": response["sc_id"],
+                    "scheduled_by": current_user,
+                    "sc_data_version": 1,
+                    "signoffs": {},
+                    "change_type": data["change_type"],
+                  },
+                };
+              }
+            }
+          };
+        };
         var errorCallback = function(data, deferred) {
           return function(response, status) {
             if (typeof response === "object") {
@@ -235,7 +258,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             else {
               sweetAlert("Unknown error occurred");
             }
-            //deferred.resolve();
+            deferred.resolve();
           };
         };
 
@@ -294,6 +317,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                 else {
                   delete required_signoffs[$scope.product]["permissions"][role_name];
                 }
+                deferreds[role_name].resolve();
               })
               .error(errorCallback(data, deferreds[role_name].deferred));
             }
@@ -307,6 +331,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                 else {
                   required_signoffs[$scope.product]["permissions"][role_name]["sc"]["signoffs_required"] = role["sc"]["signoffs_required"];
                 }
+                deferreds[role_name].resolve();
               })
               .error(errorCallback(data, deferreds[role_name].deferred));
             }
@@ -315,9 +340,9 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           else {
             data["change_type"] = action;
             data["signoffs_required"] = role["signoffs_required"];
-            service.addScheduledChange(data);
-         //   .success(successCallback(data, deferred, pending, action))
-            //.error(errorCallback(data, deferred));
+            service.addScheduledChange(data)
+            .success(addScheduledChangeCallback(data, deferreds[role_name].deferred))
+            .error(errorCallback(data, deferreds[role_name].deferred));
           }
         }
       });
