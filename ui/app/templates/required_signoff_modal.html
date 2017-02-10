@@ -54,7 +54,10 @@
           <td>
             <input tabindex="{{ ($index * 2) + 3 }}" name="role" type="text" class="form-control" ng-model="rs['role']">
           </td>
-          <td><input tabindex="{{ ($index * 2) + 4 }}" name="signoffs_required" type="text" class="form-control" ng-model="rs['signoffs_required']"></td>
+          <td ng-if="rs['sc']"><input tabindex="{{ ($index * 2) + 4 }}" name="signoffs_required" type="text" class="form-control"
+                     ng-model="rs['sc']['signoffs_required']"></td>
+          <td ng-if="! rs['sc']"><input tabindex="{{ ($index * 2) + 4 }}" name="signoffs_required" type="text" class="form-control"
+                     ng-model="rs['signoffs_required']"></td>
         </tr>
         <tr ng-class="{'has-error': errors.role || errors.signoffs_required}" ng-if="errors.role || errors.signoffs_required">
           <td class="help-block">{{ errors.role }}</td>

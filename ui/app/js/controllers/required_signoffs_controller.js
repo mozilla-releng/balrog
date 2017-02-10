@@ -242,6 +242,9 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         required_signoffs: function() {
           return $scope.required_signoffs;
         },
+        current_user: function() {
+          return $scope.current_user;
+        },
       }
     });
   };
@@ -348,5 +351,4 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
       }
     });
   };
-  console.log($scope.required_signoffs);
 });

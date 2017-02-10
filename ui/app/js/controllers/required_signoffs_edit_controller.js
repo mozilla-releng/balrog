@@ -1,15 +1,14 @@
 angular.module("app").controller("EditRequiredSignoffsCtrl",
 function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs,
-         required_signoffs, mode, product, channel) {
+         required_signoffs, mode, product, channel, current_user) {
   var current_roles = [];
   if (mode === "channel") {
     for (let role of Object.keys(required_signoffs[product]["channels"][channel])) {
       current_roles.push({
         "role": role,
         "data_version": required_signoffs[product]["channels"][channel][role]["data_version"],
-        "sc_data_version": required_signoffs[product]["channels"][channel][role]["sc_data_version"],
         "signoffs_required": required_signoffs[product]["channels"][channel][role]["signoffs_required"],
-        "sc_id": required_signoffs[product]["channels"][channel][role]["sc_id"],
+        "sc": required_signoffs[product]["channels"][channel][role]["sc"],
       });
     }
   }
@@ -18,9 +17,8 @@ function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs,
       current_roles.push({
         "role": role,
         "data_version": required_signoffs[product]["permissions"][role]["data_version"],
-        "sc_data_version": required_signoffs[product]["permissions"][role]["sc_data_version"],
         "signoffs_required": required_signoffs[product]["permissions"][role]["signoffs_required"],
-        "sc_id": required_signoffs[product]["permissions"][role]["sc_id"],
+        "sc": required_signoffs[product]["permissions"][role]["sc"],
       });
     }
   }
@@ -36,6 +34,7 @@ function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs,
     mode: mode,
     product: product,
     channel: channel,
+    current_user: current_user,
     current_roles: current_roles,
     editing: true,
   });

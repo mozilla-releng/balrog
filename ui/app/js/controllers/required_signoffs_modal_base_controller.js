@@ -40,7 +40,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   };
 
   $scope.addRole = function() {
-    $scope.new_roles.push({"role": "", "signoffs_required": null, "sc_id": null});
+    $scope.new_roles.push({"role": "", "signoffs_required": null, "sc": null});
   };
 
   $scope.removeRole = function(index) {
@@ -118,7 +118,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           action = "delete";
           for (let r of current_roles) {
             if (r["role"] === role_name) {
-              pending = r["sc_id"] ? true : false;
+              pending = r["sc"] ? true : false;
               role = r;
               break;
             }
@@ -130,13 +130,20 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             if (r["role"] === role_name) {
               for (let r2 of current_roles) {
                 if (r["role"] === r2["role"]) {
-                  if (r["signoffs_required"] === r2["signoffs_required"]) {
-                    console.log("No change to " + role_name + ", skipping...");
-                    return; // exit forEach
+                  if (r["sc"]) {
+                    pending = true;
+                    role = r;
+                    if (r["sc"]["signoffs_required"] === r2["sc"]["signoffs_required"]) {
+                      console.log("No change to " + role_name + ", skipping...");
+                      return; // exit forEach
+                    }
                   }
                   else {
-                    pending = r["sc_id"] ? true : false;
                     role = r;
+                    if (r["signoffs_required"] === r2["signoffs_required"]) {
+                      console.log("No change to " + role_name + ", skipping...");
+                      return; // exit forEach
+                    }
                   }
                 }
               }
@@ -189,7 +196,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               namespace[data["role"]] = {
                 "signoffs_required": data["signoffs_required"],
                 "data_version": data_version,
-                "sc": null,
               };
             }
             else {
@@ -201,10 +207,10 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                     "signoffs_required": 0,
                 };
               }
-              if (! ("sc" in namespace[data["role"]])) {
+              if (! ("sc" in namespace[data["role"]]) || namespace[data["role"]]["sc"] === null) {
                 namespace[data["role"]]["sc"] = {};
               }
-              // how to fix this?
+              // how to set required signoffs correctly? backend doesn't return it
               namespace[data["role"]]["sc"]["required_signoffs"] = {};
               namespace[data["role"]]["sc"]["signoffs_required"] = data["signoffs_required"];
               namespace[data["role"]]["sc"]["sc_id"] = sc_id;
@@ -234,14 +240,14 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
 
         var deferred = $q.defer();
         promises.push(deferred.promise);
-        var data = {"product": $scope.product, "role": role_name, "signoffs_required": role["signoffs_required"], "csrf_token": csrf_token,
-                    "data_version": role["data_version"], "sc_data_version": role["sc_data_version"]};
+        var data = {"product": $scope.product, "role": role_name, "csrf_token": csrf_token, "data_version": role["data_version"]};
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
         }
 
         // If there's no signoffs required yet, we can just create it directly!
         if (! requires_signoff) {
+          data["signoffs_required"] = role["signoffs_required"];
           if (action === "insert") {
             service.addRequiredSignoff(data)
             .success(successCallback(data, deferred, pending, action))
@@ -258,20 +264,23 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           // If we're working with an already pending change we just need to
           // update or delete it.
           if (pending) {
+            data["sc_data_version"] = role["sc_data_version"];
             if (action === "delete") {
-              service.deleteScheduledChange(role["sc_id"], data)
-              .success(successCallback(data, deferred, pending, action, role["sc_id"]))
+              service.deleteScheduledChange(role["sc"]["sc_id"], data)
+              .success(successCallback(data, deferred, pending, action, role["sc"]["sc_id"]))
               .error(errorCallback(data, deferred));
             }
             else {
-              service.updateScheduledChange(role["sc_id"], data)
-              .success(successCallback(data, deferred, pending, action, role["sc_id"]))
+              data["signoffs_required"] = role["sc"]["signoffs_required"];
+              service.updateScheduledChange(role["sc"]["sc_id"], data)
+              .success(successCallback(data, deferred, pending, action, role["sc"]["sc_id"]))
               .error(errorCallback(data, deferred));
             }
           }
           // Otherwise, we'll create a new Scheduled Change.
           else {
             data["change_type"] = action;
+            data["signoffs_required"] = role["signoffs_required"];
             service.addScheduledChange(data)
             .success(successCallback(data, deferred, pending, action))
             .error(errorCallback(data, deferred));
