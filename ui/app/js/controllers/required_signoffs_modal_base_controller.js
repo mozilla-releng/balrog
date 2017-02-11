@@ -206,7 +206,8 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         };
 
         deferreds[role_name] = $q.defer();
-        promises.push(deferreds[role_name].deferred);
+        console.log(deferreds[role_name]);
+        promises.push(deferreds[role_name].promise);
         var data = {"product": $scope.product, "role": role_name, "csrf_token": csrf_token, "data_version": role["data_version"]};
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
@@ -219,7 +220,9 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             service.addRequiredSignoff(data)
             .success(function(response) {
               if ($scope.mode === "channel") {
-                required_signoffs[$scope.product] = {"channels": {}};
+                if (! ($scope.product in required_signoffs)) {
+                  required_signoffs[$scope.product] = {"channels": {}};
+                }
                 required_signoffs[$scope.product]["channels"][$scope.channel] = {};
                 required_signoffs[$scope.product]["channels"][$scope.channel][role_name] = {
                     "signoffs_required": role["signoffs_required"],
@@ -237,7 +240,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               }
               deferreds[role_name].resolve();
             })
-            .error(errorCallback(data, deferreds[role_name].deferred));
+            .error(errorCallback(data, deferreds[role_name]));
           }
         }
         // Otherwise, we need to use Scheduled Changes
@@ -262,7 +265,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                 }
                 deferreds[role_name].resolve();
               })
-              .error(errorCallback(data, deferreds[role_name].deferred));
+              .error(errorCallback(data, deferreds[role_name]));
             }
             else {
               data["signoffs_required"] = role["sc"]["signoffs_required"];
@@ -276,7 +279,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                 }
                 deferreds[role_name].resolve();
               })
-              .error(errorCallback(data, deferreds[role_name].deferred));
+              .error(errorCallback(data, deferreds[role_name]));
             }
           }
           // Otherwise, we'll create a new Scheduled Change.
@@ -286,12 +289,14 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               data["signoffs_required"] = role["signoffs_required"];
             }
             service.addScheduledChange(data)
-            .success(addScheduledChangeCallback(data, deferreds[role_name].deferred))
-            .error(errorCallback(data, deferreds[role_name].deferred));
+            // probably need to pass deferreds[role_name], not the .deferred?
+            .success(addScheduledChangeCallback(data, deferreds[role_name]))
+            .error(errorCallback(data, deferreds[role_name]));
           }
         }
       });
 
+      console.log(promises);
       // this doesn't seem to be working. maybe the promises array isn't filled up yet, beacuse the above forEach is async?
       // maybe a two stage deferred will help....dunno
       $q.all(promises)

@@ -47,7 +47,7 @@
         <tr class="new_role" ng-repeat="rs in new_roles track by $index">
         <!-- todo: do we need to show a pending indicator in here for edits? -->
           <th>
-            <button type="button" class="btn btn-default btn-xs" ng-click="removeRole($index)" ng-show="$index > 0">
+            <button type="button" class="btn btn-default btn-xs" ng-click="removeRole($index)" ng-show="$index > 0 || editing">
               <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
             </button>
           </th>
@@ -55,7 +55,7 @@
             <input tabindex="{{ ($index * 2) + 3 }}" name="role" type="text" class="form-control" ng-model="rs['role']">
           </td>
           <td ng-if="rs['sc']"><input tabindex="{{ ($index * 2) + 4 }}" name="signoffs_required" type="text" class="form-control"
-                     ng-model="rs['sc']['signoffs_required']"></td>
+                     ng-disable="editing" ng-model="rs['sc']['signoffs_required']"></td>
           <td ng-if="! rs['sc']"><input tabindex="{{ ($index * 2) + 4 }}" name="signoffs_required" type="text" class="form-control"
                      ng-model="rs['signoffs_required']"></td>
         </tr>
