@@ -86,6 +86,10 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
       });
       $scope.new_roles.forEach(function(rs) {
         if (rs["role"] !== "") {
+          if (new_role_names.indexOf(rs["role"]) !== -1) {
+            $scope.errors["exception"] = "Multiple entries found for " + rs["role"] + ". Cannot continue.";
+            return;
+          }
           new_role_names.push(rs["role"]);
           if (all_role_names.indexOf(rs["role"]) === -1) {
             all_role_names.push(rs["role"]);
