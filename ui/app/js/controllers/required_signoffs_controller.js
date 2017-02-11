@@ -129,6 +129,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         if (! (rs.role in $scope.required_signoffs[rs.product]["channels"][rs.channel])) {
           $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
             "signoffs_required": 0,
+            "data_version": null,
           };
         }
 
@@ -169,6 +170,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         if (! (rs.role in $scope.required_signoffs[rs.product]["permissions"])) {
           $scope.required_signoffs[rs.product]["permissions"][rs.role] = {
             "signoffs_required": 0,
+            "data_version": null,
           };
         }
     

@@ -211,7 +211,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         };
 
         deferreds[role_name] = $q.defer();
-        console.log(deferreds[role_name]);
         promises.push(deferreds[role_name].promise);
         var data = {"product": $scope.product, "role": role_name, "csrf_token": csrf_token, "data_version": role["data_version"]};
         if ($scope.mode === "channel") {
@@ -303,7 +302,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         }
       });
 
-      console.log(promises);
       // this doesn't seem to be working. maybe the promises array isn't filled up yet, beacuse the above forEach is async?
       // maybe a two stage deferred will help....dunno
       $q.all(promises)

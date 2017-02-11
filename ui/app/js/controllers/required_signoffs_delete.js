@@ -35,9 +35,6 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
       return;
     }
 
-    console.log(required_signoffs);
-    console.log($scope.to_delete);
-
     CSRF.getToken()
     .then(function(csrf_token) {
       $scope.saving = true;
@@ -57,7 +54,7 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
           if (namespace[data["role"]]["sc"] === null) {
             namespace[data["role"]]["sc"] = {
               "required_signoffs": {},
-              "signoffs_required": null,
+              "signoffs_required": 0,
               "sc_id": response["sc_id"],
               "scheduled_by": current_user,
               "sc_data_version": 1,
@@ -67,7 +64,15 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
           }
           // Required Signoff was previously pending, so it was directly removed
           else {
-            delete namespace[data["role"]];
+            // If it was *only* a scheduled change, we delete the whole thing
+            if (namespace[data["role"]]["data_version"] === null) {
+              delete namespace[data["role"]];
+            }
+            // If it was a scheduled change to an existing Required Signoff, just remove
+            // the Scheduled Change portion
+            else {
+              namespace[data["role"]]["sc"] = null;
+            }
           }
 
           deferred.resolve();
@@ -97,6 +102,7 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
         }
+        // Not a Scheduled Change, we'll have to create one to delete it
         if ($scope.to_delete[role_name]["sc"] === null) {
           data["when"] = new Date().getTime() + 5000;
           data["change_type"] = "delete";
@@ -105,11 +111,31 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
           .success(successCallback(data, deferred))
           .error(errorCallback(data, deferred));
         }
+        // Already has a Scheduled Change
         else {
+          var change_type = $scope.to_delete[role_name]["sc"]["change_type"];
+          // If that Scheduled Change is a delete, great, nothing to do!
+          if (change_type === "delete") {
+            return;
+          }
+          // If the Scheduled Change is an insert or update, we'll need to
+          // remove that. For inserts, that's all we need to do, because
+          // there is no current Required Signoff to deal with.
           data["sc_data_version"] = $scope.to_delete[role_name]["sc"]["sc_data_version"];
           service.deleteScheduledChange($scope.to_delete[role_name]["sc"]["sc_id"], data)
           .success(successCallback(data, deferred))
           .error(errorCallback(data, deferred));
+          // If we deleted an update, we'll need to queue up a delete to deal with
+          // the current Required Signoff
+          if (change_type === "update") {
+            delete data["sc_data_version"];
+            data["when"] = new Date().getTime() + 5000;
+            data["change_type"] = "delete";
+
+            service.addScheduledChange(data)
+            .success(successCallback(data, deferred))
+            .error(errorCallback(data, deferred));
+          }
         }
       });
 
