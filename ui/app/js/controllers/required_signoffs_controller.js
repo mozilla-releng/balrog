@@ -8,8 +8,6 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   $scope.current_user = null;
   $scope.user_roles = [];
 
-  console.log($scope.required_signoffs);
-
   $scope.isEmpty = function(obj) {
     if (Object.keys(obj).length === 0) {
       return true;
