@@ -45,15 +45,15 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         if (! (rs.product in $scope.required_signoffs)) {
           $scope.required_signoffs[rs.product] = {};
         }
-    
+
         if (! ("channels" in $scope.required_signoffs[rs.product])) {
           $scope.required_signoffs[rs.product]["channels"] = {};
         }
-    
+
         if (! (rs.channel in $scope.required_signoffs[rs.product]["channels"])) {
           $scope.required_signoffs[rs.product]["channels"][rs.channel] = {};
         }
-    
+
         $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role] = {
           "signoffs_required": rs.signoffs_required,
           "data_version": rs.data_version,
@@ -119,7 +119,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         if (! ("channels" in $scope.required_signoffs[rs.product])) {
           $scope.required_signoffs[rs.product]["channels"] = {};
         }
-    
+
         if (! (rs.channel in $scope.required_signoffs[rs.product]["channels"])) {
           $scope.required_signoffs[rs.product]["channels"][rs.channel] = {};
         }
@@ -171,7 +171,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
             "data_version": null,
           };
         }
-    
+
         $scope.required_signoffs[rs.product]["permissions"][rs.role]["sc"] = {
           "required_signoffs": rs.required_signoffs,
           "signoffs_required": rs.signoffs_required || 0,

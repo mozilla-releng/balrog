@@ -98,7 +98,7 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
         promises.push(deferred.promise);
         var data = {"product": $scope.product, "role": role_name, "data_version": $scope.to_delete[role_name]["data_version"],
                     "csrf_token": csrf_token};
-                    
+
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
         }
