@@ -11,6 +11,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   // We need the original version as well, so we can compare the two and figure
   // out how to move from the current state to the new state.
   $scope.new_roles = $.extend(true, [], current_roles);
+  $scope.current_roles = current_roles;
   $scope.editing = editing;
 
   $scope.products = [];
@@ -165,7 +166,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                   "sc": {
                     // how to set required signoffs correctly? backend doesn't return it
                     "required_signoffs": {},
-                    "signoffs_required": data["signoffs_required"],
+                    "signoffs_required": data["signoffs_required"] || 0,
                     "sc_id": response["sc_id"],
                     "scheduled_by": current_user,
                     "sc_data_version": 1,
@@ -178,7 +179,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                 required_signoffs[$scope.product]["channels"][$scope.channel][data["role"]]["sc"] = {
                   // how to set required signoffs correctly? backend doesn't return it
                   "required_signoffs": {},
-                  "signoffs_required": data["signoffs_required"],
+                  "signoffs_required": data["signoffs_required"] || 0,
                   "sc_id": response["sc_id"],
                   "scheduled_by": current_user,
                   "sc_data_version": 1,

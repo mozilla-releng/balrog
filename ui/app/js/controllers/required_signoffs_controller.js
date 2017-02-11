@@ -134,7 +134,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
 
         $scope.required_signoffs[rs.product]["channels"][rs.channel][rs.role]["sc"] = {
           "required_signoffs": rs.required_signoffs,
-          "signoffs_required": rs.signoffs_required,
+          "signoffs_required": rs.signoffs_required || 0,
           "sc_id": rs.sc_id,
           "scheduled_by": rs.scheduled_by,
           "sc_data_version": rs.sc_data_version,
@@ -174,7 +174,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     
         $scope.required_signoffs[rs.product]["permissions"][rs.role]["sc"] = {
           "required_signoffs": rs.required_signoffs,
-          "signoffs_required": rs.signoffs_required,
+          "signoffs_required": rs.signoffs_required || 0,
           "sc_id": rs.sc_id,
           "scheduled_by": rs.scheduled_by,
           "sc_data_version": rs.sc_data_version,
