@@ -41,7 +41,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   };
 
   $scope.addRole = function() {
-    $scope.new_roles.push({"role": "", "signoffs_required": null, "sc": null});
+    $scope.new_roles.push({"role": "", "signoffs_required": null, "sc": null, "new": true});
   };
 
   $scope.removeRole = function(index) {
@@ -273,9 +273,11 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               service.updateScheduledChange(role["sc"]["sc_id"], data)
               .success(function(response) {
                 if ($scope.mode === "channel") {
+                  required_signoffs[$scope.product]["channels"][$scope.channel][role_name]["sc"]["sc_data_version"] = response["new_data_version"];
                   required_signoffs[$scope.product]["channels"][$scope.channel][role_name]["sc"]["signoffs_required"] = role["sc"]["signoffs_required"];
                 }
                 else {
+                  required_signoffs[$scope.product]["permissions"][role_name]["sc"]["sc_data_version"] = response["new_data_version"];
                   required_signoffs[$scope.product]["permissions"][role_name]["sc"]["signoffs_required"] = role["sc"]["signoffs_required"];
                 }
                 deferreds[role_name].resolve();

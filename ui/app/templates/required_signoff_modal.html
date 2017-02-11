@@ -53,7 +53,7 @@
           </th>
           <td>
             <input tabindex="{{ ($index * 2) + 3 }}" name="role" type="text" class="form-control" ng-model="rs['role']"
-                   ng-disabled="editing && ($index < current_roles.length)">
+                   ng-disabled="editing && rs['new'] === undefined">
           </td>
           <td ng-if="rs['sc']"><input tabindex="{{ ($index * 2) + 4 }}" name="signoffs_required" type="text" class="form-control"
                      ng-model="rs['sc']['signoffs_required']"></td>
