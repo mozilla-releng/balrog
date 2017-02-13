@@ -27,27 +27,28 @@ class ScheduledChangesView(AdminView):
             rows = self.sc_table.select(where={"complete": False})
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
-            r = {"signoffs": {}, "required_signoffs": {}}
+            scheduled_change = {"signoffs": {}, "required_signoffs": {}}
             base_row = {}
 
             for k, v in row.iteritems():
                 if k == "data_version":
-                    r["sc_data_version"] = v
+                    scheduled_change["sc_data_version"] = v
                 else:
                     if k.startswith("base_"):
                         k = k.replace("base_", "")
                         base_row[k] = v
-                    r[k] = v
+                    scheduled_change[k] = v
 
             for signoff in self.sc_table.signoffs.select({"sc_id": row["sc_id"]}):
-                r["signoffs"][signoff["username"]] = signoff["role"]
+                scheduled_change["signoffs"][signoff["username"]] = signoff["role"]
 
             # No point in retrieving this for completed scheduled changes...
             if not row["complete"]:
                 for rs in self.table.getPotentialRequiredSignoffs([base_row]):
-                    r["required_signoffs"][rs["role"]] = max(r["required_signoffs"].get(rs["role"], 0), rs["signoffs_required"])
+                    signoffs_required = max(scheduled_change["required_signoffs"].get(rs["role"], 0), rs["signoffs_required"])
+                    scheduled_change["required_signoffs"][rs["role"]] = signoffs_required
 
-            ret["scheduled_changes"].append(r)
+            ret["scheduled_changes"].append(scheduled_change)
         return jsonify(ret)
 
     def _post(self, form, transaction, changed_by):
