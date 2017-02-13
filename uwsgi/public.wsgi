@@ -4,8 +4,8 @@ import os
 from auslib.log import configure_logging
 
 
-SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "b2gbld", "seabld", "stage-ffxbld",
-                   "stage-tbirdbld", "stage-b2gbld", "stage-seabld"]
+SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "seabld", "stage-ffxbld",
+                   "stage-tbirdbld", "stage-seabld"]
 SPECIAL_FORCE_HOSTS = ["http://download.mozilla.org"]
 DOMAIN_WHITELIST = {
     "download.mozilla.org": ("Firefox", "Fennec", "SeaMonkey", "Thunderbird"),
