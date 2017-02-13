@@ -394,7 +394,7 @@ class ScheduledChangeNewProductRequiredSignoffForm(ScheduledChangeTimeForm):
     channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
     role = StringField('Role', validators=[InputRequired()])
     signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
-    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
 
 
 class ScheduledChangeExistingProductRequiredSignoffForm(ScheduledChangeTimeForm):
@@ -403,7 +403,7 @@ class ScheduledChangeExistingProductRequiredSignoffForm(ScheduledChangeTimeForm)
     role = StringField('Role', validators=[InputRequired()])
     signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
     data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
-    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
 
 
 class ScheduledChangeDeleteProductRequiredSignoffForm(ScheduledChangeTimeForm):
@@ -443,7 +443,7 @@ class ScheduledChangeNewPermissionsRequiredSignoffForm(ScheduledChangeTimeForm):
     product = StringField('Permissions', validators=[Length(0, 15), InputRequired()])
     role = StringField('Role', validators=[InputRequired()])
     signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
-    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
 
 
 class ScheduledChangeExistingPermissionsRequiredSignoffForm(ScheduledChangeTimeForm):
@@ -451,7 +451,7 @@ class ScheduledChangeExistingPermissionsRequiredSignoffForm(ScheduledChangeTimeF
     role = StringField('Role', validators=[InputRequired()])
     signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
     data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
-    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
 
 
 class ScheduledChangeDeletePermissionsRequiredSignoffForm(ScheduledChangeTimeForm):
