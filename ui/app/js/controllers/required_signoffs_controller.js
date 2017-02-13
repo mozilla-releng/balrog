@@ -300,6 +300,9 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
         user_roles: function() {
           return $scope.user_roles;
         },
+        required_signoffs: function () {
+          return sc["required_signoffs"];
+        },
         sc: function() {
           return sc;
         },

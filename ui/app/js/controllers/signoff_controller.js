@@ -1,5 +1,5 @@
 angular.module('app').controller('SignoffCtrl',
-function ($scope, $modalInstance, CSRF, Permissions, object_name, service, current_user, user_roles, sc, pk, data) {
+function ($scope, $modalInstance, CSRF, Permissions, object_name, service, current_user, user_roles, required_signoffs, sc, pk, data) {
   $scope.saving = false;
   $scope.errors = {};
   $scope.object_name = object_name;
@@ -8,7 +8,12 @@ function ($scope, $modalInstance, CSRF, Permissions, object_name, service, curre
   $scope.data = data;
   $scope.current_user = current_user;
   $scope.signoff_role = null;
-  $scope.user_roles = user_roles;
+  $scope.possible_roles = [];
+  user_roles.forEach(function(role) {
+    if (role in required_signoffs) {
+      $scope.possible_roles.push(role);
+    }
+  });
 
   $scope.saveChanges = function () {
     if ($scope.signoff_role === null) {
