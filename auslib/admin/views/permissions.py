@@ -31,11 +31,12 @@ class CurrentUserView(AdminView):
     method to know things about the current user because it does not have
     access to REMOTE_USER, so it cannot query directly by name."""
 
-    def get(self):
-        username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
-        if not username:
-            return Response(status=401)
+    def get(self, username):
+        if username == "current":
+            username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
         permissions = dbo.permissions.getUserPermissions(username)
+        if not permissions:
+            return Response(status=404)
         roles = {}
         for r in dbo.permissions.getUserRoles(username):
             roles[r["role"]] = {"data_version": r["data_version"]}

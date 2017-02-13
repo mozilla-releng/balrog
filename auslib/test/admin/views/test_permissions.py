@@ -18,7 +18,7 @@ class TestUsersAPI_JSON(ViewTest):
 class TestCurrentUserAPI_JSON(ViewTest):
 
     def testGetCurrentUser(self):
-        ret = self._get("/current_user", username="bill")
+        ret = self._get("/users/current", username="bill")
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         expected = {
@@ -40,7 +40,7 @@ class TestCurrentUserAPI_JSON(ViewTest):
         self.assertEqual(data, expected)
 
     def testGetCurrentUserWithoutRoles(self):
-        ret = self._get("/current_user", username="billy")
+        ret = self._get("/users/current", username="billy")
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         expected = {
@@ -57,9 +57,31 @@ class TestCurrentUserAPI_JSON(ViewTest):
         }
         self.assertEqual(data, expected)
 
-    def testGetCurrentUserWithoutSpecifying(self):
-        ret = self._get("/current_user", username=None)
-        self.assertEqual(ret.status_code, 401)
+    def testGetNamedUser(self):
+        ret = self._get("/users/mary")
+        self.assertEqual(ret.status_code, 200)
+        data = json.loads(ret.data)
+        expected = {
+            "username": "mary",
+            "permissions": {
+                "scheduled_change": {
+                    "options": {
+                        "actions": ["enact"]
+                    },
+                    "data_version": 1,
+                }
+            },
+            "roles": {
+                "relman": {
+                    "data_version": 1,
+                },
+            },
+        }
+        self.assertEqual(data, expected)
+
+    def testGetNonExistentUser(self):
+        ret = self._get("/users/huetonhu")
+        self.assertEqual(ret.status_code, 404)
 
 
 class TestPermissionsAPI_JSON(ViewTest):
