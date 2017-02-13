@@ -164,14 +164,6 @@ class ProductRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
     def __init__(self):
         super(ProductRequiredSignoffScheduledChangeSignoffsView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(ProductRequiredSignoffScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
-
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(ProductRequiredSignoffScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
-
 
 class ProductRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
     def __init__(self):
@@ -253,14 +245,6 @@ class EnactPermissionsRequiredSignoffScheduledChangeView(EnactScheduledChangeVie
 class PermissionsRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
     def __init__(self):
         super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
-
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
 
 
 class PermissionsRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):

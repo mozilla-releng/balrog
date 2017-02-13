@@ -5,7 +5,7 @@ from sqlalchemy.sql.expression import null
 from flask import jsonify, request, Response
 from flask_wtf import Form
 
-from auslib.admin.views.base import AdminView
+from auslib.admin.views.base import AdminView, requirelogin
 from auslib.admin.views.forms import DbEditableForm, SignoffForm
 from auslib.admin.views.history import HistoryView
 
@@ -138,6 +138,7 @@ class SignoffsView(AdminView):
         self.signoffs_table = table.scheduled_changes.signoffs
         super(SignoffsView, self).__init__()
 
+    @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         form = SignoffForm()
         if not form.validate():
@@ -147,6 +148,7 @@ class SignoffsView(AdminView):
         self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **form.data)
         return Response(status=200)
 
+    @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
         where = {"sc_id": sc_id}
         signoff = self.signoffs_table.select(where, transaction)

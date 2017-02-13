@@ -571,14 +571,6 @@ class ReleaseScheduledChangeSignoffsView(SignoffsView):
     def __init__(self):
         super(ReleaseScheduledChangeSignoffsView, self).__init__("releases", dbo.releases)
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(ReleaseScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
-
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(ReleaseScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
-
 
 class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
     def __init__(self):

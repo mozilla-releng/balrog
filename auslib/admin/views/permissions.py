@@ -169,14 +169,6 @@ class PermissionScheduledChangeSignoffsView(SignoffsView):
     def __init__(self):
         super(PermissionScheduledChangeSignoffsView, self).__init__("permissions", dbo.permissions)
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(PermissionScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
-
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(PermissionScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
-
 
 class PermissionScheduledChangeHistoryView(ScheduledChangeHistoryView):
     def __init__(self):
