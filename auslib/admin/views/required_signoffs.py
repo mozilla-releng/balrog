@@ -128,6 +128,7 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
         elif change_type == "delete":
             form = ScheduledChangeDeleteProductRequiredSignoffForm()
         else:
+            self.log.warning("Bad input: %s", msg)
             return Response(status=400, response="Invalid or missing change_type")
 
         return super(ProductRequiredSignoffsScheduledChangesView, self)._post(form, transaction, changed_by)
@@ -210,6 +211,7 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
         elif change_type == "delete":
             form = ScheduledChangeDeletePermissionsRequiredSignoffForm()
         else:
+            self.log.warning("Bad input: %s", msg)
             return Response(status=400, response="Invalid or missing change_type")
 
         return super(PermissionsRequiredSignoffsScheduledChangesView, self)._post(form, transaction, changed_by)
