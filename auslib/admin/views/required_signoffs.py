@@ -4,7 +4,7 @@ from sqlalchemy.sql.expression import null
 
 from flask import jsonify, Response, request
 
-from auslib.admin.views.base import requirelogin, AdminView, HistoryAdminView
+from auslib.admin.views.base import requirelogin, AdminView
 from auslib.admin.views.forms import ProductRequiredSignoffForm, \
     ProductRequiredSignoffHistoryForm, \
     ScheduledChangeExistingProductRequiredSignoffForm, \
@@ -19,6 +19,7 @@ from auslib.admin.views.forms import ProductRequiredSignoffForm, \
     ScheduledChangeDeletePermissionsRequiredSignoffForm, \
     EditScheduledChangeNewPermissionsRequiredSignoffForm, \
     EditScheduledChangeExistingPermissionsRequiredSignoffForm
+from auslib.admin.views.history import HistoryView
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, SignoffsView, \
     ScheduledChangeHistoryView
@@ -57,12 +58,11 @@ class RequiredSignoffsView(AdminView):
         raise SignoffRequiredError("Required Signoffs cannot be directly deleted.")
 
 
-class RequiredSignoffsHistoryAPIView(HistoryAdminView):
+class RequiredSignoffsHistoryAPIView(HistoryView):
 
     def __init__(self, table, decisionFields):
-        self.table = table
         self.decisionFields = decisionFields
-        super(RequiredSignoffsHistoryAPIView, self).__init__()
+        super(RequiredSignoffsHistoryAPIView, self).__init__(table=table)
 
     def get(self, form):
         if not self.table.select({f: getattr(form, f).data for f in self.decisionFields}):
@@ -128,6 +128,7 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
         elif change_type == "delete":
             form = ScheduledChangeDeleteProductRequiredSignoffForm()
         else:
+            self.log.warning("Bad input: %s", form.errors)
             return Response(status=400, response="Invalid or missing change_type")
 
         return super(ProductRequiredSignoffsScheduledChangesView, self)._post(form, transaction, changed_by)
@@ -163,14 +164,6 @@ class EnactProductRequiredSignoffScheduledChangeView(EnactScheduledChangeView):
 class ProductRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
     def __init__(self):
         super(ProductRequiredSignoffScheduledChangeSignoffsView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(ProductRequiredSignoffScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
-
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(ProductRequiredSignoffScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
 
 
 class ProductRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
@@ -218,6 +211,7 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
         elif change_type == "delete":
             form = ScheduledChangeDeletePermissionsRequiredSignoffForm()
         else:
+            self.log.warning("Bad input: %s", form.errors)
             return Response(status=400, response="Invalid or missing change_type")
 
         return super(PermissionsRequiredSignoffsScheduledChangesView, self)._post(form, transaction, changed_by)
@@ -253,14 +247,6 @@ class EnactPermissionsRequiredSignoffScheduledChangeView(EnactScheduledChangeVie
 class PermissionsRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
     def __init__(self):
         super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
-
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
 
 
 class PermissionsRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):

@@ -9,7 +9,7 @@ from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm, 
     EditScheduledChangeNewPermissionForm, EditScheduledChangeExistingPermissionForm, \
     ScheduledChangeDeletePermissionForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
-    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
+    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
@@ -31,14 +31,13 @@ class CurrentUserView(AdminView):
     method to know things about the current user because it does not have
     access to REMOTE_USER, so it cannot query directly by name."""
 
-    def get(self):
-        username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
-        if not username:
-            return Response(status=401)
+    def get(self, username):
+        if username == "current":
+            username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
         permissions = dbo.permissions.getUserPermissions(username)
-        roles = {}
-        for r in dbo.permissions.getUserRoles(username):
-            roles[r["role"]] = {"data_version": r["data_version"]}
+        if not permissions:
+            return Response(status=404)
+        roles = {r["role"]: {"data_version": r["data_version"]} for r in dbo.permissions.getUserRoles(username)}
         return jsonify({"username": username, "permissions": permissions, "roles": roles})
 
 
@@ -169,14 +168,6 @@ class EnactPermissionScheduledChangeView(EnactScheduledChangeView):
 class PermissionScheduledChangeSignoffsView(SignoffsView):
     def __init__(self):
         super(PermissionScheduledChangeSignoffsView, self).__init__("permissions", dbo.permissions)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(PermissionScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
-
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(PermissionScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
 
 
 class PermissionScheduledChangeHistoryView(ScheduledChangeHistoryView):

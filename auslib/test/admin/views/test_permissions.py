@@ -18,7 +18,7 @@ class TestUsersAPI_JSON(ViewTest):
 class TestCurrentUserAPI_JSON(ViewTest):
 
     def testGetCurrentUser(self):
-        ret = self._get("/current_user", username="bill")
+        ret = self._get("/users/current", username="bill")
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         expected = {
@@ -40,7 +40,7 @@ class TestCurrentUserAPI_JSON(ViewTest):
         self.assertEqual(data, expected)
 
     def testGetCurrentUserWithoutRoles(self):
-        ret = self._get("/current_user", username="billy")
+        ret = self._get("/users/current", username="billy")
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         expected = {
@@ -57,9 +57,31 @@ class TestCurrentUserAPI_JSON(ViewTest):
         }
         self.assertEqual(data, expected)
 
-    def testGetCurrentUserWithoutSpecifying(self):
-        ret = self._get("/current_user", username=None)
-        self.assertEqual(ret.status_code, 401)
+    def testGetNamedUser(self):
+        ret = self._get("/users/mary")
+        self.assertEqual(ret.status_code, 200)
+        data = json.loads(ret.data)
+        expected = {
+            "username": "mary",
+            "permissions": {
+                "scheduled_change": {
+                    "options": {
+                        "actions": ["enact"]
+                    },
+                    "data_version": 1,
+                }
+            },
+            "roles": {
+                "relman": {
+                    "data_version": 1,
+                },
+            },
+        }
+        self.assertEqual(data, expected)
+
+    def testGetNonExistentUser(self):
+        ret = self._get("/users/huetonhu")
+        self.assertEqual(ret.status_code, 404)
 
 
 class TestPermissionsAPI_JSON(ViewTest):
@@ -454,6 +476,14 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEquals(len(rows), 0)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateCompletedScheduledChangeExistingPermission(self):
+        data = {
+            "options": '{"products": ["Thunderbird"]}', "data_version": 1, "sc_data_version": 1, "when": 200000000,
+        }
+        ret = self._post("/scheduled_changes/permissions/3", data=data)
+        self.assertEquals(ret.status_code, 400, ret.data)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeNewPermission(self):
         data = {
             "options": '{"products": ["Firefox"]}', "sc_data_version": 1, "when": 450000000,
@@ -482,6 +512,10 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEquals(got, [])
         cond_got = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
         self.assertEquals(cond_got, [])
+
+    def testDeleteCompletedScheduledChange(self):
+        ret = self._delete("/scheduled_changes/permissions/3", qs={"data_version": 1})
+        self.assertEquals(ret.status_code, 400, ret.data)
 
     def testEnactScheduledChangeExistingPermission(self):
         ret = self._post("/scheduled_changes/permissions/2/enact")

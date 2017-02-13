@@ -4,12 +4,13 @@ import os
 from auslib.log import configure_logging
 
 
-SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "b2gbld", "stage-ffxbld", "stage-tbirdbld", "stage-b2gbld"]
+SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "seabld", "stage-ffxbld",
+                   "stage-tbirdbld", "stage-seabld"]
 SPECIAL_FORCE_HOSTS = ["http://download.mozilla.org"]
 DOMAIN_WHITELIST = {
-    "download.mozilla.org": ("Firefox", "Fennec", "Thunderbird"),
-    "archive.mozilla.org": ("Firefox", "Fennec", "Thunderbird"),
-    "download.cdn.mozilla.net": ("Firefox", "Fennec"),
+    "download.mozilla.org": ("Firefox", "Fennec", "SeaMonkey", "Thunderbird"),
+    "archive.mozilla.org": ("Firefox", "Fennec", "SeaMonkey", "Thunderbird"),
+    "download.cdn.mozilla.net": ("Firefox", "Fennec", "SeaMonkey"),
     "mozilla-nightly-updates.s3.amazonaws.com": ("Firefox",),
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
