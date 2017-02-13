@@ -116,6 +116,7 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
           var change_type = $scope.to_delete[role_name]["sc"]["change_type"];
           // If that Scheduled Change is a delete, great, nothing to do!
           if (change_type === "delete") {
+            deferred.resolve();
             return;
           }
           // If the Scheduled Change is an insert or update, we'll need to

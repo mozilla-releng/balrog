@@ -4,7 +4,7 @@ angular.module("app").factory('Permissions', function($http, $q) {
       return $http.get('/api/users');
     },
     getCurrentUser: function() {
-      return $http.get("/api/current_user");
+      return $http.get("/api/users/current");
     },
     getUserPermissions: function(username) {
       var deferred = $q.defer();
