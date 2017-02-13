@@ -192,6 +192,37 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                 };
               }
             }
+            else {
+              if (data["change_type"] === "insert") {
+                // this may not work if the first direct add doesn't happen first.
+                required_signoffs[$scope.product]["permissions"][data["role"]] = {
+                  "signoffs_required": 0,
+                  "data_version": null,
+                  "sc": {
+                    // how to set required signoffs correctly? backend doesn't return it
+                    "required_signoffs": {},
+                    "signoffs_required": data["signoffs_required"] || 0,
+                    "sc_id": response["sc_id"],
+                    "scheduled_by": current_user,
+                    "sc_data_version": 1,
+                    "signoffs": {},
+                    "change_type": data["change_type"],
+                  },
+                };
+              }
+              else {
+                required_signoffs[$scope.product]["permissions"][data["role"]]["sc"] = {
+                  // how to set required signoffs correctly? backend doesn't return it
+                  "required_signoffs": {},
+                  "signoffs_required": data["signoffs_required"] || 0,
+                  "sc_id": response["sc_id"],
+                  "scheduled_by": current_user,
+                  "sc_data_version": 1,
+                  "signoffs": {},
+                  "change_type": data["change_type"],
+                };
+              }
+            }
             deferred.resolve();
           };
         };
