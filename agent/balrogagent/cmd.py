@@ -43,7 +43,21 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     else:
                         logging.debug("Unknown change type!")
 
-                    # If it *is* ready, enact it!
+                    # If it *is* ready, check if all the required signoffs have
+                    # been obtained
+                    required_signoffs = change.get('required_signoffs') or {}
+                    signoff_list = change.get('signoffs') or {}
+                    obtained_signoffs = {}
+                    for user, role in signoff_list.items():
+                        if obtained_signoffs.get(role) is not None:
+                            obtained_signoffs[role] += 1
+                        else:
+                            obtained_signoffs[role] = 1
+                    for role, number in required_signoffs.items():
+                        if required_signoffs.get(role, 0) > obtained_signoffs.get(role, 0):
+                            logging.debug("required signoffs not obtained, aborting")
+                            ready = False
+                    # If we have all required signoffs, go ahead
                     if ready:
                         logging.debug("Change %s is ready, enacting", change["sc_id"])
                         url = "/scheduled_changes/{}/{}/enact".format(endpoint, change["sc_id"])
