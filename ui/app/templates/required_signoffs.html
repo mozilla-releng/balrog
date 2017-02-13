@@ -16,7 +16,6 @@
   </button>
 </h2>
 
-<!-- todo: don't show if object is empty -->
 <div class="panel panel-default" ng-show="required_signoffs[selected_product]['permissions']">
   <div class="panel-heading">
     <h3 class="panel-title">
@@ -34,11 +33,10 @@
     </h3>
   </div>
   <div class="panel-body">
-    <!-- todo: try to find a way to sort this by non-pending first -->
+    <!-- TODO: Would be great to put non-pending stuff at the top. -->
     <div class="panel panel-default" ng-repeat="role in required_signoffs[selected_product]['permissions'] | toArray | orderBy: role.sc">
       <div class="panel-heading">
         <h4 class="panel-title">
-          <!-- copy this shite to channels -->
           <span ng-show="role['sc'] === null">{{ role["signoffs_required"] }} member(s) of {{ role.$key }}</span>
           <span ng-show="role['sc'] !== null">{{ role["sc"]["signoffs_required"] }} member(s) of {{ role.$key }} (currently: {{ role["signoffs_required"] }})</span>
           <span class="label label-info" ng-show="role['sc'] !== null && role['sc']['change_type'] !== 'delete'">Pending</span>

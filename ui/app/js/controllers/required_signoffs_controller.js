@@ -2,6 +2,11 @@ angular.module("app").controller('RequiredSignoffsController',
 function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions) {
   $scope.loading = true;
 
+  // required_signoffs holds ALL of the Required Signoffs - product, permissions,
+  // and scheduled changes for each. In an ideal world, this should probably be
+  // an object with a bunch of setters and getters. As things stand now, there's
+  // lots of repeated code because of the "if not exists" checks that need to
+  // happen at each level of it.
   $scope.required_signoffs = {};
   $scope.selected_product = null;
   $scope.state = "current";
@@ -15,6 +20,8 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     return false;
   };
 
+  // All of the initial loads happen asynchronously. We keep track of these so we can
+  // set $scope.loading properly when they're all done.
   var loading_deferreds = {
     "product": $q.defer(),
     "permissions": $q.defer(),
@@ -29,6 +36,8 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
     $scope.loading = false;
   });
 
+  // The drop down that relies on this is only empty when there's absolutely no Required Signoffs
+  // in the database, so this is mostly unused...
   $scope.$watch("required_signoffs", function() {
     if ($scope.selected_product === null) {
       var products = Object.keys($scope.required_signoffs);

@@ -10,7 +10,6 @@
              typeahead="product for product in products | filter:$viewValue | limitTo:16">
       <p class="help-block" ng-show="errors.product">{{ errors.product.join(", ") }}</p>
     </div>
-    <!-- TODO: don't show the channel and permissions switcher for edits -->
     <div class="tabbable tabs-below" ng-show="!editing">
       <ul class="nav nav-pills" role="tablist">
         <li ng-class="{active: mode === 'channel'}">
@@ -45,7 +44,8 @@
              with object keys (changes never get reflected).
         -->
         <tr class="new_role" ng-repeat="rs in new_roles track by $index">
-        <!-- todo: do we need to show a pending indicator in here for edits? -->
+        <!-- TODO: It would be nice to have a "pending" indicator in here for Scheduled Changes.
+             Not sure how to make it not ugly, though. -->
           <th>
             <button type="button" class="btn btn-danger btn-xs" ng-click="removeRole($index)" ng-show="$index > 0 || editing">
               <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>

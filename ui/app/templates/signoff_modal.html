@@ -14,12 +14,12 @@
     <dd ng-repeat-end>{{ value }}</dd>
   </dl>
   <h4 ng-show="sc['change_type'] !== 'delete'">The new values will be:</h4>
-  <!-- todo: highlight values that are actually changing compared to be the base would be lovely -->
+  <!-- TODO: Would be great to highligh values that are actually changing. We don't have that information yet, though. -->
   <dl class="dl-horizontal" ng-show="sc['change_type'] !== 'delete'">
     <dt ng-repeat-start="(key, value) in data">{{ key }}:</dt>
     <dd ng-repeat-end>{{ value }}</dd>
   </dl>
-  <!-- todo: should show when/telemetry info in here -->
+  <!-- TODO: Should show Scheduled Change condition in here, for objects it matters for (Rules and Releases). -->
   <hr>
   <h4>Please sign off on this change with one of your Roles:</h4>
   <form>

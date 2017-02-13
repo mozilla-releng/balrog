@@ -9,6 +9,7 @@ function ($scope, $modalInstance, CSRF, Permissions, object_name, service, curre
   $scope.current_user = current_user;
   $scope.signoff_role = null;
   $scope.possible_roles = [];
+  // Only put Roles that this Scheduled Change requires as options.
   user_roles.forEach(function(role) {
     if (role in required_signoffs) {
       $scope.possible_roles.push(role);
@@ -27,7 +28,6 @@ function ($scope, $modalInstance, CSRF, Permissions, object_name, service, curre
       service.signoffOnScheduledChange($scope.sc.sc_id, data)
       .success(function(response) {
         $scope.saving = false;
-        // update list of signoffs that have been made
         $scope.sc["signoffs"][$scope.current_user] = $scope.signoff_role;
         $modalInstance.close();
       })

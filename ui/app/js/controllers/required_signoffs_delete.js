@@ -114,7 +114,7 @@ function ($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, Permissions
         // Already has a Scheduled Change
         else {
           var change_type = $scope.to_delete[role_name]["sc"]["change_type"];
-          // If that Scheduled Change is a delete, great, nothing to do!
+          // If that Scheduled Change is already a delete, great, nothing to do!
           if (change_type === "delete") {
             deferred.resolve();
             return;

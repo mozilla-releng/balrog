@@ -109,6 +109,8 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         if (current_role_names.indexOf(role_name) === -1 && new_role_names.indexOf(role_name) !== -1) {
           action = "insert";
           // If we're creating a new role, and there wasn't any already, signoff won't be required
+          // Also, if first is false, some earlier iteration of the loop already directly created
+          // a Signoff, so signoff will be required.
           if (current_role_names.length === 0 && first) {
             requires_signoff = false;
           }
@@ -130,8 +132,10 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             }
           }
         }
+        // Otherwise (it's in both), it's an update.
         else {
           action = "update";
+          // There must be a better way to do this, but I can't find it.
           for (let r of $scope.new_roles) {
             if (r["role"] === role_name) {
               for (let r2 of current_roles) {
@@ -163,12 +167,12 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           return function(response) {
             if ($scope.mode === "channel") {
               if (data["change_type"] === "insert") {
-                // this may not work if the first direct add doesn't happen first.
                 required_signoffs[$scope.product]["channels"][$scope.channel][data["role"]] = {
                   "signoffs_required": 0,
                   "data_version": null,
                   "sc": {
-                    // how to set required signoffs correctly? backend doesn't return it
+                    // TODO: We should really be setting this, but the backend doesn't
+                    // return them.
                     "required_signoffs": {},
                     "signoffs_required": data["signoffs_required"] || 0,
                     "sc_id": response["sc_id"],
@@ -181,7 +185,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               }
               else {
                 required_signoffs[$scope.product]["channels"][$scope.channel][data["role"]]["sc"] = {
-                  // how to set required signoffs correctly? backend doesn't return it
                   "required_signoffs": {},
                   "signoffs_required": data["signoffs_required"] || 0,
                   "sc_id": response["sc_id"],
@@ -194,12 +197,10 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
             }
             else {
               if (data["change_type"] === "insert") {
-                // this may not work if the first direct add doesn't happen first.
                 required_signoffs[$scope.product]["permissions"][data["role"]] = {
                   "signoffs_required": 0,
                   "data_version": null,
                   "sc": {
-                    // how to set required signoffs correctly? backend doesn't return it
                     "required_signoffs": {},
                     "signoffs_required": data["signoffs_required"] || 0,
                     "sc_id": response["sc_id"],
@@ -212,7 +213,6 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               }
               else {
                 required_signoffs[$scope.product]["permissions"][data["role"]]["sc"] = {
-                  // how to set required signoffs correctly? backend doesn't return it
                   "required_signoffs": {},
                   "signoffs_required": data["signoffs_required"] || 0,
                   "sc_id": response["sc_id"],
@@ -293,10 +293,10 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               service.deleteScheduledChange(role["sc"]["sc_id"], data)
               .success(function(response) {
                 if ($scope.mode === "channel") {
-                  delete required_signoffs[$scope.product]["channels"][$scope.channel][role_name];
+                  required_signoffs[$scope.product]["channels"][$scope.channel][role_name]["sc"] = null;
                 }
                 else {
-                  delete required_signoffs[$scope.product]["permissions"][role_name];
+                  required_signoffs[$scope.product]["permissions"][role_name]["sc"] = null;
                 }
                 deferreds[role_name].resolve();
               })
@@ -326,15 +326,12 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               data["signoffs_required"] = role["signoffs_required"];
             }
             service.addScheduledChange(data)
-            // probably need to pass deferreds[role_name], not the .deferred?
             .success(addScheduledChangeCallback(data, deferreds[role_name]))
             .error(errorCallback(data, deferreds[role_name]));
           }
         }
       });
 
-      // this doesn't seem to be working. maybe the promises array isn't filled up yet, beacuse the above forEach is async?
-      // maybe a two stage deferred will help....dunno
       $q.all(promises)
       .then(function() {
         if (Object.keys($scope.errors).length === 0) {
