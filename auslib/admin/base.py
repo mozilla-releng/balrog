@@ -22,13 +22,12 @@ from auslib.admin.views.releases import SingleLocaleView, \
     ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView, \
     ReleaseScheduledChangesView, ReleaseScheduledChangeView, \
     EnactReleaseScheduledChangeView, ReleaseScheduledChangeHistoryView, \
-    ReleaseScheduledChangeSignoffsView
+    ReleaseScheduledChangeSignoffsView, ReleaseFieldView, ReleaseDiffView
 from auslib.admin.views.rules import RulesAPIView, \
     SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView, \
     RuleScheduledChangesView, RuleScheduledChangeView, \
     EnactRuleScheduledChangeView, RuleScheduledChangeHistoryView, \
     RuleScheduledChangeSignoffsView
-from auslib.admin.views.history import DiffView, FieldView
 from auslib.dockerflow import create_dockerflow_endpoints
 
 
@@ -63,6 +62,8 @@ def ise(error):
 def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers["Strict-Transport-Security"] = app.config.get("STRICT_TRANSPORT_SECURITY", "max-age=31536000;")
+    response.headers["Content-Security-Policy"] = app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
     return response
 
 
@@ -93,8 +94,8 @@ app.add_url_rule("/releases/<release>/read_only", view_func=ReleaseReadOnlyView.
 app.add_url_rule("/releases/<release>/builds/<platform>/<locale>", view_func=SingleLocaleView.as_view("single_locale"))
 app.add_url_rule("/releases/<release>/revisions", view_func=ReleaseHistoryView.as_view("release_revisions"))
 app.add_url_rule("/releases/columns/<column>", view_func=SingleReleaseColumnView.as_view("release_columns"))
-app.add_url_rule("/history/diff/<type_>/<change_id>/<field>", view_func=DiffView.as_view("diff"))
-app.add_url_rule("/history/view/<type_>/<change_id>/<field>", view_func=FieldView.as_view("field"))
+app.add_url_rule("/history/diff/release/<change_id>/<field>", view_func=ReleaseDiffView.as_view("release_diff"))
+app.add_url_rule("/history/view/release/<change_id>/<field>", view_func=ReleaseFieldView.as_view("release_field"))
 app.add_url_rule("/scheduled_changes/rules", view_func=RuleScheduledChangesView.as_view("scheduled_changes_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>", view_func=RuleScheduledChangeView.as_view("scheduled_change_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/enact", view_func=EnactRuleScheduledChangeView.as_view("enact_scheduled_change_rules"))

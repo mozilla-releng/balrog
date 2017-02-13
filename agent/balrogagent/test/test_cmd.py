@@ -129,3 +129,25 @@ class TestRunAgent(asynctest.TestCase):
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 3)
         self.assertEquals(request.call_count, 6)
+
+    @asynctest.patch("time.time")
+    async def testMultipleChangesOneEndpoint(self, time, time_is_ready, telemetry_is_ready, request):
+        time.return_value = 999999999
+        time_is_ready.return_value = True
+        sc = {'releases': [{"sc_id": 4, "when": 234, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None},
+                           {"sc_id": 5, "when": 234, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None},
+                           {"sc_id": 6, "when": 234, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None}]}
+        await self._runAgent(sc, request)
+        self.assertEquals(telemetry_is_ready.call_count, 0)
+        self.assertEquals(time_is_ready.call_count, 3)
+        self.assertEquals(request.call_count, 6)
+        called_endpoints = [call[0][1] for call in request.call_args_list]
+        self.assertIn('/scheduled_changes/releases', called_endpoints)
+        self.assertIn('/scheduled_changes/permissions', called_endpoints)
+        self.assertIn('/scheduled_changes/rules', called_endpoints)
+        self.assertIn('/scheduled_changes/releases/4/enact', called_endpoints)
+        self.assertIn('/scheduled_changes/releases/5/enact', called_endpoints)
+        self.assertIn('/scheduled_changes/releases/6/enact', called_endpoints)

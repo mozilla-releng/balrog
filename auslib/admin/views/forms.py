@@ -175,7 +175,7 @@ class ScheduledChangeNewPermissionForm(ScheduledChangeTimeForm):
     permission = StringField('Permission', validators=[Length(0, 50), InputRequired()])
     username = StringField('Username', validators=[Length(0, 100), InputRequired()])
     options = JSONStringField(None, 'Options')
-    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
 
 
 class ScheduledChangeExistingPermissionForm(ScheduledChangeTimeForm):
@@ -186,7 +186,7 @@ class ScheduledChangeExistingPermissionForm(ScheduledChangeTimeForm):
     username = StringField('Username', validators=[Length(0, 100), InputRequired()])
     options = JSONStringField(None, 'Options')
     data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
-    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
 
 
 class ScheduledChangeDeletePermissionForm(ScheduledChangeTimeForm):
@@ -231,12 +231,12 @@ class PartialReleaseForm(Form):
 
 class RuleForm(Form):
     backgroundRate = IntegerField('Background Rate', validators=[NumberRange(0, 100, "Background rate must be between 0 and 100")])
-    priority = IntegerField('Priority', validators=[InputRequired()])
+    priority = IntegerField('Priority', validators=[NumberRange(min=0, message="Priority must be a non-negative integer")])
     mapping = SelectField('Mapping', validators=[])
     fallbackMapping = NullableStringField('fallbackMapping', validators=[Optional()])
     alias = NullableStringField('Alias', validators=[Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Length(0, 15)])
-    version = NullableStringField('Version', validators=[Length(0, 10), version_validator()])
+    version = NullableStringField('Version', validators=[Length(0, 75), version_validator()])
     buildID = NullableStringField('BuildID', validators=[Length(0, 20), operator_validator()])
     channel = NullableStringField('Channel', validators=[Length(0, 75)])
     locale = NullableStringField('Locale', validators=[Length(0, 200)])
@@ -258,7 +258,7 @@ class EditRuleForm(DbEditableForm):
     fallbackMapping = NullableStringField('fallbackMapping', validators=[Optional()])
     alias = NullableStringField('Alias', validators=[Optional(), Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Optional(), Length(0, 15)])
-    version = NullableStringField('Version', validators=[Optional(), Length(0, 10), version_validator()])
+    version = NullableStringField('Version', validators=[Optional(), Length(0, 75), version_validator()])
     buildID = NullableStringField('BuildID', validators=[Optional(), Length(0, 20), operator_validator()])
     channel = NullableStringField('Channel', validators=[Optional(), Length(0, 75)])
     locale = NullableStringField('Locale', validators=[Optional(), Length(0, 200)])
@@ -274,7 +274,7 @@ class EditRuleForm(DbEditableForm):
 
 
 class ScheduledChangeNewRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, RuleForm):
-    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
 
 
 class ScheduledChangeExistingRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, EditRuleForm):
@@ -283,7 +283,7 @@ class ScheduledChangeExistingRuleForm(ScheduledChangeTimeForm, ScheduledChangeUp
     # through URLs that contain scheduled change IDs, so we need to include
     # the rule_id in the form when editing scheduled changes for rules.
     rule_id = IntegerField('Rule ID', validators=[InputRequired()])
-    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
 
 
 class ScheduledChangeDeleteRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm):
@@ -335,7 +335,7 @@ class ScheduledChangeNewReleaseForm(ScheduledChangeTimeForm):
     name = StringField('Name', validators=[InputRequired()])
     product = StringField('Product', validators=[InputRequired()])
     data = JSONStringField({}, 'Data', validators=[InputRequired()], widget=FileInput())
-    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
 
 
 class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
@@ -346,7 +346,7 @@ class ScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
     product = StringField('Product', validators=[Optional()])
     data = JSONStringField({}, 'Data', validators=[Optional()], widget=FileInput())
     data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
-    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete'), ('delete')])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
 
 
 class ScheduledChangeDeleteReleaseForm(ScheduledChangeTimeForm):

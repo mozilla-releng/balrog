@@ -438,6 +438,10 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._delete("/releases/d", username="bill", qs=dict(data_version=2))
         self.assertStatusCode(ret, 403)
 
+    def testDeleteWithRules(self):
+        ret = self._delete("/releases/a", qs=dict(data_version=1))
+        self.assertStatusCode(ret, 400)
+
     def testLocalePut(self):
         data = json.dumps({
             "complete": {
@@ -1097,6 +1101,8 @@ class TestReleasesScheduledChanges(ViewTest):
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
             change_id=9, changed_by="bill", timestamp=26, sc_id=4, when=230000000, data_version=1
         )
+        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="releng")
+        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="ben", role="releng")
 
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/releases")
@@ -1115,7 +1121,7 @@ class TestReleasesScheduledChanges(ViewTest):
                 },
                 {
                     "sc_id": 4, "when": 230000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
-                    "name": "ab", "product": None, "data": None, "read_only": False, "data_version": 1, "signoffs": {},
+                    "name": "ab", "product": None, "data": None, "read_only": False, "data_version": 1, "signoffs": {"ben": "releng", "bill": "releng"},
                 },
             ]
         }
@@ -1143,7 +1149,7 @@ class TestReleasesScheduledChanges(ViewTest):
                 },
                 {
                     "sc_id": 4, "when": 230000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
-                    "name": "ab", "product": None, "data": None, "read_only": False, "data_version": 1, "signoffs": {},
+                    "name": "ab", "product": None, "data": None, "read_only": False, "data_version": 1, "signoffs": {"ben": "releng", "bill": "releng"},
                 },
             ]
         }
@@ -1239,6 +1245,34 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeExistingReleaseResetSignOffs(self):
+        data = {
+            "name": "ab", "data_version": 1, "sc_data_version": 1, "when": 88900000000, "change_type": "delete"
+        }
+        rows = dbo.releases.scheduled_changes.signoffs.t.select().\
+            where(dbo.releases.scheduled_changes.signoffs.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(rows), 2)
+        ret = self._post("/scheduled_changes/releases/4", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+
+        r = dbo.releases.scheduled_changes.t.select().where(
+            dbo.releases.scheduled_changes.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 4, "complete": False, "change_type": "delete", "data_version": 2, "scheduled_by": "bill",
+            "base_name": "ab", "base_product": None,
+            "base_read_only": False,
+            "base_data": None,
+            "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+        rows = dbo.releases.scheduled_changes.signoffs.t.select(). \
+            where(dbo.releases.scheduled_changes.signoffs.sc_id == 4).execute().fetchall()
+        self.assertEquals(len(rows), 0)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingDeleteRelease(self):
         data = {
             "name": "c",
@@ -1246,6 +1280,24 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/releases/4", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateCompletedScheduledChangeDeleteRelease(self):
+        data = {
+            "name": "c",
+            "data_version": 1, "sc_data_version": 1, "when": 78900000000, "change_type": "delete"
+        }
+        ret = self._post("/scheduled_changes/releases/3", data=data)
+        self.assertEquals(ret.status_code, 400, ret.data)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateCompletedScheduledChangeUpdatingTheRelease(self):
+        data = {
+            "data": '{"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "c",
+            "data_version": 1, "sc_data_version": 1, "when": 78900000000, "change_type": "update",
+        }
+        ret = self._post("/scheduled_changes/releases/3", data=data)
+        self.assertEquals(ret.status_code, 400, ret.data)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeNewRelease(self):

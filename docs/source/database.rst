@@ -16,12 +16,15 @@ Rules
 -----
 
 The most important part of Balrog to understand is its rules.
-When a request comes in it is matched against each of Balrog's rule to find the one that best suits it (more in this below).
-Once found, Balrog looks at that rule's "mapping", which points to a release that has the required information to serve an update back to the client.
+When a request comes in it is matched against Balrog's rules to find the one that best suits it (more on this in :ref:`How are requests match to a rule?`).
+Once found, Balrog looks at that rule's "mapping", or "fallbackMapping", which points to a release that has the required information to serve an update back to the client.
 Without any rules, Balrog will never serve an update.
 With badly configured rules Balrog could do bad things like serve Firefox updates to Thunderbird users. 
 
-**What's in a rule?**
+
+*****************
+What's in a rule?
+*****************
 
 Each rule has multiple columns. They all fall into one of the following Category:
 
@@ -127,25 +130,68 @@ Following tables show columns according to different Categories:
   +------------------------+--------------------+--------------------------------------------------+---------------------------------+----------------------------+
 
 
-
-**How are requests matched up to rules?**
+*********************************
+How are requests match to a rule?
+*********************************
 
 The incoming request parts match up directly to incoming URL parts.
 For example, most update requests will send a URL in the following format
 
 ::
 
-    /update/3/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml?force=1
+    /update/6/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<systemCapabilities>/<distribution>/<distVersion>/update.xml?force=1
 
-The following logic is used to figure out which rule an update matches and what to respond with:
+The following logic is used to figure out which rule a request matches, and how to respond:
 
--   If a rule specifies one of these fields and a request's field doesn't match it, the rule is considered not to be a match and the rule is ignored for that request.
+-   Retrieve all rules where product, buildTarget, distribution, and distVersion are (each) unspecified, or match the request with a simple string match.
 
--   If "force" wasn't specified, the backgroundRate of the selected rule is looked at
+-   Discard any rules where the rule specifies a channel, version, buildID, osVersion, systemCapabilities, and/or locale, and that doesn't match the request. The method for each match is described in the table above.
 
--   If we still choose serve an update after accounting for backgroundRate we look at the rule's mapping. This is a foreign key that points to  an entry in the releases table. That row has most of the information we need to construct the update.
+    -   The channel has special handling to try "falling back" to a simpler channel, for example a request with release-cck-foo will also consider rules for 'release'. This only applies to channels containing '-cck-'.
 
--   Using the update_type and release that the mapping points to, construct and return an XML response with the details of the update for the client
+    -   Rules which specify a Whitelist will also be discarded if the request doesn't fall inside the Whitelist.
+
+-   Sort the remaining rules by priority, and keep the one with highest.
+
+-   The rule's value for backgroundRate modifies the response
+
+    - if the request has a query parameter force=1 then the background rate is ignored, and all requests will be served using the release in Mapping
+
+    - if force is absent then backgroundRate is the percentage of requests which will be served using Mapping
+
+    - the remaining requests will be served fallbackMapping, if that is specified on the rule, otherwise nothing.
+
+-   The Release, combined with the update_type specified by the rule, is used to construct an XML response with the details of the update.
+
+
+*************
+Rules example
+*************
+
+Rules are usually set up like this, in increasing order of priority:
+
+-   The lowest priority rule is the main path, providing the latest release for a channel
+
+-   Special cases are slightly higher, e.g. whatsnew pages for some locales
+
+-   Watersheds are higher again, to ensure that older release update to the watershed first. The older the watershed the higher the priority, so that X --> Y --> Z is preserved.
+
+-   The oldest operating system deprecations are highest priority.
+
+Here is a simplified set of rules for Firefox on the release channel, with a throttled main release, a Windows-specific watershed, and the deprecation of Windows 98 along time ago. All other values unspecified, except for update_type being 'minor' for all rules.
+
+  +----------+---------+----------+-----------+------------+-----------------------+-----------------------+-----------------+
+  | Priority | Product | Channel  | Version   | OS Version | Mapping               | Fallback Mapping      | Background Rate |
+  +==========+=========+==========+===========+============+=======================+=======================+=================+
+  |      400 | Firefox | release* |           | Windows_98 | No-Update             |                       |             100 |
+  +----------+---------+----------+-----------+------------+-----------------------+-----------------------+-----------------+
+  |      300 | Firefox | release  | < 43.0.1  | Windows_NT | Firefox-43.0.1-build1 |                       |             100 |
+  +----------+---------+----------+-----------+------------+-----------------------+-----------------------+-----------------+
+  |      100 | Firefox | release  |           |            | Firefox-51.0.1-build3 | Firefox-50.1.0-build2 |              25 |
+  +----------+---------+----------+-----------+------------+-----------------------+-----------------------+-----------------+
+
+The first two rules are static, while the last has the two mapping values updated as new releases are created.
+Future watersheds would be placed with priority below 300, while special cases are closer to 100.
 
 
 --------

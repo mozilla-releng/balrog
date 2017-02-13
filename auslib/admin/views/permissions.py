@@ -9,7 +9,7 @@ from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm, 
     EditScheduledChangeNewPermissionForm, EditScheduledChangeExistingPermissionForm, \
     ScheduledChangeDeletePermissionForm
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
-    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
+    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]

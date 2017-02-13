@@ -335,11 +335,15 @@ class AUSTable(object):
            @param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
            @type where: list of clauses or key/value pairs.
 
+           @param transaction: A transaction object to add the update statement (and history changes) to.
+                               If provided, you must commit the transaction yourself. If None, they will
+                               be added to a locally-scoped transaction and committed.
+
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
 
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
-        # clauses before porceeding.
+        # clauses before proceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
@@ -426,7 +430,7 @@ class AUSTable(object):
         return query
 
     def _prepareDelete(self, trans, where, changed_by, old_data_version):
-        """Prepare a DELETE statament for commit. If this table has history enabled,
+        """Prepare a DELETE statement for commit. If this table has history enabled,
            a row will be created in that table representing the new state of the
            row being deleted (NULL). If versioning is enabled and old_data_version
            doesn't match the current version of the row to be deleted, an OutdatedDataError
@@ -485,7 +489,7 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
-        # clauses before porceeding.
+        # clauses before proceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
@@ -583,7 +587,7 @@ class AUSTable(object):
            @rtype: sqlalchemy.engine.base.ResultProxy
         """
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
-        # clauses before porceeding.
+        # clauses before proceeding.
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
@@ -1091,7 +1095,17 @@ class ScheduledChangeTable(AUSTable):
             sc_id = ret.inserted_primary_key[0]
             self.conditions.insert(changed_by, transaction, dryrun, sc_id=sc_id, **condition_columns)
             if not self._dataVersionsAreSynced(sc_id, transaction):
-                raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s", sc_id)
+                raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s",
+                                                 sc_id)
+
+            # - If the User scheduling a change only holds one Role, record a signoff with it.
+            # - If the User scheduling a change holds more than one Role, we cannot a Signoff, because
+            #   we don't know which Role we'd want to signoff with. The user will need to signoff
+            #   manually in these cases.
+            user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
+            if len(user_roles) == 1:
+                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
+                                     sc_id=sc_id, role=user_roles[0].get("role"))
             return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
@@ -1101,6 +1115,11 @@ class ScheduledChangeTable(AUSTable):
         # We need to check each Scheduled Change that would be affected by this
         # to ensure the new row will be valid.
         for row in self.select(where=where, transaction=transaction):
+            # verify whether the scheduled change has already been completed or not. If completed,
+            # then cannot modify the scheduled change anymore.
+            if row.get("complete"):
+                raise ValueError("Scheduled change already completed. Cannot update now.")
+
             affected_ids.append(row["sc_id"])
             # Before validation, we need to create the new version of the
             # Scheduled Change by combining the old one with the new data.
@@ -1140,9 +1159,21 @@ class ScheduledChangeTable(AUSTable):
             if not self._dataVersionsAreSynced(sc_id, transaction):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s" % sc_id)
 
+        for sc_id in affected_ids:
+            where_signOff = {"sc_id": sc_id}
+            signOffs = self.signoffs.select(where=where_signOff, transaction=transaction, columns=["sc_id", "username"])
+            for signOff in signOffs:
+                where_signOff.update({"username": signOff["username"]})
+                self.signoffs.delete(where=where_signOff, changed_by=changed_by, transaction=transaction)
+
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         conditions_where = []
         for row in self.select(where=where, transaction=transaction):
+            # verify whether the scheduled change has already been completed or not. If completed,
+            # then cannot modify the scheduled change anymore.
+            if row.get("complete"):
+                raise ValueError("Scheduled change already completed. Cannot delete now.")
+
             conditions_where.append(self.conditions.sc_id == row["sc_id"])
             base_row = {col[5:]: row[col] for col in row if col.startswith("base_")}
             # we also need change_type in base_row to check permission
@@ -1232,7 +1263,8 @@ class ScheduledChangeTable(AUSTable):
                     raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
 
             # If we get here, the change is safely mergeable
-            self.update(where=[self.sc_id == sc["sc_id"]], what=what, changed_by=changed_by, old_data_version=sc["data_version"], transaction=transaction)
+            self.update(where=[self.sc_id == sc["sc_id"]], what=what, changed_by=sc["scheduled_by"],
+                        old_data_version=sc["data_version"], transaction=transaction)
             self.log.debug("Merged %s into scheduled change '%s'", what, sc["sc_id"])
 
 
@@ -1401,7 +1433,7 @@ class Rules(AUSTable):
                            Column('backgroundRate', Integer),
                            Column('update_type', String(15), nullable=False),
                            Column('product', String(15)),
-                           Column('version', String(10)),
+                           Column('version', String(75)),
                            Column('channel', String(75)),
                            Column('buildTarget', String(75)),
                            Column('buildID', String(20)),
@@ -2503,6 +2535,9 @@ class AUSDatabase(object):
 
     def hasRole(self, *args, **kwargs):
         return self.permissions.hasRole(*args, **kwargs)
+
+    def getUserRoles(self, *args, **kwargs):
+        return self.permissions.getUserRoles(*args, **kwargs)
 
     def create(self, version=None):
         # Migrate's "create" merely declares a database to be under its control,
