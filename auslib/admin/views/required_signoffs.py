@@ -4,7 +4,7 @@ from sqlalchemy.sql.expression import null
 
 from flask import jsonify, Response, request
 
-from auslib.admin.views.base import requirelogin, AdminView, HistoryAdminView
+from auslib.admin.views.base import requirelogin, AdminView
 from auslib.admin.views.forms import ProductRequiredSignoffForm, \
     ProductRequiredSignoffHistoryForm, \
     ScheduledChangeExistingProductRequiredSignoffForm, \
@@ -19,6 +19,7 @@ from auslib.admin.views.forms import ProductRequiredSignoffForm, \
     ScheduledChangeDeletePermissionsRequiredSignoffForm, \
     EditScheduledChangeNewPermissionsRequiredSignoffForm, \
     EditScheduledChangeExistingPermissionsRequiredSignoffForm
+from auslib.admin.views.history import HistoryView
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, SignoffsView, \
     ScheduledChangeHistoryView
@@ -57,12 +58,11 @@ class RequiredSignoffsView(AdminView):
         raise SignoffRequiredError("Required Signoffs cannot be directly deleted.")
 
 
-class RequiredSignoffsHistoryAPIView(HistoryAdminView):
+class RequiredSignoffsHistoryAPIView(HistoryView):
 
     def __init__(self, table, decisionFields):
-        self.table = table
         self.decisionFields = decisionFields
-        super(RequiredSignoffsHistoryAPIView, self).__init__()
+        super(RequiredSignoffsHistoryAPIView, self).__init__(table=table)
 
     def get(self, form):
         if not self.table.select({f: getattr(form, f).data for f in self.decisionFields}):

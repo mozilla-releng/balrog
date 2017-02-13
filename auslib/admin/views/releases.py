@@ -1,3 +1,4 @@
+import difflib
 import simplejson as json
 
 from sqlalchemy.sql.expression import null
@@ -8,7 +9,7 @@ from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
 from auslib.db import OutdatedDataError, ReadOnlyError
 from auslib.admin.views.base import (
-    requirelogin, AdminView, HistoryAdminView
+    requirelogin, AdminView
 )
 from auslib.admin.views.csrf import get_csrf_headers
 from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, DbEditableForm, ReadOnlyForm, \
@@ -17,6 +18,8 @@ from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, Db
 from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
     SignoffsView
+from auslib.admin.views.history import HistoryView
+
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
@@ -348,40 +351,14 @@ class ReleaseReadOnlyView(AdminView):
         return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
 
 
-class ReleaseHistoryView(HistoryAdminView):
+class ReleaseHistoryView(HistoryView):
     """/releases/:release/revisions"""
 
-    def get(self, release):
-        releases = dbo.releases.getReleases(name=release, limit=1)
-        if not releases:
-            return Response(status=404,
-                            response='Requested release does not exist')
-        release = releases[0]
-        table = dbo.releases.history
+    def __init__(self):
+        super(ReleaseHistoryView, self).__init__(dbo.releases)
 
-        try:
-            page = int(request.args.get('page', 1))
-            limit = int(request.args.get('limit', 10))
-            assert page >= 1
-        except (ValueError, AssertionError) as e:
-            self.log.warning("Bad input: %s", json.dumps(e.args))
-            return Response(status=400, response=json.dumps({"data": e.args}))
-        offset = limit * (page - 1)
-        total_count = table.t.count()\
-            .where(table.name == release['name'])\
-            .where(table.data_version != null())\
-            .execute()\
-            .fetchone()[0]
-
-        revisions = table.select(
-            where=[
-                table.name == release['name'],
-                table.data_version != null()
-            ],
-            limit=limit,
-            offset=offset,
-            order_by=[table.timestamp.desc()],
-        )
+    def _process_revisions(self, revisions):
+        self.annotateRevisionDifferences(revisions)
 
         _mapping = [
             'data_version',
@@ -392,10 +369,7 @@ class ReleaseHistoryView(HistoryAdminView):
             '_time_ago',
             'change_id',
             'changed_by',
-            "timestamp",
-        ]
-
-        self.annotateRevisionDifferences(revisions)
+            "timestamp"]
 
         _revisions = []
         for r in revisions:
@@ -404,41 +378,51 @@ class ReleaseHistoryView(HistoryAdminView):
                 for item in _mapping
             ))
 
-        return jsonify(revisions=_revisions, count=total_count)
+        return _revisions
+
+    def _get_filters(self, release):
+        return [self.history_table.name == release['name'],
+                self.history_table.data_version != null()]
+
+    def _get_what(self, change):
+        return dict(
+            data=createBlob(change['data']),
+            product=change["product"])
+
+    def _get_release(self, release):
+        releases = self.table.getReleases(name=release, limit=1)
+        return releases[0] if releases else None
+
+    def get(self, release):
+        try:
+            return self.get_revisions(
+                get_object_callback=lambda: self._get_release(release),
+                history_filters_callback=self._get_filters,
+                process_revisions_callback=self._process_revisions,
+                revisions_order_by=[self.history_table.timestamp.desc()],
+                obj_not_found_msg='Requested release does not exist')
+        except (ValueError, AssertionError) as e:
+            self.log.warning("Bad input: %s", json.dumps(e.args))
+            return Response(status=400, response=json.dumps({"data": e.args}))
 
     @requirelogin
     def _post(self, release, transaction, changed_by):
-        releases = dbo.releases.getReleases(name=release)
-        if not releases:
-            return Response(status=404, response='bad release')
-        change_id = None
-        if request.json:
-            change_id = request.json.get('change_id')
-        if not change_id:
-            self.log.warning("Bad input: %s", release)
-            return Response(status=400, response='no change_id')
-        change = dbo.releases.history.getChange(change_id=change_id)
-        if change is None:
-            return Response(status=400, response='bad change_id')
-        if change['name'] != release:
-            return Response(status=400, response='bad release')
-        release = releases[0]
-        old_data_version = release['data_version']
-
-        # now we're going to make a new update based on this change
-        blob = createBlob(change['data'])
-
         try:
-            dbo.releases.update(where={"name": change["name"]}, what={"data": blob, "product": change["product"]}, changed_by=changed_by,
-                                old_data_version=old_data_version, transaction=transaction)
+            return self.revert_to_revision(
+                get_object_callback=lambda: self._get_release(release),
+                change_field='name',
+                get_what_callback=self._get_what,
+                changed_by=changed_by,
+                response_message='Excellent!',
+                transaction=transaction,
+                obj_not_found_msg='bad release')
         except BlobValidationError as e:
             self.log.warning("Bad input: %s", e.args)
-            return Response(status=400, response=json.dumps({"data": e.errors}))
+            return Response(status=400,
+                            response=json.dumps({"data": e.errors}))
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
             return Response(status=400, response=json.dumps({"data": e.args}))
-
-        return Response("Excellent!")
 
 
 class ReleasesAPIView(AdminView):
@@ -603,3 +587,82 @@ class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         return super(ReleaseScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
+
+
+class ReleaseFieldView(AdminView):
+    """/diff/:id/:field"""
+    def __init__(self):
+        self.table = dbo.releases
+
+    def get_value(self, change_id, field):
+        revision = self.table.history.getChange(change_id=change_id)
+        if not revision:
+            raise ValueError('Bad change_id')
+        if field not in revision:
+            raise KeyError('Bad field')
+        return revision[field]
+
+    def format_value(self, value):
+        if isinstance(value, dict):
+            try:
+                value = json.dumps(value, indent=2, sort_keys=True)
+            except ValueError:
+                pass
+        elif value is None:
+            value = 'NULL'
+        elif isinstance(value, int):
+            value = unicode(str(value), 'utf8')
+        else:
+            value = unicode(value, 'utf8')
+        return value
+
+    def get(self, change_id, field):
+        try:
+            value = self.get_value(change_id, field)
+        except KeyError as msg:
+            self.log.warning("Bad input: %s", field)
+            return Response(status=400, response=str(msg))
+        except ValueError as msg:
+            return Response(status=404, response=str(msg))
+        value = self.format_value(value)
+        return Response(value, content_type='text/plain')
+
+
+class ReleaseDiffView(ReleaseFieldView):
+    """/diff/:id/:field"""
+
+    def get_prev_id(self, value, change_id):
+        release_name = value['name']
+        table = self.table.history
+        old_revision = table.select(
+            where=[
+                table.name == release_name,
+                table.change_id < change_id,
+                table.data_version != null()
+            ],
+            limit=1,
+            order_by=[table.timestamp.desc()],
+        )
+
+        return old_revision[0]['change_id']
+
+    def get(self, change_id, field):
+        value = self.get_value(change_id, field)
+        data_version = self.get_value(change_id, "data_version")
+
+        prev_id = self.get_prev_id(value, change_id)
+        previous = self.get_value(prev_id, field)
+        prev_data_version = self.get_value(prev_id, "data_version")
+
+        value = self.format_value(value)
+        previous = self.format_value(previous)
+
+        result = difflib.unified_diff(
+            previous.splitlines(),
+            value.splitlines(),
+            fromfile="Data Version {}".format(prev_data_version),
+            tofile="Data Version {}".format(data_version),
+            lineterm=""
+        )
+
+        return Response('\n'.join(result), content_type='text/plain')

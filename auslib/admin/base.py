@@ -22,7 +22,7 @@ from auslib.admin.views.releases import SingleLocaleView, \
     ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView, \
     ReleaseScheduledChangesView, ReleaseScheduledChangeView, \
     EnactReleaseScheduledChangeView, ReleaseScheduledChangeHistoryView, \
-    ReleaseScheduledChangeSignoffsView
+    ReleaseScheduledChangeSignoffsView, ReleaseFieldView, ReleaseDiffView
 from auslib.admin.views.required_signoffs import ProductRequiredSignoffsView, \
     ProductRequiredSignoffsHistoryAPIView, \
     ProductRequiredSignoffsScheduledChangesView, \
@@ -42,7 +42,6 @@ from auslib.admin.views.rules import RulesAPIView, \
     RuleScheduledChangesView, RuleScheduledChangeView, \
     EnactRuleScheduledChangeView, RuleScheduledChangeHistoryView, \
     RuleScheduledChangeSignoffsView
-from auslib.admin.views.history import DiffView, FieldView
 from auslib.dockerflow import create_dockerflow_endpoints
 
 
@@ -115,8 +114,8 @@ app.add_url_rule("/required_signoffs/product/revisions", view_func=ProductRequir
 app.add_url_rule("/required_signoffs/permissions", view_func=PermissionsRequiredSignoffsView.as_view("permissions_required_signoffs"))
 app.add_url_rule("/required_signoffs/permissions/revisions",
                  view_func=PermissionsRequiredSignoffsHistoryAPIView.as_view("permissions_required_signoffs_revisions"))
-app.add_url_rule("/history/diff/<type_>/<change_id>/<field>", view_func=DiffView.as_view("diff"))
-app.add_url_rule("/history/view/<type_>/<change_id>/<field>", view_func=FieldView.as_view("field"))
+app.add_url_rule("/history/diff/release/<change_id>/<field>", view_func=ReleaseDiffView.as_view("release_diff"))
+app.add_url_rule("/history/view/release/<change_id>/<field>", view_func=ReleaseFieldView.as_view("release_field"))
 app.add_url_rule("/scheduled_changes/rules", view_func=RuleScheduledChangesView.as_view("scheduled_changes_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>", view_func=RuleScheduledChangeView.as_view("scheduled_change_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/enact", view_func=EnactRuleScheduledChangeView.as_view("enact_scheduled_change_rules"))
