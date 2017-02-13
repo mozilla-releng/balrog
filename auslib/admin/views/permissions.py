@@ -37,9 +37,7 @@ class CurrentUserView(AdminView):
         permissions = dbo.permissions.getUserPermissions(username)
         if not permissions:
             return Response(status=404)
-        roles = {}
-        for r in dbo.permissions.getUserRoles(username):
-            roles[r["role"]] = {"data_version": r["data_version"]}
+        roles = {r["role"]: {"data_version": r["data_version"]} for r in dbo.permissions.getUserRoles(username)}
         return jsonify({"username": username, "permissions": permissions, "roles": roles})
 
 
