@@ -850,6 +850,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "signoffs": {
                         "bill": "releng",
                     },
+                    "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
@@ -857,7 +858,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {},
+                    "change_type": "insert", "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 3, "when": 2900000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
@@ -865,7 +866,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {},
+                    "change_type": "insert", "signoffs": {}, "required_signoffs": {},
                 },
             ],
         }
@@ -886,6 +887,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "signoffs": {
                         "bill": "releng",
                     },
+                    "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
@@ -893,7 +895,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {},
+                    "change_type": "insert", "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 3, "when": 2900000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
@@ -901,7 +903,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {},
+                    "change_type": "insert", "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 4, "when": 500000, "scheduled_by": "bill", "complete": True, "sc_data_version": 2, "rule_id": 5, "priority": 80,
@@ -909,7 +911,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "update", "signoffs": {},
+                    "change_type": "update", "signoffs": {}, "required_signoffs": {},
                 },
             ],
         }

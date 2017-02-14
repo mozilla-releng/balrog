@@ -50,6 +50,14 @@ auslib.admin.views.releases
     :undoc-members:
     :show-inheritance:
 
+auslib.admin.views.required_signoffs
+---------------------------
+
+.. automodule:: auslib.admin.views.signoffs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 auslib.admin.views.rules
 ------------------------
 

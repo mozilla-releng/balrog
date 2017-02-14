@@ -53,10 +53,27 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.user_roles.t.insert().execute(username="bill", role="releng", data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="bill", role="qa", data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="bob", role="relman", data_version=1)
+        dbo.permissions.user_roles.t.insert().execute(username="julie", role="releng", data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="mary", role="relman", data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="a", role="releng", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="e", role="releng", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="j", role="releng", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="k", role="releng", signoffs_required=1, data_version=2)
+        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=10, product="fake", channel="k", role="releng")
+        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=11, product="fake", channel="k", role="releng",
+                                                               signoffs_required=2, data_version=1)
+        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=25, product="fake", channel="k", role="releng",
+                                                               signoffs_required=1, data_version=2)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="fake", role="releng", signoffs_required=1, data_version=1)
+        dbo.permissionsRequiredSignoffs.t.insert().execute(product="bar", role="releng", signoffs_required=1, data_version=1)
+        dbo.permissionsRequiredSignoffs.t.insert().execute(product="blah", role="releng", signoffs_required=1, data_version=1)
+        dbo.permissionsRequiredSignoffs.t.insert().execute(product="doop", role="releng", signoffs_required=1, data_version=2)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="superfake", role="relman", signoffs_required=1, data_version=1)
+        dbo.permissionsRequiredSignoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=10, product="doop", role="releng")
+        dbo.permissionsRequiredSignoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=11, product="doop", role="releng",
+                                                                   signoffs_required=2, data_version=1)
+        dbo.permissionsRequiredSignoffs.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=25, product="doop", role="releng",
+                                                                   signoffs_required=1, data_version=2)
         dbo.releases.t.insert().execute(
             name='a', product='a', data=createBlob(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
@@ -121,14 +138,14 @@ class ViewTest(unittest.TestCase):
     def _getAuth(self, username):
         return {'REMOTE_USER': username}
 
-    def _get(self, url, qs={}):
+    def _get(self, url, qs={}, username="bill"):
         headers = {
             "Accept-Encoding": "application/json",
             "Accept": "application/json"
         }
         if "format" not in qs:
             qs["format"] = "json"
-        ret = self.client.get(url, query_string=qs, headers=headers)
+        ret = self.client.get(url, query_string=qs, headers=headers, environ_base=self._getAuth(username))
         return ret
 
     def _post(self, url, data={}, username='bill', **kwargs):

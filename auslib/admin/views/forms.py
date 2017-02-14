@@ -374,3 +374,101 @@ class EditScheduledChangeExistingReleaseForm(ScheduledChangeTimeForm):
     data = JSONStringField(None, 'Data', validators=[Optional()], widget=FileInput())
     data_version = IntegerField('data_version', widget=HiddenInput())
     sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
+
+
+class ProductRequiredSignoffForm(Form):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
+
+
+class ProductRequiredSignoffHistoryForm(Form):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+
+
+class ScheduledChangeNewProductRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+
+
+class ScheduledChangeExistingProductRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
+    data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+
+
+class ScheduledChangeDeleteProductRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    channel = StringField('Channel', validators=[Length(0, 75), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+
+
+class EditScheduledChangeNewProductRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Product', validators=[Length(0, 15), Optional()])
+    channel = StringField('Channel', validators=[Length(0, 75), Optional()])
+    role = StringField('Role', validators=[Optional()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[Optional()])
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
+
+
+class EditScheduledChangeExistingProductRequiredSignoffForm(ScheduledChangeTimeForm):
+    signoffs_required = IntegerField("Signoffs Required", validators=[Optional()])
+    data_version = IntegerField('data_version', widget=HiddenInput())
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
+
+
+class PermissionsRequiredSignoffForm(Form):
+    product = StringField('Permissions', validators=[Length(0, 15), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
+
+
+class PermissionsRequiredSignoffHistoryForm(Form):
+    product = StringField('Product', validators=[Length(0, 15), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+
+
+class ScheduledChangeNewPermissionsRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Permissions', validators=[Length(0, 15), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+
+
+class ScheduledChangeExistingPermissionsRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Permissions', validators=[Length(0, 15), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[InputRequired()])
+    data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+
+
+class ScheduledChangeDeletePermissionsRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Permissions', validators=[Length(0, 15), InputRequired()])
+    role = StringField('Role', validators=[InputRequired()])
+    data_version = IntegerField('data_version', validators=[InputRequired()], widget=HiddenInput())
+    change_type = SelectField("Change Type", choices=[('insert', 'insert'), ('update', 'update'), ('delete', 'delete')])
+
+
+class EditScheduledChangeNewPermissionsRequiredSignoffForm(ScheduledChangeTimeForm):
+    product = StringField('Permissions', validators=[Length(0, 15), Optional()])
+    role = StringField('Role', validators=[Optional()])
+    signoffs_required = IntegerField("Signoffs Required", validators=[Optional()])
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())
+
+
+class EditScheduledChangeExistingPermissionsRequiredSignoffForm(ScheduledChangeTimeForm):
+    signoffs_required = IntegerField("Signoffs Required", validators=[Optional()])
+    data_version = IntegerField('data_version', widget=HiddenInput())
+    sc_data_version = IntegerField('sc_data_version', validators=[InputRequired()], widget=HiddenInput())

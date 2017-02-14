@@ -1311,7 +1311,7 @@ class RequiredSignoffsTable(AUSTable):
                 self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])
             ).fetchone()
         if users_with_role < columns["signoffs_required"]:
-            msg = ", ".join(self.decisionColumns)
+            msg = ", ".join([columns[col] for col in self.decisionColumns])
             raise ValueError("Cannot require {} signoffs for {} - only {} users hold the {} role".format(
                 columns["signoffs_required"], msg, users_with_role, columns["role"]
             ))

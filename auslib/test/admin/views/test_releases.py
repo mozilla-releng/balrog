@@ -1033,6 +1033,8 @@ class TestReleasesScheduledChanges(ViewTest):
 
     def setUp(self):
         super(TestReleasesScheduledChanges, self).setUp()
+        # TODO: Although sc_id has a signoff, it's actually not required. We should have a test
+        # that actually tests a scheduled change that requires a signoff
         dbo.releases.scheduled_changes.t.insert().execute(
             sc_id=1, scheduled_by="bill", change_type="insert", data_version=1, base_name="m", base_product="m",
             base_data=createBlob(dict(name="m", hashFunction="sha512", schema_version=1))
@@ -1112,16 +1114,17 @@ class TestReleasesScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
-                    "data_version": None, "signoffs": {"bill": "releng"},
+                    "data_version": None, "signoffs": {"bill": "releng"}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "name": "c", "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
-                    "read_only": False, "data_version": 1, "signoffs": {},
+                    "read_only": False, "data_version": 1, "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 4, "when": 230000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "name": "ab", "product": None, "data": None, "read_only": False, "data_version": 1, "signoffs": {"ben": "releng", "bill": "releng"},
+                    "required_signoffs": {},
                 },
             ]
         }
@@ -1135,21 +1138,22 @@ class TestReleasesScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
-                    "data_version": None, "signoffs": {"bill": "releng"},
+                    "data_version": None, "signoffs": {"bill": "releng"}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "name": "c", "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
-                    "read_only": False, "data_version": 1, "signoffs": {},
+                    "read_only": False, "data_version": 1, "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 3, "when": 10000000, "scheduled_by": "bill", "change_type": "update", "complete": True, "sc_data_version": 2,
                     "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
-                    "data_version": 1, "signoffs": {},
+                    "data_version": 1, "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 4, "when": 230000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "name": "ab", "product": None, "data": None, "read_only": False, "data_version": 1, "signoffs": {"ben": "releng", "bill": "releng"},
+                    "required_signoffs": {},
                 },
             ]
         }

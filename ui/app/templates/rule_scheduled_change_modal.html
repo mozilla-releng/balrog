@@ -68,7 +68,7 @@
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.product}">
         <label for="id_product">Product</label>
-        <input type="text" class="form-control" id="id_product" ng-model="sc.product"
+        <input type="text" class="form-control" id="id_product" ng-model="sc.product" autocomplete="off"
         typeahead="product for product in products | filter:$viewValue | limitTo:16">
         <p class="help-block" ng-show="errors.product">{{ errors.product.join(', ') }}</p>
         </div>
@@ -76,7 +76,7 @@
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.channel}">
         <label for="id_channel">Channel</label>
-        <input type="text" class="form-control" id="id_channel" ng-model="sc.channel"
+        <input type="text" class="form-control" id="id_channel" ng-model="sc.channel" autocomplete="off"
         typeahead="channel for channel in channels | filter:$viewValue | limitTo:16">
         <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(', ') }}</p>
         </div>
@@ -86,7 +86,7 @@
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.mapping}">
         <label for="id_mapping">Mapping</label>
-        <input type="text" class="form-control" id="id_mapping" ng-model="sc.mapping"
+        <input type="text" class="form-control" id="id_mapping" ng-model="sc.mapping" autocomplete="off"
         typeahead="name for name in names | filter:$viewValue | limitTo:16">
         <p class="help-block" ng-show="errors.mapping">{{ errors.mapping.join(', ') }}</p>
         </div>
@@ -94,7 +94,7 @@
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.fallbackMapping}">
         <label for="id_fallbackMapping">Fallback Mapping</label>
-        <input type="text" class="form-control" id="id_fallbackMapping" ng-model="sc.fallbackMapping"
+        <input type="text" class="form-control" id="id_fallbackMapping" ng-model="sc.fallbackMapping" autocomplete="off"
         typeahead="name for name in names | filter:$viewValue | limitTo:16">
         <p class="help-block" ng-show="errors.fallbackMapping">{{ errors.fallbackMapping.join(', ') }}</p>
         </div>
@@ -184,7 +184,7 @@
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.whitelist}">
         <label for="id_whitelist">Whitelist</label>
-        <input type="text" class="form-control" id="id_whitelist" ng-model="sc.whitelist"
+        <input type="text" class="form-control" id="id_whitelist" ng-model="sc.whitelist" autocomplete="off"
         typeahead="name for name in names | filter:$viewValue | limitTo:16">
         <p class="help-block" ng-show="errors.whitelist">{{ errors.whitelist.join(', ') }}</p>
         </div>

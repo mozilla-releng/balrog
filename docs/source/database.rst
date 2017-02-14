@@ -194,6 +194,8 @@ The first two rules are static, while the last has the two mapping values update
 Future watersheds would be placed with priority below 300, while special cases are closer to 100.
 
 
+.. _releasestable:
+
 --------
 Releases
 --------
@@ -209,6 +211,8 @@ While there's no enforced format on release names, there are a few conventions t
 
 - GMP blobs are created by hand and generally named with the version of each plugin they contain in the name, eg: GMP-20150423-CDM-v4-OpenH264-v1.4
 
+
+.. _permissionstable:
 
 -----------
 Permissions
@@ -285,6 +289,8 @@ You cannot require more signoffs than a Role has users. Eg: if only 3 users hold
 Changes that require signoff will either be Product changes or Permissions changes. Required Signoffs for each are managed independently, and described in more detail below.
 
 
+.. _product_rs_table:
+
 *************************
 Product Required Signoffs
 *************************
@@ -297,6 +303,8 @@ Releases which are mapped to be a Rule's mapping, fallbackingMapping, or whiteli
 
 If a change affects more than one product and channel combination, *all* affected combinations' required signoffs will be combined to find the full set of required. For example, if Firefox's release channel requires 3 signoffs from "relman" and Firefox's beta channel requires 2 signoffs from "releng", a change to a Rule that affects both channels will require 3 signoffs from "relman" and 2 from "releng". Changing a Release that is mapped to by Rules on the "release" and "beta" channel would also require the same signoffs.
 
+
+.. _permissions_rs_table:
 
 *****************************
 Permissions Required Signoffs

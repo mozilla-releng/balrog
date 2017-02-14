@@ -42,6 +42,10 @@
                     <li><a href="/permissions/scheduled_changes">Scheduled Changes</a></li>
                 </ul>
             </li>
+
+            <li ng-class="{active: isOn('/required_signoffs')}">
+                <a href="/required_signoffs">Required Signoffs</a>
+            </li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
