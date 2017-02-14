@@ -3,6 +3,7 @@ import asyncio
 import logging
 import time
 
+from collections import defaultdict
 from . import client
 from .changes import get_telemetry_uptake, telemetry_is_ready, time_is_ready
 from .log import configure_logging
@@ -46,17 +47,10 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     # If it *is* ready, check if all the required signoffs have
                     # been obtained
                     required_signoffs = change.get('required_signoffs') or {}
-                    signoff_list = change.get('signoffs') or {}
-                    obtained_signoffs = {}
-                    for user, role in signoff_list.items():
-                        if obtained_signoffs.get(role) is not None:
-                            obtained_signoffs[role] += 1
-                        else:
-                            obtained_signoffs[role] = 1
-                    for role, number in required_signoffs.items():
-                        if required_signoffs.get(role, 0) > obtained_signoffs.get(role, 0):
-                            logging.debug("required signoffs not obtained, aborting")
-                            ready = False
+                    signoffs = change.get('signoffs') or {}
+                    if not verify_signoffs(required_signoffs, signoffs):
+                        ready = False
+
                     # If we have all required signoffs, go ahead
                     if ready:
                         logging.debug("Change %s is ready, enacting", change["sc_id"])
@@ -76,6 +70,16 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
 
         if once:
             return
+
+
+def verify_signoffs(required_signoffs, signoffs):
+    obtained_signoffs = defaultdict(int)
+    for user, role in signoffs.items():
+        obtained_signoffs[role] += 1
+    for role, number in required_signoffs.items():
+        if required_signoffs.get(role, 0) > obtained_signoffs[role]:
+            return False
+    return True
 
 
 def main():
