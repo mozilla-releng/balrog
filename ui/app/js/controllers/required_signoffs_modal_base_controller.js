@@ -104,6 +104,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         var action = null;
         var pending = false;
         var role = null;
+        var i;
 
         // If the role is only in the new Roles, we'll need to create it.
         if (current_role_names.indexOf(role_name) === -1 && new_role_names.indexOf(role_name) !== -1) {
@@ -114,9 +115,9 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           if (current_role_names.length === 0 && first) {
             requires_signoff = false;
           }
-          for (let r of $scope.new_roles) {
-            if (r["role"] === role_name) {
-              role = r;
+          for (i = 0; i < $scope.new_roles.length; ++i) {
+            if ($scope.new_roles[i]["role"] === role_name) {
+              role = $scope.new_roles[i];
               break;
             }
           }
@@ -124,10 +125,10 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         // If the role is only in the current Roles, we'll be deleting it
         else if (current_role_names.indexOf(role_name) !== -1 && new_role_names.indexOf(role_name) === -1) {
           action = "delete";
-          for (let r of current_roles) {
-            if (r["role"] === role_name) {
-              pending = r["sc"] ? true : false;
-              role = r;
+          for (i = 0; i < current_roles.length; ++i) {
+            if (current_roles[i]["role"] === role_name) {
+              pending = current_roles[i]["sc"] ? true : false;
+              role = current_roles[i];
               break;
             }
           }
@@ -136,21 +137,21 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
         else {
           action = "update";
           // There must be a better way to do this, but I can't find it.
-          for (let r of $scope.new_roles) {
-            if (r["role"] === role_name) {
-              for (let r2 of current_roles) {
-                if (r["role"] === r2["role"]) {
-                  if (r["sc"]) {
+          for (i = 0; i < $scope.new_roles.length; ++i) {
+            if ($scope.new_roles[i]["role"] === role_name) {
+              for (var j = 0; j < current_roles.length; ++j) {
+                if ($scope.new_roles[i]["role"] === current_roles[j]["role"]) {
+                  if ($scope.new_roles[i]["sc"]) {
                     pending = true;
-                    role = r;
-                    if (r["sc"]["signoffs_required"] === r2["sc"]["signoffs_required"]) {
+                    role = $scope.new_roles[i];
+                    if ($scope.new_roles[i]["sc"]["signoffs_required"] === current_roles[j]["sc"]["signoffs_required"]) {
                       console.log("No change to " + role_name + ", skipping...");
                       return; // exit forEach
                     }
                   }
                   else {
-                    role = r;
-                    if (r["signoffs_required"] === r2["signoffs_required"]) {
+                    role = $scope.new_roles[i];
+                    if ($scope.new_roles[i]["signoffs_required"] === current_roles[j]["signoffs_required"]) {
                       console.log("No change to " + role_name + ", skipping...");
                       return; // exit forEach
                     }

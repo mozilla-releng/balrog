@@ -3,24 +3,24 @@ function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs,
          required_signoffs, mode, product, channel, current_user) {
   var current_roles = [];
   if (mode === "channel") {
-    for (let role of Object.keys(required_signoffs[product]["channels"][channel])) {
+    Object.keys(required_signoffs[product]["channels"][channel]).forEach(function(role) {
       current_roles.push({
         "role": role,
         "data_version": required_signoffs[product]["channels"][channel][role]["data_version"],
         "signoffs_required": required_signoffs[product]["channels"][channel][role]["signoffs_required"],
         "sc": required_signoffs[product]["channels"][channel][role]["sc"],
       });
-    }
+    });
   }
   else if (mode === "permissions") {
-    for (let role of Object.keys(required_signoffs[product]["permissions"])) {
+    Object.keys(required_signoffs[product]["permissions"]).forEach(function(role) {
       current_roles.push({
         "role": role,
         "data_version": required_signoffs[product]["permissions"][role]["data_version"],
         "signoffs_required": required_signoffs[product]["permissions"][role]["signoffs_required"],
         "sc": required_signoffs[product]["permissions"][role]["sc"],
       });
-    }
+    });
   }
 
   $controller("BaseRequiredSignoffCtrl", {
