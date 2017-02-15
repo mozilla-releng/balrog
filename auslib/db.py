@@ -1207,7 +1207,7 @@ class ScheduledChangeTable(AUSTable):
         # when the transaction is rolled back.
         # We explicitly avoid using ScheduledChangeTable's update() method here
         # because we don't want to trigger its validation of conditions. Doing so
-        # would raise any exception for any timestamp based changes,  because
+        # would raise any exception for any timestamp based changes, because
         # they are already in the past when we're ready to enact them.
         # Updating in conditions table also so that history view can work
         # See : https://bugzilla.mozilla.org/show_bug.cgi?id=1333876
