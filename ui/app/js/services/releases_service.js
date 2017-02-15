@@ -114,6 +114,16 @@ angular.module("app").factory('Releases', function($http, $q) {
       url += '&csrf_token=' + encodeURIComponent(csrf_token);
       return $http.delete(url);
      },
+
+    signoffOnScheduledChange: function(sc_id, data) {
+      var url = "/api/scheduled_changes/releases/" + sc_id + "/signoffs";
+      return $http.post(url, data);
+    },
+    revokeSignoffOnScheduledChange: function(sc_id, data) {
+      var url = "/api/scheduled_changes/releases/" + sc_id + "/signoffs";
+      url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
+      return $http.delete(url, data);
+    },
   };
 
   return service;
