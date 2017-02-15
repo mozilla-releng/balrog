@@ -4,6 +4,28 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
   $scope.loading = true;
   $scope.failed = false;
 
+  $scope.current_user = null;
+  $scope.user_roles = [];
+
+  $scope.isEmpty = function(obj) {
+    if (Object.keys(obj).length === 0) {
+      return true;
+    }
+    return false;
+  };
+
+  Permissions.getCurrentUser()
+  .success(function(response) {
+    $scope.current_user = response["username"];
+    $scope.user_roles = Object.keys(response["roles"]);
+  })
+  .error(function(response) {
+    sweetAlert(
+      "Failed to load current user Roles:",
+      response
+    );
+  });
+
   Permissions.getScheduledChanges()
   .success(function(response) {
     // "when" is a unix timestamp, but it's much easier to work with Date objects,
@@ -108,6 +130,72 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
             change_type: 'insert',
           };
         }
+      }
+    });
+  };
+
+  $scope.signoff = function(sc) {
+    var modalInstance = $modal.open({
+      templateUrl: "signoff_modal.html",
+      controller: "SignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Permission";
+        },
+        service: function() {
+          return Permissions;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        user_roles: function() {
+          return $scope.user_roles;
+        },
+        required_signoffs: function () {
+          return sc["required_signoffs"];
+        },
+        sc: function() {
+          return sc;
+        },
+        pk: function() {
+          return {"permission": sc["permission"],
+                  "username": sc["username"]};
+        },
+        // todo: add more stuff here
+        data: function() {
+          return {"options": sc["options"]};
+        },
+      }
+    });
+  };
+
+  $scope.revokeSignoff = function(sc) {
+    $modal.open({
+      templateUrl: "revoke_signoff_modal.html",
+      controller: "RevokeSignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Permission";
+        },
+        service: function() {
+          return Permissions;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        sc: function() {
+          return sc;
+        },
+        pk: function() {
+          return {"permission": sc["permission"],
+                  "username": sc["username"]};
+        },
+        // todo: add more stuff here
+        data: function() {
+          return {"options": sc["options"]};
+        },
       }
     });
   };

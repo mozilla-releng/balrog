@@ -42,6 +42,14 @@
     <h3 class="panel-title">
       <div style="float: right">
         <i ng-if=" scheduled_changes_rules_count && $first && (currentPage == 1)">Current</i>
+        <button class="btn btn-xs btn-primary" ng-click="signoff(sc)"
+                ng-show="! isEmpty(sc['required_signoffs']) && ! sc['signoffs'].hasOwnProperty(current_user)">
+            Signoff as...
+        </button>
+        <button class="btn btn-xs btn-danger" ng-click="revokeSignoff(sc)"
+                ng-show="! isEmpty(sc['required_signoffs']) && sc['signoffs'].hasOwnProperty(current_user)">
+            Revoke your Signoff
+        </button>
         <button class="btn btn-default btn-xs" ng-click="openScheduledUpdateModal(sc)">Update</button>
         <button class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
       </div>
@@ -54,6 +62,26 @@
     </h3>
   </div>
   <div class="panel-body">
+    <!-- TODO: improve this layout -->
+    <div ng-show="! isEmpty(sc.required_signoffs)">
+      <span>
+        <h4>Before it can be enacted, this change must be signed off on by:</h4>
+        <ul>
+          <li ng-repeat="(rs_role, signoffs_required) in sc.required_signoffs">
+            {{ signoffs_required }} members of {{ rs_role }}
+          </li>
+        </ul>
+      </span>
+      <span ng-show="! isEmpty(sc.signoffs)">
+        <h4>This change has already been signed off by:</h4>
+        <ul>
+          <li ng-repeat="(username, signoff_role) in sc.signoffs">
+            {{ username }} ({{ signoff_role }})
+          </li>
+        </ul>
+      </span>
+      <hr>
+    </div>
     <div class="left" style="float: left">
       <h5 title="Scheduled By">
         Scheduled By: <b>{{ sc.scheduled_by }}</b>

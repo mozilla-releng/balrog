@@ -89,7 +89,15 @@ angular.module("app").factory('Permissions', function($http, $q) {
       data.csrf_token = csrf_token;
       return $http.post("/api/scheduled_changes/permissions/" + sc_id, data);
     },
-
+    signoffOnScheduledChange: function(sc_id, data) {
+      var url = "/api/scheduled_changes/permissions/" + sc_id + "/signoffs";
+      return $http.post(url, data);
+    },
+    revokeSignoffOnScheduledChange: function(sc_id, data) {
+      var url = "/api/scheduled_changes/permissions/" + sc_id + "/signoffs";
+      url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
+      return $http.delete(url, data);
+    },
   };
   return service;
 
