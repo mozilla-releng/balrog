@@ -1207,8 +1207,13 @@ class ScheduledChangeTable(AUSTable):
         # when the transaction is rolled back.
         # We explicitly avoid using ScheduledChangeTable's update() method here
         # because we don't want to trigger its validation of conditions. Doing so
-        # would raise any exception for any timestamp based changes, because
-        # they are already in the past when we're ready to enact them.
+        # would raise any exception for any timestamp based changes, be
+        # Updating in conditions table also so that heistory view can work
+        # See : https://bugzilla.mozilla.org/show_bug.cgi?id=1333876
+        self.conditions.update(where=[self.conditions.sc_id == sc_id], what={},
+                               changed_by=sc["scheduled_by"], old_data_version=sc["data_version"],
+                               transaction=transaction
+                               )
         super(ScheduledChangeTable, self).update(
             where=[self.sc_id == sc_id], what={"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"],
             transaction=transaction
