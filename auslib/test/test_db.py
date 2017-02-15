@@ -1358,6 +1358,17 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(PermissionDeniedError, self.table.scheduled_changes.enactChange, 1, "jeremy")
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testEnactInsertsInConditionsHistory(self):
+        where = [self.sc_table.sc_id == 2]
+        what = {"foo": "bb"}
+        self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
+        self.table.scheduled_changes.enactChange(2, "nancy")
+        num_history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 2).execute().fetchall()
+        num_cond_history_row = self.sc_table.conditions.history.t.select().where(
+            self.sc_table.conditions.history.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(num_cond_history_row), len(num_history_row))
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testMergeUpdateWithConflict(self):
         old_row = self.table.select(where=[self.table.fooid == 1])[0]
         what = {"fooid": 1, "bar": "abc", "data_version": 1}
