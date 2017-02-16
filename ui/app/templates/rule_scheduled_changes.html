@@ -77,7 +77,7 @@
   <div class="panel-body">
     <!-- TODO: improve this layout -->
     <div ng-show="! isEmpty(sc.required_signoffs)">
-      <span>
+      <span style="float: left">
         <h4>Before it can be enacted, this change must be signed off on by:</h4>
         <ul>
           <li ng-repeat="(rs_role, signoffs_required) in sc.required_signoffs">
@@ -85,7 +85,7 @@
           </li>
         </ul>
       </span>
-      <span ng-show="! isEmpty(sc.signoffs)">
+      <span style="float: right" ng-show="! isEmpty(sc.signoffs)">
         <h4>This change has already been signed off by:</h4>
         <ul>
           <li ng-repeat="(username, signoff_role) in sc.signoffs">
@@ -93,8 +93,8 @@
           </li>
         </ul>
       </span>
-      <hr>
     </div>
+    <hr style="clear: both" ng-show="! isEmpty(sc.required_signoffs)">
     <div class="left" style="float: left">
       <h5 title="Scheduled By">
         Scheduled By: <b>{{ sc.scheduled_by }}</b>
