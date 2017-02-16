@@ -550,19 +550,19 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
     def setUp(self):
         super(TestPermissionsRequiredSignoffsScheduledChanges, self).setUp()
         dbo.permissionsRequiredSignoffs.scheduled_changes.t.insert().execute(
-            sc_id=1, scheduled_by="bill", change_type="insert", data_version=1, base_product="super", base_role="releng",
+            sc_id=1, scheduled_by="bill", change_type="insert", data_version=1, base_product="superfake", base_role="releng",
             base_signoffs_required=1
         )
         dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
         dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert().execute(
             change_id=2, changed_by="bill", timestamp=21, sc_id=1, scheduled_by="bill", change_type="insert", data_version=1,
-            base_product="super", base_role="releng", base_signoffs_required=1
+            base_product="superfake", base_role="releng", base_signoffs_required=1
         )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=30, sc_id=1,
-                                                                                              username="bill")
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=31, sc_id=1,
-                                                                                              username="bill", role="releng")
+        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bob", role="relman")
+        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(change_id=1, changed_by="bob", timestamp=30, sc_id=1,
+                                                                                              username="bob")
+        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(change_id=2, changed_by="bob", timestamp=31, sc_id=1,
+                                                                                              username="bob", role="relman")
         dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=100000000, data_version=1)
         dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
         dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
@@ -638,8 +638,8 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 100000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
-                    "product": "super", "role": "releng", "signoffs_required": 1, "data_version": None,
-                    "signoffs": {"bill": "releng"}, "required_signoffs": {},
+                    "product": "superfake", "role": "releng", "signoffs_required": 1, "data_version": None,
+                    "signoffs": {"bob": "relman"}, "required_signoffs": {"relman": 1},
                 },
                 {
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
@@ -662,8 +662,8 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 100000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
-                    "product": "super", "role": "releng", "signoffs_required": 1, "data_version": None,
-                    "signoffs": {"bill": "releng"}, "required_signoffs": {},
+                    "product": "superfake", "role": "releng", "signoffs_required": 1, "data_version": None,
+                    "signoffs": {"bob": "relman"}, "required_signoffs": {"relman": 1},
                 },
                 {
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
@@ -791,7 +791,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 1, "complete": False, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_product": "super",
+            "sc_id": 1, "complete": False, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_product": "superfake",
             "base_role": "releng", "base_signoffs_required": 2, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
@@ -842,16 +842,16 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_product": "super",
+            "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_product": "superfake",
             "base_role": "releng", "base_signoffs_required": 1, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
 
-        base_row = dict(dbo.permissionsRequiredSignoffs.t.select().where(dbo.permissionsRequiredSignoffs.product == "super")
+        base_row = dict(dbo.permissionsRequiredSignoffs.t.select().where(dbo.permissionsRequiredSignoffs.product == "superfake")
                                                                   .where(dbo.permissionsRequiredSignoffs.role == "releng")
                                                                   .execute().fetchall()[0])
         base_expected = {
-            "product": "super", "role": "releng", "signoffs_required": 1, "data_version": 1
+            "product": "superfake", "role": "releng", "signoffs_required": 1, "data_version": 1
         }
         self.assertEquals(dict(base_row), base_expected)
 
@@ -916,7 +916,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         self.assertEquals(ret.status_code, 403, ret.data)
 
     def testRevokeSignoff(self):
-        ret = self._delete("/scheduled_changes/required_signoffs/permissions/1/signoffs", username="bill")
+        ret = self._delete("/scheduled_changes/required_signoffs/permissions/1/signoffs", username="bob")
         self.assertEquals(ret.status_code, 200, ret.data)
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.select()\
             .where(dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
