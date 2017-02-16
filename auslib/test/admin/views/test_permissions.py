@@ -58,7 +58,7 @@ class TestCurrentUserAPI_JSON(ViewTest):
         self.assertEqual(data, expected)
 
     def testGetNamedUser(self):
-        ret = self._get("/users/mary")
+        ret = self._get("/users/mary", username="bill")
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
         expected = {
@@ -106,7 +106,7 @@ class TestCurrentUserAPI_JSON(ViewTest):
         self.assertEqual(ret.status_code, 403)
 
     def testGetNonExistentUser(self):
-        ret = self._get("/users/huetonhu")
+        ret = self._get("/users/huetonhu", username="bill")
         self.assertEqual(ret.status_code, 404)
 
 
