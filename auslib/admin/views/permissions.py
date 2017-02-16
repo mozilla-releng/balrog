@@ -26,14 +26,23 @@ class UsersView(AdminView):
         return jsonify(dict(users=users))
 
 
-class CurrentUserView(AdminView):
+class SpecificUserView(AdminView):
     """Returns all of the details about the logged in user. The UI needs this
     method to know things about the current user because it does not have
     access to REMOTE_USER, so it cannot query directly by name."""
 
     def get(self, username):
+        current_user = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
         if username == "current":
-            username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
+            username = current_user
+        # If the user is retrieving permissions other than their own, we need
+        # to make sure they have enough access to do so. If any user is able
+        # to retrieve permissions of anyone, it may make privilege escalation
+        # attacks easier.
+        # TODO: do this at the database layer
+        else:
+            if username != current_user and not dbo.hasPermission(current_user, "permission", "view"):
+                return Response(status=403, response="You are not authorized to view permissions of other users.")
         permissions = dbo.permissions.getUserPermissions(username)
         if not permissions:
             return Response(status=404)
