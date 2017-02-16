@@ -95,13 +95,13 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
     def setUp(self):
         super(TestProductRequiredSignoffsScheduledChanges, self).setUp()
         dbo.productRequiredSignoffs.scheduled_changes.t.insert().execute(
-            sc_id=1, scheduled_by="bill", change_type="insert", data_version=1, base_product="fake", base_channel="c", base_role="releng",
+            sc_id=1, scheduled_by="bill", change_type="insert", data_version=1, base_product="fake", base_channel="a", base_role="relman",
             base_signoffs_required=1
         )
         dbo.productRequiredSignoffs.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
         dbo.productRequiredSignoffs.scheduled_changes.history.t.insert().execute(
             change_id=2, changed_by="bill", timestamp=21, sc_id=1, scheduled_by="bill", change_type="insert", data_version=1,
-            base_product="fake", base_channel="c", base_role="releng", base_signoffs_required=1
+            base_product="fake", base_channel="a", base_role="relman", base_signoffs_required=1
         )
         dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
         dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=30, sc_id=1,
@@ -183,8 +183,8 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 100000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
-                    "product": "fake", "channel": "c", "role": "releng", "signoffs_required": 1, "data_version": None,
-                    "signoffs": {"bill": "releng"}, "required_signoffs": {},
+                    "product": "fake", "channel": "a", "role": "relman", "signoffs_required": 1, "data_version": None,
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
                 {
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
@@ -207,8 +207,8 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 100000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
-                    "product": "fake", "channel": "c", "role": "releng", "signoffs_required": 1, "data_version": None,
-                    "signoffs": {"bill": "releng"}, "required_signoffs": {},
+                    "product": "fake", "channel": "a", "role": "relman", "signoffs_required": 1, "data_version": None,
+                    "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
                 {
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
@@ -254,7 +254,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewRequiredSignoff(self):
         data = {
-            "when": 400000000, "product": "foo", "channel": "bar", "role": "relman", "signoffs_required": 1, "change_type": "insert",
+            "when": 400000000, "product": "fake", "channel": "k", "role": "relman", "signoffs_required": 1, "change_type": "insert",
         }
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -264,7 +264,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 5, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1,
-            "base_product": "foo", "base_channel": "bar", "base_role": "relman", "base_signoffs_required": 1, "base_data_version": None,
+            "base_product": "fake", "base_channel": "k", "base_role": "relman", "base_signoffs_required": 1, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()\
@@ -332,7 +332,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 1, "complete": False, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_product": "fake",
-            "base_channel": "c", "base_role": "releng", "base_signoffs_required": 2, "base_data_version": None,
+            "base_channel": "a", "base_role": "relman", "base_signoffs_required": 2, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()\
@@ -381,16 +381,16 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_product": "fake",
-            "base_channel": "c", "base_role": "releng", "base_signoffs_required": 1, "base_data_version": None,
+            "base_channel": "a", "base_role": "relman", "base_signoffs_required": 1, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
 
-        base_row = dict(dbo.productRequiredSignoffs.t.select().where(dbo.productRequiredSignoffs.channel == "c")
+        base_row = dict(dbo.productRequiredSignoffs.t.select().where(dbo.productRequiredSignoffs.channel == "a")
                                                               .where(dbo.productRequiredSignoffs.product == "fake")
-                                                              .where(dbo.productRequiredSignoffs.role == "releng")
+                                                              .where(dbo.productRequiredSignoffs.role == "relman")
                                                               .execute().fetchall()[0])
         base_expected = {
-            "product": "fake", "channel": "c", "role": "releng", "signoffs_required": 1, "data_version": 1
+            "product": "fake", "channel": "a", "role": "relman", "signoffs_required": 1, "data_version": 1
         }
         self.assertEquals(dict(base_row), base_expected)
 
