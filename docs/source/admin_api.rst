@@ -607,7 +607,7 @@ Permissions Required Signoffs
 
 Endpoints to view and create new :ref:`permissions_rs_table`. In most cases, these will be managed with :ref:`scheduledChangesApi` instead, because they themselves require signoff.
 
-**/required_signoffs/product**
+**/required_signoffs/permissions**
 ------------------------------
 
 GET
@@ -662,7 +662,7 @@ GET
 ***
 
 Returns the Scheduled Changes for the named object. If the query arg "all" evaluates to True, Scheduled Changes that have been enacted
-will be returned along with active ones. If "all" evaluates to False, only active Scheduled Changes will be returned. Example response:
+will be returned along with pending ones. If "all" evaluates to False, only active Scheduled Changes will be returned. Example response:
 
 ::
 
