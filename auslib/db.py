@@ -2388,9 +2388,13 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
                body, use_tls):
     from email.mime.text import MIMEText
     from smtplib import SMTP
+    import string, random
+
 
     msg = MIMEText("\n".join(body), "plain")
-    msg["Subject"] = subj
+    refstr = ''.join(random.SystemRandom().choice(string.ascii_uppercase + \
+                                                  string.digits) for _ in range(8))
+    msg["Subject"] = subj + refstr
     msg["from"] = from_addr
 
     try:
@@ -2441,7 +2445,7 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             body.append("Row to be inserted:")
             body.append(UTF8PrettyPrinter().pformat(query.parameters))
 
-        subj = "%s to %s detected" % (type_, table.t.name)
+        subj = "%s to %s detected-" % (type_, table.t.name)
         send_email(relayhost, port, username, password, to_addr, from_addr,
                    table, subj, body, use_tls)
         table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
