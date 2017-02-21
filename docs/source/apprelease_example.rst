@@ -1,8 +1,8 @@
 .. _appreleaseExample:
 
-========
+==========================
 Firefox-43.0.2-build1 blob
-========
+==========================
 
 .. code-block:: json
 
