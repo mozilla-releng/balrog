@@ -778,17 +778,17 @@ class TestRuleScheduledChanges(ViewTest):
             base_product="a", base_channel="a",
         )
         dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=1000000, data_version=1)
-        dbo.rules.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
         dbo.rules.scheduled_changes.t.insert().execute(
             sc_id=2, scheduled_by="bill", data_version=1, base_priority=50, base_backgroundRate=100, base_product="baz",
             base_mapping="ab", base_update_type="minor", change_type="insert",
         )
         dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=1500000, data_version=1)
         dbo.rules.scheduled_changes.t.insert().execute(
-            sc_id=3, scheduled_by="bill", data_version=2, base_priority=150, base_backgroundRate=100, base_product="ff",
+            sc_id=3, scheduled_by="bill", data_version=2, base_priority=150, base_backgroundRate=100, base_channel="a",
             base_mapping="ghi", base_update_type="minor", change_type="insert",
         )
         dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=2900000, data_version=2)
+        dbo.rules.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="bill", role="releng")
         dbo.rules.scheduled_changes.t.insert().execute(
             sc_id=4, scheduled_by="bill", data_version=2, complete=True, base_rule_id=5, base_priority=80, base_version="3.3",
             base_buildTarget="d", base_backgroundRate=0, base_mapping="c", base_update_type="minor", base_data_version=1, change_type="update",
@@ -801,13 +801,13 @@ class TestRuleScheduledChanges(ViewTest):
 
         dbo.rules.scheduled_changes.history.t.insert().execute(
             change_id=2, changed_by="bill", timestamp=6, sc_id=3, scheduled_by="bill", data_version=1, base_priority=150,
-            base_backgroundRate=100, base_product="ff", base_mapping="def", base_update_type="minor", change_type="insert"
+            base_backgroundRate=100, base_channel="a", base_mapping="def", base_update_type="minor", change_type="insert"
         )
         dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=6, sc_id=3, when=2000000, data_version=1)
 
         dbo.rules.scheduled_changes.history.t.insert().execute(
             change_id=3, changed_by="bill", timestamp=10, sc_id=3, scheduled_by="bill", data_version=2, base_priority=150,
-            base_backgroundRate=100, base_product="ff", base_mapping="ghi", base_update_type="minor", change_type="insert"
+            base_backgroundRate=100, base_channel="a", base_mapping="ghi", base_update_type="minor", change_type="insert"
         )
         dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=10, sc_id=3, when=2900000, data_version=2)
 
@@ -846,10 +846,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "data_version": 1, "alias": None, "product": "a", "channel": "a", "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "update",
-                    "signoffs": {
-                        "bill": "releng",
-                    },
+                    "change_type": "update", "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
@@ -857,15 +854,15 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {},
+                    "change_type": "insert", "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 3, "when": 2900000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
-                    "backgroundRate": 100, "product": "ff", "mapping": "ghi", "update_type": "minor", "version": None,
-                    "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
+                    "backgroundRate": 100, "channel": "a", "mapping": "ghi", "update_type": "minor", "version": None,
+                    "buildTarget": None, "alias": None, "product": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {},
+                    "change_type": "insert", "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
             ],
         }
@@ -882,10 +879,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "data_version": 1, "alias": None, "product": "a", "channel": "a", "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "update",
-                    "signoffs": {
-                        "bill": "releng",
-                    },
+                    "change_type": "update", "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
@@ -893,15 +887,15 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {},
+                    "change_type": "insert", "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 3, "when": 2900000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
-                    "backgroundRate": 100, "product": "ff", "mapping": "ghi", "update_type": "minor", "version": None,
-                    "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None,
+                    "backgroundRate": 100, "channel": "a", "mapping": "ghi", "update_type": "minor", "version": None,
+                    "buildTarget": None, "alias": None, "product": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {},
+                    "change_type": "insert", "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                 },
                 {
                     "sc_id": 4, "when": 500000, "scheduled_by": "bill", "complete": True, "sc_data_version": 2, "rule_id": 5, "priority": 80,
@@ -909,7 +903,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "whitelist": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "update", "signoffs": {},
+                    "change_type": "update", "signoffs": {}, "required_signoffs": {},
                 },
             ],
         }
@@ -1140,31 +1134,31 @@ class TestRuleScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeResetSignOffs(self):
         data = {
-            "when": 2000000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d",
-            "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
+            "when": 2900000, "priority": 150, "backgroundRate": 100, "mapping": "c", "channel": "a", "update_type": "minor",
+            "sc_data_version": 2
         }
         rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
-            dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+            dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
         self.assertEquals(len(rows), 1)
-        ret = self._post("/scheduled_changes/rules/1", data=data)
+        ret = self._post("/scheduled_changes/rules/3", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
 
-        r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()
+        r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 3).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 1, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1,
-            "base_priority": 100, "base_version": "3.5", "base_buildTarget": "d", "base_backgroundRate": 100,
-            "base_mapping": "c", "base_update_type": "minor", "base_data_version": 1, "base_alias": None,
-            "base_product": "a", "base_channel": "a", "base_buildID": None, "base_locale": None, "base_osVersion": None,
+            "sc_id": 3, "scheduled_by": "bill", "data_version": 3, "complete": False,
+            "base_priority": 150, "base_backgroundRate": 100, "base_mapping": "c", "base_update_type": "minor",
+            "base_channel": "a", "base_buildID": None, "base_locale": None, "base_osVersion": None,
+            "base_product": None, "base_data_version": None, "base_alias": None,
             "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
             "base_headerArchitecture": None, "base_comment": None, "base_whitelist": None,
-            "base_systemCapabilities": None,
-            "change_type": "update",
+            "base_systemCapabilities": None, "base_version": None, "base_rule_id": None, "base_buildTarget": None,
+            "change_type": "insert",
         }
         self.assertEquals(db_data, expected)
         rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
-            dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+            dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
         self.assertEquals(len(rows), 0)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
@@ -1249,17 +1243,17 @@ class TestRuleScheduledChanges(ViewTest):
             "revisions": [
                 {
                     "change_id": 3, "changed_by": "bill", "timestamp": 10, "sc_id": 3, "scheduled_by": "bill", "when": 2900000, "sc_data_version": 2,
-                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "ghi", "fallbackMapping": None, "update_type": "minor",
+                    "priority": 150, "backgroundRate": 100, "channel": "a", "mapping": "ghi", "fallbackMapping": None, "update_type": "minor",
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
-                    "version": None, "channel": None, "buildTarget": None, "buildID": None, "locale": None,
+                    "version": None, "product": None, "buildTarget": None, "buildID": None, "locale": None,
                     "osVersion": None, "systemCapabilities": None, "distribution": None, "distVersion": None,
                     "headerArchitecture": None, "comment": None, "whitelist": None, "alias": None, "data_version": None, "change_type": "insert"
                 },
                 {
                     "change_id": 2, "changed_by": "bill", "timestamp": 6, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 1,
-                    "priority": 150, "backgroundRate": 100, "product": "ff", "mapping": "def", "fallbackMapping": None, "update_type": "minor",
+                    "priority": 150, "backgroundRate": 100, "channel": "a", "mapping": "def", "fallbackMapping": None, "update_type": "minor",
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
-                    "version": None, "channel": None, "buildTarget": None, "buildID": None, "locale": None,
+                    "version": None, "product": None, "buildTarget": None, "buildID": None, "locale": None,
                     "osVersion": None, "systemCapabilities": None, "distribution": None, "distVersion": None,
                     "headerArchitecture": None, "comment": None, "whitelist": None, "alias": None, "data_version": None, "change_type": "insert",
                 },
@@ -1278,8 +1272,8 @@ class TestRuleScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 3, "scheduled_by": "bill", "complete": False, "data_version": 3, "base_rule_id": None, "base_priority": 150,
-            "base_backgroundRate": 100, "base_product": "ff", "base_mapping": "def", "base_update_type": "minor", "base_version": None,
-            "base_buildTarget": None, "base_alias": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None,
+            "base_backgroundRate": 100, "base_channel": "a", "base_mapping": "def", "base_update_type": "minor", "base_version": None,
+            "base_buildTarget": None, "base_alias": None, "base_product": None, "base_buildID": None, "base_locale": None, "base_osVersion": None,
             "base_distribution": None, 'base_fallbackMapping': None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None,
             "base_whitelist": None, "base_data_version": None, "base_systemCapabilities": None, "change_type": "insert",
         }
@@ -1311,23 +1305,23 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(ret.status_code, 403, ret.data)
 
     def testSignoffASecondTimeWithSameRole(self):
-        ret = self._post("/scheduled_changes/rules/1/signoffs", data=dict(role="releng"), username="bill")
+        ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(role="releng"), username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
-        r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        self.assertEquals(db_data, {"sc_id": 1, "username": "bill", "role": "releng"})
+        self.assertEquals(db_data, {"sc_id": 3, "username": "bill", "role": "releng"})
 
     def testSignoffWithSecondRole(self):
-        ret = self._post("/scheduled_changes/rules/1/signoffs", data=dict(role="qa"), username="bill")
+        ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(role="qa"), username="bill")
         self.assertEquals(ret.status_code, 403, ret.data)
 
     def testRevokeSignoff(self):
-        ret = self._delete("/scheduled_changes/rules/1/signoffs", username="bill")
+        ret = self._delete("/scheduled_changes/rules/3/signoffs", username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
-        r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
         self.assertEquals(len(r), 0)
 
     def testRevokeOtherUsersSignoff(self):
-        ret = self._delete("/scheduled_changes/rules/1/signoffs", username="bob")
+        ret = self._delete("/scheduled_changes/rules/3/signoffs", username="bob")
         self.assertEquals(ret.status_code, 403, ret.data)

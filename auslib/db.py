@@ -1209,6 +1209,12 @@ class ScheduledChangeTable(AUSTable):
         # because we don't want to trigger its validation of conditions. Doing so
         # would raise any exception for any timestamp based changes, because
         # they are already in the past when we're ready to enact them.
+        # Updating in conditions table also so that history view can work
+        # See : https://bugzilla.mozilla.org/show_bug.cgi?id=1333876
+        self.conditions.update(where=[self.conditions.sc_id == sc_id], what={},
+                               changed_by=sc["scheduled_by"], old_data_version=sc["data_version"],
+                               transaction=transaction
+                               )
         super(ScheduledChangeTable, self).update(
             where=[self.sc_id == sc_id], what={"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"],
             transaction=transaction
@@ -1239,6 +1245,10 @@ class ScheduledChangeTable(AUSTable):
         (meaning: the scheduled change and the new version of the row modify
         the same columns), an UpdateMergeError is raised."""
 
+        # Filter the update to only include fields that are different than
+        # what's in the base (old_row).
+        what = {k: v for k, v in what.items() if v != old_row.get(k)}
+
         # pyflakes thinks this should be "is False", but that's not how SQLAlchemy
         # works, so we need to shut it up.
         # http://stackoverflow.com/questions/18998010/flake8-complains-on-boolean-comparison-in-filter-clause
@@ -1259,7 +1269,7 @@ class ScheduledChangeTable(AUSTable):
                 # be modifying the row when enacted. If the update to the row
                 # ("what") is also modifying the same column, this is a conflict
                 # that the server cannot resolve.
-                if sc["base_%s" % col] != old_row.get(col) and sc["base_%s" % col] != what.get(col):
+                if sc["base_%s" % col] != old_row.get(col) and what.get(col) != old_row.get(col):
                     raise UpdateMergeError("Cannot safely merge change to '%s' with scheduled change '%s'", col, sc["sc_id"])
 
             # If we get here, the change is safely mergeable
@@ -1307,7 +1317,7 @@ class RequiredSignoffsTable(AUSTable):
                 self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])
             ).fetchone()
         if users_with_role < columns["signoffs_required"]:
-            msg = ", ".join(self.decisionColumns)
+            msg = ", ".join([columns[col] for col in self.decisionColumns])
             raise ValueError("Cannot require {} signoffs for {} - only {} users hold the {} role".format(
                 columns["signoffs_required"], msg, users_with_role, columns["role"]
             ))

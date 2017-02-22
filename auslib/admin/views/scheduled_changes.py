@@ -5,7 +5,7 @@ from sqlalchemy.sql.expression import null
 from flask import jsonify, request, Response
 from flask_wtf import Form
 
-from auslib.admin.views.base import AdminView
+from auslib.admin.views.base import AdminView, requirelogin
 from auslib.admin.views.forms import DbEditableForm, SignoffForm
 from auslib.admin.views.history import HistoryView
 
@@ -27,19 +27,28 @@ class ScheduledChangesView(AdminView):
             rows = self.sc_table.select(where={"complete": False})
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
-            # TODO: Probably need to return signoffs still required after
-            # that's been implemented. That + existing signoffs may end up
-            # in the same data structure.
-            r = {"signoffs": {}}
-            for signoff in self.sc_table.signoffs.select({"sc_id": row["sc_id"]}):
-                r["signoffs"][signoff["username"]] = signoff["role"]
+            scheduled_change = {"signoffs": {}, "required_signoffs": {}}
+            base_row = {}
 
             for k, v in row.iteritems():
                 if k == "data_version":
-                    r["sc_data_version"] = v
+                    scheduled_change["sc_data_version"] = v
                 else:
-                    r[k.replace("base_", "")] = v
-            ret["scheduled_changes"].append(r)
+                    if k.startswith("base_"):
+                        k = k.replace("base_", "")
+                        base_row[k] = v
+                    scheduled_change[k] = v
+
+            for signoff in self.sc_table.signoffs.select({"sc_id": row["sc_id"]}):
+                scheduled_change["signoffs"][signoff["username"]] = signoff["role"]
+
+            # No point in retrieving this for completed scheduled changes...
+            if not row["complete"]:
+                for rs in self.table.getPotentialRequiredSignoffs([base_row]):
+                    signoffs_required = max(scheduled_change["required_signoffs"].get(rs["role"], 0), rs["signoffs_required"])
+                    scheduled_change["required_signoffs"][rs["role"]] = signoffs_required
+
+            ret["scheduled_changes"].append(scheduled_change)
         return jsonify(ret)
 
     def _post(self, form, transaction, changed_by):
@@ -130,6 +139,7 @@ class SignoffsView(AdminView):
         self.signoffs_table = table.scheduled_changes.signoffs
         super(SignoffsView, self).__init__()
 
+    @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         form = SignoffForm()
         if not form.validate():
@@ -139,6 +149,7 @@ class SignoffsView(AdminView):
         self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **form.data)
         return Response(status=200)
 
+    @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
         where = {"sc_id": sc_id}
         signoff = self.signoffs_table.select(where, transaction)

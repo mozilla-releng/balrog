@@ -358,14 +358,6 @@ class RuleScheduledChangeSignoffsView(SignoffsView):
     def __init__(self):
         super(RuleScheduledChangeSignoffsView, self).__init__("rules", dbo.rules)
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(RuleScheduledChangeSignoffsView, self)._post(sc_id, transaction, changed_by)
-
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(RuleScheduledChangeSignoffsView, self)._delete(sc_id, transaction, changed_by)
-
 
 class RuleScheduledChangeHistoryView(ScheduledChangeHistoryView):
     def __init__(self):
