@@ -85,7 +85,7 @@ class TestRunAgent(asynctest.TestCase):
                                                  "telemetry_channel": None}]}
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
-        self.assertEquals(time_is_ready.call_count, 1)
+        self.assertEquals(time_is_ready.call_count, 2)
         self.assertEquals(request.call_count, 5)
 
     @asynctest.patch("time.time")
