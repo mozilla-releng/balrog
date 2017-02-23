@@ -3,6 +3,7 @@ import asyncio
 import logging
 import time
 
+from collections import defaultdict
 from . import client
 from .changes import get_telemetry_uptake, telemetry_is_ready, time_is_ready
 from .log import configure_logging
@@ -43,7 +44,14 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     else:
                         logging.debug("Unknown change type!")
 
-                    # If it *is* ready, enact it!
+                    # Check if all the required signoffs have been obtained
+                    required_signoffs = change.get('required_signoffs') or {}
+                    signoffs = change.get('signoffs') or {}
+                    if not verify_signoffs(required_signoffs, signoffs):
+                        logging.debug("Signoff requirements unmet, marking as not ready")
+                        ready = False
+
+                    # If we have all required signoffs, go ahead
                     if ready:
                         logging.debug("Change %s is ready, enacting", change["sc_id"])
                         url = "/scheduled_changes/{}/{}/enact".format(endpoint, change["sc_id"])
@@ -62,6 +70,16 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
 
         if once:
             return
+
+
+def verify_signoffs(required_signoffs, signoffs):
+    obtained_signoffs = defaultdict(int)
+    for user, role in signoffs.items():
+        obtained_signoffs[role] += 1
+    for role, number in required_signoffs.items():
+        if required_signoffs.get(role, 0) > obtained_signoffs[role]:
+            return False
+    return True
 
 
 def main():
