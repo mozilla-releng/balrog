@@ -76,9 +76,9 @@ class TestRunAgent(asynctest.TestCase):
         time.return_value = 0
         time_is_ready.return_value = False
         sc = {'required_signoffs/product': [{"sc_id": 4, "when": 23456789,
-                                              "telemetry_uptake": None,
-                                              "telemetry_product": None,
-                                              "telemetry_channel": None}],
+                                             "telemetry_uptake": None,
+                                             "telemetry_product": None,
+                                             "telemetry_channel": None}],
               'required_signoffs/permissions': [{"sc_id": 4, "when": 23456789,
                                                  "telemetry_uptake": None,
                                                  "telemetry_product": None,
@@ -123,9 +123,9 @@ class TestRunAgent(asynctest.TestCase):
         time.return_value = 999999999
         time_is_ready.return_value = True
         sc = {'required_signoffs/product': [{"sc_id": 4, "when": 234,
-                                              "telemetry_uptake": None,
-                                              "telemetry_product": None,
-                                              "telemetry_channel": None}],
+                                             "telemetry_uptake": None,
+                                             "telemetry_product": None,
+                                             "telemetry_channel": None}],
               'required_signoffs/permissions': [{"sc_id": 4, "when": 234,
                                                  "telemetry_uptake": None,
                                                  "telemetry_product": None,
