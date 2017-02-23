@@ -151,3 +151,35 @@ class TestRunAgent(asynctest.TestCase):
         self.assertIn('/scheduled_changes/releases/4/enact', called_endpoints)
         self.assertIn('/scheduled_changes/releases/5/enact', called_endpoints)
         self.assertIn('/scheduled_changes/releases/6/enact', called_endpoints)
+
+    @asynctest.patch("time.time")
+    async def testSignoffsPresent(self, time, time_is_ready, telemetry_is_ready, request):
+        time.return_value = 999999999
+        time_is_ready.return_value = True
+        sc = {'permissions': [{"sc_id": 4,
+                               "when": 234,
+                               "telemetry_uptake": None,
+                               "telemetry_product": None,
+                               "telemetry_channel": None,
+                               "signoffs": {"bill": "releng", "mary": "relman"},
+                               "required_signoffs": {"releng": 1, "relman": 1}}]}
+        await self._runAgent(sc, request)
+        self.assertEquals(telemetry_is_ready.call_count, 0)
+        self.assertEquals(time_is_ready.call_count, 1)
+        self.assertEquals(request.call_count, 4)
+
+    @asynctest.patch("time.time")
+    async def testSignoffsAbsent(self, time, time_is_ready, telemetry_is_ready, request):
+        time.return_value = 999999999
+        time_is_ready.return_value = True
+        sc = {'permissions': [{"sc_id": 4,
+                               "when": 234,
+                               "telemetry_uptake": None,
+                               "telemetry_product": None,
+                               "telemetry_channel": None,
+                               "signoffs": {"mary": "relman"},
+                               "required_signoffs": {"releng": 1, "relman": 1}}]}
+        await self._runAgent(sc, request)
+        self.assertEquals(telemetry_is_ready.call_count, 0)
+        self.assertEquals(time_is_ready.call_count, 1)
+        self.assertEquals(request.call_count, 3)
