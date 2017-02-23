@@ -11,7 +11,7 @@ from .log import configure_logging
 SCHEDULED_CHANGE_ENDPOINTS = ['rules',
                               'releases',
                               'permissions',
-                              'required_signoffs/products',
+                              'required_signoffs/product',
                               'required_signoffs/permissions']
 
 

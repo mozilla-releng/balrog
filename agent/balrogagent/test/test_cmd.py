@@ -75,7 +75,7 @@ class TestRunAgent(asynctest.TestCase):
     async def testTimeBasedIsNotReadyRequiredSignoffs(self, time, time_is_ready, telemetry_is_ready, request):
         time.return_value = 0
         time_is_ready.return_value = False
-        sc = {'required_signoffs/products': [{"sc_id": 4, "when": 23456789,
+        sc = {'required_signoffs/product': [{"sc_id": 4, "when": 23456789,
                                               "telemetry_uptake": None,
                                               "telemetry_product": None,
                                               "telemetry_channel": None}],
@@ -122,7 +122,7 @@ class TestRunAgent(asynctest.TestCase):
     async def testTimeBasedIsReadyRequiredSignoffs(self, time, time_is_ready, telemetry_is_ready, request):
         time.return_value = 999999999
         time_is_ready.return_value = True
-        sc = {'required_signoffs/products': [{"sc_id": 4, "when": 234,
+        sc = {'required_signoffs/product': [{"sc_id": 4, "when": 234,
                                               "telemetry_uptake": None,
                                               "telemetry_product": None,
                                               "telemetry_channel": None}],
