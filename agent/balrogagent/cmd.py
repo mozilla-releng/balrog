@@ -44,11 +44,11 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     else:
                         logging.debug("Unknown change type!")
 
-                    # If it *is* ready, check if all the required signoffs have
-                    # been obtained
+                    # Check if all the required signoffs have been obtained
                     required_signoffs = change.get('required_signoffs') or {}
                     signoffs = change.get('signoffs') or {}
                     if not verify_signoffs(required_signoffs, signoffs):
+                        logging.debug("Signoff requirements unmet, marking as not ready")
                         ready = False
 
                     # If we have all required signoffs, go ahead
