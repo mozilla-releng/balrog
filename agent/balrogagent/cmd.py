@@ -10,7 +10,9 @@ from .log import configure_logging
 
 SCHEDULED_CHANGE_ENDPOINTS = ['rules',
                               'releases',
-                              'permissions']
+                              'permissions',
+                              'required_signoffs/products',
+                              'required_signoffs/permissions']
 
 
 async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, telemetry_api_root, sleeptime=30,
