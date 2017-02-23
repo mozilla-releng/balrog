@@ -74,7 +74,7 @@ class TestRunAgent(asynctest.TestCase):
     @asynctest.patch("time.time")
     async def testTimeBasedIsNotReadyRequiredSignoffs(self, time, time_is_ready, telemetry_is_ready, request):
         time.return_value = 0
-        time_is_ready.return_value = True
+        time_is_ready.return_value = False
         sc = {'required_signoffs/products': [{"sc_id": 4, "when": 23456789,
                                               "telemetry_uptake": None,
                                               "telemetry_product": None,
@@ -86,7 +86,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 2)
-        self.assertEquals(request.call_count, 7)
+        self.assertEquals(request.call_count, 5)
 
     @asynctest.patch("time.time")
     async def testTimeBasedIsReadyRules(self, time, time_is_ready, telemetry_is_ready, request):
