@@ -222,3 +222,26 @@ class TestSchema1Blob(unittest.TestCase):
 """)
         self.assertFalse(blob.containsForbiddenDomain('gg',
                                                       self.whitelistedDomains))
+
+    def testIncorrectAddonLayout(self):
+        blob = SystemAddonsBlob()
+        blob.loadJSON("""
+    {
+    "name": "fake",
+    "schema_version": 1000,
+    "hashFunction": "SHA512",
+    "addons": {
+        "c": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                    "filesize": 2,
+                    "hashValue": "3",
+                    "fileUrl": "http://a.com/blah"
+                }
+            }
+        }
+    }
+}
+""")
+        blob.validate('gg', self.whitelistedDomains)
