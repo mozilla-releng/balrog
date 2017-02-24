@@ -835,6 +835,10 @@ class TestRuleScheduledChanges(ViewTest):
             change_type="update")
         dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=8, changed_by="bill", timestamp=7, sc_id=4, when=500000, data_version=2)
 
+    # TODO: need tests that verify the new required signoffs code in scheduled_changes.py
+    # probably one that schedules a delete that requires signoff
+    # and one that schedules an insert that requires signoff
+    # and one that schedules an update where the current version requires signoff, but future version won't
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/rules")
         expected = {

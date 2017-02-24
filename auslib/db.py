@@ -1462,7 +1462,7 @@ class Rules(AUSTable):
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = []
         # The new row may change the product or channel, so we must look for
-        # Signoff for both.
+        # Signoffs for both.
         for row in affected_rows:
             if not row:
                 continue
