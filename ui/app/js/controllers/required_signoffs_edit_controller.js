@@ -5,7 +5,7 @@ function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs,
   if (mode === "channel") {
     Object.keys(required_signoffs[product]["channels"][channel]).forEach(function(role) {
       current_roles.push({
-        "role": role,
+        "name": role,
         "data_version": required_signoffs[product]["channels"][channel][role]["data_version"],
         "signoffs_required": required_signoffs[product]["channels"][channel][role]["signoffs_required"],
         "sc": required_signoffs[product]["channels"][channel][role]["sc"],
@@ -15,7 +15,7 @@ function($scope, $controller, $modalInstance, $q, CSRF, ProductRequiredSignoffs,
   else if (mode === "permissions") {
     Object.keys(required_signoffs[product]["permissions"]).forEach(function(role) {
       current_roles.push({
-        "role": role,
+        "name": role,
         "data_version": required_signoffs[product]["permissions"][role]["data_version"],
         "signoffs_required": required_signoffs[product]["permissions"][role]["signoffs_required"],
         "sc": required_signoffs[product]["permissions"][role]["sc"],

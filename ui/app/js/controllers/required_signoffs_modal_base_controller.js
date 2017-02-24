@@ -41,7 +41,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   };
 
   $scope.addRole = function() {
-    $scope.new_roles.push({"role": "", "signoffs_required": null, "sc": null, "new": true});
+    $scope.new_roles.push({"name": "", "data_version": null, "signoffs_required": null, "sc": null, "new": true});
   };
 
   $scope.removeRole = function(index) {
@@ -51,6 +51,11 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
   $scope.saveChanges = function() {
     $scope.errors = {};
     var service = null;
+    var role_names = {
+      "current": new Set(),
+      "new": new Set(),
+      "all": new Set(),
+    };
 
     if (Object.keys($scope.new_roles).length === 0) {
       $scope.errors["exception"] = "No roles found!";
@@ -68,218 +73,128 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
       return;
     }
 
-    $scope.saving = true;
-    CSRF.getToken()
-    .then(function(csrf_token) {
-      var deferreds = {};
-      var promises = [];
-      var first = true;
-
-      var current_role_names = [];
-      var new_role_names = [];
-      var all_role_names = [];
-      current_roles.forEach(function(rs) {
-        if (rs["role"] !== "") {
-          current_role_names.push(rs["role"]);
-          all_role_names.push(rs["role"]);
+    current_roles.forEach(function(role) {
+      if (role["name"] !== "") {
+        role_names["current"].add(role["name"]);
+        role_names["all"].add(role["name"]);
+      }
+    });
+    $scope.new_roles.forEach(function(role) {
+      if (role["name"] !== "") {
+        if (role_names["new"].has(role["name"])) {
+          $scope.errors["exception"] = "Multiple entries found for " + role["name"] + ". Cannot continue.";
+          return;
         }
-      });
-      $scope.new_roles.forEach(function(rs) {
-        if (rs["role"] !== "") {
-          if (new_role_names.indexOf(rs["role"]) !== -1) {
-            $scope.errors["exception"] = "Multiple entries found for " + rs["role"] + ". Cannot continue.";
-            return;
-          }
-          new_role_names.push(rs["role"]);
-          if (all_role_names.indexOf(rs["role"]) === -1) {
-            all_role_names.push(rs["role"]);
-          }
-        }
-      });
+        role_names["new"].add(role["name"]);
+        role_names["all"].add(role["name"]);
+      }
+    });
 
-      all_role_names.forEach(function(role_name) {
-        // The safe thing to do is to assume signoff is required.
-        // This will get overridden below in the one case where we shouldn't.
-        var requires_signoff = true;
-        var action = null;
-        var pending = false;
-        var role = null;
-        var i;
+    var get_role_changes = function(role_names, current_roles, new_roles) {
+      var role_changes = [];
+      var first_insert = true;
+
+      role_names["all"].forEach(function(role_name) {
+        var noop = false;
+        var change = {
+          "type": null,
+          "pending": null,
+          "role": null,
+          "requires_signoff": true,
+        };
 
         // If the role is only in the new Roles, we'll need to create it.
-        if (current_role_names.indexOf(role_name) === -1 && new_role_names.indexOf(role_name) !== -1) {
-          action = "insert";
-          // If we're creating a new role, and there wasn't any already, signoff won't be required
-          // Also, if first is false, some earlier iteration of the loop already directly created
-          // a Signoff, so signoff will be required.
-          if (current_role_names.length === 0 && first) {
-            requires_signoff = false;
-          }
-          for (i = 0; i < $scope.new_roles.length; ++i) {
-            if ($scope.new_roles[i]["role"] === role_name) {
-              role = $scope.new_roles[i];
-              break;
-            }
+        if (! role_names["current"].has(role_name) && role_names["new"].has(role_name)) {
+          change["type"] = "insert";
+          change["role"] = new_roles.find(function(r) { return r["name"] === role_name; });
+          change["pending"] = false;
+          if (role_names["current"].size === 0 && first_insert) {
+            change["requires_signoff"] = false;
+            first_insert = false;
           }
         }
         // If the role is only in the current Roles, we'll be deleting it
-        else if (current_role_names.indexOf(role_name) !== -1 && new_role_names.indexOf(role_name) === -1) {
-          action = "delete";
-          for (i = 0; i < current_roles.length; ++i) {
-            if (current_roles[i]["role"] === role_name) {
-              pending = current_roles[i]["sc"] ? true : false;
-              role = current_roles[i];
-              break;
-            }
-          }
+        else if (role_names["current"].has(role_name) && ! role_names["new"].has(role_name)) {
+          change["type"] = "delete";
+          change["role"] = current_roles.find(function(r) { return r["name"] === role_name; });
+          change["pending"] = change["role"]["sc"] ? true : false;
         }
-        // Otherwise (it's in both), it's an update.
+        // Otherwise, it's an update
         else {
-          action = "update";
-          // There must be a better way to do this, but I can't find it.
-          for (i = 0; i < $scope.new_roles.length; ++i) {
-            if ($scope.new_roles[i]["role"] === role_name) {
-              for (var j = 0; j < current_roles.length; ++j) {
-                if ($scope.new_roles[i]["role"] === current_roles[j]["role"]) {
-                  if ($scope.new_roles[i]["sc"]) {
-                    pending = true;
-                    role = $scope.new_roles[i];
-                    if ($scope.new_roles[i]["sc"]["signoffs_required"] === current_roles[j]["sc"]["signoffs_required"]) {
-                      console.log("No change to " + role_name + ", skipping...");
-                      return; // exit forEach
-                    }
-                  }
-                  else {
-                    role = $scope.new_roles[i];
-                    if ($scope.new_roles[i]["signoffs_required"] === current_roles[j]["signoffs_required"]) {
-                      console.log("No change to " + role_name + ", skipping...");
-                      return; // exit forEach
-                    }
-                  }
-                }
-              }
+          var new_role = new_roles.find(function(r) { return r["name"] === role_name; });
+          var current_role = current_roles.find(function(r) { return r["name"] === role_name; });
+
+          change["type"] = "update";
+          change["role"] = new_role;
+          if (new_role["sc"]) {
+            change["pending"] = true;
+            if (new_role["sc"]["signoffs_required"] === current_role["sc"]["signoffs_required"]) {
+              console.log("No change to " + role_name + ", skipping...");
+              noop = true;
+            }
+          }
+          else {
+            change["pending"] = false;
+            if (new_role["signoffs_required"] === current_role["signoffs_required"]) {
+              console.log("No change to " + role_name + ", skipping...");
+              noop = true;
             }
           }
         }
 
-        first = false;
+        if (! noop) {
+          role_changes.push(change);
+        }
+      });
+      return role_changes;
+    };
 
-        var addScheduledChangeCallback = function(data, deferred) {
-          return function(response) {
-            if ($scope.mode === "channel") {
-              if (data["change_type"] === "insert") {
-                required_signoffs[$scope.product]["channels"][$scope.channel][data["role"]] = {
-                  "signoffs_required": 0,
-                  "data_version": null,
-                  "sc": {
-                    // TODO: We should really be setting this, but the backend doesn't
-                    // return them.
-                    "required_signoffs": {},
-                    "signoffs_required": data["signoffs_required"] || 0,
-                    "sc_id": response["sc_id"],
-                    "scheduled_by": current_user,
-                    "sc_data_version": 1,
-                    "signoffs": {},
-                    "change_type": data["change_type"],
-                  },
-                };
-              }
-              else {
-                required_signoffs[$scope.product]["channels"][$scope.channel][data["role"]]["sc"] = {
-                  "required_signoffs": {},
-                  "signoffs_required": data["signoffs_required"] || 0,
-                  "sc_id": response["sc_id"],
-                  "scheduled_by": current_user,
-                  "sc_data_version": 1,
-                  "signoffs": {},
-                  "change_type": data["change_type"],
-                };
-              }
-            }
-            else {
-              if (data["change_type"] === "insert") {
-                required_signoffs[$scope.product]["permissions"][data["role"]] = {
-                  "signoffs_required": 0,
-                  "data_version": null,
-                  "sc": {
-                    "required_signoffs": {},
-                    "signoffs_required": data["signoffs_required"] || 0,
-                    "sc_id": response["sc_id"],
-                    "scheduled_by": current_user,
-                    "sc_data_version": 1,
-                    "signoffs": {},
-                    "change_type": data["change_type"],
-                  },
-                };
-              }
-              else {
-                required_signoffs[$scope.product]["permissions"][data["role"]]["sc"] = {
-                  "required_signoffs": {},
-                  "signoffs_required": data["signoffs_required"] || 0,
-                  "sc_id": response["sc_id"],
-                  "scheduled_by": current_user,
-                  "sc_data_version": 1,
-                  "signoffs": {},
-                  "change_type": data["change_type"],
-                };
-              }
-            }
-            deferred.resolve();
-          };
-        };
-        var errorCallback = function(data, deferred) {
-          return function(response, status) {
-            if (typeof response === "object") {
-              $scope.errors = response;
-            }
-            else if (typeof response === "string"){
-              $scope.errors["exception"] = response;
-            }
-            else {
-              sweetAlert("Unknown error occurred");
-            }
-            deferred.resolve();
-          };
-        };
-
-        deferreds[role_name] = $q.defer();
-        promises.push(deferreds[role_name].promise);
-        var data = {"product": $scope.product, "role": role_name, "csrf_token": csrf_token, "data_version": role["data_version"]};
+    var process_role_changes = function(change, csrf_token) {
+      return new Promise((resolve, reject) => {
+        var role_name = change["role"]["name"];
+        var data = {"product": $scope.product, "role": role_name, "csrf_token": csrf_token, "data_version": change["data_version"]};
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
         }
 
         // If there's no signoffs required yet, we can just create it directly!
-        if (! requires_signoff) {
-          data["signoffs_required"] = role["signoffs_required"];
-          if (action === "insert") {
+        if (! change["requires_signoff"]) {
+          data["signoffs_required"] = change["role"]["signoffs_required"];
+          if (change["type"] === "insert") {
             service.addRequiredSignoff(data)
             .success(function(response) {
               if ($scope.mode === "channel") {
                 if (! ($scope.product in required_signoffs)) {
                   required_signoffs[$scope.product] = {"channels": {}};
                 }
+                if (! ("channels" in required_signoffs[$scope.product])) {
+                  required_signoffs[$scope.product]["channels"] = {};
+                }
                 required_signoffs[$scope.product]["channels"][$scope.channel] = {};
                 required_signoffs[$scope.product]["channels"][$scope.channel][role_name] = {
-                    "signoffs_required": role["signoffs_required"],
+                    "signoffs_required": change["role"]["signoffs_required"],
                     "data_version": response["new_data_version"],
                     "sc": null,
                 };
               }
               else {
-                required_signoffs[$scope.product] = {"permissions": {}};
+                if (! ($scope.product in required_signoffs)) {
+                  required_signoffs[$scope.product] = {"permissions": {}};
+                }
+                if (! ("permissions" in required_signoffs[$scope.product])) {
+                  required_signoffs[$scope.product]["permissions"] = {};
+                }
                 required_signoffs[$scope.product]["permissions"][role_name] = {
-                    "signoffs_required": role["signoffs_required"],
+                    "signoffs_required": change["role"]["signoffs_required"],
                     "data_version": response["new_data_version"],
                     "sc": null,
                 };
               }
-              deferreds[role_name].resolve();
+              resolve();
             })
-            .error(errorCallback(data, deferreds[role_name]));
+            .error(function(response) { reject(response); });
           }
         }
-        // Otherwise, we need to use Scheduled Changes
         else {
           // There's no use case for users to pick a specific time for these
           // to be enacted, so we just schedule them for 5 seconds in the future.
@@ -288,58 +203,146 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           data["when"] = new Date().getTime() + 5000;
           // If we're working with an already pending change we just need to
           // update or delete it.
-          if (pending) {
-            data["sc_data_version"] = role["sc"]["sc_data_version"];
-            if (action === "delete") {
-              service.deleteScheduledChange(role["sc"]["sc_id"], data)
+          if (change["pending"]) {
+            data["sc_data_version"] = change["role"]["sc"]["sc_data_version"];
+            if (change["type"] === "delete") {
+              service.deleteScheduledChange(change["role"]["sc"]["sc_id"], data)
               .success(function(response) {
                 if ($scope.mode === "channel") {
-                  required_signoffs[$scope.product]["channels"][$scope.channel][role_name]["sc"] = null;
+                  // If there was _only_ a scheduled change, we can delete the entire Role.
+                  if (required_signoffs[$scope.product]["channels"][$scope.channel][role_name]["data_version"] === null) {
+                    delete required_signoffs[$scope.product]["channels"][$scope.channel][role_name];
+                  }
+                  // Otherwise, just reset the scheduled changes part
+                  else {
+                    required_signoffs[$scope.product]["channels"][$scope.channel][role_name]["sc"] = null;
+                  }
                 }
                 else {
-                  required_signoffs[$scope.product]["permissions"][role_name]["sc"] = null;
+                  if (required_signoffs[$scope.product]["permissions"][role_name]["data_version"] === null) {
+                    delete required_signoffs[$scope.product]["permissions"][role_name];
+                  }
+                  else {
+                    required_signoffs[$scope.product]["permissions"][role_name]["sc"] = null;
+                  }
                 }
-                deferreds[role_name].resolve();
+                resolve();
               })
-              .error(errorCallback(data, deferreds[role_name]));
+              .error(function(response) { reject(response); });
             }
             else {
-              data["signoffs_required"] = role["sc"]["signoffs_required"];
-              service.updateScheduledChange(role["sc"]["sc_id"], data)
+              data["signoffs_required"] = change["role"]["sc"]["signoffs_required"];
+              service.updateScheduledChange(change["role"]["sc"]["sc_id"], data)
               .success(function(response) {
                 if ($scope.mode === "channel") {
                   required_signoffs[$scope.product]["channels"][$scope.channel][role_name]["sc"]["sc_data_version"] = response["new_data_version"];
-                  required_signoffs[$scope.product]["channels"][$scope.channel][role_name]["sc"]["signoffs_required"] = role["sc"]["signoffs_required"];
+                  required_signoffs[$scope.product]["channels"][$scope.channel][role_name]["sc"]["signoffs_required"] = change["role"]["sc"]["signoffs_required"];
                 }
                 else {
                   required_signoffs[$scope.product]["permissions"][role_name]["sc"]["sc_data_version"] = response["new_data_version"];
-                  required_signoffs[$scope.product]["permissions"][role_name]["sc"]["signoffs_required"] = role["sc"]["signoffs_required"];
+                  required_signoffs[$scope.product]["permissions"][role_name]["sc"]["signoffs_required"] = change["role"]["sc"]["signoffs_required"];
                 }
-                deferreds[role_name].resolve();
+                resolve();
               })
-              .error(errorCallback(data, deferreds[role_name]));
+              .error(function(response) { reject(response); });
             }
           }
           // Otherwise, we'll create a new Scheduled Change.
           else {
-            data["change_type"] = action;
-            if (action !== "delete") {
-              data["signoffs_required"] = role["signoffs_required"];
+            data["change_type"] = change["type"];
+            if (change["type"] !== "delete") {
+              data["signoffs_required"] = change["role"]["signoffs_required"];
             }
             service.addScheduledChange(data)
-            .success(addScheduledChangeCallback(data, deferreds[role_name]))
-            .error(errorCallback(data, deferreds[role_name]));
+            .success(function(response) {
+              if ($scope.mode === "channel") {
+                if (data["change_type"] === "insert") {
+                  required_signoffs[$scope.product]["channels"][$scope.channel][role_name] = {
+                    "signoffs_required": 0,
+                    "data_version": null,
+                    "sc": {
+                      // TODO: We should really be setting this, but the backend doesn't
+                      // return them.
+                      "required_signoffs": {},
+                      "signoffs_required": change["role"]["signoffs_required"] || 0,
+                      "sc_id": response["sc_id"],
+                      "scheduled_by": current_user,
+                      "sc_data_version": 1,
+                      "signoffs": {},
+                      "change_type": change["type"],
+                    },
+                  };
+                }
+                else {
+                  required_signoffs[$scope.product]["channels"][$scope.channel][role_name]["sc"] = {
+                    "required_signoffs": {},
+                    "signoffs_required": change["role"]["signoffs_required"] || 0,
+                    "sc_id": response["sc_id"],
+                    "scheduled_by": current_user,
+                    "sc_data_version": 1,
+                    "signoffs": {},
+                    "change_type": change["type"],
+                  };
+                }
+              }
+              else {
+                if (data["change_type"] === "insert") {
+                  required_signoffs[$scope.product]["permissions"][role_name] = {
+                    "signoffs_required": 0,
+                    "data_version": null,
+                    "sc": {
+                      "required_signoffs": {},
+                      "signoffs_required": change["role"]["signoffs_required"] || 0,
+                      "sc_id": response["sc_id"],
+                      "scheduled_by": current_user,
+                      "sc_data_version": 1,
+                      "signoffs": {},
+                      "change_type": change["type"],
+                    },
+                  };
+                }
+                else {
+                  required_signoffs[$scope.product]["permissions"][role_name]["sc"] = {
+                    "required_signoffs": {},
+                    "signoffs_required": change["role"]["signoffs_required"] || 0,
+                    "sc_id": response["sc_id"],
+                    "scheduled_by": current_user,
+                    "sc_data_version": 1,
+                    "signoffs": {},
+                    "change_type": change["type"],
+                  };
+                }
+              }
+              resolve();
+            })
+            .error(function(response) { reject(response); });
           }
         }
       });
+    };
 
-      $q.all(promises)
-      .then(function() {
-        if (Object.keys($scope.errors).length === 0) {
-          $modalInstance.close();
-        }
-        $scope.saving = false;
-      });
+    $scope.saving = true;
+    CSRF.getToken()
+    .then(function(csrf_token) {
+      role_changes = get_role_changes(role_names, current_roles, $scope.new_roles);
+      promises = role_changes.map(function(change) { return process_role_changes(change, csrf_token); });
+      return $q.all(promises);
+    })
+    .then(function() {
+      $scope.saving = false;
+      $modalInstance.close();
+    },
+    function(response) {
+      $scope.saving = false;
+      if (typeof response === "object") {
+        $scope.errors = response;
+      }
+      else if (typeof response === "string"){
+        $scope.errors["exception"] = response;
+      }
+      else {
+        sweetAlert("Unknown error occurred");
+      }
     });
   };
 
