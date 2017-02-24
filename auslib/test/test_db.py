@@ -4149,3 +4149,87 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             table_instances.append((meta_data.tables[table_name], self.db.metadata.tables[table_name]))
 
         self.assert_attributes_for_tables(table_instances)
+
+    def _rules_version_length_migration_test(self, db, upgrade=True):
+        """
+        Tests the upgrades and downgrades for version 23 work properly.
+        :param db: migrated DB object.
+        :param upgrade: boolean parameter. If true run for upgrade script tests else
+          run downgrade script tests.
+        """
+        upgraded_length = 75
+        downgrade_length = 10
+        meta_data = self._get_reflected_metadata(db)
+        tables_list = ["rules", "rules_history"]
+        scheduled_changes_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
+        if upgrade:
+            for table_name in tables_list:
+                self.assertEquals(upgraded_length, meta_data.tables[table_name].c.version.type.length)
+            for table_name in scheduled_changes_tables:
+                self.assertEquals(upgraded_length, meta_data.tables[table_name].c.base_version.type.length)
+        else:
+            for table_name in tables_list:
+                self.assertEquals(downgrade_length, meta_data.tables[table_name].c.version.type.length)
+            for table_name in scheduled_changes_tables:
+                self.assertEquals(downgrade_length, meta_data.tables[table_name].c.base_version.type.length)
+
+    def _fix_column_attributes_migration_test(self, db, upgrade=True):
+        """
+        Tests the upgrades and downgrades for version 22 work properly.
+        :param db: migrated DB object
+        :param upgrade: boolean parameter. If true run for upgrade script tests else
+          run downgrade script tests.
+        """
+        data_version_nullable_tables = [
+            'permissions_req_signoffs_scheduled_changes_conditions',
+            'permissions_scheduled_changes',
+            'permissions_scheduled_changes_conditions',
+            'product_req_signoffs_scheduled_changes_conditions',
+            'releases_scheduled_changes',
+            'releases_scheduled_changes_conditions',
+            'rules_scheduled_changes',
+            'rules_scheduled_changes_conditions',
+            'user_roles'
+        ]
+
+        when_nullable_tables = [
+            'permissions_scheduled_changes_conditions',
+            'releases_scheduled_changes_conditions'
+        ]
+
+        meta_data = self._get_reflected_metadata(db)
+
+        if upgrade:
+            for table_name in data_version_nullable_tables:
+                self.assertFalse(meta_data.tables[table_name].c.data_version.nullable)
+            for table_name in when_nullable_tables:
+                self.assertTrue(meta_data.tables[table_name].c.when.nullable)
+        else:
+            for table_name in data_version_nullable_tables:
+                self.assertTrue(meta_data.tables[table_name].c.data_version.nullable)
+            for table_name in when_nullable_tables:
+                self.assertFalse(meta_data.tables[table_name].c.when.nullable)
+
+    def testDowngradesWorkAsExpected(self):
+        """
+        Tests that downgrades and upgrades work as expected. Since the DB will never
+        be rolled back beyond version 21 we treat it as the base version for all future versions from now.
+        Note: These tests run and verify migrations on a sqllite DB
+        whereas the actual migration happens on a mySQL DB.
+        """
+        # https://github.com/buildbot/buildbot/blob/87108ec4088dc7fd5394ac3c1d0bd3b465300d92/master/buildbot/db/model.py#L455
+        # http://code.google.com/p/sqlalchemy-migrate/issues/detail?id=100
+        # means  we cannot use the migrate.versioning.api module.  So the workaround for that hard-code
+        # the latest version.
+        latest_version = 23
+        db = self._get_migrated_db()
+        versions_migrate_tests_dict = {22: self._rules_version_length_migration_test,
+                                       21: self._fix_column_attributes_migration_test}
+
+        for v in xrange(latest_version - 1, 20, -1):
+            db.downgrade(version=v)
+            versions_migrate_tests_dict[v](db=db, upgrade=False)
+
+        for v in xrange(22, latest_version + 1):
+            db.upgrade(version=v)
+            versions_migrate_tests_dict[v - 1](db=db)
