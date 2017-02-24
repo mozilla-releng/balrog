@@ -236,7 +236,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   };
 
   $scope.editRequiredSignoffs = function(mode, channel) {
-    channel = channel ? channel : "";
+    channel = channel || "";
     $modal.open({
       templateUrl: "required_signoff_modal.html",
       controller: "EditRequiredSignoffsCtrl",
@@ -262,7 +262,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   };
 
   $scope.deleteRequiredSignoffs = function(required_signoffs, mode, channel) {
-    channel = channel ? channel : "";
+    channel = channel || "";
     $modal.open({
       templateUrl: "required_signoff_delete_modal.html",
       controller: "DeleteRequiredSignoffsCtrl",
@@ -288,7 +288,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   };
 
   $scope.signoff = function(mode, sc, role, channel) {
-    channel = channel ? channel : "";
+    channel = channel || "";
     $modal.open({
       templateUrl: "signoff_modal.html",
       controller: "SignoffCtrl",
@@ -332,7 +332,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   };
 
   $scope.revokeSignoff = function(mode, sc, role, channel) {
-    channel = channel ? channel : "";
+    channel = channel || "";
     $modal.open({
       templateUrl: "revoke_signoff_modal.html",
       controller: "RevokeSignoffCtrl",

@@ -13,10 +13,10 @@
     <div class="tabbable tabs-below" ng-show="!editing">
       <ul class="nav nav-pills" role="tablist">
         <li ng-class="{active: mode === 'channel'}">
-          <a href="#" ng-click="mode = 'channel'">Channel</a>
+          <a class="btn btn-default" href="#" ng-click="mode = 'channel'">Channel</a>
         </li>
         <li ng-class="{active: mode === 'permissions'}">
-          <a href="#" ng-click="mode = 'permissions'">Permissions</a>
+          <a class="btn btn-default" href="#" ng-click="mode = 'permissions'">Permissions</a>
         </li>
       </ul>
       <div class="tab-content" ng-show="mode === 'channel'">
@@ -52,7 +52,7 @@
             </button>
           </th>
           <td>
-            <input tabindex="{{ ($index * 2) + 3 }}" name="role" type="text" class="form-control" ng-model="rs['role']"
+            <input tabindex="{{ ($index * 2) + 3 }}" name="role" type="text" class="form-control" ng-model="rs['name']"
                    ng-disabled="editing && rs['new'] === undefined">
           </td>
           <td ng-if="rs['sc']"><input tabindex="{{ ($index * 2) + 4 }}" name="signoffs_required" type="text" class="form-control"
