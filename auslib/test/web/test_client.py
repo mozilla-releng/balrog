@@ -55,7 +55,7 @@ class ClientTestBase(ClientTestCommon):
         self.version_fd, self.version_file = mkstemp()
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
-        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'b2g', 'response-a', 'response-b', 's', 'responseblob-a',
+        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'response-a', 'response-b', 's', 'responseblob-a',
                                                        'responseblob-b', 'q', 'fallback')}
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
@@ -68,7 +68,7 @@ class ClientTestBase(ClientTestCommon):
 """)
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e', 'b2g')})
+        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e')})
         self.client = app.test_client()
         self.view = ClientRequestView()
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='b',
@@ -259,69 +259,6 @@ class ClientTestBase(ClientTestCommon):
 }
 """))
 
-        dbo.rules.t.insert().execute(priority=100, backgroundRate=100, mapping='foxfood-whitelisted', update_type='minor', product='b2g',
-                                     whitelist='b2g-whitelist', data_version=1)
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='foxfood-whitelisted', update_type='minor', product='b2g',
-                                     channel="foxfood", whitelist='b2g-whitelist', data_version=1)
-        dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping='foxfood-fallback', update_type='minor', product='b2g', data_version=1)
-        dbo.releases.t.insert().execute(name='b2g-whitelist', product='b2g', data_version=1, data=createBlob("""
-{
-  "name": "b2g-whitelist",
-  "schema_version": 3000,
-  "whitelist": [
-    { "imei": "000000000000000" },
-    { "imei": "000000000000001" },
-    { "imei": "000000000000002" }
-  ]
-}
-"""))
-
-        dbo.releases.t.insert().execute(name='foxfood-whitelisted', product='b2g', data_version=1, data=createBlob("""
-{
-    "name": "foxfood-whitelisted",
-    "schema_version": 1,
-    "extv": "2.5",
-    "hashFunction": "sha512",
-    "platforms": {
-        "p": {
-            "buildID": "25",
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 22,
-                        "from": "*",
-                        "hashValue": "23",
-                        "fileUrl": "http://a.com/secrets"
-                    }
-                }
-            }
-        }
-    }
-}
-"""))
-        dbo.releases.t.insert().execute(name='foxfood-fallback', product='b2g', data_version=1, data=createBlob("""
-{
-    "name": "foxfood-fallback",
-    "schema_version": 1,
-    "extv": "2.5",
-    "hashFunction": "sha512",
-    "platforms": {
-        "p": {
-            "buildID": "25",
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 22,
-                        "from": "*",
-                        "hashValue": "23",
-                        "fileUrl": "http://a.com/public"
-                    }
-                }
-            }
-        }
-    }
-}
-"""))
         dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
                                      mapping='gmp', update_type='minor',
                                      product='gmp',
@@ -669,35 +606,6 @@ class ClientTest(ClientTestBase):
 </updates>
 """)
 
-    def testVersion5GetWhitelistedOneLevel(self):
-        ret = self.client.get('/update/5/b2g/1.0/1/p/l/foxfood/a/a/a/000000000000001/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
-        <patch type="complete" URL="http://a.com/secrets" hashFunction="sha512" hashValue="23" size="22"/>
-    </update>
-</updates>
-""")
-
-    def testVersion5GetNotWhitelistedOneLevel(self):
-        ret = self.client.get('/update/5/b2g/1.0/1/p/l/a/a/a/a/000000000000009/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
-        <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
-    </update>
-</updates>
-""")
-
-    def testVersion5GetNotWhitelistedMultiLevel(self):
-        ret = self.client.get('/update/5/b2g/1.0/1/p/l/foxfood/a/a/a/000000000000009/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
-        <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
-    </update>
-</updates>
-""")
 
     def testVersion6GetWithSystemCapabilitiesMatch(self):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml')
