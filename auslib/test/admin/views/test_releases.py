@@ -993,7 +993,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEquals(ret_data, json.loads("""
 {
     "releases": [
-        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4]},
+        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4, 6]},
         {"data_version": 1, "name": "ab", "product": "a", "read_only": false, "rule_ids": []}
     ]
 }
@@ -1103,6 +1103,10 @@ class TestReleasesScheduledChanges(ViewTest):
         )
         dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="releng")
         dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="ben", role="releng")
+        # TODO: need tests that verify the new required signoffs code in scheduled_changes.py
+        # probably one that schedules a delete that requires signoff
+        # and one that schedules an insert that requires signoff
+        # and one that schedules an update where the current version requires signoff, but future version won't
 
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/releases")
@@ -1665,7 +1669,7 @@ class TestRuleIdsReturned(ViewTest):
 
     def testWhitelistIncluded(self):
         rel_name = 'ab'
-        rule_id = 6
+        rule_id = 7
 
         releases = self._get("/releases")
         releases_data = json.loads(releases.data)
@@ -1684,7 +1688,7 @@ class TestRuleIdsReturned(ViewTest):
 
     def testMappingIncluded(self):
         rel_name = 'ab'
-        rule_id = 6
+        rule_id = 7
 
         releases = self._get("/releases")
         releases_data = json.loads(releases.data)

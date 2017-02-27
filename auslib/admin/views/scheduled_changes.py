@@ -56,7 +56,7 @@ class ScheduledChangesView(AdminView):
                 # looking for required signoffs, because it won't exist when
                 # enacted.
                 if row["change_type"] != "delete":
-                  affected_rows.append(base_row)
+                    affected_rows.append(base_row)
                 for rs in self.table.getPotentialRequiredSignoffs(affected_rows):
                     signoffs_required = max(scheduled_change["required_signoffs"].get(rs["role"], 0), rs["signoffs_required"])
                     scheduled_change["required_signoffs"][rs["role"]] = signoffs_required

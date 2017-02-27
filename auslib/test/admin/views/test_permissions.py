@@ -336,6 +336,10 @@ class TestPermissionsScheduledChanges(ViewTest):
         )
         dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="releng")
         dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="mary", role="relman")
+        # TODO: need tests that verify the new required signoffs code in scheduled_changes.py
+        # probably one that schedules a delete that requires signoff
+        # and one that schedules an insert that requires signoff
+        # and one that schedules an update where the current version requires signoff, but future version won't
 
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/permissions")
