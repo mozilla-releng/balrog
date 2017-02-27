@@ -66,6 +66,12 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
         $scope.sc.sc_data_version = 1;
         $scope.sc.sc_id = response.sc_id;
         $scope.scheduled_changes.push($scope.sc);
+        Rules.getScheduledByUser()
+          .then(function successCallback(response) {
+            $scope.sc.scheduled_by = response.data.username;
+          },function errorCallback(response) {
+            console.log(response.data);
+          });
         $modalInstance.close();
       })
       .error(function(response, status) {
