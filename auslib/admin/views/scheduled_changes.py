@@ -29,7 +29,7 @@ class ScheduledChangesView(AdminView):
         for row in rows:
             scheduled_change = {"signoffs": {}, "required_signoffs": {}}
             base_row = {}
-            pk = {}
+            base_pk = {}
 
             for k, v in row.iteritems():
                 if k == "data_version":
@@ -39,7 +39,7 @@ class ScheduledChangesView(AdminView):
                         k = k.replace("base_", "")
                         base_row[k] = v
                         if getattr(self.table, k).primary_key:
-                            pk[k] = v
+                            base_pk[k] = v
                     scheduled_change[k] = v
 
             for signoff in self.sc_table.signoffs.select({"sc_id": row["sc_id"]}):
@@ -51,7 +51,7 @@ class ScheduledChangesView(AdminView):
                 # We don't need to consider the existing version of a row for
                 # inserts, because it doesn't exist yet!
                 if row["change_type"] != "insert":
-                    affected_rows.append(self.table.select(where=pk)[0])
+                    affected_rows.append(self.table.select(where=base_pk)[0])
                 # We don't need to consider the future version of the row when
                 # looking for required signoffs, because it won't exist when
                 # enacted.
