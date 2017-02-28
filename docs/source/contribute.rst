@@ -51,7 +51,7 @@ Running Tests
 
 It is a good idea to run all tests to see if Balrog is running properly.
 
-To excute all tests, run
+To execute all tests, run
 ::
 
     $ ./run-tests.sh
@@ -88,6 +88,19 @@ To start with, it's recommended that you look at a `Good First Bug <https://bugz
 Once you have decided the work a bug you can comment on the Bug about any questions you have related to it.
 You can also ask in irc://irc.mozilla.org/#balrog for help.
 
+
+------------------
+IRC best practices
+------------------
+
+If you want to message someone directly within the channel, precede your message
+with their nick:. This will alert the person that they have a message especially
+for them, and makes it easier for the person receiving the message to read it
+in a busy channel. For example:
+
+::
+
+    johnsmith_: your message/query
 
 
 ------------
