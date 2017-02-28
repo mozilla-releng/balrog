@@ -4,14 +4,14 @@ auslib.web
 
 .. toctree::
 
-    auslib.web.views
+    auslib.web.public.views
 
 
 
-auslib.web.base
+auslib.web.public.base
 ---------------
 
-.. automodule:: auslib.web.base
+.. automodule:: auslib.web.public.base
     :members:
     :undoc-members:
     :show-inheritance:

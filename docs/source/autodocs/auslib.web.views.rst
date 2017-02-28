@@ -1,10 +1,10 @@
-auslib.web.views
+auslib.web.public.views
 ================
 
-auslib.web.views.client
+auslib.web.public.views.client
 -----------------------
 
-.. automodule:: auslib.web.views.client
+.. automodule:: auslib.web.public.views.client
     :members:
     :undoc-members:
     :show-inheritance:

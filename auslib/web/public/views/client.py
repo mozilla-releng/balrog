@@ -4,7 +4,7 @@ import re
 from flask import make_response, request
 from flask.views import MethodView
 
-from auslib.web.base import AUS, app
+from auslib.web.public.base import AUS, app
 from auslib.global_state import dbo
 
 import logging

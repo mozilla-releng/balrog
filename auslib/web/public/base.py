@@ -13,7 +13,7 @@ app = Flask(__name__)
 AUS = AUS()
 sentry = Sentry()
 
-from auslib.web.views.client import ClientRequestView
+from auslib.web.public.views.client import ClientRequestView
 from auslib.errors import BadDataError
 
 

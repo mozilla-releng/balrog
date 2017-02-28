@@ -8,8 +8,8 @@ import json
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
-from auslib.web.base import app
-from auslib.web.views.client import ClientRequestView
+from auslib.web.public.base import app
+from auslib.web.public.views.client import ClientRequestView
 from auslib.errors import BadDataError
 
 
@@ -898,7 +898,7 @@ class ClientTest(ClientTestBase):
         request6 = '/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/' \
             '%DISTRIBUTION_VERSION%/update.xml'
 
-        with mock.patch('auslib.web.views.client.ClientRequestView') as mock_cr_view:
+        with mock.patch('auslib.web.public.views.client.ClientRequestView') as mock_cr_view:
             for request in [request1, request2, request3, request4, request5, request6]:
                 ret = self.client.get(request)
                 self.assertEqual(ret.status_code, 404)
@@ -935,13 +935,13 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
 
     def testContentSecurityPolicyIsSetFor400(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.views.client.ClientRequestView.get') as m:
             m.side_effect = BadDataError('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
 
     def testContentSecurityPolicyIsSetFor500(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.views.client.ClientRequestView.get') as m:
             m.side_effect = Exception('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
@@ -955,13 +955,13 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
 
     def testStrictTransportSecurityIsSetFor400(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.views.client.ClientRequestView.get') as m:
             m.side_effect = BadDataError('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
 
     def testStrictTransportSecurityIsSetFor500(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.views.client.ClientRequestView.get') as m:
             m.side_effect = Exception('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
@@ -975,13 +975,13 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
 
     def testXContentTypeOptionsIsSetFor400(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.views.client.ClientRequestView.get') as m:
             m.side_effect = BadDataError('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
 
     def testXContentTypeOptionsIsSetFor500(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.views.client.ClientRequestView.get') as m:
             m.side_effect = Exception('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
@@ -991,7 +991,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.assertUpdatesAreEmpty(ret)
 
     def testErrorMessageOn500(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.views.client.ClientRequestView.get') as m:
             m.side_effect = Exception('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.status_code, 500)
@@ -999,7 +999,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual('I break!', ret.data)
 
     def testEscapedOutputOn500(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.views.client.ClientRequestView.get') as m:
             m.side_effect = Exception('50.1.0zibj5<img src%3da onerror%3dalert(document.domain)>')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.status_code, 500)
@@ -1007,7 +1007,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual('50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;', ret.data)
 
     def testEscapedOutputOn400(self):
-        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
+        with mock.patch("auslib.web.public.views.client.ClientRequestView.get") as m:
             m.side_effect = BadDataError('Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.')
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 400, ret.data)
@@ -1015,7 +1015,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", ret.data)
 
     def testSentryBadDataError(self):
-        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m, mock.patch("auslib.web.base.sentry") as sentry:
+        with mock.patch("auslib.web.public.views.client.ClientRequestView.get") as m, mock.patch("auslib.web.public.base.sentry") as sentry:
             m.side_effect = BadDataError("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertFalse(sentry.captureException.called)
@@ -1023,7 +1023,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.mimetype, "text/plain")
 
     def testSentryRealError(self):
-        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m, mock.patch("auslib.web.base.sentry") as sentry:
+        with mock.patch("auslib.web.public.views.client.ClientRequestView.get") as m, mock.patch("auslib.web.public.base.sentry") as sentry:
             m.side_effect = Exception("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
@@ -1043,7 +1043,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         request6 = '/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/' \
             '%DISTRIBUTION_VERSION%/update.xml'
 
-        with mock.patch('auslib.web.views.client.ClientRequestView') as mock_cr_view:
+        with mock.patch('auslib.web.public.views.client.ClientRequestView') as mock_cr_view:
             for request in [request1, request2, request3, request4, request5, request6]:
                 ret = self.client.get(request)
                 self.assertUpdatesAreEmpty(ret)
