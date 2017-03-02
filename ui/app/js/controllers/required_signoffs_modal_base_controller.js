@@ -192,7 +192,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               }
               resolve();
             })
-            .error(function(response) { reject(response); });
+            .error(reject);
           }
         }
         else {
@@ -228,7 +228,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                 }
                 resolve();
               })
-              .error(function(response) { reject(response); });
+              .error(reject);
             }
             else {
               data["signoffs_required"] = change["role"]["sc"]["signoffs_required"];
@@ -244,7 +244,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
                 }
                 resolve();
               })
-              .error(function(response) { reject(response); });
+              .error(reject);
             }
           }
           // Otherwise, we'll create a new Scheduled Change.
@@ -315,7 +315,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
               }
               resolve();
             })
-            .error(function(response) { reject(response); });
+            .error(reject);
           }
         }
       });
