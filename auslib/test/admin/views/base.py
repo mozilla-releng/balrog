@@ -44,7 +44,7 @@ class ViewTest(unittest.TestCase):
                                            options=dict(products=['fake', "a", 'b'], actions=["create", "modify"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=dict(actions=["set"], products=["a", "b"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='rule', username='bob', options=dict(actions=["modify"], products=['a', "b"]), data_version=1)
-        dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=dict(actions=["modify"], products=['a']), data_version=1)
+        dbo.permissions.t.insert().execute(permission='release', username='ashanti', options=dict(actions=["modify"], products=['a']), data_version=1)
         dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=dict(actions=["enact"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_locale', username='ashanti',
                                            options=dict(actions=["modify"], products=['a']), data_version=1)

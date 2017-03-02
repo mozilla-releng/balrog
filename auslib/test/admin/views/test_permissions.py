@@ -485,7 +485,7 @@ class TestPermissionsScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeDeletePermission(self):
         data = {
-            "when": 400000000, "permission": "build", "username": "ashanti", "change_type": "delete", "data_version": 1,
+            "when": 400000000, "permission": "release", "username": "ashanti", "change_type": "delete", "data_version": 1,
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -495,7 +495,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 7, "scheduled_by": "bill", "change_type": "delete", "complete": False, "data_version": 1,
-            "base_permission": "build", "base_username": "ashanti", "base_options": None, "base_data_version": 1,
+            "base_permission": "release", "base_username": "ashanti", "base_options": None, "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 7).execute().fetchall()
