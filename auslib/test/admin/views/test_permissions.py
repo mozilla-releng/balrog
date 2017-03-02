@@ -337,10 +337,40 @@ class TestPermissionsScheduledChanges(ViewTest):
         dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="releng")
         dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="mary", role="relman")
 
+        dbo.permissions.scheduled_changes.t.insert().execute(
+            sc_id=5, scheduled_by="bill", change_type="insert", data_version=1, base_permission="rule", base_username="joe",
+            base_options={"products": ["fake"]},
+        )
+        dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=10, changed_by="bill", timestamp=204, sc_id=5)
+        dbo.permissions.scheduled_changes.history.t.insert().execute(
+            change_id=11, changed_by="bill", timestamp=205, sc_id=5, scheduled_by="bill", change_type="insert", data_version=1,
+            base_permission="rule", base_username="joe", base_options={"products": ["fake"]},
+        )
+        dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=5, when=98000000, data_version=1)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=10, changed_by="bill", timestamp=204, sc_id=5)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
+            change_id=11, changed_by="bill", timestamp=205, sc_id=5, when=98000000, data_version=1
+        )
+
+        dbo.permissions.scheduled_changes.t.insert().execute(
+            sc_id=6, scheduled_by="bill", change_type="update", data_version=1, base_permission="release", base_username="bob",
+            base_options={"products": ["a", "b"]}, base_data_version=1
+        )
+        dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=12, changed_by="bill", timestamp=404, sc_id=6)
+        dbo.permissions.scheduled_changes.history.t.insert().execute(
+            change_id=13, changed_by="bill", timestamp=405, sc_id=6, scheduled_by="bill", change_type="update", data_version=1,
+            base_permission="release", base_username="bob", base_options={"products": ["a", "b"]}, base_data_version=1
+        )
+        dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=6, when=38000000, data_version=1)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=12, changed_by="bill", timestamp=404, sc_id=6)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
+            change_id=13, changed_by="bill", timestamp=405, sc_id=6, when=38000000, data_version=1
+        )
+
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/permissions")
         expected = {
-            "count": 3,
+            "count": 5,
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
@@ -357,6 +387,16 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
                 },
+                {
+                    "sc_id": 5, "when": 98000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
+                    "permission": "rule", "username": "joe", "options": {"products": ["fake"]}, "data_version": None,
+                    "signoffs": {}, "required_signoffs": {"releng": 1},
+                },
+                {
+                    "sc_id": 6, "when": 38000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
+                    "permission": "release", "username": "bob", "options": {"products": ["a", "b"]}, "data_version": 1,
+                    "signoffs": {}, "required_signoffs": {"releng": 1},
+                },
             ],
         }
         self.assertEquals(json.loads(ret.data), expected)
@@ -364,7 +404,7 @@ class TestPermissionsScheduledChanges(ViewTest):
     def testGetScheduledChangesWithCompleted(self):
         ret = self._get("/scheduled_changes/permissions", qs={"all": 1})
         expected = {
-            "count": 4,
+            "count": 6,
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 10000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
@@ -386,6 +426,16 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
                 },
+                {
+                    "sc_id": 5, "when": 98000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
+                    "permission": "rule", "username": "joe", "options": {"products": ["fake"]}, "data_version": None,
+                    "signoffs": {}, "required_signoffs": {"releng": 1},
+                },
+                {
+                    "sc_id": 6, "when": 38000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
+                    "permission": "release", "username": "bob", "options": {"products": ["a", "b"]}, "data_version": 1,
+                    "signoffs": {}, "required_signoffs": {"releng": 1},
+                },
             ],
         }
         self.assertEquals(json.loads(ret.data), expected)
@@ -397,18 +447,18 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
-        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 5).execute().fetchall()
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7})
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 5, "scheduled_by": "bill", "change_type": "update", "complete": False, "data_version": 1,
+            "sc_id": 7, "scheduled_by": "bill", "change_type": "update", "complete": False, "data_version": 1,
             "base_permission": "rule", "base_username": "bob", "base_options": None, "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
-        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 7).execute().fetchall()
         self.assertEquals(len(cond), 1)
-        cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
+        cond_expected = {"sc_id": 7, "data_version": 1, "when": 400000000}
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
@@ -418,18 +468,18 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
-        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 5).execute().fetchall()
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7})
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 5, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1,
+            "sc_id": 7, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1,
             "base_permission": "release", "base_username": "jill", "base_options": {"products": ["a"]}, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
-        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 7).execute().fetchall()
         self.assertEquals(len(cond), 1)
-        cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
+        cond_expected = {"sc_id": 7, "data_version": 1, "when": 400000000}
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
@@ -439,18 +489,18 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
-        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 5).execute().fetchall()
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7})
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 5, "scheduled_by": "bill", "change_type": "delete", "complete": False, "data_version": 1,
+            "sc_id": 7, "scheduled_by": "bill", "change_type": "delete", "complete": False, "data_version": 1,
             "base_permission": "build", "base_username": "ashanti", "base_options": None, "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
-        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 7).execute().fetchall()
         self.assertEquals(len(cond), 1)
-        cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
+        cond_expected = {"sc_id": 7, "data_version": 1, "when": 400000000}
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
@@ -659,36 +709,36 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
-        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 5).execute().fetchall()
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7})
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 5, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1,
+            "sc_id": 7, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1,
             "base_permission": "admin", "base_username": "jill", "base_options": None, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
-        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 7).execute().fetchall()
         self.assertEquals(len(cond), 1)
-        cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
+        cond_expected = {"sc_id": 7, "data_version": 1, "when": 400000000}
         self.assertEquals(dict(cond[0]), cond_expected)
 
         # Signoffs, which require signoff from role in permissionsRequiredSignoffs
         # regardless of product (because a full fledged admin can mange all products).
-        ret = self._post("/scheduled_changes/permissions/5/signoffs", data=dict(role="relman"), username="bob")
+        ret = self._post("/scheduled_changes/permissions/7/signoffs", data=dict(role="relman"), username="bob")
         self.assertEquals(ret.status_code, 200, ret.data)
-        ret = self._post("/scheduled_changes/permissions/5/signoffs", data=dict(role="releng"), username="bill")
+        ret = self._post("/scheduled_changes/permissions/7/signoffs", data=dict(role="releng"), username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
 
         # Enacting!
-        ret = self._post("/scheduled_changes/permissions/5/enact")
+        ret = self._post("/scheduled_changes/permissions/7/enact")
         self.assertEquals(ret.status_code, 200, ret.data)
 
-        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 5).execute().fetchall()
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 5, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_permission": "admin",
+            "sc_id": 7, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_permission": "admin",
             "base_username": "jill", "base_options": None, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
