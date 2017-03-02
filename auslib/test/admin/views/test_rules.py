@@ -871,12 +871,12 @@ class TestRuleScheduledChanges(ViewTest):
 
         dbo.rules.scheduled_changes.t.insert().execute(
             sc_id=7, scheduled_by="bill", data_version=1, base_priority=40, base_backgroundRate=50, base_mapping="a", base_update_type="minor",
-            base_channel="g", base_product="fake", base_rule_id=6, change_type="update",
+            base_channel="k", base_product="fake", base_rule_id=6, change_type="update",
         )
         dbo.rules.scheduled_changes.history.t.insert().execute(change_id=14, changed_by="bill", timestamp=123, sc_id=7)
         dbo.rules.scheduled_changes.history.t.insert().execute(
             change_id=15, changed_by="bill", timestamp=124, sc_id=7, scheduled_by="bill", data_version=1, base_priority=40,
-            base_backgroundRate=50, base_mapping="a", base_update_type="minor", base_channel="g", base_product="fake", base_rule_id=6,
+            base_backgroundRate=50, base_mapping="a", base_update_type="minor", base_channel="k", base_product="fake", base_rule_id=6,
             change_type="update",
         )
         dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=7, when=7500000, data_version=1)
@@ -931,10 +931,10 @@ class TestRuleScheduledChanges(ViewTest):
                 {
                     "sc_id": 7, "when": 7500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 6, "priority": 40,
                     "backgroundRate": 50, "product": "fake", "mapping": "a", "update_type": "minor", "version": None,
-                    "buildTarget": None, "alias": None, "channel": "g", "buildID": None, "locale": None, "osVersion": None,
+                    "buildTarget": None, "alias": None, "channel": "k", "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "update", "signoffs": {}, "required_signoffs": {"releng": 1},
+                    "change_type": "update", "signoffs": {}, "required_signoffs": {"releng": 1, "relman": 1},
                 },
             ],
         }
@@ -996,10 +996,10 @@ class TestRuleScheduledChanges(ViewTest):
                 {
                     "sc_id": 7, "when": 7500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 6, "priority": 40,
                     "backgroundRate": 50, "product": "fake", "mapping": "a", "update_type": "minor", "version": None,
-                    "buildTarget": None, "alias": None, "channel": "g", "buildID": None, "locale": None, "osVersion": None,
+                    "buildTarget": None, "alias": None, "channel": "k", "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "whitelist": None,
                     "data_version": None, "systemCapabilities": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "update", "signoffs": {}, "required_signoffs": {"releng": 1},
+                    "change_type": "update", "signoffs": {}, "required_signoffs": {"releng": 1, "relman": 1},
                 },
             ],
         }
