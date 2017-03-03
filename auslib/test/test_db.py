@@ -6,6 +6,7 @@ from tempfile import mkstemp
 import unittest
 import re
 
+from os import path
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
 
@@ -19,6 +20,7 @@ from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     verify_signoffs
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
+from migrate.versioning.api import version
 
 
 def setUpModule():
@@ -2320,9 +2322,9 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def testGetRulesMatchingQueryListOfVersionsComparison(self):
         expected = [dict(rule_id=4, priority=90, backgroundRate=100,
                          version='3.0.1,3.0.2,3.0b3', update_type='z', data_version=1)]
-        for version in ['3.0.1', '3.0.2', '3.0b3']:
+        for version_no in ['3.0.1', '3.0.2', '3.0b3']:
             rules = self.rules.getRulesMatchingQuery(
-                dict(name='', product='', version=version, channel='',
+                dict(name='', product='', version=version_no, channel='',
                      buildTarget='', buildID='', locale='', osVersion='',
                      distribution='', distVersion='', headerArchitecture='',
                      force=False, queryVersion=3,
@@ -4217,11 +4219,8 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         Note: These tests run and verify migrations on a sqllite DB
         whereas the actual migration happens on a mySQL DB.
         """
-        # https://github.com/buildbot/buildbot/blob/87108ec4088dc7fd5394ac3c1d0bd3b465300d92/master/buildbot/db/model.py#L455
-        # http://code.google.com/p/sqlalchemy-migrate/issues/detail?id=100
-        # means  we cannot use the migrate.versioning.api module.  So the workaround for that hard-code
-        # the latest version.
-        latest_version = 23
+        # TODO Remove these tests when we upgrade sqlalchemy so that these per-version tests are no longer required.
+        latest_version = version(path.abspath(path.join(path.dirname(__file__), "..", "migrate")))
         db = self._get_migrated_db()
         versions_migrate_tests_dict = {22: self._rules_version_length_migration_test,
                                        21: self._fix_column_attributes_migration_test}
