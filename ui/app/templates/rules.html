@@ -31,7 +31,7 @@
     </div>
   </div>
   <div class="col-sm-5 text-right">
-    <div class="row" ng-if="!rule_id">
+    <div class="row" ng-show="!rule_id">
       <label>Product/Channel filter:</label>
       <select ng-model="pr_ch_filter" name="pr_ch_filter"
         ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
