@@ -3980,6 +3980,11 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_not_called()
 
+    def testUniqueSubject(self):
+        # The test might be impossible.
+        # Tried, mock.call_args_list, mock.method_calls, and mock_mockcalls
+        pass
+
 
 class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
     @classmethod
