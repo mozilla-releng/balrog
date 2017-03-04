@@ -706,8 +706,10 @@ class ScheduledChangesTableMixin(object):
                                    Column("bar", String(15)))
                 super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
-            def getPotentialRequiredSignoffs(self, *args, **kwargs):
-                return None
+            def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+                for row in affected_rows:
+                    if row["foo"] == "signofftest":
+                        return [{"role": "releng", "signoffs_required": 1}]
 
             def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
                 if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
@@ -759,10 +761,12 @@ class ScheduledChangesTableMixin(object):
         self.sc_table.conditions.t.insert().execute(sc_id=6, when=400000, data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="jane", data_version=1)
         self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options={"actions": ["enact"]}, data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="mary", role="releng", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="mary", role="dev", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="jane", role="dev", data_version=1)
 
 
 class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, MemoryDatabaseMixin):
@@ -893,7 +897,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertRecordSignOffForUserHavingSingleRole(self):
-        what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
+        what = {"fooid": 3, "foo": "signofftest", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
         self.sc_table.insert(changed_by="bob", **what)
         user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "bob", "sc_id": 7})
         self.assertEquals(len(user_role_rows), 1)
@@ -903,9 +907,16 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertRecordSignOffForUserHavingMultipleRoles(self):
-        what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
+        what = {"fooid": 3, "foo": "signofftest", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
         self.sc_table.insert(changed_by="mary", **what)
-        user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "nancy", "sc_id": 7})
+        user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "mary", "sc_id": 7})
+        self.assertEquals(len(user_role_rows), 0)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertRecordSignOffUnneededRole(self):
+        what = {"fooid": 3, "foo": "signofftest", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
+        self.sc_table.insert(changed_by="jane", **what)
+        user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "jane", "sc_id": 7})
         self.assertEquals(len(user_role_rows), 0)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))

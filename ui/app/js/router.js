@@ -73,6 +73,13 @@ angular.module("app").config(function($routeProvider, $locationProvider) {
     controller: 'RulesController',
     reloadOnSearch: false
   })
+
+  .when('/required_signoffs', {
+    templateUrl: 'required_signoffs.html',
+    controller: 'RequiredSignoffsController',
+    reloadOnSearch: false
+  })
+
   ;
 
   $routeProvider.otherwise({ redirectTo: '/' });

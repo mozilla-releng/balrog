@@ -44,7 +44,7 @@ class ViewTest(unittest.TestCase):
                                            options=dict(products=['fake', "a", 'b'], actions=["create", "modify"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=dict(actions=["set"], products=["a", "b"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='rule', username='bob', options=dict(actions=["modify"], products=['a', "b"]), data_version=1)
-        dbo.permissions.t.insert().execute(permission='build', username='ashanti', options=dict(actions=["modify"], products=['a']), data_version=1)
+        dbo.permissions.t.insert().execute(permission='release', username='ashanti', options=dict(actions=["modify"], products=['a']), data_version=1)
         dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=dict(actions=["enact"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_locale', username='ashanti',
                                            options=dict(actions=["modify"], products=['a']), data_version=1)
@@ -58,11 +58,11 @@ class ViewTest(unittest.TestCase):
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="a", role="releng", signoffs_required=1, data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="e", role="releng", signoffs_required=1, data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="j", role="releng", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="k", role="releng", signoffs_required=1, data_version=2)
-        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=10, product="fake", channel="k", role="releng")
-        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=11, product="fake", channel="k", role="releng",
+        dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="k", role="relman", signoffs_required=1, data_version=2)
+        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=10, product="fake", channel="k", role="relman")
+        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=11, product="fake", channel="k", role="relman",
                                                                signoffs_required=2, data_version=1)
-        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=25, product="fake", channel="k", role="releng",
+        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=25, product="fake", channel="k", role="relman",
                                                                signoffs_required=1, data_version=2)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="fake", role="releng", signoffs_required=1, data_version=1)
         dbo.permissionsRequiredSignoffs.t.insert().execute(product="bar", role="releng", signoffs_required=1, data_version=1)
@@ -122,6 +122,7 @@ class ViewTest(unittest.TestCase):
             rule_id=5, priority=80, buildTarget='d', version='3.3', backgroundRate=0, mapping='c', update_type='minor',
             product="a", channel="a", data_version=1
         )
+        dbo.rules.t.insert().execute(rule_id=6, product='fake', priority=40, backgroundRate=50, mapping='a', update_type='minor', channel="e", data_version=1)
         self.client = app.test_client()
 
     def tearDown(self):

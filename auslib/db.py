@@ -1103,7 +1103,11 @@ class ScheduledChangeTable(AUSTable):
             #   we don't know which Role we'd want to signoff with. The user will need to signoff
             #   manually in these cases.
             user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
-            if len(user_roles) == 1:
+            required_roles = set()
+            required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            if required_signoffs:
+                required_roles.update([rs["role"] for rs in required_signoffs])
+            if len(user_roles) == 1 and user_roles[0]["role"] in required_roles:
                 self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
                                      sc_id=sc_id, role=user_roles[0].get("role"))
             return sc_id
@@ -1462,7 +1466,7 @@ class Rules(AUSTable):
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = []
         # The new row may change the product or channel, so we must look for
-        # Signoff for both.
+        # Signoffs for both.
         for row in affected_rows:
             if not row:
                 continue

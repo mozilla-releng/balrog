@@ -49,7 +49,7 @@
     </div>
     <div ng-show= "sc.change_type !== 'delete'" class="form-group" ng-class="{'has-error': errors.product}">
       <label for="id_product">Product</label>
-      <input type="text" class="form-control" id="id_product" ng-model="sc.product"
+      <input type="text" class="form-control" id="id_product" ng-model="sc.product" autocomplete="off"
       typeahead="product for product in products | filter:$viewValue | limitTo:16">
       <p class="help-block" ng-show="errors.product">{{ errors.product.join(', ') }}</p>
     </div>
