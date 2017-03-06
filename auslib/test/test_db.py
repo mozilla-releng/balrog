@@ -3993,6 +3993,13 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_not_called()
 
+    @mock.patch("auslib.db.generate_random_string", mock.MagicMock(return_value="ABCDEF"))
+    def testUniqueSubject(self):
+        def doit():
+            self.db.rules.scheduled_changes.delete({"sc_id": 1}, changed_by="bob", old_data_version=1)
+        mock_conn = self._runTest(doit)
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("ABCDEF"))
+
 
 class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
     @classmethod
