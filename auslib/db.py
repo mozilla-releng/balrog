@@ -2576,6 +2576,8 @@ class AUSDatabase(object):
             schema.runchange(step, change, 1)
 
     def downgrade(self, version):
+        if version < 21:
+            raise ValueError("Cannot downgrade below version 21")
         schema = migrate.versioning.schema.ControlledSchema(self.engine, self.migrate_repo)
         changeset = schema.changeset(version)
         for step, change in changeset:
