@@ -14,6 +14,7 @@ caseIgnoreOsBouncer = re.compile(re.escape('%os_bouncer%'), re.IGNORECASE)
 caseIgnoreVersion = re.compile(re.escape('%version%'), re.IGNORECASE)
 caseIgnoreOs = re.compile(re.escape('%os%'), re.IGNORECASE)
 
+
 class ReleaseBlobBase(Blob):
 
     def __init__(self, **kwargs):
