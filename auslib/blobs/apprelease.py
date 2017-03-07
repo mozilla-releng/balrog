@@ -1,9 +1,18 @@
+import re
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob
 from auslib.errors import BadDataError
 from auslib.util.versions import MozillaVersion
 
+# Bug: 1136164. Strings declaration for case insensitive interpolation of blobs
+caseIgnoreLocale = re.compile(re.escape('%locale%'), re.IGNORECASE)
+caseIgnoreOsFtp = re.compile(re.escape('%os_ftp%'), re.IGNORECASE)
+caseIgnoreFilename = re.compile(re.escape('%filename%'), re.IGNORECASE)
+caseIgnoreProduct = re.compile(re.escape('%product%'), re.IGNORECASE)
+caseIgnoreOsBouncer = re.compile(re.escape('%os_bouncer%'), re.IGNORECASE)
+caseIgnoreVersion = re.compile(re.escape('%version%'), re.IGNORECASE)
+caseIgnoreOs = re.compile(re.escape('%os%'), re.IGNORECASE)
 
 class ReleaseBlobBase(Blob):
 
@@ -250,11 +259,11 @@ class SeparatedFileUrlsMixin(object):
                     self.log.debug("Couldn't find fileUrl for")
                     raise
 
-            url = url.replace('%LOCALE%', updateQuery['locale'])
-            url = url.replace('%OS_FTP%', platformData['OS_FTP'])
-            url = url.replace('%FILENAME%', ftpFilename)
-            url = url.replace('%PRODUCT%', bouncerProduct)
-            url = url.replace('%OS_BOUNCER%', platformData['OS_BOUNCER'])
+            url = caseIgnoreLocale.sub(updateQuery['locale'], url)
+            url = caseIgnoreOsFtp.sub(platformData['OS_FTP'], url)
+            url = caseIgnoreFilename.sub(ftpFilename, url)
+            url = caseIgnoreProduct.sub(bouncerProduct, url)
+            url = caseIgnoreOsBouncer.sub(platformData['OS_BOUNCER'], url)
         # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
         if updateQuery['force']:
             url = self.processSpecialForceHosts(url, specialForceHosts)
@@ -352,10 +361,10 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
                 "extv=%s" % self.getExtv(buildTarget, locale),
             ]
             if "detailsUrl" in self:
-                details = self["detailsUrl"].replace("%LOCALE%", updateQuery["locale"])
+                details = caseIgnoreLocale.sub(updateQuery["locale"], self["detailsUrl"])
                 snippet.append("detailsUrl=%s" % details)
             if "licenseUrl" in self:
-                license = self["licenseUrl"].replace("%LOCALE%", updateQuery["locale"])
+                license = caseIgnoreLocale.sub(updateQuery["locale"], self["licenseUrl"])
                 snippet.append("licenseUrl=%s" % license)
             if update_type == "major":
                 snippet.append("updateType=major")
@@ -378,10 +387,10 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         updateLine = '    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
             (update_type, appv, extv, buildid)
         if "detailsUrl" in self:
-            details = self["detailsUrl"].replace("%LOCALE%", locale)
+            details = caseIgnoreLocale.sub(locale, self["detailsUrl"])
             updateLine += ' detailsURL="%s"' % details
         if "licenseUrl" in self:
-            license = self["licenseUrl"].replace("%LOCALE%", locale)
+            license = caseIgnoreLocale.sub(locale, self["licenseUrl"])
             updateLine += ' licenseURL="%s"' % license
         updateLine += ">"
 
@@ -446,17 +455,17 @@ class NewStyleVersionsMixin(object):
         updateLine = '    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"' % \
             (update_type, displayVersion, appVersion, platformVersion, buildid)
         if "detailsUrl" in self:
-            details = self["detailsUrl"].replace("%LOCALE%", locale)
+            details = caseIgnoreLocale.sub(locale, self["detailsUrl"])
             updateLine += ' detailsURL="%s"' % details
         if "licenseUrl" in self:
-            license = self["licenseUrl"].replace("%LOCALE%", locale)
+            license = caseIgnoreLocale.sub(locale, self["licenseUrl"])
             updateLine += ' licenseURL="%s"' % license
         if localeData.get("isOSUpdate"):
             updateLine += ' isOSUpdate="true"'
         for attr in self.optional_:
             if attr in self:
                 if self.interpolable_ and attr in self.interpolable_:
-                    updateLine += ' %s="%s"' % (attr, self[attr].replace("%LOCALE%", locale))
+                    updateLine += ' %s="%s"' % (attr, caseIgnoreLocale.sub(locale, self[attr]))
                 else:
                     # Responses require lower cased version of True/False for
                     # boolean properties. Strings are sent as stored.
@@ -531,17 +540,17 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
                 "platformVersion=%s" % self.getPlatformVersion(buildTarget, locale),
             ]
             if "detailsUrl" in self:
-                details = self["detailsUrl"].replace("%LOCALE%", updateQuery["locale"])
+                details = caseIgnoreLocale.sub(updateQuery["locale"], self["detailsUrl"])
                 snippet.append("detailsUrl=%s" % details)
             if "licenseUrl" in self:
-                license = self["licenseUrl"].replace("%LOCALE%", updateQuery["locale"])
+                license = caseIgnoreLocale.sub(updateQuery["locale"], self["licenseUrl"])
                 snippet.append("licenseUrl=%s" % license)
             if update_type == "major":
                 snippet.append("updateType=major")
             for attr in self.optional_:
                 if attr in self:
                     if attr in self.interpolable_:
-                        snippet.append("%s=%s" % (attr, self[attr].replace("%LOCALE%", updateQuery["locale"])))
+                        snippet.append("%s=%s" % (attr, caseIgnoreLocale.sub(updateQuery["locale"], self[attr])))
                     else:
                         snippet.append("%s=%s" % (attr, self[attr]))
             snippets[patchKey] = "\n".join(snippet) + "\n"
@@ -662,10 +671,9 @@ class UnifiedFileUrlsMixin(object):
                 self.log.debug("Couldn't find fileUrl")
                 raise ValueError("Couldn't find fileUrl")
 
-            url = url.replace('%LOCALE%', updateQuery['locale'])
-            url = url.replace('%OS_FTP%', platformData['OS_FTP'])
-            url = url.replace('%OS_BOUNCER%', platformData['OS_BOUNCER'])
-
+            url = caseIgnoreLocale.sub(updateQuery['locale'], url)
+            url = caseIgnoreOsFtp.sub(platformData['OS_FTP'], url)
+            url = caseIgnoreOsBouncer.sub(platformData['OS_BOUNCER'], url)
         # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
         if updateQuery['force']:
             url = self.processSpecialForceHosts(url, specialForceHosts)
@@ -915,9 +923,11 @@ class DesupportBlob(Blob):
         return ''
 
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        tmp_url = self['detailsUrl'].replace("%LOCALE%", updateQuery['locale'])\
-                                    .replace("%VERSION%", updateQuery['version'])\
-                                    .replace("%OS%", updateQuery['buildTarget'].split('_')[0])
+        tmp_url = caseIgnoreLocale.sub(updateQuery['locale'], self['detailsUrl'])
+        tmp_url = caseIgnoreVersion.sub(updateQuery['version'], tmp_url)
+        tmp_url = caseIgnoreOs.sub(updateQuery['buildTarget'], tmp_url)
+        tmp_url = tmp_url.split('_')[0]
+
         xml = []
         xml.append('    <update type="%s" unsupported="true" detailsURL="%s" displayVersion="%s">' % (update_type, tmp_url, self["displayVersion"]))
         return xml

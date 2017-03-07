@@ -669,17 +669,17 @@ class TestSchema2Blob(unittest.TestCase):
     "appVersion": "50.0",
     "displayVersion": "50.0",
     "platformVersion": "50.0",
-    "detailsUrl": "http://example.org/details/%LOCALE%",
-    "licenseUrl": "http://example.org/license/%LOCALE%",
+    "detailsUrl": "http://example.org/details/%LOCale%",
+    "licenseUrl": "http://example.org/license/%locaLE%",
     "actions": "silent",
     "billboardURL": "http://example.org/billboard/%LOCALE%",
     "openURL": "http://example.org/url/%LOCALE%",
-    "notificationURL": "http://example.org/notification/%LOCALE%",
-    "alertURL": "http://example.org/alert/%LOCALE%",
+    "notificationURL": "http://example.org/notification/%LOCaLE%",
+    "alertURL": "http://example.org/alert/%LocaLE%",
     "showPrompt": false,
     "showNeverForVersion": true,
     "fileUrls": {
-        "c1": "http://a.com/%FILENAME%"
+        "c1": "http://a.com/%filename%"
     },
     "ftpFilenames": {
         "complete": "complete.mar"
