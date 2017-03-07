@@ -669,17 +669,17 @@ class TestSchema2Blob(unittest.TestCase):
     "appVersion": "50.0",
     "displayVersion": "50.0",
     "platformVersion": "50.0",
-    "detailsUrl": "http://example.org/details/%LOCale%",
-    "licenseUrl": "http://example.org/license/%locaLE%",
+    "detailsUrl": "http://example.org/details/%locale%",
+    "licenseUrl": "http://example.org/license/%LOCALE%",
     "actions": "silent",
     "billboardURL": "http://example.org/billboard/%LOCALE%",
-    "openURL": "http://example.org/url/%LOCALE%",
-    "notificationURL": "http://example.org/notification/%LOCaLE%",
-    "alertURL": "http://example.org/alert/%LocaLE%",
+    "openURL": "http://example.org/url/%locale%",
+    "notificationURL": "http://example.org/notification/%locale%",
+    "alertURL": "http://example.org/alert/%LOCALE%",
     "showPrompt": false,
     "showNeverForVersion": true,
     "fileUrls": {
-        "c1": "http://a.com/%filename%"
+        "c1": "http://a.com/%filename%/%os_ftp%/%os_bouncer%"
     },
     "ftpFilenames": {
         "complete": "complete.mar"
@@ -865,13 +865,15 @@ class TestSchema2Blob(unittest.TestCase):
         returned = self.blobK.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned_footer = self.blobK.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
+        print "I'm here"
+        print str(returned)
         expected_header = '<update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" ' \
             'buildID="35" detailsURL="http://example.org/details/l" licenseURL="http://example.org/license/l" ' \
             'billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true" ' \
             'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
             'alertURL="http://example.org/alert/l">'
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="35" size="40"/>
+<patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="35" size="40"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -896,7 +898,7 @@ class TestSchema2Blob(unittest.TestCase):
             'showNeverForVersion="true" actions="silent" openURL="http://example.org/url/l2" ' \
             'notificationURL="http://example.org/notification/l2" alertURL="http://example.org/alert/l2">'
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="45" size="50"/>
+<patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="45" size="50"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
