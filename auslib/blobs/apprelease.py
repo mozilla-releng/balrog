@@ -5,6 +5,7 @@ from auslib.errors import BadDataError
 from auslib.util.versions import MozillaVersion
 
 
+
 class ReleaseBlobBase(Blob):
 
     def __init__(self, **kwargs):
