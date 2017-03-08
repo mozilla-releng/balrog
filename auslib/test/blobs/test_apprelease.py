@@ -1159,7 +1159,7 @@ class TestSchema3Blob(unittest.TestCase):
     "platformVersion": "26.0",
     "fileUrls": {
         "c1": "http://a.com/%FILENAME%",
-        "c2": "http://a.com/%PRODUCT%"
+        "c2": "http://a.com/%product%"
     },
     "ftpFilenames": {
         "partials": {
@@ -2900,7 +2900,7 @@ class TestDesupportBlob(unittest.TestCase):
 {
     "name": "d1",
     "schema_version": 50,
-    "detailsUrl": "http://moo.com/%LOCALE%/cow/%VERSION%/%OS%",
+    "detailsUrl": "http://moo.com/%locale%/cow/%version%/%os%",
     "displayVersion": "50.0"
 }
 """)
