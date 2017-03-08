@@ -865,8 +865,6 @@ class TestSchema2Blob(unittest.TestCase):
         returned = self.blobK.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned_footer = self.blobK.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
-        print "I'm here"
-        print str(returned)
         expected_header = '<update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" ' \
             'buildID="35" detailsURL="http://example.org/details/l" licenseURL="http://example.org/license/l" ' \
             'billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true" ' \
