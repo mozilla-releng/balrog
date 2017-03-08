@@ -29,6 +29,10 @@ def create_dockerflow_endpoints(app, heartbeat_database_fn=None):
         database_entry_value = heartbeat_database_fn(dbo)
         return Response(str(database_entry_value), headers={"Cache-Control": "no-cache"})
 
+    @app.errorhandler(502)
+    def internal_server_error(error):
+        return Response("ERROR 502 !!! Couldn't connect to the database.")
+
     @app.route("/__lbheartbeat__")
     def lbheartbeat():
         """Per the Dockerflow spec:
