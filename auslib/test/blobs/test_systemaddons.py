@@ -344,6 +344,7 @@ class TestSchema1Blob(unittest.TestCase):
         "hashFunction": "SHA512",
         "addons": {
             "c": {
+                "version": "1",
                 "platforms": {
                     "p": {},
                     "q": {

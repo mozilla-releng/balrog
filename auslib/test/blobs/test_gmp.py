@@ -254,3 +254,152 @@ class TestSchema1Blob(unittest.TestCase):
 """)
         self.assertFalse(blob.containsForbiddenDomain('gg',
                                                       self.whitelistedDomains))
+
+    def testGMPLayout(self):
+
+        # Test 1: Correct layout with empty vendors
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {}
+    }
+    """)
+        blob.validate('gg', self.whitelistedDomains)
+
+        # Test2: Incorrect layout with no vendors
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512"
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+
+        # Test3: Correct layout with one vendor and two platforms
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {
+            "c": {
+                "version": "1",
+                "platforms": {
+                    "p": {
+                        "alias": "q"
+                    },
+                    "q": {
+                        "filesize": 2,
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        blob.validate('gg', self.whitelistedDomains)
+
+        # Test4: Incorrect layout with missing version for an vendor name
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {
+            "c": {
+                "platforms": {
+                    "p": {
+                        "alias": "q"
+                    },
+                    "q": {
+                        "filesize": 2,
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+
+        # Test5: Correct layout with empty platforms
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {
+            "c": {
+                "version": "1",
+                "platforms": {}
+            }
+        }
+    }
+    """)
+        blob.validate('gg', self.whitelistedDomains)
+
+        # Test6: Incorrect layout with empty platform name
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {
+            "c": {
+                "version": "1",
+                "platforms": {
+                    "p": {},
+                    "q": {
+                        "filesize": 2,
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+
+        # Test7: Incorrect layout with missing filesize
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {
+            "c": {
+                "version": "1",
+                "platforms": {
+                    "p": {
+                        "alias": "q"
+                    },
+                    "q": {
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
