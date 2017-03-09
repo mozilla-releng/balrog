@@ -923,7 +923,7 @@ class TestReleasesAPI_JSON(ViewTest):
             "version": "1",
             "platforms": {
                 "a": {
-                    "filesize": 2,
+                    "filesize": "2",
                     "hashValue": "3",
                     "fileUrl": "http://good.com/4"
                 },
@@ -951,7 +951,7 @@ class TestReleasesAPI_JSON(ViewTest):
             "version": "1",
             "platforms": {
                 "a": {
-                    "filesize": 2,
+                    "filesize": "2",
                     "hashValue": "3",
                     "fileUrl": "http://good.com/4"
                 },
@@ -993,7 +993,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEquals(ret_data, json.loads("""
 {
     "releases": [
-        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4, 6]},
+        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4]},
         {"data_version": 1, "name": "ab", "product": "a", "read_only": false, "rule_ids": []}
     ]
 }
@@ -1042,6 +1042,10 @@ class TestReleasesScheduledChanges(ViewTest):
             change_id=2, changed_by="bill", timestamp=51, sc_id=1, scheduled_by="bill", change_type="insert", data_version=1, base_name="m",
             base_product="m", base_data=createBlob(dict(name="m", hashFunction="sha512", schema_version=1))
         )
+        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
+        dbo.releases.scheduled_changes.signoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=100, sc_id=1, username="bill")
+        dbo.releases.scheduled_changes.signoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=101, sc_id=1,
+                                                                           username="bill", role="releng")
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=4000000000, data_version=1)
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=50, sc_id=1)
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
@@ -1049,18 +1053,14 @@ class TestReleasesScheduledChanges(ViewTest):
         )
 
         dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=2, scheduled_by="bill", change_type="update", data_version=1, base_name="a", base_product="a",
-            base_data=createBlob(dict(name="a", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
+            sc_id=2, scheduled_by="bill", change_type="update", data_version=1, base_name="c", base_product="c",
+            base_data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
         )
         dbo.releases.scheduled_changes.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=70, sc_id=2)
         dbo.releases.scheduled_changes.history.t.insert().execute(
-            change_id=4, changed_by="bill", timestamp=71, sc_id=2, scheduled_by="bill", change_type="update", data_version=1, base_name="a",
-            base_product="a", base_data=createBlob(dict(name="a", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
+            change_id=4, changed_by="bill", timestamp=71, sc_id=2, scheduled_by="bill", change_type="update", data_version=1, base_name="c",
+            base_product="c", base_data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1, extv="2.0")), base_data_version=1
         )
-        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="bill", role="releng")
-        dbo.releases.scheduled_changes.signoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=100, sc_id=2, username="bill")
-        dbo.releases.scheduled_changes.signoffs.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=101, sc_id=2,
-                                                                           username="bill", role="releng")
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=6000000000, data_version=1)
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=70, sc_id=2)
         dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
@@ -1112,17 +1112,16 @@ class TestReleasesScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
-                    "data_version": None, "signoffs": {}, "required_signoffs": {},
+                    "data_version": None, "signoffs": {"bill": "releng"},
                 },
                 {
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
-                    "name": "a", "product": "a", "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
-                    "read_only": False, "data_version": 1, "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "name": "c", "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
+                    "read_only": False, "data_version": 1, "signoffs": {},
                 },
                 {
                     "sc_id": 4, "when": 230000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "name": "ab", "product": None, "data": None, "read_only": False, "data_version": 1, "signoffs": {"ben": "releng", "bill": "releng"},
-                    "required_signoffs": {},
                 },
             ]
         }
@@ -1136,22 +1135,21 @@ class TestReleasesScheduledChanges(ViewTest):
                 {
                     "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
                     "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
-                    "data_version": None, "signoffs": {}, "required_signoffs": {},
+                    "data_version": None, "signoffs": {"bill": "releng"},
                 },
                 {
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
-                    "name": "a", "product": "a", "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
-                    "read_only": False, "data_version": 1, "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "name": "c", "product": "c", "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
+                    "read_only": False, "data_version": 1, "signoffs": {},
                 },
                 {
                     "sc_id": 3, "when": 10000000, "scheduled_by": "bill", "change_type": "update", "complete": True, "sc_data_version": 2,
                     "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
-                    "data_version": 1, "signoffs": {}, "required_signoffs": {},
+                    "data_version": 1, "signoffs": {},
                 },
                 {
                     "sc_id": 4, "when": 230000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "name": "ab", "product": None, "data": None, "read_only": False, "data_version": 1, "signoffs": {"ben": "releng", "bill": "releng"},
-                    "required_signoffs": {},
                 },
             ]
         }
@@ -1225,7 +1223,7 @@ class TestReleasesScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingRelease(self):
         data = {
-            "data": '{"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "a",
+            "data": '{"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "c",
             "data_version": 1, "sc_data_version": 1, "when": 78900000000, "change_type": "update",
         }
         ret = self._post("/scheduled_changes/releases/2", data=data)
@@ -1236,8 +1234,8 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 2, "complete": False, "change_type": "update", "data_version": 2, "scheduled_by": "bill", "base_name": "a", "base_product": "a",
-            "base_read_only": False, "base_data": {"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1},
+            "sc_id": 2, "complete": False, "change_type": "update", "data_version": 2, "scheduled_by": "bill", "base_name": "c", "base_product": "c",
+            "base_read_only": False, "base_data": {"name": "c", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1},
             "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
@@ -1366,16 +1364,16 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "sc_id": 2, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "update", "base_name": "a", "base_product": "a",
-            "base_read_only": False, "base_data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
+            "sc_id": 2, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "update", "base_name": "c", "base_product": "c",
+            "base_read_only": False, "base_data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
             "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
 
-        base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "a").execute().fetchall()[0])
+        base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "c").execute().fetchall()[0])
         base_expected = {
-            "name": "a", "product": "a", "read_only": False,
-            "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"}, "data_version": 2,
+            "name": "c", "product": "c", "read_only": False,
+            "data": {"name": "c", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"}, "data_version": 2,
         }
         self.assertEquals(base_row, base_expected)
 
@@ -1439,23 +1437,23 @@ class TestReleasesScheduledChanges(ViewTest):
 
     @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):
-        ret = self._post("/scheduled_changes/releases/1/signoffs", data=dict(role="qa"), username="bill")
+        ret = self._post("/scheduled_changes/releases/2/signoffs", data=dict(role="qa"), username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
-        r = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        r = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
-        self.assertEquals(db_data, {"sc_id": 1, "username": "bill", "role": "qa"})
-        r = dbo.releases.scheduled_changes.signoffs.history.t.select().where(dbo.releases.scheduled_changes.signoffs.history.sc_id == 1).execute().fetchall()
+        self.assertEquals(db_data, {"sc_id": 2, "username": "bill", "role": "qa"})
+        r = dbo.releases.scheduled_changes.signoffs.history.t.select().where(dbo.releases.scheduled_changes.signoffs.history.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 2)
-        self.assertEquals(dict(r[0]), {"change_id": 3, "changed_by": "bill", "timestamp": 99999, "sc_id": 1, "username": "bill", "role": None})
-        self.assertEquals(dict(r[1]), {"change_id": 4, "changed_by": "bill", "timestamp": 100000, "sc_id": 1, "username": "bill", "role": "qa"})
+        self.assertEquals(dict(r[0]), {"change_id": 3, "changed_by": "bill", "timestamp": 99999, "sc_id": 2, "username": "bill", "role": None})
+        self.assertEquals(dict(r[1]), {"change_id": 4, "changed_by": "bill", "timestamp": 100000, "sc_id": 2, "username": "bill", "role": "qa"})
 
     def testSignoffWithoutPermission(self):
-        ret = self._post("/scheduled_changes/releases/1/signoffs", data=dict(role="relman"), username="bill")
+        ret = self._post("/scheduled_changes/releases/2/signoffs", data=dict(role="relman"), username="bill")
         self.assertEquals(ret.status_code, 403, ret.data)
 
     def testRevokeSignoff(self):
-        ret = self._delete("/scheduled_changes/releases/2/signoffs", username="bill")
+        ret = self._delete("/scheduled_changes/releases/1/signoffs", username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
         r = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 0)
@@ -1665,7 +1663,7 @@ class TestRuleIdsReturned(ViewTest):
 
     def testWhitelistIncluded(self):
         rel_name = 'ab'
-        rule_id = 7
+        rule_id = 6
 
         releases = self._get("/releases")
         releases_data = json.loads(releases.data)
@@ -1684,7 +1682,7 @@ class TestRuleIdsReturned(ViewTest):
 
     def testMappingIncluded(self):
         rel_name = 'ab'
-        rule_id = 7
+        rule_id = 6
 
         releases = self._get("/releases")
         releases_data = json.loads(releases.data)
