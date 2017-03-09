@@ -222,3 +222,179 @@ class TestSchema1Blob(unittest.TestCase):
 """)
         self.assertFalse(blob.containsForbiddenDomain('gg',
                                                       self.whitelistedDomains))
+
+    def testAddonLayoutEmptyAddons(self):
+
+        # Correct layout with empty addons
+
+        blob = SystemAddonsBlob()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 5000,
+        "hashFunction": "SHA512",
+        "addons": {}
+    }
+    """)
+        blob.validate('gg', self.whitelistedDomains)
+
+    def testAddonLayoutWithUninstall(self):
+
+        # Correct layout with no addons, and with uninstall
+
+        blob = SystemAddonsBlob()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 5000,
+        "hashFunction": "SHA512",
+        "uninstall": false
+    }
+    """)
+        blob.validate('gg', self.whitelistedDomains)
+
+    def testAddonLayoutNoAddonsNoUninstall(self):
+
+        # Incorrect layout with no addons and no uninstall
+
+        blob = SystemAddonsBlob()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 5000,
+        "hashFunction": "SHA512"
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+
+    def testAddonLayoutTwoPlatforms(self):
+
+        # Correct layout with one addon and two platforms
+
+        blob = SystemAddonsBlob()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 5000,
+        "hashFunction": "SHA512",
+        "addons": {
+            "c": {
+                "version": "1",
+                "platforms": {
+                    "p": {
+                        "alias": "q"
+                    },
+                    "q": {
+                        "filesize": 2,
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        blob.validate('gg', self.whitelistedDomains)
+
+    def testAddonLayoutNoVersion(self):
+
+        # Incorrect layout with missing version for an addon name
+
+        blob = SystemAddonsBlob()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 5000,
+        "hashFunction": "SHA512",
+        "addons": {
+            "c": {
+                "platforms": {
+                    "p": {
+                        "alias": "q"
+                    },
+                    "q": {
+                        "filesize": 2,
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+
+    def testAddonLayoutEmptyPlatforms(self):
+
+        # Correct layout with empty platforms
+
+        blob = SystemAddonsBlob()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 5000,
+        "hashFunction": "SHA512",
+        "addons": {
+            "c": {
+                "version": "1",
+                "platforms": {}
+            }
+        }
+    }
+    """)
+        blob.validate('gg', self.whitelistedDomains)
+
+    def testAddonLayoutEmptyPlatformName(self):
+
+        # Incorrect layout with empty platform name
+
+        blob = SystemAddonsBlob()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 5000,
+        "hashFunction": "SHA512",
+        "addons": {
+            "c": {
+                "version": "1",
+                "platforms": {
+                    "p": {},
+                    "q": {
+                        "filesize": 2,
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+
+    def testAddonLayoutNoFilesize(self):
+
+        # Incorrect layout with missing filesize
+
+        blob = SystemAddonsBlob()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 5000,
+        "hashFunction": "SHA512",
+        "addons": {
+            "c": {
+                "version": "1",
+                "platforms": {
+                    "p": {
+                        "alias": "q"
+                    },
+                    "q": {
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
