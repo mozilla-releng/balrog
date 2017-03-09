@@ -923,7 +923,7 @@ class TestReleasesAPI_JSON(ViewTest):
             "version": "1",
             "platforms": {
                 "a": {
-                    "filesize": "2",
+                    "filesize": 2,
                     "hashValue": "3",
                     "fileUrl": "http://good.com/4"
                 },
@@ -951,7 +951,7 @@ class TestReleasesAPI_JSON(ViewTest):
             "version": "1",
             "platforms": {
                 "a": {
-                    "filesize": "2",
+                    "filesize": 2,
                     "hashValue": "3",
                     "fileUrl": "http://good.com/4"
                 },
