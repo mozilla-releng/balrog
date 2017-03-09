@@ -255,9 +255,9 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertFalse(blob.containsForbiddenDomain('gg',
                                                       self.whitelistedDomains))
 
-    def testGMPLayout(self):
+    def testGMPLayoutEmptyVendor(self):
 
-        # Test 1: Correct layout with empty vendors
+        # Correct layout with empty vendors
 
         blob = GMPBlobV1()
         blob.loadJSON("""
@@ -270,7 +270,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         blob.validate('gg', self.whitelistedDomains)
 
-        # Test2: Incorrect layout with no vendors
+    def testGMPLayoutNoVendor(self):
+
+        # Incorrect layout with no vendors
 
         blob = GMPBlobV1()
         blob.loadJSON("""
@@ -282,7 +284,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
 
-        # Test3: Correct layout with one vendor and two platforms
+    def testGMPLayoutTwoPlatforms(self):
+
+        # Correct layout with one vendor and two platforms
 
         blob = GMPBlobV1()
         blob.loadJSON("""
@@ -309,7 +313,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         blob.validate('gg', self.whitelistedDomains)
 
-        # Test4: Incorrect layout with missing version for an vendor name
+    def testGMPLayoutMissingVersion(self):
+
+        # Incorrect layout with missing version for an vendor name
 
         blob = GMPBlobV1()
         blob.loadJSON("""
@@ -335,7 +341,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
 
-        # Test5: Correct layout with empty platforms
+    def testGMPLayoutEmptyPlatforms(self):
+
+        # Correct layout with empty platforms
 
         blob = GMPBlobV1()
         blob.loadJSON("""
@@ -353,7 +361,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         blob.validate('gg', self.whitelistedDomains)
 
-        # Test6: Incorrect layout with empty platform name
+    def testGMPLayoutEmptyPlatformName(self):
+
+        # Incorrect layout with empty platform name
 
         blob = GMPBlobV1()
         blob.loadJSON("""
@@ -378,7 +388,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
 
-        # Test7: Incorrect layout with missing filesize
+    def testGMPLayoutNoFilesize(self):
+
+        # Incorrect layout with missing filesize
 
         blob = GMPBlobV1()
         blob.loadJSON("""

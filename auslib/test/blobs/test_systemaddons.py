@@ -223,9 +223,9 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertFalse(blob.containsForbiddenDomain('gg',
                                                       self.whitelistedDomains))
 
-    def testAddonLayout(self):
+    def testAddonLayoutEmptyAddons(self):
 
-        # Test 1: Correct layout with empty addons
+        # Correct layout with empty addons
 
         blob = SystemAddonsBlob()
         blob.loadJSON("""
@@ -238,7 +238,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         blob.validate('gg', self.whitelistedDomains)
 
-        # Test2: Correct layout with no addons, and with uninstall
+    def testAddonLayoutWithUninstall(self):
+
+        # Correct layout with no addons, and with uninstall
 
         blob = SystemAddonsBlob()
         blob.loadJSON("""
@@ -251,7 +253,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         blob.validate('gg', self.whitelistedDomains)
 
-        # Test3: Incorrect layout with no addons and no uninstall
+    def testAddonLayoutNoAddonsNoUninstall(self):
+
+        # Incorrect layout with no addons and no uninstall
 
         blob = SystemAddonsBlob()
         blob.loadJSON("""
@@ -263,7 +267,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
 
-        # Test4: Correct layout with one addon and two platforms
+    def testAddonLayoutTwoPlatforms(self):
+
+        # Correct layout with one addon and two platforms
 
         blob = SystemAddonsBlob()
         blob.loadJSON("""
@@ -290,7 +296,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         blob.validate('gg', self.whitelistedDomains)
 
-        # Test5: Incorrect layout with missing version for an addon name
+    def testAddonLayoutNoVersion(self):
+
+        # Incorrect layout with missing version for an addon name
 
         blob = SystemAddonsBlob()
         blob.loadJSON("""
@@ -316,7 +324,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
 
-        # Test6: Correct layout with empty platforms
+    def testAddonLayoutEmptyPlatforms(self):
+
+        # Correct layout with empty platforms
 
         blob = SystemAddonsBlob()
         blob.loadJSON("""
@@ -334,7 +344,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         blob.validate('gg', self.whitelistedDomains)
 
-        # Test7: Incorrect layout with empty platform name
+    def testAddonLayoutEmptyPlatformName(self):
+
+        # Incorrect layout with empty platform name
 
         blob = SystemAddonsBlob()
         blob.loadJSON("""
@@ -359,7 +371,9 @@ class TestSchema1Blob(unittest.TestCase):
     """)
         self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
 
-        # Test8: Incorrect layout with missing filesize
+    def testAddonLayoutNoFilesize(self):
+
+        # Incorrect layout with missing filesize
 
         blob = SystemAddonsBlob()
         blob.loadJSON("""
