@@ -1,19 +1,22 @@
 import cgi
+import connexion
 import logging
 log = logging.getLogger(__name__)
 
-from flask import Flask, make_response, send_from_directory, abort, Response
+from flask import make_response, send_from_directory, abort, Response
 
 from raven.contrib.flask import Sentry
 
 from auslib.AUS import AUS
 from auslib.dockerflow import create_dockerflow_endpoints
 
-app = Flask(__name__)
+connexion_app = connexion.App(__name__)
+connexion_app.add_api('api.yml')
+app = connexion_app.app
 AUS = AUS()
 sentry = Sentry()
 
-from auslib.web.public.views.client import ClientRequestView
+# from auslib.web.public.views.client import ClientRequestView
 from auslib.errors import BadDataError
 
 
@@ -78,6 +81,15 @@ def contributejson():
     return send_from_directory(app.static_folder, "contribute.json")
 
 
+@app.before_request
+def set_cache_control():
+    # By default, we want a cache that can be shared across requests from
+    # different users ("public").
+    # and a maximum age of 90 seconds, to keep our TTL low.
+    # We bumped this from 60s -> 90s in November, 2016.
+    setattr(app, 'cacheControl', app.config.get("CACHE_CONTROL", "public, max-age=90"))
+
+
 @app.route('/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml')
 @app.route('/update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml')
 @app.route('/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml')
@@ -88,48 +100,3 @@ def contributejson():
            '/%DISTRIBUTION_VERSION%/update.xml')
 def unsubstituted_url_variables():
     abort(404)
-
-
-# The "main" routes. 99% of requests will come in through these.
-app.add_url_rule(
-    "/update/1/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/update.xml",
-    view_func=ClientRequestView.as_view("clientrequest1"),
-    # Underlying code depends on osVersion being set. Since this route only
-    # exists to support ancient queries, and all newer versions have osVersion
-    # in them it's easier to set this here than make the all of the underlying
-    # code support queries without it.
-    defaults={"queryVersion": 2, "osVersion": ""},
-)
-app.add_url_rule(
-    '/update/2/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest2'),
-    defaults={'queryVersion': 2},
-)
-app.add_url_rule(
-    '/update/3/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest3'),
-    defaults={'queryVersion': 3},
-)
-app.add_url_rule(
-    '/update/4/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/<platformVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest4'),
-    defaults={'queryVersion': 4},
-)
-app.add_url_rule(
-    '/update/5/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/<IMEI>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest5'),
-    defaults={'queryVersion': 5},
-)
-app.add_url_rule(
-    '/update/6/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<systemCapabilities>/<distribution>/<distVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest6'),
-    defaults={'queryVersion': 6},
-)
-
-# Routes to deal with edge cases.
-# bug 1133250 - support for old-style nightly ESR versions
-app.add_url_rule(
-    '/update/3/<product>/<version>esrpre/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml',
-    view_func=ClientRequestView.as_view('clientrequest_esrnightly'),
-    defaults={'queryVersion': 3},
-)
