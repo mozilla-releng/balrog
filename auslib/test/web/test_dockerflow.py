@@ -27,7 +27,8 @@ class TestDockerflowEndpoints(ClientTestBase):
             cr.side_effect = Exception("kabom!")
             # Because there's no web server between us and the endpoint, we receive
             # the Exception directly instead of a 500 error
-            self.assertRaises(Exception, self.client.get, "/__heartbeat__")
+            ret = self.client.get("/__heartbeat__")
+            self.assertEqual(ret.status_code, 502)
             self.assertEqual(cr.call_count, 1)
 
     def testLbHeartbeat(self):

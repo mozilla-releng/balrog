@@ -1,3 +1,5 @@
+import logging
+
 from os import path
 
 from flask import Response, jsonify
@@ -30,8 +32,8 @@ def create_dockerflow_endpoints(app, heartbeat_database_fn=None):
             database_entry_value = heartbeat_database_fn(dbo)
             return Response(str(database_entry_value), headers={"Cache-Control": "no-cache"})
         except Exception as e:
-            e.status_code = 500
-            return Response(e)
+            logging.exception(e)
+            return Response(status=502)
 
     @app.route("/__lbheartbeat__")
     def lbheartbeat():
