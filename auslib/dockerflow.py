@@ -4,6 +4,8 @@ from flask import Response, jsonify
 
 from auslib.global_state import dbo
 
+import logging
+
 
 def create_dockerflow_endpoints(app, heartbeat_database_fn=None):
     """ Wrapper that creates the endpoints required by CloudOps' Dockerflow spec:
@@ -26,12 +28,12 @@ def create_dockerflow_endpoints(app, heartbeat_database_fn=None):
         """Per the Dockerflow spec:
         Respond to /__heartbeat__ with a HTTP 200 or 5xx on error. This should
         depend on services like the database to also ensure they are healthy."""
-        database_entry_value = heartbeat_database_fn(dbo)
-        return Response(str(database_entry_value), headers={"Cache-Control": "no-cache"})
-
-    @app.errorhandler(502)
-    def internal_server_error(error):
-        return Response("ERROR 502 !!! Couldn't connect to the database.")
+        try:
+            database_entry_value = heartbeat_database_fn(dbo)
+            return Response(str(database_entry_value), headers={"Cache-Control": "no-cache"})
+        except Exception as e:
+            logging.exception("Error occured: %s", e.message)
+            return Response(status=502, response=e.message)
 
     @app.route("/__lbheartbeat__")
     def lbheartbeat():
