@@ -486,3 +486,59 @@ paths:
       responses:
         200:
           description: Update blob in text/xml format.
+
+  /update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables"
+      description: Handles unsubstituted URL requests.
+      responses:
+        200:
+          description: Empty xml files.
+
+  /update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables"
+      description: Handles unsubstituted URL requests.
+      responses:
+        200:
+          description: Empty xml files.
+
+  /update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables"
+      description: Handles unsubstituted URL requests.
+      responses:
+        200:
+          description: Empty xml files.
+
+  /update/4/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/%MOZ_VERSION%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables"
+      description: Handles unsubstituted URL requests.
+      responses:
+        200:
+          description: Empty xml files.
+
+  /update/5/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/%IMEI%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables"
+      description: Handles unsubstituted URL requests.
+      responses:
+        200:
+          description: Empty xml files.
+
+  /update/5/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/%IMEI%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables"
+      description: Handles unsubstituted URL requests.
+      responses:
+        200:
+          description: Empty xml files.
+
+  /update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables"
+      description: Handles unsubstituted URL requests.
+      responses:
+        200:
+          description: Empty xml files.

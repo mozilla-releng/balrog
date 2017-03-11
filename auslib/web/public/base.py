@@ -3,7 +3,7 @@ import cgi
 import logging
 log = logging.getLogger(__name__)
 
-from flask import make_response, send_from_directory, abort, Response
+from flask import make_response, send_from_directory, Response
 
 from raven.contrib.flask import Sentry
 
@@ -89,15 +89,3 @@ def set_cache_control():
     # and a maximum age of 90 seconds, to keep our TTL low.
     # We bumped this from 60s -> 90s in November, 2016.
     setattr(app, 'cacheControl', app.config.get("CACHE_CONTROL", "public, max-age=90"))
-
-
-@app.route('/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml')
-@app.route('/update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml')
-@app.route('/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml')
-@app.route('/update/4/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/%MOZ_VERSION%'
-           '/update.xml')
-@app.route('/update/5/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/%IMEI%/update.xml')
-@app.route('/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%'
-           '/%DISTRIBUTION_VERSION%/update.xml')
-def unsubstituted_url_variables():
-    abort(404)

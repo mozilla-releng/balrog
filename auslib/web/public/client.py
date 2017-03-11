@@ -1,7 +1,7 @@
 import urllib
 import re
 
-from flask import make_response, request, current_app as app
+from flask import abort, make_response, request, current_app as app
 
 from auslib.AUS import AUS
 from auslib.global_state import dbo
@@ -10,6 +10,10 @@ import logging
 
 AUS = AUS()
 LOG = logging.getLogger(__name__)
+
+
+def unsubstituted_url_variables():
+    abort(404)
 
 
 def getHeaderArchitecture(buildTarget, ua):
