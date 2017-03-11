@@ -1,5 +1,5 @@
 import cgi
-import connexion
+# import connexion
 import logging
 log = logging.getLogger(__name__)
 
@@ -9,8 +9,9 @@ from raven.contrib.flask import Sentry
 
 from auslib.AUS import AUS
 from auslib.dockerflow import create_dockerflow_endpoints
+from auslib.web.balrog_api import BalrogApp
 
-connexion_app = connexion.App(__name__)
+connexion_app = BalrogApp(__name__)
 connexion_app.add_api('api.yml')
 app = connexion_app.app
 AUS = AUS()

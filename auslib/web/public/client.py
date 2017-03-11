@@ -47,34 +47,6 @@ def getQueryFromURL(url):
     return query
 
 
-def get_update_blob_1(**url):
-    return get_update_blob(**url)
-
-
-def get_update_blob_2(**url):
-    return get_update_blob(**url)
-
-
-def get_update_blob_3(**url):
-    return get_update_blob(**url)
-
-
-def get_update_blob_3_esrpre(**url):
-    return get_update_blob(**url)
-
-
-def get_update_blob_4(**url):
-    return get_update_blob(**url)
-
-
-def get_update_blob_5(**url):
-    return get_update_blob(**url)
-
-
-def get_update_blob_6(**url):
-    return get_update_blob(**url)
-
-
 def get_update_blob(**url):
     query = getQueryFromURL(url)
     LOG.debug("Got query: %s", query)
