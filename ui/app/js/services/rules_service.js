@@ -1,4 +1,4 @@
-angular.module("app").factory('Rules', function($http) {
+angular.module("app").factory('Rules', function($http, ScheduledChanges) {
   // these routes map to stubbed API endpoints in config/server.js
   var service = {
     getRules: function() {
@@ -74,11 +74,11 @@ angular.module("app").factory('Rules', function($http) {
       return $http.delete(url);
     },
     signoffOnScheduledChange: function(sc_id, data) {
-      var url = "/api/scheduled_changes/rules/" + sc_id + "/signoffs";
+      var url = ScheduledChanges.signoffsUrl("rules", sc_id);
       return $http.post(url, data);
     },
     revokeSignoffOnScheduledChange: function(sc_id, data) {
-      var url = "/api/scheduled_changes/rules/" + sc_id + "/signoffs";
+      var url = ScheduledChanges.signoffsUrl("rules", sc_id);
       url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
       return $http.delete(url, data);
     },

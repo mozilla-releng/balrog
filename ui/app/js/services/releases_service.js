@@ -1,4 +1,4 @@
-angular.module("app").factory('Releases', function($http, $q) {
+angular.module("app").factory('Releases', function($http, $q, ScheduledChanges) {
   var service = {
     getNames: function() {
       var deferred = $q.defer();
@@ -116,11 +116,11 @@ angular.module("app").factory('Releases', function($http, $q) {
      },
 
     signoffOnScheduledChange: function(sc_id, data) {
-      var url = "/api/scheduled_changes/releases/" + sc_id + "/signoffs";
+      var url = ScheduledChanges.signoffsUrl("releases", sc_id);
       return $http.post(url, data);
     },
     revokeSignoffOnScheduledChange: function(sc_id, data) {
-      var url = "/api/scheduled_changes/releases/" + sc_id + "/signoffs";
+      var url = ScheduledChanges.signoffsUrl("releases", sc_id);
       url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
       return $http.delete(url, data);
     },
