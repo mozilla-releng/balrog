@@ -1,10 +1,28 @@
 angular.module("app").controller("RuleScheduledChangesController",
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Permissions) {
 
   $scope.loading = true;
   $scope.failed = false;
+  $scope.current_user = null;
+  $scope.user_roles = [];
 
   $scope.sc_id = parseInt($routeParams.sc_id, 10);
+
+  $scope.isEmpty = function(obj) {
+    return Object.keys(obj).length === 0;
+  };
+
+  Permissions.getCurrentUser()
+  .success(function(response) {
+    $scope.current_user = response["username"];
+    $scope.user_roles = Object.keys(response["roles"]);
+  })
+  .error(function(response) {
+    sweetAlert(
+      "Failed to load current user Roles:",
+      response
+    );
+  });
 
   function loadPage(newPage) {
     Rules.getScheduledChangeHistory($scope.sc_id, $scope.pageSize, newPage)
@@ -132,6 +150,82 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             change_type: 'insert',
           };
         }
+      }
+    });
+  };
+
+  $scope.signoff = function(sc) {
+    var modalInstance = $modal.open({
+      templateUrl: "signoff_modal.html",
+      controller: "SignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Rule";
+        },
+        service: function() {
+          return Rules;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        user_roles: function() {
+          return $scope.user_roles;
+        },
+        required_signoffs: function () {
+          return sc["required_signoffs"];
+        },
+        sc: function() {
+          return sc;
+        },
+        pk: function() {
+          return {"rule_id": sc["rule_id"]};
+        },
+        // todo: add more stuff here
+        data: function() {
+          return {
+            "product": sc["product"],
+            "channel": sc["channel"],
+            "priority": sc["priority"],
+            "backgroundRate": sc["backgroundRate"],
+            "version": sc["version"],
+          };
+        },
+      }
+    });
+  };
+
+  $scope.revokeSignoff = function(sc) {
+    $modal.open({
+      templateUrl: "revoke_signoff_modal.html",
+      controller: "RevokeSignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Rule";
+        },
+        service: function() {
+          return Rules;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        sc: function() {
+          return sc;
+        },
+        pk: function() {
+          // TODO: add alias here if it exists
+          return {"rule_id": sc["rule_id"]};
+        },
+        data: function() {
+          return {
+            "product": sc["product"],
+            "channel": sc["channel"],
+            "priority": sc["priority"],
+            "backgroundRate": sc["backgroundRate"],
+            "version": sc["version"],
+          };
+        },
       }
     });
   };

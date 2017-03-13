@@ -152,7 +152,7 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
     var process_role_changes = function(change, csrf_token) {
       return new Promise(function(resolve, reject) {
         var role_name = change["role"]["name"];
-        var data = {"product": $scope.product, "role": role_name, "csrf_token": csrf_token, "data_version": change["data_version"]};
+        var data = {"product": $scope.product, "role": role_name, "csrf_token": csrf_token, "data_version": change["role"]["data_version"]};
         if ($scope.mode === "channel") {
           data["channel"] = $scope.channel;
         }
