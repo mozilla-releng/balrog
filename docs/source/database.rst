@@ -19,7 +19,7 @@ The most important part of Balrog to understand is its rules.
 When a request comes in it is matched against Balrog's rules to find the one that best suits it (more on this in :ref:`How are requests match to a rule?`).
 Once found, Balrog looks at that rule's "mapping", or "fallbackMapping", which points to a release that has the required information to serve an update back to the client.
 Without any rules, Balrog will never serve an update.
-With badly configured rules Balrog could do bad things like serve Firefox updates to Thunderbird users. 
+With badly configured rules Balrog could do bad things like serve Firefox updates to Thunderbird users.
 
 
 *****************
@@ -101,8 +101,9 @@ Following tables show columns according to different Categories:
   |                        |                    | based on their hardware. Eg: users who do not    |                                 |                            |
   |                        |                    | support SSE2                                     |                                 |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | Version            | The version of the application requesting an     | Exact string match or           | "36.0" or ">=38.0a1"       |
-  |                        |                    | update.                                          | operator plus version           |                            |
+  |                        | Version            | The version of the application requesting an     | Exact string match or exact     | "36.0" or "36.0,36.1,36.2" |
+  |                        |                    | update.                                          | matches from list of values or  |  or ">=38.0a1"             |
+  |                        |                    |                                                  | operator plus version           |                            |
   |                        |                    |                                                  | to compare the incoming         |                            |
   |                        |                    |                                                  | one against                     |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+

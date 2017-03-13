@@ -255,6 +255,11 @@ class SeparatedFileUrlsMixin(object):
             url = url.replace('%FILENAME%', ftpFilename)
             url = url.replace('%PRODUCT%', bouncerProduct)
             url = url.replace('%OS_BOUNCER%', platformData['OS_BOUNCER'])
+            url = url.replace('%locale%', updateQuery['locale'])
+            url = url.replace('%os_ftp%', platformData['OS_FTP'])
+            url = url.replace('%filename%', ftpFilename)
+            url = url.replace('%product%', bouncerProduct)
+            url = url.replace('%os_bouncer%', platformData['OS_BOUNCER'])
         # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
         if updateQuery['force']:
             url = self.processSpecialForceHosts(url, specialForceHosts)
@@ -353,9 +358,11 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
             ]
             if "detailsUrl" in self:
                 details = self["detailsUrl"].replace("%LOCALE%", updateQuery["locale"])
+                details = details.replace("%locale%", updateQuery["locale"])
                 snippet.append("detailsUrl=%s" % details)
             if "licenseUrl" in self:
                 license = self["licenseUrl"].replace("%LOCALE%", updateQuery["locale"])
+                license = license.replace("%locale%", updateQuery["locale"])
                 snippet.append("licenseUrl=%s" % license)
             if update_type == "major":
                 snippet.append("updateType=major")
@@ -379,9 +386,11 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
             (update_type, appv, extv, buildid)
         if "detailsUrl" in self:
             details = self["detailsUrl"].replace("%LOCALE%", locale)
+            details = details.replace("%locale%", locale)
             updateLine += ' detailsURL="%s"' % details
         if "licenseUrl" in self:
             license = self["licenseUrl"].replace("%LOCALE%", locale)
+            license = license.replace("%locale%", locale)
             updateLine += ' licenseURL="%s"' % license
         updateLine += ">"
 
@@ -447,16 +456,20 @@ class NewStyleVersionsMixin(object):
             (update_type, displayVersion, appVersion, platformVersion, buildid)
         if "detailsUrl" in self:
             details = self["detailsUrl"].replace("%LOCALE%", locale)
+            details = details.replace("%locale%", locale)
             updateLine += ' detailsURL="%s"' % details
         if "licenseUrl" in self:
             license = self["licenseUrl"].replace("%LOCALE%", locale)
+            license = license.replace("%locale%", locale)
             updateLine += ' licenseURL="%s"' % license
         if localeData.get("isOSUpdate"):
             updateLine += ' isOSUpdate="true"'
         for attr in self.optional_:
             if attr in self:
                 if self.interpolable_ and attr in self.interpolable_:
-                    updateLine += ' %s="%s"' % (attr, self[attr].replace("%LOCALE%", locale))
+                    updateLineToAdd = self[attr].replace("%LOCALE%", locale)
+                    updateLineToAdd = updateLineToAdd.replace("%locale%", locale)
+                    updateLine += ' %s="%s"' % (attr, updateLineToAdd)
                 else:
                     # Responses require lower cased version of True/False for
                     # boolean properties. Strings are sent as stored.
@@ -532,16 +545,20 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
             ]
             if "detailsUrl" in self:
                 details = self["detailsUrl"].replace("%LOCALE%", updateQuery["locale"])
+                details = details.replace("%locale%", updateQuery["locale"])
                 snippet.append("detailsUrl=%s" % details)
             if "licenseUrl" in self:
                 license = self["licenseUrl"].replace("%LOCALE%", updateQuery["locale"])
+                license = license.replace("%locale%", updateQuery["locale"])
                 snippet.append("licenseUrl=%s" % license)
             if update_type == "major":
                 snippet.append("updateType=major")
             for attr in self.optional_:
                 if attr in self:
                     if attr in self.interpolable_:
-                        snippet.append("%s=%s" % (attr, self[attr].replace("%LOCALE%", updateQuery["locale"])))
+                        snippetToAppend = self[attr].replace("%LOCALE%", updateQuery["locale"])
+                        snippetToAppend = snippetToAppend.replace("%locale%", updateQuery["locale"])
+                        snippet.append("%s=%s" % (attr, snippetToAppend))
                     else:
                         snippet.append("%s=%s" % (attr, self[attr]))
             snippets[patchKey] = "\n".join(snippet) + "\n"
@@ -665,6 +682,9 @@ class UnifiedFileUrlsMixin(object):
             url = url.replace('%LOCALE%', updateQuery['locale'])
             url = url.replace('%OS_FTP%', platformData['OS_FTP'])
             url = url.replace('%OS_BOUNCER%', platformData['OS_BOUNCER'])
+            url = url.replace('%locale%', updateQuery['locale'])
+            url = url.replace('%os_ftp%', platformData['OS_FTP'])
+            url = url.replace('%os_bouncer%', platformData['OS_BOUNCER'])
 
         # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
         if updateQuery['force']:
@@ -918,6 +938,9 @@ class DesupportBlob(Blob):
         tmp_url = self['detailsUrl'].replace("%LOCALE%", updateQuery['locale'])\
                                     .replace("%VERSION%", updateQuery['version'])\
                                     .replace("%OS%", updateQuery['buildTarget'].split('_')[0])
+        tmp_url = tmp_url.replace("%locale%", updateQuery['locale']) \
+            .replace("%version%", updateQuery['version']) \
+            .replace("%os%", updateQuery['buildTarget'].split('_')[0])
         xml = []
         xml.append('    <update type="%s" unsupported="true" detailsURL="%s" displayVersion="%s">' % (update_type, tmp_url, self["displayVersion"]))
         return xml

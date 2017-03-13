@@ -2445,11 +2445,19 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             body.append("Row to be inserted:")
             body.append(UTF8PrettyPrinter().pformat(query.parameters))
 
-        subj = "%s to %s detected" % (type_, table.t.name)
+        subj = "%s to %s detected %s" % (type_, table.t.name, generate_random_string(6))
         send_email(relayhost, port, username, password, to_addr, from_addr,
                    table, subj, body, use_tls)
         table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
     return bleet
+
+
+def generate_random_string(length):
+    import string
+    import random
+
+    return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
+                   for _ in range(length))
 
 
 def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr, use_tls):
@@ -2576,6 +2584,8 @@ class AUSDatabase(object):
             schema.runchange(step, change, 1)
 
     def downgrade(self, version):
+        if version < 21:
+            raise ValueError("Cannot downgrade below version 21")
         schema = migrate.versioning.schema.ControlledSchema(self.engine, self.migrate_repo)
         changeset = schema.changeset(version)
         for step, change in changeset:
