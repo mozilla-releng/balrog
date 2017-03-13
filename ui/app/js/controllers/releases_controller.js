@@ -1,5 +1,7 @@
 angular.module("app").controller('ReleasesController',
-function($scope, $routeParams, $location, $timeout, Releases, Search, $modal) {
+function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Page) {
+
+  Page.setTitle('Balrog Admin Interface - Releases');
 
   $scope.loading = true;
   $scope.failed = false;

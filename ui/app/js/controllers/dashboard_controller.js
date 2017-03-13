@@ -1,6 +1,8 @@
 angular.module("app").controller('DashboardController',
-function($scope, $location, cssInjector, $localForage) {
+function($scope, $location, cssInjector, $localForage, Page) {
   cssInjector.add('//fonts.googleapis.com/css?family=Bangers');
+
+  Page.setTitle('Balrog Admin Interface');
 
   $scope.saved_searches = [];
   $localForage.getItem('savedSearches')

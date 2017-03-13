@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="/css/app.css" media="all" />
   </head>
-  <body>
+  <body ng-controller="ParentController">
 
     <div class="navbar navbar-inverse navbar-static-top" role="navigation">
       <div class="container">
@@ -18,7 +18,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/"><%= pkg.title %></a>
+          <a class="navbar-brand" href="/">{{Page.title()}}</a>
         </div>
         <div class="collapse navbar-collapse" ng-class="{'in':!navCollapsed}">
           <ul class="nav navbar-nav navbar-right" ng-controller="NavController">
@@ -51,7 +51,7 @@
       </div>
     </div>
 
-    <div class="container" ng-controller="ParentController">
+    <div class="container">
 
       <div id="view" ng-view></div>
 

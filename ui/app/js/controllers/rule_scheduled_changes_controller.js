@@ -1,5 +1,7 @@
 angular.module("app").controller("RuleScheduledChangesController",
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Permissions) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Permissions, Page) {
+
+  Page.setTitle('Balrog Admin Interface - Scheduled Rule Changes');
 
   $scope.loading = true;
   $scope.failed = false;
