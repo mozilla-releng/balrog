@@ -8,10 +8,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
   $scope.user_roles = [];
 
   $scope.isEmpty = function(obj) {
-    if (Object.keys(obj).length === 0) {
-      return true;
-    }
-    return false;
+    return Object.keys(obj).length === 0;
   };
 
   Permissions.getCurrentUser()

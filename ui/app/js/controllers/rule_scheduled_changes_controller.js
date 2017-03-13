@@ -9,10 +9,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.sc_id = parseInt($routeParams.sc_id, 10);
 
   $scope.isEmpty = function(obj) {
-    if (Object.keys(obj).length === 0) {
-      return true;
-    }
-    return false;
+    return Object.keys(obj).length === 0;
   };
 
   Permissions.getCurrentUser()
