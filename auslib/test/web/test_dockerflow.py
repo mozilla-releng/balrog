@@ -1,6 +1,6 @@
 import mock
 
-from auslib.test.web.test_client import ClientTestBase
+from auslib.test.web.test_client import ClientTestBase, ClientTestWithErrorHandlers
 
 
 class TestDockerflowEndpoints(ClientTestBase):
@@ -29,10 +29,23 @@ class TestDockerflowEndpoints(ClientTestBase):
             # the Exception directly instead of a 500 error
             ret = self.client.get("/__heartbeat__")
             self.assertEqual(ret.status_code, 502)
-            self.assertEqual(ret.data, "kabom!")
+            self.assertEqual(ret.data, "Error occured")
             self.assertEqual(cr.call_count, 1)
 
     def testLbHeartbeat(self):
         ret = self.client.get("/__lbheartbeat__")
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.headers["Cache-Control"], "no-cache")
+
+
+class TestHeartbeatExceptionSentry(ClientTestWithErrorHandlers):
+
+    def testHeartbeatWithException(self):
+        with mock.patch("auslib.global_state.dbo.rules.countRules") as sentry:
+            sentry.side_effect = Exception("kabom!")
+            # Because there's no web server between us and the endpoint, we receive
+            # the Exception directly instead of a 500 error
+            ret = self.client.get("/__heartbeat__")
+            self.assertEqual(ret.status_code, 502)
+            self.assertEqual(ret.data, "kabom!")
+            self.assertEqual(sentry.call_count, 1)

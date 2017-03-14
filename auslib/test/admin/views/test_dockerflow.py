@@ -33,7 +33,7 @@ class TestDockerflowEndpoints(ViewTest):
             # the Exception directly instead of a 500 error
             ret = self.client.get("/__heartbeat__")
             self.assertEqual(ret.status_code, 502)
-            self.assertEqual(ret.data, "kabom!")
+            self.assertEqual(ret.data, "Error occured")
             self.assertEqual(cr.call_count, 1)
 
     def testLbHeartbeat(self):
