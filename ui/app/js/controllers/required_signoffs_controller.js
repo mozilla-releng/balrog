@@ -1,7 +1,7 @@
 angular.module("app").controller('RequiredSignoffsController',
 function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions, Page) {
 
-  Page.setTitle('Balrog Admin Interface - Required Signoffs');
+  Page.setTitle('Balrog Admin - Signoffs');
 
   $scope.loading = true;
 

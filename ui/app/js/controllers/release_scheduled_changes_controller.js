@@ -1,7 +1,7 @@
 angular.module("app").controller("ReleaseScheduledChangesController",
 function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Releases, Permissions, Page) {
 
-  Page.setTitle('Balrog Admin Interface - Scheduled Release Changes');
+  Page.setTitle('Scheduled Release Changes');
 
   $scope.loading = true;
   $scope.failed = false;

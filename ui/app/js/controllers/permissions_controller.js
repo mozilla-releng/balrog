@@ -1,7 +1,7 @@
 angular.module("app").controller('PermissionsController',
 function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal, Page) {
 
-  Page.setTitle('Balrog Admin Interface - Permissions');
+  Page.setTitle('Balrog Admin - Permissions');
 
   $scope.loading = true;
   $scope.failed = false;

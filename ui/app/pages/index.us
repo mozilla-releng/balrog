@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html ng-app="app">
+<html ng-app="app" ng-controller="ParentController">
   <head>
-    <title><%= pkg.title %></title>
+    <title>{{Page.title()}}</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="/css/app.css" media="all" />
   </head>
-  <body ng-controller="ParentController">
+  <body>
 
     <div class="navbar navbar-inverse navbar-static-top" role="navigation">
       <div class="container">
@@ -18,7 +18,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">{{Page.title()}}</a>
+          <a class="navbar-brand" href="/"><%= pkg.title %></a>
         </div>
         <div class="collapse navbar-collapse" ng-class="{'in':!navCollapsed}">
           <ul class="nav navbar-nav navbar-right" ng-controller="NavController">

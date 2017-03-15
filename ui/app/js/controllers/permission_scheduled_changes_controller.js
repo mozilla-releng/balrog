@@ -1,7 +1,7 @@
 angular.module("app").controller("PermissionScheduledChangesController",
 function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, $modal, $route, Releases, Page) {
 
-  Page.setTitle('Balrog Admin Interface - Scheduled Permission Changes');
+  Page.setTitle('Scheduled Permission Changes');
 
   $scope.loading = true;
   $scope.failed = false;
