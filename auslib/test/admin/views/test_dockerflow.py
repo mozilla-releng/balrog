@@ -22,7 +22,7 @@ class TestDockerflowEndpoints(ViewTest):
                 ret = self.client.get("/__heartbeat__")
                 self.assertEqual(ret.status_code, 200)
                 self.assertEqual(cr.call_count, i)
-                self.assertEqual(ret.headers["Cache-Control"], "no-cache")
+                self.assertEqual(ret.headers["Cache-Control"], "public, max-age=60")
                 returned_digit = int(ret.data)
                 self.assertEqual(returned_digit, i)
 

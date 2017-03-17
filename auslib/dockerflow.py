@@ -28,7 +28,7 @@ def create_dockerflow_endpoints(app, heartbeat_database_fn=None):
         depend on services like the database to also ensure they are healthy."""
         try:
             database_entry_value = heartbeat_database_fn(dbo)
-            return Response(str(database_entry_value), headers={"Cache-Control": "no-cache"})
+            return Response(str(database_entry_value), headers={"Cache-Control": "public, max-age=60"})
         except Exception:
             return Response(status=502, response="Can't connect to the database.", headers={"Cache-Control": "public, max-age=60"})
 
