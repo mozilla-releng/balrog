@@ -1,14 +1,8 @@
-import logging
-
 from os import path
 
 from flask import Response, jsonify
 
 from auslib.global_state import dbo
-
-from raven.contrib.flask import Sentry
-
-sentry = Sentry()
 
 
 def create_dockerflow_endpoints(app, heartbeat_database_fn=None):
@@ -35,11 +29,8 @@ def create_dockerflow_endpoints(app, heartbeat_database_fn=None):
         try:
             database_entry_value = heartbeat_database_fn(dbo)
             return Response(str(database_entry_value), headers={"Cache-Control": "no-cache"})
-        except Exception as e:
-            logging.exception("Error Occured %s", e.message)
-            return Response(status=502, response="Error occured")
-            if sentry.client:
-                sentry.captureMessage(e.message)
+        except Exception:
+            return Response(status=502, response="Can't connect to the database.")
 
     @app.route("/__lbheartbeat__")
     def lbheartbeat():
