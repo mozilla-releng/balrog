@@ -1539,18 +1539,28 @@ class Rules(AUSTable):
             return True
         return string_compare(queryBuildID, ruleBuildID)
 
-    def _csvMatchesRule(self, ruleString, queryString, substring=True):
-        """Decides whether a column from a rule matches an incoming one.
-           Some columns in a rule may specify multiple values delimited by a
-           comma. Once split we do a full or substring match against the query
-           string. Because we support substring matches, there's no need
-           to support globbing as well."""
+    def _simpleBooleanMatchesSubRule(self, subRuleString, queryStringList):
+        for rule in subRuleString:
+            if rule not in queryStringList:
+                return False
+        return True
+
+    def _simpleBooleanMatchesRule(self, ruleString, queryString):
+        """Decides whether a column from a rule matches an incoming one using simplified boolean logic.
+        Only two operators are supported: '&&' (and), ',' (or). A rule like 'AMD,SSE' will match incoming
+        rules that contain either 'AMD' or 'SSE'. A rule like 'AMD&&SSE' will only match incoming rules
+        that contain both 'AMD' and 'SSE'.
+        Rules are matched to full strings, so if we have a rule that specifies 'AMD,SSE', it will NOT be
+        matched by an incoming rule that contains 'SSE3'.
+        """
         if ruleString is None:
             return True
-        for part in ruleString.split(','):
-            if substring and part in queryString:
-                return True
-            elif part == queryString:
+
+        decomposedRules = [[rule.strip() for rule in subRule.split('&&')] for subRule in ruleString.split(',')]
+        decomposedQueryString = queryString.split(',')
+
+        for subRule in decomposedRules:
+            if self._simpleBooleanMatchesSubRule(subRule, decomposedQueryString):
                 return True
         return False
 
@@ -1645,11 +1655,11 @@ class Rules(AUSTable):
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to
             # break them out and create clauses for each one.
-            if not self._csvMatchesRule(rule['osVersion'], updateQuery['osVersion']):
+            if not self._simpleBooleanMatchesRule(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
             # Same deal for system capabilities
-            if not self._csvMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', ""), substring=False):
+            if not self._simpleBooleanMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', "")):
                 self.log.debug("%s doesn't match %s", rule['systemCapabilities'], updateQuery.get('systemCapabilities'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only

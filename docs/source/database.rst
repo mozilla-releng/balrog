@@ -88,17 +88,17 @@ Following tables show columns according to different Categories:
   |                        |                    | update.                                          | comma separated list of         | "en-US,en-GB,id"           |
   |                        |                    |                                                  | locales to do an exact match on |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | osVersion          | The OS Version of the application requesting an  | Partial string match or         | "Windows_NT 5.0" or        |
-  |                        |                    | update. This field is primarily used to point    | comma separated list of         | "Darwin 6,Darwin 7         |
-  |                        |                    | desupported operating systems to their last      | partial strings to match on     | ,Darwin 8"                 |
-  |                        |                    | supported build.                                 |                                 |                            |
+  |                        | osVersion          | The OS Version of the application requesting an  | Simplified boolean string       | "Windows_NT 5.0" or        |
+  |                        |                    | update. This field is primarily used to point    | match. '&&' ANDs terms while    | "Darwin 6, Darwin 7        |
+  |                        |                    | desupported operating systems to their last      | ',' ORs them. Terms are matched | , Darwin 8"                |
+  |                        |                    | supported build.                                 | using exact strings.            |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | Product            | The name of the application requesting an update.| Exact string match only         | "Firefox" or "B2G"         |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | systemCapabilities | The supported hardware features of the           | Full string match or            | 	"SSE" or "MMX,SSE"        |
-  |                        |                    | application requesting an update. This field     | comma separated list of         |                            |
-  |                        |                    | is primarily used to point desupported users     | full strings to match on        |                            |
-  |                        |                    | based on their hardware. Eg: users who do not    |                                 |                            |
+  |                        | systemCapabilities | The supported hardware features of the           | Simplified boolean string       | 	"SSE" or "MMX, SSE" or    |
+  |                        |                    | application requesting an update. This field     | match. '&&' ANDs terms while    |  "GenuineIntel && MMX,SSE" |
+  |                        |                    | is primarily used to point desupported users     | ',' ORs them. Terms are matched |                            |
+  |                        |                    | based on their hardware. Eg: users who do not    | using exact strings.            |                            |
   |                        |                    | support SSE2                                     |                                 |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | Version            | The version of the application requesting an     | Exact string match or exact     | "36.0" or "36.0,36.1,36.2" |
