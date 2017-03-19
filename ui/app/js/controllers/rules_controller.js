@@ -1,7 +1,7 @@
 angular.module("app").controller('RulesController',
 function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page) {
 
-  Page.setTitle('Balrog Admin - Rules');
+  Page.setTitle('Rules');
 
   $scope.loading = true;
   $scope.failed = false;

@@ -1,7 +1,7 @@
 angular.module("app").controller('ReleasesController',
 function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Page) {
 
-  Page.setTitle('Balrog Admin - Releases');
+  Page.setTitle('Releases');
 
   $scope.loading = true;
   $scope.failed = false;
