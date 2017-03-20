@@ -42,6 +42,6 @@ angular.module("app").config(['$httpProvider', function($httpProvider) {
 
 /* Put things in here that the sub-controllers can use */
 angular.module("app").controller('ParentController',
-function($scope) {
-
+function($scope, Page) {
+  $scope.Page = Page;
 });

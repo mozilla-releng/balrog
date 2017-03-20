@@ -1,5 +1,8 @@
 angular.module("app").controller('RequiredSignoffsController',
-function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions) {
+function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions, Page) {
+
+  Page.setTitle('Signoffs');
+
   $scope.loading = true;
 
   // required_signoffs holds ALL of the Required Signoffs - product, permissions,
