@@ -30,7 +30,8 @@ branch_tag="${branch}"
 if [ "$branch" == "master" ]; then
     branch_tag="latest"
 fi
-date_tag="${branch}-${date}"commit_tag="${branch}-${commit}"
+date_tag="${branch}-${date}"
+commit_tag="${branch}-${commit}"
 
 echo "Building Docker image"
 docker build -t mozilla/balrogagent:${branch_tag} .
