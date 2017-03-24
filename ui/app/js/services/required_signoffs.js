@@ -5,37 +5,37 @@
 var RequiredSignoffBase = (function() {
   var service = {
     getRequiredSignoffs: function() {
-      var url = "/api" + this.base_url;
+      var url = "/api/" + this.object_name;
       return this.http.get(url);
     },
     addRequiredSignoff: function(data) {
-      var url = "/api" + this.base_url;
+      var url = "/api/" + this.object_name;
       return this.http.post(url, data);
     },
     getScheduledChanges: function() {
-      var url = "/api/scheduled_changes" + this.base_url;
+      var url = "/api/scheduled_changes/" + this.object_name;
       return this.http.get(url);
     },
     addScheduledChange: function(data) {
-      var url = "/api/scheduled_changes" + this.base_url;
+      var url = "/api/scheduled_changes/" + this.object_name;
       return this.http.post(url, data);
     },
     updateScheduledChange: function(sc_id, data) {
-      var url = "/api/scheduled_changes" + this.base_url + "/" + sc_id;
+      var url = "/api/scheduled_changes/" + this.object_name + "/" + sc_id;
       return this.http.post(url, data);
     },
     deleteScheduledChange: function(sc_id, data) {
-      var url = "/api/scheduled_changes" + this.base_url + "/" + sc_id;
+      var url = "/api/scheduled_changes/" + this.object_name + "/" + sc_id;
       url += "?data_version=" + data["sc_data_version"];
       url += "&csrf_token=" + encodeURIComponent(data["csrf_token"]);
       return this.http.delete(url);
     },
     signoffOnScheduledChange: function(sc_id, data) {
-      var url = "/api/scheduled_changes" + this.base_url + "/" + sc_id + "/signoffs";
+      var url = this.ScheduledChanges.signoffsUrl(this.object_name, sc_id);
       return this.http.post(url, data);
     },
     revokeSignoffOnScheduledChange: function(sc_id, data) {
-      var url = "/api/scheduled_changes" + this.base_url + "/" + sc_id + "/signoffs";
+      var url = this.ScheduledChanges.signoffsUrl(this.object_name, sc_id);
       url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
       return this.http.delete(url, data);
     },
@@ -43,16 +43,18 @@ var RequiredSignoffBase = (function() {
   return service;
 }());
 
-angular.module("app").factory("ProductRequiredSignoffs", function($http) {
+angular.module("app").factory("ProductRequiredSignoffs", function($http, ScheduledChanges) {
   var service = Object.create(RequiredSignoffBase);
-  service.base_url = "/required_signoffs/product";
+  service.object_name = "required_signoffs/product";
   service.http = $http;
+  service.ScheduledChanges = ScheduledChanges;
   return service;
 });
 
-angular.module("app").factory("PermissionsRequiredSignoffs", function($http) {
+angular.module("app").factory("PermissionsRequiredSignoffs", function($http, ScheduledChanges) {
   var service = Object.create(RequiredSignoffBase);
-  service.base_url = "/required_signoffs/permissions";
+  service.object_name = "required_signoffs/permissions";
   service.http = $http;
+  service.ScheduledChanges = ScheduledChanges;
   return service;
 });

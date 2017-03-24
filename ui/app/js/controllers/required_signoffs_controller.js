@@ -1,5 +1,8 @@
 angular.module("app").controller('RequiredSignoffsController',
-function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions) {
+function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions, Page) {
+
+  Page.setTitle('Signoffs');
+
   $scope.loading = true;
 
   // required_signoffs holds ALL of the Required Signoffs - product, permissions,
@@ -14,10 +17,7 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   $scope.user_roles = [];
 
   $scope.isEmpty = function(obj) {
-    if (Object.keys(obj).length === 0) {
-      return true;
-    }
-    return false;
+    return Object.keys(obj).length === 0;
   };
 
   // All of the initial loads happen asynchronously. We keep track of these so we can
