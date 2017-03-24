@@ -33,13 +33,7 @@ class SuperBlob(Blob):
         """
         :return: Header specific to GMP and systemaddons superblob
         """
-        if not self.get("products"):
-            revision = self['revision']
-            # In case of systemaddons superblob
-            return '    <addons revision=\"%i\">' % (revision)
-        else:
-            # In case of GMP superblob
-            return '    <addons>'
+        return '    <addons>'
 
     def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return '    </addons>'

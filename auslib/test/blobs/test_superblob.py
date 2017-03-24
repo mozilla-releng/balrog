@@ -25,7 +25,6 @@ class TestSchema1Blob(unittest.TestCase):
 {
     "name": "SystemAddOnsSuperblob",
     "schema_version": 1000,
-    "revision": 123,
     "blobs": [
         "Hello-1.0",
         "Pocket-2.0"
@@ -58,7 +57,7 @@ class TestSchema1Blob(unittest.TestCase):
                                                                  self.specialForceHosts)
 
         expected_header_gmp = '    <addons>'
-        expected_header_addon = '    <addons revision="123">'
+        expected_header_addon = '    <addons>'
 
         self.assertEqual(headerXML_gmp, expected_header_gmp)
         self.assertEquals(headerXML_addon, expected_header_addon)

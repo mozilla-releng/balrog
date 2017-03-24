@@ -39,13 +39,17 @@
       required:
         - name
         - schema_version
-        - revision
         - blobs
       additionalProperties: false
       properties:
         name:
           type: string
           description: Human readable identifier
+          minLength: 1
+          maxLength: 100
+        product:
+          type: string
+          description: The product that the blob is associated to
           minLength: 1
           maxLength: 100
         schema_version:
