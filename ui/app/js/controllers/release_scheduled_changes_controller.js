@@ -1,10 +1,30 @@
 angular.module("app").controller("ReleaseScheduledChangesController",
-function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Releases) {
+function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Releases, Permissions, Page) {
+
+  Page.setTitle('Scheduled Release Changes');
 
   $scope.loading = true;
   $scope.failed = false;
+  $scope.current_user = null;
+  $scope.user_roles = [];
 
   $scope.sc_id = $routeParams.sc_id;
+
+  $scope.isEmpty = function(obj) {
+    return Object.keys(obj).length === 0;
+  };
+
+  Permissions.getCurrentUser()
+  .success(function(response) {
+    $scope.current_user = response["username"];
+    $scope.user_roles = Object.keys(response["roles"]);
+  })
+  .error(function(response) {
+    sweetAlert(
+      "Failed to load current user Roles:",
+      response
+    );
+  });
 
   function loadPage(newPage) {
     Releases.getScheduledChangeHistory($scope.sc_id, $scope.pageSize, newPage)
@@ -131,6 +151,73 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
             change_type: 'insert',
           };
         }
+      }
+    });
+  };
+
+  $scope.signoff = function(sc) {
+    var modalInstance = $modal.open({
+      templateUrl: "signoff_modal.html",
+      controller: "SignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Release";
+        },
+        service: function() {
+          return Releases;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        user_roles: function() {
+          return $scope.user_roles;
+        },
+        required_signoffs: function () {
+          return sc["required_signoffs"];
+        },
+        sc: function() {
+          return sc;
+        },
+        pk: function() {
+          return {"name": sc["name"]};
+        },
+        // todo: add more stuff here
+        data: function() {
+          return {
+            "product": sc["product"],
+          };
+        },
+      }
+    });
+  };
+
+  $scope.revokeSignoff = function(sc) {
+    $modal.open({
+      templateUrl: "revoke_signoff_modal.html",
+      controller: "RevokeSignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Release";
+        },
+        service: function() {
+          return Releases;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        sc: function() {
+          return sc;
+        },
+        pk: function() {
+          return {"name": sc["name"]};
+        },
+        data: function() {
+          return {
+            "product": sc["product"],
+          };
+        },
       }
     });
   };
