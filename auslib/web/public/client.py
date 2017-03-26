@@ -1,5 +1,6 @@
 import urllib
 import re
+import sys
 
 from flask import abort, make_response, request, current_app as app
 
@@ -10,6 +11,21 @@ import logging
 
 AUS = AUS()
 LOG = logging.getLogger(__name__)
+
+update_blob_functions = ["get_update_blob_1",
+                         "get_update_blob_2",
+                         "get_update_blob_3",
+                         "get_update_blob_3_esrpre",
+                         "get_update_blob_4",
+                         "get_update_blob_5",
+                         "get_update_blob_6"]
+
+unsubstituted_url_var_functions = ["unsubstituted_url_variables_1",
+                                   "unsubstituted_url_variables_2",
+                                   "unsubstituted_url_variables_3",
+                                   "unsubstituted_url_variables_4",
+                                   "unsubstituted_url_variables_5",
+                                   "unsubstituted_url_variables_6"]
 
 
 def unsubstituted_url_variables():
@@ -131,3 +147,13 @@ def get_update_blob(**url):
     response.headers["Cache-Control"] = app.cacheControl
     response.mimetype = "text/xml"
     return response
+
+
+def _set_functions(function_names, function):
+    module = sys.modules[__name__]
+    for function_name in function_names:
+        setattr(module, function_name, function)
+
+
+_set_functions(update_blob_functions, get_update_blob)
+_set_functions(unsubstituted_url_var_functions, unsubstituted_url_variables)
