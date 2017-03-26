@@ -17,10 +17,3 @@ class BalrogParameterValidator(ParameterValidator):
             args[param['name']] = val
 
         return self.validate_parameter('path', val, param)
-
-    def validate_query_parameter(self, param):
-        if param['name'] in CONNEXION_IGNORE_VALIDATION_AVAST:
-            print "IGNORE", param['name']
-            return
-        val = flask.request.args.get(param['name'])
-        return self.validate_parameter('query', val, param)
