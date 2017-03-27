@@ -241,7 +241,7 @@ class Rule(API):
 class ScheduledRuleChange(API):
     """Update Balrog rules"""
     url_template = '/scheduled_changes/rules'
-    prerequest_url_template = '/scheduled_changes/rules'
+    prerequest_url_template = '/rules/%(rule_id)s'
 
     def __init__(self, rule_id, **kwargs):
         super(ScheduledRuleChange, self).__init__(**kwargs)
