@@ -13,8 +13,7 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
     options_as_json: ''
   };
   $scope.errors = {
-    permissions: {},
-    roles: {}
+    permissions: {}
   };
 
   $scope.user.permissions = [];
