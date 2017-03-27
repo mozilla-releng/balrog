@@ -57,9 +57,6 @@
           description: Blob identifier number
           enum:
             - 4000
-        revision:
-          type: number
-          description: Revision number of adds collection
         blobs:
           type: array
           items:
