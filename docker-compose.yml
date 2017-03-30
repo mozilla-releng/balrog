@@ -71,7 +71,6 @@ balrogui:
     - .cache:/cache
   environment:
     - WEB_PORT=8080
-    - LOG_LEVEL=WARNING
   entrypoint:
     - /bin/bash
     - /app/docker-entrypoint.sh
@@ -85,6 +84,5 @@ balrogdb:
     - MYSQL_USER=balrogadmin
     - MYSQL_PASSWORD=balrogadmin
     - MYSQL_ROOT_PASSWORD=admin
-    - LOG_LEVEL=WARNING
   volumes:
     - .cache/mysql:/var/lib/mysql
