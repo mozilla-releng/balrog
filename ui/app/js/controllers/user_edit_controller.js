@@ -13,7 +13,8 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
     options_as_json: ''
   };
   $scope.errors = {
-    permissions: {}
+    permissions: {},
+    role: {}
   };
 
   $scope.user.permissions = [];
@@ -101,7 +102,7 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
           data_version: ''
         };
         $scope.errors = {
-          roles: {}
+          role: {}
         };
         sweetAlert("Saved", "Role granted.", "success");
       })
