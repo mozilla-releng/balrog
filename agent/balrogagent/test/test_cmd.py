@@ -220,3 +220,77 @@ class TestRunAgent(asynctest.TestCase):
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 1)
         self.assertEquals(request.call_count, 5)
+
+    @asynctest.patch("time.time")
+    async def testRightEnactOrderForMultipleChangesOneEndpoint(self, time, time_is_ready, telemetry_is_ready, request):
+        time.return_value = 999999999
+        time_is_ready.return_value = True
+        sc = {'releases': [{"priority": 1, "sc_id": 4, "when": 234, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None},
+                           {"priority": 2, "sc_id": 5, "when": 234, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None},
+                           {"priority": 1, "sc_id": 6, "when": 378, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None},
+                           {"priority": 2, "sc_id": 7, "when": 187, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None},
+                           {"priority": 2, "sc_id": 8, "when": 1000, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None},
+                           {"priority": 4, "sc_id": 9, "when": 74, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None},
+                           {"priority": 3, "sc_id": 10, "when": 543, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None}
+                           ]}
+        await self._runAgent(sc, request)
+        self.assertEquals(telemetry_is_ready.call_count, 0)
+        self.assertEquals(time_is_ready.call_count, 7)
+        self.assertEquals(request.call_count, 12)
+        called_endpoints = [call[0][1] for call in request.call_args_list]
+        called_endpoints = called_endpoints[2:9]  # the list slice returns only the enacted endpoints
+        self.assertEquals(called_endpoints.index('/scheduled_changes/releases/4/enact'), 6)
+        self.assertEquals(called_endpoints.index('/scheduled_changes/releases/5/enact'), 3)
+        self.assertEquals(called_endpoints.index('/scheduled_changes/releases/6/enact'), 5)
+        self.assertEquals(called_endpoints.index('/scheduled_changes/releases/7/enact'), 4)
+        self.assertEquals(called_endpoints.index('/scheduled_changes/releases/8/enact'), 2)
+        self.assertEquals(called_endpoints.index('/scheduled_changes/releases/9/enact'), 0)
+        self.assertEquals(called_endpoints.index('/scheduled_changes/releases/10/enact'), 1)
+
+    @asynctest.patch("time.time")
+    async def testRightEnactOrderForMultipleEndpointsAtOnce(self, time, time_is_ready, telemetry_is_ready, request):
+        time.return_value = 999999999
+        time_is_ready.return_value = True
+        sc = {'releases': [{"priority": 1, "sc_id": 4, "when": 234, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None},
+                           {"priority": 2, "sc_id": 5, "when": 234, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None},
+                           {"priority": 1, "sc_id": 6, "when": 378, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None},
+                           {"priority": 2, "sc_id": 7, "when": 187, "telemetry_uptake": None,
+                            "telemetry_product": None, "telemetry_channel": None}],
+              'rules': [{"priority": 100, "sc_id": 1, "when": 23400, "telemetry_uptake": None,
+                         "telemetry_product": None, "telemetry_channel": None},
+                        {"priority": 300, "sc_id": 2, "when": 7000, "telemetry_uptake": None,
+                         "telemetry_product": None, "telemetry_channel": None},
+                        {"priority": 50, "sc_id": 3, "when": 329, "telemetry_uptake": None,
+                         "telemetry_product": None, "telemetry_channel": None}],
+              'permissions': [{"priority": 600, "sc_id": 8, "when": 45400, "telemetry_uptake": None,
+                               "telemetry_product": None, "telemetry_channel": None},
+                              {"priority": 600, "sc_id": 9, "when": 98000, "telemetry_uptake": None,
+                               "telemetry_product": None, "telemetry_channel": None},
+                              {"priority": 600, "sc_id": 10, "when": 5000, "telemetry_uptake": None,
+                               "telemetry_product": None, "telemetry_channel": None}]
+
+              }
+        await self._runAgent(sc, request)
+        self.assertEquals(telemetry_is_ready.call_count, 0)
+        self.assertEquals(time_is_ready.call_count, 10)
+        self.assertEquals(request.call_count, 15)
+        called_endpoints = [call[0][1] for call in request.call_args_list]
+        self.assertLess(called_endpoints.index('/scheduled_changes/rules'), called_endpoints.index('/scheduled_changes/releases'))
+        self.assertLess(called_endpoints.index('/scheduled_changes/releases'), called_endpoints.index('/scheduled_changes/permissions'))
+        self.assertLess(called_endpoints.index('/scheduled_changes/releases/5/enact'), called_endpoints.index('/scheduled_changes/releases/7/enact'))
+        self.assertLess(called_endpoints.index('/scheduled_changes/releases/7/enact'), called_endpoints.index('/scheduled_changes/releases/6/enact'))
+        self.assertLess(called_endpoints.index('/scheduled_changes/releases/6/enact'), called_endpoints.index('/scheduled_changes/releases/4/enact'))
+        self.assertLess(called_endpoints.index('/scheduled_changes/rules/2/enact'), called_endpoints.index('/scheduled_changes/rules/1/enact'))
+        self.assertLess(called_endpoints.index('/scheduled_changes/rules/1/enact'), called_endpoints.index('/scheduled_changes/rules/3/enact'))
+        self.assertLess(called_endpoints.index('/scheduled_changes/permissions/9/enact'), called_endpoints.index('/scheduled_changes/permissions/8/enact'))
+        self.assertLess(called_endpoints.index('/scheduled_changes/permissions/8/enact'), called_endpoints.index('/scheduled_changes/permissions/10/enact'))
