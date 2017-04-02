@@ -38,14 +38,14 @@ class TestRunAgent(asynctest.TestCase):
     async def testSignoffsAbsent(self, time, time_is_ready, telemetry_is_ready, request):
         time.return_value = 999999999
         time_is_ready.return_value = True
-        sc = {'permissions': [{"sc_id": 4,
+        sc = {'permissions': [{"priority": None, "sc_id": 4,
                                "when": 234,
                                "telemetry_uptake": None,
                                "telemetry_product": None,
                                "telemetry_channel": None,
                                "signoffs": {"mary": "relman"},
                                "required_signoffs": {"releng": 1, "relman": 1}},
-                              {"sc_id": 5,
+                              {"priority": None, "sc_id": 5,
                                "when": 234,
                                "telemetry_uptake": None,
                                "telemetry_product": None,
