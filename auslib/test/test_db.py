@@ -2041,7 +2041,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def testGetRulesMatchingQueryOsVersionSubstring(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product="a", version='5.0', channel="a", buildTarget='d',
-                 buildID='', locale='', osVersion='foo 1', distribution='',
+                 buildID='', locale='', osVersion='foo 1.2.3', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
                  ),
@@ -2059,7 +2059,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def testGetRulesMatchingQueryOsVersionSubstringNotAtStart(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product="a", version='5.0', channel="a", buildTarget='d',
-                 buildID='', locale='', osVersion='bbb,foo 1,ccc', distribution='',
+                 buildID='', locale='', osVersion='bbb,foo 1.2.3', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
                  ),
@@ -2077,7 +2077,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def testGetRulesMatchingQueryOsVersionMultipleSubstring(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product="a", version='5.0', channel="a", buildTarget='d',
-                 buildID='', locale='', osVersion='blah 6', distribution='',
+                 buildID='', locale='', osVersion='blah 6.3.2', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
                  ),

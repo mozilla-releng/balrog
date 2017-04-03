@@ -1539,28 +1539,38 @@ class Rules(AUSTable):
             return True
         return string_compare(queryBuildID, ruleBuildID)
 
-    def _simpleBooleanMatchesSubRule(self, subRuleString, queryStringList):
+    def _simpleBooleanMatchesSubRule(self, subRuleString, preparedQuery):
         for rule in subRuleString:
-            if rule not in queryStringList:
+            if rule not in preparedQuery:
                 return False
         return True
 
-    def _simpleBooleanMatchesRule(self, ruleString, queryString):
+    def _simpleBooleanMatchesRule(self, ruleString, queryString, substring=True):
         """Decides whether a column from a rule matches an incoming one using simplified boolean logic.
         Only two operators are supported: '&&' (and), ',' (or). A rule like 'AMD,SSE' will match incoming
         rules that contain either 'AMD' or 'SSE'. A rule like 'AMD&&SSE' will only match incoming rules
         that contain both 'AMD' and 'SSE'.
-        Rules are matched to full strings, so if we have a rule that specifies 'AMD,SSE', it will NOT be
-        matched by an incoming rule that contains 'SSE3'.
+        This function can do substring matching or full string matching. When doing substring matching, a rule
+        specifying 'AMD,Windows 10' WILL match an incoming rule such as 'Windows 10.1.2'. When doing full string
+        matching, a rule specifying 'AMD,SSE' will NOT match an incoming rule that contains 'SSE3', but WILL match
+        an incoming rule that contains either 'AMD' or 'SSE3'.
         """
         if ruleString is None:
             return True
 
         decomposedRules = [[rule.strip() for rule in subRule.split('&&')] for subRule in ruleString.split(',')]
-        decomposedQueryString = queryString.split(',')
+        # If we want to do substring matching (ie. inexact matching), we preserve the queryString as a string,
+        # but if we want to do exact matching, we turn the queryString into a list. This works by using Python's
+        # "in" operator that does inexact matching for strings, but exact matching for lists.
+        if substring:
+            preparedQuery = queryString
+        else:
+            preparedQuery = queryString.split(',')
 
         for subRule in decomposedRules:
-            if self._simpleBooleanMatchesSubRule(subRule, decomposedQueryString):
+            if self._simpleBooleanMatchesSubRule(subRule, preparedQuery):
+                # We can immediately return True on the first match because this loop is iterating over an OR expression
+                # so we need just one match to pass.
                 return True
         return False
 
@@ -1659,7 +1669,7 @@ class Rules(AUSTable):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
             # Same deal for system capabilities
-            if not self._simpleBooleanMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', "")):
+            if not self._simpleBooleanMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', ""), substring=False):
                 self.log.debug("%s doesn't match %s", rule['systemCapabilities'], updateQuery.get('systemCapabilities'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only
