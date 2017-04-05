@@ -2573,7 +2573,7 @@ class AUSDatabase(object):
 
     def upgrade(self, version=None):
         # This method was taken from Buildbot:
-        # https://github.com/buildbot/buildbot/blob/87108ec4088dc7fd5394ac3c1d0bd3b465300d92/master/builselft/db/model.py#L455
+        # https://github.com/buildbot/buildbot/blob/87108ec4088dc7fd5394ac3c1d0bd3b465300d92/master/buildbot/db/model.py#L455
         # http://code.google.com/p/sqlalchemy-migrate/issues/detail?id=100
         # means  we cannot use the migrate.versioning.api module.  So these
         # methods perform similar wrapping functions to what is done by the API
