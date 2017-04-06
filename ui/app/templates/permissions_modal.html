@@ -19,7 +19,7 @@
           <div class="form-group" ng-class="{'has-error': errors.permission}">
             <label for="id_permission">Permission</label>
             <input type="text" class="form-control" id="id_permission" ng-model="permission.permission">
-            <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
+            <p class="help-block" ng-show="errors.permission">{{ errors.permission.data_version.join(', ') }}</p>
           </div>
           <div class="form-group" ng-class="{'has-error': errors.options_as_json}">
             <label for="id_options">Options</label>
@@ -60,7 +60,7 @@
             <label for="id_role">Role</label>
             <input type="text" class="form-control" id="id_role" ng-model="role.role" autocomplete="off"
             typeahead="role for role in roles_list | filter:$viewValue | limitTo:16">
-            <p class="help-block" ng-show="errors.role">{{ errors.role.join(', ') }}</p>
+            <p class="help-block" ng-show="errors.role">{{ errors.role.exception }}</p>
           </div>
           <div style="text-align: right">
             <input type="hidden" name="data_version" ng-model="role.data_version">
