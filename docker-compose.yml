@@ -19,7 +19,7 @@ balrogadmin:
     - SECRET_KEY=blahblah
     - PORT=7070
     - LOG_FORMAT=plain
-    - LOG_LEVEL=DEBUG
+    - LOG_LEVEL=WARNING
     # Grab mail information from the local environment
     - SMTP_HOST
     - SMTP_PORT
@@ -42,7 +42,7 @@ balrogpub:
     - SECRET_KEY=blahblah
     - PORT=9090
     - LOG_FORMAT=plain
-    - LOG_LEVEL=DEBUG
+    - LOG_LEVEL=WARNING
   links:
     - balrogdb
 
@@ -58,7 +58,7 @@ balrogagent:
     - BALROG_PASSWORD=balrogadmin
     - TELEMETRY_API_ROOT=abc
     - LOG_FORMAT=plain
-    - LOG_LEVEL=DEBUG
+    - LOG_LEVEL=WARNING
 
 balrogui:
   image: node:0.10

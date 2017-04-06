@@ -50,8 +50,8 @@
                 ng-show="! isEmpty(sc['required_signoffs']) && sc['signoffs'].hasOwnProperty(current_user)">
             Revoke your Signoff
         </button>
-        <button class="btn btn-default btn-xs" ng-click="openScheduledUpdateModal(sc)">Update</button>
-        <button class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
+        <button ng-show="!sc.complete" class="btn btn-default btn-xs" ng-click="openScheduledUpdateModal(sc)">Update</button>
+        <button ng-show="!sc.complete" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
       </div>
 
 
@@ -112,4 +112,3 @@
       ></pagination>
     </div>
   </div>
-
