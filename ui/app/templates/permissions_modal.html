@@ -9,8 +9,8 @@
         <li ng-class="{active: currentItemTab == 1}">
           <a href="#" ng-click="currentItemTab = 1;">Permissions</a>
         </li>
-        <li ng-class="{active: currentItemTab == 2}">
-          <a href="#" ng-click="currentItemTab = 2;" ng-hide="showRole" ng-show='user.permissions.length > 0'>Roles</a>
+        <li ng-class="{active: currentItemTab == 2}" ng-show='user.permissions.length > 0'>
+          <a href="#" ng-click="currentItemTab = 2;">Roles</a>
         </li>
       </ul>
       <div class="tab-content" ng-show="currentItemTab == 1">

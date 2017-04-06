@@ -8,7 +8,6 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
   $scope.is_edit = true;
   $scope.original_user = user;
   $scope.user = angular.copy(user);
-  $scope.showRole = true;
   $scope.permission = {
     permission: '',
     options_as_json: ''
@@ -146,7 +145,6 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
           permissions: {}
         };
         sweetAlert("Saved", "Permission added.", "success");
-        $scope.showRole = !$scope.showRole;
       })
       .error(function(response) {
         if (typeof response === 'object') {
