@@ -20,7 +20,7 @@ import migrate.versioning.api
 import dictdiffer
 import dictdiffer.merge
 
-from auslib.global_state import cache, dbo
+from auslib.global_state import cache
 from auslib.blobs.base import createBlob
 from auslib.util.comparison import string_compare, version_compare
 from auslib.util.timestamp import getMillisecondTimestamp
@@ -1662,7 +1662,7 @@ class Rules(AUSTable):
             if rule.get("whitelist"):
                 self.log.debug("Matching rule requires a whitelist")
                 try:
-                    whitelist = dbo.releases.getReleaseBlob(name=rule["whitelist"], transaction=transaction)
+                    whitelist = self.db.releases.getReleaseBlob(name=rule["whitelist"], transaction=transaction)
                     if whitelist and not whitelist.shouldServeUpdate(updateQuery):
                         continue
                 # It shouldn't be possible for the whitelist blob not to exist,
@@ -1820,12 +1820,13 @@ class Releases(AUSTable):
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
 
         if not nameOnly:
-            j = join(dbo.releases.t, dbo.rules.t, ((dbo.releases.name == dbo.rules.mapping) | (dbo.releases.name == dbo.rules.whitelist) |
-                                                   (dbo.releases.name == dbo.rules.fallbackMapping)))
+            j = join(self.db.releases.t, self.db.rules.t, ((self.db.releases.name == self.db.rules.mapping) |
+                                                           (self.db.releases.name == self.db.rules.whitelist) |
+                                                           (self.db.releases.name == self.db.rules.fallbackMapping)))
             if transaction:
-                ref_list = transaction.execute(select([dbo.releases.name, dbo.rules.rule_id]).select_from(j)).fetchall()
+                ref_list = transaction.execute(select([self.db.releases.name, self.db.rules.rule_id]).select_from(j)).fetchall()
             else:
-                ref_list = self.getEngine().execute(select([dbo.releases.name, dbo.rules.rule_id]).select_from(j)).fetchall()
+                ref_list = self.getEngine().execute(select([self.db.releases.name, self.db.rules.rule_id]).select_from(j)).fetchall()
 
             for row in rows:
                 refs = [ref for ref in ref_list if ref[0] == row['name']]
@@ -2066,13 +2067,13 @@ class Releases(AUSTable):
 
     def isMappedTo(self, name, transaction=None):
         if transaction:
-            mapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.mapping == name)).fetchone()[0]
-            whitelist_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.whitelist == name)).fetchone()[0]
-            fallbackMapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.fallbackMapping == name)).fetchone()[0]
+            mapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
+            whitelist_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.whitelist == name)).fetchone()[0]
+            fallbackMapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
         else:
-            mapping_count = self.getEngine().execute(dbo.rules.t.count().where(dbo.rules.mapping == name)).fetchone()[0]
-            whitelist_count = self.getEngine().execute(dbo.rules.t.count().where(dbo.rules.whitelist == name)).fetchone()[0]
-            fallbackMapping_count = self.getEngine().execute(dbo.rules.t.count().where(dbo.rules.fallbackMapping == name)).fetchone()[0]
+            mapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
+            whitelist_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.whitelist == name)).fetchone()[0]
+            fallbackMapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
         if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
             return True
 
