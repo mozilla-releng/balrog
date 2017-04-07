@@ -38,7 +38,7 @@ services:
         test: nc -z -v balrogadmin 7070
         interval: 5s
         timeout: 30s
-        retries: 3
+        retries: 10
 
 
   balrogpub:
@@ -103,7 +103,7 @@ services:
   balrogdb:
     build:
       context: .
-      dockerfile: Dockerfile.datab
+      dockerfile: Dockerfile.database
     expose:
       - "3306"
     environment:
@@ -117,4 +117,4 @@ services:
         test: nc -z -v balrogdb 3306
         interval: 30s
         timeout: 30s
-        retries: 3
+        retries: 10
