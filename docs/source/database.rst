@@ -91,7 +91,7 @@ Following tables show columns according to different Categories:
   |                        | osVersion          | The OS Version of the application requesting an  | Simplified boolean string       | "Windows_NT 5.0" or        |
   |                        |                    | update. This field is primarily used to point    | match. '&&' ANDs terms while    | "Darwin 6, Darwin 7        |
   |                        |                    | desupported operating systems to their last      | ',' ORs them. Terms are matched | , Darwin 8"                |
-  |                        |                    | supported build.                                 | using exact strings.            |                            |
+  |                        |                    | supported build.                                 | using partial strings.          |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | Product            | The name of the application requesting an update.| Exact string match only         | "Firefox" or "B2G"         |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
