@@ -74,6 +74,15 @@ class SystemAddonsBlob(Blob):
 
         return addonXML
 
+    def validate(self, *args, **kwargs, ignore=False):
+        Blob.validate(self, *args, **kwargs)
+        required_length = Blob.hashes[self["hashFunction"].upper()]
+        if not ignore:
+            for addons in self["addons"]:
+                for platform in addons["platforms"]:
+                    if len(platform["hashValue"]) != required_length:
+                        raise ValueError("Length of hash is not equal to that of {} function".format(self["hashFunction"]))
+
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         if self.get("uninstall", False) or self.hasUpdates(updateQuery, whitelistedDomains):
             return '    <addons>'

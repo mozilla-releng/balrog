@@ -118,6 +118,16 @@ class ReleaseBlobBase(Blob):
         return '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
             (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
 
+    def validate(self, *args, **kwargs, ignore=False):
+        Blob.validate(self, *args, **kwargs)
+        required_length = Blob.hashes[self["hashFunction"].upper()]
+        if not ignore:
+            for platform in self["platforms"]:
+                for locale in platform["locales"]:
+                    for state in locale:
+                        if len(state["hashValue"]) != required_length:
+                            raise ValueError("Length of hash is not equal to that of {} function".format(self["hashFunction"]))
+
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         buildTarget = updateQuery["buildTarget"]
         locale = updateQuery["locale"]
