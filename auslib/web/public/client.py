@@ -12,21 +12,6 @@ import logging
 AUS = AUS()
 LOG = logging.getLogger(__name__)
 
-update_blob_functions = ["get_update_blob_1",
-                         "get_update_blob_2",
-                         "get_update_blob_3",
-                         "get_update_blob_3_esrpre",
-                         "get_update_blob_4",
-                         "get_update_blob_5",
-                         "get_update_blob_6"]
-
-unsubstituted_url_var_functions = ["unsubstituted_url_variables_1",
-                                   "unsubstituted_url_variables_2",
-                                   "unsubstituted_url_variables_3",
-                                   "unsubstituted_url_variables_4",
-                                   "unsubstituted_url_variables_5",
-                                   "unsubstituted_url_variables_6"]
-
 
 def unsubstituted_url_variables():
     abort(404)
@@ -42,28 +27,38 @@ def getHeaderArchitecture(buildTarget, ua):
         return 'Intel'
 
 
-def removeAvastBrokenness(locale):
+def getCleanQueryFromURL(url):
+    query = url.copy()
+
     # Some versions of Avast make requests and blindly append "?avast=1" to
     # them, which breaks query string parsing if ?force=1 is already
     # there. Because we're nice people we'll fix it up.
-    qs = request.environ.get("QUERY_STRING", "")
-    if "force" in qs and "avast" in qs:
-        qs = qs.replace("?avast=1", "&avast=1")
-        qs = qs.replace("%3Favast=1", "&avast=1")
-        request.environ["QUERY_STRING"] = qs
+    if 'force' in query and 'avast' in query['force']:
+        force_value = query['force']
+        force_split = force_value.split('?', 1)
+
+        if len(force_split) < 2:
+            force_split = force_value.split('%3F', 1)
+
+        query['force'] = int(force_split[0])
+
+        avast_parameter = force_split[1]
+        avast_split = avast_parameter.split('=')
+        query[avast_split[0]] = int(avast_split[1])
+
     # Some versions of Avast have a bug in them that prepends "x86 "
-    # to the locale. We need to make sure we handle this case correctly
-    # so that these people can keep up to date.
-    return locale.replace("x86 ", "")
+    if 'locale' in query:
+        query['locale'] = query['locale'].replace('x86 ', '')
+
+    return query
 
 
 def getQueryFromURL(url):
-    query = url.copy()
-    query["locale"] = removeAvastBrokenness(query["locale"])
+    query = getCleanQueryFromURL(url)
     query['osVersion'] = urllib.unquote(query['osVersion'])
     ua = request.headers.get('User-Agent')
     query['headerArchitecture'] = getHeaderArchitecture(query['buildTarget'], ua)
-    query['force'] = (int(request.args.get('force', 0)) == 1)
+    query['force'] = (int(query.get('force', 0)) == 1)
     return query
 
 
@@ -153,6 +148,22 @@ def _set_functions(function_names, function):
     module = sys.modules[__name__]
     for function_name in function_names:
         setattr(module, function_name, function)
+
+
+update_blob_functions = ["get_update_blob_1",
+                         "get_update_blob_2",
+                         "get_update_blob_3",
+                         "get_update_blob_3_esrpre",
+                         "get_update_blob_4",
+                         "get_update_blob_5",
+                         "get_update_blob_6"]
+
+unsubstituted_url_var_functions = ["unsubstituted_url_variables_1",
+                                   "unsubstituted_url_variables_2",
+                                   "unsubstituted_url_variables_3",
+                                   "unsubstituted_url_variables_4",
+                                   "unsubstituted_url_variables_5",
+                                   "unsubstituted_url_variables_6"]
 
 
 _set_functions(update_blob_functions, get_update_blob)

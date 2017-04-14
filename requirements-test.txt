@@ -22,5 +22,3 @@ pytest-xdist==1.15.0 \
 #    --hash=sha256:6238395f8bd050f9288a3b10f34330edece80f4424cf2b4204d6e7d622f0f00b
 requests==2.12.4
 lxml==3.7.2
-connexion==1.1.5
-# --hash=sha256:aa17010b1e0f15bc89df77804d0e15a56b6f38791bd9d5ea2922e98ebe493fc5

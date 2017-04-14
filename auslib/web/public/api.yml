@@ -8,6 +8,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.get_update_blob_1"
       description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
       parameters:
         - name: product
           in: path
@@ -63,6 +64,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.get_update_blob_2"
       description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
       parameters:
         - name: product
           in: path
@@ -113,6 +115,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.get_update_blob_3"
       description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
       parameters:
         - name: product
           in: path
@@ -165,18 +168,16 @@ paths:
           required: true
           type: integer
           default: 3
-        # - name: avast
-        #   in: query
-        #   description: avast
-        #   required: false
-        #   type: integer
-        #   default: 0
-        # - name: force
-        #   in: query
-        #   description: force
-        #   required: false
-        #   type: integer
-        #   default: 0
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
       responses:
         200:
           description: Update blob in text/xml format.
@@ -185,6 +186,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.get_update_blob_4"
       description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
       parameters:
         - name: product
           in: path
@@ -242,18 +244,16 @@ paths:
           required: true
           type: integer
           default: 4
-        # - name: avast
-        #   in: query
-        #   description: avast
-        #   required: false
-        #   type: string
-        #   default: 0
-        # - name: force
-        #   in: query
-        #   description: force
-        #   required: false
-        #   type: integer
-        #   default: 0
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
       responses:
         200:
           description: Update blob in text/xml format.
@@ -262,6 +262,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.get_update_blob_5"
       description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
       parameters:
         - name: product
           in: path
@@ -319,18 +320,16 @@ paths:
           required: true
           type: integer
           default: 5
-        # - name: avast
-        #   in: query
-        #   description: avast
-        #   required: false
-        #   type: integer
-        #   default: 0
-        # - name: force
-        #   in: query
-        #   description: force
-        #   required: false
-        #   type: integer
-        #   default: 0
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
       responses:
         200:
           description: Update blob in text/xml format.
@@ -339,6 +338,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.get_update_blob_6"
       description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
       parameters:
         - name: product
           in: path
@@ -397,18 +397,16 @@ paths:
           required: true
           type: integer
           default: 6
-        # - name: avast
-        #   in: query
-        #   description: avast
-        #   required: false
-        #   type: integer
-        #   default: 0
-        # - name: force
-        #   in: query
-        #   description: force
-        #   required: false
-        #   type: integer
-        #   default: 0
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
       responses:
         200:
           description: Update blob in text/xml format.
@@ -419,6 +417,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.get_update_blob_3_esrpre"
       description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
       parameters:
         - name: product
           in: path
@@ -471,18 +470,16 @@ paths:
           required: true
           type: integer
           default: 3
-        # - name: avast
-        #   in: query
-        #   description: avast
-        #   required: false
-        #   type: integer
-        #   default: 0
-        # - name: force
-        #   in: query
-        #   description: force
-        #   required: false
-        #   type: integer
-        #   default: 0
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
       responses:
         200:
           description: Update blob in text/xml format.
@@ -491,6 +488,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.unsubstituted_url_variables_1"
       description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
       responses:
         200:
           description: Empty xml file.
@@ -499,6 +497,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.unsubstituted_url_variables_2"
       description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
       responses:
         200:
           description: Empty xml file.
@@ -507,6 +506,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.unsubstituted_url_variables_3"
       description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
       responses:
         200:
           description: Empty xml file.
@@ -515,6 +515,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.unsubstituted_url_variables_4"
       description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
       responses:
         200:
           description: Empty xml file.
@@ -523,6 +524,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.unsubstituted_url_variables_5"
       description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
       responses:
         200:
           description: Empty xml file.
@@ -531,6 +533,7 @@ paths:
     get:
       operationId: "auslib.web.public.client.unsubstituted_url_variables_6"
       description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
       responses:
         200:
           description: Empty xml file.
