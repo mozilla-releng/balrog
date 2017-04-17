@@ -648,7 +648,7 @@ class ReleaseDiffView(ReleaseFieldView):
             prev_data_version = self.get_value(prev_id, "data_version")
         else:
             previous = {}
-            prev_data_version = data_version - 1
+            prev_data_version = data_version-1
 
         value = self.format_value(value)
         previous = self.format_value(previous)
