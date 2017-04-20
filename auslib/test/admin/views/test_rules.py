@@ -1013,7 +1013,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 8})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "rule_id": 5})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1038,7 +1038,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 8})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "rule_id": 5})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
         self.assertEquals(len(r), 1)
