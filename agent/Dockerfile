@@ -11,7 +11,7 @@ COPY balrogagent/ /app/balrogagent/
 COPY scripts/ /app/scripts/
 COPY run.sh MANIFEST.in setup.py version.json /app/
 # test-only stuff
-COPY .coveragerc requirements-tox.txt run-tests.sh tox.ini version.txt /app/
+COPY .coveragerc requirements-tox.txt requirements-test.txt run-tests.sh tox.ini version.txt /app/
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.
