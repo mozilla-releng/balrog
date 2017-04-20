@@ -275,6 +275,7 @@ class EditRuleForm(DbEditableForm):
 
 class ScheduledChangeNewRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, RuleForm):
     change_type = SelectField("Change Type", choices=[('insert', 'insert')])
+    rule_id = IntegerField('Rule ID')
 
 
 class ScheduledChangeExistingRuleForm(ScheduledChangeTimeForm, ScheduledChangeUptakeForm, EditRuleForm):
