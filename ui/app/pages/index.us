@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html ng-app="app">
+<html ng-app="app" ng-controller="ParentController">
   <head>
-    <title><%= pkg.title %></title>
+    <title>{{Page.title()}}</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,7 +12,7 @@
     <div class="navbar navbar-inverse navbar-static-top" role="navigation">
       <div class="container">
         <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse" ng-init="navCollapsed = true" ng-click="navCollapsed = !navCollapsed" data-target=".nav-collapse">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
@@ -20,7 +20,7 @@
           </button>
           <a class="navbar-brand" href="/"><%= pkg.title %></a>
         </div>
-        <div class="collapse navbar-collapse">
+        <div class="collapse navbar-collapse" ng-class="{'in':!navCollapsed}">
           <ul class="nav navbar-nav navbar-right" ng-controller="NavController">
             <li ng-class="{active: isOn('/')}"><a href="/">Home</a></li>
             <li class="dropdown nav" ng-class="{active: isOn('/rules')}">
@@ -42,12 +42,16 @@
                     <li><a href="/permissions/scheduled_changes">Scheduled Changes</a></li>
                 </ul>
             </li>
+
+            <li ng-class="{active: isOn('/required_signoffs')}">
+                <a href="/required_signoffs">Required Signoffs</a>
+            </li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </div>
 
-    <div class="container" ng-controller="ParentController">
+    <div class="container">
 
       <div id="view" ng-view></div>
 

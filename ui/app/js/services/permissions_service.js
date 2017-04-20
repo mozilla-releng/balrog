@@ -1,7 +1,10 @@
-angular.module("app").factory('Permissions', function($http, $q) {
+angular.module("app").factory('Permissions', function($http, $q, ScheduledChanges) {
   var service = {
     getUsers: function() {
       return $http.get('/api/users');
+    },
+    getCurrentUser: function() {
+      return $http.get("/api/users/current");
     },
     getUserPermissions: function(username) {
       var deferred = $q.defer();
@@ -75,18 +78,26 @@ angular.module("app").factory('Permissions', function($http, $q) {
       url += '&csrf_token=' + encodeURIComponent(csrf_token);
       return $http.delete(url);
     },
-     deleteScheduledChange: function(sc_id, data, csrf_token) {
+    deleteScheduledChange: function(sc_id, data, csrf_token) {
       var url = "/api/scheduled_changes/permissions/" + sc_id;
       url += '?data_version=' + data.sc_data_version;
       url += '&csrf_token=' + encodeURIComponent(csrf_token);
       return $http.delete(url);
-     },
-     updateScheduledChange: function(sc_id, data, csrf_token) {
+    },
+    updateScheduledChange: function(sc_id, data, csrf_token) {
       data = jQuery.extend({}, data);
       data.csrf_token = csrf_token;
       return $http.post("/api/scheduled_changes/permissions/" + sc_id, data);
     },
-
+    signoffOnScheduledChange: function(sc_id, data) {
+      var url = ScheduledChanges.signoffsUrl("permissions", sc_id);
+      return $http.post(url, data);
+    },
+    revokeSignoffOnScheduledChange: function(sc_id, data) {
+      var url = ScheduledChanges.signoffsUrl("permissions", sc_id);
+      url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
+      return $http.delete(url, data);
+    },
   };
   return service;
 

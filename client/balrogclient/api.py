@@ -236,3 +236,18 @@ class Rule(API):
     def update_rule(self, **rule_data):
         """wrapper for self.request"""
         return self.request(method='POST', data=rule_data)
+
+
+class ScheduledRuleChange(API):
+    """Update Balrog rules"""
+    url_template = '/scheduled_changes/rules'
+    prerequest_url_template = '/rules/%(rule_id)s'
+
+    def __init__(self, rule_id, **kwargs):
+        super(ScheduledRuleChange, self).__init__(**kwargs)
+        self.rule_id = rule_id
+        self.url_template_vars = dict(rule_id=rule_id)
+
+    def add_scheduled_rule_change(self, **rule_data):
+        """wrapper for self.request"""
+        return self.request(method='POST', data=rule_data)

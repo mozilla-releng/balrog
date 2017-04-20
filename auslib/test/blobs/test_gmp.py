@@ -254,3 +254,164 @@ class TestSchema1Blob(unittest.TestCase):
 """)
         self.assertFalse(blob.containsForbiddenDomain('gg',
                                                       self.whitelistedDomains))
+
+    def testGMPLayoutEmptyVendor(self):
+
+        # Correct layout with empty vendors
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {}
+    }
+    """)
+        blob.validate('gg', self.whitelistedDomains)
+
+    def testGMPLayoutNoVendor(self):
+
+        # Incorrect layout with no vendors
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512"
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+
+    def testGMPLayoutTwoPlatforms(self):
+
+        # Correct layout with one vendor and two platforms
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {
+            "c": {
+                "version": "1",
+                "platforms": {
+                    "p": {
+                        "alias": "q"
+                    },
+                    "q": {
+                        "filesize": 2,
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        blob.validate('gg', self.whitelistedDomains)
+
+    def testGMPLayoutMissingVersion(self):
+
+        # Incorrect layout with missing version for an vendor name
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {
+            "c": {
+                "platforms": {
+                    "p": {
+                        "alias": "q"
+                    },
+                    "q": {
+                        "filesize": 2,
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+
+    def testGMPLayoutEmptyPlatforms(self):
+
+        # Correct layout with empty platforms
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {
+            "c": {
+                "version": "1",
+                "platforms": {}
+            }
+        }
+    }
+    """)
+        blob.validate('gg', self.whitelistedDomains)
+
+    def testGMPLayoutEmptyPlatformName(self):
+
+        # Incorrect layout with empty platform name
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {
+            "c": {
+                "version": "1",
+                "platforms": {
+                    "p": {},
+                    "q": {
+                        "filesize": 2,
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+
+    def testGMPLayoutNoFilesize(self):
+
+        # Incorrect layout with missing filesize
+
+        blob = GMPBlobV1()
+        blob.loadJSON("""
+    {
+        "name": "fake",
+        "schema_version": 1000,
+        "hashFunction": "SHA512",
+        "vendors": {
+            "c": {
+                "version": "1",
+                "platforms": {
+                    "p": {
+                        "alias": "q"
+                    },
+                    "q": {
+                        "hashValue": "3",
+                        "fileUrl": "http://boring.com/blah"
+                    }
+                }
+            }
+        }
+    }
+    """)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)

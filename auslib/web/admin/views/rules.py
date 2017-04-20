@@ -284,8 +284,10 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-
-        change_type = request.json.get("change_type")
+        if request.json:
+            change_type = request.json.get("change_type")
+        else:
+            change_type = request.values.get("change_type")
 
         if change_type == "update":
             form = ScheduledChangeExistingRuleForm()

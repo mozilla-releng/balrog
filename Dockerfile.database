@@ -1,0 +1,7 @@
+FROM mysql:5.7
+
+# netcat is used to listen to the ports.
+
+RUN apt-get -q update \
+    && apt-get -q --yes install netcat  \
+    && apt-get clean

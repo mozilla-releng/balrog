@@ -31,16 +31,20 @@ if [ "$branch" == "master" ]; then
     branch_tag="latest"
 fi
 date_tag="${branch}-${date}"
+commit_tag="${branch}-${commit}"
 
 echo "Building Docker image"
 docker build -t mozilla/balrogagent:${branch_tag} .
 echo "Tagging Docker image with date tag"
 docker tag mozilla/balrogagent:${branch_tag} "mozilla/balrogagent:${date_tag}"
+echo "Tagging Docker image with git commit tag"
+docker tag mozilla/balrogagent:${branch_tag} "mozilla/balrogagent:${commit_tag}"
 echo "Logging into Dockerhub"
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
 echo "Pushing Docker image"
 docker push mozilla/balrogagent:${branch_tag}
 docker push mozilla/balrogagent:${date_tag}
+docker push mozilla/balrogagent:${commit_tag}
 
 sha256=$(docker images --no-trunc mozilla/balrogagent | grep "${date_tag}" | awk '/^mozilla/ {print $3}')
 echo "SHA256 is ${sha256}, creating artifact for it"

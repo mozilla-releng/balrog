@@ -20,7 +20,7 @@ import migrate.versioning.api
 import dictdiffer
 import dictdiffer.merge
 
-from auslib.global_state import cache, dbo
+from auslib.global_state import cache
 from auslib.blobs.base import createBlob
 from auslib.util.comparison import string_compare, version_compare
 from auslib.util.timestamp import getMillisecondTimestamp
@@ -1103,7 +1103,11 @@ class ScheduledChangeTable(AUSTable):
             #   we don't know which Role we'd want to signoff with. The user will need to signoff
             #   manually in these cases.
             user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
-            if len(user_roles) == 1:
+            required_roles = set()
+            required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            if required_signoffs:
+                required_roles.update([rs["role"] for rs in required_signoffs])
+            if len(user_roles) == 1 and user_roles[0]["role"] in required_roles:
                 self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
                                      sc_id=sc_id, role=user_roles[0].get("role"))
             return sc_id
@@ -1462,7 +1466,7 @@ class Rules(AUSTable):
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = []
         # The new row may change the product or channel, so we must look for
-        # Signoff for both.
+        # Signoffs for both.
         for row in affected_rows:
             if not row:
                 continue
@@ -1535,18 +1539,40 @@ class Rules(AUSTable):
             return True
         return string_compare(queryBuildID, ruleBuildID)
 
-    def _csvMatchesRule(self, ruleString, queryString, substring=True):
-        """Decides whether a column from a rule matches an incoming one.
-           Some columns in a rule may specify multiple values delimited by a
-           comma. Once split we do a full or substring match against the query
-           string. Because we support substring matches, there's no need
-           to support globbing as well."""
+    def _simpleBooleanMatchesSubRule(self, subRuleString, queryString, substring):
+        """Performs the actual logical 'AND' operation on a rule as well as partial/full string matching
+           for each section of a rule.
+           If all parts of the subRuleString match the queryString, then we have successfully resolved the
+           logical 'AND' operation and return True.
+           Partial matching makes use of Python's "<substring> in <string>" functionality, giving us the ability
+           for an incoming rule to match only a substring of a rule.
+           Full matching makes use of Python's "<string> in <list>" functionality, giving us the ability for
+           an incoming rule to exactly match the whole rule. Currently, incoming rules are comma-separated strings."""
+        for rule in subRuleString:
+            if substring and rule not in queryString:
+                return False
+            elif not substring and rule not in queryString.split(','):
+                return False
+        return True
+
+    def _simpleBooleanMatchesRule(self, ruleString, queryString, substring=True):
+        """Decides whether a column from a rule matches an incoming one using simplified boolean logic.
+           Only two operators are supported: '&&' (and), ',' (or). A rule like 'AMD,SSE' will match incoming
+           rules that contain either 'AMD' or 'SSE'. A rule like 'AMD&&SSE' will only match incoming rules
+           that contain both 'AMD' and 'SSE'.
+           This function can do substring matching or full string matching. When doing substring matching, a rule
+           specifying 'AMD,Windows 10' WILL match an incoming rule such as 'Windows 10.1.2'. When doing full string
+           matching, a rule specifying 'AMD,SSE' will NOT match an incoming rule that contains 'SSE3', but WILL match
+           an incoming rule that contains either 'AMD' or 'SSE3'."""
         if ruleString is None:
             return True
-        for part in ruleString.split(','):
-            if substring and part in queryString:
-                return True
-            elif part == queryString:
+
+        decomposedRules = [[rule.strip() for rule in subRule.split('&&')] for subRule in ruleString.split(',')]
+
+        for subRule in decomposedRules:
+            if self._simpleBooleanMatchesSubRule(subRule, queryString, substring):
+                # We can immediately return True on the first match because this loop is iterating over an OR expression
+                # so we need just one match to pass.
                 return True
         return False
 
@@ -1641,11 +1667,11 @@ class Rules(AUSTable):
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to
             # break them out and create clauses for each one.
-            if not self._csvMatchesRule(rule['osVersion'], updateQuery['osVersion']):
+            if not self._simpleBooleanMatchesRule(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
             # Same deal for system capabilities
-            if not self._csvMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', ""), substring=False):
+            if not self._simpleBooleanMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', ""), substring=False):
                 self.log.debug("%s doesn't match %s", rule['systemCapabilities'], updateQuery.get('systemCapabilities'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only
@@ -1658,7 +1684,7 @@ class Rules(AUSTable):
             if rule.get("whitelist"):
                 self.log.debug("Matching rule requires a whitelist")
                 try:
-                    whitelist = dbo.releases.getReleaseBlob(name=rule["whitelist"], transaction=transaction)
+                    whitelist = self.db.releases.getReleaseBlob(name=rule["whitelist"], transaction=transaction)
                     if whitelist and not whitelist.shouldServeUpdate(updateQuery):
                         continue
                 # It shouldn't be possible for the whitelist blob not to exist,
@@ -1816,12 +1842,13 @@ class Releases(AUSTable):
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
 
         if not nameOnly:
-            j = join(dbo.releases.t, dbo.rules.t, ((dbo.releases.name == dbo.rules.mapping) | (dbo.releases.name == dbo.rules.whitelist) |
-                                                   (dbo.releases.name == dbo.rules.fallbackMapping)))
+            j = join(self.db.releases.t, self.db.rules.t, ((self.db.releases.name == self.db.rules.mapping) |
+                                                           (self.db.releases.name == self.db.rules.whitelist) |
+                                                           (self.db.releases.name == self.db.rules.fallbackMapping)))
             if transaction:
-                ref_list = transaction.execute(select([dbo.releases.name, dbo.rules.rule_id]).select_from(j)).fetchall()
+                ref_list = transaction.execute(select([self.db.releases.name, self.db.rules.rule_id]).select_from(j)).fetchall()
             else:
-                ref_list = self.getEngine().execute(select([dbo.releases.name, dbo.rules.rule_id]).select_from(j)).fetchall()
+                ref_list = self.getEngine().execute(select([self.db.releases.name, self.db.rules.rule_id]).select_from(j)).fetchall()
 
             for row in rows:
                 refs = [ref for ref in ref_list if ref[0] == row['name']]
@@ -2062,13 +2089,13 @@ class Releases(AUSTable):
 
     def isMappedTo(self, name, transaction=None):
         if transaction:
-            mapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.mapping == name)).fetchone()[0]
-            whitelist_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.whitelist == name)).fetchone()[0]
-            fallbackMapping_count = transaction.execute(dbo.rules.t.count().where(dbo.rules.fallbackMapping == name)).fetchone()[0]
+            mapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
+            whitelist_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.whitelist == name)).fetchone()[0]
+            fallbackMapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
         else:
-            mapping_count = self.getEngine().execute(dbo.rules.t.count().where(dbo.rules.mapping == name)).fetchone()[0]
-            whitelist_count = self.getEngine().execute(dbo.rules.t.count().where(dbo.rules.whitelist == name)).fetchone()[0]
-            fallbackMapping_count = self.getEngine().execute(dbo.rules.t.count().where(dbo.rules.fallbackMapping == name)).fetchone()[0]
+            mapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
+            whitelist_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.whitelist == name)).fetchone()[0]
+            fallbackMapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
         if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
             return True
 
@@ -2441,11 +2468,19 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             body.append("Row to be inserted:")
             body.append(UTF8PrettyPrinter().pformat(query.parameters))
 
-        subj = "%s to %s detected" % (type_, table.t.name)
+        subj = "%s to %s detected %s" % (type_, table.t.name, generate_random_string(6))
         send_email(relayhost, port, username, password, to_addr, from_addr,
                    table, subj, body, use_tls)
         table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
     return bleet
+
+
+def generate_random_string(length):
+    import string
+    import random
+
+    return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
+                   for _ in range(length))
 
 
 def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr, use_tls):
@@ -2572,6 +2607,8 @@ class AUSDatabase(object):
             schema.runchange(step, change, 1)
 
     def downgrade(self, version):
+        if version < 21:
+            raise ValueError("Cannot downgrade below version 21")
         schema = migrate.versioning.schema.ControlledSchema(self.engine, self.migrate_repo)
         changeset = schema.changeset(version)
         for step, change in changeset:

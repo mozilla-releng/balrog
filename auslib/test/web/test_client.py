@@ -517,7 +517,6 @@ class ClientTestBase(ClientTestCommon):
 {
     "name": "superblobaddon",
     "schema_version": 4000,
-    "revision": 123,
     "blobs": ["responseblob-a"]
 }
 """))
@@ -526,7 +525,6 @@ class ClientTestBase(ClientTestCommon):
 {
     "name": "superblobaddon",
     "schema_version": 4000,
-    "revision": 124,
     "blobs": ["responseblob-a", "responseblob-b"]
 }
 """))
@@ -863,7 +861,7 @@ class ClientTest(ClientTestBase):
         # update / 3 / gg / 3 / 1 / p / l / a / a / a / a / update.xml?force = 0
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
-    <addons revision="124">
+    <addons>
         <addon id="c" URL="http://a.com/e" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
         <addon id="d" URL="http://a.com/c" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
         <addon id="b" URL="http://a.com/b" hashFunction="sha512" hashValue="23" size="27" version="1"/>
@@ -876,7 +874,7 @@ class ClientTest(ClientTestBase):
         # update / 3 / gg / 3 / 1 / p / l / a / a / a / a / update.xml?force = 0
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
-    <addons revision="123">
+    <addons>
         <addon id="c" URL="http://a.com/e" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
         <addon id="d" URL="http://a.com/c" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
     </addons>

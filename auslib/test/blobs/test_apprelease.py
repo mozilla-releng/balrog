@@ -669,17 +669,17 @@ class TestSchema2Blob(unittest.TestCase):
     "appVersion": "50.0",
     "displayVersion": "50.0",
     "platformVersion": "50.0",
-    "detailsUrl": "http://example.org/details/%LOCALE%",
+    "detailsUrl": "http://example.org/details/%locale%",
     "licenseUrl": "http://example.org/license/%LOCALE%",
     "actions": "silent",
     "billboardURL": "http://example.org/billboard/%LOCALE%",
-    "openURL": "http://example.org/url/%LOCALE%",
-    "notificationURL": "http://example.org/notification/%LOCALE%",
+    "openURL": "http://example.org/url/%locale%",
+    "notificationURL": "http://example.org/notification/%locale%",
     "alertURL": "http://example.org/alert/%LOCALE%",
     "showPrompt": false,
     "showNeverForVersion": true,
     "fileUrls": {
-        "c1": "http://a.com/%FILENAME%"
+        "c1": "http://a.com/%filename%/%os_ftp%/%os_bouncer%"
     },
     "ftpFilenames": {
         "complete": "complete.mar"
@@ -871,7 +871,7 @@ class TestSchema2Blob(unittest.TestCase):
             'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
             'alertURL="http://example.org/alert/l">'
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="35" size="40"/>
+<patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="35" size="40"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -896,7 +896,7 @@ class TestSchema2Blob(unittest.TestCase):
             'showNeverForVersion="true" actions="silent" openURL="http://example.org/url/l2" ' \
             'notificationURL="http://example.org/notification/l2" alertURL="http://example.org/alert/l2">'
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="45" size="50"/>
+<patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="45" size="50"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1157,7 +1157,7 @@ class TestSchema3Blob(unittest.TestCase):
     "platformVersion": "26.0",
     "fileUrls": {
         "c1": "http://a.com/%FILENAME%",
-        "c2": "http://a.com/%PRODUCT%"
+        "c2": "http://a.com/%product%"
     },
     "ftpFilenames": {
         "partials": {
@@ -2898,7 +2898,7 @@ class TestDesupportBlob(unittest.TestCase):
 {
     "name": "d1",
     "schema_version": 50,
-    "detailsUrl": "http://moo.com/%LOCALE%/cow/%VERSION%/%OS%",
+    "detailsUrl": "http://moo.com/%locale%/cow/%version%/%os%",
     "displayVersion": "50.0"
 }
 """)

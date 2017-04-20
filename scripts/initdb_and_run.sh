@@ -3,9 +3,6 @@ set -xe
 export LOCAL_DUMP="/app/scripts/prod_db_dump.sql"
 
 if [ ! -e /app/.cache/mysql/db.done ]; then
-    # We need to sleep awhile for fresh databases because mysql will take longer to initialize.
-    # Ideally, this would find some better way to probe for mysql-readyness.
-    sleep 45
     echo "Initializing DB..."
     python scripts/manage-db.py -d mysql://balrogadmin:balrogadmin@balrogdb/balrog create
     python scripts/import-db.py
@@ -20,9 +17,7 @@ if [ ! -e /app/.cache/mysql/db.done ]; then
     mysql -h balrogdb -u balrogadmin --password=balrogadmin -e "insert into permissions (username, permission, data_version) values (\"balrogadmin\", \"admin\", 1)" balrog
     touch /app/.cache/mysql/db.done
     echo "Done"
-else
-    # We also should sleep for existing databases, but we don't need for nearly as long.
-    sleep 10
+
 fi
 
 # We need to try upgrading even if the database was freshly created, because it

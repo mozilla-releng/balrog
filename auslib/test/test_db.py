@@ -6,6 +6,7 @@ from tempfile import mkstemp
 import unittest
 import re
 
+from os import path
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
 
@@ -19,6 +20,7 @@ from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
     verify_signoffs
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
+from migrate.versioning.api import version
 
 
 def setUpModule():
@@ -706,8 +708,10 @@ class ScheduledChangesTableMixin(object):
                                    Column("bar", String(15)))
                 super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
 
-            def getPotentialRequiredSignoffs(self, *args, **kwargs):
-                return None
+            def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+                for row in affected_rows:
+                    if row["foo"] == "signofftest":
+                        return [{"role": "releng", "signoffs_required": 1}]
 
             def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
                 if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
@@ -759,10 +763,12 @@ class ScheduledChangesTableMixin(object):
         self.sc_table.conditions.t.insert().execute(sc_id=6, when=400000, data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
+        self.db.permissions.t.insert().execute(permission="admin", username="jane", data_version=1)
         self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options={"actions": ["enact"]}, data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="mary", role="releng", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="mary", role="dev", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="jane", role="dev", data_version=1)
 
 
 class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, MemoryDatabaseMixin):
@@ -893,7 +899,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertRecordSignOffForUserHavingSingleRole(self):
-        what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
+        what = {"fooid": 3, "foo": "signofftest", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
         self.sc_table.insert(changed_by="bob", **what)
         user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "bob", "sc_id": 7})
         self.assertEquals(len(user_role_rows), 1)
@@ -903,9 +909,16 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertRecordSignOffForUserHavingMultipleRoles(self):
-        what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
+        what = {"fooid": 3, "foo": "signofftest", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
         self.sc_table.insert(changed_by="mary", **what)
-        user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "nancy", "sc_id": 7})
+        user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "mary", "sc_id": 7})
+        self.assertEquals(len(user_role_rows), 0)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertRecordSignOffUnneededRole(self):
+        what = {"fooid": 3, "foo": "signofftest", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
+        self.sc_table.insert(changed_by="jane", **what)
+        user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "jane", "sc_id": 7})
         self.assertEquals(len(user_role_rows), 0)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
@@ -1879,6 +1892,16 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                                       product="foo", channel="foo*", data_version=1)
         self.paths.t.insert().execute(rule_id=10, priority=100, buildTarget="g", mapping="g", fallbackMapping='fallback', backgroundRate=100,
                                       update_type="z", product="foo", channel="foo", data_version=1)
+
+        self.paths.t.insert().execute(rule_id=11, priority=100, buildTarget='h', mapping='h', systemCapabilities='GenuineIntel, SSE2', update_type='z',
+                                      product='a', channel='a', data_version=1)
+        self.paths.t.insert().execute(rule_id=12, priority=100, buildTarget='i', mapping='i', systemCapabilities='GenuineIntel && SSE2', update_type='z',
+                                      product='a', channel='a', data_version=1, version='5.0')
+        self.paths.t.insert().execute(rule_id=13, priority=100, buildTarget='j', mapping='j', systemCapabilities='GenuineIntel && SSE3, SSE2', update_type='z',
+                                      product='a', channel='a', data_version=1)
+        self.paths.t.insert().execute(rule_id=14, priority=100, buildTarget='k', mapping='k', systemCapabilities='GenuineIntel, SSE', update_type='z',
+                                      product='a', channel='a', data_version=1)
+
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.db.permissions.user_roles.t.insert(username="bill", role="bar", data_version=1)
         self.db.permissions.user_roles.t.insert(username="jane", role="bar", data_version=1)
@@ -1895,27 +1918,34 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
         expected = [
-            dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
-                 channel="a", data_version=1),
-            dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z',
-                 data_version=1),
-            dict(rule_id=6, alias="radagast", priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
-                 product="a", channel="a", data_version=1),
-            dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z',
-                 product="a", channel="a", data_version=1),
-            dict(rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z',
-                 product="a", channel="a", data_version=1),
-            dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z",
-                 product="foo", channel="foo*", data_version=1),
-            dict(rule_id=10, priority=100, buildTarget="g", mapping="g", fallbackMapping='fallback', backgroundRate=100, update_type="z",
-                 product="foo", channel="foo", data_version=1),
-            dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z',
-                 product="a", channel="a", data_version=1),
-            dict(rule_id=3, priority=100, backgroundRate=100, version='3.5', buildTarget='a', mapping='a', update_type='z',
-                 product="a", data_version=1),
-            dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z',
-                 product="a", channel="a", data_version=1),
+            dict(alias='gandalf', backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', priority=80, rule_id=4, update_type='z'),
+            dict(backgroundRate=0, buildTarget='d', data_version=1, mapping='c', priority=80, rule_id=5, update_type='z', version='3.3'),
+            dict(alias='radagast', backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', osVersion='foo 1', priority=100, product='a',
+                 rule_id=6, update_type='z'),
+            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', osVersion='foo 2,blah 6', priority=100, product='a', rule_id=7,
+                 update_type='z'),
+            dict(backgroundRate=100, buildTarget='e', channel='a', data_version=1, locale='foo,bar-baz', mapping='d', priority=100, product='a', rule_id=8,
+                 update_type='z'),
+            dict(backgroundRate=100, buildTarget='f', channel='foo*', data_version=1, mapping='f', priority=100, product='foo', rule_id=9,
+                 systemCapabilities='S', update_type='z'),
+            dict(backgroundRate=100, buildTarget='g', channel='foo', data_version=1, fallbackMapping='fallback', mapping='g', priority=100, product='foo',
+                 rule_id=10, update_type='z'),
+            dict(buildTarget='h', channel='a', data_version=1, mapping='h', priority=100, product='a', rule_id=11,
+                 systemCapabilities='GenuineIntel, SSE2', update_type='z'),
+            dict(buildTarget='j', channel='a', data_version=1, mapping='j', priority=100, product='a', rule_id=13,
+                 systemCapabilities='GenuineIntel && SSE3, SSE2', update_type='z'),
+            dict(buildTarget='k', channel='a', data_version=1, mapping='k', priority=100, product='a', rule_id=14,
+                 systemCapabilities='GenuineIntel, SSE', update_type='z'),
+            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='b', priority=100, product='a', rule_id=2,
+                 update_type='z', version='3.3'),
+            dict(backgroundRate=100, buildTarget='a', data_version=1, mapping='a', priority=100, product='a', rule_id=3,
+                 update_type='z', version='3.5'),
+            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='c', priority=100, product='a', rule_id=1,
+                 update_type='z', version='3.5'),
+            dict(buildTarget='i', channel='a', data_version=1, mapping='i', priority=100, product='a', rule_id=12,
+                 systemCapabilities='GenuineIntel && SSE2', update_type='z', version='5.0')
         ]
+
         self.assertEquals(rules, expected)
 
     def testGetOrderedRulesWithCondition(self):
@@ -2029,7 +2059,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def testGetRulesMatchingQueryOsVersionSubstringNotAtStart(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product="a", version='5.0', channel="a", buildTarget='d',
-                 buildID='', locale='', osVersion='bbb foo 1.2.3', distribution='',
+                 buildID='', locale='', osVersion='bbb,foo 1.2.3', distribution='',
                  distVersion='', headerArchitecture='', force=False,
                  queryVersion=3,
                  ),
@@ -2089,6 +2119,149 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, [])
+
+    def testGetRulesMatchingQuerySystemCapabilitiesOrs(self):
+        match_1 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='GenuineIntel',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+        match_2 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='SSE2', version='5.0'),
+            fallbackChannel=''
+        )
+        no_match_1 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='SSE3', version='5.0'),
+            fallbackChannel=''
+        )
+        no_match_2 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='SSE', version='5.0'),
+            fallbackChannel=''
+        )
+
+        self.assertEqual(1, len(match_1))
+        self.assertEqual(1, len(match_2))
+        self.assertEqual(11, match_1[0]['rule_id'])
+        self.assertEqual(11, match_2[0]['rule_id'])
+        self.assertEquals(no_match_1, [])
+        self.assertEquals(no_match_2, [])
+
+    def testGetRulesMatchingQuerySystemCapabilitiesBooleanAnds(self):
+        match = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE2',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+        no_match_1 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='AMD,SSE2',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+        no_match_2 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE3',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+        no_match_3 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+
+        self.assertEqual(len(match), 1)
+        self.assertEqual(match[0]['rule_id'], 12)
+        self.assertEqual(no_match_1, [])
+        self.assertEqual(no_match_2, [])
+        self.assertEqual(no_match_3, [])
+
+    def testGetRulesMatchingQuerySystemCapabilitiesBooleanExact(self):
+        match = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='k', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='SSE',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+        no_match = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='k', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='SSE2',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+
+        self.assertEqual(len(match), 1)
+        self.assertEqual(match[0]['rule_id'], 14)
+        self.assertEqual(no_match, [])
+
+    def testGetRulesMatchingQuerySystemCapabilitiesBooleanMixed(self):
+        match_1 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE2',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+        match_2 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='AMD,SSE2',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+        match_3 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE3',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+        no_match_1 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='AMD,SSE3',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+        no_match_2 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+        no_match_3 = self.paths.getRulesMatchingQuery(
+            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
+                 osVersion='', distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6, systemCapabilities='AMD,SSE',
+                 version='5.0'),
+            fallbackChannel=''
+        )
+        self.assertEqual(len(match_1), 1)
+        self.assertEqual(match_1[0]['rule_id'], 13)
+        self.assertEqual(len(match_2), 1)
+        self.assertEqual(match_2[0]['rule_id'], 13)
+        self.assertEqual(len(match_3), 1)
+        self.assertEqual(match_3[0]['rule_id'], 13)
+        self.assertEqual(no_match_1, [])
+        self.assertEqual(no_match_2, [])
+        self.assertEqual(no_match_3, [])
 
     def testGetRulesMatchingQueryFallbackMapping(self):
         rules = self.paths.getRulesMatchingQuery(
@@ -2241,7 +2414,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertRaises(SignoffRequiredError, self.paths.delete, {"rule_id": 9}, changed_by="bill", old_data_version=1)
 
     def testGetNumberOfRules(self):
-        self.assertEquals(self.paths.countRules(), 10)
+        self.assertEquals(self.paths.countRules(), 14)
 
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
@@ -2309,9 +2482,9 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def testGetRulesMatchingQueryListOfVersionsComparison(self):
         expected = [dict(rule_id=4, priority=90, backgroundRate=100,
                          version='3.0.1,3.0.2,3.0b3', update_type='z', data_version=1)]
-        for version in ['3.0.1', '3.0.2', '3.0b3']:
+        for version_no in ['3.0.1', '3.0.2', '3.0b3']:
             rules = self.rules.getRulesMatchingQuery(
-                dict(name='', product='', version=version, channel='',
+                dict(name='', product='', version=version_no, channel='',
                      buildTarget='', buildID='', locale='', osVersion='',
                      distribution='', distVersion='', headerArchitecture='',
                      force=False, queryVersion=3,
@@ -3980,6 +4153,13 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_not_called()
 
+    @mock.patch("auslib.db.generate_random_string", mock.MagicMock(return_value="ABCDEF"))
+    def testUniqueSubject(self):
+        def doit():
+            self.db.rules.scheduled_changes.delete({"sc_id": 1}, changed_by="bob", old_data_version=1)
+        mock_conn = self._runTest(doit)
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("ABCDEF"))
+
 
 class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
     @classmethod
@@ -4138,3 +4318,84 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             table_instances.append((meta_data.tables[table_name], self.db.metadata.tables[table_name]))
 
         self.assert_attributes_for_tables(table_instances)
+
+    def _rules_version_length_migration_test(self, db, upgrade=True):
+        """
+        Tests the upgrades and downgrades for version 23 work properly.
+        :param db: migrated DB object.
+        :param upgrade: boolean parameter. If true run for upgrade script tests else
+          run downgrade script tests.
+        """
+        upgraded_length = 75
+        downgrade_length = 10
+        meta_data = self._get_reflected_metadata(db)
+        tables_list = ["rules", "rules_history"]
+        scheduled_changes_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
+        if upgrade:
+            for table_name in tables_list:
+                self.assertEquals(upgraded_length, meta_data.tables[table_name].c.version.type.length)
+            for table_name in scheduled_changes_tables:
+                self.assertEquals(upgraded_length, meta_data.tables[table_name].c.base_version.type.length)
+        else:
+            for table_name in tables_list:
+                self.assertEquals(downgrade_length, meta_data.tables[table_name].c.version.type.length)
+            for table_name in scheduled_changes_tables:
+                self.assertEquals(downgrade_length, meta_data.tables[table_name].c.base_version.type.length)
+
+    def _fix_column_attributes_migration_test(self, db, upgrade=True):
+        """
+        Tests the upgrades and downgrades for version 22 work properly.
+        :param db: migrated DB object
+        :param upgrade: boolean parameter. If true run for upgrade script tests else
+          run downgrade script tests.
+        """
+        data_version_nullable_tables = [
+            'permissions_req_signoffs_scheduled_changes_conditions',
+            'permissions_scheduled_changes',
+            'permissions_scheduled_changes_conditions',
+            'product_req_signoffs_scheduled_changes_conditions',
+            'releases_scheduled_changes',
+            'releases_scheduled_changes_conditions',
+            'rules_scheduled_changes',
+            'rules_scheduled_changes_conditions',
+            'user_roles'
+        ]
+
+        when_nullable_tables = [
+            'permissions_scheduled_changes_conditions',
+            'releases_scheduled_changes_conditions'
+        ]
+
+        meta_data = self._get_reflected_metadata(db)
+
+        if upgrade:
+            for table_name in data_version_nullable_tables:
+                self.assertFalse(meta_data.tables[table_name].c.data_version.nullable)
+            for table_name in when_nullable_tables:
+                self.assertTrue(meta_data.tables[table_name].c.when.nullable)
+        else:
+            for table_name in data_version_nullable_tables:
+                self.assertTrue(meta_data.tables[table_name].c.data_version.nullable)
+            for table_name in when_nullable_tables:
+                self.assertFalse(meta_data.tables[table_name].c.when.nullable)
+
+    def testDowngradesWorkAsExpected(self):
+        """
+        Tests that downgrades and upgrades work as expected. Since the DB will never
+        be rolled back beyond version 21 we treat it as the base version for all future versions from now.
+        Note: These tests run and verify migrations on a sqllite DB
+        whereas the actual migration happens on a mySQL DB.
+        """
+        # TODO Remove these tests when we upgrade sqlalchemy so that these per-version tests are no longer required.
+        latest_version = version(path.abspath(path.join(path.dirname(__file__), "..", "migrate")))
+        db = self._get_migrated_db()
+        versions_migrate_tests_dict = {22: self._rules_version_length_migration_test,
+                                       21: self._fix_column_attributes_migration_test}
+
+        for v in xrange(latest_version - 1, 20, -1):
+            db.downgrade(version=v)
+            versions_migrate_tests_dict[v](db=db, upgrade=False)
+
+        for v in xrange(22, latest_version + 1):
+            db.upgrade(version=v)
+            versions_migrate_tests_dict[v - 1](db=db)
