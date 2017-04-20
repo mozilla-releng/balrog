@@ -24,10 +24,8 @@ def cleanup_releases(trans, nightly_age, dryrun=True):
     # is being executed.
     query = """
 LEFT JOIN rules rules_mapping ON (name=rules_mapping.mapping)
-LEFT JOIN rules rules_whitelist ON (name=rules_whitelist.whitelist)
 WHERE name LIKE '%%%%nightly%%%%'
 AND name NOT LIKE '%%%%latest'
-AND rules_whitelist.whitelist IS NULL
 AND rules_mapping.mapping IS NULL
 AND (STR_TO_DATE(RIGHT(name, 14), "%%%%Y%%%%m%%%%d%%%%H%%%%i%%%%S") < NOW() - INTERVAL %s DAY);
 """ % nightly_age
@@ -137,10 +135,8 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
             FROM rules, rules_scheduled_changes \
             WHERE releases.name IN ( \
                 rules.mapping, \
-                rules.whitelist, \
                 rules.fallbackMapping, \
                 rules_scheduled_changes.base_mapping, \
-                rules_scheduled_changes.base_whitelist, \
                 rules_scheduled_changes.base_fallbackMapping) \
             )" \
         >> %s' % (mysql_default_command, database, dump_location))
@@ -163,10 +159,8 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
         FROM releases, rules, rules_scheduled_changes \
         WHERE releases.name IN ( \
             rules.mapping, \
-            rules.whitelist, \
             rules.fallbackMapping, \
             rules_scheduled_changes.base_mapping, \
-            rules_scheduled_changes.base_whitelist, \
             rules_scheduled_changes.base_fallbackMapping \
             )"""
 

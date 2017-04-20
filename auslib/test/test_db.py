@@ -2592,8 +2592,10 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                       data_version=1)
         self.rules.t.insert().execute(rule_id=2, product="b", channel="h", mapping="c", fallbackMapping="h", backgroundRate=100, priority=100,
                                       update_type="minor", data_version=1)
-        self.rules.t.insert().execute(rule_id=3, product="b", channel="h", mapping="c", whitelist="h", backgroundRate=100, priority=100,
-                                      update_type="minor", data_version=1)
+        # because i've removed the whitelist support, rule_id 1 and 3 are now the same thing so i commented it out.
+
+        # self.rules.t.insert().execute(rule_id=3, product="b", channel="h", mapping="c", backgroundRate=100, priority=100,
+        #                               update_type="minor", data_version=1)
         self.releases.t.insert().execute(name='a', product='a', data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.releases.t.insert().execute(name='ab', product='a', data=createBlob(dict(name="ab", schema_version=1, hashFunction="sha512")),
@@ -2644,8 +2646,8 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         expected = [dict(name='a', product='a', data_version=1, read_only=False, rule_ids=[]),
                     dict(name='ab', product='a', data_version=1, read_only=False, rule_ids=[]),
                     dict(name='b', product='b', data_version=1, read_only=False, rule_ids=[]),
-                    dict(name='c', product='c', data_version=1, read_only=False, rule_ids=[2, 3]),
-                    dict(name="h", product="b", data_version=1, read_only=False, rule_ids=[1, 2, 3]),
+                    dict(name='c', product='c', data_version=1, read_only=False, rule_ids=[2]),
+                    dict(name="h", product="b", data_version=1, read_only=False, rule_ids=[1, 2]),
                     ]
         self.assertEquals(releases, expected)
 
@@ -2660,7 +2662,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                          data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.rules.t.insert().execute(rule_id=4, priority=100, fallbackMapping="fallback", version='3.5',
-                                      whitelist='e', update_type='z', data_version=1)
+                                      update_type='z', data_version=1)
         releases = self.releases.getReleaseInfo(product='e')
         expected = [dict(name='fallback', product='e', data_version=1, read_only=False, rule_ids=[4])]
         self.assertEquals(releases, expected)
@@ -2725,19 +2727,12 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                       data_version=1)
         self.assertRaises(ValueError, self.releases.delete, {"name": "d"}, changed_by='me', old_data_version=1)
 
-    def testDeleteWithRuleWhitelist(self):
-        self.releases.t.insert().execute(name='e', product='e', data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")),
-                                         data_version=1)
-        self.rules.t.insert().execute(rule_id=4, priority=100, version='3.5', buildTarget='e', backgroundRate=100, whitelist='e', update_type='z',
-                                      data_version=1)
-        self.assertRaises(ValueError, self.releases.delete, {"name": "e"}, changed_by='me', old_data_version=1)
-
     def testDeleteWithRuleFallbackMapping(self):
         self.releases.t.insert().execute(name='fallback', product='e',
                                          data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.rules.t.insert().execute(rule_id=4, priority=100, fallbackMapping="fallback", version='3.5', buildTarget='e', backgroundRate=100,
-                                      whitelist='e', update_type='z',
+                                      update_type='z',
                                       data_version=1)
 
         self.assertRaises(ValueError, self.releases.delete, {"name": "fallback"}, changed_by='me', old_data_version=1)
@@ -2780,10 +2775,6 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(SignoffRequiredError, self.releases.update, {"name": "h"}, {"data": newBlob}, "bill", 1)
 
     def testUpdateReleaseWithRuleFallbackMappingAtItThatRequiresSignoff(self):
-        newBlob = ReleaseBlobV1(name="h", schema_version=1, hashFunction="sha256")
-        self.assertRaises(SignoffRequiredError, self.releases.update, {"name": "h"}, {"data": newBlob}, "bill", 1)
-
-    def testUpdateReleaseWithRuleWhitelistThatRequiresSignoff(self):
         newBlob = ReleaseBlobV1(name="h", schema_version=1, hashFunction="sha256")
         self.assertRaises(SignoffRequiredError, self.releases.update, {"name": "h"}, {"data": newBlob}, "bill", 1)
 
@@ -4342,6 +4333,33 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table_name in scheduled_changes_tables:
                 self.assertEquals(downgrade_length, meta_data.tables[table_name].c.base_version.type.length)
 
+    def _delete_whitelist_migration_test(self, db, upgrade=True):
+        """
+        Tests the upgrades and downgrades for version 24 work properly.
+        :param db: migrated DB object
+        :param upgrade: boolean parameter. If true run for upgrade script tests else
+          run downgrade script tests.
+        """
+
+        meta_data = self._get_reflected_metadata(db)
+
+        whitelist_tables = ['rules', 'rules_history']
+        base_whitelist_tables = ['rules_scheduled_changes', 'rules_scheduled_changes_history']
+
+        if upgrade:
+            for table_name in whitelist_tables:
+                print meta_data.tables[table_name]
+                self.assertNotIn('whitelist', meta_data.tables[table_name].c)
+
+            for table_name in base_whitelist_tables:
+                self.assertNotIn('base_whitelist', meta_data.tables[table_name].c)
+        else:
+            for table_name in whitelist_tables:
+                self.assertIn('whitelist', meta_data.tables[table_name].c)
+
+            for table_name in base_whitelist_tables:
+                self.assertIn('base_whitelist', meta_data.tables[table_name].c)
+
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
         """
         Tests the upgrades and downgrades for version 22 work properly.
@@ -4389,7 +4407,8 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         # TODO Remove these tests when we upgrade sqlalchemy so that these per-version tests are no longer required.
         latest_version = version(path.abspath(path.join(path.dirname(__file__), "..", "migrate")))
         db = self._get_migrated_db()
-        versions_migrate_tests_dict = {22: self._rules_version_length_migration_test,
+        versions_migrate_tests_dict = {23: self._delete_whitelist_migration_test,
+                                       22: self._rules_version_length_migration_test,
                                        21: self._fix_column_attributes_migration_test}
 
         for v in xrange(latest_version - 1, 20, -1):
