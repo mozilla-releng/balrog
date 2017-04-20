@@ -13,7 +13,7 @@ function($scope, $http, $modalInstance, CSRF, Permissions, users) {
     if (!$scope.user.username) {
         $scope.errors.nullValue = 'The username field cannot be empty';
         sweetAlert("failed", $scope.errors.nullValue, "error");
-        return false
+        return false;
     }
     $modalInstance.close($scope.user);
   };

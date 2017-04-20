@@ -282,7 +282,7 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
 
   $scope.cancel = function () {
       if (!$scope.user.permissions.length) {
-        $scope.users.pop($scope.user.username)
+        $scope.users.pop($scope.user.username);
       }
       $modalInstance.dismiss('cancel');
 
