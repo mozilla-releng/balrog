@@ -10,6 +10,11 @@ function($scope, $http, $modalInstance, CSRF, Permissions, users) {
   $scope.saving = false;
 
   $scope.saveChanges = function () {
+    if (!$scope.user.username) {
+        $scope.errors.nullValue = 'The username field cannot be empty';
+        sweetAlert("failed", $scope.errors.nullValue, "error");
+        return false;
+    }
     $modalInstance.close($scope.user);
   };
 
