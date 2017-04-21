@@ -2592,10 +2592,6 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                       data_version=1)
         self.rules.t.insert().execute(rule_id=2, product="b", channel="h", mapping="c", fallbackMapping="h", backgroundRate=100, priority=100,
                                       update_type="minor", data_version=1)
-        # because i've removed the whitelist support, rule_id 1 and 3 are now the same thing so i commented it out.
-
-        # self.rules.t.insert().execute(rule_id=3, product="b", channel="h", mapping="c", backgroundRate=100, priority=100,
-        #                               update_type="minor", data_version=1)
         self.releases.t.insert().execute(name='a', product='a', data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.releases.t.insert().execute(name='ab', product='a', data=createBlob(dict(name="ab", schema_version=1, hashFunction="sha512")),
