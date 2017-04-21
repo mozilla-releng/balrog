@@ -15,7 +15,6 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
   $scope.errors = {
     permissions: {}
   };
-
   $scope.user.permissions = [];
   Permissions.getUserPermissions(user.username)
   .then(function(permissions) {
@@ -282,6 +281,10 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
 
 
   $scope.cancel = function () {
-    $modalInstance.dismiss('cancel');
+      if (!$scope.user.permissions.length) {
+        $scope.users.pop($scope.user.username);
+      }
+      $modalInstance.dismiss('cancel');
+
   };
 });
