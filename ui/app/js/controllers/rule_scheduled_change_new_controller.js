@@ -65,6 +65,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
       .success(function(response) {
         $scope.sc.sc_data_version = 1;
         $scope.sc.sc_id = response.sc_id;
+        $scope.sc.rule_id = response.rule_id;
         $scope.scheduled_changes.push($scope.sc);
         $modalInstance.close();
       })
