@@ -1458,7 +1458,6 @@ class Rules(AUSTable):
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),
                            Column('comment', String(500)),
-                           Column('whitelist', String(100)),
                            )
 
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
@@ -1678,19 +1677,6 @@ class Rules(AUSTable):
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
                 continue
-            # If a rule has a whitelist attached to it, the rule is only
-            # considered "matching" if it passes the whitelist check.
-            # The decision about matching or not is delegated to the whitelist blob.
-            if rule.get("whitelist"):
-                self.log.debug("Matching rule requires a whitelist")
-                try:
-                    whitelist = self.db.releases.getReleaseBlob(name=rule["whitelist"], transaction=transaction)
-                    if whitelist and not whitelist.shouldServeUpdate(updateQuery):
-                        continue
-                # It shouldn't be possible for the whitelist blob not to exist,
-                # but just in case...
-                except KeyError:
-                    self.log.warning("Got exeception when looking for whitelist blob %s", rule["whitelist"], exc_info=True)
 
             matchingRules.append(rule)
 
@@ -1843,7 +1829,6 @@ class Releases(AUSTable):
 
         if not nameOnly:
             j = join(self.db.releases.t, self.db.rules.t, ((self.db.releases.name == self.db.rules.mapping) |
-                                                           (self.db.releases.name == self.db.rules.whitelist) |
                                                            (self.db.releases.name == self.db.rules.fallbackMapping)))
             if transaction:
                 ref_list = transaction.execute(select([self.db.releases.name, self.db.rules.rule_id]).select_from(j)).fetchall()
@@ -2090,13 +2075,11 @@ class Releases(AUSTable):
     def isMappedTo(self, name, transaction=None):
         if transaction:
             mapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
-            whitelist_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.whitelist == name)).fetchone()[0]
             fallbackMapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
         else:
             mapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
-            whitelist_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.whitelist == name)).fetchone()[0]
             fallbackMapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
-        if mapping_count > 0 or whitelist_count > 0 or fallbackMapping_count > 0:
+        if mapping_count > 0 or fallbackMapping_count > 0:
             return True
 
         return False

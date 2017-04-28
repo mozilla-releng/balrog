@@ -25,7 +25,6 @@ def createBlob(data):
     from auslib.blobs.apprelease import ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, \
         ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV7, DesupportBlob
     from auslib.blobs.gmp import GMPBlobV1
-    from auslib.blobs.whitelist import WhitelistBlobV1
     from auslib.blobs.superblob import SuperBlob
     from auslib.blobs.systemaddons import SystemAddonsBlob
 
@@ -39,7 +38,6 @@ def createBlob(data):
         7: ReleaseBlobV7,
         50: DesupportBlob,
         1000: GMPBlobV1,
-        3000: WhitelistBlobV1,
         4000: SuperBlob,
         5000: SystemAddonsBlob
     }

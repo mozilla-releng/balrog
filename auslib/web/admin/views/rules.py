@@ -69,7 +69,6 @@ class RulesAPIView(AdminView):
                     osVersion=form.osVersion.data,
                     systemCapabilities=form.systemCapabilities.data,
                     distVersion=form.distVersion.data,
-                    whitelist=form.whitelist.data,
                     comment=form.comment.data,
                     update_type=form.update_type.data,
                     headerArchitecture=form.headerArchitecture.data)
@@ -183,7 +182,6 @@ class RuleHistoryAPIView(HistoryView):
             'osVersion': 'osVersion',
             'systemCapabilities': 'systemCapabilities',
             'distVersion': 'distVersion',
-            'whitelist': 'whitelist',
             'comment': 'comment',
             'update_type': 'update_type',
             'headerArchitecture': 'headerArchitecture',
@@ -225,7 +223,6 @@ class RuleHistoryAPIView(HistoryView):
             osVersion=change['osVersion'],
             systemCapabilities=change['systemCapabilities'],
             distVersion=change['distVersion'],
-            whitelist=change['whitelist'],
             comment=change['comment'],
             update_type=change['update_type'],
             headerArchitecture=change['headerArchitecture'],
