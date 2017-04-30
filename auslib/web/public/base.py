@@ -7,35 +7,21 @@ from flask import make_response, send_from_directory, Response
 from raven.contrib.flask import Sentry
 
 from auslib.AUS import AUS
-from auslib.dockerflow import create_dockerflow_endpoints
 from auslib.web.api_validator import BalrogParameterValidator
 
+from auslib.errors import BadDataError
+
 log = logging.getLogger(__name__)
+AUS = AUS()
+sentry = Sentry()
 
 validator_map = {
     'parameter': BalrogParameterValidator
 }
 
-connexion_app = connexion.App(
-    __name__, specification_dir='.', validator_map=validator_map)
-connexion_app.add_api('api.yml')
+connexion_app = connexion.App(__name__, specification_dir='.', validator_map=validator_map)
+connexion_app.add_api('api.yml', validate_responses=True, strict_validation=True)
 app = connexion_app.app
-AUS = AUS()
-sentry = Sentry()
-
-# from auslib.web.public.views.client import ClientRequestView
-from auslib.errors import BadDataError
-
-
-def heartbeat_database_function(dbo):
-    # web has only a read access to the database. That's why we don't use
-    # the default database function.
-    # Counting the rules should be a trivial enough operation that it won't
-    # cause notable load, but will verify that the database works.
-    return dbo.rules.countRules()
-
-
-create_dockerflow_endpoints(app, heartbeat_database_function)
 
 
 @app.after_request
@@ -78,6 +64,8 @@ def generic(error):
     return Response(status=500, mimetype="text/plain", response=error.message)
 
 
+# Keeping static files endpoints here due to an issue when returning response for static files.
+# Similar issue: https://github.com/zalando/connexion/issues/401
 @app.route('/robots.txt')
 def robots():
     return send_from_directory(app.static_folder, "robots.txt")

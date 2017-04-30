@@ -2,7 +2,9 @@ import urllib
 import re
 import sys
 
-from flask import abort, make_response, request, current_app as app
+from connexion import request
+
+from flask import abort, make_response, current_app as app
 
 from auslib.AUS import AUS
 from auslib.global_state import dbo
@@ -29,7 +31,6 @@ def getHeaderArchitecture(buildTarget, ua):
 
 def getCleanQueryFromURL(url):
     query = url.copy()
-
     # Some versions of Avast make requests and blindly append "?avast=1" to
     # them, which breaks query string parsing if ?force=1 is already
     # there. Because we're nice people we'll fix it up.

@@ -40,22 +40,32 @@ paths:
           description: The update channel of the application request an update.
           required: true
           type: string
-        # Underlying code depends on osVersion being set. Since this route only
-        # exists to support ancient queries, and all newer versions have osVersion
-        # in them it's easier to set this here than make the all of the underlying
-        # code support queries without it.
         - name: queryVersion
           in: path
           description: queryVersion
           required: true
           type: integer
           default: 2
+        # Underlying code depends on osVersion being set. Since this route only
+        # exists to support ancient queries, and all newer versions have osVersion
+        # in them it's easier to set this here than make the all of the underlying
+        # code support queries without it.
         - name: osVersion
           in: path
           description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
           required: true
           type: string
           default: ""
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
       responses:
         200:
           description: Update blob in text/xml format.
@@ -107,6 +117,16 @@ paths:
           required: true
           type: integer
           default: 2
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
       responses:
         200:
           description: Update blob in text/xml format.
@@ -537,3 +557,33 @@ paths:
       responses:
         200:
           description: Empty xml file.
+
+  /__heartbeat__:
+    get:
+      operationId: "auslib.web.public.dockerflow.heartbeat"
+      description: |
+        Respond to /__heartbeat__ with a HTTP 200 or 5xx on error.
+        This should check backing services like a database for connectivity.
+      responses:
+        200:
+          description: Service is healthy.
+        502:
+          description: Service is unhealthy.
+
+  /__lbheartbeat__:
+    get:
+      operationId: "auslib.web.public.dockerflow.lbheartbeat"
+      description: |
+        Respond to /__lbheartbeat__ with an HTTP 200.
+        This is for load balancer checks and should not check backing services.
+      responses:
+        200:
+          description: Service is healthy.
+
+  /__version__:
+    get:
+      operationId: "auslib.web.public.dockerflow.version"
+      description: Respond to /__version__ with the contents of /app/version.json.
+      responses:
+        200:
+          description: version.json content.
