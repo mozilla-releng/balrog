@@ -5,7 +5,7 @@ from tempfile import mkstemp
 import unittest
 
 from auslib.global_state import dbo, cache
-from auslib.admin.base import app
+from auslib.web.admin.base import app
 from auslib.blobs.base import createBlob
 
 

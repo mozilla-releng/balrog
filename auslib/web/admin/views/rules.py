@@ -5,18 +5,18 @@ from sqlalchemy.sql.expression import null
 from flask import Response, request, jsonify
 
 from auslib.global_state import dbo
-from auslib.admin.views.base import (
+from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
-from auslib.admin.views.csrf import get_csrf_headers
-from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
+from auslib.web.admin.views.csrf import get_csrf_headers
+from auslib.web.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
     ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
     ScheduledChangeDeleteRuleForm, EditScheduledChangeNewRuleForm, \
     EditScheduledChangeExistingRuleForm, EditScheduledChangeDeleteRuleForm
-from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
+from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
-from auslib.admin.views.history import HistoryView
+from auslib.web.admin.views.history import HistoryView
 
 
 class RulesAPIView(AdminView):

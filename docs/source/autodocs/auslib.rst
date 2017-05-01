@@ -5,7 +5,7 @@ Developer Documentation (Auslib Package)
 
 .. toctree::
 
-    auslib.admin
+    auslib.web.admin
     auslib.blobs
     auslib.db
     auslib.util

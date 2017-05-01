@@ -5,9 +5,9 @@ from sqlalchemy.sql.expression import null
 from flask import jsonify, request, Response
 from flask_wtf import Form
 
-from auslib.admin.views.base import AdminView, requirelogin
-from auslib.admin.views.forms import DbEditableForm, SignoffForm
-from auslib.admin.views.history import HistoryView
+from auslib.web.admin.views.base import AdminView, requirelogin
+from auslib.web.admin.views.forms import DbEditableForm, SignoffForm
+from auslib.web.admin.views.history import HistoryView
 
 
 class ScheduledChangesView(AdminView):
