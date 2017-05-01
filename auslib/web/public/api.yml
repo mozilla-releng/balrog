@@ -45,7 +45,7 @@ paths:
           description: queryVersion
           required: true
           type: integer
-          default: 2
+          default: 1
         # Underlying code depends on osVersion being set. Since this route only
         # exists to support ancient queries, and all newer versions have osVersion
         # in them it's easier to set this here than make the all of the underlying
