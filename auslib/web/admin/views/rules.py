@@ -1,7 +1,8 @@
 import json
+import connexion
 
 from sqlalchemy.sql.expression import null
-
+from jsonschema.compat import str_types
 from flask import Response, request, jsonify
 
 from auslib.global_state import dbo
@@ -27,8 +28,8 @@ class RulesAPIView(AdminView):
         # to exist, which doesn't make sense for GET requests.
         where = {}
         for field in ("product",):
-            if request.args.get(field):
-                where[field] = request.args[field]
+            if connexion.request.args.get(field):
+                where[field] = connexion.request.args[field]
 
         rules = dbo.rules.getOrderedRules(where=where)
         count = 0
@@ -46,32 +47,37 @@ class RulesAPIView(AdminView):
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
         form = RuleForm()
-        releaseNames = dbo.releases.getReleaseNames()
-        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+        release_names = dbo.releases.getReleaseNames()
+        form.mapping.choices = [(item['name'], item['name']) for item in release_names]
         form.mapping.choices.insert(0, ('', 'NULL'))
 
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
+        # Replaces wtfForms validations
+        nullable_field_dict = dict()
+        for key in request.json:
+            if isinstance(request.json[key], str_types):
+                nullable_field_dict[key] = None if request.json[key].strip() == '' else request.json[key].strip()
+            else:
+                nullable_field_dict[key] = request.json[key]
 
-        what = dict(backgroundRate=form.backgroundRate.data,
-                    mapping=form.mapping.data,
-                    fallbackMapping=form.fallbackMapping.data,
-                    priority=form.priority.data,
-                    alias=form.alias.data,
-                    product=form.product.data,
-                    version=form.version.data,
-                    buildID=form.buildID.data,
-                    channel=form.channel.data,
-                    locale=form.locale.data,
-                    distribution=form.distribution.data,
-                    buildTarget=form.buildTarget.data,
-                    osVersion=form.osVersion.data,
-                    systemCapabilities=form.systemCapabilities.data,
-                    distVersion=form.distVersion.data,
-                    comment=form.comment.data,
-                    update_type=form.update_type.data,
-                    headerArchitecture=form.headerArchitecture.data)
+        what = dict(backgroundRate=nullable_field_dict.get('backgroundRate'),
+                    mapping=nullable_field_dict.get('mapping'),
+                    fallbackMapping=nullable_field_dict.get('fallbackMapping'),
+                    priority=nullable_field_dict.get('priority'),
+                    alias=nullable_field_dict.get('alias'),
+                    product=nullable_field_dict.get('product'),
+                    version=nullable_field_dict.get('version'),
+                    buildID=nullable_field_dict.get('buildID'),
+                    channel=nullable_field_dict.get('channel'),
+                    locale=nullable_field_dict.get('locale'),
+                    distribution=nullable_field_dict.get('distribution'),
+                    buildTarget=nullable_field_dict.get('buildTarget'),
+                    osVersion=nullable_field_dict.get('osVersion'),
+                    systemCapabilities=nullable_field_dict.get('systemCapabilities'),
+                    distVersion=nullable_field_dict.get('distVersion'),
+                    comment=nullable_field_dict.get('comment'),
+                    update_type=nullable_field_dict.get('update_type'),
+                    headerArchitecture=nullable_field_dict.get('headerArchitecture')
+                    )
         rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
         return Response(status=200, response=str(rule_id))
 
