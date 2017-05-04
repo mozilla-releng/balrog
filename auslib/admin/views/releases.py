@@ -642,9 +642,13 @@ class ReleaseDiffView(ReleaseFieldView):
         value = self.get_value(change_id, field)
         data_version = self.get_value(change_id, "data_version")
 
-        prev_id = self.get_prev_id(value, change_id)
-        previous = self.get_value(prev_id, field)
-        prev_data_version = self.get_value(prev_id, "data_version")
+        if data_version > 1:
+            prev_id = self.get_prev_id(value, change_id)
+            previous = self.get_value(prev_id, field)
+            prev_data_version = self.get_value(prev_id, "data_version")
+        else:
+            previous = {}
+            prev_data_version = data_version - 1
 
         value = self.format_value(value)
         previous = self.format_value(previous)
