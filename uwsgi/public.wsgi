@@ -29,7 +29,7 @@ if os.environ.get("LOG_FORMAT") == "plain":
 configure_logging(**logging_kwargs)
 
 from auslib.global_state import cache, dbo
-from auslib.web.public.base import app as application, sentry
+from auslib.web.base import app as application, sentry
 
 cache.make_cache("blob", 500, 3600)
 # There's probably no no need to ever expire items in the blob schema cache
@@ -54,7 +54,7 @@ application.config["VERSION_FILE"] = "/app/version.json"
 
 if os.environ.get('SENTRY_DSN'):
     application.config['SENTRY_DSN'] = os.environ.get('SENTRY_DSN')
-    from auslib.web.public.base import sentry
+    from auslib.web.base import sentry
     sentry.init_app(application, register_signal=False)
 
 if os.environ.get("CACHE_CONTROL"):

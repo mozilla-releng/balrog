@@ -4,7 +4,7 @@ import time
 from flask import Response, jsonify, request
 from sqlalchemy import and_
 
-from auslib.web.admin.views.base import AdminView
+from auslib.admin.views.base import AdminView
 from auslib.util.timesince import timesince
 
 
