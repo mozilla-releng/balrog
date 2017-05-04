@@ -11,19 +11,19 @@ log = logging.getLogger(__name__)
 app = Flask(__name__)
 sentry = Sentry()
 
-from auslib.web.admin.views.csrf import CSRFView
-from auslib.web.admin.views.permissions import UsersView, PermissionsView, \
+from auslib.admin.views.csrf import CSRFView
+from auslib.admin.views.permissions import UsersView, PermissionsView, \
     SpecificPermissionView, UserRolesView, UserRoleView, AllRolesView, \
     PermissionScheduledChangesView, PermissionScheduledChangeView, \
     EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, \
     PermissionScheduledChangeSignoffsView, SpecificUserView
-from auslib.web.admin.views.releases import SingleLocaleView, \
+from auslib.admin.views.releases import SingleLocaleView, \
     SingleReleaseView, ReleaseHistoryView, \
     ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView, \
     ReleaseScheduledChangesView, ReleaseScheduledChangeView, \
     EnactReleaseScheduledChangeView, ReleaseScheduledChangeHistoryView, \
     ReleaseScheduledChangeSignoffsView, ReleaseFieldView, ReleaseDiffView
-from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsView, \
+from auslib.admin.views.required_signoffs import ProductRequiredSignoffsView, \
     ProductRequiredSignoffsHistoryAPIView, \
     ProductRequiredSignoffsScheduledChangesView, \
     ProductRequiredSignoffScheduledChangeView, \
@@ -37,7 +37,7 @@ from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsView
     EnactPermissionsRequiredSignoffScheduledChangeView, \
     PermissionsRequiredSignoffScheduledChangeSignoffsView, \
     PermissionsRequiredSignoffScheduledChangeHistoryView
-from auslib.web.admin.views.rules import RulesAPIView, \
+from auslib.admin.views.rules import RulesAPIView, \
     SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView, \
     RuleScheduledChangesView, RuleScheduledChangeView, \
     EnactRuleScheduledChangeView, RuleScheduledChangeHistoryView, \

@@ -3,6 +3,5 @@ include version.txt
 
 recursive-include auslib/migrate *
 recursive-include auslib/blobs/schemas *
-recursive-include auslib/web *.yml
 recursive-include ui/dist *
 recursive-exclude * *.py[co]

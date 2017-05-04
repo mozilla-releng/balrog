@@ -1,6 +1,6 @@
 import flask_wtf.form
 
-from auslib.web.admin.base import app
+from auslib.admin.base import app
 from auslib.test.admin.views.base import ViewTest
 
 

@@ -10,7 +10,7 @@ import unittest
 
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
-from auslib.web.public.base import app
+from auslib.web.base import app
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
     ReleaseBlobV3, ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV7, DesupportBlob, \

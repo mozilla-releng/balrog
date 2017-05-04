@@ -3,12 +3,12 @@ import simplejson as json
 from flask import request, Response, jsonify
 
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import requirelogin, AdminView
-from auslib.web.admin.views.forms import NewPermissionForm, ExistingPermissionForm, DbEditableForm, \
+from auslib.admin.views.base import requirelogin, AdminView
+from auslib.admin.views.forms import NewPermissionForm, ExistingPermissionForm, DbEditableForm, \
     ScheduledChangeNewPermissionForm, ScheduledChangeExistingPermissionForm, \
     EditScheduledChangeNewPermissionForm, EditScheduledChangeExistingPermissionForm, \
     ScheduledChangeDeletePermissionForm
-from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
+from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
 
