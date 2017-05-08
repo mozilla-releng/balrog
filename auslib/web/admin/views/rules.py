@@ -4,13 +4,13 @@ import connexion
 from sqlalchemy.sql.expression import null
 from jsonschema.compat import str_types
 from flask import Response, request, jsonify
-
+from connexion import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
 from auslib.web.admin.views.csrf import get_csrf_headers
-from auslib.web.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
+from auslib.web.admin.views.forms import EditRuleForm, DbEditableForm, \
     ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
     ScheduledChangeDeleteRuleForm, EditScheduledChangeNewRuleForm, \
     EditScheduledChangeExistingRuleForm, EditScheduledChangeDeleteRuleForm
@@ -46,38 +46,25 @@ class RulesAPIView(AdminView):
     @requirelogin
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
-        form = RuleForm()
         release_names = dbo.releases.getReleaseNames()
-        form.mapping.choices = [(item['name'], item['name']) for item in release_names]
-        form.mapping.choices.insert(0, ('', 'NULL'))
+        mapping_choices = [(item['name'], item['name']) for item in release_names]
+        mapping_choices.insert(0, ('', 'NULL'))
 
         # Replaces wtfForms validations
-        nullable_field_dict = dict()
+        what = dict()
         for key in request.json:
             if isinstance(request.json[key], str_types):
-                nullable_field_dict[key] = None if request.json[key].strip() == '' else request.json[key].strip()
+                what[key] = None if request.json[key].strip() == '' else request.json[key].strip()
             else:
-                nullable_field_dict[key] = request.json[key]
+                what[key] = request.json[key]
 
-        what = dict(backgroundRate=nullable_field_dict.get('backgroundRate'),
-                    mapping=nullable_field_dict.get('mapping'),
-                    fallbackMapping=nullable_field_dict.get('fallbackMapping'),
-                    priority=nullable_field_dict.get('priority'),
-                    alias=nullable_field_dict.get('alias'),
-                    product=nullable_field_dict.get('product'),
-                    version=nullable_field_dict.get('version'),
-                    buildID=nullable_field_dict.get('buildID'),
-                    channel=nullable_field_dict.get('channel'),
-                    locale=nullable_field_dict.get('locale'),
-                    distribution=nullable_field_dict.get('distribution'),
-                    buildTarget=nullable_field_dict.get('buildTarget'),
-                    osVersion=nullable_field_dict.get('osVersion'),
-                    systemCapabilities=nullable_field_dict.get('systemCapabilities'),
-                    distVersion=nullable_field_dict.get('distVersion'),
-                    comment=nullable_field_dict.get('comment'),
-                    update_type=nullable_field_dict.get('update_type'),
-                    headerArchitecture=nullable_field_dict.get('headerArchitecture')
-                    )
+        mapping_values = [y for x, y in mapping_choices if x == what.get("mapping")]
+        if what.get('mapping', None) is not None and len(mapping_values) != 1:
+            return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
+
+        for i in ["priority", "backgroundRate"]:
+            if what.get(i, None):
+                what[i] = int(what[i])
         rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
         return Response(status=200, response=str(rule_id))
 

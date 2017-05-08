@@ -3,14 +3,18 @@ import re
 
 from flask import request
 from flask_compress import Compress
-
+from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 from raven.contrib.flask import Sentry
 
 import connexion
 import logging
 log = logging.getLogger(__name__)
 
-connexion_app = connexion.App(__name__, specification_dir='swagger/')
+validator_map = {
+    'body': BalrogRequestBodyValidator
+}
+
+connexion_app = connexion.App(__name__, specification_dir='swagger/', validator_map=validator_map, debug=True)
 connexion_app.add_api("api.yaml", validate_responses=True, strict_validation=True)
 app = connexion_app.app
 sentry = Sentry()
@@ -80,6 +84,8 @@ def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers["Strict-Transport-Security"] = app.config.get("STRICT_TRANSPORT_SECURITY", "max-age=31536000;")
     if re.match("^/ui/", request.path):
+        # This enables swagger-ui to dynamically fetch and
+        # load the swagger specification JSON file containing API definition and examples.
         response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     else:
         response.headers["Content-Security-Policy"] = \

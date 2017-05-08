@@ -147,7 +147,6 @@ class TestRulesAPI_JSON(ViewTest):
         # Connexion and manual request.json validation methods will preempt and throw 400 error as
         # soon as the first field invalidates. Only one field may be present in the response.data depending
         # upon the order of fields sorted in swagger yaml file and in views.
-        self.assertTrue('title' in ret.data, msg=ret.data)
         post_data['update_type'] = 'minor'
         ret = self._post('/rules', data=post_data)
 
@@ -163,7 +162,8 @@ class TestRulesAPI_JSON(ViewTest):
         for op in operators:
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                              product='Firefox', channel="nightly", update_type='minor', version='%s4.0' % op))
-            self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" % (ret.status_code, ret.data, op))
+            self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" %
+                              (ret.status_code, ret.data, op))
             r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
             self.assertEquals(len(r), 1)
             self.assertEquals(r[0]['version'], '%s4.0' % op)
