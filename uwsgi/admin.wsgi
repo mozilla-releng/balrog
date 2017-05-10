@@ -27,7 +27,7 @@ if os.environ.get("LOG_FORMAT") == "plain":
     logging_kwargs["formatter"] = logging.Formatter
 configure_logging(**logging_kwargs)
 
-from auslib.admin.base import app as application
+from auslib.web.admin.base import app as application
 from auslib.global_state import cache, dbo
 
 cache.make_copies = True
@@ -63,7 +63,7 @@ application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 
 if os.environ.get("SENTRY_DSN"):
     application.config["SENTRY_DSN"] = os.environ.get("SENTRY_DSN")
-    from auslib.admin.base import sentry
+    from auslib.web.admin.base import sentry
     sentry.init_app(application)
 
 # version.json is created when the Docker image is built, and contains details

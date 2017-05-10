@@ -4,8 +4,8 @@ from sqlalchemy.sql.expression import null
 
 from flask import jsonify, Response, request
 
-from auslib.admin.views.base import requirelogin, AdminView
-from auslib.admin.views.forms import ProductRequiredSignoffForm, \
+from auslib.web.admin.views.base import requirelogin, AdminView
+from auslib.web.admin.views.forms import ProductRequiredSignoffForm, \
     ProductRequiredSignoffHistoryForm, \
     ScheduledChangeExistingProductRequiredSignoffForm, \
     ScheduledChangeNewProductRequiredSignoffForm, \
@@ -19,8 +19,8 @@ from auslib.admin.views.forms import ProductRequiredSignoffForm, \
     ScheduledChangeDeletePermissionsRequiredSignoffForm, \
     EditScheduledChangeNewPermissionsRequiredSignoffForm, \
     EditScheduledChangeExistingPermissionsRequiredSignoffForm
-from auslib.admin.views.history import HistoryView
-from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
+from auslib.web.admin.views.history import HistoryView
+from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, SignoffsView, \
     ScheduledChangeHistoryView
 from auslib.db import SignoffRequiredError

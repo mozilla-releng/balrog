@@ -1,7 +1,7 @@
 from flask import Response
 from flask_wtf import Form
 
-from auslib.admin.views.base import AdminView
+from auslib.web.admin.views.base import AdminView
 
 __all__ = ["CSRFView"]
 

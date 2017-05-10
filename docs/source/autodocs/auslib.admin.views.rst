@@ -1,75 +1,75 @@
-auslib.admin.views
+auslib.web.admin.views
 ==================
 
 
-auslib.admin.views.base
+auslib.web.admin.views.base
 -----------------------
 
-.. automodule:: auslib.admin.views.base
+.. automodule:: auslib.web.admin.views.base
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.admin.views.csrf
+auslib.web.admin.views.csrf
 -----------------------
 
-.. automodule:: auslib.admin.views.csrf
+.. automodule:: auslib.web.admin.views.csrf
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.admin.views.forms
+auslib.web.admin.views.forms
 ------------------------
 
-.. automodule:: auslib.admin.views.forms
+.. automodule:: auslib.web.admin.views.forms
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.admin.views.history
+auslib.web.admin.views.history
 --------------------------
 
-.. automodule:: auslib.admin.views.history
+.. automodule:: auslib.web.admin.views.history
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.admin.views.permissions
+auslib.web.admin.views.permissions
 ------------------------------
 
-.. automodule:: auslib.admin.views.permissions
+.. automodule:: auslib.web.admin.views.permissions
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.admin.views.releases
+auslib.web.admin.views.releases
 ---------------------------
 
-.. automodule:: auslib.admin.views.releases
+.. automodule:: auslib.web.admin.views.releases
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.admin.views.required_signoffs
+auslib.web.admin.views.required_signoffs
 ---------------------------
 
-.. automodule:: auslib.admin.views.signoffs
+.. automodule:: auslib.web.admin.views.signoffs
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.admin.views.rules
+auslib.web.admin.views.rules
 ------------------------
 
-.. automodule:: auslib.admin.views.rules
+.. automodule:: auslib.web.admin.views.rules
     :members:
     :undoc-members:
     :show-inheritance:
 
-auslib.admin.views.scheduled_changes
+auslib.web.admin.views.scheduled_changes
 ------------------------------------
 
-.. automodule:: auslib.admin.views.scheduled_changes
+.. automodule:: auslib.web.admin.views.scheduled_changes
     :members:
     :undoc-members:
     :show-inheritance:
