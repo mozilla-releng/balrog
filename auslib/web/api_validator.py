@@ -21,7 +21,11 @@ class BalrogParameterValidator(ParameterValidator):
             val = param['default']
             request.path_params[param['name']] = val
 
-        # Encode strings in utf-8.
+        # We don't expect any unicode in the update URL, nor do we know which
+        # encoding it would use if we get it, so we simply ignore any that is
+        # given. All known cases of this are misconfiguration on the client end.
+        # This will need to be changed if we ever have a case where a client is
+        # validly sending unicode.
         if param['type'] == 'string':
             request.path_params[param['name']] = val.encode('ascii', 'ignore')
 
