@@ -1,4 +1,3 @@
-import codecs
 import logging
 from connexion.decorators.validation import ParameterValidator
 
@@ -24,7 +23,6 @@ class BalrogParameterValidator(ParameterValidator):
 
         # Encode strings in utf-8.
         if param['type'] == 'string':
-            val = codecs.encode(val, 'utf-8')
-            request.path_params[param['name']] = val
+            request.path_params[param['name']] = val.encode('ascii', 'ignore')
 
         return self.validate_parameter('path', val, param)
