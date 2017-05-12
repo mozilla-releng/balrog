@@ -151,15 +151,18 @@ class ViewTest(unittest.TestCase):
         return ret
 
     def _post(self, url, data={}, username='bill', **kwargs):
-        data["csrf_token"] = "lorem"
+        if type(data) == dict:
+            data["csrf_token"] = "lorem"
         return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getAuth(username), **kwargs)
 
     def _httpRemoteUserPost(self, url, username="bill", data={}):
-        data["csrf_token"] = "lorem"
+        if type(data) == dict:
+            data["csrf_token"] = "lorem"
         return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getHttpRemoteUserAuth(username))
 
     def _badAuthPost(self, url, data={}):
-        data["csrf_token"] = "lorem"
+        if type(data) == dict:
+            data["csrf_token"] = "lorem"
         return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getBadAuth())
 
     def _put(self, url, data={}, username='bill'):

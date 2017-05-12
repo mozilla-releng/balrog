@@ -183,10 +183,10 @@ paths:
             type: string
             example: "514"
         '400':
-          description: Requires remote username and password in basic authentication
+          description: Bad Request. Invalid POST request.
           schema:
             type: string
-            example: "{'error': 'invalid form values'}"
+            example: "{'detail': 'invalid form values', 'status':  400}"
           examples:
             application/json: "{'error': 'Invalid Form Values'}"
         default:
