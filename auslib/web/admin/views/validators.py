@@ -47,7 +47,6 @@ class BalrogRequestBodyValidator(RequestBodyValidator):
         # type: (dict, AnyStr) -> Union[ConnexionResponse, None]
         if self.is_null_value_valid and is_null(data):
             return None
-        print data
         try:
             self.validator.validate(data)
         except JsonschemaValidationError as exception:
