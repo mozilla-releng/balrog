@@ -5,18 +5,18 @@ from sqlalchemy.sql.expression import null
 from flask import Response, request, jsonify
 
 from auslib.global_state import dbo
-from auslib.admin.views.base import (
+from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
-from auslib.admin.views.csrf import get_csrf_headers
-from auslib.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
+from auslib.web.admin.views.csrf import get_csrf_headers
+from auslib.web.admin.views.forms import EditRuleForm, RuleForm, DbEditableForm, \
     ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
     ScheduledChangeDeleteRuleForm, EditScheduledChangeNewRuleForm, \
     EditScheduledChangeExistingRuleForm, EditScheduledChangeDeleteRuleForm
-from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
+from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
-from auslib.admin.views.history import HistoryView
+from auslib.web.admin.views.history import HistoryView
 
 
 class RulesAPIView(AdminView):
@@ -69,7 +69,6 @@ class RulesAPIView(AdminView):
                     osVersion=form.osVersion.data,
                     systemCapabilities=form.systemCapabilities.data,
                     distVersion=form.distVersion.data,
-                    whitelist=form.whitelist.data,
                     comment=form.comment.data,
                     update_type=form.update_type.data,
                     headerArchitecture=form.headerArchitecture.data)
@@ -183,7 +182,6 @@ class RuleHistoryAPIView(HistoryView):
             'osVersion': 'osVersion',
             'systemCapabilities': 'systemCapabilities',
             'distVersion': 'distVersion',
-            'whitelist': 'whitelist',
             'comment': 'comment',
             'update_type': 'update_type',
             'headerArchitecture': 'headerArchitecture',
@@ -225,7 +223,6 @@ class RuleHistoryAPIView(HistoryView):
             osVersion=change['osVersion'],
             systemCapabilities=change['systemCapabilities'],
             distVersion=change['distVersion'],
-            whitelist=change['whitelist'],
             comment=change['comment'],
             update_type=change['update_type'],
             headerArchitecture=change['headerArchitecture'],

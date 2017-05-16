@@ -8,17 +8,17 @@ from flask import Response, jsonify, request
 from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
 from auslib.db import OutdatedDataError, ReadOnlyError
-from auslib.admin.views.base import (
+from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
-from auslib.admin.views.csrf import get_csrf_headers
-from auslib.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, DbEditableForm, ReadOnlyForm, \
+from auslib.web.admin.views.csrf import get_csrf_headers
+from auslib.web.admin.views.forms import PartialReleaseForm, CompleteReleaseForm, DbEditableForm, ReadOnlyForm, \
     ScheduledChangeNewReleaseForm, ScheduledChangeExistingReleaseForm, ScheduledChangeDeleteReleaseForm, \
     EditScheduledChangeNewReleaseForm, EditScheduledChangeExistingReleaseForm
-from auslib.admin.views.scheduled_changes import ScheduledChangesView, \
+from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
     SignoffsView
-from auslib.admin.views.history import HistoryView
+from auslib.web.admin.views.history import HistoryView
 
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]

@@ -1,16 +1,16 @@
-auslib.admin
+auslib.web.admin
 ============
 
 
 
 .. toctree::
 
-    auslib.admin.views
+    auslib.web.admin.views
 
-auslib.admin.base
+auslib.web.admin.base
 -----------------
 
-.. automodule:: auslib.admin.base
+.. automodule:: auslib.web.admin.base
     :members:
     :undoc-members:
     :show-inheritance:

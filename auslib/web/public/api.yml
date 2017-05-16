@@ -1,0 +1,589 @@
+swagger: '2.0'
+info:
+  title: Balrog Public API
+  description: Balrog Application Update Service
+  version: "1.0.0"
+paths:
+  /update/1/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/update.xml:
+    get:
+      operationId: "auslib.web.public.client.get_update_blob_1"
+      description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
+      parameters:
+        - name: product
+          in: path
+          description: The name of the application requesting an update.
+          required: true
+          type: string
+        - name: version
+          in: path
+          description: The version of the application requesting an update.
+          required: true
+          type: string
+        - name: buildID
+          in: path
+          description: The build ID of the application requesting an update.
+          required: true
+          type: string
+        - name: buildTarget
+          in: path
+          description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
+          required: true
+          type: string
+        - name: locale
+          in: path
+          description: The locale of the application requesting an update.
+          required: true
+          type: string
+        - name: channel
+          in: path
+          description: The update channel of the application request an update.
+          required: true
+          type: string
+        - name: queryVersion
+          in: path
+          description: queryVersion
+          required: true
+          type: integer
+          default: 1
+        # Underlying code depends on osVersion being set. Since this route only
+        # exists to support ancient queries, and all newer versions have osVersion
+        # in them it's easier to set this here than make the all of the underlying
+        # code support queries without it.
+        - name: osVersion
+          in: path
+          description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+          required: true
+          type: string
+          default: ""
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /update/2/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/{osVersion}/update.xml:
+    get:
+      operationId: "auslib.web.public.client.get_update_blob_2"
+      description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
+      parameters:
+        - name: product
+          in: path
+          description: The name of the application requesting an update.
+          required: true
+          type: string
+        - name: version
+          in: path
+          description: The version of the application requesting an update.
+          required: true
+          type: string
+        - name: buildID
+          in: path
+          description: The build ID of the application requesting an update.
+          required: true
+          type: string
+        - name: buildTarget
+          in: path
+          description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
+          required: true
+          type: string
+        - name: locale
+          in: path
+          description: The locale of the application requesting an update.
+          required: true
+          type: string
+        - name: channel
+          in: path
+          description: The update channel of the application request an update.
+          required: true
+          type: string
+        - name: osVersion
+          in: path
+          description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+          required: true
+          type: string
+        - name: queryVersion
+          in: path
+          description: queryVersion
+          required: true
+          type: integer
+          default: 2
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /update/3/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/{osVersion}/{distribution}/{distVersion}/update.xml:
+    get:
+      operationId: "auslib.web.public.client.get_update_blob_3"
+      description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
+      parameters:
+        - name: product
+          in: path
+          description: The name of the application requesting an update.
+          required: true
+          type: string
+        - name: version
+          in: path
+          description: The version of the application requesting an update.
+          required: true
+          type: string
+        - name: buildID
+          in: path
+          description: The build ID of the application requesting an update.
+          required: true
+          type: string
+        - name: buildTarget
+          in: path
+          description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
+          required: true
+          type: string
+        - name: locale
+          in: path
+          description: The locale of the application requesting an update.
+          required: true
+          type: string
+        - name: channel
+          in: path
+          description: The update channel of the application request an update.
+          required: true
+          type: string
+        - name: osVersion
+          in: path
+          description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+          required: true
+          type: string
+        - name: distribution
+          in: path
+          description: The partner distribution name of the application requesting an update or “default” if the application is not a partner build.
+          required: true
+          type: string
+        - name: distVersion
+          in: path
+          description: The version of the partner distribution of the application requesting an update or “default” if the application is not a partner build.
+          required: true
+          type: string
+        - name: queryVersion
+          in: path
+          description: queryVersion
+          required: true
+          type: integer
+          default: 3
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /update/4/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/{osVersion}/{distribution}/{distVersion}/{platformVersion}/update.xml:
+    get:
+      operationId: "auslib.web.public.client.get_update_blob_4"
+      description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
+      parameters:
+        - name: product
+          in: path
+          description: The name of the application requesting an update.
+          required: true
+          type: string
+        - name: version
+          in: path
+          description: The version of the application requesting an update.
+          required: true
+          type: string
+        - name: buildID
+          in: path
+          description: The build ID of the application requesting an update.
+          required: true
+          type: string
+        - name: buildTarget
+          in: path
+          description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
+          required: true
+          type: string
+        - name: locale
+          in: path
+          description: The locale of the application requesting an update.
+          required: true
+          type: string
+        - name: channel
+          in: path
+          description: The update channel of the application request an update.
+          required: true
+          type: string
+        - name: osVersion
+          in: path
+          description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+          required: true
+          type: string
+        - name: distribution
+          in: path
+          description: The partner distribution name of the application requesting an update or “default” if the application is not a partner build.
+          required: true
+          type: string
+        - name: distVersion
+          in: path
+          description: The version of the partner distribution of the application requesting an update or “default” if the application is not a partner build.
+          required: true
+          type: string
+        - name: platformVersion
+          in: path
+          description: Platform Version.
+          required: true
+          type: string
+        - name: queryVersion
+          in: path
+          description: queryVersion
+          required: true
+          type: integer
+          default: 4
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /update/5/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/{osVersion}/{distribution}/{distVersion}/{IMEI}/update.xml:
+    get:
+      operationId: "auslib.web.public.client.get_update_blob_5"
+      description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
+      parameters:
+        - name: product
+          in: path
+          description: The name of the application requesting an update.
+          required: true
+          type: string
+        - name: version
+          in: path
+          description: The version of the application requesting an update.
+          required: true
+          type: string
+        - name: buildID
+          in: path
+          description: The build ID of the application requesting an update.
+          required: true
+          type: string
+        - name: buildTarget
+          in: path
+          description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
+          required: true
+          type: string
+        - name: locale
+          in: path
+          description: The locale of the application requesting an update.
+          required: true
+          type: string
+        - name: channel
+          in: path
+          description: The update channel of the application request an update.
+          required: true
+          type: string
+        - name: osVersion
+          in: path
+          description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+          required: true
+          type: string
+        - name: distribution
+          in: path
+          description: The partner distribution name of the application requesting an update or “default” if the application is not a partner build.
+          required: true
+          type: string
+        - name: distVersion
+          in: path
+          description: The version of the partner distribution of the application requesting an update or “default” if the application is not a partner build.
+          required: true
+          type: string
+        - name: IMEI
+          in: path
+          description: IMEI
+          required: true
+          type: string
+        - name: queryVersion
+          in: path
+          description: queryVersion
+          required: true
+          type: integer
+          default: 5
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /update/6/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/{osVersion}/{systemCapabilities}/{distribution}/{distVersion}/update.xml:
+    get:
+      operationId: "auslib.web.public.client.get_update_blob_6"
+      description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
+      parameters:
+        - name: product
+          in: path
+          description: The name of the application requesting an update.
+          required: true
+          type: string
+        - name: version
+          in: path
+          description: The version of the application requesting an update.
+          required: true
+          type: string
+        - name: buildID
+          in: path
+          description: The build ID of the application requesting an update.
+          required: true
+          type: string
+        - name: buildTarget
+          in: path
+          description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
+          required: true
+          type: string
+        - name: locale
+          in: path
+          description: The locale of the application requesting an update.
+          required: true
+          type: string
+        - name: channel
+          in: path
+          description: The update channel of the application request an update.
+          required: true
+          type: string
+        - name: osVersion
+          in: path
+          description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+          required: true
+          type: string
+        - name: systemCapabilities
+          in: path
+          description: |
+            The supported hardware features of the application requesting an update. This field is primarily used to point desupported users based on their hardware. Eg: users who do not support SSE2.
+          required: true
+          type: string
+        - name: distribution
+          in: path
+          description: The partner distribution name of the application requesting an update or “default” if the application is not a partner build.
+          required: true
+          type: string
+        - name: distVersion
+          in: path
+          description: The version of the partner distribution of the application requesting an update or “default” if the application is not a partner build.
+          required: true
+          type: string
+        - name: queryVersion
+          in: path
+          description: queryVersion
+          required: true
+          type: integer
+          default: 6
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  # Routes to deal with edge cases.
+  # bug 1133250 - support for old-style nightly ESR versions
+  /update/3/<product>/<version>esrpre/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<distribution>/<distVersion>/update.xml:
+    get:
+      operationId: "auslib.web.public.client.get_update_blob_3_esrpre"
+      description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
+      parameters:
+        - name: product
+          in: path
+          description: The name of the application requesting an update.
+          required: true
+          type: string
+        - name: version
+          in: path
+          description: The version of the application requesting an update.
+          required: true
+          type: string
+        - name: buildID
+          in: path
+          description: The build ID of the application requesting an update.
+          required: true
+          type: string
+        - name: buildTarget
+          in: path
+          description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
+          required: true
+          type: string
+        - name: locale
+          in: path
+          description: The locale of the application requesting an update.
+          required: true
+          type: string
+        - name: channel
+          in: path
+          description: The update channel of the application request an update.
+          required: true
+          type: string
+        - name: osVersion
+          in: path
+          description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+          required: true
+          type: string
+        - name: distribution
+          in: path
+          description: The partner distribution name of the application requesting an update or “default” if the application is not a partner build.
+          required: true
+          type: string
+        - name: distVersion
+          in: path
+          description: The version of the partner distribution of the application requesting an update or “default” if the application is not a partner build.
+          required: true
+          type: string
+        - name: queryVersion
+          in: path
+          description: queryVersion
+          required: true
+          type: integer
+          default: 3
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables_1"
+      description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
+      responses:
+        200:
+          description: Empty xml file.
+
+  /update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables_2"
+      description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
+      responses:
+        200:
+          description: Empty xml file.
+
+  /update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables_3"
+      description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
+      responses:
+        200:
+          description: Empty xml file.
+
+  /update/4/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/%MOZ_VERSION%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables_4"
+      description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
+      responses:
+        200:
+          description: Empty xml file.
+
+  /update/5/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/%IMEI%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables_5"
+      description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
+      responses:
+        200:
+          description: Empty xml file.
+
+  /update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml:
+    get:
+      operationId: "auslib.web.public.client.unsubstituted_url_variables_6"
+      description: Handles unsubstituted URL requests.
+      produces: ["text/xml"]
+      responses:
+        200:
+          description: Empty xml file.
+
+  /__heartbeat__:
+    get:
+      operationId: "auslib.web.public.dockerflow.heartbeat"
+      description: |
+        Respond to /__heartbeat__ with a HTTP 200 or 5xx on error.
+        This should check backing services like a database for connectivity.
+      responses:
+        200:
+          description: Service is healthy.
+        502:
+          description: Service is unhealthy.
+
+  /__lbheartbeat__:
+    get:
+      operationId: "auslib.web.public.dockerflow.lbheartbeat"
+      description: |
+        Respond to /__lbheartbeat__ with an HTTP 200.
+        This is for load balancer checks and should not check backing services.
+      responses:
+        200:
+          description: Service is healthy.
+
+  /__version__:
+    get:
+      operationId: "auslib.web.public.dockerflow.version"
+      description: Respond to /__version__ with the contents of /app/version.json.
+      responses:
+        200:
+          description: version.json content.

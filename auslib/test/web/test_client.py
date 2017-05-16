@@ -6,10 +6,12 @@ import unittest
 from xml.dom import minidom
 import json
 
+import auslib.web.public.client as client_api
+
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
-from auslib.web.base import app
-from auslib.web.views.client import ClientRequestView
+from auslib.web.public.base import app
+
 from auslib.errors import BadDataError
 
 
@@ -55,7 +57,7 @@ class ClientTestBase(ClientTestCommon):
         self.version_fd, self.version_file = mkstemp()
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
-        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'b2g', 'response-a', 'response-b', 's', 'responseblob-a',
+        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'response-a', 'response-b', 's', 'responseblob-a',
                                                        'responseblob-b', 'q', 'fallback')}
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
@@ -68,9 +70,8 @@ class ClientTestBase(ClientTestCommon):
 """)
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e', 'b2g')})
+        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e')})
         self.client = app.test_client()
-        self.view = ClientRequestView()
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='b',
                                      data_version=1)
         dbo.releases.t.insert().execute(name='b', product='b', data_version=1, data=createBlob("""
@@ -259,69 +260,6 @@ class ClientTestBase(ClientTestCommon):
 }
 """))
 
-        dbo.rules.t.insert().execute(priority=100, backgroundRate=100, mapping='foxfood-whitelisted', update_type='minor', product='b2g',
-                                     whitelist='b2g-whitelist', data_version=1)
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='foxfood-whitelisted', update_type='minor', product='b2g',
-                                     channel="foxfood", whitelist='b2g-whitelist', data_version=1)
-        dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping='foxfood-fallback', update_type='minor', product='b2g', data_version=1)
-        dbo.releases.t.insert().execute(name='b2g-whitelist', product='b2g', data_version=1, data=createBlob("""
-{
-  "name": "b2g-whitelist",
-  "schema_version": 3000,
-  "whitelist": [
-    { "imei": "000000000000000" },
-    { "imei": "000000000000001" },
-    { "imei": "000000000000002" }
-  ]
-}
-"""))
-
-        dbo.releases.t.insert().execute(name='foxfood-whitelisted', product='b2g', data_version=1, data=createBlob("""
-{
-    "name": "foxfood-whitelisted",
-    "schema_version": 1,
-    "extv": "2.5",
-    "hashFunction": "sha512",
-    "platforms": {
-        "p": {
-            "buildID": "25",
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 22,
-                        "from": "*",
-                        "hashValue": "23",
-                        "fileUrl": "http://a.com/secrets"
-                    }
-                }
-            }
-        }
-    }
-}
-"""))
-        dbo.releases.t.insert().execute(name='foxfood-fallback', product='b2g', data_version=1, data=createBlob("""
-{
-    "name": "foxfood-fallback",
-    "schema_version": 1,
-    "extv": "2.5",
-    "hashFunction": "sha512",
-    "platforms": {
-        "p": {
-            "buildID": "25",
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 22,
-                        "from": "*",
-                        "hashValue": "23",
-                        "fileUrl": "http://a.com/public"
-                    }
-                }
-            }
-        }
-    }
-}
-"""))
         dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
                                      mapping='gmp', update_type='minor',
                                      product='gmp',
@@ -599,13 +537,13 @@ class ClientTestBase(ClientTestCommon):
 class ClientTest(ClientTestBase):
 
     def testGetHeaderArchitectureWindows(self):
-        self.assertEqual(self.view.getHeaderArchitecture('WINNT_x86-msvc', 'Firefox Intel Windows'), 'Intel')
+        self.assertEqual(client_api.getHeaderArchitecture('WINNT_x86-msvc', 'Firefox Intel Windows'), 'Intel')
 
     def testGetHeaderArchitectureMacIntel(self):
-        self.assertEqual(self.view.getHeaderArchitecture('Darwin_x86-gcc3-u-ppc-i386', 'Firefox Intel Mac'), 'Intel')
+        self.assertEqual(client_api.getHeaderArchitecture('Darwin_x86-gcc3-u-ppc-i386', 'Firefox Intel Mac'), 'Intel')
 
     def testGetHeaderArchitectureMacPPC(self):
-        self.assertEqual(self.view.getHeaderArchitecture('Darwin_ppc-gcc3-u-ppc-i386', 'Firefox PPC Mac'), 'PPC')
+        self.assertEqual(client_api.getHeaderArchitecture('Darwin_ppc-gcc3-u-ppc-i386', 'Firefox PPC Mac'), 'PPC')
 
     def testDontUpdateToYourself(self):
         ret = self.client.get('/update/3/b/1.0/2/p/l/a/a/a/a/update.xml')
@@ -663,36 +601,6 @@ class ClientTest(ClientTestBase):
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
-    </update>
-</updates>
-""")
-
-    def testVersion5GetWhitelistedOneLevel(self):
-        ret = self.client.get('/update/5/b2g/1.0/1/p/l/foxfood/a/a/a/000000000000001/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
-        <patch type="complete" URL="http://a.com/secrets" hashFunction="sha512" hashValue="23" size="22"/>
-    </update>
-</updates>
-""")
-
-    def testVersion5GetNotWhitelistedOneLevel(self):
-        ret = self.client.get('/update/5/b2g/1.0/1/p/l/a/a/a/a/000000000000009/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
-        <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
-    </update>
-</updates>
-""")
-
-    def testVersion5GetNotWhitelistedMultiLevel(self):
-        ret = self.client.get('/update/5/b2g/1.0/1/p/l/foxfood/a/a/a/000000000000009/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="None" extensionVersion="2.5" buildID="25">
-        <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
     </update>
 </updates>
 """)
@@ -896,7 +804,7 @@ class ClientTest(ClientTestBase):
         request6 = '/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/' \
             '%DISTRIBUTION_VERSION%/update.xml'
 
-        with mock.patch('auslib.web.views.client.ClientRequestView') as mock_cr_view:
+        with mock.patch('auslib.web.public.client.get_update_blob') as mock_cr_view:
             for request in [request1, request2, request3, request4, request5, request6]:
                 ret = self.client.get(request)
                 self.assertEqual(ret.status_code, 404)
@@ -914,7 +822,6 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         self.client = app.test_client()
-        self.view = ClientRequestView()
 
     def testCacheControlIsSet(self):
         ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
@@ -933,13 +840,13 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
 
     def testContentSecurityPolicyIsSetFor400(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.client.get_update_blob') as m:
             m.side_effect = BadDataError('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
 
     def testContentSecurityPolicyIsSetFor500(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.client.get_update_blob') as m:
             m.side_effect = Exception('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
@@ -953,13 +860,13 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
 
     def testStrictTransportSecurityIsSetFor400(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.client.get_update_blob') as m:
             m.side_effect = BadDataError('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
 
     def testStrictTransportSecurityIsSetFor500(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.client.get_update_blob') as m:
             m.side_effect = Exception('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
@@ -973,13 +880,13 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
 
     def testXContentTypeOptionsIsSetFor400(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.client.get_update_blob') as m:
             m.side_effect = BadDataError('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
 
     def testXContentTypeOptionsIsSetFor500(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.client.get_update_blob') as m:
             m.side_effect = Exception('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
@@ -989,7 +896,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.assertUpdatesAreEmpty(ret)
 
     def testErrorMessageOn500(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
             m.side_effect = Exception('I break!')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.status_code, 500)
@@ -997,7 +904,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual('I break!', ret.data)
 
     def testEscapedOutputOn500(self):
-        with mock.patch('auslib.web.views.client.ClientRequestView.get') as m:
+        with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
             m.side_effect = Exception('50.1.0zibj5<img src%3da onerror%3dalert(document.domain)>')
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.status_code, 500)
@@ -1005,7 +912,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual('50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;', ret.data)
 
     def testEscapedOutputOn400(self):
-        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m:
+        with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
             m.side_effect = BadDataError('Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.')
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 400, ret.data)
@@ -1013,7 +920,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", ret.data)
 
     def testSentryBadDataError(self):
-        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m, mock.patch("auslib.web.base.sentry") as sentry:
+        with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.sentry") as sentry:
             m.side_effect = BadDataError("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertFalse(sentry.captureException.called)
@@ -1021,7 +928,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.mimetype, "text/plain")
 
     def testSentryRealError(self):
-        with mock.patch("auslib.web.views.client.ClientRequestView.get") as m, mock.patch("auslib.web.base.sentry") as sentry:
+        with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.sentry") as sentry:
             m.side_effect = Exception("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
@@ -1041,7 +948,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         request6 = '/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/' \
             '%DISTRIBUTION_VERSION%/update.xml'
 
-        with mock.patch('auslib.web.views.client.ClientRequestView') as mock_cr_view:
+        with mock.patch('auslib.web.public.client') as mock_cr_view:
             for request in [request1, request2, request3, request4, request5, request6]:
                 ret = self.client.get(request)
                 self.assertUpdatesAreEmpty(ret)
