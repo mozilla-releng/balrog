@@ -104,12 +104,6 @@ paths:
           type: string
           x-nullable: true
           required: false
-        - name: format
-          in: query
-          description: json format applied during testing.
-          type: string
-          x-nullable: true
-          required: false
       produces: [application/json]
       deprecated: false
       responses:

@@ -5,44 +5,15 @@ from jsonschema import ValidationError as JsonschemaValidationError
 from auslib.util.comparison import get_op
 from auslib.util.versions import MozillaVersion
 from connexion.decorators.validation import RequestBodyValidator
-from connexion.utils import all_json, is_null
+from connexion.utils import is_null
 from connexion import problem
 import operator
 import logging
-import functools
 
 logger = logging.getLogger(__name__)
 
 
 class BalrogRequestBodyValidator(RequestBodyValidator):
-    def __call__(self, func):
-        """
-        :type func: types.FunctionType
-        :rtype: types.FunctionType
-        """
-
-        @functools.wraps(func)
-        def wrapper(request):
-            if all_json(self.consumes):
-                data = request.json
-                if data is None and len(request.body) > 0 and not self.is_null_value_valid:
-                    # the body has contents that were not parsed as JSON
-                    return problem(415,
-                                   "Unsupported Media Type",
-                                   "Invalid Content-type ({content_type}), expected JSON data".format(
-                                       content_type=request.headers["Content-Type"]
-                                   ))
-
-                logger.debug("%s validating schema...", request.url)
-                error = self.validate_schema(data, request.url)
-                if error and not self.has_default:
-                    return error
-
-            response = func(request)
-            return response
-
-        return wrapper
-
     def validate_schema(self, data, url):
         # type: (dict, AnyStr) -> Union[ConnexionResponse, None]
         if self.is_null_value_valid and is_null(data):
@@ -113,9 +84,7 @@ def version_validator(field_value):
     return True
 
 
-@draft4_format_checker.checks(format="priority", raises=JsonschemaValidationError)
-def priority_validator(field_value):
-    logger.debug('starting in priority_validator: field data is %s' % field_value)
+def integer_and_range_validator(field_name, field_value, min_val=None, max_val=None):
     if not isinstance(field_value, str_types) and not isinstance(field_value, int) and field_value is not None:
         return False
     # empty input is fine
@@ -124,24 +93,23 @@ def priority_validator(field_value):
     try:
         x = int(field_value)
     except:
-        raise JsonschemaValidationError('Invalid input %s for priority.Not an integer.' % field_value)
-    if x < 0:
-        raise JsonschemaValidationError("Priority field value %s shouldn't be less than 0" % field_value)
+        raise JsonschemaValidationError(message=("Invalid input for %s. Not an integer." % field_name))
+    if min_val is not None and x < min_val:
+        raise JsonschemaValidationError(
+            message=("%s field value should be an integer >= %s" % field_name, min_val))
+    if max_val is not None and x > max_val:
+        raise JsonschemaValidationError(
+            message=("%s field value should be an integer <= %s" % field_name, max_val))
     return True
+
+
+@draft4_format_checker.checks(format="priority", raises=JsonschemaValidationError)
+def priority_validator(field_value):
+    logger.debug('starting in priority_validator: field data is %s' % field_value)
+    return integer_and_range_validator("priority", field_value, 0)
 
 
 @draft4_format_checker.checks(format="backgroundRate", raises=JsonschemaValidationError)
 def background_rate_validator(field_value):
     logger.debug('starting in backgroundRate_validator: field data is %s' % field_value)
-    if not isinstance(field_value, str_types) and not isinstance(field_value, int) and field_value is not None:
-        return False
-    # empty input is fine
-    if field_value is None or field_value == '':
-        return True
-    try:
-        x = int(field_value)
-    except:
-        raise JsonschemaValidationError(message=('Invalid input %s for backgroundRate. Not an integer.' % field_value))
-    if x < 0 or x > 100:
-        raise JsonschemaValidationError(message="backgroundRate field value should be in range 0-100")
-    return True
+    return integer_and_range_validator("backgroundRate", field_value, 0, 100)
