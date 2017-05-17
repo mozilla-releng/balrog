@@ -42,6 +42,24 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
     });
   }
 
+  $scope.openDataModal = function(release) { 
+    var modalInstance = $modal.open({
+      templateUrl: 'release_scheduled_change_data_modal.html',
+      controller: 'ReleaseScheduledChangeDataCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        release: function () {
+          return release;
+        },
+        diff: function() {
+          return false;
+        }
+      }
+    });
+  };
+  /* End openDataModal */
+
   if ($scope.sc_id) {
     $scope.$watch("currentPage", function(newPage) {
       loadPage(newPage);
