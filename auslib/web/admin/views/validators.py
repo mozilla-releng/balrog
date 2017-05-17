@@ -93,13 +93,11 @@ def integer_and_range_validator(field_name, field_value, min_val=None, max_val=N
     try:
         x = int(field_value)
     except:
-        raise JsonschemaValidationError(message=("Invalid input for %s. Not an integer." % field_name))
+        raise JsonschemaValidationError(message="Invalid input for %s. Not an integer." % field_name)
     if min_val is not None and x < min_val:
-        raise JsonschemaValidationError(
-            message=("%s field value should be an integer >= %s" % field_name, min_val))
+        raise JsonschemaValidationError(message="%s field value should be an integer >= %s" % (field_name, min_val))
     if max_val is not None and x > max_val:
-        raise JsonschemaValidationError(
-            message=("%s field value should be an integer <= %s" % field_name, max_val))
+        raise JsonschemaValidationError(message="%s field value should be an integer <= %s" % (field_name, max_val))
     return True
 
 
