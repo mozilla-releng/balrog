@@ -141,16 +141,29 @@ class TestRulesAPI_JSON(ViewTest):
     def testMissingFields(self):
         # But we still need to pass product, because permission checking
         # is done before what we're testing
-        ret = self._post('/rules', data=dict({'product': 'a'}))
+        post_data = {'product': 'a'}
+        ret = self._post('/rules', data=post_data)
+        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        # Connexion and manual request.json validation methods will preempt and throw 400 error as
+        # soon as the first field invalidates. Only one field may be present in the response.data depending
+        # upon the order of fields sorted in swagger yaml file and in views.
+        post_data['update_type'] = 'minor'
+        ret = self._post('/rules', data=post_data)
+
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         self.assertTrue('backgroundRate' in ret.data, msg=ret.data)
+        post_data['backgroundRate'] = 10
+        ret = self._post('/rules', data=post_data)
+
+        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         self.assertTrue('priority' in ret.data, msg=ret.data)
 
     def testVersionValidation(self):
         for op in operators:
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                              product='Firefox', channel="nightly", update_type='minor', version='%s4.0' % op))
-            self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" % (ret.status_code, ret.data, op))
+            self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" %
+                              (ret.status_code, ret.data, op))
             r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
             self.assertEquals(len(r), 1)
             self.assertEquals(r[0]['version'], '%s4.0' % op)

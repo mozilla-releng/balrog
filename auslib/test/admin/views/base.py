@@ -145,20 +145,24 @@ class ViewTest(unittest.TestCase):
             "Accept-Encoding": "application/json",
             "Accept": "application/json"
         }
-        if "format" not in qs:
-            qs["format"] = "json"
         if username:
             environ_base = self._getAuth(username)
         ret = self.client.get(url, query_string=qs, headers=headers, environ_base=environ_base)
         return ret
 
     def _post(self, url, data={}, username='bill', **kwargs):
+        if type(data) == dict:
+            data["csrf_token"] = "lorem"
         return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getAuth(username), **kwargs)
 
     def _httpRemoteUserPost(self, url, username="bill", data={}):
+        if type(data) == dict:
+            data["csrf_token"] = "lorem"
         return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getHttpRemoteUserAuth(username))
 
     def _badAuthPost(self, url, data={}):
+        if type(data) == dict:
+            data["csrf_token"] = "lorem"
         return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getBadAuth())
 
     def _put(self, url, data={}, username='bill'):

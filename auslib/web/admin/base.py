@@ -1,18 +1,25 @@
 import urllib
+import re
 
-from flask import Flask, request
+from flask import request
 from flask_compress import Compress
-
+from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 from raven.contrib.flask import Sentry
 
+import connexion
 import logging
 log = logging.getLogger(__name__)
 
-app = Flask(__name__)
+validator_map = {
+    'body': BalrogRequestBodyValidator
+}
+
+connexion_app = connexion.App(__name__, specification_dir='swagger/', validator_map=validator_map, debug=True)
+connexion_app.add_api("api.yaml", validate_responses=True, strict_validation=True)
+app = connexion_app.app
 sentry = Sentry()
 
-from auslib.web.admin.views.csrf import CSRFView
-from auslib.web.admin.views.permissions import UsersView, PermissionsView, \
+from auslib.web.admin.views.permissions import PermissionsView, \
     SpecificPermissionView, UserRolesView, UserRoleView, AllRolesView, \
     PermissionScheduledChangesView, PermissionScheduledChangeView, \
     EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, \
@@ -37,11 +44,10 @@ from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsView
     EnactPermissionsRequiredSignoffScheduledChangeView, \
     PermissionsRequiredSignoffScheduledChangeSignoffsView, \
     PermissionsRequiredSignoffScheduledChangeHistoryView
-from auslib.web.admin.views.rules import RulesAPIView, \
+from auslib.web.admin.views.rules import RuleScheduledChangeSignoffsView, \
     SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView, \
     RuleScheduledChangesView, RuleScheduledChangeView, \
-    EnactRuleScheduledChangeView, RuleScheduledChangeHistoryView, \
-    RuleScheduledChangeSignoffsView
+    EnactRuleScheduledChangeView, RuleScheduledChangeHistoryView
 from auslib.dockerflow import create_dockerflow_endpoints
 
 
@@ -77,7 +83,13 @@ def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers["Strict-Transport-Security"] = app.config.get("STRICT_TRANSPORT_SECURITY", "max-age=31536000;")
-    response.headers["Content-Security-Policy"] = app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
+    if re.match("^/ui/", request.path):
+        # This enables swagger-ui to dynamically fetch and
+        # load the swagger specification JSON file containing API definition and examples.
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    else:
+        response.headers["Content-Security-Policy"] = \
+            app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
     return response
 
 
@@ -89,15 +101,12 @@ Compress(app)
 # and the static admin UI are hosted on the same domain. This API wsgi app is
 # hosted at "/api", which is stripped away by the web server before we see
 # these requests.
-app.add_url_rule("/csrf_token", view_func=CSRFView.as_view("csrf"))
-app.add_url_rule("/users", view_func=UsersView.as_view("users"))
 app.add_url_rule("/users/roles", view_func=AllRolesView.as_view("all_users_roles"))
 app.add_url_rule("/users/<username>", view_func=SpecificUserView.as_view("specific_user"))
 app.add_url_rule("/users/<username>/permissions", view_func=PermissionsView.as_view("user_permissions"))
 app.add_url_rule("/users/<username>/permissions/<permission>", view_func=SpecificPermissionView.as_view("specific_permission"))
 app.add_url_rule("/users/<username>/roles", view_func=UserRolesView.as_view("user_roles"))
 app.add_url_rule("/users/<username>/roles/<role>", view_func=UserRoleView.as_view("user_role"))
-app.add_url_rule("/rules", view_func=RulesAPIView.as_view("rules"))
 # Normal operations (get/update/delete) on rules can be done by id or alias...
 app.add_url_rule("/rules/<id_or_alias>", view_func=SingleRuleView.as_view("rule"))
 app.add_url_rule("/rules/columns/<column>", view_func=SingleRuleColumnView.as_view("rule_columns"))
