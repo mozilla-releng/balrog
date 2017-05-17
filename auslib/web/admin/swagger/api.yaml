@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: '2.28'
+  version: '2.29'
   title: "Balrog's Admin API"
   termsOfService: "https://wiki.mozilla.org/Balrog"
   license:
@@ -10,17 +10,31 @@ info:
     name: "Mozilla Release Engineering"
     url: "https://github.com/mozilla/balrog"
     email: "release-engineering@lists.mozilla.org"
-  description: "Mozilla's Update Server. APIs for Balrog" #TODO write in detail using Github Flavored Markdown
-
-schemes:
-  - http
-  - https
+  description: >
+    **Balrog** is the software that runs the server side component of the update
+    system used by Firefox and other Mozilla products. It is the successor to *AUS*
+    (Application Update Service), which did not scale to our current needs nor allow
+    us to adapt to more recent business requirements. Balrog helps us ship updates faster
+    and with much more flexibility than we’ve had in the past.
 security:
   - basic: []
 securityDefinitions:
   basic:
     type: basic
     description: HTTP basic access authentication
+
+# host and scheme can be omitted for a more dynamic association.
+# In this case, the host and scheme used to serve the API documentation
+# will be used for API calls. For example, if Swagger UI-based documentation is
+# hosted at https://api.example.com/apidocs/index.html, “try it out” API calls
+# will be directed to https://api.example.com.
+
+#schemes:
+#  - http
+#  - https
+# basePath: "/api"
+# host: "localhost:8080"
+# Swagger-UI bug : fix TODO week 13
 
 tags:
   - name: "Rules"
@@ -41,22 +55,21 @@ tags:
       description: "Find out more about CSRF-Token"
       url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#csrf-token"
 
-# basePath: "/api"
-# host: "localhost:8080"
-# Swagger-UI bug : fix TODO week 13
-
 paths:
   /csrf_token:
     get:
       summary: Returns valid csrf_token in response header.
-      description: Returns an empty response with a valid CSRF token in the X-CSRF-Token header.
+      description: >
+        Returns an empty response with a valid CSRF token in the X-CSRF-Token header. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#csrf-token)
       tags:
         - "CSRF Token"
       operationId: auslib.web.admin.views.mapper.csrf_get
       consumes: []
       produces:
         - text/html
-      deprecated: false
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#csrf-token"
+        description: Returns an empty response with a valid CSRF token in the X-CSRF-Token header.
       responses:
         '200':
           description: Generate csrf token
@@ -68,14 +81,17 @@ paths:
   /users:
     get:
       summary: Returns all of Users in Balrog's DB
-      description: Returns all of the Rules in Balrog’s database inside of a JSON Object.
+      description: >
+        Returns all of the users known to Balrog inside of a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id20)
       tags:
         - Users
       operationId: auslib.web.admin.views.mapper.users_get
       consumes: []
       produces:
         - application/json
-      deprecated: false
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id19"
+        description: "Returns all of Users in Balrog's DB."
       responses:
         '200':
           description: Get all Users
@@ -91,12 +107,17 @@ paths:
                 example: ["balrogadmin"]
   /rules:
     get:
-      summary: Returns filtered list of Rules in Balrog's DB
-      description: "Returns filtered list Rules in Balrog’s database
-      inside of a JSON Object. Returns all rules if 'product' query parameter isn't passed"
+      summary: Returns filtered list of Rules from Balrog's DB
+      description: >
+        Returns filtered list Rules in Balrog’s database inside of a JSON Object. Returns all rules if 'product' query parameter isn't passed. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id1)
       tags:
         - Rules
       operationId: auslib.web.admin.views.mapper.rules_get
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id1"
+        description: "Returns filtered list of Rules from Balrog's DB."
       parameters:
         - name: product
           in: query
@@ -104,8 +125,7 @@ paths:
           type: string
           x-nullable: true
           required: false
-      produces: [application/json]
-      deprecated: false
+
       responses:
         '200':
           description: Get all Rules
@@ -148,17 +168,20 @@ paths:
                     version: null
                     whitelist: null
     post:
+      summary: creates a new Rule in Balrog's DB
+      description: >
+        Creates a new Rule in Balrog's database. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#post)
       tags:
         - Rules
-      summary: creates a Rule
-      description: creates a new Rule in Balrog's DB
+      operationId: auslib.web.admin.views.mapper.rules_post
       consumes:
         - application/json
       produces:
         - text/html
         - application/json
-      deprecated: false
-      operationId: auslib.web.admin.views.mapper.rules_post
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id1"
+        description: "creates a new Rule in Balrog's DB."
       parameters:
         - name: rule
           in: body
@@ -168,15 +191,14 @@ paths:
             allOf:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/RulesBase'
-
-            #If you change the order, make sure to modify test cases too.
+            #If you change the required list order, make sure to modify test cases too.
             required:
               - backgroundRate
               - priority
 
       responses:
         '200':
-          description: Created a new rule
+          description: Successfully created a new rule
           schema:
             type: integer
             example: 514
