@@ -45,7 +45,7 @@ from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsView
     PermissionsRequiredSignoffScheduledChangeSignoffsView, \
     PermissionsRequiredSignoffScheduledChangeHistoryView
 from auslib.web.admin.views.rules import RuleScheduledChangeSignoffsView, \
-    SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView, \
+    RuleHistoryAPIView, SingleRuleColumnView, \
     RuleScheduledChangesView, RuleScheduledChangeView, \
     EnactRuleScheduledChangeView, RuleScheduledChangeHistoryView
 from auslib.dockerflow import create_dockerflow_endpoints
@@ -108,7 +108,6 @@ app.add_url_rule("/users/<username>/permissions/<permission>", view_func=Specifi
 app.add_url_rule("/users/<username>/roles", view_func=UserRolesView.as_view("user_roles"))
 app.add_url_rule("/users/<username>/roles/<role>", view_func=UserRoleView.as_view("user_role"))
 # Normal operations (get/update/delete) on rules can be done by id or alias...
-app.add_url_rule("/rules/<id_or_alias>", view_func=SingleRuleView.as_view("rule"))
 app.add_url_rule("/rules/columns/<column>", view_func=SingleRuleColumnView.as_view("rule_columns"))
 # ...but anything to do with history must be done by id, beacuse alias may change over time
 app.add_url_rule("/rules/<int:rule_id>/revisions", view_func=RuleHistoryAPIView.as_view("rules_revisions"))

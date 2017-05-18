@@ -52,11 +52,11 @@ class RulesAPIView(AdminView):
 
         # Replaces wtfForms validations
         what = dict()
-        for key in request.json:
-            if isinstance(request.json[key], str_types):
-                what[key] = None if request.json[key].strip() == '' else request.json[key].strip()
+        for key in connexion.request.json:
+            if isinstance(connexion.request.json[key], str_types):
+                what[key] = None if connexion.request.json[key].strip() == '' else connexion.request.json[key].strip()
             else:
-                what[key] = request.json[key]
+                what[key] = connexion.request.json[key]
 
         mapping_values = [y for x, y in mapping_choices if x == what.get("mapping")]
         if what.get('mapping', None) is not None and len(mapping_values) != 1:
@@ -91,9 +91,9 @@ class SingleRuleView(AdminView):
             return Response(status=404)
         form = EditRuleForm()
 
-        releaseNames = dbo.releases.getReleaseNames()
+        release_names = dbo.releases.getReleaseNames()
 
-        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+        form.mapping.choices = [(item['name'], item['name']) for item in release_names]
         form.mapping.choices.insert(0, ('', 'NULL'))
 
         if not form.validate():

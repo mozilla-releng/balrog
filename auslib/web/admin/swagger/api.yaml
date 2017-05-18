@@ -89,6 +89,7 @@ paths:
       consumes: []
       produces:
         - application/json
+        - text/html
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id19"
         description: "Returns all of Users in Balrog's DB."
@@ -200,6 +201,7 @@ paths:
         '200':
           description: Successfully created a new rule
           schema:
+            title: successfully created a new rule
             type: integer
             example: 514
         '400':
@@ -207,13 +209,187 @@ paths:
           schema:
             $ref: '#/definitions/BadRequestResponseModel'
         default:
-          description: Requires remote username and password in basic authentication
+          # Without this if any exception that should not occur for the particular API does occur
+          # will be absorbed and won't be returned to user by handleGeneralExceptions method in views/base.py
+          description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
           examples:
-            text/html: "Error: REMOTE_USERNAME required"
+            application/json: "{Error: REMOTE_USERNAME required}"
 
+  /rules/{id_or_alias}:
+    get:
+      summary: Returns a rule identified by the id or alias
+      description: >
+        Returns the entire rule identified by the id or alias given in JSON format. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#rules-id-or-alias)
+      tags:
+        - Rules
+      operationId: auslib.web.admin.views.mapper.rules_id_or_alias_get
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
+        description: "Returns the entire rule identified by the id or alias given in JSON format."
+      parameters:
+        - name: id_or_alias
+          in: path
+          description: rule_id or alias field value to filter the rule against
+          type: string
+          required: true
+
+      responses:
+        '200':
+          description: Successfully created a new rule
+          schema:
+            $ref: "#/definitions/RulesBaseGET"
+          headers:
+            X-Data-Version:
+              description: data version of the rule
+              type: integer
+              format: int32
+              minimum: 1
+        '404':
+          description: Requested rule did not exist
+          schema:
+            title: Reuested rule not found
+            type: string
+            example: Requested rule does not exist
+    post:
+      summary: Updates the rule
+      description: >
+        Updates the rule identified by the id or alias. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id3)
+      tags:
+        - Rules
+      operationId: auslib.web.admin.views.mapper.rules_id_or_alias_post
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
+        description: "Returns the entire rule identified by the id or alias given in JSON format."
+      parameters:
+        - name: id_or_alias
+          in: path
+          description: rule_id or alias field value to filter the rule against
+          type: string
+          required: true
+
+      responses:
+        '200':
+          description: Successfully created a new rule
+          schema:
+            type: object
+            required:
+              - new_data_version
+            properties:
+              new_data_version:
+                description: "Newly created rule's data version. Will always be greater than 1"
+                type: integer
+                format: int32
+                minimum: 2
+                example: 2
+        '404':
+          description: Requested rule did not exist
+          schema:
+            title: Reuested rule not found
+            type: string
+            example: Requested rule does not exist
+        #400 left
+        default:
+          description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
+          examples:
+            application/json: "{Error: REMOTE_USERNAME required}"
+    # Exactly same as POST
+    put:
+      summary: Updates the rule
+      description: >
+        Updates the rule identified by the id or alias. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id3)
+      tags:
+        - Rules
+      operationId: auslib.web.admin.views.mapper.rules_id_or_alias_put
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
+        description: "Returns the entire rule identified by the id or alias given in JSON format."
+      parameters:
+        - name: id_or_alias
+          in: path
+          description: rule_id or alias field value to filter the rule against
+          type: string
+          required: true
+
+      responses:
+        '200':
+          description: Successfully created a new rule
+          schema:
+            type: object
+            required:
+              - new_data_version
+            properties:
+              new_data_version:
+                description: "Newly created rule's data version. Will always be greater than 1"
+                type: integer
+                format: int32
+                minimum: 2
+                example: 2
+        '404':
+          description: Requested rule did not exist
+          schema:
+            title: Reuested rule not found
+            type: string
+            example: Requested rule does not exist
+        #400 left
+        default:
+          description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
+          examples:
+            application/json: "{Error: REMOTE_USERNAME required}"
+
+    delete:
+      summary: Deletes a rule identified by the rule id
+      description: >
+        Deletes the entire rule entry in DB identified by the rule_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#delete)
+      tags:
+        - Rules
+      operationId: auslib.web.admin.views.mapper.rules_id_or_alias_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#delete"
+        description: "Deletes the rule identified by the rule_id."
+      parameters:
+        - name: id_or_alias
+          in: path
+          description: rule_id or alias field value to filter the rule against
+          type: string
+          required: true
+        - name: csrf_token
+          in: query
+          description: valid csrf token
+          type: string
+          required: true
+        - name: data_version
+          in: query
+          description: Name of the product to filter the rules against.
+          type: string
+          required: true
+
+      responses:
+        '200':
+          description: Successfully deleted a rule
+        '404':
+          description: Requested rule does not exist
+        default:
+          description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
+          examples:
+            application/json: "{Error: REMOTE_USERNAME required}"
 
 definitions:
-
   BadRequestResponseModel:
     title: "Invalid Request's Response object"
     description: "Invalid Request's Response JSON Object."
@@ -242,6 +418,10 @@ definitions:
         description: "An absolute URI that identifies the problem type.  When dereferenced, it SHOULD provide human-readable documentation for the problem type (e.g., using HTML).When this member is not present its value is assumed to be 'about:blank'"
         type: string
         example: "about:blank"
+      exception:
+        description: An human readable explanation specific to this occurrence of the problem. Same as detail. Used for UI forms
+        type: string
+        example: "field_name is missing"
 
   CSRFModel:
     title: CSRF Token
