@@ -512,7 +512,7 @@ class TestSingleRuleView_JSON(ViewTest):
         ret = self._delete("/rules/112")
         # Missing data_version field
         self.assertEquals(ret.status_code, 400)
-        ret = self._delete("/rules/112", qs={"data_version": 24})
+        ret = self._delete("/rules/112", qs={"data_version": 25})
         self.assertEquals(ret.status_code, 404)
 
     def testDeleteWithProductAdminPermission(self):
