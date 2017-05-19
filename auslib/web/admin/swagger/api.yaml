@@ -305,7 +305,10 @@ paths:
             title: Reuested rule not found
             type: string
             example: Requested rule does not exist
-        #400 left
+        '400':
+          description: "Bad Request's Response"
+          schema:
+            $ref: '#/definitions/BadRequestResponseModel'
         default:
           description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
           examples:
@@ -361,7 +364,10 @@ paths:
             title: Reuested rule not found
             type: string
             example: Requested rule does not exist
-        #400 left
+        '400':
+          description: "Bad Request's Response"
+          schema:
+            $ref: '#/definitions/BadRequestResponseModel'
         default:
           description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
           examples:
