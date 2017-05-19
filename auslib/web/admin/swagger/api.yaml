@@ -194,6 +194,7 @@ paths:
               - $ref: '#/definitions/RulesBase'
             #If you change the required list order, make sure to modify test cases too.
             required:
+              - update_type
               - backgroundRate
               - priority
 
@@ -233,7 +234,7 @@ paths:
       parameters:
         - name: id_or_alias
           in: path
-          description: rule_id or alias field value to filter the rule against
+          description: rule_id or alias field value to update the rule against
           type: string
           required: true
 
@@ -271,7 +272,7 @@ paths:
       parameters:
         - name: id_or_alias
           in: path
-          description: rule_id or alias field value to filter the rule against
+          description: rule_id or alias field value to update the rule against
           type: string
           required: true
         - name: rule
@@ -331,7 +332,7 @@ paths:
       parameters:
         - name: id_or_alias
           in: path
-          description: rule_id or alias field value to filter the rule against
+          description: rule_id or alias field value to update the rule against
           type: string
           required: true
         - name: rule
@@ -390,7 +391,7 @@ paths:
       parameters:
         - name: id_or_alias
           in: path
-          description: rule_id or alias field value to filter the rule against
+          description: rule_id or alias field value to update the rule against
           type: string
           required: true
         - name: csrf_token
@@ -490,8 +491,6 @@ definitions:
     title: Rules object definition
     description: Balrog's Rule Attributes
     type: object
-    required:
-      - update_type # Required during both POSTing and GET(fetch) Operations
 
     # Cannot have additionalProperties as false for strict validation ,else it disallows csrf_token or any other model's properties to be added
     #additionalProperties: false

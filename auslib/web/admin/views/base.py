@@ -30,7 +30,7 @@ def handleGeneralExceptions(messages):
                 # using connexion.problem results in TypeError: 'ConnexionResponse' object is not callable
                 # hence using flask.Response but modifying response's json data into connexion.problem format
                 # for validation purpose
-                return problem(400, "Bad Request", "OutDatedError", ext={"exception": msg})
+                return problem(400, "Bad Request", "OutdatedDataError", ext={"exception": msg})
             except UpdateMergeError as e:
                 msg = "Couldn't perform the request %s due to merge error. " \
                       "Is there a scheduled change that conflicts with yours?" % messages

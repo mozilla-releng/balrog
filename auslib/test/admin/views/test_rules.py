@@ -218,10 +218,6 @@ class TestRulesAPI_JSON(ViewTest):
     def testPutDataVersionLessThanOne(self):
         # Throw 400 error when data_version is less than 1.
         ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d',
-                                              priority=73, data_version=0,
-                                              product='Firefox', channel='nightly', update_type='minor'))
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d',
                                               priority=73, data_version=1,
                                               product='Firefox', channel='nightly', update_type='minor'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
@@ -312,7 +308,7 @@ class TestSingleRuleView_JSON(ViewTest):
         # Make changes to a rule
         ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d',
                                               priority=73, data_version=1,
-                                              product='Firefox', channel='nightly', update_type='minor'))
+                                              product='Firefox', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -326,12 +322,8 @@ class TestSingleRuleView_JSON(ViewTest):
 
     def testPostRuleOutdatedData(self):
         # Make changes to a rule
-        ret = self._post('/rules/1', data=dict(backgroundRate=71,
-                                               mapping='d', priority=73,
-                                               data_version=1, product='Firefox', channel='nightly'))
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
-                                               product='Firefox', channel='nightly', update_type='major'))
+                                               product='Firefox', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -340,14 +332,14 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r[0]['data_version'], 2)
 
         # OutdatedDataVersion Request
-        ret2 = self._put('/rules/1', data=dict(backgroundRate=71, update_type='minor', mapping='d', priority=73,
+        ret2 = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73,
                                                data_version=1, product='Firefox', channel='nightly'))
         self.assertEquals(ret2.status_code, 400, "Status Code: %d, Data: %s" % (ret2.status_code, ret2.data))
 
     def testPostByAlias(self):
         # Make some changes to a rule
         ret = self._post('/rules/frodo', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
-                                                   product='Firefox', channel='nightly', update_type="minor"))
+                                                   product='Firefox', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -367,7 +359,7 @@ class TestSingleRuleView_JSON(ViewTest):
     def testPostJSON(self):
         data = dict(
             backgroundRate=71, mapping="d", priority=73, data_version=1,
-            product="Firefox", channel="nightly", update_type="minor"
+            product="Firefox", channel="nightly"
         )
         ret = self._post("/rules/1", data=data)
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
@@ -388,7 +380,7 @@ class TestSingleRuleView_JSON(ViewTest):
 
     def testPostAddAlias(self):
         # Make some changes to a rule
-        ret = self._post("/rules/1", data=dict(alias="sam", update_type='minor', data_version=1))
+        ret = self._post("/rules/1", data=dict(alias="sam", data_version=1))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load["new_data_version"], 2)
@@ -404,13 +396,13 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r[0]["buildTarget"], "d")
 
     def testPostAddBadAlias(self):
-        ret = self._post("/rules/1", data=dict(alias="abc#$%", update_type='minor', data_version=1))
+        ret = self._post("/rules/1", data=dict(alias="abc#$%", data_version=1))
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
     def testPostWithoutProduct(self):
         ret = self._post('/rules/2', username='bob',
                          data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
-                                   channel='nightly', update_type='minor'))
+                                   channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -429,8 +421,6 @@ class TestSingleRuleView_JSON(ViewTest):
 
     def testPostSetBackgroundRateTo0(self):
         ret = self._post("/rules/3", data=dict(backgroundRate=0, data_version=1))
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        ret = self._post("/rules/3", data=dict(backgroundRate=0, data_version=1, update_type="minor"))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -447,7 +437,7 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r[0]['product'], 'a')
 
     def testPostRemoveRestriction(self):
-        ret = self._post("/rules/5", data=dict(buildTarget="", data_version=1, update_type="minor"))
+        ret = self._post("/rules/5", data=dict(buildTarget="", data_version=1))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -465,34 +455,30 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r["product"], "a")
 
     def testPost404(self):
-        ret = self._post("/rules/555", data=dict(mapping="d", data_version=1, update_type="minor"))
+        ret = self._post("/rules/555", data=dict(mapping="d", data_version=1))
         self.assertEquals(ret.status_code, 404)
 
     def testPostWithBadData(self):
-        ret = self._post("/rules/1", data=dict(mapping="uhet", update_type="minor"))
+        ret = self._post("/rules/1", data=dict(mapping="uhet"))
         self.assertEquals(ret.status_code, 400)
 
     def testPostWithBadAlias(self):
-        ret = self._post("/rules/1", data=dict(alias="3", data_version=1, update_type="minor"))
+        ret = self._post("/rules/1", data=dict(alias="3", data_version=1))
         self.assertEquals(ret.status_code, 400)
 
     def testPostWithRequiredSignoff(self):
-        ret = self._post("/rules/4", data=dict(product="c", channel="c", data_version=1, update_type="minor"))
+        ret = self._post("/rules/4", data=dict(product="c", channel="c", data_version=1))
         self.assertEquals(ret.status_code, 400)
         self.assertIn("This change requires signoff", ret.data)
 
     def testBadAuthPost(self):
-        ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, update_type='minor', mapping='c', priority=100, data_version=1))
+        ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
         self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
     def testHttpRemoteUserAuth(self):
         # Make some changes to a rule
         ret = self._httpRemoteUserPost('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
                                                              product='Firefox', channel='nightly'))
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        ret = self._httpRemoteUserPost('/rules/1',
-                                       data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
-                                                 product='Firefox', channel='nightly', update_type='minor'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -510,7 +496,7 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r[0]['buildTarget'], 'd')
 
     def testNoPermissionToAlterExistingProduct(self):
-        ret = self._post('/rules/4', data=dict(backgroundRate=71, update_type='minor', data_version=1), username='bob')
+        ret = self._post('/rules/4', data=dict(backgroundRate=71, data_version=1), username='bob')
         self.assertEquals(ret.status_code, 403)
 
     def testNoPermissionToAlterNewProduct(self):
@@ -540,9 +526,6 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(ret.status_code, 200, msg=ret.data)
 
     def testDeleteRule404(self):
-        ret = self._delete("/rules/112")
-        # Missing data_version field
-        self.assertEquals(ret.status_code, 400)
         ret = self._delete("/rules/112", qs={"data_version": 25})
         self.assertEquals(ret.status_code, 404)
 
@@ -1308,7 +1291,7 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(ret.status_code, 403, ret.data)
 
     def testUpdateRuleWithMergeError(self):
-        data = {"mapping": "a", "data_version": 1, "update_type": "minor"}
+        data = {"mapping": "a", "data_version": 1}
         ret = self._post("/rules/1", data=data)
         self.assertEquals(ret.status_code, 400, ret.data)
         self.assertIn("Is there a scheduled change", ret.data)

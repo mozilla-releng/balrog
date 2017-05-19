@@ -104,36 +104,17 @@ class SingleRuleView(AdminView):
         if not rule:
             return Response(status=404)
 
-        edit_rule_dict, mapping_values = process_rule_form(connexion.request.json)
+        what, mapping_values = process_rule_form(connexion.request.json)
 
-        if edit_rule_dict.get('mapping', None) is not None and len(mapping_values) != 1:
+        if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
         # Solves https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
-        edit_rule_dict.pop("csrf_token", None)
-
-        what = dict()
-        # We need to be able to support changing AND removing parts of a rule,
-        # and because of how Flask's request object and WTForm's defaults work
-        # this gets a little hary.
-        for k, v in edit_rule_dict.iteritems():
-            # data_version is a "special" column, in that it's not part of the
-            # primary data, and shouldn't be updatable by the user.
-            if k == "data_version":
-                continue
-            # We need to check for each column in the JSON style post
-            # If the key is not present in either of these data structures
-            # , we treat this cases as no-op
-            # and shouldn't modify the data for that key.
-            # If the key is present we should modify the data as requested.
-            # If a value is an empty string, we should remove that restriction
-            # from the rule (aka, set as NULL in the db). The above form processing
-            # method will have already converted it to None, so we can treat it the
-            # same as a modification here.
-            what[k] = v
+        what.pop("csrf_token", None)
+        data_version = what.pop("data_version", None)
 
         dbo.rules.update(changed_by=changed_by, where={"rule_id": id_or_alias}, what=what,
-                         old_data_version=edit_rule_dict.get("data_version"), transaction=transaction)
+                         old_data_version=data_version, transaction=transaction)
 
         # find out what the next data version is
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
@@ -264,7 +245,8 @@ class SingleRuleColumnView(AdminView):
         rules = dbo.rules.getOrderedRules()
         column_values = []
         if column not in rules[0].keys():
-            return Response(status=404, response="Requested column does not exist")
+            return problem(status=404, title="Not Found", detail="Requested column was not found",
+                           ext={"exception": "Requested column does not exist"})
 
         for rule in rules:
             for key, value in rule.items():
