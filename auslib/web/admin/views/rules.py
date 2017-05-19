@@ -4,7 +4,7 @@ import connexion
 from sqlalchemy.sql.expression import null
 from jsonschema.compat import str_types
 from flask import Response, request, jsonify
-from connexion import problem
+from auslib.web.admin.views.problem import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
     requirelogin, AdminView

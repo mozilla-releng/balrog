@@ -1,8 +1,7 @@
-import json
-
 from flask import request, Response
 from flask.views import MethodView
 from auslib.global_state import dbo
+from auslib.web.admin.views.problem import problem
 from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
     SignoffRequiredError
 import logging
@@ -31,51 +30,32 @@ def handleGeneralExceptions(messages):
                 # using connexion.problem results in TypeError: 'ConnexionResponse' object is not callable
                 # hence using flask.Response but modifying response's json data into connexion.problem format
                 # for validation purpose
-                return Response(status=400, response=json.dumps({"status": 400,
-                                                                 "detail": "OutDatedError",
-                                                                 "title": "Bad Request",
-                                                                 "exception": msg}), mimetype="application/json")
+                return problem(400, "Bad Request", "OutDatedError", ext={"exception": msg})
             except UpdateMergeError as e:
                 msg = "Couldn't perform the request %s due to merge error. " \
                       "Is there a scheduled change that conflicts with yours?" % messages
                 logging.warning("Bad input: %s", msg)
                 logging.warning(e)
-                return Response(status=400, response=json.dumps({"status": 400,
-                                                                 "title": "Bad Request",
-                                                                 "detail": "UpdateMergeError",
-                                                                 "exception": msg}), mimetype="application/json")
-
+                return problem(400, "Bad Request", "UpdateMergeError", ext={"exception": msg})
             except ChangeScheduledError as e:
                 msg = "Couldn't perform the request %s due a conflict with a scheduled change. " % messages
                 msg += e.message
                 logging.warning("Bad input: %s", msg)
                 logging.warning(e)
-                return Response(status=400, response=json.dumps({"status": 400,
-                                                                 "title": "Bad Request",
-                                                                 "detail": "ChangeScheduledError",
-                                                                 "exception": msg}), mimetype="application/json")
+                return problem(400, "Bad Request", "ChangeScheduledError", ext={"exception": msg})
             except SignoffRequiredError as e:
                 msg = "This change requires signoff, it cannot be done directly."
                 logging.warning(msg)
                 logging.warning(e)
-                return Response(status=400, response=json.dumps({"status": 400,
-                                                                 "title": "Bad Request",
-                                                                 "detail": "SignoffRequiredError",
-                                                                 "exception": msg}), mimetype="application/json")
+                return problem(400, "Bad Request", "SignoffRequiredError", ext={"exception": msg})
             except PermissionDeniedError as e:
                 msg = "Permission denied to perform the request. {}".format(e.message)
                 logging.warning(msg)
-                return Response(status=403, response=json.dumps({"status": 403,
-                                                                 "title": "Bad Request",
-                                                                 "detail": "PermissionDeniedError",
-                                                                 "exception": msg}), mimetype="application/json")
+                return problem(403, "Forbidden", "PermissionDeniedError", ext={"exception": msg})
             except ValueError as e:
                 msg = "Bad input: {}".format(e.message)
                 logging.warning(msg)
-                return Response(status=400, response=json.dumps({"status": 400,
-                                                                 "title": "Bad Request",
-                                                                 "detail": "ValueError",
-                                                                 "exception": msg}), mimetype="application/json")
+                return problem(400, "Bad Request", "ValueError", ext={"exception": msg})
         return decorated
     return wrap
 
