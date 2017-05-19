@@ -282,15 +282,8 @@ paths:
             allOf:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/RulesBase'
-              - type: object
-                required:
-                  - data_version
-                properties:
-                  data_version:
-                    type: integer
-                    format: int32
-                    example: 1
-                    minimum: 1
+            required:
+              - data_version
 
       responses:
         '200':
@@ -346,16 +339,8 @@ paths:
             allOf:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/RulesBase'
-              - type: object
-                required:
-                  - data_version
-                properties:
-                  data_version:
-                    type: integer
-                    format: int32
-                    example: 1
-                    minimum: 1
-
+            required:
+              - data_version
       responses:
         '200':
           description: Successfully created a new rule

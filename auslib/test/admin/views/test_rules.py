@@ -210,9 +210,21 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(r[0]['version'], None)
 
     def testInvalidMapping(self):
-        data_dict = dict(backgroundRate=31, mapping='ad', priority=33, product='a', update_type='minor')
+        data_dict = dict(backgroundRate=31, mapping='random', priority=33, product='a', update_type='minor')
         ret = self._post('/rules', data=data_dict)
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        self.assertIn("mapping", ret.data, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
+    def testPutDataVersionLessThanOne(self):
+        # Throw 400 error when data_version is less than 1.
+        ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d',
+                                              priority=73, data_version=0,
+                                              product='Firefox', channel='nightly', update_type='minor'))
+        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d',
+                                              priority=73, data_version=1,
+                                              product='Firefox', channel='nightly', update_type='minor'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
 
 class TestSingleRuleView_JSON(ViewTest):

@@ -39,7 +39,7 @@ def process_rule_form(form_data):
         else:
             rule_form_dict[key] = form_data[key]
 
-    for i in ["priority", "backgroundRate"]:
+    for i in ["priority", "backgroundRate", "data_version"]:
         if rule_form_dict.get(i, None):
             rule_form_dict[i] = int(rule_form_dict[i])
 
@@ -77,7 +77,8 @@ class RulesAPIView(AdminView):
         what, mapping_values = process_rule_form(connexion.request.json)
         if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
-
+        # Solves Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
+        what.pop("csrf_token", None)
         rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
         return Response(status=200, response=str(rule_id))
 
@@ -107,6 +108,9 @@ class SingleRuleView(AdminView):
 
         if edit_rule_dict.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
+
+        # Solves https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
+        edit_rule_dict.pop("csrf_token", None)
 
         what = dict()
         # We need to be able to support changing AND removing parts of a rule,
