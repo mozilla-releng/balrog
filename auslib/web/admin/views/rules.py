@@ -10,7 +10,7 @@ from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
 from auslib.web.admin.views.csrf import get_csrf_headers
-from auslib.web.admin.views.forms import EditRuleForm, DbEditableForm, \
+from auslib.web.admin.views.forms import \
     ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
     ScheduledChangeDeleteRuleForm, EditScheduledChangeNewRuleForm, \
     EditScheduledChangeExistingRuleForm, EditScheduledChangeDeleteRuleForm
@@ -18,6 +18,34 @@ from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
 from auslib.web.admin.views.history import HistoryView
+
+
+def process_rule_form(form_data):
+    """
+    Method to process either new/existing Rule form's data without wtfForm validations
+    :param form_data: input json form data in dict
+    :return: dictionary of processed form field values and list of valid mapping key's value.
+    """
+    release_names = dbo.releases.getReleaseNames()
+
+    mapping_choices = [(item['name'], item['name']) for item in release_names]
+    mapping_choices.insert(0, ('', 'NULL'))
+
+    # Replaces wtfForms validations
+    rule_form_dict = dict()
+    for key in form_data:
+        if isinstance(form_data[key], str_types):
+            rule_form_dict[key] = None if form_data[key].strip() == '' else form_data[key].strip()
+        else:
+            rule_form_dict[key] = form_data[key]
+
+    for i in ["priority", "backgroundRate"]:
+        if rule_form_dict.get(i, None):
+            rule_form_dict[i] = int(rule_form_dict[i])
+
+    mapping_values = [y for x, y in mapping_choices if x == rule_form_dict.get("mapping")]
+
+    return rule_form_dict, mapping_values
 
 
 class RulesAPIView(AdminView):
@@ -46,25 +74,10 @@ class RulesAPIView(AdminView):
     @requirelogin
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
-        release_names = dbo.releases.getReleaseNames()
-        mapping_choices = [(item['name'], item['name']) for item in release_names]
-        mapping_choices.insert(0, ('', 'NULL'))
-
-        # Replaces wtfForms validations
-        what = dict()
-        for key in connexion.request.json:
-            if isinstance(connexion.request.json[key], str_types):
-                what[key] = None if connexion.request.json[key].strip() == '' else connexion.request.json[key].strip()
-            else:
-                what[key] = connexion.request.json[key]
-
-        mapping_values = [y for x, y in mapping_choices if x == what.get("mapping")]
+        what, mapping_values = process_rule_form(connexion.request.json)
         if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-        for i in ["priority", "backgroundRate"]:
-            if what.get(i, None):
-                what[i] = int(what[i])
         rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
         return Response(status=200, response=str(rule_id))
 
@@ -89,40 +102,34 @@ class SingleRuleView(AdminView):
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
             return Response(status=404)
-        form = EditRuleForm()
 
-        release_names = dbo.releases.getReleaseNames()
+        edit_rule_dict, mapping_values = process_rule_form(connexion.request.json)
 
-        form.mapping.choices = [(item['name'], item['name']) for item in release_names]
-        form.mapping.choices.insert(0, ('', 'NULL'))
-
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
+        if edit_rule_dict.get('mapping', None) is not None and len(mapping_values) != 1:
+            return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
         what = dict()
         # We need to be able to support changing AND removing parts of a rule,
         # and because of how Flask's request object and WTForm's defaults work
         # this gets a little hary.
-        for k, v in form.data.iteritems():
+        for k, v in edit_rule_dict.iteritems():
             # data_version is a "special" column, in that it's not part of the
             # primary data, and shouldn't be updatable by the user.
             if k == "data_version":
                 continue
-            # We need to check for each column in both the JSON style post
-            # and the regular multipart form data. If the key is not present in
-            # either of these data structures. We treat this cases as no-op
+            # We need to check for each column in the JSON style post
+            # If the key is not present in either of these data structures
+            # , we treat this cases as no-op
             # and shouldn't modify the data for that key.
             # If the key is present we should modify the data as requested.
             # If a value is an empty string, we should remove that restriction
-            # from the rule (aka, set as NULL in the db). The underlying Form
-            # will have already converted it to None, so we can treat it the
+            # from the rule (aka, set as NULL in the db). The above form processing
+            # method will have already converted it to None, so we can treat it the
             # same as a modification here.
-            if (request.json and k in request.json) or k in request.form:
-                what[k] = v
+            what[k] = v
 
         dbo.rules.update(changed_by=changed_by, where={"rule_id": id_or_alias}, what=what,
-                         old_data_version=form.data_version.data, transaction=transaction)
+                         old_data_version=edit_rule_dict.get("data_version"), transaction=transaction)
 
         # find out what the next data version is
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
@@ -137,14 +144,13 @@ class SingleRuleView(AdminView):
         if not rule:
             return Response(status=404)
 
-        # Bodies are ignored for DELETE requests, so we need to force WTForms
-        # to look at the arguments instead.
+        # Bodies are ignored for DELETE requests, so we need to look at the request arguments instead.
         # Even though we aren't going to use most of the form fields (just
         # rule_id and data_version), we still want to create and validate the
         # form to make sure that the CSRF token is checked.
-        form = DbEditableForm(request.args)
 
-        dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by, old_data_version=form.data_version.data,
+        dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by,
+                         old_data_version=connexion.request.args.get("data_version", None),
                          transaction=transaction)
 
         return Response(status=200)

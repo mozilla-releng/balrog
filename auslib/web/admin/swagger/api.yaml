@@ -274,6 +274,23 @@ paths:
           description: rule_id or alias field value to filter the rule against
           type: string
           required: true
+        - name: rule
+          in: body
+          description: Rule object data
+          required: true
+          schema:
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/RulesBase'
+              - type: object
+                required:
+                  - data_version
+                properties:
+                  data_version:
+                    type: integer
+                    format: int32
+                    example: 1
+                    minimum: 1
 
       responses:
         '200':
@@ -321,6 +338,23 @@ paths:
           description: rule_id or alias field value to filter the rule against
           type: string
           required: true
+        - name: rule
+          in: body
+          description: Rule object data
+          required: true
+          schema:
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/RulesBase'
+              - type: object
+                required:
+                  - data_version
+                properties:
+                  data_version:
+                    type: integer
+                    format: int32
+                    example: 1
+                    minimum: 1
 
       responses:
         '200':
