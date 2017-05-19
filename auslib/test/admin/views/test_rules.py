@@ -210,13 +210,9 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(r[0]['version'], None)
 
     def testInvalidMapping(self):
-        data = dict(
-            backgroundRate=31, mapping="ad", priority=33, product="a",
-            update_type="minor"
-        )
-        ret = self._post("/rules", data=data, username="billy")
+        data_dict = dict(backgroundRate=31, mapping='ad', priority=33, product='a', update_type='minor')
+        ret = self._post('/rules', data=data_dict)
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        self.assertIn("mapping", ret.data)
 
 
 class TestSingleRuleView_JSON(ViewTest):
