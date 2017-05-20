@@ -1,6 +1,6 @@
 from auslib.web.admin.views.csrf import CSRFView
 from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRuleColumnView, \
-RuleHistoryAPIView
+    RuleHistoryAPIView
 from auslib.web.admin.views.permissions import UsersView
 
 
@@ -47,6 +47,11 @@ def single_rule_column_get(column):
 def rules_revisions_get(rule_id):
     """GET /rules/:id/revisions"""
     return RuleHistoryAPIView().get(rule_id)
+
+
+def rules_revisions_post(rule_id):
+    """POST /rules/:id/revisions"""
+    return RuleHistoryAPIView().post(rule_id)
 
 
 def users_get():

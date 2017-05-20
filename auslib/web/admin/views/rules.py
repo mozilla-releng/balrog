@@ -225,9 +225,13 @@ class RuleHistoryAPIView(HistoryView):
                 revisions_order_by=[self.history_table.timestamp.desc()],
                 obj_not_found_msg='Requested rule does not exist',
                 response_key='rules')
-        except (ValueError, AssertionError) as msg:
+        # Adding AttributeError to accommodate exception thrown when no rule
+        # is found when db.getRule method is invoked
+        except (ValueError, AttributeError) as msg:
             self.log.warning("Bad input: %s", msg)
-            return Response(status=400, response=str(msg))
+            return problem(400, "Bad Request", "Error occurred when trying to fetch"
+                                               " Rule's revisions having rule_id {0}".format(rule_id),
+                           ext={"exception": str(msg)})
 
     @requirelogin
     def _post(self, rule_id, transaction, changed_by):
