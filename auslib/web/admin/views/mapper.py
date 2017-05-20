@@ -1,5 +1,6 @@
 from auslib.web.admin.views.csrf import CSRFView
-from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRuleColumnView
+from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRuleColumnView, \
+RuleHistoryAPIView
 from auslib.web.admin.views.permissions import UsersView
 
 
@@ -38,9 +39,14 @@ def rules_id_or_alias_delete(id_or_alias):
     return SingleRuleView().delete(id_or_alias)
 
 
-def single_rule_column(column):
+def single_rule_column_get(column):
     """GET /rules/columns/:column"""
     return SingleRuleColumnView().get(column)
+
+
+def rules_revisions_get(rule_id):
+    """GET /rules/:id/revisions"""
+    return RuleHistoryAPIView().get(rule_id)
 
 
 def users_get():

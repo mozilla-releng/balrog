@@ -77,6 +77,8 @@ paths:
             X-CSRF-Token:
               description: token
               type: string
+          examples:
+            text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
 
   /users:
     get:
@@ -139,6 +141,7 @@ paths:
               count:
                 description: count of total rules fetched
                 type: integer
+                minimum: 0
                 format: int32
                 example: 1
               rules:
@@ -205,16 +208,24 @@ paths:
             title: successfully created a new rule
             type: integer
             example: 514
+          examples:
+            text/html: 514
         '400':
           description: Bad Request. Invalid POST request.
           schema:
-            $ref: '#/definitions/BadRequestResponseModel'
+            $ref: '#/definitions/4xxClientErrorResponseModel'
+          examples:
+            application/json:
+              detail: "Invalid field value"
+              status: 400
+
         default:
           # Without this if any exception that should not occur for the particular API does occur
           # will be absorbed and won't be returned to user by handleGeneralExceptions method in views/base.py
           description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
           examples:
-            application/json: "{Error: REMOTE_USERNAME required}"
+            application/json:
+              Error: "REMOTE_USERNAME required"
 
   /rules/{id_or_alias}:
     get:
@@ -227,7 +238,6 @@ paths:
       consumes: []
       produces:
         - application/json
-        - text/html
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
         description: "Returns the entire rule identified by the id or alias given in JSON format."
@@ -240,7 +250,7 @@ paths:
 
       responses:
         '200':
-          description: Successfully created a new rule
+          description: Successfully fetched a rule
           schema:
             $ref: "#/definitions/RulesBaseGET"
           headers:
@@ -252,9 +262,12 @@ paths:
         '404':
           description: Requested rule did not exist
           schema:
-            title: Reuested rule not found
-            type: string
+            $ref: "#/definitions/4xxClientErrorResponseModel"
             example: Requested rule does not exist
+          examples:
+            application/json:
+              detail: "Requested rule does not exist"
+              status: "404"
     post:
       summary: Updates the rule
       description: >
@@ -265,7 +278,6 @@ paths:
       consumes: []
       produces:
         - application/json
-        - text/html
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
         description: "Returns the entire rule identified by the id or alias given in JSON format."
@@ -288,7 +300,7 @@ paths:
 
       responses:
         '200':
-          description: Successfully created a new rule
+          description: Successfully updated the rule
           schema:
             type: object
             required:
@@ -303,17 +315,26 @@ paths:
         '404':
           description: Requested rule did not exist
           schema:
-            title: Reuested rule not found
-            type: string
-            example: Requested rule does not exist
+            $ref: '#/definitions/4xxClientErrorResponseModel'
+          examples:
+            application/json:
+              detail: Requested rule does not exist
+              status: 404
         '400':
           description: "Bad Request's Response"
           schema:
-            $ref: '#/definitions/BadRequestResponseModel'
+            $ref: '#/definitions/4xxClientErrorResponseModel'
+          examples:
+            application/json:
+              title: OutdatedDataError
+              detail: Outdated Data Version
+              exception: "old_data_version doesn't match current data_version"
+              status: 400
         default:
           description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
           examples:
-            application/json: "{Error: REMOTE_USERNAME required}"
+            application/json:
+              Error: "REMOTE_USERNAME required"
     # Exactly same as POST
     put:
       summary: Updates the rule
@@ -325,7 +346,6 @@ paths:
       consumes: []
       produces:
         - application/json
-        - text/html
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
         description: "Returns the entire rule identified by the id or alias given in JSON format."
@@ -345,9 +365,10 @@ paths:
               - $ref: '#/definitions/RulesBase'
             required:
               - data_version
+
       responses:
         '200':
-          description: Successfully created a new rule
+          description: Successfully updated the rule
           schema:
             type: object
             required:
@@ -362,18 +383,26 @@ paths:
         '404':
           description: Requested rule did not exist
           schema:
-            title: Reuested rule not found
-            type: string
-            example: Requested rule does not exist
+            $ref: '#/definitions/4xxClientErrorResponseModel'
+          examples:
+            application/json:
+              detail: Requested rule does not exist
+              status: 404
         '400':
           description: "Bad Request's Response"
           schema:
-            $ref: '#/definitions/BadRequestResponseModel'
+            $ref: '#/definitions/4xxClientErrorResponseModel'
+          examples:
+            application/json:
+              title: OutdatedDataError
+              detail: Outdated Data Version
+              exception: "old_data_version doesn't match current data_version"
+              status: 400
         default:
           description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
           examples:
-            application/json: "{Error: REMOTE_USERNAME required}"
-
+            application/json:
+              Error: "REMOTE_USERNAME required"
     delete:
       summary: Deletes a rule identified by the rule id
       description: >
@@ -409,32 +438,100 @@ paths:
         '200':
           description: Successfully deleted a rule
         '404':
-          description: Requested rule does not exist
+          description: Requested rule did not exist
+          schema:
+            $ref: '#/definitions/4xxClientErrorResponseModel'
+          examples:
+            application/json:
+              detail: Requested rule does not exist
+              status: 404
         default:
           description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
           examples:
-            application/json: "{Error: REMOTE_USERNAME required}"
+            application/json:
+              Error: "REMOTE_USERNAME required"
+
+  /rules/columns/{column}:
+    get:
+      summary: Returns previous versions of the rule.
+      description: >
+        Returns previous versions of the rule identified by the id or alias given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id4)
+      tags:
+        - Rules
+      operationId: auslib.web.admin.views.mapper.single_rule_column_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#rules-id-or-alias-revisions"
+        description: "Returns the entire rule identified by the id or alias given in JSON format."
+      parameters:
+        - name: column
+          in: path
+          description: Name of a defined Rule column.
+          type: string
+          required: true
+
+      responses:
+        '200':
+          description:  "200"
+          schema:
+            type: object
+            required:
+             - count
+            properties:
+              count:
+                description: cnt
+                type: integer
+                format: int32
+                minimum: 0
+                example: 1
+            # limits the extent of validation of column_key array
+            # oneOf isn't supported in swagger 2.0 but will be in 3.0
+            # https://github.com/OAI/OpenAPI-Specification/issues/333
+            additionalProperties:
+              type: array
+            maxProperties: 2
+            minProperties: 2
+          examples:
+            application/json:
+              count: 5
+              rule_id: [1,2,3,4,5]
+        '404':
+          description: Requested rule did not exist
+          schema:
+            $ref: '#/definitions/4xxClientErrorResponseModel'
+          examples:
+            application/json:
+              detail: Requested rule does not exist
+              status: 404
 
 definitions:
-  BadRequestResponseModel:
-    title: "Invalid Request's Response object"
-    description: "Invalid Request's Response JSON Object."
+  4xxClientErrorResponseModel:
+    title: "4xx Response"
+    description: "Invalid client request's response object. The 4xx class of status codes is intended for situations in which the client seems to have erred. This model describes the response format"
     type: object
     # currently we're using detail and status only in the UI
     # Therefore rest of fields aren't always required.
     required:
       - detail
       - status
+      - title
     properties:
       detail:
         description: An human readable explanation specific to this occurrence of the problem.
         type: string
         example: "field_name is a required property"
+      exception:
+        description: An human readable explanation specific to this occurrence of the problem. Same as detail. Used in some UI forms.
+        type: string
+        example: "field_name is missing"
       status:
         description: The HTTP status code generated by the origin server for this occurrence of the problem.
         type: integer
         format: int32
-        enum: [400]
+        minimum: 400
+        maximum: 499
         example: 400
       title:
         description: A short, human-readable summary of the problem type. It SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localisation.
@@ -444,10 +541,6 @@ definitions:
         description: "An absolute URI that identifies the problem type.  When dereferenced, it SHOULD provide human-readable documentation for the problem type (e.g., using HTML).When this member is not present its value is assumed to be 'about:blank'"
         type: string
         example: "about:blank"
-      exception:
-        description: An human readable explanation specific to this occurrence of the problem. Same as detail. Used for UI forms
-        type: string
-        example: "field_name is missing"
 
   CSRFModel:
     title: CSRF Token

@@ -89,7 +89,8 @@ class SingleRuleView(AdminView):
     def get(self, id_or_alias):
         rule = dbo.rules.getRule(id_or_alias)
         if not rule:
-            return Response(status=404, response="Requested rule does not exist")
+            return problem(status=404, title="Not Found", detail="Requested rule wasn't found",
+                           ext={"exception": "Requested rule does not exist"})
 
         headers = {'X-Data-Version': rule['data_version']}
         headers.update(get_csrf_headers())
@@ -102,7 +103,8 @@ class SingleRuleView(AdminView):
         # Verify that the rule_id or alias exists.
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
-            return Response(status=404)
+            return problem(status=404, title="Not Found", detail="Requested rule wasn't found",
+                           ext={"exception": "Requested rule does not exist"})
 
         what, mapping_values = process_rule_form(connexion.request.json)
 
@@ -127,7 +129,8 @@ class SingleRuleView(AdminView):
         # Verify that the rule_id or alias exists.
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
-            return Response(status=404)
+            return problem(status=404, title="Not Found", detail="Requested rule wasn't found",
+                           ext={"exception": "Requested rule does not exist"})
 
         # Bodies are ignored for DELETE requests, so we need to look at the request arguments instead.
         # Even though we aren't going to use most of the form fields (just
@@ -245,7 +248,7 @@ class SingleRuleColumnView(AdminView):
         rules = dbo.rules.getOrderedRules()
         column_values = []
         if column not in rules[0].keys():
-            return problem(status=404, title="Not Found", detail="Requested column was not found",
+            return problem(status=404, title="Not Found", detail="Rule column was not found",
                            ext={"exception": "Requested column does not exist"})
 
         for rule in rules:
