@@ -72,13 +72,14 @@ class RulesAPIView(AdminView):
 class SingleRuleView(AdminView):
     """ /rules/:id"""
 
-    def get(self, id_or_alias):
+    def get(self, id_or_alias, csrf = True):
         rule = dbo.rules.getRule(id_or_alias)
         if not rule:
             return Response(status=404, response="Requested rule does not exist")
 
         headers = {'X-Data-Version': rule['data_version']}
-        headers.update(get_csrf_headers())
+        if csrf:
+            headers.update(get_csrf_headers())
 
         return Response(response=json.dumps(rule), mimetype="application/json", headers=headers)
 
