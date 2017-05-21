@@ -20,7 +20,7 @@ app = connexion_app.app
 sentry = Sentry()
 
 from auslib.web.admin.views.permissions import PermissionsView, \
-    SpecificPermissionView, UserRolesView, UserRoleView, AllRolesView, \
+    SpecificPermissionView, UserRolesView, UserRoleView, \
     PermissionScheduledChangesView, PermissionScheduledChangeView, \
     EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, \
     PermissionScheduledChangeSignoffsView, SpecificUserView
@@ -100,7 +100,6 @@ Compress(app)
 # and the static admin UI are hosted on the same domain. This API wsgi app is
 # hosted at "/api", which is stripped away by the web server before we see
 # these requests.
-app.add_url_rule("/users/roles", view_func=AllRolesView.as_view("all_users_roles"))
 app.add_url_rule("/users/<username>", view_func=SpecificUserView.as_view("specific_user"))
 app.add_url_rule("/users/<username>/permissions", view_func=PermissionsView.as_view("user_permissions"))
 app.add_url_rule("/users/<username>/permissions/<permission>", view_func=SpecificPermissionView.as_view("specific_permission"))

@@ -90,14 +90,13 @@ paths:
     get:
       summary: Returns all of Users in Balrog's DB
       description: >
-        Returns all of the users known to Balrog inside of a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id20)
+        Returns all of the usernames present in Balrog. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id20)
       tags:
         - Users
       operationId: auslib.web.admin.views.mapper.users_get
       consumes: []
       produces:
         - application/json
-        - text/html
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id19"
         description: "Returns all of Users in Balrog's DB."
@@ -108,12 +107,41 @@ paths:
             type: object
             properties:
               users:
-                description: array of users
+                description: list of users
                 type: array
                 items:
                   type: string
                   minItems: 0
                 example: ["balrogadmin"]
+
+  /users/roles:
+    get:
+      summary: Returns all distinct user roles
+      description: >
+        Returns all unique roles defined for all users. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles).
+      tags:
+        - Users
+      operationId: auslib.web.admin.views.mapper.all_users_roles_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#user-roles"
+        description: Returns all distinct user roles
+      responses:
+        '200':
+          description: Successfully fetched all user roles.
+          schema:
+            type: object
+            properties:
+              roles:
+                description: list of roles
+                type: array
+                items:
+                  type: string
+                  minItems: 0
+                example: ["releng", "qa"]
+
   /rules:
     get:
       summary: Returns filtered list of Rules from Balrog's DB
@@ -469,26 +497,7 @@ paths:
                     description: array where each element is a rule object plus timestamp, change_id and changed_by
                     type: array
                     items:
-                      allOf:
-                        - type: object
-                          required:
-                            - timestamp
-                            - change_id
-                            - changed_by
-                          properties:
-                            timestamp:
-                              type: integer
-                              minimum: 0
-                              example: 1495308
-                            change_id:
-                              type: integer
-                              minimum: 0
-                              example: 10
-                            changed_by:
-                              type: string
-                              minimum: 1
-                              maximum: 100
-                              example: "balrogadmin"
+                      $ref: '#/definitions/HistoryModel'
           examples:
             application/json:
               count: 1
@@ -698,6 +707,29 @@ definitions:
         type: string
         example: "1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
 
+  HistoryModel:
+    title: History Table Model
+    description: Contains fields to be added to base table models to generate a history table
+    type: object
+    required:
+      - timestamp
+      - change_id
+      - changed_by
+    properties:
+      timestamp:
+        type: integer
+        minimum: 0
+        example: 1495308
+      change_id:
+        type: integer
+        minimum: 0
+        example: 10
+      changed_by:
+        type: string
+        minimum: 1
+        maximum: 100
+        example: "balrogadmin"
+
   RulesBaseGET:
     title: GET Operations on Rules Base
     description: "Operations on /rules GET"
@@ -767,6 +799,31 @@ definitions:
             version: null
             whitelist: null
 
+  UserRoles:
+    title: User Roles object definition
+    description: Users may hold any number of Roles. Roles are used when signing off on Scheduled Changes.
+    type: object
+    properties:
+      data_version:
+        description: the version number of user role
+        type: ["integer", "string"]
+        format: data_version
+        readOnly: true
+        example: 1
+
+      role:
+        description: Roles are used when signing off on Scheduled Changes
+        type: string
+        minLength: 1
+        maxLength: 50
+        example: 'admin'
+
+      username:
+        description: unique identifier name for the user
+        type: string
+        minLength: 1
+        maxLength: 100
+        example: 'balrogadmin'
 
   RulesBase:
     title: Rules object definition
