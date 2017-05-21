@@ -72,7 +72,7 @@ class RulesAPIView(AdminView):
 class SingleRuleView(AdminView):
     """ /rules/:id"""
 
-    def get(self, id_or_alias, csrf = True):
+    def get(self, id_or_alias, csrf=True):
         rule = dbo.rules.getRule(id_or_alias)
         if not rule:
             return Response(status=404, response="Requested rule does not exist")
