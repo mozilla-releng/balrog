@@ -34,6 +34,7 @@ services:
       - SMTP_TLS
       - NOTIFY_TO_ADDR
       - NOTIFY_FROM_ADDR
+      - STAGING
     healthcheck:
         test: nc -z -v balrogadmin 7070
         interval: 5s
