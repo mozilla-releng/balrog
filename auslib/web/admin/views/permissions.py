@@ -1,6 +1,6 @@
 import simplejson as json
-
-from flask import request, Response, jsonify
+import connexion
+from flask import Response, jsonify
 
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import requirelogin, AdminView
@@ -32,7 +32,7 @@ class SpecificUserView(AdminView):
     access to REMOTE_USER, so it cannot query directly by name."""
 
     def get(self, username):
-        current_user = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
+        current_user = connexion.request.environ.get('REMOTE_USER', connexion.request.environ.get("HTTP_REMOTE_USER"))
         if username == "current":
             username = current_user
         # If the user is retrieving permissions other than their own, we need
@@ -115,7 +115,7 @@ class SpecificPermissionView(AdminView):
             # For practical purposes, DELETE can't have a request body, which means the Form
             # won't find data where it's expecting it. Instead, we have to tell it to look at
             # the query string, which Flask puts in request.args.
-            form = ExistingPermissionForm(request.args)
+            form = ExistingPermissionForm(connexion.request.args)
             if not form.validate():
                 self.log.warning("Bad input: %s", form.errors)
                 return Response(status=400, response=json.dumps(form.errors))
@@ -133,7 +133,7 @@ class PermissionScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        change_type = request.json.get("change_type")
+        change_type = connexion.request.json.get("change_type")
 
         if change_type == "update":
             form = ScheduledChangeExistingPermissionForm()
@@ -153,7 +153,7 @@ class PermissionScheduledChangeView(ScheduledChangeView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if request.json and request.json.get("data_version"):
+        if connexion.request.json and connexion.request.json.get("data_version"):
             form = EditScheduledChangeExistingPermissionForm()
         else:
             form = EditScheduledChangeNewPermissionForm()
@@ -225,7 +225,7 @@ class UserRoleView(AdminView):
         if role not in roles:
             return Response(status=404)
 
-        form = DbEditableForm(request.args)
+        form = DbEditableForm(connexion.request.args)
         if not form.validate():
             self.log.warning("Bad input: %s", form.errors)
             return Response(status=400, response=json.dumps(form.errors))

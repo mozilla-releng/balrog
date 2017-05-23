@@ -38,7 +38,7 @@ securityDefinitions:
 
 tags:
   - name: "Rules"
-    description: "Balrog Rules Description."
+    description: "When a request comes in it is matched against Balrog’s rules to find the one that best suits it which points to a release that has the required information to serve an update back to the client"
     externalDocs:
       description: "Find out more about Rules"
       url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#rules"
@@ -50,7 +50,7 @@ tags:
       url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#users"
 
   - name: "CSRF Token"
-    description: "CSRF Token Description"
+    description: "Cross-site request forgery Token for preventing execution of unauthorized commands"
     externalDocs:
       description: "Find out more about CSRF-Token"
       url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#csrf-token"
@@ -109,6 +109,7 @@ paths:
               users:
                 description: list of users
                 type: array
+                uniqueItems: true
                 items:
                   type: string
                   minItems: 0
@@ -137,11 +138,183 @@ paths:
               roles:
                 description: list of roles
                 type: array
+                uniqueItems: true
                 items:
                   type: string
                   minItems: 0
                 example: ["releng", "qa"]
 
+  /users/{username}:
+    get:
+      summary: Returns all of the details about the user
+      description: >
+        Returns all of the details about the user's roles and permissions [Docs](http://mozilla-balrog.readthedocs.io/en/latest/database.html#permissions).
+      tags:
+        - Users
+      operationId: auslib.web.admin.views.mapper.specific_user_get
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#user-roles"
+        description: Returns all of the details about the user
+      parameters:
+        - name: username
+          in: path
+          description: unique identifier name of the user
+          type: string
+          maxLength: 100
+          required: true
+      responses:
+        '200':
+          description: Successfully fetched all user details.
+          schema:
+            type: object
+            required:
+              - username
+              - permissions
+              - roles
+            properties:
+              username:
+                description: unique identifier name of the user
+                type: string
+                maxLength: 100
+                minLength: 1
+                example: balrogadmin
+              roles:
+                description: "user's assigned roles"
+                type: object
+                # Cannot fully validate roles object as patternProperties, part of jsonschema, isn't supported by
+                # swagger. https://github.com/OAI/OpenAPI-Specification/issues/687
+                example:
+                  sample_role:
+                    data_version: 1
+              permissions:
+                description: all user permission details object
+                type: object
+                properties:
+                  # Each key is a permission object
+                  admin:
+                    description: "An admin user with no options specified has completely unrestricted access to Balrog"
+                    allOf:
+                      - $ref: "#/definitions/DataVersionModel"
+                      - type: object
+                        properties:
+                          options:
+                            type: ['object', 'null']
+                            description: Options available for admin permission
+                            properties:
+                              products:
+                                description: If specified, the user can perform any actions on Rules or Releases that affect the specified products
+                                type: array
+                                uniqueItems: true
+                                items:
+                                  type: string
+                  release:
+                    description: "Release permission to perform actions on releases. Example actions: add create, delete or modify release of products"
+                    $ref: "#/definitions/UserPermissionsModel"
+
+                  rule:
+                    description: "Rule permission to perform actions. Example actions: add create, delete or modify rules of products"
+                    $ref: "#/definitions/UserPermissionsModel"
+
+                  required_signoff:
+                    description: "Permission to perform actions related to required signoffs. Example: add create, delete or modify rules of products"
+                    $ref: "#/definitions/UserPermissionsModel"
+
+                  release_locale:
+                    description: "Release Locale permission to perform modify action only on product releases."
+                    allOf:
+                      - $ref: "#/definitions/DataVersionModel"
+                      - type: object
+                        properties:
+                          options:
+                            type: ['object', 'null']
+                            description: Options available for the given permission
+                            properties:
+                              products:
+                                type: array
+                                uniqueItems: true
+                                items:
+                                  type: string
+                              actions:
+                                type: array
+                                uniqueItems: true
+                                items:
+                                  type: string
+                                  enum: ["modify"]
+
+                  release_read_only:
+                    description: "Read only Releases permission to perform modify action only on product releases."
+                    allOf:
+                      - $ref: "#/definitions/DataVersionModel"
+                      - type: object
+                        properties:
+                          options:
+                            type: ['object', 'null']
+                            description: Options available for the given permission
+                            properties:
+                              products:
+                                type: array
+                                uniqueItems: true
+                                items:
+                                  type: string
+                              actions:
+                                type: array
+                                uniqueItems: true
+                                items:
+                                  type: string
+                                  enum: ["set", "unset"]
+
+                  permission:
+                    description: "permission to perform modify actions only."
+                    allOf:
+                      - $ref: "#/definitions/DataVersionModel"
+                      - type: object
+                        properties:
+                          options:
+                            type: ['object', 'null']
+                            description: Options available for the given permission
+                            properties:
+                              actions:
+                                type: array
+                                uniqueItems: true
+                                items:
+                                  type: string
+                                  enum: ["create", "modify", "delete"]
+
+                  scheduled_change:
+                    description: "permission to schedule a change to rule, release or permission. Only the Balrog Agent should be granted this permission."
+                    allOf:
+                      - $ref: "#/definitions/DataVersionModel"
+                      - type: object
+                        properties:
+                          options:
+                            type: ['object', 'null']
+                            description: Options available for the given permission
+                            properties:
+                              actions:
+                                type: array
+                                uniqueItems: true
+                                items:
+                                  type: string
+                                  enum: ["enact"]
+          examples:
+            application/json:
+              permissions:
+                rule:
+                  data_version: 1
+                  options:
+                    actions:
+                      - create
+                      - modify
+              roles:
+                temp:
+                  data_version: 1
+              username: balrogadmin
+        default:
+          description: Random text
   /rules:
     get:
       summary: Returns filtered list of Rules from Balrog's DB
@@ -220,7 +393,7 @@ paths:
         default:
           # Without this if any exception that should not occur for the particular API does occur
           # will be absorbed and won't be returned to user by handleGeneralExceptions method in views/base.py
-          description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
+          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
           examples:
             application/json:
               Error: "REMOTE_USERNAME required"
@@ -276,6 +449,7 @@ paths:
       consumes: []
       produces:
         - application/json
+        - text/html
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
         description: "Returns the entire rule identified by the id or alias given in JSON format."
@@ -305,7 +479,7 @@ paths:
               - new_data_version
             properties:
               new_data_version:
-                description: "Newly created rule's data version. Will always be greater than 1"
+                description: "Updated rule's new data version. Will always be greater than 1"
                 type: integer
                 format: int32
                 minimum: 2
@@ -329,7 +503,7 @@ paths:
               exception: "old_data_version doesn't match current data_version"
               status: 400
         default:
-          description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
+          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
           examples:
             application/json:
               Error: "REMOTE_USERNAME required"
@@ -344,6 +518,7 @@ paths:
       consumes: []
       produces:
         - application/json
+        - text/html
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
         description: "Returns the entire rule identified by the id or alias given in JSON format."
@@ -397,7 +572,7 @@ paths:
               exception: "old_data_version doesn't match current data_version"
               status: 400
         default:
-          description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
+          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
           examples:
             application/json:
               Error: "REMOTE_USERNAME required"
@@ -444,7 +619,7 @@ paths:
               detail: Requested rule does not exist
               status: 404
         default:
-          description: Default case for sporadic exceptions like value error or permission denied error or requires remote username and password in basic authentication for posting new data.
+          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
           examples:
             application/json:
               Error: "REMOTE_USERNAME required"
@@ -604,12 +779,17 @@ paths:
               title: Bad Request
               detail: Error when trying to Revert to Rule revisions
               status: 400
+        default:
+          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
+          examples:
+            application/json:
+              Error: "REMOTE_USERNAME required"
 
   /rules/columns/{column}:
     get:
-      summary: Returns previous versions of the rule.
+      summary: Returns a JSON Object containing the unique values for the given column.
       description: >
-        Returns previous versions of the rule identified by the id or alias given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id4)
+        Returns a JSON Object containing the unique values for the given Rule column. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#rules-columns-column)
       tags:
         - Rules
       operationId: auslib.web.admin.views.mapper.single_rule_column_get
@@ -617,8 +797,8 @@ paths:
       produces:
         - application/json
       externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#rules-id-or-alias-revisions"
-        description: "Returns the entire rule identified by the id or alias given in JSON format."
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id6"
+        description: "Returns a JSON Object containing the unique values for the given Rule column."
       parameters:
         - name: column
           in: path
@@ -635,7 +815,7 @@ paths:
              - count
             properties:
               count:
-                description: cnt
+                description: count of unique values of column present in DB
                 type: integer
                 format: int32
                 minimum: 0
@@ -652,12 +832,12 @@ paths:
               count: 5
               rule_id: [1,2,3,4,5]
         '404':
-          description: Requested rule did not exist
+          description: Requested rule column did not exist
           schema:
             $ref: '#/definitions/4xxClientErrorResponseModel'
           examples:
             application/json:
-              detail: Requested rule does not exist
+              detail: Requested rule column does not exist
               status: 404
 
 definitions:
@@ -706,6 +886,44 @@ definitions:
       csrf_token:
         type: string
         example: "1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
+
+  DataVersionModel:
+    title: Data Version
+    description: version number of object
+    type: object
+    required:
+      - data_version
+    properties:
+      data_version:
+        type: integer
+        format: int32
+        minimum: 1
+        example: 3
+
+  UserPermissionsModel:
+    title: User Permissions
+    description: "Model of user's permissions with all details of avaliable actions and options for the particular permission user is assigned"
+    allOf:
+      - $ref: "#/definitions/DataVersionModel"
+      - type: object
+        properties:
+          options:
+            type: ['object', 'null']
+            description: Options available for the given permission
+            properties:
+              products:
+                type: array
+                uniqueItems: true
+                items:
+                  type: string
+                example: ["Firefox"]
+              actions:
+                type: array
+                uniqueItems: true
+                items:
+                  type: string
+                  enum: ["create", "modify", "delete"]
+                example: ["modify"]
 
   HistoryModel:
     title: History Table Model
@@ -799,7 +1017,7 @@ definitions:
             version: null
             whitelist: null
 
-  UserRoles:
+  UserRolesModel:
     title: User Roles object definition
     description: Users may hold any number of Roles. Roles are used when signing off on Scheduled Changes.
     type: object
@@ -976,5 +1194,5 @@ definitions:
         maxLength: 100
         example: null
 
-    #Warning: Do NOT add an example object here. Inteferes with Example Value during
+    #Warning: Do NOT add an example object here. Interferes with Example Value during
     # request generation in Swagger-UI
