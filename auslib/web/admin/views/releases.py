@@ -218,12 +218,13 @@ class SingleLocaleView(AdminView):
 class SingleReleaseView(AdminView):
     """ /releases/:release"""
 
-    def get(self, release):
+    def get(self, release, csrf=True):
         release = dbo.releases.getReleases(name=release, limit=1)
         if not release:
             return Response(status=404, mimetype="application/json")
         headers = {'X-Data-Version': release[0]['data_version']}
-        headers.update(get_csrf_headers())
+        if csrf:
+            headers.update(get_csrf_headers())
         if request.args.get("pretty"):
             indent = 4
         else:
