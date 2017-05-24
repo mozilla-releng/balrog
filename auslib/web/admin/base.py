@@ -20,7 +20,7 @@ app = connexion_app.app
 sentry = Sentry()
 
 from auslib.web.admin.views.permissions import \
-    SpecificPermissionView, UserRolesView, UserRoleView, \
+    SpecificPermissionView, UserRoleView, \
     PermissionScheduledChangesView, PermissionScheduledChangeView, \
     EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, \
     PermissionScheduledChangeSignoffsView
@@ -101,7 +101,6 @@ Compress(app)
 # hosted at "/api", which is stripped away by the web server before we see
 # these requests.
 app.add_url_rule("/users/<username>/permissions/<permission>", view_func=SpecificPermissionView.as_view("specific_permission"))
-app.add_url_rule("/users/<username>/roles", view_func=UserRolesView.as_view("user_roles"))
 app.add_url_rule("/users/<username>/roles/<role>", view_func=UserRoleView.as_view("user_role"))
 # Normal operations (get/update/delete) on rules can be done by id or alias...
 # ...but anything to do with history must be done by id, beacuse alias may change over time

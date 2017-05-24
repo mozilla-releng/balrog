@@ -61,6 +61,15 @@ tags:
       description: "Find out more about Releases"
       url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#releases"
 
+parameters:
+  usernameParam:
+    name: username
+    in: path
+    description: unique identifier name of the user
+    type: string
+    maxLength: 100
+    required: true
+
 paths:
   /csrf_token:
     get:
@@ -144,6 +153,48 @@ paths:
                   minItems: 0
                 example: ["releng", "qa"]
 
+  /users/{username}/roles:
+    get:
+      summary: Returns list of user roles
+      description: >
+        Returns list of user roles as a json object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles).
+      tags:
+        - Users
+      operationId: auslib.web.admin.views.mapper.user_get_roles
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id26"
+        description: Returns list of user roles
+      parameters:
+        - $ref: '#/parameters/usernameParam'
+      responses:
+        '200':
+          description: Successfully fetched the list of user roles.
+          schema:
+            type: object
+            properties:
+              roles:
+                description: list of roles
+                type: array
+                uniqueItems: true
+                items:
+                  minItems: 0
+                  type: object
+                  properties:
+                    data_version:
+                      description: the version number of user role
+                      type: integer
+                      minimum: 1
+                      example: 1
+                    role:
+                      description: roles are used when signing off on Scheduled Changes
+                      type: string
+                      minLength: 1
+                      maxLength: 50
+                      example: 'releng'
+
   /users/{username}:
     get:
       summary: Returns all of the details about the user
@@ -159,12 +210,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#user-roles"
         description: Returns all of the details about the user
       parameters:
-        - name: username
-          in: path
-          description: unique identifier name of the user
-          type: string
-          maxLength: 100
-          required: true
+        - $ref: '#/parameters/usernameParam'
       responses:
         '200':
           description: Successfully fetched all user details.
@@ -236,12 +282,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id21"
         description: Returns all of the details about the user's permissions
       parameters:
-        - name: username
-          in: path
-          description: unique identifier name of the user
-          type: string
-          maxLength: 100
-          required: true
+        - $ref: '#/parameters/usernameParam'
       responses:
         '200':
           description: Successfully fetched all permission details
