@@ -32,6 +32,9 @@
             <button type="submit" class="btn btn-primary">Save</button>
           </div>
         </form>
+          <div class="form-group" ng-class="{'has-error': errors.detail}">
+            <p class="help-block" ng-show="errors.detail">fd  {{ errors.detail }}</p>
+          </div>
         <h4>Current Permissions</h4>
         <div class="panel panel-default"
              ng-repeat="permission in user.permissions">
@@ -67,6 +70,9 @@
             <button type="submit" class="btn btn-primary">Save</button>
           </div>
         </form>
+          <div class="form-group" ng-class="{'has-error': errors.detail}">
+            <p class="help-block" ng-show="errors.detail">different names  {{ errors.detail }}</p>
+          </div>
         <h4>Current Roles</h4>
         <div class="panel panel-default"
              ng-repeat="role in user.roles">

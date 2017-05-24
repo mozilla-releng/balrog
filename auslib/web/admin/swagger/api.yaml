@@ -155,7 +155,6 @@ paths:
       consumes: []
       produces:
         - application/json
-        - text/html
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#user-roles"
         description: Returns all of the details about the user
@@ -191,115 +190,7 @@ paths:
                   sample_role:
                     data_version: 1
               permissions:
-                description: all user permission details object
-                type: object
-                properties:
-                  # Each key is a permission object
-                  admin:
-                    description: "An admin user with no options specified has completely unrestricted access to Balrog"
-                    allOf:
-                      - $ref: "#/definitions/DataVersionModel"
-                      - type: object
-                        properties:
-                          options:
-                            type: ['object', 'null']
-                            description: Options available for admin permission
-                            properties:
-                              products:
-                                description: If specified, the user can perform any actions on Rules or Releases that affect the specified products
-                                type: array
-                                uniqueItems: true
-                                items:
-                                  type: string
-                  release:
-                    description: "Release permission to perform actions on releases. Example actions: add create, delete or modify release of products"
-                    $ref: "#/definitions/UserPermissionsModel"
-
-                  rule:
-                    description: "Rule permission to perform actions. Example actions: add create, delete or modify rules of products"
-                    $ref: "#/definitions/UserPermissionsModel"
-
-                  required_signoff:
-                    description: "Permission to perform actions related to required signoffs. Example: add create, delete or modify rules of products"
-                    $ref: "#/definitions/UserPermissionsModel"
-
-                  release_locale:
-                    description: "Release Locale permission to perform modify action only on product releases."
-                    allOf:
-                      - $ref: "#/definitions/DataVersionModel"
-                      - type: object
-                        properties:
-                          options:
-                            type: ['object', 'null']
-                            description: Options available for the given permission
-                            properties:
-                              products:
-                                type: array
-                                uniqueItems: true
-                                items:
-                                  type: string
-                              actions:
-                                type: array
-                                uniqueItems: true
-                                items:
-                                  type: string
-                                  enum: ["modify"]
-
-                  release_read_only:
-                    description: "Read only Releases permission to perform modify action only on product releases."
-                    allOf:
-                      - $ref: "#/definitions/DataVersionModel"
-                      - type: object
-                        properties:
-                          options:
-                            type: ['object', 'null']
-                            description: Options available for the given permission
-                            properties:
-                              products:
-                                type: array
-                                uniqueItems: true
-                                items:
-                                  type: string
-                              actions:
-                                type: array
-                                uniqueItems: true
-                                items:
-                                  type: string
-                                  enum: ["set", "unset"]
-
-                  permission:
-                    description: "permission to perform modify actions only."
-                    allOf:
-                      - $ref: "#/definitions/DataVersionModel"
-                      - type: object
-                        properties:
-                          options:
-                            type: ['object', 'null']
-                            description: Options available for the given permission
-                            properties:
-                              actions:
-                                type: array
-                                uniqueItems: true
-                                items:
-                                  type: string
-                                  enum: ["create", "modify", "delete"]
-
-                  scheduled_change:
-                    description: "permission to schedule a change to rule, release or permission. Only the Balrog Agent should be granted this permission."
-                    allOf:
-                      - $ref: "#/definitions/DataVersionModel"
-                      - type: object
-                        properties:
-                          options:
-                            type: ['object', 'null']
-                            description: Options available for the given permission
-                            properties:
-                              actions:
-                                type: array
-                                uniqueItems: true
-                                items:
-                                  type: string
-                                  enum: ["enact"]
+                $ref: "#/definitions/UserPermissionsGET"
           examples:
             application/json:
               permissions:
@@ -313,8 +204,56 @@ paths:
                 temp:
                   data_version: 1
               username: balrogadmin
-        default:
-          description: Random text
+        '404':
+          description: No permission found for given username
+          schema:
+            $ref: "#/definitions/4xxClientErrorResponseModel"
+          examples:
+            application/json:
+              detail: "No permission found for username"
+              status: 404
+        '403':
+          description: Not authorized to view permissions of other users
+          schema:
+            $ref: "#/definitions/4xxClientErrorResponseModel"
+          examples:
+            application/json:
+              detail: "You are not authorized to view permissions of other users"
+              status: 403
+
+  /users/{username}/permissions:
+    get:
+      summary: Returns all of the details about the user
+      description: >
+        Returns all of the details about the user's permissions [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions).
+      tags:
+        - Users
+      operationId: auslib.web.admin.views.mapper.user_permissions_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id21"
+        description: Returns all of the details about the user's permissions
+      parameters:
+        - name: username
+          in: path
+          description: unique identifier name of the user
+          type: string
+          maxLength: 100
+          required: true
+      responses:
+        '200':
+          description: Successfully fetched all permission details
+          schema:
+            $ref: "#/definitions/UserPermissionsGET"
+          examples:
+            application/json:
+              rule:
+                data_version: 2
+                options:
+                  actions: ['create', 'modify']
+
   /rules:
     get:
       summary: Returns filtered list of Rules from Balrog's DB
@@ -902,7 +841,7 @@ definitions:
 
   UserPermissionsModel:
     title: User Permissions
-    description: "Model of user's permissions with all details of avaliable actions and options for the particular permission user is assigned"
+    description: "Model of user's permissions with all details of avaliable options and actions for the rule,release,required signoff and permission of user is assigned"
     allOf:
       - $ref: "#/definitions/DataVersionModel"
       - type: object
@@ -924,6 +863,118 @@ definitions:
                   type: string
                   enum: ["create", "modify", "delete"]
                 example: ["modify"]
+
+  UserPermissionsGET:
+    title: GET User Permissions
+    description: Model which defines all possible user permission objects and their actions and options
+    type: object
+    properties:
+      # Each key is a permission object
+      admin:
+        description: "An admin user with no options specified has completely unrestricted access to Balrog"
+        allOf:
+          - $ref: "#/definitions/DataVersionModel"
+          - type: object
+            properties:
+              options:
+                type: ['object', 'null']
+                description: Options available for admin permission
+                properties:
+                  products:
+                    description: If specified, the user can perform any actions on Rules or Releases that affect the specified products
+                    type: array
+                    uniqueItems: true
+                    items:
+                      type: string
+      release:
+        description: "Release permission to perform actions on releases. Example actions: add create, delete or modify release of products"
+        $ref: "#/definitions/UserPermissionsModel"
+
+      rule:
+        description: "Rule permission to perform actions. Example actions: add create, delete or modify rules of products"
+        $ref: "#/definitions/UserPermissionsModel"
+
+      required_signoff:
+        description: "Permission to perform actions related to required signoffs. Example: add create, delete or modify rules of products"
+        $ref: "#/definitions/UserPermissionsModel"
+
+      release_locale:
+        description: "Release Locale permission to perform modify action only on product releases."
+        allOf:
+          - $ref: "#/definitions/DataVersionModel"
+          - type: object
+            properties:
+              options:
+                type: ['object', 'null']
+                description: Options available for the given permission
+                properties:
+                  products:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      type: string
+                  actions:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      type: string
+                      enum: ["modify"]
+
+      release_read_only:
+        description: "Read only Releases permission to perform modify action only on product releases."
+        allOf:
+          - $ref: "#/definitions/DataVersionModel"
+          - type: object
+            properties:
+              options:
+                type: ['object', 'null']
+                description: Options available for the given permission
+                properties:
+                  products:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      type: string
+                  actions:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      type: string
+                      enum: ["set", "unset"]
+
+      permission:
+        description: "permission to perform modify actions only."
+        allOf:
+          - $ref: "#/definitions/DataVersionModel"
+          - type: object
+            properties:
+              options:
+                type: ['object', 'null']
+                description: Options available for the given permission
+                properties:
+                  actions:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      type: string
+                      enum: ["create", "modify", "delete"]
+
+      scheduled_change:
+        description: "permission to schedule a change to rule, release or permission. Only the Balrog Agent should be granted this permission."
+        allOf:
+          - $ref: "#/definitions/DataVersionModel"
+          - type: object
+            properties:
+              options:
+                type: ['object', 'null']
+                description: Options available for the given permission
+                properties:
+                  actions:
+                    type: array
+                    uniqueItems: true
+                    items:
+                      type: string
+                      enum: ["enact"]
 
   HistoryModel:
     title: History Table Model
