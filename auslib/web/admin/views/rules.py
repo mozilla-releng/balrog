@@ -138,7 +138,7 @@ class SingleRuleView(AdminView):
         # form to make sure that the CSRF token is checked.
 
         dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by,
-                         old_data_version=connexion.request.args.get("data_version", None),
+                         old_data_version=connexion.request.args.get("data_version"),
                          transaction=transaction)
 
         return Response(status=200)

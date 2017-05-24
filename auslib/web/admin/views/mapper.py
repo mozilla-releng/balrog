@@ -2,7 +2,7 @@ from auslib.web.admin.views.csrf import CSRFView
 from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRuleColumnView, \
     RuleHistoryAPIView
 from auslib.web.admin.views.permissions import UsersView, AllRolesView, SpecificUserView,\
-    PermissionsView, UserRolesView
+    PermissionsView, UserRolesView, UserRoleView
 
 
 def csrf_get():
@@ -78,3 +78,13 @@ def user_permissions_get(username):
 def user_get_roles(username):
     """GET /users/:username/roles"""
     return UserRolesView().get(username)
+
+
+def user_role_put(username, role):
+    """PUT /users/:username/roles/:role"""
+    return UserRoleView().put(username, role)
+
+
+def user_role_delete(username, role):
+    """DELETE /users/:username/roles/:role"""
+    return UserRoleView().delete(username, role)

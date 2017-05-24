@@ -4,7 +4,7 @@ from flask import Response, jsonify
 from auslib.web.admin.views.problem import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import requirelogin, AdminView
-from auslib.web.admin.views.forms import NewPermissionForm, ExistingPermissionForm, DbEditableForm, \
+from auslib.web.admin.views.forms import NewPermissionForm, ExistingPermissionForm, \
     ScheduledChangeNewPermissionForm, ScheduledChangeExistingPermissionForm, \
     EditScheduledChangeNewPermissionForm, EditScheduledChangeExistingPermissionForm, \
     ScheduledChangeDeletePermissionForm
@@ -225,12 +225,10 @@ class UserRoleView(AdminView):
     def _delete(self, username, role, changed_by, transaction):
         roles = [r['role'] for r in dbo.permissions.getUserRoles(username)]
         if role not in roles:
-            return Response(status=404)
-
-        form = DbEditableForm(connexion.request.args)
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
-
-        dbo.permissions.revokeRole(username, role, changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
+            return problem(404, "Not Found", "Role not found", ext={"exception": "No role '%s' found for "
+                                                                                 "username '%s'" % (role, username)})
+        # query argument i.e. data_version  is also required.
+        # All input value validations already defined in swagger specification and carried out by connexion.
+        dbo.permissions.revokeRole(username, role, changed_by=changed_by,
+                                   old_data_version=connexion.request.args.get("data_version"), transaction=transaction)
         return Response(status=200)

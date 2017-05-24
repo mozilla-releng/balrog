@@ -14,13 +14,14 @@ validator_map = {
     'body': BalrogRequestBodyValidator
 }
 
+# TODO set debug=False after fully migrating all the admin APIs
 connexion_app = connexion.App(__name__, specification_dir='swagger/', validator_map=validator_map, debug=True)
 connexion_app.add_api("api.yaml", validate_responses=True, strict_validation=True)
 app = connexion_app.app
 sentry = Sentry()
 
 from auslib.web.admin.views.permissions import \
-    SpecificPermissionView, UserRoleView, \
+    SpecificPermissionView, \
     PermissionScheduledChangesView, PermissionScheduledChangeView, \
     EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, \
     PermissionScheduledChangeSignoffsView
@@ -101,9 +102,8 @@ Compress(app)
 # hosted at "/api", which is stripped away by the web server before we see
 # these requests.
 app.add_url_rule("/users/<username>/permissions/<permission>", view_func=SpecificPermissionView.as_view("specific_permission"))
-app.add_url_rule("/users/<username>/roles/<role>", view_func=UserRoleView.as_view("user_role"))
 # Normal operations (get/update/delete) on rules can be done by id or alias...
-# ...but anything to do with history must be done by id, beacuse alias may change over time
+# ...but anything to do with history must be done by id, because alias may change over time
 app.add_url_rule("/releases", view_func=ReleasesAPIView.as_view("releases"))
 app.add_url_rule("/releases/<release>", view_func=SingleReleaseView.as_view("single_release"))
 app.add_url_rule("/releases/<release>/read_only", view_func=ReleaseReadOnlyView.as_view("read_only"))

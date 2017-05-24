@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: '2.29'
+  version: '2.30'
   title: "Balrog's Admin API"
   termsOfService: "https://wiki.mozilla.org/Balrog"
   license:
@@ -68,6 +68,44 @@ parameters:
     description: unique identifier name of the user
     type: string
     maxLength: 100
+    required: true
+
+  csrfTokenParam:
+    name: csrf_token
+    in: query
+    description: valid csrf token
+    type: string
+    required: true
+
+  dataVersionParam:
+    name: data_version
+    in: query
+    description: data version of object.
+    type: integer
+    minimum: 1
+    required: true
+
+  roleParam:
+    name: role
+    in: path
+    description: user role to grant access to
+    type: string
+    maxLength: 50
+    required: true
+
+  rule_id_Or_alias_param:
+    name: id_or_alias
+    in: path
+    description: rule_id or alias field value to update the rule against
+    type: string
+    required: true
+
+  rule_id_param:
+    name: rule_id
+    in: path
+    description:  Field value to uniquely identfiy the rule
+    type: integer
+    minimum: 0
     required: true
 
 paths:
@@ -294,6 +332,92 @@ paths:
                 data_version: 2
                 options:
                   actions: ['create', 'modify']
+  /users/{username}/roles/{role}:
+    put:
+      summary: Grants the given username the given role
+      description: >
+        Grants the given username the given role. If the user already holds that role, this is a no-op. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles-role).
+      tags:
+        - Users
+      operationId: auslib.web.admin.views.mapper.user_role_put
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id27"
+        description: Grants the given username the given role
+      parameters:
+        - $ref: '#/parameters/usernameParam'
+        - $ref: '#/parameters/roleParam'
+      responses:
+        '200':
+          description: "If the user already has the desired role, no change needs to be made"
+          schema:
+            type: object
+            required:
+              - new_data_version
+            properties:
+              new_data_version:
+                description: "data version of the existing role"
+                type: integer
+                format: int32
+                minimum: 1
+                example: 2
+        '201':
+          description: "New role successfully assigned to the user"
+          schema:
+            type: object
+            required:
+              - new_data_version
+            properties:
+              new_data_version:
+                description: "data version of the new role assigned. Always 1"
+                type: integer
+                format: int32
+                minimum: 1
+                maximum: 1
+                example: 1
+        default:
+          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
+          examples:
+            application/json:
+              Error: "REMOTE_USERNAME required"
+    delete:
+      summary: Revokes the given role from the given username
+      description: >
+        Revokes the given role from the given username. The 'data_version' parameter must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles-role).
+      tags:
+        - Users
+      operationId: auslib.web.admin.views.mapper.user_role_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id28"
+        description: Revokes the given role from the given username
+      parameters:
+        - $ref: '#/parameters/usernameParam'
+        - $ref: '#/parameters/roleParam'
+        - $ref: '#/parameters/csrfTokenParam'
+        - $ref: '#/parameters/dataVersionParam'
+      responses:
+        '200':
+          description: Successfully revoked the user role
+        '404':
+          description: Role not found
+          schema:
+            $ref: '#/definitions/4xxClientErrorResponseModel'
+          examples:
+            application/json:
+              detail: "Role not found for given username"
+              status: 404
+        default:
+          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
+          examples:
+            application/json:
+              Error: "REMOTE_USERNAME required"
 
   /rules:
     get:
@@ -393,11 +517,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
         description: "Returns the entire rule identified by the id or alias given in JSON format."
       parameters:
-        - name: id_or_alias
-          in: path
-          description: rule_id or alias field value to update the rule against
-          type: string
-          required: true
+        - $ref: '#/parameters/rule_id_Or_alias_param'
 
       responses:
         '200':
@@ -434,11 +554,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
         description: "Returns the entire rule identified by the id or alias given in JSON format."
       parameters:
-        - name: id_or_alias
-          in: path
-          description: rule_id or alias field value to update the rule against
-          type: string
-          required: true
+        - $ref: '#/parameters/rule_id_Or_alias_param'
         - name: rule
           in: body
           description: Rule object data
@@ -452,7 +568,7 @@ paths:
 
       responses:
         '200':
-          description: Successfully updated the rule
+          description: Successfully updated the existing rule
           schema:
             type: object
             required:
@@ -503,11 +619,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
         description: "Returns the entire rule identified by the id or alias given in JSON format."
       parameters:
-        - name: id_or_alias
-          in: path
-          description: rule_id or alias field value to update the rule against
-          type: string
-          required: true
+        - $ref: '#/parameters/rule_id_Or_alias_param'
         - name: rule
           in: body
           description: Rule object data
@@ -521,7 +633,7 @@ paths:
 
       responses:
         '200':
-          description: Successfully updated the rule
+          description: Successfully updated the existing rule
           schema:
             type: object
             required:
@@ -571,22 +683,9 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#delete"
         description: "Deletes the rule identified by the rule_id."
       parameters:
-        - name: id_or_alias
-          in: path
-          description: rule_id or alias field value to update the rule against
-          type: string
-          required: true
-        - name: csrf_token
-          in: query
-          description: valid csrf token
-          type: string
-          required: true
-        - name: data_version
-          in: query
-          description: Name of the product to filter the rules against.
-          type: string
-          required: true
-
+        - $ref: '#/parameters/rule_id_Or_alias_param'
+        - $ref: '#/parameters/csrfTokenParam'
+        - $ref: '#/parameters/dataVersionParam'
       responses:
         '200':
           description: Successfully deleted a rule
@@ -618,12 +717,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#rules"
         description: "Fetches list and count of all the revisions of the rule given by rule_id"
       parameters:
-        - name: rule_id
-          in: path
-          description:  Field value to uniquely identfiy the rule
-          type: integer
-          minimum: 0
-          required: true
+        - $ref: '#/parameters/rule_id_param'
         - name: page
           in: query
           description: Variable value used pagination of response revisions.
@@ -715,12 +809,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field"
         description: "Updates the rule identified by the rule_id to a previous revision identified by change_id."
       parameters:
-        - name: rule_id
-          in: path
-          description:  Field value to uniquely identfiy the rule
-          type: integer
-          minimum: 0
-          required: true
+        - $ref: '#/parameters/rule_id_param'
         - name: rule_change_id
           in: body
           description: change_id of the Rule to revert back to
@@ -1108,32 +1197,6 @@ definitions:
             update_type: "minor"
             version: null
             whitelist: null
-
-  UserRolesModel:
-    title: User Roles object definition
-    description: Users may hold any number of Roles. Roles are used when signing off on Scheduled Changes.
-    type: object
-    properties:
-      data_version:
-        description: the version number of user role
-        type: ["integer", "string"]
-        format: data_version
-        readOnly: true
-        example: 1
-
-      role:
-        description: Roles are used when signing off on Scheduled Changes
-        type: string
-        minLength: 1
-        maxLength: 50
-        example: 'admin'
-
-      username:
-        description: unique identifier name for the user
-        type: string
-        minLength: 1
-        maxLength: 100
-        example: 'balrogadmin'
 
   RulesBase:
     title: Rules object definition
