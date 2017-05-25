@@ -48,6 +48,13 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges) 
     },
     updateRelease: function(name, data, csrf_token) {
       data.csrf_token = csrf_token;
+      for (var i in data) {
+        if (data.hasOwnProperty(i)) {
+          if ((typeof data[i] === 'string' || data[i] instanceof String) && data[i] === "") {
+              data[i] = null;
+          }
+        }
+      }
       return $http.put('/api/releases/' + encodeURIComponent(name), data);
     },
     changeReadOnly: function(name, data, csrf_token) {
@@ -98,6 +105,13 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges) 
 
     updateScheduledChange: function(sc_id, data, csrf_token) {
       data = jQuery.extend({}, data);
+      for (var i in data) {
+        if (data.hasOwnProperty(i)) {
+          if ((typeof data[i] === 'string' || data[i] instanceof String) && data[i] === "") {
+              data[i] = null;
+          }
+        }
+      }
       if (data.when === null) {
         data.when = "";
       }

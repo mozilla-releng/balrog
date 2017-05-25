@@ -22,6 +22,13 @@ var RequiredSignoffBase = (function() {
     },
     updateScheduledChange: function(sc_id, data) {
       var url = "/api/scheduled_changes/" + this.object_name + "/" + sc_id;
+      for (var i in data) {
+        if (data.hasOwnProperty(i)) {
+          if ((typeof data[i] === 'string' || data[i] instanceof String) && data[i] === "") {
+              data[i] = null;
+          }
+        }
+      }
       return this.http.post(url, data);
     },
     deleteScheduledChange: function(sc_id, data) {

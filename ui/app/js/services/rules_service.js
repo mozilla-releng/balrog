@@ -21,7 +21,7 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges) {
       data.csrf_token = csrf_token;
       for (var i in data) {
         if (data.hasOwnProperty(i)) {
-          if (data[i] === "") {
+          if ((typeof data[i] === 'string' || data[i] instanceof String) && data[i] === "") {
               data[i] = null;
           }
         }
@@ -65,6 +65,13 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges) {
     },
     updateScheduledChange: function(sc_id, data, csrf_token) {
       data = jQuery.extend({}, data);
+      for (var i in data) {
+        if (data.hasOwnProperty(i)) {
+          if ((typeof data[i] === 'string' || data[i] instanceof String) && data[i] === "") {
+              data[i] = null;
+          }
+        }
+      }
       if (data.when === null) {
         data.when = "";
       }
