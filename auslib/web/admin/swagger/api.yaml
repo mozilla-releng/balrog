@@ -191,48 +191,6 @@ paths:
                   minItems: 0
                 example: ["releng", "qa"]
 
-  /users/{username}/roles:
-    get:
-      summary: Returns list of user roles
-      description: >
-        Returns list of user roles as a json object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles).
-      tags:
-        - Users
-      operationId: auslib.web.admin.views.mapper.user_get_roles
-      consumes: []
-      produces:
-        - application/json
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id26"
-        description: Returns list of user roles
-      parameters:
-        - $ref: '#/parameters/usernameParam'
-      responses:
-        '200':
-          description: Successfully fetched the list of user roles.
-          schema:
-            type: object
-            properties:
-              roles:
-                description: list of roles
-                type: array
-                uniqueItems: true
-                items:
-                  minItems: 0
-                  type: object
-                  properties:
-                    data_version:
-                      description: the version number of user role
-                      type: integer
-                      minimum: 1
-                      example: 1
-                    role:
-                      description: roles are used when signing off on Scheduled Changes
-                      type: string
-                      minLength: 1
-                      maxLength: 50
-                      example: 'releng'
-
   /users/{username}:
     get:
       summary: Returns all of the details about the user
@@ -332,6 +290,49 @@ paths:
                 data_version: 2
                 options:
                   actions: ['create', 'modify']
+
+  /users/{username}/roles:
+    get:
+      summary: Returns list of user roles
+      description: >
+        Returns list of user roles as a json object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles).
+      tags:
+        - Users
+      operationId: auslib.web.admin.views.mapper.user_get_roles
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id26"
+        description: Returns list of user roles
+      parameters:
+        - $ref: '#/parameters/usernameParam'
+      responses:
+        '200':
+          description: Successfully fetched the list of user roles.
+          schema:
+            type: object
+            properties:
+              roles:
+                description: list of roles
+                type: array
+                uniqueItems: true
+                items:
+                  minItems: 0
+                  type: object
+                  properties:
+                    data_version:
+                      description: the version number of user role
+                      type: integer
+                      minimum: 1
+                      example: 1
+                    role:
+                      description: roles are used when signing off on Scheduled Changes
+                      type: string
+                      minLength: 1
+                      maxLength: 50
+                      example: 'releng'
+
   /users/{username}/roles/{role}:
     put:
       summary: Grants the given username the given role
