@@ -1,0 +1,67 @@
+swagger: '2.0'
+info:
+  title: Balrog Public API
+  description: Balrog Application Update Service
+  version: "1.0.0"
+paths:
+  /update/1/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/update.xml:
+    get:
+      operationId: "auslib.web.public.client.get_update_blob_1"
+      description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
+      parameters:
+        - name: product
+          in: path
+          description: The name of the application requesting an update.
+          required: true
+          type: string
+        - name: version
+          in: path
+          description: The version of the application requesting an update.
+          required: true
+          type: string
+        - name: buildID
+          in: path
+          description: The build ID of the application requesting an update.
+          required: true
+          type: string
+        - name: buildTarget
+          in: path
+          description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
+          required: true
+          type: string
+        - name: locale
+          in: path
+          description: The locale of the application requesting an update.
+          required: true
+          type: string
+        - name: channel
+          in: path
+          description: The update channel of the application request an update.
+          required: true
+          type: string
+        - name: queryVersion
+          in: path
+          description: queryVersion
+          required: true
+          type: integer
+          default: 1
+        - name: osVersion
+          in: path
+          description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+          required: true
+          type: string
+          default: ""
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
+      responses:
+        200:
+          description: Update blob in text/xml format.

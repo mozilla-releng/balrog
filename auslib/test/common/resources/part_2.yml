@@ -1,0 +1,51 @@
+paths:
+  /releases:
+    get:
+      operationId: "auslib.web.public.releases.get"
+      description: ""
+      produces: ["application/json"]
+      parameters:
+        - name: product
+          in: query
+          required: false
+          type: string
+        - name: name_prefix
+          in: query
+          required: false
+          type: string
+        - name: names_only
+          in: query
+          required: false
+          type: string
+      responses:
+        200:
+          description: ""
+          schema:
+            $ref: "#/definitions/ReleasesWrapper"
+
+definitions:
+  Release:
+    type: object
+    properties:
+      name:
+        type: string
+      product:
+        type: string
+      read_only:
+        type: boolean
+      rule_ids:
+        type: array
+        items:
+          type: integer
+
+  ReleasesWrapper:
+    type: object
+    properties:
+      names:
+        type: array
+        items:
+          type: string
+      releases:
+        type: array
+        items:
+          $ref: "#/definitions/Release"

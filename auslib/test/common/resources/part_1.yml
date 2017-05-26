@@ -1,0 +1,67 @@
+paths:
+  /rules:
+    get:
+      operationId: "auslib.web.public.rules.get"
+      description: ""
+      produces: ["application/json"]
+      responses:
+        200:
+          description: ""
+          schema:
+            $ref: "#/definitions/RulesWrapper"
+
+definitions:
+  Rule:
+    type: object
+    properties:
+      rule_id:
+        type: integer
+        format: int32
+      alias:
+        type: ["string", "null"]
+      priority:
+        type: ["integer", "null"]
+        format: int32
+      mapping:
+        type: ["string", "null"]
+      fallbackMapping:
+        type: ["string", "null"]
+      backgroundRate:
+        type: ["integer", "null"]
+        format: int32
+      update_type:
+        type: string
+      product:
+        type: ["string", "null"]
+      version:
+        type: ["string", "null"]
+      channel:
+        type: ["string", "null"]
+      buildTarget:
+        type: ["string", "null"]
+      buildID:
+        type: ["string", "null"]
+      locale:
+        type: ["string", "null"]
+      osVersion:
+        type: ["string", "null"]
+      systemCapabilities:
+        type: ["string", "null"]
+      distribution:
+        type: ["string", "null"]
+      distVersion:
+        type: ["string", "null"]
+      headerArchitecture:
+        type: ["string", "null"]
+      comment:
+        type: ["string", "null"]
+  RulesWrapper:
+    type: object
+    properties:
+      count:
+        type: integer
+        format: int32
+      rules:
+        type: array
+        items:
+          $ref: "#/definitions/Rule"

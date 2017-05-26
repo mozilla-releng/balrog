@@ -1,6 +1,7 @@
 import cgi
 import connexion
 import logging
+import yaml
 
 from flask import make_response, send_from_directory, Response
 
@@ -20,7 +21,12 @@ validator_map = {
 }
 
 connexion_app = connexion.App(__name__, specification_dir='.', validator_map=validator_map)
-connexion_app.add_api('api.yml', validate_responses=True, strict_validation=True)
+
+import os
+f = os.path.join(os.path.dirname(__file__), 'api.yml')
+stream = file(f, 'r')
+spec = yaml.load(stream)
+connexion_app.add_api(spec, validate_responses=True, strict_validation=True)
 app = connexion_app.app
 
 

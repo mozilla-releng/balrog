@@ -1,0 +1,181 @@
+swagger: '2.0'
+info:
+  title: Balrog Public API
+  description: Balrog Application Update Service
+  version: "1.0.0"
+paths:
+  /update/1/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/update.xml:
+    get:
+      operationId: "auslib.web.public.client.get_update_blob_1"
+      description: Returns an update blob for the given parameters.
+      produces: ["text/xml"]
+      parameters:
+        - name: product
+          in: path
+          description: The name of the application requesting an update.
+          required: true
+          type: string
+        - name: version
+          in: path
+          description: The version of the application requesting an update.
+          required: true
+          type: string
+        - name: buildID
+          in: path
+          description: The build ID of the application requesting an update.
+          required: true
+          type: string
+        - name: buildTarget
+          in: path
+          description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
+          required: true
+          type: string
+        - name: locale
+          in: path
+          description: The locale of the application requesting an update.
+          required: true
+          type: string
+        - name: channel
+          in: path
+          description: The update channel of the application request an update.
+          required: true
+          type: string
+        - name: queryVersion
+          in: path
+          description: queryVersion
+          required: true
+          type: integer
+          default: 1
+        - name: osVersion
+          in: path
+          description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+          required: true
+          type: string
+          default: ""
+        - name: avast
+          in: query
+          description: avast
+          required: false
+          type: string
+        - name: force
+          in: query
+          description: force
+          required: false
+          type: string
+      responses:
+        200:
+          description: Update blob in text/xml format.
+  /rules:
+    get:
+      operationId: "auslib.web.public.rules.get"
+      description: ""
+      produces: ["application/json"]
+      responses:
+        200:
+          description: ""
+          schema:
+            $ref: "#/definitions/RulesWrapper"
+  /releases:
+    get:
+      operationId: "auslib.web.public.releases.get"
+      description: ""
+      produces: ["application/json"]
+      parameters:
+        - name: product
+          in: query
+          required: false
+          type: string
+        - name: name_prefix
+          in: query
+          required: false
+          type: string
+        - name: names_only
+          in: query
+          required: false
+          type: string
+      responses:
+        200:
+          description: ""
+          schema:
+            $ref: "#/definitions/RulesWrapper"
+
+definitions:
+  Rule:
+    type: object
+    properties:
+      rule_id:
+        type: integer
+        format: int32
+      alias:
+        type: ["string", "null"]
+      priority:
+        type: ["integer", "null"]
+        format: int32
+      mapping:
+        type: ["string", "null"]
+      fallbackMapping:
+        type: ["string", "null"]
+      backgroundRate:
+        type: ["integer", "null"]
+        format: int32
+      update_type:
+        type: string
+      product:
+        type: ["string", "null"]
+      version:
+        type: ["string", "null"]
+      channel:
+        type: ["string", "null"]
+      buildTarget:
+        type: ["string", "null"]
+      buildID:
+        type: ["string", "null"]
+      locale:
+        type: ["string", "null"]
+      osVersion:
+        type: ["string", "null"]
+      systemCapabilities:
+        type: ["string", "null"]
+      distribution:
+        type: ["string", "null"]
+      distVersion:
+        type: ["string", "null"]
+      headerArchitecture:
+        type: ["string", "null"]
+      comment:
+        type: ["string", "null"]
+  RulesWrapper:
+    type: object
+    properties:
+      count:
+        type: integer
+        format: int32
+      rules:
+        type: array
+        items:
+          $ref: "#/definitions/Rule"
+  Release:
+    type: object
+    properties:
+      name:
+        type: string
+      product:
+        type: string
+      read_only:
+        type: boolean
+      rule_ids:
+        type: array
+        items:
+          type: integer
+
+  ReleasesWrapper:
+    type: object
+    properties:
+      names:
+        type: array
+        items:
+          type: string
+      releases:
+        type: array
+        items:
+          $ref: "#/definitions/Release"
