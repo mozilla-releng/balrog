@@ -1,4 +1,4 @@
-angular.module("app").factory('Rules', function($http, ScheduledChanges) {
+angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers) {
   // these routes map to stubbed API endpoints in config/server.js
   var service = {
     getRules: function() {
@@ -19,6 +19,7 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges) {
     },
     updateRule: function(id, data, csrf_token) {
       data.csrf_token = csrf_token;
+      data = Helpers.replaceEmptyStrings(data);
       return $http.put('/api/rules/' + id, data);
     },
     deleteRule: function(id, data, csrf_token) {
@@ -29,6 +30,7 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges) {
     },
     addRule: function(data, csrf_token) {
       data.csrf_token = csrf_token;
+      data = Helpers.replaceEmptyStrings(data);
       return $http.post('/api/rules', data);
     },
     revertRule: function(id, change_id, csrf_token) {
@@ -44,6 +46,7 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges) {
     },
     addScheduledChange: function(data, csrf_token) {
       data = jQuery.extend({}, data);
+      data = Helpers.replaceEmptyStrings(data);
       if (data.when === null) {
         data.when = "";
       }
@@ -58,6 +61,7 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges) {
     },
     updateScheduledChange: function(sc_id, data, csrf_token) {
       data = jQuery.extend({}, data);
+      data = Helpers.replaceEmptyStrings(data);
       if (data.when === null) {
         data.when = "";
       }
