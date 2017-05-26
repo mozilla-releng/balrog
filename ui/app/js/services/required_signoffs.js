@@ -9,6 +9,7 @@ var RequiredSignoffBase = (function() {
       return this.http.get(url);
     },
     addRequiredSignoff: function(data) {
+      data = this.Helpers.replaceEmptyStrings(data);
       var url = "/api/" + this.object_name;
       return this.http.post(url, data);
     },
@@ -17,18 +18,13 @@ var RequiredSignoffBase = (function() {
       return this.http.get(url);
     },
     addScheduledChange: function(data) {
+      data = this.Helpers.replaceEmptyStrings(data);
       var url = "/api/scheduled_changes/" + this.object_name;
       return this.http.post(url, data);
     },
     updateScheduledChange: function(sc_id, data) {
+      data = this.Helpers.replaceEmptyStrings(data);
       var url = "/api/scheduled_changes/" + this.object_name + "/" + sc_id;
-      for (var i in data) {
-        if (data.hasOwnProperty(i)) {
-          if ((typeof data[i] === 'string' || data[i] instanceof String) && data[i] === "") {
-              data[i] = null;
-          }
-        }
-      }
       return this.http.post(url, data);
     },
     deleteScheduledChange: function(sc_id, data) {
@@ -50,18 +46,20 @@ var RequiredSignoffBase = (function() {
   return service;
 }());
 
-angular.module("app").factory("ProductRequiredSignoffs", function($http, ScheduledChanges) {
+angular.module("app").factory("ProductRequiredSignoffs", function($http, ScheduledChanges, Helpers) {
   var service = Object.create(RequiredSignoffBase);
   service.object_name = "required_signoffs/product";
   service.http = $http;
   service.ScheduledChanges = ScheduledChanges;
+  service.Helpers = Helpers;
   return service;
 });
 
-angular.module("app").factory("PermissionsRequiredSignoffs", function($http, ScheduledChanges) {
+angular.module("app").factory("PermissionsRequiredSignoffs", function($http, ScheduledChanges, Helpers) {
   var service = Object.create(RequiredSignoffBase);
   service.object_name = "required_signoffs/permissions";
   service.http = $http;
   service.ScheduledChanges = ScheduledChanges;
+  service.Helpers = Helpers;
   return service;
 });

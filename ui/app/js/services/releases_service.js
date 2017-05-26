@@ -1,4 +1,4 @@
-angular.module("app").factory('Releases', function($http, $q, ScheduledChanges) {
+angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, Helpers) {
   var service = {
     getNames: function() {
       var deferred = $q.defer();
@@ -48,13 +48,7 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges) 
     },
     updateRelease: function(name, data, csrf_token) {
       data.csrf_token = csrf_token;
-      for (var i in data) {
-        if (data.hasOwnProperty(i)) {
-          if ((typeof data[i] === 'string' || data[i] instanceof String) && data[i] === "") {
-              data[i] = null;
-          }
-        }
-      }
+      data = Helpers.replaceEmptyStrings(data);
       return $http.put('/api/releases/' + encodeURIComponent(name), data);
     },
     changeReadOnly: function(name, data, csrf_token) {
@@ -69,6 +63,7 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges) 
     },
     addRelease: function(data, csrf_token) {
       data.csrf_token = csrf_token;
+      data = Helpers.replaceEmptyStrings(data);
       return $http.post('/api/releases', data);
     },
     revertRelease: function(name, change_id, csrf_token) {
@@ -93,6 +88,7 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges) 
 
     addScheduledChange: function(data, csrf_token) {
       data = jQuery.extend({}, data);
+      data = Helpers.replaceEmptyStrings(data);
       if (data.when === null) {
         data.when = "";
       }
@@ -105,13 +101,7 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges) 
 
     updateScheduledChange: function(sc_id, data, csrf_token) {
       data = jQuery.extend({}, data);
-      for (var i in data) {
-        if (data.hasOwnProperty(i)) {
-          if ((typeof data[i] === 'string' || data[i] instanceof String) && data[i] === "") {
-              data[i] = null;
-          }
-        }
-      }
+      data = Helpers.replaceEmptyStrings(data);
       if (data.when === null) {
         data.when = "";
       }
