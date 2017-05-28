@@ -218,9 +218,9 @@ class TestRulesAPI_JSON(ViewTest):
     def testPutDataVersionLessThanOne(self):
         # Throw 400 error when data_version is less than 1.
         ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d',
-                                              priority=73, data_version=1,
+                                              priority=73, data_version=0,
                                               product='Firefox', channel='nightly', update_type='minor'))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
 
 class TestSingleRuleView_JSON(ViewTest):

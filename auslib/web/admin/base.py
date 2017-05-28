@@ -102,8 +102,6 @@ Compress(app)
 # hosted at "/api", which is stripped away by the web server before we see
 # these requests.
 app.add_url_rule("/users/<username>/permissions/<permission>", view_func=SpecificPermissionView.as_view("specific_permission"))
-# Normal operations (get/update/delete) on rules can be done by id or alias...
-# ...but anything to do with history must be done by id, because alias may change over time
 app.add_url_rule("/releases", view_func=ReleasesAPIView.as_view("releases"))
 app.add_url_rule("/releases/<release>", view_func=SingleReleaseView.as_view("single_release"))
 app.add_url_rule("/releases/<release>/read_only", view_func=ReleaseReadOnlyView.as_view("read_only"))

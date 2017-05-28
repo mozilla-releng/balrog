@@ -93,7 +93,7 @@ parameters:
     maxLength: 50
     required: true
 
-  rule_id_Or_alias_param:
+  rule_id_or_alias_param:
     name: id_or_alias
     in: path
     description: rule_id or alias field value to update the rule against
@@ -487,7 +487,7 @@ paths:
           examples:
             text/html: 514
         '400':
-          description: Bad Request. Invalid POST request.
+          description: Error in form data.
           schema:
             $ref: '#/definitions/4xxClientErrorResponseModel'
           examples:
@@ -518,7 +518,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
         description: "Returns the entire rule identified by the id or alias given in JSON format."
       parameters:
-        - $ref: '#/parameters/rule_id_Or_alias_param'
+        - $ref: '#/parameters/rule_id_or_alias_param'
 
       responses:
         '200':
@@ -535,7 +535,6 @@ paths:
           description: Requested rule did not exist
           schema:
             $ref: "#/definitions/4xxClientErrorResponseModel"
-            example: Requested rule does not exist
           examples:
             application/json:
               detail: "Requested rule does not exist"
@@ -555,7 +554,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
         description: "Returns the entire rule identified by the id or alias given in JSON format."
       parameters:
-        - $ref: '#/parameters/rule_id_Or_alias_param'
+        - $ref: '#/parameters/rule_id_or_alias_param'
         - name: rule
           in: body
           description: Rule object data
@@ -590,7 +589,7 @@ paths:
               detail: Requested rule does not exist
               status: 404
         '400':
-          description: "Bad Request's Response"
+          description: "Error in form data"
           schema:
             $ref: '#/definitions/4xxClientErrorResponseModel'
           examples:
@@ -620,7 +619,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
         description: "Returns the entire rule identified by the id or alias given in JSON format."
       parameters:
-        - $ref: '#/parameters/rule_id_Or_alias_param'
+        - $ref: '#/parameters/rule_id_or_alias_param'
         - name: rule
           in: body
           description: Rule object data
@@ -655,7 +654,7 @@ paths:
               detail: Requested rule does not exist
               status: 404
         '400':
-          description: "Bad Request's Response"
+          description: "Error in form data"
           schema:
             $ref: '#/definitions/4xxClientErrorResponseModel'
           examples:
@@ -684,7 +683,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#delete"
         description: "Deletes the rule identified by the rule_id."
       parameters:
-        - $ref: '#/parameters/rule_id_Or_alias_param'
+        - $ref: '#/parameters/rule_id_or_alias_param'
         - $ref: '#/parameters/csrfTokenParam'
         - $ref: '#/parameters/dataVersionParam'
       responses:
@@ -787,7 +786,7 @@ paths:
               detail: Requested rule revision does not exist
               status: 404
         '400':
-          description: "Bad Request's Response"
+          description: "Error in form data"
           schema:
             $ref: '#/definitions/4xxClientErrorResponseModel'
           examples:
@@ -841,7 +840,7 @@ paths:
               detail: Requested rule revision does not exist
               status: 404
         '400':
-          description: "Bad Request's Response"
+          description: "Error in form data"
           schema:
             $ref: '#/definitions/4xxClientErrorResponseModel'
           examples:
