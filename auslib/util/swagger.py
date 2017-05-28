@@ -1,8 +1,14 @@
 import yaml
+import auslib
+
+from os import path
+
+AUS_DIR = path.dirname(auslib.__file__)
 
 
 class SpecBuilder():
-    def __init__(self, endpoints_key="paths", definitions_key="definitions"):
+    def __init__(self, app, endpoints_key="paths", definitions_key="definitions"):
+        self._app = app
         self.endpoints_key = endpoints_key
         self.definitions_key = definitions_key
         self._main_spec = {}
@@ -16,20 +22,19 @@ class SpecBuilder():
                 self._get_dict(v, key)
         return None
 
-    def _read_yaml(self, file_name):
-        content = ""
-        with open(file_name, 'r') as f:
-            content = f.read()
-        return content
+    def _load_spec(self, file_name):
+        with file(file_name, 'r') as spec_file:
+            return yaml.load(spec_file)
 
     def add_main_spec(self, file_name):
-        stream = file(file_name, 'r')
-        self._main_spec = yaml.load(stream)
+        app_dir = self._app.root_path
+        file_name = path.join(app_dir, file_name)
+        self._main_spec = self._load_spec(file_name)
         return self
 
     def add_spec_part(self, file_name):
-        stream = file(file_name, 'r')
-        self._spec_parts.append(yaml.load(stream))
+        file_name = path.join(AUS_DIR, file_name)
+        self._spec_parts.append(self._load_spec(file_name))
         return self
 
     def build(self):

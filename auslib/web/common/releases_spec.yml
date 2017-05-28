@@ -1,0 +1,83 @@
+paths:
+  /releases:
+    get:
+      operationId: "auslib.web.common.releases.get_releases"
+      description: ""
+      produces: ["application/json"]
+      parameters:
+        - name: product
+          in: query
+          required: false
+          type: string
+        - name: name_prefix
+          in: query
+          required: false
+          type: string
+        - name: names_only
+          in: query
+          required: false
+          type: string
+      responses:
+        200:
+          description: ""
+          schema:
+            $ref: "#/definitions/ReleasesWrapper"
+
+  /releases/{release}:
+    get:
+      operationId: "auslib.web.common.releases.get_release"
+      description: ""
+      produces: ["application/json"]
+      parameters:
+        - name: release
+          in: path
+          required: true
+          type: string
+        - name: pretty
+          in: query
+          required: false
+          type: integer
+      responses:
+        200:
+          description: "Release Blob"
+
+  /releases/{release}/revisions:
+    get:
+      operationId: "auslib.web.common.releases.get_release_history"
+      description: ""
+      produces: ["application/json"]
+      parameters:
+        - name: release
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: "Release History"
+
+definitions:
+  Release:
+    type: object
+    properties:
+      name:
+        type: string
+      product:
+        type: string
+      read_only:
+        type: ["boolean", "null"]
+      rule_ids:
+        type: array
+        items:
+          type: integer
+
+  ReleasesWrapper:
+    type: object
+    properties:
+      names:
+        type: array
+        items:
+          type: string
+      releases:
+        type: array
+        items:
+          $ref: "#/definitions/Release"

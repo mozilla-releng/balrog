@@ -1,7 +1,6 @@
 import cgi
 import connexion
 import logging
-import yaml
 
 from flask import make_response, send_from_directory, Response
 
@@ -9,6 +8,7 @@ from raven.contrib.flask import Sentry
 
 from auslib.AUS import AUS
 from auslib.web.api_validator import BalrogParameterValidator
+from auslib.util.swagger import SpecBuilder
 
 from auslib.errors import BadDataError
 
@@ -21,13 +21,13 @@ validator_map = {
 }
 
 connexion_app = connexion.App(__name__, specification_dir='.', validator_map=validator_map)
-
-import os
-f = os.path.join(os.path.dirname(__file__), 'api.yml')
-stream = file(f, 'r')
-spec = yaml.load(stream)
-connexion_app.add_api(spec, validate_responses=True, strict_validation=True)
 app = connexion_app.app
+
+spec = SpecBuilder(app).add_main_spec('api.yml')\
+                       .add_spec_part('web/common/releases_spec.yml')\
+                       .add_spec_part('web/common/rules_spec.yml')\
+                       .build()
+connexion_app.add_api(spec, validate_responses=True, strict_validation=True)
 
 
 @app.after_request
