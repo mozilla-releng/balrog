@@ -85,6 +85,23 @@ parameters:
     minimum: 1
     required: true
 
+  permissionParam:
+    name: permission
+    in: path
+    description: permission name
+    type: string
+    enum:
+      - admin
+      - rule
+      - release
+      - release_read_only
+      - release_locale
+      - required_signoff
+      - permission
+      - scheduled_change
+    maxLength: 50
+    required: true
+
   roleParam:
     name: role
     in: path
@@ -107,6 +124,96 @@ parameters:
     type: integer
     minimum: 0
     required: true
+
+  userPermissionFormDataParam:
+    name: user_permission_request_body
+    in: body
+    description: Request body containing options and data version field values for manipulating user permission values in DB
+    required: true
+    schema:
+      allOf:
+        - $ref: '#/definitions/CSRFModel'
+        - type: object
+          properties:
+            data_version:
+              type: integer
+              format: int32
+              description: data_version of permission
+              minimum: 1
+              example: 1
+            options:
+              type: ["string", "null"]
+              format: JSONStringField
+              description: JSON field specifying the actions that user can perform and the prdouct on which it has current permission to do so
+              example: "{'actions':['modify']}"
+          # accomodate 'options_as_json' and 'permission' which are duplicate values of 'options'
+          # and 'permission path parameter' respectively, getting passed in request body
+          # No need to validate the duplicate values again
+          additionalProperties: true
+
+
+responses:
+  updateExistingPermission:
+    description: "If the user already has the given permission, update its options and the data_version"
+    schema:
+      type: object
+      required:
+        - new_data_version
+      properties:
+        new_data_version:
+          description: "data version of the updated permission"
+          type: integer
+          format: int32
+          minimum: 2
+          example: 2
+
+  newObjectDataVersion:
+    description: "When a new object (permission/role) is successfully assigned to the user. Its data version value is always 1"
+    schema:
+      type: object
+      required:
+        - new_data_version
+      properties:
+        new_data_version:
+          description: "data version of the new object (permission/role) assigned.Value is always 1"
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 1
+          example: 1
+
+  invalidFormData:
+    description: Error in form data
+    schema:
+      $ref: '#/definitions/4xxClientErrorResponseModel'
+    examples:
+      application/json:
+        detail: "Invalid field value"
+        status: 400
+
+  unauthorizedUser:
+    description: Not authorized to access resource
+    schema:
+      $ref: "#/definitions/4xxClientErrorResponseModel"
+    examples:
+      application/json:
+        detail: "You are not authorized to access this resource"
+        status: 403
+
+  resourceNotFound:
+    description: Resource Not Found
+    schema:
+      $ref: "#/definitions/4xxClientErrorResponseModel"
+    examples:
+      application/json:
+        detail: "Requested resource was not found"
+        status: 404
+
+  defaultResponse:
+    description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
+    examples:
+      application/json:
+        Error: "REMOTE_USERNAME required"
 
 paths:
   /csrf_token:
@@ -247,21 +354,9 @@ paths:
                   data_version: 1
               username: balrogadmin
         '404':
-          description: No permission found for given username
-          schema:
-            $ref: "#/definitions/4xxClientErrorResponseModel"
-          examples:
-            application/json:
-              detail: "No permission found for username"
-              status: 404
+          $ref: '#/responses/resourceNotFound'
         '403':
-          description: Not authorized to view permissions of other users
-          schema:
-            $ref: "#/definitions/4xxClientErrorResponseModel"
-          examples:
-            application/json:
-              detail: "You are not authorized to view permissions of other users"
-              status: 403
+          $ref: '#/responses/unauthorizedUser'
 
   /users/{username}/permissions:
     get:
@@ -366,19 +461,7 @@ paths:
                 minimum: 1
                 example: 2
         '201':
-          description: "New role successfully assigned to the user"
-          schema:
-            type: object
-            required:
-              - new_data_version
-            properties:
-              new_data_version:
-                description: "data version of the new role assigned. Always 1"
-                type: integer
-                format: int32
-                minimum: 1
-                maximum: 1
-                example: 1
+          $ref: '#/responses/newObjectDataVersion'
         default:
           description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
           examples:
@@ -407,18 +490,146 @@ paths:
         '200':
           description: Successfully revoked the user role
         '404':
-          description: Role not found
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              detail: "Role not found for given username"
-              status: 404
+          $ref: '#/responses/resourceNotFound'
         default:
-          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
+          $ref: '#/responses/defaultResponse'
+
+  /users/{username}/permissions/{permission}:
+    get:
+      summary: Returns the details of the named permission
+      description: >
+        Returns the details of the named permission for the username given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
+      tags:
+        - Users
+      operationId: auslib.web.admin.views.mapper.user_specific_permission_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id22"
+        description: Returns the details of the named permission
+      parameters:
+        - $ref: '#/parameters/usernameParam'
+        - $ref: '#/parameters/permissionParam'
+      responses:
+        '200':
+          description: Successfully fetched the details of the given permission
+          schema:
+            allOf:
+              - $ref: "#/definitions/DataVersionModel"
+              - type: object
+                properties:
+                  options:
+                    type: ['object', 'null']
+                    description: Options available for the given permission
+                    properties:
+                      products:
+                        type: array
+                        uniqueItems: true
+                        items:
+                          type: string
+                      actions:
+                        type: array
+                        uniqueItems: true
+                        items:
+                          type: string
+                          enum: ["set", "unset", "create", "modify", "delete", "enact"]
           examples:
             application/json:
-              Error: "REMOTE_USERNAME required"
+              data_version: 1
+              options:
+                actions:
+                  - create
+                  - modify
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    put:
+      summary: Overwrites the details of named permission for the username given. If the permission does not exist, it is created.
+      description: >
+        Overwrites the details of named permission for the username given. If the permission does not exist, it is created. The following parameters are supported , data_version (required if the permission already exists) and options, a JSON string field [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
+      tags:
+        - Users
+      operationId: auslib.web.admin.views.mapper.user_specific_permission_put
+      consumes:
+        - application/json
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id23"
+        description: Overwrites the options of named permission for the username given.If the permission does not exist, it is created first.
+      parameters:
+        - $ref: '#/parameters/usernameParam'
+        - $ref: '#/parameters/permissionParam'
+        - $ref: '#/parameters/userPermissionFormDataParam'
+      responses:
+        '200':
+          $ref: '#/responses/updateExistingPermission'
+        '201':
+          $ref: '#/responses/newObjectDataVersion'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        default:
+          $ref: '#/responses/defaultResponse'
+
+    post:
+      summary: Only overwrites the details of named permission for the username given.
+      description: >
+        Overwrites the details of named permission for the username given. The following parameters are supported , data_version(required) and options, a JSON string field [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
+      tags:
+        - Users
+      operationId: auslib.web.admin.views.mapper.user_specific_permission_post
+      consumes:
+        - application/json
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id23"
+        description: Overwrites the options of named permission for the username given.
+      parameters:
+        - $ref: '#/parameters/usernameParam'
+        - $ref: '#/parameters/permissionParam'
+        - $ref: '#/parameters/userPermissionFormDataParam'
+      responses:
+        '200':
+          $ref: '#/responses/updateExistingPermission'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        default:
+          $ref: '#/responses/defaultResponse'
+
+    delete:
+      summary: Deletes the named permission for the username given.
+      description: >
+        Deletes the named permission for the username given. data_version is required. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
+      tags:
+        - Users
+      operationId: auslib.web.admin.views.mapper.user_specific_permission_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id28"
+        description: Deletes the named permission for the username given. The 'data_version' parameter must be provided.
+      parameters:
+        - $ref: '#/parameters/usernameParam'
+        - $ref: '#/parameters/permissionParam'
+        - $ref: '#/parameters/csrfTokenParam'
+        - $ref: '#/parameters/dataVersionParam'
+      responses:
+        '200':
+          description: Successfully deleted the permission
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        default:
+          $ref: '#/responses/defaultResponse'
 
   /rules:
     get:
@@ -487,21 +698,12 @@ paths:
           examples:
             text/html: 514
         '400':
-          description: Error in form data.
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              detail: "Invalid field value"
-              status: 400
+          $ref: '#/responses/invalidFormData'
 
         default:
           # Without this if any exception that should not occur for the particular API does occur
           # will be absorbed and won't be returned to user by handleGeneralExceptions method in views/base.py
-          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
-          examples:
-            application/json:
-              Error: "REMOTE_USERNAME required"
+          $ref: '#/responses/defaultResponse'
 
   /rules/{id_or_alias}:
     get:
@@ -532,13 +734,7 @@ paths:
               format: int32
               minimum: 1
         '404':
-          description: Requested rule did not exist
-          schema:
-            $ref: "#/definitions/4xxClientErrorResponseModel"
-          examples:
-            application/json:
-              detail: "Requested rule does not exist"
-              status: "404"
+          $ref: '#/responses/resourceNotFound'
     post:
       summary: Updates the rule
       description: >
@@ -581,28 +777,12 @@ paths:
                 minimum: 2
                 example: 2
         '404':
-          description: Requested rule did not exist
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              detail: Requested rule does not exist
-              status: 404
+          $ref: '#/responses/resourceNotFound'
         '400':
-          description: "Error in form data"
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              title: OutdatedDataError
-              detail: Outdated Data Version
-              exception: "old_data_version doesn't match current data_version"
-              status: 400
+          $ref: '#/responses/invalidFormData'
         default:
-          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
-          examples:
-            application/json:
-              Error: "REMOTE_USERNAME required"
+          $ref: '#/responses/defaultResponse'
+
     # Exactly same as POST
     put:
       summary: Updates the rule
@@ -640,34 +820,18 @@ paths:
               - new_data_version
             properties:
               new_data_version:
-                description: "Newly created rule's data version. Will always be greater than 1"
+                description: "Updated rule's new data version. Will always be greater than 1"
                 type: integer
                 format: int32
                 minimum: 2
                 example: 2
         '404':
-          description: Requested rule did not exist
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              detail: Requested rule does not exist
-              status: 404
+          $ref: '#/responses/resourceNotFound'
         '400':
-          description: "Error in form data"
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              title: OutdatedDataError
-              detail: Outdated Data Version
-              exception: "old_data_version doesn't match current data_version"
-              status: 400
+          $ref: '#/responses/invalidFormData'
         default:
-          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
-          examples:
-            application/json:
-              Error: "REMOTE_USERNAME required"
+          $ref: '#/responses/defaultResponse'
+
     delete:
       summary: Deletes a rule identified by the rule id
       description: >
@@ -690,18 +854,9 @@ paths:
         '200':
           description: Successfully deleted a rule
         '404':
-          description: Requested rule did not exist
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              detail: Requested rule does not exist
-              status: 404
+          $ref: '#/responses/resourceNotFound'
         default:
-          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
-          examples:
-            application/json:
-              Error: "REMOTE_USERNAME required"
+          $ref: '#/responses/defaultResponse'
 
   /rules/{rule_id}/revisions:
     get:
@@ -777,23 +932,10 @@ paths:
                   whitelist: null
 
         '404':
-          description: Requested rule revision did not exist
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              title: Not Found
-              detail: Requested rule revision does not exist
-              status: 404
+          $ref: '#/responses/resourceNotFound'
         '400':
-          description: "Error in form data"
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              title: Bad Request
-              detail: Error when trying to fetch Rule revisions
-              status: 400
+          $ref: '#/responses/invalidFormData'
+
     post:
       summary: Reverts the rule to a previous revision
       description: >
@@ -831,28 +973,11 @@ paths:
         '200':
           description: Successfully reverted back the Rule
         '404':
-          description: Requested rule revision did not exist
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              title: Not Found
-              detail: Requested rule revision does not exist
-              status: 404
+          $ref: '#/responses/resourceNotFound'
         '400':
-          description: "Error in form data"
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              title: Bad Request
-              detail: Error when trying to Revert to Rule revisions
-              status: 400
+          $ref: '#/responses/invalidFormData'
         default:
-          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
-          examples:
-            application/json:
-              Error: "REMOTE_USERNAME required"
+          $ref: '#/responses/defaultResponse'
 
   /rules/columns/{column}:
     get:
@@ -901,18 +1026,12 @@ paths:
               count: 5
               rule_id: [1,2,3,4,5]
         '404':
-          description: Requested rule column did not exist
-          schema:
-            $ref: '#/definitions/4xxClientErrorResponseModel'
-          examples:
-            application/json:
-              detail: Requested rule column does not exist
-              status: 404
+          $ref: '#/responses/resourceNotFound'
 
 definitions:
   4xxClientErrorResponseModel:
     title: "4xx Response"
-    description: "Invalid client request's response object. The 4xx class of status codes is intended for situations in which the client seems to have erred. This model describes the response format"
+    description: "Invalid request's response object. The 4xx class of status codes is intended for situations in which the client seems to have erred. This model describes the response format"
     type: object
     # currently we're using detail and status only in the UI
     # Therefore rest of fields aren't always required.
