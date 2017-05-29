@@ -44,8 +44,9 @@ def process_rule_form(form_data):
             rule_form_dict[i] = int(rule_form_dict[i])
 
     mapping_values = [y for x, y in mapping_choices if x == rule_form_dict.get("mapping")]
+    fallback_mapping_values = [y for x, y in mapping_choices if x == rule_form_dict.get("fallbackMapping")]
 
-    return rule_form_dict, mapping_values
+    return rule_form_dict, mapping_values, fallback_mapping_values
 
 
 class RulesAPIView(AdminView):
@@ -74,9 +75,14 @@ class RulesAPIView(AdminView):
     @requirelogin
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
-        what, mapping_values = process_rule_form(connexion.request.json)
+        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.json)
+
         if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
+
+        if what.get('fallbackMapping', None) is not None and len(fallback_mapping_values) != 1:
+            return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
+
         # Solves Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
         what.pop("csrf_token", None)
         rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
@@ -106,10 +112,13 @@ class SingleRuleView(AdminView):
             return problem(status=404, title="Not Found", detail="Requested rule wasn't found",
                            ext={"exception": "Requested rule does not exist"})
 
-        what, mapping_values = process_rule_form(connexion.request.json)
+        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.json)
 
         if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
+
+        if what.get('fallbackMapping', None) is not None and len(fallback_mapping_values) != 1:
+            return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
         # Solves https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
         what.pop("csrf_token", None)
