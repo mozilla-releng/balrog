@@ -3,6 +3,7 @@ from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRul
     RuleHistoryAPIView
 from auslib.web.admin.views.permissions import UsersView, AllRolesView, SpecificUserView,\
     PermissionsView, UserRolesView, UserRoleView, SpecificPermissionView
+from releases import ReleaseDiffView, ReleaseFieldView
 
 
 def csrf_get():
@@ -108,3 +109,13 @@ def user_specific_permission_post(username, permission):
 def user_specific_permission_delete(username, permission):
     """DELETE /users/:username/permissions/:permission"""
     return SpecificPermissionView().delete(username, permission)
+
+
+def release_diff_history_get(change_id, field):
+    """GET /history/diff/release/:id/:field"""
+    return ReleaseDiffView().get(change_id, field)
+
+
+def release_view_history_get(change_id, field):
+    """GET /history/view/release/:id/:field"""
+    return ReleaseFieldView().get(change_id, field)

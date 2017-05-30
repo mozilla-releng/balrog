@@ -19,6 +19,7 @@ from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
     SignoffsView
 from auslib.web.admin.views.history import HistoryView
+from auslib.web.admin.views.problem import problem
 
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
@@ -602,7 +603,7 @@ class ReleaseFieldView(AdminView):
                 pass
         elif value is None:
             value = 'NULL'
-        elif isinstance(value, int):
+        elif isinstance(value, int) or isinstance(value, long):
             value = unicode(str(value), 'utf8')
         else:
             value = unicode(value, 'utf8')
@@ -613,9 +614,9 @@ class ReleaseFieldView(AdminView):
             value = self.get_value(change_id, field)
         except KeyError as msg:
             self.log.warning("Bad input: %s", field)
-            return Response(status=400, response=str(msg))
+            return problem(400, "Bad Request", str(msg))
         except ValueError as msg:
-            return Response(status=404, response=str(msg))
+            return problem(404, "Not Found", str(msg))
         value = self.format_value(value)
         return Response(value, content_type='text/plain')
 
@@ -639,12 +640,17 @@ class ReleaseDiffView(ReleaseFieldView):
         return old_revision[0]['change_id']
 
     def get(self, change_id, field):
-        value = self.get_value(change_id, field)
-        data_version = self.get_value(change_id, "data_version")
+        try:
+            value = self.get_value(change_id, field)
+            data_version = self.get_value(change_id, "data_version")
 
-        prev_id = self.get_prev_id(value, change_id)
-        previous = self.get_value(prev_id, field)
-        prev_data_version = self.get_value(prev_id, "data_version")
+            prev_id = self.get_prev_id(value, change_id)
+            previous = self.get_value(prev_id, field)
+            prev_data_version = self.get_value(prev_id, "data_version")
+        except (KeyError, TypeError, IndexError) as msg:
+            return problem(400, "Bad Request", str(msg))
+        except ValueError as msg:
+            return problem(404, "Not Found", str(msg))
 
         value = self.format_value(value)
         previous = self.format_value(previous)

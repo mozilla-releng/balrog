@@ -29,7 +29,7 @@ from auslib.web.admin.views.releases import SingleLocaleView, \
     ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView, \
     ReleaseScheduledChangesView, ReleaseScheduledChangeView, \
     EnactReleaseScheduledChangeView, ReleaseScheduledChangeHistoryView, \
-    ReleaseScheduledChangeSignoffsView, ReleaseFieldView, ReleaseDiffView
+    ReleaseScheduledChangeSignoffsView
 from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsView, \
     ProductRequiredSignoffsHistoryAPIView, \
     ProductRequiredSignoffsScheduledChangesView, \
@@ -111,8 +111,6 @@ app.add_url_rule("/required_signoffs/product/revisions", view_func=ProductRequir
 app.add_url_rule("/required_signoffs/permissions", view_func=PermissionsRequiredSignoffsView.as_view("permissions_required_signoffs"))
 app.add_url_rule("/required_signoffs/permissions/revisions",
                  view_func=PermissionsRequiredSignoffsHistoryAPIView.as_view("permissions_required_signoffs_revisions"))
-app.add_url_rule("/history/diff/release/<change_id>/<field>", view_func=ReleaseDiffView.as_view("release_diff"))
-app.add_url_rule("/history/view/release/<change_id>/<field>", view_func=ReleaseFieldView.as_view("release_field"))
 app.add_url_rule("/scheduled_changes/rules", view_func=RuleScheduledChangesView.as_view("scheduled_changes_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>", view_func=RuleScheduledChangeView.as_view("scheduled_change_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/enact", view_func=EnactRuleScheduledChangeView.as_view("enact_scheduled_change_rules"))

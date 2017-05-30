@@ -56,10 +56,16 @@ tags:
       url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#csrf-token"
 
   - name: "Releases"
-    description: "Balrog Releases Description"
+    description: "To Balrog, a 'release' is data about a related set of builds. This does _not_ match up with the concept of a 'release' being on the 'beta', 'release' or 'esr' channel elsewhere."
     externalDocs:
       description: "Find out more about Releases"
       url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#releases"
+
+  - name: "History"
+    description: "The rules, releases, permissions, required signoffs, and all associated scheduled changes tables have a corresponding history table that records the time a change was made and who made it"
+    externalDocs:
+      description: "Find out more about history tables"
+      url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#history-tables"
 
 parameters:
   usernameParam:
@@ -123,6 +129,20 @@ parameters:
     description:  Field value to uniquely identfiy the rule
     type: integer
     minimum: 0
+    required: true
+
+  change_id_param:
+    name: change_id
+    in: path
+    description: Unique id to identify the identify the change
+    type: string
+    required: true
+
+  field_name_param:
+    name: field
+    in: path
+    description: name of DB column whose history is requested
+    type: string
     required: true
 
   userPermissionFormDataParam:
@@ -239,6 +259,58 @@ paths:
               type: string
           examples:
             text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
+
+  /history/diff/release/{change_id}/{field}:
+    get:
+      summary: Returns a diff of the value of the named field
+      description: >
+        Returns a diff of the value of the named field from the named object at the specified change_id vs the previous change to that object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field)
+      tags:
+        - History
+      operationId: auslib.web.admin.views.mapper.release_diff_history_get
+      consumes: []
+      produces:
+        - application/json
+        - text/plain
+      externalDocs:
+        description: "Returns a diff of the value of the named field from the named object at the specified change_id vs the previous change to that object"
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field"
+      parameters:
+        - $ref: '#/parameters/change_id_param'
+        - $ref: '#/parameters/field_name_param'
+      responses:
+        '200':
+          description: Successfully fetched the requested diff value
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /history/view/release/{change_id}/{field}:
+    get:
+      summary: Returns the value of the named field from the named object at specified change_id
+      description: >
+        Returns the value of the named field from the named object at the specified change_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field)
+      tags:
+        - History
+      operationId: auslib.web.admin.views.mapper.release_view_history_get
+      consumes: []
+      produces:
+        - application/json
+        - text/plain
+      externalDocs:
+        description: "Returns the value of the named field from the named object at the specified change_id"
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field"
+      parameters:
+        - $ref: '#/parameters/change_id_param'
+        - $ref: '#/parameters/field_name_param'
+      responses:
+        '200':
+          description: Successfully fetched the requested value
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /users:
     get:
@@ -615,7 +687,7 @@ paths:
         - text/html
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id28"
-        description: Deletes the named permission for the username given. The 'data_version' parameter must be provided.
+        description: "Deletes the named permission for the username given. The 'data_version' parameter must be provided."
       parameters:
         - $ref: '#/parameters/usernameParam'
         - $ref: '#/parameters/permissionParam'
