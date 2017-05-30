@@ -11,6 +11,19 @@ class GMPBlobV1(Blob):
         if "schema_version" not in self:
             self["schema_version"] = 1000
 
+    def validate(self, product, whitelistedDomains, checkHash=True):
+        Blob.validate(self, product, whitelistedDomains)
+        if checkHash:
+            for vendor in self["vendors"]:
+                if "platform" in self["vendors"][vendor]:
+                    for platform in self["vendors"][vendor]["platforms"]:
+                        if "hashValue" in self["vendors"][vendor]["platforms"][platform]:
+                            actualLen = len(self["vendors"][vendor]["platforms"][platform]["hashValue"])
+                            requiredLen = Blob.hashLen[self["hashFunction"].lower()]
+                            if actualLen != requiredLen:
+                                raise ValueError("The hashValue length is different from {} requirement."
+                                                 .format(self["hashFunction"].lower()))
+
     def getVendorsForPlatform(self, platform):
         for v in self["vendors"]:
             if platform in self["vendors"][v]["platforms"] or "default" in self["vendors"][v]["platforms"]:
