@@ -271,8 +271,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         rule: function() {
           var copy = angular.copy(rule);
-          copy.data_version = '';
-          copy.rule_id = '';
+          delete copy.data_version;
+          delete copy.rule_id;
           copy._duplicate = true;
           return copy;
         },
