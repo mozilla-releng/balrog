@@ -61,11 +61,12 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                         resp.close()
                     else:
                         logging.debug("Change %s is not ready", change["sc_id"])
+                        raise
 
         except:
             logging.error("Encountered exception:", exc_info=True)
-            if raise_exceptions:
-                raise
+            pass
+
         finally:
             if not once:
                 await asyncio.sleep(sleeptime)
