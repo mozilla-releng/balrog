@@ -56,7 +56,7 @@ describe("controller: UserPermissionsCtrl", function() {
       this.$httpBackend.expectGET('/api/users/roles')
       .respond(200, JSON.stringify(sample_all_roles));
       this.$httpBackend.flush();
-      expect(this.scope.errors).toEqual({permissions:{}});
+      expect(this.scope.errors).toEqual({permissions:{}, role: {}});
       expect(this.scope.saving).toEqual(false);
       expect(this.scope.loading).toEqual(false);
       expect(this.scope.user).toEqual({

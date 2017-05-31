@@ -13,7 +13,8 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
     options_as_json: ''
   };
   $scope.errors = {
-    permissions: {}
+    permissions: {},
+    role: {}
   };
   $scope.user.permissions = [];
   Permissions.getUserPermissions(user.username)
@@ -99,11 +100,14 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
           role: '',
           data_version: ''
         };
+        $scope.errors = {
+          role: {}
+        };
         sweetAlert("Saved", "Role granted.", "success");
       })
       .error(function(response) {
         if (typeof response === 'object') {
-          $scope.errors = response;
+          $scope.errors.role = response;
           sweetAlert(
             "Form submission error",
             "See fields highlighted in red.",
@@ -147,7 +151,7 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
       })
       .error(function(response) {
         if (typeof response === 'object') {
-          $scope.errors = response;
+          $scope.errors.permission = response;
           sweetAlert(
             "Form submission error",
             "See fields highlighted in red.",
