@@ -32,14 +32,6 @@
             <button type="submit" class="btn btn-primary">Save</button>
           </div>
         </form>
-          <!-- connexion catches and throws exception without invoking API method-->
-          <div class="form-group" ng-class="{'has-error': errors.detail}">
-            <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
-          </div>
-          <!-- API method throws exceptions -->
-          <div class="form-group" ng-class="{'has-error': errors.exception}">
-            <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>
-          </div>
         <h4>Current Permissions</h4>
         <div class="panel panel-default"
              ng-repeat="permission in user.permissions">
@@ -75,14 +67,6 @@
             <button type="submit" class="btn btn-primary">Save</button>
           </div>
         </form>
-          <!-- connexion catches and throws exception without invoking API method-->
-          <div class="form-group" ng-class="{'has-error': errors.detail}">
-            <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
-          </div>
-          <!-- API method throws exceptions -->
-          <div class="form-group" ng-class="{'has-error': errors.exception}">
-            <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>
-          </div>
         <h4>Current Roles</h4>
         <div class="panel panel-default"
              ng-repeat="role in user.roles">
