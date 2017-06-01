@@ -61,7 +61,7 @@ class TestSchema1Blob(unittest.TestCase):
 
     def testValidateHashValue(self):
         blob = GMPBlobV1()
-        blob.whitelistedDomains = {"a.com": ('gg',), 'boring.com': ('gg',), 'nice.com': ('gg',)}
+        blob.whitelistedDomains = {'boring.com': ('gg',), }
         blob.loadJSON("""
 {
     "name": "validName",
@@ -69,36 +69,8 @@ class TestSchema1Blob(unittest.TestCase):
     "hashFunction": "SHA512",
     "vendors": {
         "a": {
-            "version": "1",
-            "platforms": {
-                "p": {
-                    "filesize": 2,
-                    "hashValue": "3",
-                    "fileUrl": "http://a.com/blah"
-                },
-                "q": {
-                    "filesize": 4,
-                    "hashValue": "5",
-                    "fileUrl": "http://boring.com/blah"
-                },
-                "r": {
-                    "alias": "q"
-                }
-            }
-        },
-        "b": {
             "version": "5",
             "platforms": {
-                "q": {
-                    "filesize": 10,
-                    "hashValue": "11",
-                    "fileUrl": "http://boring.com/foo"
-                },
-                "r": {
-                    "filesize": 666,
-                    "hashValue": "666",
-                    "fileUrl": "http://nice.com/fire"
-                },
                 "default": {
                     "filesize": 20,
                     "hashValue": "50",
@@ -110,12 +82,26 @@ class TestSchema1Blob(unittest.TestCase):
 }
 """)
         self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
-        # Filling the 'hashValue' fields with correct length hashValues
-        for vendor in blob["vendors"]:
-            if "platform" in blob["vendors"][vendor]:
-                for platform in blob["vendors"][vendor]["platforms"]:
-                    if "hashValue" in blob["vendors"][vendor]["platforms"][platform]:
-                        blob["vendors"][vendor]["platforms"][platform]["hashValue"] = 'K' * 128
+        blob.loadJSON("""
+{
+    "name": "validName",
+    "schema_version": 1000,
+    "hashFunction": "SHA512",
+    "vendors": {
+        "a": {
+            "version": "5",
+            "platforms": {
+                "default": {
+                    "filesize": 20,
+                    "hashValue": "acbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda\
+cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbd",
+                    "fileUrl": "http://boring.com/bar"
+                }
+            }
+        }
+    }
+}
+""")
         blob.validate('gg', blob.whitelistedDomains)
 
     def testGetVendorsForPlatform(self):
@@ -362,7 +348,8 @@ class TestSchema1Blob(unittest.TestCase):
                     },
                     "q": {
                         "filesize": 2,
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }
@@ -370,7 +357,7 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
     """)
-        blob.validate('gg', self.whitelistedDomains, False)
+        blob.validate('gg', self.whitelistedDomains)
 
     def testGMPLayoutMissingVersion(self):
 
@@ -390,7 +377,8 @@ class TestSchema1Blob(unittest.TestCase):
                     },
                     "q": {
                         "filesize": 2,
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }
@@ -398,7 +386,7 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
     """)
-        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains, False)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
 
     def testGMPLayoutEmptyPlatforms(self):
 
@@ -437,7 +425,8 @@ class TestSchema1Blob(unittest.TestCase):
                     "p": {},
                     "q": {
                         "filesize": 2,
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }
@@ -445,7 +434,7 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
     """)
-        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains, False)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
 
     def testGMPLayoutNoFilesize(self):
 
@@ -465,7 +454,8 @@ class TestSchema1Blob(unittest.TestCase):
                         "alias": "q"
                     },
                     "q": {
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }
@@ -473,4 +463,4 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
     """)
-        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains, False)
+        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)

@@ -6,6 +6,11 @@ import logging
 from auslib.global_state import dbo
 
 
+def getHashLen(hashName):
+    hashLen = {'sha256': 64, 'sha384': 96, 'sha512': 128}
+    return hashLen[hashName.lower()]
+
+
 def isSpecialURL(url, specialForceHosts):
     if not specialForceHosts:
         return False
