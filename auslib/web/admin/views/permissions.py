@@ -77,8 +77,9 @@ class SpecificPermissionView(AdminView):
                 if not connexion.request.json.get("data_version"):
                     return problem(400, "Bad Request", "'data_version' is missing from request body")
 
-                options_dict = None if not connexion.request.json.get("options") else json.loads(
-                    connexion.request.json.get("options"))
+                options_dict = None
+                if connexion.request.json.get("options"):
+                    options_dict = json.loads(connexion.request.json.get("options"))
 
                 dbo.permissions.update(where={"username": username, "permission": permission},
                                        what={"options": options_dict}, changed_by=changed_by,
@@ -89,8 +90,9 @@ class SpecificPermissionView(AdminView):
                 return jsonify(new_data_version=new_data_version)
             else:
                 # New Permission
-                options_dict = None if not connexion.request.json.get("options") else json.loads(
-                    connexion.request.json.get("options"))
+                options_dict = None
+                if connexion.request.json.get("options"):
+                    options_dict = json.loads(connexion.request.json.get("options"))
                 dbo.permissions.insert(changed_by, transaction=transaction, username=username, permission=permission,
                                        options=options_dict)
                 return Response(status=201, response=json.dumps(dict(new_data_version=1)))
@@ -107,8 +109,9 @@ class SpecificPermissionView(AdminView):
             # Existing Permission
             if not connexion.request.json.get("data_version"):
                 return problem(400, "Bad Request", "'data_version' is missing from request body")
-            options_dict = None if not connexion.request.json.get("options") else json.loads(
-                connexion.request.json.get("options"))
+            options_dict = None
+            if connexion.request.json.get("options"):
+                options_dict = json.loads(connexion.request.json.get("options"))
 
             dbo.permissions.update(where={"username": username, "permission": permission},
                                    what={"options": options_dict}, changed_by=changed_by,
