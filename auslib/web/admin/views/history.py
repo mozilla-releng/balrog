@@ -1,9 +1,9 @@
 import json
 import time
-import connexion
-from flask import Response, jsonify
+
+from flask import Response, jsonify, request
 from sqlalchemy import and_
-from auslib.web.admin.views.problem import problem
+
 from auslib.web.admin.views.base import AdminView
 from auslib.util.timesince import timesince
 
@@ -98,13 +98,14 @@ class HistoryView(HistoryAdminView):
         @param response_key: Dictionary key to wrap returned revisions.
         @type response_key: string
         """
-        page = int(connexion.request.args.get('page', 1))
-        limit = int(connexion.request.args.get('limit', 10))
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 10))
+        assert page >= 1
 
         obj = get_object_callback()
         if not obj:
-            return problem(status=404, title="Not Found", detail="History object not found",
-                           ext={"exception": self.not_found_msg})
+            return Response(status=404,
+                            response=self.not_found_msg)
 
         offset = limit * (page - 1)
 
@@ -121,7 +122,7 @@ class HistoryView(HistoryAdminView):
 
         _revisions = process_revisions_callback(revisions)
 
-        ret = dict()
+        ret = {}
         ret[response_key] = _revisions
         ret['count'] = total_count
         return jsonify(ret)
@@ -161,30 +162,30 @@ class HistoryView(HistoryAdminView):
 
         obj = get_object_callback()
         if not obj:
-            return problem(404, "Not Found", obj_not_found_msg,
-                           ext={"exception": "Requested object wasn't found"})
+            return Response(status=404,
+                            response=obj_not_found_msg)
 
         change_id = None
-        if connexion.request.json:
-            change_id = connexion.request.json.get('change_id')
+        if request.json:
+            change_id = request.json.get('change_id')
         if not change_id:
             self.log.warning("Bad input: %s", "no change_id")
-            return problem(400, "Bad Request", "No change_id passed in the request body")
+            return Response(status=400, response='no change_id')
 
         change = self.history_table.getChange(change_id=change_id)
         if change is None:
-            return problem(400, "Bad Request", "Invalid change_id : {0} passed in the request body".format(change_id))
+            return Response(status=400, response='bad change_id')
 
         obj_id = obj[change_field]
 
         if change[change_field] != obj_id:
-            return problem(400, "Bad Request", detail="Bad {0} passed in the request".format(change_field))
-
+            return Response(status=400,
+                            response='bad {0}'.format(change_field))
         old_data_version = obj['data_version']
 
         # now we're going to make a new insert based on this
         what = get_what_callback(change)
-        where = dict()
+        where = {}
         where[change_field] = obj_id
         self.table.update(changed_by=changed_by,
                           where=where,

@@ -103,27 +103,11 @@ def integer_and_range_validator(field_name, field_value, min_val=None, max_val=N
 
 @draft4_format_checker.checks(format="priority", raises=JsonschemaValidationError)
 def priority_validator(field_value):
-    if field_value is not None and field_value != '':
-        logger.debug('starting in priority_validator: priority is %s' % field_value)
+    logger.debug('starting in priority_validator: field data is %s' % field_value)
     return integer_and_range_validator("priority", field_value, 0)
 
 
 @draft4_format_checker.checks(format="backgroundRate", raises=JsonschemaValidationError)
 def background_rate_validator(field_value):
-    if field_value is not None and field_value != '':
-        logger.debug('starting in backgroundRate_validator: backgroundRate is %s' % field_value)
+    logger.debug('starting in backgroundRate_validator: field data is %s' % field_value)
     return integer_and_range_validator("backgroundRate", field_value, 0, 100)
-
-
-@draft4_format_checker.checks(format="data_version", raises=JsonschemaValidationError)
-def data_version_validator(field_value):
-    if field_value is not None and field_value != '':
-        logger.debug('starting in data_version_validator: data_version is %s' % field_value)
-    return integer_and_range_validator("data_version", field_value, 1)
-
-
-@draft4_format_checker.checks(format="rule_id", raises=JsonschemaValidationError)
-def rule_id_validator(field_value):
-    if field_value is not None and field_value != '':
-        logger.debug('starting in rule_id_validator: rule_id is %s' % field_value)
-    return integer_and_range_validator("rule_id", field_value, 0)
