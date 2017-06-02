@@ -119,10 +119,11 @@ class API(object):
         else:
             logging.debug('Data sent: %s', data)
         headers = {'Accept-Encoding': 'application/json',
-                   'Accept': 'application/json'}
+                   'Accept': 'application/json',
+                   'Content-Type': 'application/json'}
         before = time.time()
         req = self.session.request(
-            method=method, url=url, data=data, timeout=self.timeout,
+            method=method, url=url, data=json.dumps(data), timeout=self.timeout,
             verify=self.verify, auth=self.auth, headers=headers)
         try:
             if self.raise_exceptions:
