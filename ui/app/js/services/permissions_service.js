@@ -1,4 +1,4 @@
-angular.module("app").factory('Permissions', function($http, $q, ScheduledChanges) {
+angular.module("app").factory('Permissions', function($http, $q, ScheduledChanges, Helpers) {
   var service = {
     getUsers: function() {
       return $http.get('/api/users');
@@ -28,12 +28,14 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
     },
     addPermission: function(username, data, csrf_token) {
       data.csrf_token = csrf_token;
+      data = Helpers.replaceEmptyStrings(data);
       var url = '/api/users/' + encodeURIComponent(username) + '/permissions';
       url += '/' + encodeURIComponent(data.permission);
       return $http.put(url, data);
     },
     updatePermission: function(username, data, csrf_token) {
       data.csrf_token = csrf_token;
+      data = Helpers.replaceEmptyStrings(data);
       var url = '/api/users/' + encodeURIComponent(username) + '/permissions';
       url += '/' + encodeURIComponent(data.permission);
       return $http.post(url, data);
@@ -50,6 +52,7 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
     },
     addScheduledChange: function(data, csrf_token) {
       data = jQuery.extend({}, data);
+      data = Helpers.replaceEmptyStrings(data);
       data.csrf_token = csrf_token;
       return $http.post("/api/scheduled_changes/permissions", data);
     },
@@ -87,6 +90,7 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
     updateScheduledChange: function(sc_id, data, csrf_token) {
       data = jQuery.extend({}, data);
       data.csrf_token = csrf_token;
+      data = Helpers.replaceEmptyStrings(data);
       return $http.post("/api/scheduled_changes/permissions/" + sc_id, data);
     },
     signoffOnScheduledChange: function(sc_id, data) {
