@@ -59,7 +59,7 @@ class TestSchema1Blob(unittest.TestCase):
 }
 """)
 
-    def testValidateHashValue(self):
+    def testValidateHashLength(self):
         blob = GMPBlobV1()
         blob.whitelistedDomains = {'boring.com': ('gg',), }
         blob.loadJSON("""
@@ -81,28 +81,8 @@ class TestSchema1Blob(unittest.TestCase):
     }
 }
 """)
-        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
-        blob.loadJSON("""
-{
-    "name": "validName",
-    "schema_version": 1000,
-    "hashFunction": "SHA512",
-    "vendors": {
-        "a": {
-            "version": "5",
-            "platforms": {
-                "default": {
-                    "filesize": 20,
-                    "hashValue": "acbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda\
-cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbd",
-                    "fileUrl": "http://boring.com/bar"
-                }
-            }
-        }
-    }
-}
-""")
-        blob.validate('gg', blob.whitelistedDomains)
+        self.assertRaisesRegexp(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+                                blob.validate, 'gg', self.whitelistedDomains)
 
     def testGetVendorsForPlatform(self):
         vendors = set([v for v in self.blob.getVendorsForPlatform("q")])

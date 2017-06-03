@@ -1,5 +1,5 @@
 from auslib.AUS import isForbiddenUrl
-from auslib.AUS import getHashLen
+from auslib.util.hashes import getHashLen
 from auslib.blobs.base import Blob
 from auslib.errors import BadDataError
 
