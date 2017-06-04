@@ -11,8 +11,6 @@ log = logging.getLogger(__name__)
 
 
 def get_rules():
-    # We can't use a form here because it will enforce "csrf_token" needing
-    # to exist, which doesn't make sense for GET requests.
     where = {}
     for field in ("product",):
         if request.args.get(field):

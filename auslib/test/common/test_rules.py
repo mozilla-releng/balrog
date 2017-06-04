@@ -22,6 +22,7 @@ class TestPublicRulesAPI(CommonTestBase):
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)
         self.assertTrue(got, "Empty dict")
+        self.assertEqual(ret.headers['X-Data-Version'], '1')
 
     def test_get_rule_by_alias(self):
         expected = dict(priority=90, backgroundRate=100, mapping="b",
@@ -36,6 +37,7 @@ class TestPublicRulesAPI(CommonTestBase):
         got = json.loads(ret.data)
         del got["rule_id"]
         self.assertEqual(got, expected)
+        self.assertEqual(ret.headers['X-Data-Version'], '1')
 
     def test_rule_not_found(self):
         ret = self.public_client.get("/rules/404")
@@ -61,3 +63,7 @@ class TestPublicRulesAPI(CommonTestBase):
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)
         self.assertEqual(got["count"], 2)
+
+    def test_get_revisions_400(self):
+        ret = self.public_client.get("/rules/1/revisions?page=0")
+        self.assertEqual(ret.status_code, 400)

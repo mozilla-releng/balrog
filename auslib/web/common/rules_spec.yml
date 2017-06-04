@@ -20,11 +20,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - name: id_or_alias
-          description: Rule id or alias.
-          in: path
-          required: true
-          type: string
+        - $ref: '#/parameters/idOrAliasParam'
       responses:
         200:
           description: Rule object.
@@ -44,11 +40,17 @@ paths:
       produces:
         - application/json
       parameters:
-        - name: id_or_alias
-          description: Rule id or alias.
-          in: path
-          required: true
-          type: string
+        - $ref: '#/parameters/idOrAliasParam'
+        - name: page
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: limit
+          in: query
+          required: false
+          type: integer
+          format: int32
       responses:
         200:
           description: The number of versions and a list of versions.
@@ -60,6 +62,9 @@ paths:
 definitions:
   Rule:
     type: object
+    required:
+      - rule_id
+      - update_type
     properties:
       rule_id:
         type: integer
@@ -134,6 +139,10 @@ definitions:
     allOf:
     - $ref: '#/definitions/Rule'
     - type: object
+    required:
+      - change_id
+      - changed_by
+      - timestamp
     properties:
       change_id:
         type: integer
@@ -149,6 +158,9 @@ definitions:
 
   RulesWrapper:
     type: object
+    required:
+      - count
+      - rules
     properties:
       count:
         type: integer
@@ -162,6 +174,9 @@ definitions:
 
   RuleHistoryWrapper:
     type: object
+    required:
+      - count
+      - rules
     properties:
       count:
         type: integer
@@ -171,3 +186,11 @@ definitions:
         description: List of rules versions.
         items:
           $ref: '#/definitions/RuleHistory'
+
+parameters:
+  idOrAliasParam:
+    name: id_or_alias
+    description: Rule id or alias.
+    in: path
+    required: true
+    type: string

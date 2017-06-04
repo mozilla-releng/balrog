@@ -55,3 +55,7 @@ class TestPublicReleasesAPI(CommonTestBase):
         self.assertEqual(ret.status_code, 404)
         ret = self.public_client.get("/releases/Firefox.55.0a1/builds/p/404")
         self.assertEqual(ret.status_code, 404)
+
+    def test_get_revisions_400(self):
+        ret = self.public_client.get("/releases/q/revisions?page=0")
+        self.assertEqual(ret.status_code, 400)

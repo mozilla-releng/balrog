@@ -54,9 +54,21 @@ paths:
         - application/json
       parameters:
         - $ref: '#/parameters/releaseParam'
+        - name: page
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: limit
+          in: query
+          required: false
+          type: integer
+          format: int32
       responses:
         200:
           description: Release History.
+        400:
+          description: Bad input.
 
   /releases/{release}/builds/{platform}/{locale}:
     get:
