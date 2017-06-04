@@ -44,3 +44,14 @@ class TestPublicReleasesAPI(CommonTestBase):
         got = json.loads(ret.data)
         self.assertEquals(got["count"], 2)
         self.assertEquals(len(got["revisions"]), 2)
+
+    def test_get_release_locale(self):
+        ret = self.public_client.get("/releases/Firefox.55.0a1/builds/p/l")
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.headers['X-Data-Version'], '1')
+
+    def test_get_release_locale_not_found(self):
+        ret = self.public_client.get("/releases/Firefox.55.0a1/builds/404/l")
+        self.assertEqual(ret.status_code, 404)
+        ret = self.public_client.get("/releases/Firefox.55.0a1/builds/p/404")
+        self.assertEqual(ret.status_code, 404)

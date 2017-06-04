@@ -49,3 +49,11 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Release"
+
+parameters:
+  localeParam:
+    name: locale
+    in: path
+    description: The locale of the application requesting an update.
+    required: true
+    type: string

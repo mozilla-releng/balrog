@@ -1,59 +1,86 @@
 paths:
   /releases:
     get:
-      operationId: "auslib.web.common.releases.get_releases"
-      description: ""
-      produces: ["application/json"]
+      operationId: 'auslib.web.common.releases.get_releases'
+      description: >
+        Returns a JSON Object containing metadata about Releases in Balrog’s database. Due to its size, the actual Release “blob” is never returned from this endpoint.
+        There are a few query arguments that affect its response:
+          -If no arguments are provided, it returns information about all of the Releases;
+          -If "product" is passed, only Releases with the given product name will be returned;
+          -If "name_prefix" is passed, only Releases whose name starts with the given prefix will be returned;
+          -If "names_only" is set to true, the response changes format and provides a list of all of the Release names.
+      produces:
+        - application/json
       parameters:
-        - name: product
-          in: query
-          required: false
-          type: string
+        - $ref: '#/parameters/productQueryParam'
         - name: name_prefix
+          description: If "name_prefix" is passed, only Releases whose name starts with the given prefix will be returned.
           in: query
           required: false
           type: string
         - name: names_only
+          description: If "names_only" is set to true, the response changes format and provides a list of all of the Release names.
           in: query
           required: false
           type: string
       responses:
         200:
-          description: ""
+          description: A releases list or a list of releases names.
           schema:
-            $ref: "#/definitions/ReleasesWrapper"
+            $ref: '#/definitions/ReleasesWrapper'
 
   /releases/{release}:
     get:
-      operationId: "auslib.web.common.releases.get_release"
-      description: ""
-      produces: ["application/json"]
+      operationId: 'auslib.web.common.releases.get_release'
+      description: Returns the "data" portion of the named Release, which is a JSON Object.
+      produces:
+        - application/json
       parameters:
-        - name: release
-          in: path
-          required: true
-          type: string
+        - $ref: '#/parameters/releaseParam'
         - name: pretty
+          description: If "pretty" is present in the query string and set to true, it will be pretty formatted.
           in: query
           required: false
           type: integer
       responses:
         200:
-          description: "Release Blob"
+          description: Release Blob
 
   /releases/{release}/revisions:
     get:
-      operationId: "auslib.web.common.releases.get_release_history"
-      description: ""
-      produces: ["application/json"]
+      operationId: 'auslib.web.common.releases.get_release_history'
+      description: Returns previous versions of the named Release in a JSON Object.
+      produces:
+        - application/json
       parameters:
-        - name: release
+        - $ref: '#/parameters/releaseParam'
+      responses:
+        200:
+          description: Release History.
+
+  /releases/{release}/builds/{platform}/{locale}:
+    get:
+      operationId: 'auslib.web.common.releases.get_release_single_locale'
+      description: Returns the platform+locale specific data of the named Release, which is a JSON Object.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - name: platform
+          description: Platform
           in: path
           required: true
           type: string
+        - $ref: '#/parameters/localeParam'
       responses:
         200:
-          description: "Release History"
+          description: Release Blob.
+          headers:
+            X-Data-Version:
+              description: The version of returned data.
+              type: integer
+        404:
+          description: Release not found for platform+locale.
 
 definitions:
   Release:
@@ -64,7 +91,7 @@ definitions:
       product:
         type: string
       read_only:
-        type: ["boolean", "null"]
+        type: ['boolean', 'null']
       rule_ids:
         type: array
         items:
@@ -80,4 +107,11 @@ definitions:
       releases:
         type: array
         items:
-          $ref: "#/definitions/Release"
+          $ref: '#/definitions/Release'
+
+parameters:
+  releaseParam:
+    name: release
+    in: path
+    required: true
+    type: string

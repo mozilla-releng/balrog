@@ -65,3 +65,18 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Rule"
+
+parameters:
+  productParam:
+    name: product
+    in: path
+    description: The name of the application requesting an update.
+    required: true
+    type: string
+  
+  versionParam:
+    name: version
+    in: path
+    description: The version of the application requesting an update.
+    required: true
+    type: string

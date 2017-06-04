@@ -8,6 +8,15 @@ class TestPublicRulesAPI(CommonTestBase):
         got = json.loads(ret.data)
         self.assertEquals(got["count"], 3)
 
+    def test_get_rules_by_product(self):
+        product = "Fennec"
+        ret = self.public_client.get("/rules?product={}".format(product))
+        self.assertEqual(ret.status_code, 200, ret.data)
+        got = json.loads(ret.data)
+        self.assertTrue(got, "Empty dict")
+        self.assertEqual(got["count"], 1)
+        self.assertEqual(got["rules"][0]["product"], product)
+
     def test_get_rule_by_id(self):
         ret = self.public_client.get("/rules/1")
         self.assertEqual(ret.status_code, 200, ret.data)
@@ -16,7 +25,7 @@ class TestPublicRulesAPI(CommonTestBase):
 
     def test_get_rule_by_alias(self):
         expected = dict(priority=90, backgroundRate=100, mapping="b",
-                        update_type="minor", product="b", data_version=1,
+                        update_type="minor", product="Fennec", data_version=1,
                         alias="moz-releng", buildID=None, buildTarget=None,
                         channel=None, comment=None, distVersion=None,
                         distribution=None, fallbackMapping=None,

@@ -35,7 +35,7 @@ class CommonTestBase(unittest.TestCase):
         dbo.create()
         dbo.setDomainWhitelist({'a.com': ('q')})
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='b',
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='Fennec',
                                      data_version=1, alias="moz-releng")
         dbo.releases.t.insert().execute(name='Fennec.55.0a1', product='Fennec', data_version=1, data=createBlob("""
 {
@@ -69,7 +69,7 @@ class CommonTestBase(unittest.TestCase):
     }
 }
 """))
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='s', update_type='minor', product='s',
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='s', update_type='minor', product='Firefox',
                                      systemCapabilities="SSE", data_version=1)
         dbo.releases.t.insert().execute(name='Firefox.55.0a1', product='Firefox', data_version=1, data=createBlob("""
 {

@@ -105,3 +105,17 @@ def get_release_history(release):
     except (ValueError, AssertionError) as e:
         log.warning("Bad input: %s", json.dumps(e.args))
         return Response(status=400, response=json.dumps({"data": e.args}))
+
+
+def get_release_single_locale(release, platform, locale):
+    try:
+        locale = dbo.releases.getLocale(release, platform, locale)
+    except KeyError as e:
+        return Response(status=404,
+                        response=json.dumps(e.args),
+                        mimetype='application/json')
+    data_version = dbo.releases.getReleases(name=release)[0]['data_version']
+    headers = {'X-Data-Version': data_version}
+    return Response(response=json.dumps(locale),
+                    mimetype='application/json',
+                    headers=headers)

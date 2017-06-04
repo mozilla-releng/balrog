@@ -85,11 +85,11 @@ def _get_filters(rule, history_table):
             history_table.data_version != null()]
 
 
-def get_rule_history(rule_id):
+def get_rule_history(id_or_alias):
     history_table = dbo.rules.history
     order_by = [history_table.timestamp.desc()]
     history_helper = HistoryHelper(history_table, order_by)\
-        .with_get_object_callback(lambda: dbo.rules.getRule(rule_id),
+        .with_get_object_callback(lambda: dbo.rules.getRule(id_or_alias),
                                   'Requested rule does not exist')\
         .with_history_filters_callback(_get_filters)\
         .with_process_revisions_callback(_process_revisions)

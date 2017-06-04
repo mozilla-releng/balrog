@@ -1,7 +1,9 @@
 import cgi
 import connexion
 import logging
+import re
 
+from connexion import request
 from flask import make_response, send_from_directory, Response
 
 from raven.contrib.flask import Sentry
@@ -20,14 +22,19 @@ validator_map = {
     'parameter': BalrogParameterValidator
 }
 
-connexion_app = connexion.App(__name__, specification_dir='.', validator_map=validator_map)
+connexion_app = connexion.App(__name__,
+                              specification_dir='.',
+                              validator_map=validator_map)
+
 app = connexion_app.app
 
 spec = SpecBuilder(app).add_main_spec('api.yml')\
                        .add_spec_part('web/common/releases_spec.yml')\
-                       .add_spec_part('web/common/rules_spec.yml')\
-                       .build()
-connexion_app.add_api(spec, validate_responses=True, strict_validation=True)
+                       .add_spec_part('web/common/rules_spec.yml')
+
+connexion_app.add_api(spec.build(),
+                      validate_responses=True,
+                      strict_validation=True)
 
 
 @app.after_request
@@ -36,9 +43,15 @@ def apply_security_headers(response):
     # nor be embedded elsewhere, so we apply a strict Content Security Policy.
     # We also need to set X-Content-Type-Options to nosniff for Firefox to obey this.
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829#c4 for background.
-    response.headers["Content-Security-Policy"] = app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
     response.headers["Strict-Transport-Security"] = app.config.get("STRICT_TRANSPORT_SECURITY", "max-age=31536000;")
     response.headers["X-Content-Type-Options"] = app.config.get("CONTENT_TYPE_OPTIONS", "nosniff")
+    if re.match("^/ui/", request.path):
+        # This enables swagger-ui to dynamically fetch and
+        # load the swagger specification JSON file containing API definition and examples.
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    else:
+        response.headers["Content-Security-Policy"] = \
+            app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
     return response
 
 

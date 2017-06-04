@@ -1,0 +1,5 @@
+swagger: '2.0'
+info:
+  title: Balrog Public API
+  description: Balrog Application Update Service
+  version: "1.0.0"
