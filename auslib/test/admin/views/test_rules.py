@@ -222,6 +222,17 @@ class TestRulesAPI_JSON(ViewTest):
                                               product='Firefox', channel='nightly', update_type='minor'))
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
+    def testDuplicateAlias(self):
+        ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c',
+                                             priority=33, product='Firefox',
+                                             update_type='minor', channel='nightly', alias='test'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
+        ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c',
+                                             priority=33, product='Firefox',
+                                             update_type='minor', channel='nightly', alias='test'))
+        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
 
 class TestSingleRuleView_JSON(ViewTest):
 
