@@ -59,3 +59,5 @@ if os.environ.get('SENTRY_DSN'):
 
 if os.environ.get("CACHE_CONTROL"):
     application.config["CACHE_CONTROL"] = os.environ["CACHE_CONTROL"]
+
+application.config["SWAGGER_DEBUG"] = True

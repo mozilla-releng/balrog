@@ -31,8 +31,8 @@ app = connexion_app.app
 spec = SpecBuilder(app).add_main_spec('api.yml')\
                        .add_spec_part('web/common/releases_spec.yml')\
                        .add_spec_part('web/common/rules_spec.yml')
-
-connexion_app.add_api(spec.build(),
+result_spec = spec.build()
+connexion_app.add_api(result_spec,
                       validate_responses=True,
                       strict_validation=True)
 
@@ -102,3 +102,12 @@ def set_cache_control():
     # and a maximum age of 90 seconds, to keep our TTL low.
     # We bumped this from 60s -> 90s in November, 2016.
     setattr(app, 'cacheControl', app.config.get("CACHE_CONTROL", "public, max-age=90"))
+
+
+@app.route('/debug/api.yml')
+def get_yaml():
+    if app.config.get('SWAGGER_DEBUG', False):
+        import yaml
+        app_spec = yaml.dump(result_spec)
+        return Response(mimetype='text/plain', response=app_spec)
+    return Response(status=404)
