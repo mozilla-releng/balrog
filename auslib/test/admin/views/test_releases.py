@@ -924,7 +924,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "platforms": {
                 "a": {
                     "filesize": 2,
-                    "hashValue": "3",
+                    "hashValue": "acbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda\
+cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbd",
                     "fileUrl": "http://good.com/4"
                 },
                 "a2": {
@@ -952,7 +953,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "platforms": {
                 "a": {
                     "filesize": 2,
-                    "hashValue": "3",
+                    "hashValue": "acbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda\
+cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbd",
                     "fileUrl": "http://good.com/4"
                 },
                 "a2": {
