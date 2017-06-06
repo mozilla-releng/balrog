@@ -632,8 +632,8 @@ class ReleaseDiffView(ReleaseFieldView):
             limit=1,
             order_by=[table.timestamp.desc()],
         )
-
-        return old_revision[0]['change_id']
+        if len(old_revision) > 0:
+            return old_revision[0]['change_id']
 
     def get(self, change_id, field):
         try:
@@ -641,8 +641,13 @@ class ReleaseDiffView(ReleaseFieldView):
             data_version = self.get_value(change_id, "data_version")
 
             prev_id = self.get_prev_id(value, change_id)
-            previous = self.get_value(prev_id, field)
-            prev_data_version = self.get_value(prev_id, "data_version")
+            if prev_id:
+                previous = self.get_value(prev_id, field)
+                prev_data_version = self.get_value(prev_id, "data_version")
+            else:
+                previous = ""
+                prev_data_version = ""
+
         except (KeyError, TypeError, IndexError) as msg:
             return problem(400, "Bad Request", str(msg))
         except ValueError as msg:
