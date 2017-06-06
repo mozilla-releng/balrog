@@ -7,8 +7,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, releases) {
   $scope.releases = releases;
   $scope.release = {
     name: '',
-    product: '',
-    version: ''
+    product: ''
   };
   $scope.products = [];
   Releases.getProducts().success(function(response) {

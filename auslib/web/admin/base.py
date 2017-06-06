@@ -24,12 +24,10 @@ from auslib.web.admin.views.permissions import \
     PermissionScheduledChangesView, PermissionScheduledChangeView, \
     EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, \
     PermissionScheduledChangeSignoffsView
-from auslib.web.admin.views.releases import SingleLocaleView, \
-    SingleReleaseView, ReleaseHistoryView, \
-    ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView, \
+from auslib.web.admin.views.releases import ReleaseScheduledChangeHistoryView, \
+    ReleaseScheduledChangeSignoffsView, \
     ReleaseScheduledChangesView, ReleaseScheduledChangeView, \
-    EnactReleaseScheduledChangeView, ReleaseScheduledChangeHistoryView, \
-    ReleaseScheduledChangeSignoffsView
+    EnactReleaseScheduledChangeView
 from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsView, \
     ProductRequiredSignoffsHistoryAPIView, \
     ProductRequiredSignoffsScheduledChangesView, \
@@ -100,12 +98,6 @@ Compress(app)
 # and the static admin UI are hosted on the same domain. This API wsgi app is
 # hosted at "/api", which is stripped away by the web server before we see
 # these requests.
-app.add_url_rule("/releases", view_func=ReleasesAPIView.as_view("releases"))
-app.add_url_rule("/releases/<release>", view_func=SingleReleaseView.as_view("single_release"))
-app.add_url_rule("/releases/<release>/read_only", view_func=ReleaseReadOnlyView.as_view("read_only"))
-app.add_url_rule("/releases/<release>/builds/<platform>/<locale>", view_func=SingleLocaleView.as_view("single_locale"))
-app.add_url_rule("/releases/<release>/revisions", view_func=ReleaseHistoryView.as_view("release_revisions"))
-app.add_url_rule("/releases/columns/<column>", view_func=SingleReleaseColumnView.as_view("release_columns"))
 app.add_url_rule("/required_signoffs/product", view_func=ProductRequiredSignoffsView.as_view("product_required_signoffs"))
 app.add_url_rule("/required_signoffs/product/revisions", view_func=ProductRequiredSignoffsHistoryAPIView.as_view("product_required_signoffs_revisions"))
 app.add_url_rule("/required_signoffs/permissions", view_func=PermissionsRequiredSignoffsView.as_view("permissions_required_signoffs"))
