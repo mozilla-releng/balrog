@@ -121,7 +121,7 @@ class TestHistoryView(ViewTest):
         }"""
 
         ret = self._put('/releases/ddd1', data=dict(blob=blob, name='ddd1',
-                                                  product='d', data_version=1))
+                        product='d', data_version=1))
         self.assertStatusCode(ret, 201)
         ret = self._post(
             '/releases/ddd1',
