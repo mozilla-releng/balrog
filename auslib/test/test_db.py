@@ -1915,6 +1915,25 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertTrue(self.db.rules.scheduled_changes.conditions)
         self.assertTrue(self.db.rules.scheduled_changes.conditions.history)
 
+    def testAllColumnsExist(self):
+        columns = [c.name for c in self.db.rules.t.get_children()]
+        expected = ["rule_id", "alias", "priority", "mapping", "fallbackMapping", "backgroundRate", "update_type",
+                    "product", "version", "channel", "buildTarget", "buildID", "locale", "osVersion",
+                    "systemCapabilities", "distribution", "distVersion", "headerArchitecture", "comment",
+                    "data_version"]
+        sc_expected = ["base_{}".format(c) for c in expected]
+        self.assertEquals(set(columns), set(expected))
+        # No need to test the non-base parts of history nor scheduled changes table
+        # because tests for those table types verify them.
+        history_columns = [c.name for c in self.db.rules.history.t.get_children()]
+        self.assertTrue(set(expected).issubset(set(history_columns)))
+
+        sc_columns = [c.name for c in self.db.rules.scheduled_changes.t.get_children()]
+        self.assertTrue(set(sc_expected).issubset(set(sc_columns)))
+
+        sc_history_columns = [c.name for c in self.db.rules.scheduled_changes.history.t.get_children()]
+        self.assertTrue(set(sc_expected).issubset(set(sc_history_columns)))
+
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
         expected = [
