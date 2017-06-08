@@ -1454,6 +1454,7 @@ class Rules(AUSTable):
                            Column('locale', String(200)),
                            Column('osVersion', String(1000)),
                            Column('systemCapabilities', String(1000)),
+                           Column('memory', Integer),
                            Column('distribution', String(100)),
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),

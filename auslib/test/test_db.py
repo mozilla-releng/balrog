@@ -1920,7 +1920,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         expected = ["rule_id", "alias", "priority", "mapping", "fallbackMapping", "backgroundRate", "update_type",
                     "product", "version", "channel", "buildTarget", "buildID", "locale", "osVersion",
                     "systemCapabilities", "distribution", "distVersion", "headerArchitecture", "comment",
-                    "data_version"]
+                    "data_version", "memory"]
         sc_expected = ["base_{}".format(c) for c in expected]
         self.assertEquals(set(columns), set(expected))
         # No need to test the non-base parts of history nor scheduled changes table
@@ -4363,7 +4363,6 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
 
         if upgrade:
             for table_name in whitelist_tables:
-                print meta_data.tables[table_name]
                 self.assertNotIn('whitelist', meta_data.tables[table_name].c)
 
             for table_name in base_whitelist_tables:
@@ -4374,6 +4373,22 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
 
             for table_name in base_whitelist_tables:
                 self.assertIn('base_whitelist', meta_data.tables[table_name].c)
+
+    def _add_memory_migration_test(self, db, upgrade=True):
+        metadata = self._get_reflected_metadata(db)
+        memory_tables = ["rules", "rules_history"]
+        base_memory_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
+
+        if upgrade:
+            for table_name in memory_tables:
+                self.assertIn("memory", metadata.tables[table_name].c)
+            for table_name in base_memory_tables:
+                self.assertIn("base_memory", metadata.tables[table_name].c)
+        else:
+            for table_name in memory_tables:
+                self.assertNotIn("memory", metadata.tables[table_name].c)
+            for table_name in base_memory_tables:
+                self.assertNotIn("base_memory", metadata.tables[table_name].c)
 
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
         """
@@ -4422,7 +4437,8 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         # TODO Remove these tests when we upgrade sqlalchemy so that these per-version tests are no longer required.
         latest_version = version(path.abspath(path.join(path.dirname(__file__), "..", "migrate")))
         db = self._get_migrated_db()
-        versions_migrate_tests_dict = {23: self._delete_whitelist_migration_test,
+        versions_migrate_tests_dict = {24: self._add_memory_migration_test,
+                                       23: self._delete_whitelist_migration_test,
                                        22: self._rules_version_length_migration_test,
                                        21: self._fix_column_attributes_migration_test}
 
