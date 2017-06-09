@@ -1,5 +1,5 @@
 paths:
-  /releases:
+  /api/v1/releases:
     get:
       operationId: 'auslib.web.common.releases.get_releases'
       description: >
@@ -29,7 +29,7 @@ paths:
           schema:
             $ref: '#/definitions/ReleasesWrapper'
 
-  /releases/{release}:
+  /api/v1/releases/{release}:
     get:
       operationId: 'auslib.web.common.releases.get_release'
       description: Returns the "data" portion of the named Release, which is a JSON Object.
@@ -46,7 +46,7 @@ paths:
         200:
           description: Release Blob
 
-  /releases/{release}/revisions:
+  /api/v1/releases/{release}/revisions:
     get:
       operationId: 'auslib.web.common.releases.get_release_history'
       description: Returns previous versions of the named Release in a JSON Object.
@@ -70,7 +70,7 @@ paths:
         400:
           description: Bad input.
 
-  /releases/{release}/builds/{platform}/{locale}:
+  /api/v1/releases/{release}/builds/{platform}/{locale}:
     get:
       operationId: 'auslib.web.common.releases.get_release_single_locale'
       description: Returns the platform+locale specific data of the named Release, which is a JSON Object.

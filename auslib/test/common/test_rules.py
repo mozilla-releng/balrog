@@ -4,13 +4,13 @@ from auslib.test.common.base import CommonTestBase
 
 class TestPublicRulesAPI(CommonTestBase):
     def test_get_rules(self):
-        ret = self.public_client.get("/rules")
+        ret = self.public_client.get("/api/v1/rules")
         got = json.loads(ret.data)
         self.assertEquals(got["count"], 3)
 
     def test_get_rules_by_product(self):
         product = "Fennec"
-        ret = self.public_client.get("/rules?product={}".format(product))
+        ret = self.public_client.get("/api/v1/rules?product={}".format(product))
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)
         self.assertTrue(got, "Empty dict")
@@ -18,7 +18,7 @@ class TestPublicRulesAPI(CommonTestBase):
         self.assertEqual(got["rules"][0]["product"], product)
 
     def test_get_rule_by_id(self):
-        ret = self.public_client.get("/rules/1")
+        ret = self.public_client.get("/api/v1/rules/1")
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)
         self.assertTrue(got, "Empty dict")
@@ -32,7 +32,7 @@ class TestPublicRulesAPI(CommonTestBase):
                         distribution=None, fallbackMapping=None,
                         headerArchitecture=None, locale=None, version=None,
                         systemCapabilities=None, osVersion=None)
-        ret = self.public_client.get("/rules/moz-releng")
+        ret = self.public_client.get("/api/v1/rules/moz-releng")
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)
         del got["rule_id"]
@@ -40,7 +40,7 @@ class TestPublicRulesAPI(CommonTestBase):
         self.assertEqual(ret.headers['X-Data-Version'], '1')
 
     def test_rule_not_found(self):
-        ret = self.public_client.get("/rules/404")
+        ret = self.public_client.get("/api/v1/rules/404")
         self.assertEqual(ret.status_code, 404)
 
     def test_get_revisions(self):
@@ -59,11 +59,11 @@ class TestPublicRulesAPI(CommonTestBase):
                                      environ_base=user)
         self.assertEqual(ret.status_code, 200, ret.data)
 
-        ret = self.public_client.get("/rules/1/revisions")
+        ret = self.public_client.get("/api/v1/rules/1/revisions")
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)
         self.assertEqual(got["count"], 2)
 
     def test_get_revisions_400(self):
-        ret = self.public_client.get("/rules/1/revisions?page=0")
+        ret = self.public_client.get("/api/v1/rules/1/revisions?page=0")
         self.assertEqual(ret.status_code, 400)
