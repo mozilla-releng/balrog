@@ -124,7 +124,7 @@ class TestHistoryView(ViewTest):
                         product='d', data_version=1))
         self.assertStatusCode(ret, 201)
         table = dbo.releases.history
-        row, = table.select(order_by=[table.change_id.desc()], limit=1)
+        row, = table.select(order_by=[table.change_id.asc()], limit=1)
         change_id = row['change_id']
 
         url = '/history/diff/release/%d/data' % change_id
