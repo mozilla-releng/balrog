@@ -621,19 +621,20 @@ class ReleaseDiffView(ReleaseFieldView):
     """/diff/:id/:field"""
 
     def get_prev_id(self, value, change_id):
-        release_name = value['name']
-        table = self.table.history
-        old_revision = table.select(
-            where=[
-                table.name == release_name,
-                table.change_id < change_id,
-                table.data_version != null()
-            ],
-            limit=1,
-            order_by=[table.timestamp.desc()],
-        )
-        if len(old_revision) > 0:
-            return old_revision[0]['change_id']
+        if value:
+            release_name = value['name']
+            table = self.table.history
+            old_revision = table.select(
+                where=[
+                    table.name == release_name,
+                    table.change_id < change_id,
+                    table.data_version != null()
+                ],
+                limit=1,
+                order_by=[table.timestamp.desc()],
+            )
+            if len(old_revision) > 0:
+                return old_revision[0]['change_id']
 
     def get(self, change_id, field):
         try:
