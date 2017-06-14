@@ -123,10 +123,12 @@ class TestHistoryView(ViewTest):
         ret = self._put('/releases/ddd1', data=dict(blob=blob, name='ddd1',
                         product='d', data_version=1))
         self.assertStatusCode(ret, 201)
-        ret = self._post(
-            '/releases/ddd1',
-            data=dict(data=blob, product='d', data_version=1)
-        )
+        table = dbo.releases.history
+        row, = table.select(order_by=[table.change_id.desc()], limit=1)
+        change_id = row['change_id']
+
+        url = '/history/diff/release/%d/data' % change_id
+        ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
 
     def testFieldViewDiffRelease(self):
