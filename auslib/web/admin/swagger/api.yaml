@@ -318,6 +318,7 @@ responses:
       # limits the extent of validation of column_key array
       # oneOf isn't supported in swagger 2.0 but will be in 3.0
       # https://github.com/OAI/OpenAPI-Specification/issues/333
+      # NOTE: additional key will be the same value as the column given in the URL
       additionalProperties:
         type: array
       maxProperties: 2
@@ -702,6 +703,11 @@ paths:
                   - read_only
                 properties:
                   read_only:
+                    # read_only key is always present when submitted from the UI form.
+                    # In case of false , a blank string i.e. '' is passed as key's value
+                    # hence we have to add type: string along with boolean as list of accepted types
+                    # for read_only.
+                    # TODO: Fix bug in UI and remove type: string below
                     type: ["boolean", "string"]
                     description: blank string if read only is true else set to false
                     example: true
