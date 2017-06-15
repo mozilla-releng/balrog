@@ -414,7 +414,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 400)
 
     def testDeleteNonExistentRelease(self):
-        ret = self._delete("/releases/ueo")
+        ret = self._delete("/releases/ueo", qs=dict(data_version=1))
         self.assertStatusCode(ret, 404)
 
     def testDeleteWithoutPermission(self):
@@ -766,7 +766,15 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(ret.headers['X-Data-Version'], '1')
 
     def testLocalePutNotAllowed(self):
-        ret = self.client.put('/releases/d/builds/p/d', data=dict(product='a'))
+        data = json.dumps({
+            "complete": {
+                "filesize": 435,
+                "from": "*",
+                "hashValue": "abc",
+            }
+        })
+        inp_data = dict(csrf_token="lorem", data=data, product='d', data_version=1, schema_version=1)
+        ret = self.client.put('/releases/d/builds/p/d', data=json.dumps(inp_data), content_type="application/json")
         self.assertStatusCode(ret, 401)
 
     def testLocalePutReadOnlyRelease(self):
@@ -1566,7 +1574,7 @@ class TestReleaseHistoryView(ViewTest):
         )
         self.assertStatusCode(ret, 200)
         # when posting you need both the release name and the change_id
-        ret = self._post('/releases/CRAZYNAME/revisions', json.dumps({'change_id': 1}))
+        ret = self._post('/releases/CRAZYNAME/revisions', data={'change_id': 1})
         self.assertEquals(ret.status_code, 404, ret.data)
 
         url = '/releases/d/revisions'

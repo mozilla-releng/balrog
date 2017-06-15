@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: '2.30'
+  version: '2.32'
   title: "Balrog's Admin API"
   termsOfService: "https://wiki.mozilla.org/Balrog"
   license:
@@ -76,6 +76,14 @@ parameters:
     maxLength: 100
     required: true
 
+  releaseParam:
+    name: release
+    in: path
+    description: release name
+    type: string
+    maxLength: 100
+    required: true
+
   csrfTokenParam:
     name: csrf_token
     in: query
@@ -90,6 +98,40 @@ parameters:
     type: integer
     minimum: 1
     required: true
+
+  columnParam:
+    name: column
+    in: path
+    description: Name of defined column in DB.
+    type: string
+    maxLength: 50
+    required: true
+
+  pageParam:
+    name: page
+    in: query
+    description: Variable value used pagination of response revisions.
+    type: integer
+    minimum: 1
+    x-nullable: true
+    required: false
+
+  limitParam:
+    name: limit
+    in: query
+    description: Variable value used for calculating offset for pagination.
+    type: integer
+    minimum: 1
+    x-nullable: true
+    required: false
+
+  productParam:
+    name: product
+    in: query
+    description: Name of the product to filter the rules/releases against.
+    type: string
+    x-nullable: true
+    required: false
 
   permissionParam:
     name: permission
@@ -114,6 +156,20 @@ parameters:
     description: user role to grant access to
     type: string
     maxLength: 50
+    required: true
+
+  platformParam:
+    name: platform
+    in: path
+    description: platform name
+    type: string
+    required: true
+
+  localeParam:
+    name: locale
+    in: path
+    description: locale identifier
+    type: string
     required: true
 
   rule_id_or_alias_param:
@@ -146,6 +202,24 @@ parameters:
     type: string
     required: true
 
+  change_id_body_param:
+    name: object_change_id
+    in: body
+    description: change_id of the Rule/Release/Scheduled_Change to revert back to
+    required: true
+    schema:
+      allOf:
+        - $ref: '#/definitions/CSRFModel'
+        - type: object
+          required:
+            - change_id
+          properties:
+            change_id:
+              type: integer
+              description: change_id of the Rule/Release/Scheduled_Change revision to revert to
+              minimum: 0
+              example: 85142
+
   userPermissionFormDataParam:
     name: user_permission_request_body
     in: body
@@ -167,41 +241,92 @@ parameters:
               format: JSONStringField
               description: JSON field specifying the actions that user can perform and the prdouct on which it has current permission to do so
               example: "{'actions':['modify']}"
-          # accomodate 'options_as_json' and 'permission' which are duplicate values of 'options'
+          # accommodate 'options_as_json' and 'permission' which are duplicate values of 'options'
           # and 'permission path parameter' respectively, getting passed in request body
-          # No need to validate the duplicate values again
+          # No need to validate the duplicate values again.
           additionalProperties: true
 
-
 responses:
-  updateExistingPermission:
-    description: "If the user already has the given permission, update its options and the data_version"
+  updateExistingObject:
+    description: "successfully updated the existing object and incremented its data_version"
     schema:
       type: object
       required:
         - new_data_version
       properties:
         new_data_version:
-          description: "data version of the updated permission"
+          description: "data version of the updated object. Should be greater than 1"
           type: integer
           format: int32
           minimum: 2
           example: 2
 
   newObjectDataVersion:
-    description: "When a new object (permission/role) is successfully assigned to the user. Its data version value is always 1"
+    description: "A new object (permission/role/release) is successfully created and its data version value is always 1"
     schema:
       type: object
       required:
         - new_data_version
       properties:
         new_data_version:
-          description: "data version of the new object (permission/role) assigned.Value is always 1"
+          description: "data version of the new object (permission/role/release) assigned.Value is always 1"
           type: integer
           format: int32
           minimum: 1
           maximum: 1
           example: 1
+
+  # explicit Response for APIs utilizing changeRelease() method to serve requests
+  changeReleaseDataVersion:
+    description: "Create or Updated exisiting release"
+    schema:
+      type: object
+      required:
+        - new_data_version
+      properties:
+        new_data_version:
+          description: "data version of the updated or new release"
+          type: integer
+          format: int32
+          minimum: 1
+          example: 2
+
+  releaseDataResponse:
+    description: Returns release object data
+    schema:
+      type: object
+    headers:
+      X-Data-Version:
+        description: data version of the release
+        type: integer
+        format: int32
+        minimum: 1
+
+  columnResponse:
+    description:  returns all distinct column values from database
+    schema:
+      type: object
+      required:
+       - count
+      properties:
+        count:
+          description: count of unique values of column present in DB
+          type: integer
+          format: int32
+          minimum: 0
+          example: 1
+      # limits the extent of validation of column_key array
+      # oneOf isn't supported in swagger 2.0 but will be in 3.0
+      # https://github.com/OAI/OpenAPI-Specification/issues/333
+      # NOTE: additional key will be the same value as the column given in the URL
+      additionalProperties:
+        type: array
+      maxProperties: 2
+      minProperties: 2
+    examples:
+      application/json:
+        count: 5
+        data_version: [1,2,3,4,5]
 
   invalidFormData:
     description: Error in form data
@@ -229,12 +354,6 @@ responses:
       application/json:
         detail: "Requested resource was not found"
         status: 404
-
-  defaultResponse:
-    description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
-    examples:
-      application/json:
-        Error: "REMOTE_USERNAME required"
 
 paths:
   /csrf_token:
@@ -313,6 +432,445 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
+  /releases:
+    get:
+      summary: "Returns a JSON Object containing metadata about Releases in Balrog's database"
+      description: >
+        Returns a JSON object containing metadata about Releases in Balrog's database. Due to its size, the actual Release 'blob' is never returned from this endpoint. There are a few query arguments that affect its response. If no arguments are provided, it returns all information about all of the Releases in the database. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.release_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases"
+        description: "Returns a JSON Object containing metadata about Releases in Balrog's database."
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - name: name_prefix
+          in: query
+          description: "If 'name_prefix' is passed, only Releases whose name starts with the given prefix will be returned."
+          type: string
+          x-nullable: true
+          required: false
+        - name: names_only
+          in: query
+          description: "If 'names_only' is set to true, the response changes format and provides a list of all of the Release names in the database"
+          type: string
+          x-nullable: true
+          required: false
+
+      responses:
+        '200':
+          description: Returns metadata about Releases
+          schema:
+            type: object
+            # since there are two exclusive and independent data formats i.e. releases and names and
+            # oneOf isn't supported in swagger 2.0 hence cannot have 'required'
+            # field in schema
+            properties:
+              releases:
+                description: list of release objects
+                type: array
+                minItems: 0
+                items:
+                  $ref: '#/definitions/ReleaseGET'
+              names:
+                description: List of release names
+                type: array
+                minItems: 0
+                uniqueItems: true
+                items:
+                  type: string
+                  maxLength: 100
+          examples:
+            application/json:
+              releases:
+                - data_version: 2
+                  name: XP-Vista-Desupport
+                  product: Firefox
+                  read_only: false
+                  rule_ids: [468, 498]
+
+    post:
+      summary: Creates a new Release
+      description: >
+        Creates a new Release with the provided values. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id9)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.release_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id9"
+        description: "Creates a new Release in Balrog's DB."
+      parameters:
+        - name: release_body
+          in: body
+          description: New Release object data
+          required: true
+          schema:
+            $ref: '#/definitions/ReleaseData'
+      responses:
+        '201':
+          $ref: '#/responses/newObjectDataVersion'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /releases/{release}:
+    get:
+      summary: "Returns the 'data' portion of the named Release, which is a JSON Object."
+      description: >
+        Returns the 'data' portion of the named Release, which is a JSON Object. If 'pretty' is present in the query string and set to true, it will be pretty formatted. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.single_release_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release"
+        description: "Returns the 'data' portion of the named Release, which is a JSON Object."
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - name: pretty
+          in: query
+          description: "If 'pretty' is present in the query string and set to true, it will be pretty formatted."
+          type: string
+          x-nullable: true
+          required: false
+      responses:
+        '200':
+          $ref: '#/responses/releaseDataResponse'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    put:
+      summary: Overwrites the named Release with the data given.
+      description: >
+        Overwrites the named Release with the data given. The 'blob' field is completely overridden with the new one, not updated. If the Release does not exist, it is created. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.single_release_put
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Overwrites the named Release with the data given."
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - name: release_body
+          in: body
+          description: Release object data
+          required: true
+          schema:
+            $ref: '#/definitions/ReleaseData'
+      responses:
+        '200':
+          $ref: '#/responses/updateExistingObject'
+        '201':
+          description: successfully created a new release
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+
+    post:
+      summary: Updates the named Release with the data given.
+      description: >
+        Updates the named Release with the data given. The 'blob' field is updated with the new one instead of being completely overridden. If the Release does not exist, it is created. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id11)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.single_release_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id11"
+        description: "Updates the named Release with the data given."
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - name: partial_release_body
+          in: body
+          description: Release object data
+          required: true
+          schema:
+            $ref: '#/definitions/PartialRelease'
+      responses:
+        '200':
+          $ref: '#/responses/changeReleaseDataVersion'
+        '201':
+          $ref: '#/responses/changeReleaseDataVersion'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+
+    delete:
+      summary: Deletes the named Release
+      description: >
+        Deletes the named Release. The 'data_version' parameter must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id12).
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.single_release_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id12"
+        description: Deletes the named Release
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/csrfTokenParam'
+        - $ref: '#/parameters/dataVersionParam'
+      responses:
+        '200':
+          description: Successfully deleted the release
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /releases/{release}/read_only:
+    get:
+      summary: Returns whether or not the named Release is marked as read_only
+      description: >
+        Returns whether or not the named Release is marked as read_only. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-read-only)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.release_read_only_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-read-only"
+        description: Returns whether or not the named Release is marked as read_only
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+      responses:
+        '200':
+          description: Returns release object data
+          schema:
+            type: object
+            required:
+              - read_only
+            properties:
+              read_only:
+                description: boolean flag set to True is release is read only else set as False
+                type: boolean
+                example: true
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    put:
+      summary: Sets or unsets the read_only flag of the named Release.
+      description: >
+        Sets or unsets the read_only flag of the named Release. Requires release name, data_version and read_only values. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id15)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.release_read_only_put
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id15"
+        description: Sets or unsets the read_only flag of the named Release.
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - name: release_read_only_body
+          in: body
+          description: Read Only Release modify Request paramaters
+          required: true
+          schema:
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/DataVersionModel'
+              - type: object
+                description: read_only boolean flag
+                required:
+                  - read_only
+                properties:
+                  read_only:
+                    # read_only key is always present when submitted from the UI form.
+                    # In case of false , a blank string i.e. '' is passed as key's value
+                    # hence we have to add type: string along with boolean as list of accepted types
+                    # for read_only.
+                    # TODO: Fix bug in UI and remove type: string below
+                    type: ["boolean", "string"]
+                    description: blank string if read only is true else set to false
+                    example: true
+                # TODO: Fix bug in UI. Currently the UI form sends the entire '#/definitions/ReleaseGET' model in
+                # the request.json when only two values 'read_only' and 'data_version' are needed.
+                additionalProperties: true
+      responses:
+        '201':
+          $ref: '#/responses/updateExistingObject'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /releases/columns/{column}:
+    get:
+      summary: Returns a JSON Object containing the unique values for the given release column
+      description: >
+        Returns a JSON Object containing the unique values for the given column. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-columns-column)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.release_single_column_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-columns-column"
+        description: "Returns a JSON Object containing the unique values for the given column."
+      parameters:
+        - $ref: '#/parameters/columnParam'
+      responses:
+        '200':
+          $ref: '#/responses/columnResponse'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /releases/{release}/builds/{platform}/{locale}:
+    get:
+      summary: "Returns the platform+locale specific data of the named Release"
+      description: >
+        Returns the platform+locale specific data of the named Release, which is a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-builds-platform-locale)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.release_single_locale_view_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-builds-platform-locale"
+        description: Returns the platform+locale specific data of the named Release
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/platformParam'
+        - $ref: '#/parameters/localeParam'
+      responses:
+        '200':
+          $ref: '#/responses/releaseDataResponse'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    put:
+      summary: Updates the named Release with the data given.
+      description: >
+        Updates the named Release with the data given. The 'blob' field is updated with the new one instead of being completely overridden. If the Release does not exist, it is created. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id11)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.release_single_locale_view_put
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id11"
+        description: "Updates the named Release with the data given."
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/platformParam'
+        - $ref: '#/parameters/localeParam'
+        - name: partial_release_body
+          in: body
+          description: Release object data
+          required: true
+          schema:
+            $ref: '#/definitions/PartialRelease'
+      responses:
+        '200':
+          $ref: '#/responses/changeReleaseDataVersion'
+        '201':
+          $ref: '#/responses/changeReleaseDataVersion'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+
+
+  /releases/{release}/revisions:
+    get:
+      summary: Returns previous versions of the named Release
+      description: >
+        Returns previous versions of the named Release in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-revisions)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.release_history_view_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-revisions"
+        description: Returns previous versions of the named Release
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of release revisions plus total count
+          schema:
+            type: object
+            required:
+              - count
+              - revisions
+            properties:
+              count:
+                description: count of total release revisions fetched
+                type: integer
+                minimum: 0
+                format: int32
+                example: 1
+              revisions:
+                description: array where each element is a release revision object
+                type: array
+                minItems: 0
+                items:
+                  $ref: '#/definitions/ReleaseRevision'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    post:
+      summary: Reverts the release to a previous revision
+      description: >
+        Reverts the named Release to the version identified by the change_id given in the request body. The request body must be a JSON object containing a 'change_id' key. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-revisions)
+      tags:
+        - Releases
+      operationId: auslib.web.admin.views.mapper.release_history_view_post
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-revisions"
+        description: "Reverts the release to a previous revision."
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/change_id_body_param'
+      responses:
+        '200':
+          description: Successfully reverted back the release revision
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
   /users:
     get:
       summary: Returns all of Users in Balrog's DB
@@ -337,9 +895,9 @@ paths:
                 description: list of users
                 type: array
                 uniqueItems: true
+                minItems: 0
                 items:
                   type: string
-                  minItems: 0
                 example: ["balrogadmin"]
 
   /users/roles:
@@ -366,9 +924,9 @@ paths:
                 description: list of roles
                 type: array
                 uniqueItems: true
+                minItems: 0
                 items:
                   type: string
-                  minItems: 0
                 example: ["releng", "qa"]
 
   /users/{username}:
@@ -535,11 +1093,6 @@ paths:
                 example: 2
         '201':
           $ref: '#/responses/newObjectDataVersion'
-        default:
-          description: Default case for sporadic exceptions. Example, No remote username and password in basic authentication for posting new data.
-          examples:
-            application/json:
-              Error: "REMOTE_USERNAME required"
     delete:
       summary: Revokes the given role from the given username
       description: >
@@ -564,8 +1117,6 @@ paths:
           description: Successfully revoked the user role
         '404':
           $ref: '#/responses/resourceNotFound'
-        default:
-          $ref: '#/responses/defaultResponse'
 
   /users/{username}/permissions/{permission}:
     get:
@@ -618,7 +1169,7 @@ paths:
           $ref: '#/responses/resourceNotFound'
 
     put:
-      summary: Overwrites the details of named permission for the username given. If the permission does not exist, it is created.
+      summary: Overwrites or creates the details of named permission for the username given.
       description: >
         Overwrites the details of named permission for the username given. If the permission does not exist, it is created. The following parameters are supported , data_version (required if the permission already exists) and options, a JSON string field [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
       tags:
@@ -638,13 +1189,11 @@ paths:
         - $ref: '#/parameters/userPermissionFormDataParam'
       responses:
         '200':
-          $ref: '#/responses/updateExistingPermission'
+          $ref: '#/responses/updateExistingObject'
         '201':
           $ref: '#/responses/newObjectDataVersion'
         '400':
           $ref: '#/responses/invalidFormData'
-        default:
-          $ref: '#/responses/defaultResponse'
 
     post:
       summary: Only overwrites the details of named permission for the username given.
@@ -667,13 +1216,11 @@ paths:
         - $ref: '#/parameters/userPermissionFormDataParam'
       responses:
         '200':
-          $ref: '#/responses/updateExistingPermission'
+          $ref: '#/responses/updateExistingObject'
         '400':
           $ref: '#/responses/invalidFormData'
         '404':
           $ref: '#/responses/resourceNotFound'
-        default:
-          $ref: '#/responses/defaultResponse'
 
     delete:
       summary: Deletes the named permission for the username given.
@@ -701,8 +1248,6 @@ paths:
           $ref: '#/responses/invalidFormData'
         '404':
           $ref: '#/responses/resourceNotFound'
-        default:
-          $ref: '#/responses/defaultResponse'
 
   /rules:
     get:
@@ -718,12 +1263,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id1"
         description: "Returns filtered list of Rules from Balrog's DB."
       parameters:
-        - name: product
-          in: query
-          description: Name of the product to filter the rules against.
-          type: string
-          x-nullable: true
-          required: false
+        - $ref: '#/parameters/productParam'
 
       responses:
         '200':
@@ -760,7 +1300,6 @@ paths:
               - update_type
               - backgroundRate
               - priority
-
       responses:
         '200':
           description: Successfully created a new rule
@@ -772,11 +1311,6 @@ paths:
             text/html: 514
         '400':
           $ref: '#/responses/invalidFormData'
-
-        default:
-          # Without this if any exception that should not occur for the particular API does occur
-          # will be absorbed and won't be returned to user by handleGeneralExceptions method in views/base.py
-          $ref: '#/responses/defaultResponse'
 
   /rules/{id_or_alias}:
     get:
@@ -834,27 +1368,13 @@ paths:
               - $ref: '#/definitions/RulesBase'
             required:
               - data_version
-
       responses:
         '200':
-          description: Successfully updated the existing rule
-          schema:
-            type: object
-            required:
-              - new_data_version
-            properties:
-              new_data_version:
-                description: "Updated rule's new data version. Will always be greater than 1"
-                type: integer
-                format: int32
-                minimum: 2
-                example: 2
+          $ref: '#/responses/updateExistingObject'
         '404':
           $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
-        default:
-          $ref: '#/responses/defaultResponse'
 
     # Exactly same as POST
     put:
@@ -883,27 +1403,13 @@ paths:
               - $ref: '#/definitions/RulesBase'
             required:
               - data_version
-
       responses:
         '200':
-          description: Successfully updated the existing rule
-          schema:
-            type: object
-            required:
-              - new_data_version
-            properties:
-              new_data_version:
-                description: "Updated rule's new data version. Will always be greater than 1"
-                type: integer
-                format: int32
-                minimum: 2
-                example: 2
+          $ref: '#/responses/updateExistingObject'
         '404':
           $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
-        default:
-          $ref: '#/responses/defaultResponse'
 
     delete:
       summary: Deletes a rule identified by the rule id
@@ -928,8 +1434,6 @@ paths:
           description: Successfully deleted a rule
         '404':
           $ref: '#/responses/resourceNotFound'
-        default:
-          $ref: '#/responses/defaultResponse'
 
   /rules/{rule_id}/revisions:
     get:
@@ -946,21 +1450,8 @@ paths:
         description: "Fetches list and count of all the revisions of the rule given by rule_id"
       parameters:
         - $ref: '#/parameters/rule_id_param'
-        - name: page
-          in: query
-          description: Variable value used pagination of response revisions.
-          type: integer
-          minimum: 1
-          x-nullable: true
-          required: false
-        - name: limit
-          in: query
-          description: Variable value used for calculating offset for pagination.
-          type: integer
-          minimum: 1
-          x-nullable: true
-          required: false
-
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
       responses:
         '200':
           description: Returns JSON object of list of rules with their count
@@ -1025,23 +1516,7 @@ paths:
         description: "Updates the rule identified by the rule_id to a previous revision identified by change_id."
       parameters:
         - $ref: '#/parameters/rule_id_param'
-        - name: rule_change_id
-          in: body
-          description: change_id of the Rule to revert back to
-          required: true
-          schema:
-            allOf:
-              - $ref: '#/definitions/CSRFModel'
-              - type: object
-                required:
-                  - change_id
-                properties:
-                  change_id:
-                    type: integer
-                    description: change_id of the rule revision to revert to
-                    minimum: 0
-                    example: 85142
-
+        - $ref: '#/parameters/change_id_body_param'
       responses:
         '200':
           description: Successfully reverted back the Rule
@@ -1049,8 +1524,6 @@ paths:
           $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
-        default:
-          $ref: '#/responses/defaultResponse'
 
   /rules/columns/{column}:
     get:
@@ -1067,37 +1540,10 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id6"
         description: "Returns a JSON Object containing the unique values for the given Rule column."
       parameters:
-        - name: column
-          in: path
-          description: Name of a defined Rule column.
-          type: string
-          required: true
-
+        - $ref: '#/parameters/columnParam'
       responses:
         '200':
-          description:  "200"
-          schema:
-            type: object
-            required:
-             - count
-            properties:
-              count:
-                description: count of unique values of column present in DB
-                type: integer
-                format: int32
-                minimum: 0
-                example: 1
-            # limits the extent of validation of column_key array
-            # oneOf isn't supported in swagger 2.0 but will be in 3.0
-            # https://github.com/OAI/OpenAPI-Specification/issues/333
-            additionalProperties:
-              type: array
-            maxProperties: 2
-            minProperties: 2
-          examples:
-            application/json:
-              count: 5
-              rule_id: [1,2,3,4,5]
+          $ref: '#/responses/columnResponse'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -1160,6 +1606,148 @@ definitions:
         format: int32
         minimum: 1
         example: 3
+
+  ReleaseBase:
+    title: Release Base
+    description: "To Balrog, a 'release' is data about a related set of builds. This does _not_ match up with the concept of a 'release' being on the 'beta', 'release' or 'esr' channel elsewhere. In Balrog, each set of nightlies on any branch is considered a release"
+    type: object
+    properties:
+      name:
+        description: Release name
+        type: string
+        maxLength: 100
+        example: "Firefox-47.0.2-build2-43.0.1"
+
+      product:
+        description: Name of the product
+        type: string
+        maxLength: 15
+        example: Firefox
+
+      data_version:
+        description: The data version number of release
+        type: integer
+        format: int32
+        example: 1
+        minimum: 1
+
+  ReleaseRevision:
+    title: Release Revision
+    description: "Release Revision object model"
+    type: object
+    allOf:
+      - $ref: "#/definitions/HistoryModel"
+      - $ref: "#/definitions/ReleaseBase"
+      - type: object
+        properties:
+          read_only:
+            description: Flag that indicates whether release is marked read_only or not.
+            type: string
+            enum: [ "True", "False"]
+            example: "True"
+          _different:
+            description: list of columns that were modified in revision
+            type: array
+            uniqueItems: true
+            minItems: 0
+            items:
+              type: string
+            example: ["product", "data"]
+          _time_ago:
+            description: Time passed since the particular change
+            type: string
+            example: "1 day ago"
+    required:
+      - name
+      - product
+      - data_version
+      - read_only
+      - _different
+      - _time_ago
+
+  ReleaseData:
+    title: Release form values plus blob
+    description: "Release Base Model + release blob"
+    type: object
+    allOf:
+      - $ref: "#/definitions/CSRFModel"
+      - $ref: "#/definitions/ReleaseBase"
+      - type: object
+        properties:
+          blob:
+            type: string
+            example: '{"hashFunction": "sha512", "name": "CDM-979", "product": "Firefox", "schema_version": 1000, "vendors": { "gmp-eme-adobe": { "platforms": {"WINNT_x86_64-msvc-x64": {"alias": "WINNT_x86_64-msvc"}},"version": "15"}}}'
+            format: JSONStringField
+            description: json blob containing information about the release
+    required:
+      - name
+      - product
+      - blob
+
+  ReleaseGET:
+    title: Release form values plus read only and rule ids
+    description: "Release Base Model + read only + list of mapped rule_ids"
+    type: object
+    allOf:
+      - $ref: "#/definitions/ReleaseBase"
+      - type: object
+        properties:
+          read_only:
+            type: ["boolean", "null"]
+            example: true
+            description: "flag value is true if release is marked as read_only else release is modifiable"
+          rule_ids:
+            description: list of rule_ids
+            type: array
+            uniqueItems: true
+            minItems: 0
+            items:
+              type: integer
+              minimum: 0
+            example: [487, 589]
+    required:
+      - name
+      - product
+      - data_version
+      - read_only
+      - rule_ids
+
+  PartialRelease:
+    title: Partial Release
+    description: "Partial Release form values"
+    type: object
+    allOf:
+      # Note: 'name' is inherited with other required fields from Base model but never used when processing the input request
+      - $ref: '#/definitions/CSRFModel'
+      - $ref: "#/definitions/ReleaseBase"
+      - type: object
+        properties:
+          data:
+            description: json blob containing information about the release
+            type: string
+            example: '{"hashFunction": "sha512", "name": "CDM-979", "product": "Firefox", "schema_version": 1000, "vendors": { "gmp-eme-adobe": { "platforms": {"WINNT_x86_64-msvc-x64": {"alias": "WINNT_x86_64-msvc"}},"version": "15"}}}'
+            format: JSONStringField
+          hashFunction:
+            description: cryptographic hash function to assure integrity of transmitted data
+            type: string
+            example: sha512
+          schema_version:
+            description: The version number of release
+            type: integer
+            format: int32
+            minimum: 1
+            example: 1
+          copyTo:
+            description: List names of releases which the updated data must be copied to
+            type: string
+            format: JSONStringField
+          alias:
+            description: id of the release
+            type: string
+            format: JSONStringField
+    required:
+      - product
+      - data
 
   UserPermissionsModel:
     title: User Permissions
@@ -1429,7 +2017,6 @@ definitions:
         description: the version number of rule
         type: ["integer", "string"]
         format: data_version
-        readOnly: true
         example: 1
 
       update_type:

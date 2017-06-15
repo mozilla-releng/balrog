@@ -103,8 +103,7 @@ class HistoryView(HistoryAdminView):
 
         obj = get_object_callback()
         if not obj:
-            return problem(status=404, title="Not Found", detail="History object not found",
-                           ext={"exception": self.not_found_msg})
+            return problem(status=404, title="Not Found", detail=obj_not_found_msg)
 
         offset = limit * (page - 1)
 
@@ -161,8 +160,7 @@ class HistoryView(HistoryAdminView):
 
         obj = get_object_callback()
         if not obj:
-            return problem(404, "Not Found", obj_not_found_msg,
-                           ext={"exception": "Requested object wasn't found"})
+            return problem(404, "Not Found", obj_not_found_msg)
 
         change_id = None
         if connexion.request.json:
@@ -178,7 +176,7 @@ class HistoryView(HistoryAdminView):
         obj_id = obj[change_field]
 
         if change[change_field] != obj_id:
-            return problem(400, "Bad Request", detail="Bad {0} passed in the request".format(change_field))
+            return problem(400, "Bad Request", "Bad {0} passed in the request".format(change_field))
 
         old_data_version = obj['data_version']
 

@@ -3,7 +3,8 @@ from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRul
     RuleHistoryAPIView
 from auslib.web.admin.views.permissions import UsersView, AllRolesView, SpecificUserView,\
     PermissionsView, UserRolesView, UserRoleView, SpecificPermissionView
-from releases import ReleaseDiffView, ReleaseFieldView
+from releases import ReleaseDiffView, ReleaseFieldView, ReleasesAPIView, SingleReleaseView,\
+    ReleaseReadOnlyView, SingleReleaseColumnView, SingleLocaleView, ReleaseHistoryView
 
 
 def csrf_get():
@@ -119,3 +120,68 @@ def release_diff_history_get(change_id, field):
 def release_view_history_get(change_id, field):
     """GET /history/view/release/:id/:field"""
     return ReleaseFieldView().get(change_id, field)
+
+
+def release_get():
+    """GET /releases"""
+    return ReleasesAPIView().get()
+
+
+def release_post():
+    """POST /releases"""
+    return ReleasesAPIView().post()
+
+
+def single_release_get(release):
+    """GET /releases/:release"""
+    return SingleReleaseView().get(release)
+
+
+def single_release_post(release):
+    """POST /releases/:release"""
+    return SingleReleaseView().post(release)
+
+
+def single_release_put(release):
+    """PUT /releases/:release"""
+    return SingleReleaseView().put(release)
+
+
+def single_release_delete(release):
+    """DELETE /releases/:release"""
+    return SingleReleaseView().delete(release)
+
+
+def release_read_only_get(release):
+    """GET /releases/:release/read_only"""
+    return ReleaseReadOnlyView().get(release)
+
+
+def release_read_only_put(release):
+    """PUT /releases/:release/read_only"""
+    return ReleaseReadOnlyView().put(release)
+
+
+def release_single_column_get(column):
+    """GET /releases/columns/:column"""
+    return SingleReleaseColumnView().get(column)
+
+
+def release_single_locale_view_get(release, platform, locale):
+    """GET /releases/[release]/builds/[platform]/[locale]"""
+    return SingleLocaleView().get(release, platform, locale)
+
+
+def release_single_locale_view_put(release, platform, locale):
+    """PUT /releases/[release]/builds/[platform]/[locale]"""
+    return SingleLocaleView().put(release, platform, locale)
+
+
+def release_history_view_get(release):
+    """GET /releases/:release/revisions"""
+    return ReleaseHistoryView().get(release)
+
+
+def release_history_view_post(release):
+    """POST /releases/:release/revisions"""
+    return ReleaseHistoryView().post(release)
