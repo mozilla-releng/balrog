@@ -14,16 +14,17 @@ validator_map = {
     'body': BalrogRequestBodyValidator
 }
 
+# TODO set debug=False after fully migrating all the admin APIs
 connexion_app = connexion.App(__name__, specification_dir='swagger/', validator_map=validator_map, debug=True)
 connexion_app.add_api("api.yaml", validate_responses=True, strict_validation=True)
 app = connexion_app.app
 sentry = Sentry()
 
-from auslib.web.admin.views.permissions import PermissionsView, \
-    SpecificPermissionView, UserRolesView, UserRoleView, AllRolesView, \
+from auslib.web.admin.views.permissions import \
+    SpecificPermissionView, \
     PermissionScheduledChangesView, PermissionScheduledChangeView, \
     EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, \
-    PermissionScheduledChangeSignoffsView, SpecificUserView
+    PermissionScheduledChangeSignoffsView
 from auslib.web.admin.views.releases import SingleLocaleView, \
     SingleReleaseView, ReleaseHistoryView, \
     ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView, \
@@ -45,7 +46,6 @@ from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsView
     PermissionsRequiredSignoffScheduledChangeSignoffsView, \
     PermissionsRequiredSignoffScheduledChangeHistoryView
 from auslib.web.admin.views.rules import RuleScheduledChangeSignoffsView, \
-    SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView, \
     RuleScheduledChangesView, RuleScheduledChangeView, \
     EnactRuleScheduledChangeView, RuleScheduledChangeHistoryView
 from auslib.dockerflow import create_dockerflow_endpoints
@@ -101,17 +101,7 @@ Compress(app)
 # and the static admin UI are hosted on the same domain. This API wsgi app is
 # hosted at "/api", which is stripped away by the web server before we see
 # these requests.
-app.add_url_rule("/users/roles", view_func=AllRolesView.as_view("all_users_roles"))
-app.add_url_rule("/users/<username>", view_func=SpecificUserView.as_view("specific_user"))
-app.add_url_rule("/users/<username>/permissions", view_func=PermissionsView.as_view("user_permissions"))
 app.add_url_rule("/users/<username>/permissions/<permission>", view_func=SpecificPermissionView.as_view("specific_permission"))
-app.add_url_rule("/users/<username>/roles", view_func=UserRolesView.as_view("user_roles"))
-app.add_url_rule("/users/<username>/roles/<role>", view_func=UserRoleView.as_view("user_role"))
-# Normal operations (get/update/delete) on rules can be done by id or alias...
-app.add_url_rule("/rules/<id_or_alias>", view_func=SingleRuleView.as_view("rule"))
-app.add_url_rule("/rules/columns/<column>", view_func=SingleRuleColumnView.as_view("rule_columns"))
-# ...but anything to do with history must be done by id, beacuse alias may change over time
-app.add_url_rule("/rules/<int:rule_id>/revisions", view_func=RuleHistoryAPIView.as_view("rules_revisions"))
 app.add_url_rule("/releases", view_func=ReleasesAPIView.as_view("releases"))
 app.add_url_rule("/releases/<release>", view_func=SingleReleaseView.as_view("single_release"))
 app.add_url_rule("/releases/<release>/read_only", view_func=ReleaseReadOnlyView.as_view("read_only"))
