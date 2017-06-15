@@ -1,10 +1,16 @@
 from auslib.web.admin.views.csrf import CSRFView
+
 from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRuleColumnView, \
     RuleHistoryAPIView
+
 from auslib.web.admin.views.permissions import UsersView, AllRolesView, SpecificUserView,\
     PermissionsView, UserRolesView, UserRoleView, SpecificPermissionView
-from releases import ReleaseDiffView, ReleaseFieldView, ReleasesAPIView, SingleReleaseView,\
+
+from auslib.web.admin.views.releases import ReleaseDiffView, ReleaseFieldView, ReleasesAPIView, SingleReleaseView,\
     ReleaseReadOnlyView, SingleReleaseColumnView, SingleLocaleView, ReleaseHistoryView
+
+from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsHistoryAPIView, \
+    PermissionsRequiredSignoffsHistoryAPIView, ProductRequiredSignoffsView, PermissionsRequiredSignoffsView
 
 
 def csrf_get():
@@ -185,3 +191,43 @@ def release_history_view_get(release):
 def release_history_view_post(release):
     """POST /releases/:release/revisions"""
     return ReleaseHistoryView().post(release)
+
+
+def required_signoffs_product_revisions_get():
+    """GET /required_signoffs/product/revisions"""
+    return ProductRequiredSignoffsHistoryAPIView().get()
+
+
+def required_signoffs_permissions_revisions_get():
+    """GET /required_signoffs/permissions/revisions"""
+    return PermissionsRequiredSignoffsHistoryAPIView().get()
+
+
+def required_signoffs_product_get():
+    """GET /required_signoffs/product"""
+    return ProductRequiredSignoffsView().get()
+
+
+def required_signoffs_product_post():
+    """POST /required_signoffs/product"""
+    return ProductRequiredSignoffsView().post()
+
+
+def required_signoffs_product_delete():
+    """DELETE /required_signoffs/product"""
+    return ProductRequiredSignoffsView().delete()
+
+
+def required_signoffs_permissions_get():
+    """GET /required_signoffs/permissions"""
+    return PermissionsRequiredSignoffsView().get()
+
+
+def required_signoffs_permissions_post():
+    """POST /required_signoffs/permissions"""
+    return PermissionsRequiredSignoffsView().post()
+
+
+def required_signoffs_permissions_delete():
+    """DELETE /required_signoffs/permissions"""
+    return PermissionsRequiredSignoffsView().delete()

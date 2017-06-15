@@ -8,6 +8,7 @@
   </ul>
 
   <div ng-class="{'has-error': errors.exception}" ng-if="errors.exception">{{ errors.exception }}</div>
+  <div ng-class="{'has-error': errors.detail}" ng-if="errors.detail">{{ errors.detail }}</div>
 </div>
 <div class="modal-footer">
   <div ng-show="saving" small-loader></div>

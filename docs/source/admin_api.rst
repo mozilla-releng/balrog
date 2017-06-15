@@ -638,7 +638,7 @@ Returns all of the :ref:`permissions_rs_table`. Example response:
 POST
 ****
 
-Create a new Product Required Signoff. "product", "role", and "signoffs_required" are all required. If the product provided already require signoff, a 400 will be returned (you must use a Scheduled Change and meet the existing signoff requirements to modify Required Signoffs for things that already require it).
+Create a new Permissions Required Signoff. "product", "role", and "signoffs_required" are all required. If the product provided already requires a signoff, a 400 will be returned (you must use a Scheduled Change and meet the existing signoff requirements to modify Required Signoffs for things that already require it).
 
 
 .. _scheduledChangesApi:
