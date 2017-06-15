@@ -85,6 +85,12 @@ class RulesAPIView(AdminView):
 
         # Solves Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
         what.pop("csrf_token", None)
+
+        alias = what.get('alias', None)
+        if alias:
+            if dbo.rules.getRule(alias):
+                return problem(400, 'Bad Request', 'Rule with alias exists.')
+
         rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
         return Response(status=200, response=str(rule_id))
 
