@@ -4,13 +4,13 @@ import connexion
 from sqlalchemy.sql.expression import null
 from jsonschema.compat import str_types
 from flask import Response, request, jsonify
-from connexion import problem
+from auslib.web.admin.views.problem import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
 from auslib.web.admin.views.csrf import get_csrf_headers
-from auslib.web.admin.views.forms import EditRuleForm, DbEditableForm, \
+from auslib.web.admin.views.forms import \
     ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
     ScheduledChangeDeleteRuleForm, EditScheduledChangeNewRuleForm, \
     EditScheduledChangeExistingRuleForm, EditScheduledChangeDeleteRuleForm
@@ -18,6 +18,35 @@ from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
 from auslib.web.admin.views.history import HistoryView
+
+
+def process_rule_form(form_data):
+    """
+    Method to process either new/existing Rule form's data without wtfForm validations
+    :param form_data: input json form data in dict
+    :return: dictionary of processed form field values and list of valid mapping key's value.
+    """
+    release_names = dbo.releases.getReleaseNames()
+
+    mapping_choices = [(item['name'], item['name']) for item in release_names]
+    mapping_choices.insert(0, ('', 'NULL'))
+
+    # Replaces wtfForms validations
+    rule_form_dict = dict()
+    for key in form_data:
+        if isinstance(form_data[key], str_types):
+            rule_form_dict[key] = None if form_data[key].strip() == '' else form_data[key].strip()
+        else:
+            rule_form_dict[key] = form_data[key]
+
+    for i in ["priority", "backgroundRate", "data_version"]:
+        if rule_form_dict.get(i, None):
+            rule_form_dict[i] = int(rule_form_dict[i])
+
+    mapping_values = [y for x, y in mapping_choices if x == rule_form_dict.get("mapping")]
+    fallback_mapping_values = [y for x, y in mapping_choices if x == rule_form_dict.get("fallbackMapping")]
+
+    return rule_form_dict, mapping_values, fallback_mapping_values
 
 
 class RulesAPIView(AdminView):
@@ -46,25 +75,22 @@ class RulesAPIView(AdminView):
     @requirelogin
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
-        release_names = dbo.releases.getReleaseNames()
-        mapping_choices = [(item['name'], item['name']) for item in release_names]
-        mapping_choices.insert(0, ('', 'NULL'))
+        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.json)
 
-        # Replaces wtfForms validations
-        what = dict()
-        for key in request.json:
-            if isinstance(request.json[key], str_types):
-                what[key] = None if request.json[key].strip() == '' else request.json[key].strip()
-            else:
-                what[key] = request.json[key]
-
-        mapping_values = [y for x, y in mapping_choices if x == what.get("mapping")]
         if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-        for i in ["priority", "backgroundRate"]:
-            if what.get(i, None):
-                what[i] = int(what[i])
+        if what.get('fallbackMapping', None) is not None and len(fallback_mapping_values) != 1:
+            return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
+
+        # Solves Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
+        what.pop("csrf_token", None)
+
+        alias = what.get('alias', None)
+        if alias:
+            if dbo.rules.getRule(alias):
+                return problem(400, 'Bad Request', 'Rule with alias exists.')
+
         rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
         return Response(status=200, response=str(rule_id))
 
@@ -75,7 +101,8 @@ class SingleRuleView(AdminView):
     def get(self, id_or_alias):
         rule = dbo.rules.getRule(id_or_alias)
         if not rule:
-            return Response(status=404, response="Requested rule does not exist")
+            return problem(status=404, title="Not Found", detail="Requested rule wasn't found",
+                           ext={"exception": "Requested rule does not exist"})
 
         headers = {'X-Data-Version': rule['data_version']}
         headers.update(get_csrf_headers())
@@ -88,41 +115,23 @@ class SingleRuleView(AdminView):
         # Verify that the rule_id or alias exists.
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
-            return Response(status=404)
-        form = EditRuleForm()
+            return problem(status=404, title="Not Found", detail="Requested rule wasn't found",
+                           ext={"exception": "Requested rule does not exist"})
 
-        releaseNames = dbo.releases.getReleaseNames()
+        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.json)
 
-        form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
-        form.mapping.choices.insert(0, ('', 'NULL'))
+        if what.get('mapping', None) is not None and len(mapping_values) != 1:
+            return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
+        if what.get('fallbackMapping', None) is not None and len(fallback_mapping_values) != 1:
+            return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
-        what = dict()
-        # We need to be able to support changing AND removing parts of a rule,
-        # and because of how Flask's request object and WTForm's defaults work
-        # this gets a little hary.
-        for k, v in form.data.iteritems():
-            # data_version is a "special" column, in that it's not part of the
-            # primary data, and shouldn't be updatable by the user.
-            if k == "data_version":
-                continue
-            # We need to check for each column in both the JSON style post
-            # and the regular multipart form data. If the key is not present in
-            # either of these data structures. We treat this cases as no-op
-            # and shouldn't modify the data for that key.
-            # If the key is present we should modify the data as requested.
-            # If a value is an empty string, we should remove that restriction
-            # from the rule (aka, set as NULL in the db). The underlying Form
-            # will have already converted it to None, so we can treat it the
-            # same as a modification here.
-            if (request.json and k in request.json) or k in request.form:
-                what[k] = v
+        # Solves https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
+        what.pop("csrf_token", None)
+        data_version = what.pop("data_version", None)
 
         dbo.rules.update(changed_by=changed_by, where={"rule_id": id_or_alias}, what=what,
-                         old_data_version=form.data_version.data, transaction=transaction)
+                         old_data_version=data_version, transaction=transaction)
 
         # find out what the next data version is
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
@@ -135,16 +144,16 @@ class SingleRuleView(AdminView):
         # Verify that the rule_id or alias exists.
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
-            return Response(status=404)
+            return problem(status=404, title="Not Found", detail="Requested rule wasn't found",
+                           ext={"exception": "Requested rule does not exist"})
 
-        # Bodies are ignored for DELETE requests, so we need to force WTForms
-        # to look at the arguments instead.
+        # Bodies are ignored for DELETE requests, so we need to look at the request arguments instead.
         # Even though we aren't going to use most of the form fields (just
         # rule_id and data_version), we still want to create and validate the
         # form to make sure that the CSRF token is checked.
-        form = DbEditableForm(request.args)
 
-        dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by, old_data_version=form.data_version.data,
+        dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by,
+                         old_data_version=connexion.request.args.get("data_version"),
                          transaction=transaction)
 
         return Response(status=200)
@@ -231,9 +240,13 @@ class RuleHistoryAPIView(HistoryView):
                 revisions_order_by=[self.history_table.timestamp.desc()],
                 obj_not_found_msg='Requested rule does not exist',
                 response_key='rules')
-        except (ValueError, AssertionError) as msg:
+        # Adding AttributeError to accommodate exception thrown when no rule
+        # is found when db.getRule method is invoked
+        except (ValueError, AttributeError) as msg:
             self.log.warning("Bad input: %s", msg)
-            return Response(status=400, response=str(msg))
+            return problem(400, "Bad Request", "Error occurred when trying to fetch"
+                                               " Rule's revisions having rule_id {0}".format(rule_id),
+                           ext={"exception": str(msg)})
 
     @requirelogin
     def _post(self, rule_id, transaction, changed_by):
@@ -254,7 +267,8 @@ class SingleRuleColumnView(AdminView):
         rules = dbo.rules.getOrderedRules()
         column_values = []
         if column not in rules[0].keys():
-            return Response(status=404, response="Requested column does not exist")
+            return problem(status=404, title="Not Found", detail="Rule column was not found",
+                           ext={"exception": "Requested column does not exist"})
 
         for rule in rules:
             for key, value in rule.items():

@@ -1,13 +1,14 @@
 from jsonschema import draft4_format_checker
 from jsonschema.compat import str_types
-# To be able to Differentitate from wftForms.ValiddationError.
-from jsonschema import ValidationError as JsonschemaValidationError
+# To be able to Differentitate from wftForms.ValidationError.
+from jsonschema import ValidationError as JsonSchemaValidationError
 from auslib.util.comparison import get_op
 from auslib.util.versions import MozillaVersion
 from connexion.decorators.validation import RequestBodyValidator
 from connexion.utils import is_null
 from connexion import problem
 import operator
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ class BalrogRequestBodyValidator(RequestBodyValidator):
             return None
         try:
             self.validator.validate(data)
-        except JsonschemaValidationError as exception:
+        except JsonSchemaValidationError as exception:
             # Add field name to the error response
             exception_field = ''
             for i in exception.path:
@@ -36,7 +37,7 @@ class BalrogRequestBodyValidator(RequestBodyValidator):
         return None
 
 
-@draft4_format_checker.checks(format="buildID", raises=JsonschemaValidationError)
+@draft4_format_checker.checks(format="buildID", raises=JsonSchemaValidationError)
 def operator_validator(field_value):
     logger.debug('starting in operator_validator: buildID is %s' % field_value)
     if not isinstance(field_value, str_types):
@@ -49,11 +50,11 @@ def operator_validator(field_value):
         logger.debug('Got (%s, %s) from get_op', op, operand)
     except TypeError:
         # get_op field returns None if no operator or no match, can't be unpacked
-        raise JsonschemaValidationError("Invalid input for buildID : %s. No Operator or Match found." % field_value)
+        raise JsonSchemaValidationError("Invalid input for buildID : %s. No Operator or Match found." % field_value)
     return True
 
 
-@draft4_format_checker.checks(format="version", raises=JsonschemaValidationError)
+@draft4_format_checker.checks(format="version", raises=JsonSchemaValidationError)
 def version_validator(field_value):
     logger.debug('starting in version_validator: version data is %s' % field_value)
     if not isinstance(field_value, str_types):
@@ -67,20 +68,35 @@ def version_validator(field_value):
         try:
             op, operand = get_op(rule_version)
             if is_list_of_versions and op != operator.eq:
-                raise JsonschemaValidationError('Invalid input for %s .Relational Operators are not allowed'
+                raise JsonSchemaValidationError('Invalid input for %s .Relational Operators are not allowed'
                                                 ' when providing a list of versions.' % field_value)
             version = MozillaVersion(operand)
-        except JsonschemaValidationError:
+        except JsonSchemaValidationError:
             raise
         except ValueError:
-            raise JsonschemaValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value"
+            raise JsonSchemaValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value"
                                             % (field_value, field_value))
         except:
-            raise JsonschemaValidationError('Invalid input for %s . No Operator or Match found.' % field_value)
+            raise JsonSchemaValidationError('Invalid input for %s . No Operator or Match found.' % field_value)
         # MozillaVersion doesn't error on empty strings
         if not hasattr(version, 'version'):
-            raise JsonschemaValidationError("Couldn't parse the version for %s. No attribute 'version' was detected."
+            raise JsonSchemaValidationError("Couldn't parse the version for %s. No attribute 'version' was detected."
                                             % field_value)
+    return True
+
+
+@draft4_format_checker.checks(format="JSONStringField", raises=JsonSchemaValidationError)
+def json_field_validator(field_value):
+    logger.debug('starting in json_field_validator: input json is %s' % field_value)
+    if not isinstance(field_value, str_types):
+        return True
+    # empty input is fine
+    if field_value is None or field_value == '':
+        return True
+    try:
+        json.loads(field_value)
+    except ValueError as e:
+        raise JsonSchemaValidationError("Not a valid json. Error: %s." % str(e.args[0]))
     return True
 
 
@@ -93,21 +109,37 @@ def integer_and_range_validator(field_name, field_value, min_val=None, max_val=N
     try:
         x = int(field_value)
     except:
-        raise JsonschemaValidationError(message="Invalid input for %s. Not an integer." % field_name)
+        raise JsonSchemaValidationError(message="Invalid input for %s. Not an integer." % field_name)
     if min_val is not None and x < min_val:
-        raise JsonschemaValidationError(message="%s field value should be an integer >= %s" % (field_name, min_val))
+        raise JsonSchemaValidationError(message="%s field value should be an integer >= %s" % (field_name, min_val))
     if max_val is not None and x > max_val:
-        raise JsonschemaValidationError(message="%s field value should be an integer <= %s" % (field_name, max_val))
+        raise JsonSchemaValidationError(message="%s field value should be an integer <= %s" % (field_name, max_val))
     return True
 
 
-@draft4_format_checker.checks(format="priority", raises=JsonschemaValidationError)
+@draft4_format_checker.checks(format="priority", raises=JsonSchemaValidationError)
 def priority_validator(field_value):
-    logger.debug('starting in priority_validator: field data is %s' % field_value)
+    if field_value is not None and field_value != '':
+        logger.debug('starting in priority_validator: priority is %s' % field_value)
     return integer_and_range_validator("priority", field_value, 0)
 
 
-@draft4_format_checker.checks(format="backgroundRate", raises=JsonschemaValidationError)
+@draft4_format_checker.checks(format="backgroundRate", raises=JsonSchemaValidationError)
 def background_rate_validator(field_value):
-    logger.debug('starting in backgroundRate_validator: field data is %s' % field_value)
+    if field_value is not None and field_value != '':
+        logger.debug('starting in backgroundRate_validator: backgroundRate is %s' % field_value)
     return integer_and_range_validator("backgroundRate", field_value, 0, 100)
+
+
+@draft4_format_checker.checks(format="data_version", raises=JsonSchemaValidationError)
+def data_version_validator(field_value):
+    if field_value is not None and field_value != '':
+        logger.debug('starting in data_version_validator: data_version is %s' % field_value)
+    return integer_and_range_validator("data_version", field_value, 1)
+
+
+@draft4_format_checker.checks(format="rule_id", raises=JsonSchemaValidationError)
+def rule_id_validator(field_value):
+    if field_value is not None and field_value != '':
+        logger.debug('starting in rule_id_validator: rule_id is %s' % field_value)
+    return integer_and_range_validator("rule_id", field_value, 0)

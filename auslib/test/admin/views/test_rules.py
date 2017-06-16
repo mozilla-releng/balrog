@@ -210,6 +210,30 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(r[0]['buildID'], None)
         self.assertEquals(r[0]['version'], None)
 
+    def testInvalidMapping(self):
+        data_dict = dict(backgroundRate=31, mapping='random', priority=33, product='a', update_type='minor')
+        ret = self._post('/rules', data=data_dict)
+        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        self.assertIn("mapping", ret.data, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
+    def testPutDataVersionLessThanOne(self):
+        # Throw 400 error when data_version is less than 1.
+        ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d',
+                                              priority=73, data_version=0,
+                                              product='Firefox', channel='nightly', update_type='minor'))
+        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
+    def testDuplicateAlias(self):
+        ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c',
+                                             priority=33, product='Firefox',
+                                             update_type='minor', channel='nightly', alias='test'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
+        ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c',
+                                             priority=33, product='Firefox',
+                                             update_type='minor', channel='nightly', alias='test'))
+        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
 
 class TestSingleRuleView_JSON(ViewTest):
 
@@ -273,8 +297,8 @@ class TestSingleRuleView_JSON(ViewTest):
 
     def testPost(self):
         # Make some changes to a rule
-        ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d',
-                                               fallbackMapping="fallback_d", priority=73, data_version=1,
+        ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', update_type='minor',
+                                               fallbackMapping="b", priority=73, data_version=1,
                                                product='Firefox', channel='nightly', systemCapabilities="SSE"))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
@@ -284,7 +308,7 @@ class TestSingleRuleView_JSON(ViewTest):
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mapping'], 'd')
-        self.assertEquals(r[0]['fallbackMapping'], 'fallback_d')
+        self.assertEquals(r[0]['fallbackMapping'], 'b')
         self.assertEquals(r[0]['backgroundRate'], 71)
         self.assertEquals(r[0]['systemCapabilities'], "SSE")
         self.assertEquals(r[0]['priority'], 73)
@@ -296,7 +320,9 @@ class TestSingleRuleView_JSON(ViewTest):
 
     def testPutRuleOutdatedData(self):
         # Make changes to a rule
-        ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1, product='Firefox', channel='nightly'))
+        ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d',
+                                              priority=73, data_version=1,
+                                              product='Firefox', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -310,7 +336,8 @@ class TestSingleRuleView_JSON(ViewTest):
 
     def testPostRuleOutdatedData(self):
         # Make changes to a rule
-        ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1, product='Firefox', channel='nightly'))
+        ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
+                                               product='Firefox', channel='nightly'))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -319,7 +346,8 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r[0]['data_version'], 2)
 
         # OutdatedDataVersion Request
-        ret2 = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1, product='Firefox', channel='nightly'))
+        ret2 = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73,
+                                               data_version=1, product='Firefox', channel='nightly'))
         self.assertEquals(ret2.status_code, 400, "Status Code: %d, Data: %s" % (ret2.status_code, ret2.data))
 
     def testPostByAlias(self):
@@ -441,7 +469,7 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r["product"], "a")
 
     def testPost404(self):
-        ret = self._post("/rules/555", data=dict(mapping="d"))
+        ret = self._post("/rules/555", data=dict(mapping="d", data_version=1))
         self.assertEquals(ret.status_code, 404)
 
     def testPostWithBadData(self):
@@ -508,11 +536,11 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(ret.status_code, 400, msg=ret.data)
 
     def testDeleteRuleByAlias(self):
-        ret = self._delete('/rules/frodo', qs=dict(data_version=1))
+        ret = self._delete('/rules/frodo', qs={"data_version": 1})
         self.assertEquals(ret.status_code, 200, msg=ret.data)
 
     def testDeleteRule404(self):
-        ret = self._delete("/rules/112")
+        ret = self._delete("/rules/112", qs={"data_version": 25})
         self.assertEquals(ret.status_code, 404)
 
     def testDeleteWithProductAdminPermission(self):
