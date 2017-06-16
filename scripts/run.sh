@@ -57,6 +57,7 @@ elif [ $1 == "extract-active-data" ]; then
         exit 1
     fi
     exec python scripts/manage-db.py -d ${DBURI} extract ${OUTPUT_FILE}
+    export
 elif [ $1 == "test" ]; then
     shift
     if [[ $1 == "backend" ]]; then
@@ -73,6 +74,7 @@ elif [ $1 == "test" ]; then
 
         if [[ $backend_rc == 0 && $frontend_rc == 0 ]]; then
             echo "All tests pass!!!"
+            export
             if [[ $GITHUB_HEAD_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
             then
               password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:coveralls"
