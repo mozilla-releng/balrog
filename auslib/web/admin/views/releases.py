@@ -307,8 +307,9 @@ class SingleReleaseView(AdminView):
         # query argument i.e. data_version  is also required.
         # All input value validations already defined in swagger specification and carried out by connexion.
         try:
+            old_data_version = int(connexion.request.args.get("data_version"))
             dbo.releases.delete(where={"name": release["name"]}, changed_by=changed_by,
-                                old_data_version=connexion.request.args.get("data_version"),
+                                old_data_version=old_data_version,
                                 transaction=transaction)
         except ReadOnlyError as e:
                 msg = "Couldn't delete release: %s" % e
