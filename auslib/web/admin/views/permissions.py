@@ -134,9 +134,9 @@ class SpecificPermissionView(AdminView):
             # won't find data where it's expecting it. Instead, we have to tell it to look at
             # the query string, which Flask puts in request.args.
 
+            old_data_version = int(connexion.request.args.get("data_version"))
             dbo.permissions.delete(where={"username": username, "permission": permission},
-                                   changed_by=changed_by, old_data_version=connexion.request.args.get("data_version"),
-                                   transaction=transaction)
+                                   changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
             return Response(status=200)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
@@ -243,6 +243,7 @@ class UserRoleView(AdminView):
                                                                                  "username '%s'" % (role, username)})
         # query argument i.e. data_version  is also required.
         # All input value validations already defined in swagger specification and carried out by connexion.
+        old_data_version = int(connexion.request.args.get("data_version"))
         dbo.permissions.revokeRole(username, role, changed_by=changed_by,
-                                   old_data_version=connexion.request.args.get("data_version"), transaction=transaction)
+                                   old_data_version=old_data_version, transaction=transaction)
         return Response(status=200)

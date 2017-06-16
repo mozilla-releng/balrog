@@ -152,8 +152,9 @@ class SingleRuleView(AdminView):
         # rule_id and data_version), we still want to create and validate the
         # form to make sure that the CSRF token is checked.
 
+        old_data_version = int(connexion.request.args.get("data_version"))
         dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by,
-                         old_data_version=connexion.request.args.get("data_version"),
+                         old_data_version=old_data_version,
                          transaction=transaction)
 
         return Response(status=200)
