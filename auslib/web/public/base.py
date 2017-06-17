@@ -3,6 +3,10 @@ import connexion
 import logging
 import re
 
+import auslib.web
+
+from os import path
+
 from connexion import request
 from flask import make_response, send_from_directory, Response
 
@@ -25,14 +29,14 @@ validator_map = {
 connexion_app = connexion.App(__name__,
                               specification_dir='.',
                               validator_map=validator_map)
-
 app = connexion_app.app
 
-spec = SpecBuilder(app).add_main_spec('api.yml')\
-                       .add_spec_part('web/common/releases_spec.yml')\
-                       .add_spec_part('web/common/rules_spec.yml')
-result_spec = spec.build()
-connexion_app.add_api(result_spec,
+current_dir = path.dirname(__file__)
+web_dir = path.dirname(auslib.web.__file__)
+spec = SpecBuilder().add_spec(path.join(current_dir, 'api.yml'))\
+                    .add_spec(path.join(web_dir, 'common/releases_spec.yml'))\
+                    .add_spec(path.join(web_dir, 'common/rules_spec.yml'))
+connexion_app.add_api(spec,
                       validate_responses=True,
                       strict_validation=True)
 
@@ -108,6 +112,6 @@ def set_cache_control():
 def get_yaml():
     if app.config.get('SWAGGER_DEBUG', False):
         import yaml
-        app_spec = yaml.dump(result_spec)
+        app_spec = yaml.dump(spec)
         return Response(mimetype='text/plain', response=app_spec)
     return Response(status=404)

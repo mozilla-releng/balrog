@@ -95,11 +95,11 @@ def _process_revisions(revisions):
 def get_release_history(release):
     history_table = dbo.releases.history
     order_by = [history_table.timestamp.desc()]
-    history_helper = HistoryHelper(history_table, order_by)\
-        .with_get_object_callback(lambda: _get_release(release),
-                                  'Requested release does not exist')\
-        .with_history_filters_callback(_get_filters)\
-        .with_process_revisions_callback(_process_revisions)
+    history_helper = HistoryHelper(hist_table=history_table,
+                                   order_by=order_by,
+                                   get_object_callback=lambda: _get_release(release),
+                                   history_filters_callback=_get_filters,
+                                   process_revisions_callback=_process_revisions)
     try:
         return history_helper.get_history()
     except (ValueError, AssertionError) as e:

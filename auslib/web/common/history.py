@@ -7,27 +7,19 @@ from auslib.util.timesince import timesince
 
 
 class HistoryHelper():
-    def __init__(self, hist_table, order_by):
+    def __init__(self,
+                 hist_table,
+                 order_by,
+                 get_object_callback,
+                 history_filters_callback,
+                 process_revisions_callback,
+                 obj_not_found_msg='Requested object does not exist'):
         self.hist_table = hist_table
         self.order_by = order_by
-        self.fn_get_object = None
-        self.fn_history_filters = None
-        self.fn_process_revisions = None
-        self.obj_not_found_msg = 'Requested object does not exist'
-
-    def with_get_object_callback(self, get_object_callback, obj_not_found_msg=None):
-        self.fn_get_object = get_object_callback
-        if obj_not_found_msg:
-            self.obj_not_found_msg = obj_not_found_msg
-        return self
-
-    def with_history_filters_callback(self, history_filters_callback):
         self.fn_history_filters = history_filters_callback
-        return self
-
-    def with_process_revisions_callback(self, process_revisions_callback):
         self.fn_process_revisions = process_revisions_callback
-        return self
+        self.fn_get_object = get_object_callback
+        self.obj_not_found_msg = obj_not_found_msg
 
     def get_history(self, response_key='revisions'):
         page = int(request.args.get('page', 1))

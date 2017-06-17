@@ -86,11 +86,12 @@ def _get_filters(rule, history_table):
 def get_rule_history(id_or_alias):
     history_table = dbo.rules.history
     order_by = [history_table.timestamp.desc()]
-    history_helper = HistoryHelper(history_table, order_by)\
-        .with_get_object_callback(lambda: dbo.rules.getRule(id_or_alias),
-                                  'Requested rule does not exist')\
-        .with_history_filters_callback(_get_filters)\
-        .with_process_revisions_callback(_process_revisions)
+    history_helper = HistoryHelper(hist_table=history_table,
+                                   order_by=order_by,
+                                   get_object_callback=lambda: dbo.rules.getRule(id_or_alias),
+                                   history_filters_callback=_get_filters,
+                                   process_revisions_callback=_process_revisions,
+                                   obj_not_found_msg='Requested rule does not exist')
     try:
         return history_helper.get_history(response_key='rules')
     except (ValueError, AssertionError) as msg:
