@@ -4,7 +4,6 @@ import logging
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.web.public.base import app
-from auslib.web.admin.base import app as admin_app
 
 
 def setUpModule():
@@ -28,14 +27,11 @@ class CommonTestBase(unittest.TestCase):
         app.config['DEBUG'] = True
         self.public_client = app.test_client()
 
-        admin_app.config["WTF_CSRF_ENABLED"] = False
-        self.admin_client = admin_app.test_client()
-
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         dbo.setDomainWhitelist({'a.com': ('q')})
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='Fennec',
+        dbo.rules.t.insert().execute(rule_id=1, priority=90, backgroundRate=100, mapping='b', update_type='minor', product='Fennec',
                                      data_version=1, alias="moz-releng")
         dbo.releases.t.insert().execute(name='Fennec.55.0a1', product='Fennec', data_version=1, data=createBlob("""
 {
@@ -96,7 +92,7 @@ class CommonTestBase(unittest.TestCase):
 }
 """))
         dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping='q', update_type='minor', product='q',
-                                     fallbackMapping='fallback', data_version=1)
+                                     data_version=1)
         dbo.releases.t.insert().execute(name='q', product='q', data_version=1, data=createBlob("""
 {
     "name": "q",
