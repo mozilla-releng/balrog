@@ -2,26 +2,24 @@ import unittest
 import yaml
 from os import path
 from auslib.util.swagger import SpecBuilder
-from flask import Flask
-
-app = Flask(__name__)
 
 
 class TestSpecBuilder(unittest.TestCase):
     def setUp(self):
-        self.resources_dir = "test/util/resources"
+        current_path = path.dirname(__file__)
+        self.resources_dir = path.join(current_path, "resources")
 
     def test_build_spec(self):
-        main_spec = path.join(app.root_path, "resources/api.yml")
+        main_spec = path.join(self.resources_dir, "api.yml")
         part_1 = path.join(self.resources_dir, "part_1.yml")
         part_2 = path.join(self.resources_dir, "part_2.yml")
 
-        spec = SpecBuilder(app).add_main_spec(main_spec)\
-                               .add_spec_part(part_1)\
-                               .add_spec_part(part_2)\
-                               .build()
+        spec = SpecBuilder().add_spec(main_spec)\
+                            .add_spec(part_1)\
+                            .add_spec(part_2)
+
         self.assertIsNotNone(spec)
-        result_file = file(path.join(app.root_path, "resources/result.yml"), 'r')
+        result_file = file(path.join(self.resources_dir, "result.yml"), 'r')
         result = yaml.load(result_file)
 
         def check_dicts(l, r):
@@ -34,20 +32,10 @@ class TestSpecBuilder(unittest.TestCase):
         check_dicts(result, spec)
 
     def test_build_spec_bad_spec_part(self):
-        main_spec = path.join(app.root_path, "resources/api.yml")
+        main_spec = path.join(self.resources_dir, "api.yml")
         part_1 = path.join(self.resources_dir, "part_1.yml")
         part_3 = path.join(self.resources_dir, "part_3.yml")
         with self.assertRaises(ValueError):
-            SpecBuilder(app).add_main_spec(main_spec)\
-                            .add_spec_part(part_1)\
-                            .add_spec_part(part_3)\
-                            .build()
-
-    def test_build_spec_Key_conflict(self):
-        main_spec = path.join(app.root_path, "resources/api.yml")
-        part_1 = path.join(self.resources_dir, "part_1.yml")
-        with self.assertRaises(AssertionError):
-            SpecBuilder(app).add_main_spec(main_spec)\
-                            .add_spec_part(part_1)\
-                            .add_spec_part(part_1)\
-                            .build()
+            SpecBuilder().add_spec(main_spec)\
+                         .add_spec(part_1)\
+                         .add_spec(part_3)

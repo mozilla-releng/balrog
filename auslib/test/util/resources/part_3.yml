@@ -1,5 +1,5 @@
 swagger: '2.0'
 info:
-  title: Balrog Public API
-  description: Balrog Application Update Service
+  title: Foo API
+  description: Foo API
   version: "1.0.0"
