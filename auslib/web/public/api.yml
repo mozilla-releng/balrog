@@ -2,7 +2,6 @@ swagger: '2.0'
 info:
   version: '2.30'
   title: Balrog Public API
-  termsOfService: https://wiki.mozilla.org/Balrog
   license:
     name: Mozilla Public License 2.0
     url: https://www.mozilla.org/en-US/MPL/2.0/
@@ -24,12 +23,12 @@ paths:
       produces:
         - text/xml
       parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/versionParam'
-        - $ref: '#/parameters/buildIDParam'
-        - $ref: '#/parameters/buildTargetParam'
-        - $ref: '#/parameters/localeParam'
-        - $ref: '#/parameters/channelParam'
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
         - name: queryVersion
           in: path
           description: queryVersion
@@ -46,8 +45,8 @@ paths:
           required: true
           type: string
           default: ""
-        - $ref: '#/parameters/avastParam'
-        - $ref: '#/parameters/forceParam'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -59,21 +58,21 @@ paths:
       produces:
         - text/xml
       parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/versionParam'
-        - $ref: '#/parameters/buildIDParam'
-        - $ref: '#/parameters/buildTargetParam'
-        - $ref: '#/parameters/localeParam'
-        - $ref: '#/parameters/channelParam'
-        - $ref: '#/parameters/osVersionParam'
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
         - name: queryVersion
           in: path
           description: queryVersion
           required: true
           type: integer
           default: 2
-        - $ref: '#/parameters/avastParam'
-        - $ref: '#/parameters/forceParam'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -85,23 +84,23 @@ paths:
       produces:
         - text/xml
       parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/versionParam'
-        - $ref: '#/parameters/buildIDParam'
-        - $ref: '#/parameters/buildTargetParam'
-        - $ref: '#/parameters/localeParam'
-        - $ref: '#/parameters/channelParam'
-        - $ref: '#/parameters/osVersionParam'
-        - $ref: '#/parameters/distributionParam'
-        - $ref: '#/parameters/distVersionParam'
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
+        - $ref: '#/parameters/distribution'
+        - $ref: '#/parameters/distVersion'
         - name: queryVersion
           in: path
           description: queryVersion
           required: true
           type: integer
           default: 3
-        - $ref: '#/parameters/avastParam'
-        - $ref: '#/parameters/forceParam'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -113,15 +112,15 @@ paths:
       produces:
         - text/xml
       parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/versionParam'
-        - $ref: '#/parameters/buildIDParam'
-        - $ref: '#/parameters/buildTargetParam'
-        - $ref: '#/parameters/localeParam'
-        - $ref: '#/parameters/channelParam'
-        - $ref: '#/parameters/osVersionParam'
-        - $ref: '#/parameters/distributionParam'
-        - $ref: '#/parameters/distVersionParam'
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
+        - $ref: '#/parameters/distribution'
+        - $ref: '#/parameters/distVersion'
         - name: platformVersion
           in: path
           description: Platform Version.
@@ -133,8 +132,8 @@ paths:
           required: true
           type: integer
           default: 4
-        - $ref: '#/parameters/avastParam'
-        - $ref: '#/parameters/forceParam'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -146,15 +145,15 @@ paths:
       produces:
         - text/xml
       parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/versionParam'
-        - $ref: '#/parameters/buildIDParam'
-        - $ref: '#/parameters/buildTargetParam'
-        - $ref: '#/parameters/localeParam'
-        - $ref: '#/parameters/channelParam'
-        - $ref: '#/parameters/osVersionParam'
-        - $ref: '#/parameters/distributionParam'
-        - $ref: '#/parameters/distVersionParam'
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
+        - $ref: '#/parameters/distribution'
+        - $ref: '#/parameters/distVersion'
         - name: IMEI
           in: path
           description: IMEI
@@ -166,8 +165,8 @@ paths:
           required: true
           type: integer
           default: 5
-        - $ref: '#/parameters/avastParam'
-        - $ref: '#/parameters/forceParam'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -179,29 +178,29 @@ paths:
       produces:
         - text/xml
       parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/versionParam'
-        - $ref: '#/parameters/buildIDParam'
-        - $ref: '#/parameters/buildTargetParam'
-        - $ref: '#/parameters/localeParam'
-        - $ref: '#/parameters/channelParam'
-        - $ref: '#/parameters/osVersionParam'
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
         - name: systemCapabilities
           in: path
           description: |
             The supported hardware features of the application requesting an update. This field is primarily used to point desupported users based on their hardware. Eg: users who do not support SSE2.
           required: true
           type: string
-        - $ref: '#/parameters/distributionParam'
-        - $ref: '#/parameters/distVersionParam'
+        - $ref: '#/parameters/distribution'
+        - $ref: '#/parameters/distVersion'
         - name: queryVersion
           in: path
           description: queryVersion
           required: true
           type: integer
           default: 6
-        - $ref: '#/parameters/avastParam'
-        - $ref: '#/parameters/forceParam'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -215,23 +214,23 @@ paths:
       produces:
         - text/xml
       parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/versionParam'
-        - $ref: '#/parameters/buildIDParam'
-        - $ref: '#/parameters/buildTargetParam'
-        - $ref: '#/parameters/localeParam'
-        - $ref: '#/parameters/channelParam'
-        - $ref: '#/parameters/osVersionParam'
-        - $ref: '#/parameters/distributionParam'
-        - $ref: '#/parameters/distVersionParam'
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
+        - $ref: '#/parameters/distribution'
+        - $ref: '#/parameters/distVersion'
         - name: queryVersion
           in: path
           description: queryVersion
           required: true
           type: integer
           default: 3
-        - $ref: '#/parameters/avastParam'
-        - $ref: '#/parameters/forceParam'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -327,56 +326,56 @@ paths:
           description: version.json content.
 
 parameters:
-  productParam:
+  product:
     name: product
     in: path
     description: The name of the application requesting an update.
     required: true
     type: string
 
-  productQueryParam:
+  productQuery:
     name: product
     description: The name of the application.
     in: query
     required: false
     type: string
 
-  versionParam:
+  version:
     name: version
     in: path
     description: The version of the application requesting an update.
     required: true
     type: string
 
-  buildIDParam:
+  buildID:
     name: buildID
     in: path
     description: The build ID of the application requesting an update.
     required: true
     type: string
 
-  buildTargetParam:
+  buildTarget:
     name: buildTarget
     in: path
     description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
     required: true
     type: string
 
-  localeParam:
+  locale:
     name: locale
     in: path
     description: The locale of the application requesting an update.
     required: true
     type: string
 
-  channelParam:
+  channel:
     name: channel
     in: path
     description: The update channel of the application request an update.
     required: true
     type: string
 
-  osVersionParam:
+  osVersion:
     name: osVersion
     in: path
     description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
@@ -384,28 +383,28 @@ parameters:
     type: string
     default: ""
 
-  distributionParam:
+  distribution:
     name: distribution
     in: path
     description: The partner distribution name of the application requesting an update or “default” if the application is not a partner build.
     required: true
     type: string
 
-  distVersionParam:
+  distVersion:
     name: distVersion
     in: path
     description: The version of the partner distribution of the application requesting an update or “default” if the application is not a partner build.
     required: true
     type: string
 
-  avastParam:
+  avast:
     name: avast
     in: query
     description: avast
     required: false
     type: string
 
-  forceParam:
+  force:
     name: force
     in: query
     description: force

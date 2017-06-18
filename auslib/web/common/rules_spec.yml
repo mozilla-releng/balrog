@@ -6,7 +6,7 @@ paths:
       produces: 
         - application/json
       parameters:
-        - $ref: '#/parameters/productQueryParam'
+        - $ref: '#/parameters/productQuery'
       responses:
         200:
           description: The number of matched rules and a rules list.
@@ -20,7 +20,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - $ref: '#/parameters/idOrAliasParam'
+        - $ref: '#/parameters/idOrAlias'
       responses:
         200:
           description: Rule object.
@@ -40,7 +40,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - $ref: '#/parameters/idOrAliasParam'
+        - $ref: '#/parameters/idOrAlias'
         - name: page
           in: query
           required: false
@@ -65,6 +65,8 @@ definitions:
     required:
       - rule_id
       - update_type
+      - backgroundRate
+      - priority
     properties:
       rule_id:
         type: integer
@@ -188,7 +190,7 @@ definitions:
           $ref: '#/definitions/RuleHistory'
 
 parameters:
-  idOrAliasParam:
+  idOrAlias:
     name: id_or_alias
     description: Rule id or alias.
     in: path

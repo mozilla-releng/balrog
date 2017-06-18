@@ -12,7 +12,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - $ref: '#/parameters/productQueryParam'
+        - $ref: '#/parameters/productQuery'
         - name: name_prefix
           description: If "name_prefix" is passed, only Releases whose name starts with the given prefix will be returned.
           in: query
@@ -36,7 +36,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/release'
         - name: pretty
           description: If "pretty" is present in the query string and set to true, it will be pretty formatted.
           in: query
@@ -44,7 +44,13 @@ paths:
           type: integer
       responses:
         200:
-          description: Release Blob
+          description: Release Blob.
+          headers:
+            X-Data-Version:
+              description: The version of returned data.
+              type: integer
+        404:
+          description: Release not found.
 
   /api/v1/releases/{release}/revisions:
     get:
@@ -53,7 +59,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/release'
         - name: page
           in: query
           required: false
@@ -77,13 +83,13 @@ paths:
       produces:
         - application/json
       parameters:
-        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/release'
         - name: platform
           description: Platform
           in: path
           required: true
           type: string
-        - $ref: '#/parameters/localeParam'
+        - $ref: '#/parameters/locale'
       responses:
         200:
           description: Release Blob.
@@ -122,7 +128,7 @@ definitions:
           $ref: '#/definitions/Release'
 
 parameters:
-  releaseParam:
+  release:
     name: release
     in: path
     required: true
