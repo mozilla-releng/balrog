@@ -1,5 +1,5 @@
 import json
-from auslib.test.common.base import CommonTestBase
+from auslib.test.web.api.base import CommonTestBase
 
 
 class TestPublicRulesAPI(CommonTestBase):
@@ -7,25 +7,33 @@ class TestPublicRulesAPI(CommonTestBase):
         ret = self.public_client.get("/api/v1/rules")
         got = json.loads(ret.data)
         self.assertEquals(got["count"], 3)
+        rules = [(rule["mapping"], rule["product"]) for rule in got["rules"]]
+        self.assertIn(("Fennec.55.0a1", "Fennec"), rules)
+        self.assertIn(("Firefox.55.0a1", "Firefox"), rules)
+        self.assertIn(("q", "q"), rules)
 
     def test_get_rules_by_product(self):
         product = "Fennec"
         ret = self.public_client.get("/api/v1/rules?product={}".format(product))
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)
-        self.assertTrue(got, "Empty dict")
+        self.assertTrue(got, "No rules returned for product {}".format(product))
         self.assertEqual(got["count"], 1)
         self.assertEqual(got["rules"][0]["product"], product)
 
     def test_get_rule_by_id(self):
-        ret = self.public_client.get("/api/v1/rules/1")
+        rule_id = 2
+        ret = self.public_client.get("/api/v1/rules/{}".format(rule_id))
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)
-        self.assertTrue(got, "Empty dict")
+        self.assertTrue(got, "Rule not found by rule_id={}".format(rule_id))
         self.assertEqual(ret.headers['X-Data-Version'], '1')
+        self.assertEqual(got["rule_id"], rule_id)
+        self.assertEqual(got["mapping"], "Firefox.55.0a1")
+        self.assertEqual(got["product"], "Firefox")
 
     def test_get_rule_by_alias(self):
-        expected = dict(priority=90, backgroundRate=100, mapping="b",
+        expected = dict(rule_id=1, priority=90, backgroundRate=100, mapping="Fennec.55.0a1",
                         update_type="minor", product="Fennec", data_version=1,
                         alias="moz-releng", buildID=None, buildTarget=None,
                         channel=None, comment=None, distVersion=None,
@@ -35,7 +43,6 @@ class TestPublicRulesAPI(CommonTestBase):
         ret = self.public_client.get("/api/v1/rules/moz-releng")
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)
-        del got["rule_id"]
         self.assertEqual(got, expected)
         self.assertEqual(ret.headers['X-Data-Version'], '1')
 
@@ -44,25 +51,13 @@ class TestPublicRulesAPI(CommonTestBase):
         self.assertEqual(ret.status_code, 404)
 
     def test_get_revisions(self):
-        user = {'REMOTE_USER': 'bill'}
-        changes = dict(data_version=1, channel="nightly")
-        ret = self.admin_client.post("/rules/1",
-                                     data=json.dumps(changes),
-                                     content_type="application/json",
-                                     environ_base=user)
-        self.assertEqual(ret.status_code, 200, ret.data)
-
-        changes = dict(data_version=2, backgroundRate=42)
-        ret = self.admin_client.post("/rules/1",
-                                     data=json.dumps(changes),
-                                     content_type="application/json",
-                                     environ_base=user)
-        self.assertEqual(ret.status_code, 200, ret.data)
-
-        ret = self.public_client.get("/api/v1/rules/1/revisions")
+        ret = self.public_client.get("/api/v1/rules/3/revisions")
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)
         self.assertEqual(got["count"], 2)
+        rules = [(rule["mapping"], rule["product"], rule["data_version"]) for rule in got["rules"]]
+        self.assertIn(("z", "z", 1), rules)
+        self.assertIn(("y", "y", 2), rules)
 
     def test_get_revisions_400(self):
         ret = self.public_client.get("/api/v1/rules/1/revisions?page=0")

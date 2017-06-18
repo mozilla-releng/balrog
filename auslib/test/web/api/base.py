@@ -29,9 +29,7 @@ class CommonTestBase(unittest.TestCase):
 
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist({'a.com': ('q')})
-        dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
-        dbo.rules.t.insert().execute(rule_id=1, priority=90, backgroundRate=100, mapping='b', update_type='minor', product='Fennec',
+        dbo.rules.t.insert().execute(rule_id=1, priority=90, backgroundRate=100, mapping='Fennec.55.0a1', update_type='minor', product='Fennec',
                                      data_version=1, alias="moz-releng")
         dbo.releases.t.insert().execute(name='Fennec.55.0a1', product='Fennec', data_version=1, data=createBlob("""
 {
@@ -65,7 +63,7 @@ class CommonTestBase(unittest.TestCase):
     }
 }
 """))
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='s', update_type='minor', product='Firefox',
+        dbo.rules.t.insert().execute(rule_id=2, priority=90, backgroundRate=100, mapping='Firefox.55.0a1', update_type='minor', product='Firefox',
                                      systemCapabilities="SSE", data_version=1)
         dbo.releases.t.insert().execute(name='Firefox.55.0a1', product='Firefox', data_version=1, data=createBlob("""
 {
@@ -79,6 +77,7 @@ class CommonTestBase(unittest.TestCase):
             "buildID": "5",
             "locales": {
                 "l": {
+                    "buildID": "5",
                     "complete": {
                         "filesize": "5",
                         "from": "*",
@@ -91,9 +90,13 @@ class CommonTestBase(unittest.TestCase):
     }
 }
 """))
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping='q', update_type='minor', product='q',
-                                     data_version=1)
-        dbo.releases.t.insert().execute(name='q', product='q', data_version=1, data=createBlob("""
+        dbo.rules.t.insert().execute(rule_id=3, priority=90, backgroundRate=0, mapping='q', update_type='minor', product='q',
+                                     data_version=3)
+        dbo.rules.history.t.insert().execute(change_id=1, changed_by="usr", timestamp=10, rule_id=3, priority=90, backgroundRate=0,
+                                             mapping='y', update_type='minor', product='y', data_version=2)
+        dbo.rules.history.t.insert().execute(change_id=2, changed_by="usr", timestamp=10, rule_id=3, priority=90, backgroundRate=0,
+                                             mapping='z', update_type='minor', product='z', data_version=1)
+        dbo.releases.t.insert().execute(name='q', product='q', data_version=2, data=createBlob("""
 {
     "name": "q",
     "schema_version": 1,
@@ -102,7 +105,7 @@ class CommonTestBase(unittest.TestCase):
     "hashFunction": "sha512",
     "platforms": {
         "p": {
-            "buildID": "5",
+            "buildID": "6",
             "locales": {
                 "l": {
                     "complete": {
@@ -117,3 +120,6 @@ class CommonTestBase(unittest.TestCase):
     }
 }
 """))
+
+        dbo.releases.history.t.insert().execute(change_id=1, changed_by="usr", timestamp=10,
+                                                name='q', product='q', data_version=1)
