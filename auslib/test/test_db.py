@@ -3157,7 +3157,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3218,7 +3219,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             "complete": {
                 "filesize": 1,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill')
@@ -3235,14 +3237,16 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 1,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 },
                 "l": {
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3262,7 +3266,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             "complete": {
                 "filesize": 123,
                 "from": "*",
-                "hashValue": "abc"
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='c', data=data, old_data_version=1, changed_by='bill', alias=['p4'])
@@ -3279,14 +3284,16 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 123,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 },
                 "l": {
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3309,7 +3316,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             "complete": {
                 "filesize": 123,
                 "from": "*",
-                "hashValue": "789"
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='p', locale='l', data=data, old_data_version=1, changed_by='bill')
@@ -3326,7 +3334,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 123,
                         "from": "*",
-                        "hashValue": "789"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3346,7 +3355,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             "complete": {
                 "filesize": 432,
                 "from": "*",
-                "hashValue": "abc"
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         }
         self.releases.addLocaleToRelease(name='b', product='b', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
@@ -3363,7 +3373,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 432,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3378,7 +3389,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             "complete": {
                 "filesize": 432,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='p3', locale='l', data=data, old_data_version=1, changed_by='bill')
@@ -3395,7 +3407,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3409,7 +3422,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 432,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3424,7 +3438,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             "complete": {
                 "filesize": 324,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='q', locale='l', data=data, old_data_version=1, changed_by='bill')
@@ -3441,7 +3456,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3457,7 +3473,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 324,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3472,7 +3489,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             "complete": {
                 "filesize": 444,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
             }
         }
         self.releases.addLocaleToRelease(name='a', product='a', platform='p2', locale='j', data=data, old_data_version=1, changed_by='bill')
@@ -3489,14 +3507,16 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 },
                 "j": {
                     "complete": {
                         "filesize": 444,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3516,7 +3536,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
             "complete": {
                 "filesize": 1,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
             }
         }
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
@@ -3536,7 +3557,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3561,14 +3583,16 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 1,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 },
                 "l": {
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3593,14 +3617,16 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 1,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 },
                 "l": {
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3625,21 +3651,24 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 1,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 },
                 "l": {
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 },
                 "c1": {
                     "complete": {
                         "filesize": 1,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3671,7 +3700,8 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3696,14 +3726,16 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 1,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 },
                 "l": {
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -3728,14 +3760,16 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
                     "complete": {
                         "filesize": 12,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 },
                 "l": {
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "def"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }

@@ -44,7 +44,8 @@ class TestReleasesAPI_JSON(ViewTest):
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -73,7 +74,8 @@ class TestReleasesAPI_JSON(ViewTest):
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         }
                     }
@@ -94,14 +96,16 @@ class TestReleasesAPI_JSON(ViewTest):
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         },
                         "dd2": {
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         }
                      }
@@ -122,14 +126,16 @@ class TestReleasesAPI_JSON(ViewTest):
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         },
                         "dd1": {
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         }
                     }
@@ -150,21 +156,24 @@ class TestReleasesAPI_JSON(ViewTest):
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         },
                         "dd": {
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         },
                         "dd1": {
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         }
                     }
@@ -209,7 +218,8 @@ class TestReleasesAPI_JSON(ViewTest):
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         }
                     }
@@ -230,7 +240,8 @@ class TestReleasesAPI_JSON(ViewTest):
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         }
                     }
@@ -251,14 +262,16 @@ class TestReleasesAPI_JSON(ViewTest):
                             "complete": {
                                 "filesize": 12345,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         },
                         "dd1": {
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc1"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         }
                     }
@@ -298,7 +311,8 @@ class TestReleasesAPI_JSON(ViewTest):
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         }
                     }
@@ -447,7 +461,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "complete": {
                 "filesize": 435,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         })
         ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
@@ -466,7 +481,8 @@ class TestReleasesAPI_JSON(ViewTest):
                     "complete": {
                         "filesize": 435,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -480,7 +496,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "complete": {
                 "filesize": 435,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         })
         ret = self._put('/releases/ab/builds/p/l', username="ashanti", data=dict(data=data, product='a', data_version=1, schema_version=1))
@@ -499,7 +516,8 @@ class TestReleasesAPI_JSON(ViewTest):
                     "complete": {
                         "filesize": 435,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -514,12 +532,14 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 400)
 
     def testLocalePutWithoutPermission(self):
-        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
+        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"}}'
         ret = self._put('/releases/ab/builds/p/l', username='liu', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 403)
 
     def testLocalePutWithoutPermissionForProduct(self):
-        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
+        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"}}'
         ret = self._put('/releases/ab/builds/p/l', username='bob', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 403)
 
@@ -528,7 +548,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "complete": {
                 "filesize": 678,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         })
         # setting schema_version in the incoming blob is a hack for testing
@@ -549,7 +570,8 @@ class TestReleasesAPI_JSON(ViewTest):
                     "complete": {
                         "filesize": 678,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -563,8 +585,9 @@ class TestReleasesAPI_JSON(ViewTest):
             "partial": {
                 "filesize": 234,
                 "from": "c",
-                "hashValue": "abc",
-                "fileUrl": "http://good.com/blah",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                "fileUrl": "http://good.com/blah"
             }
         })
         ret = self._put('/releases/d/builds/p/g', data=dict(data=data, product='d', data_version=1, schema_version=1))
@@ -583,14 +606,16 @@ class TestReleasesAPI_JSON(ViewTest):
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 },
                 "g": {
                     "partial": {
                         "filesize": 234,
                         "from": "c",
-                        "hashValue": "abc",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://good.com/blah"
                     }
                 }
@@ -605,7 +630,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "complete": {
                 "filesize": 678,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         })
         # setting schema_version in the incoming blob is a hack for testing
@@ -626,7 +652,8 @@ class TestReleasesAPI_JSON(ViewTest):
                     "complete": {
                         "filesize": 678,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -643,8 +670,9 @@ class TestReleasesAPI_JSON(ViewTest):
             "partial": {
                 "filesize": 123,
                 "from": "c",
-                "hashValue": "abc",
-                "fileUrl": "http://good.com/blah",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                "fileUrl": "http://good.com/blah"
             }
         })
         ret = self._put('/releases/d/builds/q/g', data=dict(data=data, product='d', data_version=1, alias='["q2"]', schema_version=1))
@@ -663,7 +691,8 @@ class TestReleasesAPI_JSON(ViewTest):
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -674,7 +703,8 @@ class TestReleasesAPI_JSON(ViewTest):
                     "partial": {
                         "filesize": 123,
                         "from": "c",
-                        "hashValue": "abc",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://good.com/blah"
                     }
                 }
@@ -692,7 +722,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "partial": {
                 "filesize": 123,
                 "from": "b",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         })
         data = dict(data=data, product='a', copyTo=json.dumps(['b']), data_version=1, schema_version=1)
@@ -712,7 +743,8 @@ class TestReleasesAPI_JSON(ViewTest):
                     "partial": {
                         "filesize": 123,
                         "from": "b",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -733,7 +765,8 @@ class TestReleasesAPI_JSON(ViewTest):
                     "partial": {
                         "filesize": 123,
                         "from": "b",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -759,7 +792,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "complete": {
                 "filesize": 1234,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         }
         self.assertEquals(got, expected)
@@ -770,7 +804,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "complete": {
                 "filesize": 435,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         })
         inp_data = dict(csrf_token="lorem", data=data, product='d', data_version=1, schema_version=1)
@@ -783,7 +818,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "complete": {
                 "filesize": 435,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         })
         ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
@@ -794,7 +830,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "complete": {
                 "filesize": 435,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         })
         ret = self._put('/releases/ab/builds/p/l', username='billy',
@@ -806,7 +843,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "complete": {
                 "filesize": 435,
                 "from": "*",
-                "hashValue": "abc",
+                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
             }
         })
         ret = self._put('/releases/d/builds/p/d', username='billy',
