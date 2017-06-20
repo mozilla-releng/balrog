@@ -67,7 +67,7 @@ Following tables show columns according to different Categories:
   |                        |                    | requesting an update. This is usually related    |                                 | u-i386-x86_64" or          |
   |                        |                    | to the target platform the app was built for.    |                                 | "flame-kk-userdebug"       |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | Channel            | The update channel of the application request an | Exact string match or a         | "nightly" or "beta*"       |
+  |                        | channel            | The update channel of the application request an | Exact string match or a         | "nightly" or "beta*"       |
   |                        |                    | update.                                          | string with "*"                 |                            |
   |                        |                    |                                                  | character to glob               |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
@@ -84,7 +84,7 @@ Following tables show columns according to different Categories:
   |                        |                    | mostly deprecated now that this information is   |                                 | possible values            |
   |                        |                    | included in the build target.                    |                                 |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | Locale             | The locale of the application requesting an      | Exact string match or           | "de" or                    |
+  |                        | locale             | The locale of the application requesting an      | Exact string match or           | "de" or                    |
   |                        |                    | update.                                          | comma separated list of         | "en-US,en-GB,id"           |
   |                        |                    |                                                  | locales to do an exact match on |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
@@ -93,26 +93,22 @@ Following tables show columns according to different Categories:
   |                        |                    | desupported operating systems to their last      | ',' ORs them. Terms are matched | , Darwin 8"                |
   |                        |                    | supported build.                                 | using partial strings.          |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | Product            | The name of the application requesting an update.| Exact string match only         | "Firefox" or "B2G"         |
+  |                        | product            | The name of the application requesting an update.| Exact string match only         | "Firefox" or "B2G"         |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | systemCapabilities | The supported hardware features of the           | Simplified boolean string       | 	"SSE" or "MMX, SSE" or    |
-  |                        |                    | application requesting an update. This field     | match. '&&' ANDs terms while    |  "GenuineIntel && MMX,SSE" |
+  |                        | instructionSet     | The most modern instruction set supported by the | TODOTODOTODO boolean string     | "SSE" or "MMX, SSE"        |
+  |                        |                    | client requesting an update. This field          | match. '&&' ANDs terms while    |                            |
   |                        |                    | is primarily used to point desupported users     | ',' ORs them. Terms are matched |                            |
   |                        |                    | based on their hardware. Eg: users who do not    | using exact strings.            |                            |
   |                        |                    | support SSE2                                     |                                 |                            |
+  |                        |--------------------+--------------------------------------------------+---------------------------------+----------------------------|
+  |                        | memory             | The amount of RAM, in megabytes, that the client | TODO                            | 8096                       |
+  |                        |                    | requesting the update has                        |                                 |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | Version            | The version of the application requesting an     | Exact string match or exact     | "36.0" or "36.0,36.1,36.2" |
+  |                        | version            | The version of the application requesting an     | Exact string match or exact     | "36.0" or "36.0,36.1,36.2" |
   |                        |                    | update.                                          | matches from list of values or  |  or ">=38.0a1"             |
   |                        |                    |                                                  | operator plus version           |                            |
   |                        |                    |                                                  | to compare the incoming         |                            |
   |                        |                    |                                                  | one against                     |                            |
-  |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | Whitelist          | A pointer to a Whitelist blob (stored in the     | If a whitelist is present,      | Any valid release          |
-  |                        |                    | Releases table) that can determine whether an    | its shouldServeUpdate is        | name, or NULL              |
-  |                        |                    | update request is authorized to have the Release | called. If it returns True,     |                            |
-  |                        |                    | this rule is mapped to. Commonly used in         | this rule is considered to      |                            |
-  |                        |                    | whitelisting IMEIs for FirefoxOS updates.        | be matching. If it returns      |                            |
-  |                        |                    |                                                  | False, this rule is thrown out. |                            |
   +------------------------+--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   | Response               | Fallback Mapping   | The Release to construct an update out of when   | N/A                             | Any valid release          |
   |                        |                    | the user is on the wrong side of a background    |                                 | name, or NULL              |
@@ -135,12 +131,18 @@ Following tables show columns according to different Categories:
 How are requests match to a rule?
 *********************************
 
-The incoming request parts match up directly to incoming URL parts.
-For example, most update requests will send a URL in the following format
+Most of the Matchable database fields are present as distinct parts of the update URL. For example, most update requests will send a URL in the following format
 
 ::
 
     /update/6/<product>/<version>/<buildID>/<buildTarget>/<locale>/<channel>/<osVersion>/<systemCapabilities>/<distribution>/<distVersion>/update.xml?force=1
+
+There are a few special cases to consider:
+
+-   systemCapabilities contains comma separated data and breaks down into multple database columns (instructionSet, memory)
+
+-   headerArchitecture is extracted from the User-Agent header
+
 
 The following logic is used to figure out which rule a request matches, and how to respond:
 
