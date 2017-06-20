@@ -166,12 +166,21 @@
     </div>
     <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
-        <div class="form-group" ng-class="{'has-error': errors.systemCapabilities}">
-        <label for="id_systemCapabilities">System Capabilities</label>
-        <input type="text" class="form-control" id="id_systemCapabilities" ng-model="sc.systemCapabilities">
-        <p class="help-block" ng-show="errors.systemCapabilities">{{ errors.systemCapabilities.join(', ') }}</p>
+        <div class="form-group" ng-class="{'has-error': errors.instructionSet}">
+        <label for="id_instructionSet">Instruction Set</label>
+        <input type="text" class="form-control" id="id_instructionSet" ng-model="sc.instructionSet">
+        <p class="help-block" ng-show="errors.instructionSet">{{ errors.instructionSet.join(', ') }}</p>
         </div>
       </div>
+      <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
+        <div class="form-group" ng-class="{'has-error': errors.memory}">
+        <label for="id_memory">Memory</label>
+        <input type="text" class="form-control" id="id_memory" ng-model="sc.memory">
+        <p class="help-block" ng-show="errors.memory">{{ errors.memory.join(', ') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.distVersion}">
         <label for="id_distribution">Dist version</label>
@@ -179,8 +188,6 @@
         <p class="help-block" ng-show="errors.distVersion">{{ errors.distVersion.join(', ') }}</p>
         </div>
       </div>
-    </div>
-    <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.update_type}">
         <label for="id_update_type">Update Type</label>
@@ -188,6 +195,8 @@
         <p class="help-block" ng-show="errors.update_type">{{ errors.update_type.join(', ') }}</p>
         </div>
       </div>
+    </div>
+    <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.headerArchitecture}">
         <label for="id_headerArchitecture">Header Architecture</label>
@@ -195,8 +204,6 @@
         <p class="help-block" ng-show="errors.headerArchitecture">{{ errors.headerArchitecture.join(', ') }}</p>
         </div>
       </div>
-    </div>
-    <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.comment}">
         <label for="id_comment">Comment</label>
