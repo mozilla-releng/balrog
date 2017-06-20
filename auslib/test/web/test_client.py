@@ -20,6 +20,35 @@ def setUpModule():
     logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
+class TestGetSystemCapabilities(unittest.TestCase):
+    def testUnprefixedInstructionSetOnly(self):
+        self.assertEquals(
+            client_api.getSystemCapabilities("SSE3"),
+            {"instructionSet": "SSE3", "memory": None}
+        )
+
+    def testUnprefixedInstructionSetAndMemory(self):
+        self.assertEquals(
+            client_api.getSystemCapabilities("SSE3,8095"),
+            {"instructionSet": "SSE3", "memory": 8095}
+        )
+
+    def testPrefixedInstructionSetAndMemory(self):
+        self.assertEquals(
+            client_api.getSystemCapabilities("ISET:SSE2,MEM:6321"),
+            {"instructionSet": "SSE2", "memory": 6321}
+        )
+
+    def testNothingProvided(self):
+        self.assertEquals(
+            client_api.getSystemCapabilities("NA"),
+            {"instructionSet": "NA", "memory": None}
+        )
+
+    def testNonIntegerMemory(self):
+        self.assertRaises(ValueError, client_api.getSystemCapabilities, ("ISET:SSE2,MEM:63T1A"))
+
+
 class ClientTestCommon(unittest.TestCase):
     def assertHttpResponse(self, http_reponse):
         self.assertEqual(http_reponse.status_code, 200)
@@ -108,7 +137,7 @@ class ClientTestBase(ClientTestCommon):
 """))
 
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='s', update_type='minor', product='s',
-                                     systemCapabilities="SSE", data_version=1)
+                                     instructionSet="SSE", data_version=1)
         dbo.releases.t.insert().execute(name='s', product='s', data_version=1, data=createBlob("""
 {
     "name": "s",
@@ -605,7 +634,7 @@ class ClientTest(ClientTestBase):
 </updates>
 """)
 
-    def testVersion6GetWithSystemCapabilitiesMatch(self):
+    def testVersion6GetWithInstructionSetMatch(self):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
@@ -632,7 +661,7 @@ class ClientTest(ClientTestBase):
 </updates>
 """)
 
-    def testVersion6GetWithoutSystemCapabilitiesMatch(self):
+    def testVersion6GetWithoutInstructionSetMatch(self):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
         self.assertUpdatesAreEmpty(ret)
 

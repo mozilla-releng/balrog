@@ -1453,7 +1453,7 @@ class Rules(AUSTable):
                            Column('buildID', String(20)),
                            Column('locale', String(200)),
                            Column('osVersion', String(1000)),
-                           Column('systemCapabilities', String(1000)),
+                           Column('instructionSet', String(1000)),
                            Column('memory', Integer),
                            Column('distribution', String(100)),
                            Column('distVersion', String(100)),
@@ -1670,9 +1670,9 @@ class Rules(AUSTable):
             if not self._simpleBooleanMatchesRule(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
-            # Same deal for system capabilities
-            if not self._simpleBooleanMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', ""), substring=False):
-                self.log.debug("%s doesn't match %s", rule['systemCapabilities'], updateQuery.get('systemCapabilities'))
+            # Same deal for instruction set
+            if not self._simpleBooleanMatchesRule(rule['instructionSet'], updateQuery.get('instructionSet', ""), substring=False):
+                self.log.debug("%s doesn't match %s", rule['instructionSet'], updateQuery.get('instructionSet'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):

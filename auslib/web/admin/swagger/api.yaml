@@ -1491,7 +1491,7 @@ paths:
                   priority: 43
                   product: "Firefox"
                   rule_id: 308
-                  systemCapabilities: null
+                  instructionSet: null
                   update_type: "minor"
                   version: null
                   whitelist: null
@@ -1933,7 +1933,7 @@ definitions:
       - priority
       - product
       - rule_id
-      - systemCapabilities
+      - instructionSet
       - update_type
       - version
 
@@ -1974,7 +1974,7 @@ definitions:
             priority: 43
             product: "Firefox"
             rule_id: 308
-            systemCapabilities: null
+            instructionSet: null
             update_type: "minor"
             version: null
             whitelist: null
@@ -2115,7 +2115,7 @@ definitions:
         pattern: "(^[a-zA-Z][a-zA-Z0-9-]*$|^$)"
         example: 'firefox-nightly'
 
-      systemCapabilities:
+      instructionSet:
         description: The supported hardware features of the application requesting an update. This field is primarily used to point desupported users based on their hardware. Example - users who do not support SSE2
         type: ["string", "null"]
         minLength: 0
