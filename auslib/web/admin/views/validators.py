@@ -117,6 +117,20 @@ def integer_and_range_validator(field_name, field_value, min_val=None, max_val=N
     return True
 
 
+@draft4_format_checker.checks(format="telemetry_uptake", raises=JsonSchemaValidationError)
+def telemetry_uptake_validator(field_value):
+    if field_value is not None and field_value != '':
+        logger.debug('starting in telemetry_uptake_validator: telemetry_uptake is %s' % field_value)
+    return integer_and_range_validator("telemetry_uptake", field_value, 0)
+
+
+@draft4_format_checker.checks(format="when", raises=JsonSchemaValidationError)
+def sc_when_validator(field_value):
+    if field_value is not None and field_value != '':
+        logger.debug('starting in sc_when_validator: when value: %s' % field_value)
+    return integer_and_range_validator("when", field_value, 0)
+
+
 @draft4_format_checker.checks(format="priority", raises=JsonSchemaValidationError)
 def priority_validator(field_value):
     if field_value is not None and field_value != '':

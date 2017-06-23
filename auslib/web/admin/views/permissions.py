@@ -4,9 +4,8 @@ from flask import Response, jsonify
 from auslib.web.admin.views.problem import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import requirelogin, AdminView
-from auslib.web.admin.views.forms import ScheduledChangeNewPermissionForm, ScheduledChangeExistingPermissionForm, \
-    EditScheduledChangeNewPermissionForm, EditScheduledChangeExistingPermissionForm, \
-    ScheduledChangeDeletePermissionForm
+from auslib.web.admin.views.forms import EditScheduledChangeNewPermissionForm,\
+    EditScheduledChangeExistingPermissionForm
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
@@ -144,23 +143,36 @@ class SpecificPermissionView(AdminView):
 
 
 class PermissionScheduledChangesView(ScheduledChangesView):
+    """/scheduled_changes/permissions"""
+
     def __init__(self):
         super(PermissionScheduledChangesView, self).__init__("permissions", dbo.permissions)
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        change_type = connexion.request.json.get("change_type")
+        what = connexion.request.json
+        change_type = what.get("change_type")
 
-        if change_type == "update":
-            form = ScheduledChangeExistingPermissionForm()
+        if what.get("options"):
+            what["options"] = json.loads(what.get("options"))
+
+        if change_type in ["update", "delete"]:
+            if not what.get("data_version", None):
+                return problem(400, "Bad Request", "data_version is missing")
+            else:
+                what["data_version"] = int(what.get("data_version"))
+
+            # Safety check: Remove 'options' if passed in "delete" change type request.
+            if change_type == "delete":
+                what.pop("options", None)
+
         elif change_type == "insert":
-            form = ScheduledChangeNewPermissionForm()
-        elif change_type == "delete":
-            form = ScheduledChangeDeletePermissionForm()
+            # Safety check: Remove data_version if passed in "insert" change type request.
+            what.pop("data_version", None)
         else:
-            return Response(status=400, response="Invalid or missing change_type")
+            return problem(400, "Bad Request", "Invalid or missing change_type")
 
-        return super(PermissionScheduledChangesView, self)._post(form, transaction, changed_by)
+        return super(PermissionScheduledChangesView, self)._post(what, transaction, changed_by)
 
 
 class PermissionScheduledChangeView(ScheduledChangeView):

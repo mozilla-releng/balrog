@@ -1,13 +1,15 @@
 import json
-
+import connexion
 from sqlalchemy.sql.expression import null
 
-from flask import jsonify, request, Response
+from flask import jsonify, Response
 from flask_wtf import Form
 
+from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.web.admin.views.base import AdminView, requirelogin
 from auslib.web.admin.views.forms import DbEditableForm, SignoffForm
 from auslib.web.admin.views.history import HistoryView
+from auslib.web.admin.views.problem import problem
 
 
 class ScheduledChangesView(AdminView):
@@ -21,7 +23,7 @@ class ScheduledChangesView(AdminView):
         super(ScheduledChangesView, self).__init__()
 
     def get(self):
-        if request.args.get("all"):
+        if connexion.request.args.get("all"):
             rows = self.sc_table.select()
         else:
             rows = self.sc_table.select(where={"complete": False})
@@ -64,17 +66,14 @@ class ScheduledChangesView(AdminView):
             ret["scheduled_changes"].append(scheduled_change)
         return jsonify(ret)
 
-    def _post(self, form, transaction, changed_by):
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
+    def _post(self, what, transaction, changed_by):
+        what.pop("csrf_token", None)
 
-        # Forms can normally be accessed as a dict through form.data,
-        # but because some of the Forms we end up using have a Field
-        # called "data", this gets overridden, so we need to construct
-        # a dict ourselves.
-        columns = {k: v.data for k, v in form._fields.iteritems()}
-        sc_id = self.sc_table.insert(changed_by, transaction, **columns)
+        # Validate 'when' is not in past
+        if what.get("when", None) and int(what.get("when")) < getMillisecondTimestamp():
+            return problem(400, "Bad Request", "Changes may not be scheduled in the past")
+
+        sc_id = self.sc_table.insert(changed_by, transaction, **what)
         return jsonify(sc_id=sc_id)
 
 
@@ -109,7 +108,7 @@ class ScheduledChangeView(AdminView):
             # from the rule (aka, set as NULL in the db). The underlying Form
             # will have already converted it to None, so we can treat it the
             # same as a modification here.
-            if request.json and k in request.json:
+            if connexion.request.json and k in connexion.request.json:
                 what[k] = v.data
 
         where = {"sc_id": sc_id}
@@ -123,7 +122,7 @@ class ScheduledChangeView(AdminView):
         if not sc:
             return Response(status=404, response="Scheduled change does not exist")
 
-        form = DbEditableForm(request.args)
+        form = DbEditableForm(connexion.request.args)
         self.sc_table.delete(where, changed_by, form.data_version.data, transaction)
         return Response(status=200)
 
@@ -164,12 +163,7 @@ class SignoffsView(AdminView):
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
-        form = Form(request.args)
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
-
-        username = request.args.get("username", changed_by)
+        username = connexion.request.args.get("username", changed_by)
         where = {"sc_id": sc_id, "username": username}
         signoff = self.signoffs_table.select(where, transaction)
         if not signoff:

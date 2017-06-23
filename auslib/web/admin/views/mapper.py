@@ -1,16 +1,17 @@
 from auslib.web.admin.views.csrf import CSRFView
 
 from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRuleColumnView, \
-    RuleHistoryAPIView
+    RuleHistoryAPIView, RuleScheduledChangesView
 
 from auslib.web.admin.views.permissions import UsersView, AllRolesView, SpecificUserView,\
-    PermissionsView, UserRolesView, UserRoleView, SpecificPermissionView
+    PermissionsView, UserRolesView, UserRoleView, SpecificPermissionView, PermissionScheduledChangesView
 
 from auslib.web.admin.views.releases import ReleaseDiffView, ReleaseFieldView, ReleasesAPIView, SingleReleaseView,\
-    ReleaseReadOnlyView, SingleReleaseColumnView, SingleLocaleView, ReleaseHistoryView
+    ReleaseReadOnlyView, SingleReleaseColumnView, SingleLocaleView, ReleaseHistoryView, ReleaseScheduledChangesView
 
 from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsHistoryAPIView, \
-    PermissionsRequiredSignoffsHistoryAPIView, ProductRequiredSignoffsView, PermissionsRequiredSignoffsView
+    PermissionsRequiredSignoffsHistoryAPIView, ProductRequiredSignoffsView, PermissionsRequiredSignoffsView,\
+    ProductRequiredSignoffsScheduledChangesView, PermissionsRequiredSignoffsScheduledChangesView
 
 
 def csrf_get():
@@ -231,3 +232,53 @@ def required_signoffs_permissions_post():
 def required_signoffs_permissions_delete():
     """DELETE /required_signoffs/permissions"""
     return PermissionsRequiredSignoffsView().delete()
+
+
+def scheduled_changes_rules_get():
+    """GET /scheduled_changes/rules"""
+    return RuleScheduledChangesView().get()
+
+
+def scheduled_changes_rules_post():
+    """POST /scheduled_changes/rules"""
+    return RuleScheduledChangesView().post()
+
+
+def scheduled_changes_permissions_get():
+    """GET /scheduled_changes/permissions"""
+    return PermissionScheduledChangesView().get()
+
+
+def scheduled_changes_permissions_post():
+    """POST /scheduled_changes/permissions"""
+    return PermissionScheduledChangesView().post()
+
+
+def scheduled_changes_releases_get():
+    """GET /scheduled_changes/releases"""
+    return ReleaseScheduledChangesView().get()
+
+
+def scheduled_changes_releases_post():
+    """POST /scheduled_changes/releases"""
+    return ReleaseScheduledChangesView().post()
+
+
+def scheduled_changes_rs_product_get():
+    """GET /scheduled_changes/required_signoffs/product"""
+    return ProductRequiredSignoffsScheduledChangesView().get()
+
+
+def scheduled_changes_rs_product_post():
+    """POST /scheduled_changes/required_signoffs/product"""
+    return ProductRequiredSignoffsScheduledChangesView().post()
+
+
+def scheduled_changes_rs_permissions_get():
+    """GET /scheduled_changes/required_signoffs/permissions"""
+    return PermissionsRequiredSignoffsScheduledChangesView().get()
+
+
+def scheduled_changes_rs_permissions_post():
+    """POST /scheduled_changes/required_signoffs/permissions"""
+    return PermissionsRequiredSignoffsScheduledChangesView().post()

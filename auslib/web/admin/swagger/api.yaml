@@ -67,6 +67,12 @@ tags:
       description: "Find out more about Required Signoffs"
       url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#required-signoffs"
 
+  - name: "Scheduled Changes"
+    description: "Some tables (Rules, Releases, and Permissions) support having changes to them scheduled in advance. Tables with Scheduled Changes enabled will have additional related tables to store the necessary information about them."
+    externalDocs:
+      description: "Find out more about Scheduled Changes"
+      url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#scheduled-changes"
+
   - name: "History"
     description: "The rules, releases, permissions, required signoffs, and all associated scheduled changes tables have a corresponding history table that records the time a change was made and who made it"
     externalDocs:
@@ -81,6 +87,16 @@ parameters:
     type: string
     maxLength: 100
     required: true
+
+  usernameQueryParam:
+    name: username
+    in: query
+    description: unique identifier name of the user
+    type: string
+    minLength: 1
+    maxLength: 100
+    x-nullable: true
+    required: false
 
   releaseParam:
     name: release
@@ -120,6 +136,14 @@ parameters:
     description: Variable value used pagination of response revisions.
     type: integer
     minimum: 1
+    x-nullable: true
+    required: false
+
+  allSCParam:
+    name: all
+    in: query
+    description: if argument is present in request then response returns all scheduled changes else only returns unfinished changes
+    type: string
     x-nullable: true
     required: false
 
@@ -221,6 +245,14 @@ parameters:
     minimum: 0
     required: true
 
+  sc_id_param:
+    name: sc_id
+    in: path
+    description: Field value to uniquely identfiy the scheduled change
+    type: integer
+    minimum: 0
+    required: true
+
   change_id_param:
     name: change_id
     in: path
@@ -254,6 +286,19 @@ parameters:
               minimum: 0
               example: 85142
 
+  sc_signoff_post_body_param:
+    name: sc_post_signoffs_body
+    in: body
+    description: request body for posting a signoff to a scheduled change
+    required: true
+    schema:
+      type: object
+      allOf:
+        - $ref: '#/definitions/CSRFModel'
+        - $ref: '#/definitions/RoleModel'
+      required:
+        - role
+
   userPermissionFormDataParam:
     name: user_permission_request_body
     in: body
@@ -263,17 +308,11 @@ parameters:
       allOf:
         - $ref: '#/definitions/CSRFModel'
         - $ref: '#/definitions/DataVersionModel'
-        - type: object
-          properties:
-            options:
-              type: ["string", "null"]
-              format: JSONStringField
-              description: JSON field specifying the actions that user can perform and the prdouct on which it has current permission to do so
-              example: "{'actions':['modify']}"
-          # accommodate 'options_as_json' and 'permission' which are duplicate values of 'options'
-          # and 'permission path parameter' respectively, getting passed in request body
-          # No need to validate the duplicate values again.
-          additionalProperties: true
+        - $ref: '#/definitions/OptionsJSON'
+      # accommodate 'options_as_json' and 'permission' which are duplicate values of 'options'
+      # and 'permission path parameter' respectively, getting passed in request body
+      # No need to validate the duplicate values again.
+      additionalProperties: true
 
 responses:
   updateExistingObject:
@@ -872,7 +911,9 @@ paths:
                       type: object
                       allOf:
                         - $ref: "#/definitions/HistoryModel"
-                        - $ref: "#/definitions/ReleaseBase"
+                        - $ref: '#/definitions/DataVersionModel'
+                        - $ref: '#/definitions/ProductModel'
+                        - $ref: '#/definitions/ReleaseName'
                         - type: object
                           properties:
                             read_only:
@@ -1084,7 +1125,6 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
-
   /required_signoffs/permissions:
     get:
       summary: Returns all the permissions required signoffs
@@ -1180,7 +1220,6 @@ paths:
       responses:
         '400':
           $ref: '#/responses/invalidFormData'
-
 
   /required_signoffs/permissions/revisions:
     get:
@@ -1484,26 +1523,7 @@ paths:
         '200':
           description: Successfully fetched the details of the given permission
           schema:
-            required:
-              - data_version
-            allOf:
-              - $ref: "#/definitions/DataVersionModel"
-              - type: object
-                properties:
-                  options:
-                    type: ['object', 'null']
-                    description: Options available for the given permission
-                    properties:
-                      products:
-                        type: array
-                        uniqueItems: true
-                        items:
-                          type: string
-                      actions:
-                        type: array
-                        uniqueItems: true
-                        items:
-                          type: string
+            $ref: "#/definitions/UserPermissionsModel"
           examples:
             application/json:
               data_version: 1
@@ -1640,8 +1660,9 @@ paths:
           schema:
             allOf:
               - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/UpdateType'
               - $ref: '#/definitions/RulesBase'
-            #If you change the required list order, make sure to modify test cases too.
+            #If you change the required list order or add extra fields, make sure to modify this endpoint's test cases plus code for handling /scheduled_changes/rules/  POST operation endpoint.
             required:
               - update_type
               - backgroundRate
@@ -1674,12 +1695,11 @@ paths:
         description: "Returns the entire rule identified by the id or alias given in JSON format."
       parameters:
         - $ref: '#/parameters/rule_id_or_alias_param'
-
       responses:
         '200':
           description: Successfully fetched a rule
           schema:
-            $ref: "#/definitions/RulesBaseGET"
+            $ref: "#/definitions/RuleObject"
           headers:
             X-Data-Version:
               description: data version of the rule
@@ -1688,6 +1708,7 @@ paths:
               minimum: 1
         '404':
           $ref: '#/responses/resourceNotFound'
+
     post:
       summary: Updates the rule
       description: >
@@ -1712,6 +1733,7 @@ paths:
             allOf:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/RulesBase'
+              - $ref: '#/definitions/RulesNonNullable'
             required:
               - data_version
       responses:
@@ -1747,6 +1769,7 @@ paths:
             allOf:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/RulesBase'
+              - $ref: '#/definitions/RulesNonNullable'
             required:
               - data_version
       responses:
@@ -1893,13 +1916,862 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
+  /scheduled_changes/rules:
+    get:
+      summary: Returns scheduled changes for rules.
+      description: >
+        Endpoint to get Scheduled Changes for Rules. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_changes_rules_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: Returns scheduled changes for rules.
+      parameters:
+        - $ref: '#/parameters/allSCParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of all scheduled changes for rules plus total count
+          schema:
+            type: object
+            required:
+              - scheduled_changes
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  scheduled_changes:
+                    description: array where each element is a scheduled change for a Rule
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCChangeType'
+                        - $ref: '#/definitions/SCTime'
+                        - $ref: '#/definitions/SCUptake'
+                        - $ref: '#/definitions/SCIdModel'
+                        - $ref: '#/definitions/RulesBase'
+                        - $ref: '#/definitions/RulesSCNullable'
+                        - $ref: '#/definitions/SCDataVersion'
+                        - $ref: '#/definitions/SCGetModel'
+                      required:
+                        - alias
+                        - backgroundRate
+                        - buildID
+                        - buildTarget
+                        - change_type
+                        - channel
+                        - comment
+                        - data_version
+                        - distVersion
+                        - distribution
+                        - fallbackMapping
+                        - headerArchitecture
+                        - instructionSet
+                        - locale
+                        - mapping
+                        - memory
+                        - osVersion
+                        - priority
+                        - product
+                        - rule_id
+                        - telemetry_channel
+                        - telemetry_product
+                        - telemetry_uptake
+                        - update_type
+                        - version
+                        - when
+    post:
+      summary: create scheduled change for rules.
+      description: >
+        Create scheduled change for a rule(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_changes_rules_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: "create scheduled change for rule."
+      parameters:
+        - name: change_type
+          in: query
+          description: "'change_type' value for a scheduled change."
+          type: string
+          enum:
+            - insert
+            - delete
+            - update
+          minLength: 1
+          maxLength: 20
+          x-nullable: true
+          required: false
+        - name: sc_rule_body
+          in: body
+          description: request body for sc rule
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCChangeType'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/SCUptake'
+              - $ref: '#/definitions/RulesSCNullable'
+              - $ref: '#/definitions/RulesBase'
+      responses:
+        '200':
+          description: Returns sc_id of change
+          schema:
+            $ref: '#/definitions/SCIdModel'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /scheduled_changes/permissions:
+    get:
+      summary: Returns scheduled changes for permissions.
+      description: >
+        Endpoint to get Scheduled Changes for Permissions. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_changes_permissions_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: Returns scheduled changes for permissions.
+      parameters:
+        - $ref: '#/parameters/allSCParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of all scheduled changes for permissions plus total count
+          schema:
+            type: object
+            required:
+              - scheduled_changes
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  scheduled_changes:
+                    description: array where each element is a scheduled change for a Permission.
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCChangeType'
+                        - $ref: '#/definitions/SCTime'
+                        - $ref: '#/definitions/SCIdModel'
+                        - $ref: '#/definitions/SCDataVersion'
+                        - $ref: '#/definitions/SCGetModel'
+                        - $ref: '#/definitions/DataVersionNullable'
+                        - $ref: '#/definitions/OptionsModel'
+                        - $ref: '#/definitions/PermissionsModel'
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+    post:
+      summary: create scheduled change for permissions.
+      description: >
+        Create scheduled change for a permission(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_changes_permissions_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: "create scheduled change for permissions."
+      parameters:
+        - name: sc_permission_body
+          in: body
+          description: request body for sc permission
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCChangeType'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/DataVersionNullable'
+              - $ref: '#/definitions/PermissionsModel'
+              - $ref: '#/definitions/OptionsJSON'
+            required:
+              - change_type
+      responses:
+        '200':
+          description: Returns sc_id of change
+          schema:
+            $ref: '#/definitions/SCIdModel'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /scheduled_changes/releases:
+    get:
+      summary: Returns scheduled changes for releases.
+      description: >
+        Endpoint to get Scheduled Changes for Releases. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_changes_releases_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: Returns scheduled changes for releases.
+      parameters:
+        - $ref: '#/parameters/allSCParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of all scheduled changes for releases plus total count
+          schema:
+            type: object
+            required:
+              - scheduled_changes
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  scheduled_changes:
+                    description: array where each element is a scheduled change for a Release.
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCChangeType'
+                        - $ref: '#/definitions/SCTime'
+                        - $ref: '#/definitions/SCIdModel'
+                        - $ref: '#/definitions/SCDataVersion'
+                        - $ref: '#/definitions/SCGetModel'
+                        - $ref: '#/definitions/DataVersionNullable'
+                        - $ref: '#/definitions/ProductNullable'
+                        - $ref: '#/definitions/ReleaseReadOnly'
+                        - $ref: '#/definitions/ReleaseName'
+                        - type: object
+                          properties:
+                            data:
+                              description: json blob containing information about the release
+                              type: ["object", "null"]
+                              example:
+                                hashFunction: sha512
+                                name: CDM-15
+                                product: Firefox
+                                schema_version: 1000
+                                vendors:
+                                  gmp-eme-adobe:
+                                    platforms:
+                                      WINNT_x86_64-msvc-x64:
+                                        alias: WINNT_x86_64-msvc
+                                    version: '15'
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - name
+                        - data
+                        - read_only
+    post:
+      summary: create scheduled change for a release.
+      description: >
+        Create scheduled change for a release(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_changes_releases_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: "create scheduled change for releases."
+      parameters:
+        - name: sc_permission_body
+          in: body
+          description: request body for sc release
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCChangeType'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/DataVersionModel'
+              - $ref: '#/definitions/ReleaseDataField'
+              - $ref: '#/definitions/ProductModel'
+              - $ref: '#/definitions/ReleaseName'
+            required:
+              - change_type
+              - name
+      responses:
+        '200':
+          description: Returns sc_id of change
+          schema:
+            $ref: '#/definitions/SCIdModel'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /scheduled_changes/required_signoffs/product:
+    get:
+      summary: Returns scheduled changes for required signoffs of Products.
+      description: >
+        Endpoint to get Scheduled Changes for required signoffs of products. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_product_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: Returns scheduled changes for required signoffs of products.
+      parameters:
+        - $ref: '#/parameters/allSCParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of all scheduled changes for required signoffs of products plus total count
+          schema:
+            type: object
+            required:
+              - scheduled_changes
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  scheduled_changes:
+                    description: array where each element is a scheduled change for a Product Required Signoff.
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCChangeType'
+                        - $ref: '#/definitions/SCTime'
+                        - $ref: '#/definitions/SCIdModel'
+                        - $ref: '#/definitions/SCDataVersion'
+                        - $ref: '#/definitions/SCGetModel'
+                        - $ref: '#/definitions/DataVersionNullable'
+                        - $ref: '#/definitions/SignoffsRequiredNullable'
+                        - $ref: '#/definitions/ProductModel'
+                        - $ref: '#/definitions/RoleModel'
+                        - $ref: '#/definitions/ChannelModel'
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - channel
+                        - role
+                        - signoffs_required
+    post:
+      summary: create scheduled change for required signoffs of Product.
+      description: >
+        Create scheduled change for required signoffs of product(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_product_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: "create scheduled change for required signoffs of product."
+      parameters:
+        - name: sc_rs_product_body
+          in: body
+          description: request body for sc required signoffs of product
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCChangeType'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/DataVersionModel'
+              - $ref: '#/definitions/ProductModel'
+              - $ref: '#/definitions/RoleModel'
+              - $ref: '#/definitions/ChannelModel'
+              - $ref: '#/definitions/SignoffsRequiredModel'
+            required:
+              - change_type
+              - product
+              - channel
+              - role
+      responses:
+        '200':
+          description: Returns sc_id of change
+          schema:
+            $ref: '#/definitions/SCIdModel'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /scheduled_changes/required_signoffs/permissions:
+    get:
+      summary: Returns scheduled changes for required signoffs of Permissions.
+      description: >
+        Endpoint to get Scheduled Changes for required signoffs of permissions. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_permissions_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: Returns scheduled changes for required signoffs of permissions.
+      parameters:
+        - $ref: '#/parameters/allSCParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of all scheduled changes for required signoffs of permissions plus total count
+          schema:
+            type: object
+            required:
+              - scheduled_changes
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  scheduled_changes:
+                    description: array where each element is a scheduled change for a Permission Required Signoff.
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCChangeType'
+                        - $ref: '#/definitions/SCTime'
+                        - $ref: '#/definitions/SCIdModel'
+                        - $ref: '#/definitions/SCDataVersion'
+                        - $ref: '#/definitions/SCGetModel'
+                        - $ref: '#/definitions/DataVersionNullable'
+                        - $ref: '#/definitions/SignoffsRequiredNullable'
+                        - $ref: '#/definitions/ProductModel'
+                        - $ref: '#/definitions/RoleModel'
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - role
+                        - signoffs_required
+    post:
+      summary: create scheduled change for required signoffs of Permission.
+      description: >
+        Create scheduled change for required signoffs of product(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_permissions_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#scheduled-changes"
+        description: "create scheduled change for required signoffs of permissions."
+      parameters:
+        - name: sc_rs_permission_body
+          in: body
+          description: request body for sc required signoffs of permissions
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCChangeType'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/DataVersionModel'
+              - $ref: '#/definitions/ProductModel'
+              - $ref: '#/definitions/RoleModel'
+              - $ref: '#/definitions/SignoffsRequiredModel'
+            required:
+              - change_type
+              - product
+              - role
+      responses:
+        '200':
+          description: Returns sc_id of change
+          schema:
+            $ref: '#/definitions/SCIdModel'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /scheduled_changes/rules/{sc_id}/enact:
+    post:
+      summary: Execute the scheduled change for the rule.
+      description: >
+        Execute the scheduled change for the rule identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_rules_post
+      consumes: []
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact"
+        description: "Execute the scheduled change for the rule."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+      responses:
+        '200':
+          description: Successfully enacted the scheduled change
+
+  /scheduled_changes/permissions/{sc_id}/enact:
+    post:
+      summary: Execute the scheduled change for the permission.
+      description: >
+        Execute the scheduled change for the permission identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_permissions_post
+      consumes: []
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact"
+        description: "Execute the scheduled change for the permission."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+      responses:
+        '200':
+          description: Successfully enacted the scheduled change
+
+  /scheduled_changes/releases/{sc_id}/enact:
+    post:
+      summary: Execute the scheduled change for the release.
+      description: >
+        Execute the scheduled change for the release identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_releases_post
+      consumes: []
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact"
+        description: "Execute the scheduled change for the release."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+      responses:
+        '200':
+          description: Successfully enacted the scheduled change
+
+  /scheduled_changes/required_signoffs/product/{sc_id}/enact:
+    post:
+      summary: Execute the scheduled change for the required signoffs for product.
+      description: >
+        Execute the scheduled change for the required signoffs for product identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_product_rs_post
+      consumes: []
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact"
+        description: "Execute the scheduled change for the required signoffs for product."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+      responses:
+        '200':
+          description: Successfully enacted the scheduled change
+
+  /scheduled_changes/required_signoffs/permissions/{sc_id}/enact:
+    post:
+      summary: Execute the scheduled change for the required signoffs for permission.
+      description: >
+        Execute the scheduled change for the required signoffs for permission identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_permissions_rs_post
+      consumes: []
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact"
+        description: "Execute the scheduled change for the required signoffs for permission."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+      responses:
+        '200':
+          description: Successfully enacted the scheduled change
+
+  /scheduled_changes/rules/{sc_id}/signoffs:
+    post:
+      summary: Signs off on the given Scheduled Change for Rule.
+      description: >
+        Signs off on the given Scheduled Change for Rule. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_signoffs_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs"
+        description: "Signs off on the given Scheduled Change for Rule."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/sc_signoff_post_body_param'
+      responses:
+        '200':
+          description: Successfully signed off on the given scheduled change for the named object.
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    delete:
+      summary: Removes an existing Signoff from the Scheduled Change for the Rule.
+      description: >
+        Removes an existing Signoff from the Scheduled Change for the Rule. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_signoffs_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs"
+        description: Removes an existing Signoff from the Scheduled Change for the Rule.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/usernameQueryParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the signoff on the given scheduled change.
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/permissions/{sc_id}/signoffs:
+    post:
+      summary: Signs off on the given Scheduled Change for Permission.
+      description: >
+        Signs off on the given Scheduled Change for Permission. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_signoffs_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs"
+        description: "Signs off on the given Scheduled Change for Permission."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/sc_signoff_post_body_param'
+      responses:
+        '200':
+          description: Successfully signed off on the given scheduled change for the named object.
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    delete:
+      summary: Removes an existing Signoff from the Scheduled Change for the Permission.
+      description: >
+        Removes an existing Signoff from the Scheduled Change for the Permission. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_signoffs_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs"
+        description: Removes an existing Signoff from the Scheduled Change for the Permission.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/usernameQueryParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the signoff on the given scheduled change.
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/releases/{sc_id}/signoffs:
+    post:
+      summary: Signs off on the given Scheduled Change for Release.
+      description: >
+        Signs off on the given Scheduled Change for Release. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_release_signoffs_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs"
+        description: "Signs off on the given Scheduled Change for Release."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/sc_signoff_post_body_param'
+      responses:
+        '200':
+          description: Successfully signed off on the given scheduled change for the named object.
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    delete:
+      summary: Removes an existing Signoff from the Scheduled Change for the Release.
+      description: >
+        Removes an existing Signoff from the Scheduled Change for the Release. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_release_signoffs_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs"
+        description: Removes an existing Signoff from the Scheduled Change for the Release.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/usernameQueryParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the signoff on the given scheduled change.
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/required_signoffs/product/{sc_id}/signoffs:
+    post:
+      summary: Signs off on the given Scheduled Change for Product Required Signoff.
+      description: >
+        Signs off on the given Scheduled Change for Product Required Signoff. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_signoffs_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs"
+        description: "Signs off on the given Scheduled Change for Product Required Signoff."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/sc_signoff_post_body_param'
+      responses:
+        '200':
+          description: Successfully signed off on the given scheduled change for the named object.
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    delete:
+      summary: Removes an existing Signoff from the Scheduled Change for the Product Required Signoff.
+      description: >
+        Removes an existing Signoff from the Scheduled Change for the Product Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_signoffs_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs"
+        description: Removes an existing Signoff from the Scheduled Change for the Product Required Signoff.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/usernameQueryParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the signoff on the given scheduled change.
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/required_signoffs/permissions/{sc_id}/signoffs:
+    post:
+      summary: Signs off on the given Scheduled Change for Permission Required Signoff.
+      description: >
+        Signs off on the given Scheduled Change for Permission Required Signoff. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_signoffs_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs"
+        description: "Signs off on the given Scheduled Change for Permission Required Signoff."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/sc_signoff_post_body_param'
+      responses:
+        '200':
+          description: Successfully signed off on the given scheduled change for the named object.
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    delete:
+      summary: Removes an existing Signoff from the Scheduled Change for the Permission Required Signoff.
+      description: >
+        Removes an existing Signoff from the Scheduled Change for the Permission Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_signoffs_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs"
+        description: Removes an existing Signoff from the Scheduled Change for the Permission Required Signoff.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/usernameQueryParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the signoff on the given scheduled change.
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
 definitions:
   4xxClientErrorResponseModel:
     title: "4xx Response"
     description: "Invalid request's response object. The 4xx class of status codes is intended for situations in which the client seems to have erred. This model describes the response format"
     type: object
-    # currently we're using detail and status only in the UI
-    # Therefore rest of fields aren't always required.
+    # currently we're using 'detail' and 'status' in the UI.
+    # 'exception' is seldom used. Therefore rest of fields aren't always required.
     required:
       - detail
       - status
@@ -1966,14 +2838,50 @@ definitions:
         minimum: 1
         example: 3
 
+  DataVersionNullable:
+    title: Nullable Data Version
+    description: "model to re-use nullable 'data_version' field for scheduled_changes"
+    type: object
+    properties:
+      data_version:
+        description: the version number of object
+        type: ["integer", "null"]
+        format: data_version
+        example: 1
+
+  SCIdModel:
+    title: SC ID
+    description: "model to re-use 'sc_id' field"
+    type: object
+    required:
+      - sc_id
+    properties:
+      sc_id:
+        description: id of scheduled change
+        type: integer
+        format: int32
+        minimum: 0
+        example: 2
+
   SignoffsRequiredModel:
     title: Signoffs Required
-    description: "model to re-use 'signoffs_required' field."
+    description: "model to re-use 'signoffs_required' integer field."
     type: object
     properties:
       signoffs_required:
         description: The number of signoffs required for a given role
         type: ["integer", "string"]
+        format: signoffs_required
+        example: 2
+
+  SignoffsRequiredNullable:
+    title: Signoffs Required Nullable
+    description: "model to re-use 'signoffs_required' nullable integer field."
+    type: object
+    properties:
+      signoffs_required:
+        description: The number of signoffs required for a given role
+        type: ["integer", "string", "null"]
         format: signoffs_required
         example: 2
 
@@ -2003,31 +2911,162 @@ definitions:
 
   ProductModel:
     title: Product
-    description: "model to define 'product' field in request body"
+    description: "model to define 'product' field in request/response JSON body"
     type: object
     properties:
       product:
-        description: Name of the product
+        description: The product name that the client must send in order for the rule to match. Only full string matches are supported.
         type: string
         minLength: 1
         maxLength: 15
         example: Firefox
 
-  ReleaseBase:
-    title: Release Base
-    description: "To Balrog, a 'release' is data about a related set of builds. This does _not_ match up with the concept of a 'release' being on the 'beta', 'release' or 'esr' channel elsewhere. In Balrog, each set of nightlies on any branch is considered a release"
+  ProductNullable:
+    title: Product Nullable
+    description: "model to define nullable 'product' field in request/response JSON body"
     type: object
-    allOf:
-      - $ref: '#/definitions/DataVersionModel'
-      - $ref: '#/definitions/ProductModel'
-      - type: object
-        properties:
-          name:
-            description: Release name
-            type: string
-            minLength: 1
-            maxLength: 100
-            example: "Firefox-47.0.2-build2-43.0.1"
+    properties:
+      product:
+        description: The product name that the client must send in order for the rule to match. Only full string matches are supported.
+        type: ["string", "null"]
+        minLength: 1
+        maxLength: 15
+        example: Firefox
+
+  PermissionsModel:
+    title: Permissions
+    description: User Permissions JSON field model.
+    type: object
+    required:
+      - permission
+      - username
+    properties:
+      permission:
+        description: Permission name
+        type: string
+        minLength: 1
+        maxLength: 50
+        enum:
+          - admin
+          - rule
+          - release
+          - release_read_only
+          - release_locale
+          - required_signoff
+          - permission
+          - scheduled_change
+        example: admin
+      username:
+        description: user name
+        type: string
+        minLength: 1
+        maxLength: 100
+        example: balrogadmin
+
+  SCDataVersion:
+    title: SC Data Version
+    description: "model for re-using sc_data_version field"
+    type: object
+    required:
+      - sc_data_version
+    properties:
+      sc_data_version:
+          type: integer
+          description: version number of scheduled change
+          format: int32
+          minimum: 1
+          example: 2
+
+  SCGetModel:
+    title: SC GET
+    description: "model for defining common fields in scheduled changes GET operations"
+    type: object
+    required:
+      - complete
+      - required_signoffs
+      - scheduled_by
+      - signoffs
+    properties:
+      complete:
+        type: boolean
+        description: is Scheduled change complete
+        example: false
+      required_signoffs:
+        type: object
+        description: Contains key-value pairs of role names and number of minimum signoffs needed from each role
+        example:
+          releng: 2
+      scheduled_by:
+        type: string
+        description: user who scheduled the change
+        minLength: 1
+        maxLength: 100
+        example: balrogadmin
+      signoffs:
+        type: object
+        description: Contains key-value pairs of user name and role name via which the change was signed off
+        example:
+          releng: 2
+
+  SCUptake:
+    title: Schedule Change Uptake
+    description: scheduled change telemtry parameters
+    type: object
+    properties:
+      telemetry_product:
+        description: Name of telemetry product
+        type: ["string", "null"]
+        minLength: 1
+        maxLength: 15
+      telemetry_channel:
+        description: Name of telemetry channel
+        type: ["string", "null"]
+        minLength: 1
+        maxLength: 75
+      telemetry_uptake:
+        description: number of telemetry uptakes.
+        type: ["integer", "string", "null"]
+        format: telemetry_uptake
+        example: 1
+
+  SCTime:
+    title: Schedule Change Time
+    description: "model to re-use 'when' field in  scheduled change."
+    type: object
+    properties:
+      when:
+        description: Time (in milliseconds since epoch) when to enact scheduled change
+        type: ["integer", "null"]
+        format: when
+        example: 1499712894
+
+  SCChangeType:
+    title: SC Change Type
+    description: "Scheduled change 'change_type' field"
+    type: object
+    properties:
+      change_type:
+        description: type of change
+        type: string
+        enum:
+          - insert
+          - update
+          - delete
+        minLength: 1
+        maxLength: 50
+        example: update
+
+  ReleaseName:
+    title: Release Name
+    description: name of release
+    type: object
+    properties:
+      name:
+        description: Release name
+        type: string
+        minLength: 1
+        maxLength: 100
+        example: "Firefox-47.0.2-build2-43.0.1"
 
   ReleaseData:
     title: Release form values plus blob
@@ -2035,7 +3074,9 @@ definitions:
     type: object
     allOf:
       - $ref: "#/definitions/CSRFModel"
-      - $ref: "#/definitions/ReleaseBase"
+      - $ref: '#/definitions/DataVersionModel'
+      - $ref: '#/definitions/ProductModel'
+      - $ref: '#/definitions/ReleaseName'
       - type: object
         properties:
           blob:
@@ -2048,18 +3089,27 @@ definitions:
       - product
       - blob
 
+  ReleaseReadOnly:
+    title: Release Read Only
+    description: "Release's read_only flag field marks whether release can only be read and not modified"
+    type: object
+    properties:
+      read_only:
+        type: ["boolean", "null"]
+        example: true
+        description: "flag value is true if release is marked as read_only else release is modifiable"
+
   ReleaseGET:
     title: Release form values plus read only and rule ids
     description: "Release Base Model + read only + list of mapped rule_ids"
     type: object
     allOf:
-      - $ref: "#/definitions/ReleaseBase"
+      - $ref: '#/definitions/DataVersionModel'
+      - $ref: '#/definitions/ProductModel'
+      - $ref: '#/definitions/ReleaseName'
+      - $ref: '#/definitions/ReleaseReadOnly'
       - type: object
         properties:
-          read_only:
-            type: ["boolean", "null"]
-            example: true
-            description: "flag value is true if release is marked as read_only else release is modifiable"
           rule_ids:
             description: list of rule_ids
             type: array
@@ -2076,6 +3126,17 @@ definitions:
       - read_only
       - rule_ids
 
+  ReleaseDataField:
+    title: Release Data field
+    description: "release's json blob data as marshalled as string"
+    type: object
+    properties:
+      data:
+        description: json blob containing information about the release marshalled as string
+        type: string
+        format: JSONStringField
+        example: '{"hashFunction": "sha512", "name": "CDM-979", "product": "Firefox", "schema_version": 1000, "vendors": { "gmp-eme-adobe": { "platforms": {"WINNT_x86_64-msvc-x64": {"alias": "WINNT_x86_64-msvc"}},"version": "15"}}}'
+
   PartialRelease:
     title: Partial Release
     description: "Partial Release form values"
@@ -2083,14 +3144,12 @@ definitions:
     allOf:
       # Note: 'name' is inherited with other required fields from Base model but never used when processing the input request
       - $ref: '#/definitions/CSRFModel'
-      - $ref: "#/definitions/ReleaseBase"
+      - $ref: '#/definitions/DataVersionModel'
+      - $ref: '#/definitions/ProductModel'
+      - $ref: '#/definitions/ReleaseName'
+      - $ref: '#/definitions/ReleaseDataField'
       - type: object
         properties:
-          data:
-            description: json blob containing information about the release
-            type: string
-            example: '{"hashFunction": "sha512", "name": "CDM-979", "product": "Firefox", "schema_version": 1000, "vendors": { "gmp-eme-adobe": { "platforms": {"WINNT_x86_64-msvc-x64": {"alias": "WINNT_x86_64-msvc"}},"version": "15"}}}'
-            format: JSONStringField
           hashFunction:
             description: cryptographic hash function to assure integrity of transmitted data
             type: string
@@ -2113,30 +3172,46 @@ definitions:
       - product
       - data
 
+  OptionsJSON:
+    title: Option JSONStringfield
+    description: "model to re-use 'options' string field in user permissions"
+    type: object
+    properties:
+      options:
+        type: ["string", "null"]
+        format: JSONStringField
+        description: JSON field specifying the actions that user can perform and the prdouct on which it has current permission to do so
+        example: "{'actions':['modify']}"
+
+  OptionsModel:
+    title: Options object
+    description: "Data model for permission's options field"
+    type: object
+    properties:
+      options:
+        type: ['object', 'null']
+        description: Options available for the given permission
+        properties:
+          products:
+            type: array
+            uniqueItems: true
+            items:
+              type: string
+            example: ["Firefox"]
+          actions:
+            type: array
+            uniqueItems: true
+            items:
+              type: string
+            example: ["modify"]
+
   UserPermissionsModel:
     title: User Permissions
     description: "Model of user's permissions with all details of avaliable options and actions for the rule,release,required signoff and permission of user is assigned"
     type: object
     allOf:
       - $ref: "#/definitions/DataVersionModel"
-      - type: object
-        properties:
-          options:
-            type: ['object', 'null']
-            description: Options available for the given permission
-            properties:
-              products:
-                type: array
-                uniqueItems: true
-                items:
-                  type: string
-                example: ["Firefox"]
-              actions:
-                type: array
-                uniqueItems: true
-                items:
-                  type: string
-                example: ["modify"]
+      - $ref: "#/definitions/OptionsModel"
     required:
       - data_version
 
@@ -2179,48 +3254,12 @@ definitions:
 
       release_locale:
         description: "Release Locale permission to perform modify action only on product releases."
-        allOf:
-          - $ref: "#/definitions/DataVersionModel"
-          - type: object
-            properties:
-              options:
-                type: ['object', 'null']
-                description: Options available for the given permission
-                properties:
-                  products:
-                    type: array
-                    uniqueItems: true
-                    items:
-                      type: string
-                  actions:
-                    type: array
-                    uniqueItems: true
-                    items:
-                      type: string
-        required:
-          - data_version
+        $ref: "#/definitions/UserPermissionsModel"
+
       release_read_only:
         description: "Read only Releases permission to perform modify action only on product releases."
-        allOf:
-          - $ref: "#/definitions/DataVersionModel"
-          - type: object
-            properties:
-              options:
-                type: ['object', 'null']
-                description: Options available for the given permission
-                properties:
-                  products:
-                    type: array
-                    uniqueItems: true
-                    items:
-                      type: string
-                  actions:
-                    type: array
-                    uniqueItems: true
-                    items:
-                      type: string
-        required:
-          - data_version
+        $ref: "#/definitions/UserPermissionsModel"
+
       permission:
         description: "permission to perform modify actions only."
         allOf:
@@ -2238,6 +3277,7 @@ definitions:
                       type: string
         required:
           - data_version
+
       scheduled_change:
         description: "permission to schedule a change to rule, release or permission. Only the Balrog Agent should be granted this permission."
         allOf:
@@ -2255,6 +3295,7 @@ definitions:
                       type: string
         required:
           - data_version
+
   HistoryModel:
     title: History Table Model
     description: Contains fields to be added to base table models to generate a history table
@@ -2278,11 +3319,12 @@ definitions:
         maximum: 100
         example: "balrogadmin"
 
-  RulesBaseGET:
-    title: GET Operations on Rules Base
+  RuleObject:
+    title: GET Operations on Rules
     description: "Operations on /rules GET"
     allOf:
       - $ref: "#/definitions/RulesBase"
+      - $ref: "#/definitions/RulesNonNullable"
     required:
       - alias
       - backgroundRate
@@ -2320,7 +3362,7 @@ definitions:
             description: array where each element is a rule object
             type: array
             items:
-              $ref: '#/definitions/RulesBaseGET'
+              $ref: '#/definitions/RuleObject'
             example:
               - alias: "esr45-localtest"
                 backgroundRate: 100
@@ -2345,22 +3387,75 @@ definitions:
                 version: null
                 whitelist: null
 
+  UpdateType:
+    title: Rule's update_type field
+    description: Non-Null field of Rule to specify type of update
+    type: object
+    properties:
+      update_type:
+        description: "The update_type to use in the XML response. 'minor' is almost always the correct value these days."
+        type: string
+        minLength: 0
+        maxLength: 15
+        enum: [ "major", "minor"]
+        example: minor
+
+  RulesNonNullable:
+    title: Rule non-nullable fields
+    description: Balrog's Rule Attributes having non-null values
+    type: object
+    allOf:
+      - $ref: '#/definitions/UpdateType'
+      - type: object
+        properties:
+          rule_id:
+            description: "The id of the rule. This id (or the rule's alias, if set) is necessary to make changes to the rule through the REST API."
+            type: ["integer", "string"]
+            format: rule_id
+            readOnly: true
+            example: 10
+
+          data_version:
+            description: the version number of rule
+            type: ["integer", "string"]
+            format: data_version
+            example: 1
+
+  RulesSCNullable:
+    title: Rule nullable fields
+    description: Balrog's Rule Attributes that can have null values in scheduled changes tables
+    type: object
+    properties:
+      rule_id:
+        description: "The id of the rule. This id (or the rule's alias, if set) is necessary to make changes to the rule through the REST API."
+        type: ["integer", "string", "null"]
+        format: rule_id
+        readOnly: true
+        example: 10
+
+      data_version:
+        description: the version number of rule
+        type: ["integer", "string", "null"]
+        format: data_version
+        example: 1
+
+      update_type:
+        description: "The update_type to use in the XML response. 'minor' is almost always the correct value these days."
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 15
+        enum: [ "major", "minor", null]
+        example: minor
+
   RulesBase:
-    title: Rules object definition
-    description: Balrog's Rule Attributes
+    title: Rules Base Attributes
+    description: Balrog's Rule Attributes except rule_id and data_version
     type: object
 
     # Cannot have additionalProperties as false for strict validation ,else it disallows csrf_token or any other model's properties to be added
     #additionalProperties: false
 
     properties:
-      rule_id:
-        description: The id of the rule. This id (or the rule's alias, if set) is necessary to make changes to the rule through the REST API.
-        type: ["integer", "string"]
-        format: rule_id
-        readOnly: true
-        example: 10
-
       priority:
         description: The priority of the rule, relative to other rules. The higher the value, the higher the priority of the rule.
         type: ["integer", "string", "null"]
@@ -2381,20 +3476,6 @@ definitions:
         type: ["integer", "string", "null"]
         format: backgroundRate
         example: 100
-
-      data_version:
-        description: the version number of rule
-        type: ["integer", "string"]
-        format: data_version
-        example: 1
-
-      update_type:
-        description: The update_type to use in the XML response. "minor" is almost always the correct value these days.
-        type: string
-        minLength: 0
-        maxLength: 15
-        enum: [ "major", "minor"]
-        example: minor
 
       product:
         description: The product name that the client must send in order for the rule to match. Only full string matches are supported.

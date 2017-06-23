@@ -13,7 +13,6 @@ from auslib.web.admin.views.base import (
 )
 from auslib.web.admin.views.csrf import get_csrf_headers
 from auslib.web.admin.views.forms import EditScheduledChangeExistingReleaseForm, \
-    ScheduledChangeNewReleaseForm, ScheduledChangeExistingReleaseForm, ScheduledChangeDeleteReleaseForm, \
     EditScheduledChangeNewReleaseForm
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
@@ -510,25 +509,40 @@ class SingleReleaseColumnView(AdminView):
 
 
 class ReleaseScheduledChangesView(ScheduledChangesView):
+    """/scheduled_changes/releases"""
+
     def __init__(self):
         super(ReleaseScheduledChangesView, self).__init__("releases", dbo.releases)
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        change_type = connexion.request.json.get("change_type")
+        what = connexion.request.json
+        change_type = what.get("change_type")
 
         if change_type == "update":
-            form = ScheduledChangeExistingReleaseForm()
-            form.data.data = createBlob(form.data.data)
-        elif change_type == "insert":
-            form = ScheduledChangeNewReleaseForm()
-            form.data.data = createBlob(form.data.data)
-        elif change_type == "delete":
-            form = ScheduledChangeDeleteReleaseForm()
-        else:
-            return Response(status=400, response="Invalid or missing change_type")
+            if not what.get("data_version", None):
+                return problem(400, "Bad Request", "Missing data_version value")
+            if what.get("data", None):
+                what["data"] = createBlob(what.get("data"))
 
-        return super(ReleaseScheduledChangesView, self)._post(form, transaction, changed_by)
+        elif change_type == "insert":
+            what.pop("data_version", None)
+            if not what.get("product", None):
+                return problem(400, "Bad Request", "Missing product value")
+
+            if what.get("data", None):
+                what["data"] = createBlob(what.get("data"))
+            else:
+                return problem(400, "Bad Request", "Missing blob 'data' value")
+
+        elif change_type == "delete":
+            if not what.get("data_version", None):
+                return problem(400, "Bad Request", "Missing data_version value")
+
+        else:
+            return problem(400, "Bad Request", "Invalid or missing change_type")
+
+        return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by)
 
 
 class ReleaseScheduledChangeView(ScheduledChangeView):

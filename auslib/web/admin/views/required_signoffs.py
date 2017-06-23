@@ -7,14 +7,8 @@ from flask import jsonify, Response
 
 from auslib.web.admin.views.base import requirelogin, AdminView
 from auslib.web.admin.views.forms import \
-    ScheduledChangeExistingProductRequiredSignoffForm, \
-    ScheduledChangeNewProductRequiredSignoffForm, \
-    ScheduledChangeDeleteProductRequiredSignoffForm, \
     EditScheduledChangeNewProductRequiredSignoffForm, \
     EditScheduledChangeExistingProductRequiredSignoffForm, \
-    ScheduledChangeExistingPermissionsRequiredSignoffForm, \
-    ScheduledChangeNewPermissionsRequiredSignoffForm, \
-    ScheduledChangeDeletePermissionsRequiredSignoffForm, \
     EditScheduledChangeNewPermissionsRequiredSignoffForm, \
     EditScheduledChangeExistingPermissionsRequiredSignoffForm
 from auslib.web.admin.views.history import HistoryView
@@ -116,24 +110,41 @@ class ProductRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
 
 
 class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
+    """/scheduled_changes/required_signoffs/product"""
+
     def __init__(self):
         super(ProductRequiredSignoffsScheduledChangesView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        change_type = connexion.request.json.get("change_type")
+        what = connexion.request.json
+        change_type = what.get("change_type")
 
         if change_type == "update":
-            form = ScheduledChangeExistingProductRequiredSignoffForm()
-        elif change_type == "insert":
-            form = ScheduledChangeNewProductRequiredSignoffForm()
-        elif change_type == "delete":
-            form = ScheduledChangeDeleteProductRequiredSignoffForm()
-        else:
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response="Invalid or missing change_type")
+            for field in ["signoffs_required", "data_version"]:
+                if not what.get(field, None):
+                    return problem(400, "Bad Request", "%s is missing" % field)
+                else:
+                    what[field] = int(what.get(field))
 
-        return super(ProductRequiredSignoffsScheduledChangesView, self)._post(form, transaction, changed_by)
+        elif change_type == "insert":
+            if not what.get("signoffs_required", None):
+                return problem(400, "Bad Request", "signoffs_required is missing")
+            else:
+                what["signoffs_required"] = int(what.get("signoffs_required"))
+            what.pop("data_version", None)
+
+        elif change_type == "delete":
+            if not what.get("data_version", None):
+                return problem(400, "Bad Request", "data_version is missing")
+            else:
+                what["data_version"] = int(what.get("data_version"))
+
+        else:
+            self.log.warning("Bad input: %s", change_type)
+            return problem(400, "Bad Request", "Invalid or missing change_type")
+
+        return super(ProductRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by)
 
 
 class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
@@ -204,24 +215,41 @@ class PermissionsRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
 
 
 class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
+    """/scheduled_changes/required_signoffs/permissions"""
+
     def __init__(self):
         super(PermissionsRequiredSignoffsScheduledChangesView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        change_type = connexion.request.json.get("change_type")
+        what = connexion.request.json
+        change_type = what.get("change_type")
 
         if change_type == "update":
-            form = ScheduledChangeExistingPermissionsRequiredSignoffForm()
-        elif change_type == "insert":
-            form = ScheduledChangeNewPermissionsRequiredSignoffForm()
-        elif change_type == "delete":
-            form = ScheduledChangeDeletePermissionsRequiredSignoffForm()
-        else:
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response="Invalid or missing change_type")
+            for field in ["signoffs_required", "data_version"]:
+                if not what.get(field, None):
+                    return problem(400, "Bad Request", "%s is missing" % field)
+                else:
+                    what[field] = int(what.get(field))
 
-        return super(PermissionsRequiredSignoffsScheduledChangesView, self)._post(form, transaction, changed_by)
+        elif change_type == "insert":
+            if not what.get("signoffs_required", None):
+                return problem(400, "Bad Request", "signoffs_required is missing")
+            else:
+                what["signoffs_required"] = int(what.get("signoffs_required"))
+            what.pop("data_version", None)
+
+        elif change_type == "delete":
+            if not what.get("data_version", None):
+                return problem(400, "Bad Request", "data_version is missing")
+            else:
+                what["data_version"] = int(what.get("data_version"))
+
+        else:
+            self.log.warning("Bad input: %s", change_type)
+            return problem(400, "Bad Request", "Invalid or missing change_type")
+
+        return super(PermissionsRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by)
 
 
 class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):

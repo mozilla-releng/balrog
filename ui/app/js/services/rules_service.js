@@ -47,10 +47,7 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers
     addScheduledChange: function(data, csrf_token) {
       data = jQuery.extend({}, data);
       data = Helpers.replaceEmptyStrings(data);
-      if (data.when === null) {
-        data.when = "";
-      }
-      else {
+      if (data.when !== null) {
         data.when = data.when.getTime();
       }
       data.csrf_token = csrf_token;

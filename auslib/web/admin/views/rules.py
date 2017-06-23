@@ -3,16 +3,14 @@ import connexion
 
 from sqlalchemy.sql.expression import null
 from jsonschema.compat import str_types
-from flask import Response, request, jsonify
+from flask import Response, jsonify
 from auslib.web.admin.views.problem import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
 from auslib.web.admin.views.csrf import get_csrf_headers
-from auslib.web.admin.views.forms import \
-    ScheduledChangeNewRuleForm, ScheduledChangeExistingRuleForm, \
-    ScheduledChangeDeleteRuleForm, EditScheduledChangeNewRuleForm, \
+from auslib.web.admin.views.forms import EditScheduledChangeNewRuleForm, \
     EditScheduledChangeExistingRuleForm, EditScheduledChangeDeleteRuleForm
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
@@ -263,7 +261,7 @@ class RuleHistoryAPIView(HistoryView):
 
 
 class SingleRuleColumnView(AdminView):
-    """ /rules/columns/:column"""
+    """/rules/columns/:column"""
 
     def get(self, column):
         rules = dbo.rules.getOrderedRules()
@@ -285,45 +283,54 @@ class SingleRuleColumnView(AdminView):
 
 
 class RuleScheduledChangesView(ScheduledChangesView):
+    """/scheduled_changes/rules"""
+
     def __init__(self):
         super(RuleScheduledChangesView, self).__init__("rules", dbo.rules)
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        if request.json:
-            change_type = request.json.get("change_type")
+        if connexion.request.json:
+            change_type = connexion.request.json.get("change_type")
         else:
-            change_type = request.values.get("change_type")
+            change_type = connexion.request.values.get("change_type")
+        what = connexion.request.json
 
-        if change_type == "update":
-            form = ScheduledChangeExistingRuleForm()
+        # Explicit checks for each change_type
+        if change_type in ["update", "insert"]:
+            rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
+            what = rule_dict
+            if what.get('mapping') is not None and len(mapping_values) != 1:
+                return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-            releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+            if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
+                return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
-            self.log.debug("releaseNames: %s" % releaseNames)
-            self.log.debug("transaction: %s" % transaction)
+        if change_type in ["update", "delete"]:
+            for field in ["rule_id", "data_version"]:
+                if not what.get(field, None):
+                    return problem(400, "Bad Request", "%s is missing" % field)
+                else:
+                    what[field] = int(what.get(field))
 
-            form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
-            form.mapping.choices.insert(0, ('', 'NULL'))
-
+            if change_type == "delete":
+                what.pop("csrf_token", None)
+                for key in what:
+                    if key not in ["telemetry_product", "telemetry_channel", "telemetry_uptake", "when", "rule_id",
+                                   "data_version", "change_type"]:
+                        return problem(400, "Bad Request", "{} isn't required when scheduling a 'delete' change"
+                                       .format(key))
         elif change_type == "insert":
-            form = ScheduledChangeNewRuleForm()
-
-            releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
-
-            self.log.debug("releaseNames: %s" % releaseNames)
-            self.log.debug("transaction: %s" % transaction)
-
-            form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
-            form.mapping.choices.insert(0, ('', 'NULL'))
-
-        elif change_type == "delete":
-            form = ScheduledChangeDeleteRuleForm()
-
+            for field in ["update_type", "backgroundRate", "priority"]:
+                if not what.get(field):
+                    return problem(400, "Bad Request", "%s is missing" % field)
+            # Delete rule_id and data_version if accidentally passed in request.json when scheduling new rule change
+            what.pop("rule_id", None)
+            what.pop("data_version", None)
         else:
-            return Response(status=400, response="Invalid or missing change_type")
+            return problem(400, "Bad Request", "Invalid or missing change_type")
 
-        return super(RuleScheduledChangesView, self)._post(form, transaction, changed_by)
+        return super(RuleScheduledChangesView, self)._post(what, transaction, changed_by)
 
 
 class RuleScheduledChangeView(ScheduledChangeView):
@@ -332,18 +339,18 @@ class RuleScheduledChangeView(ScheduledChangeView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if request.json and request.json.get("data_version"):
-            if request.json.get("change_type") == "delete":
+        if connexion.request.json and connexion.request.json.get("data_version"):
+            if connexion.request.json.get("change_type") == "delete":
                 form = EditScheduledChangeDeleteRuleForm()
             else:
                 form = EditScheduledChangeExistingRuleForm()
         else:
             form = EditScheduledChangeNewRuleForm()
 
-        if request.json.get("change_type") != "delete":
-            releaseNames = dbo.releases.getReleaseNames(transaction=transaction)
+        if connexion.request.json.get("change_type") != "delete":
+            release_names = dbo.releases.getReleaseNames(transaction=transaction)
 
-            form.mapping.choices = [(item['name'], item['name']) for item in releaseNames]
+            form.mapping.choices = [(item['name'], item['name']) for item in release_names]
             form.mapping.choices.insert(0, ('', 'NULL'))
 
         return super(RuleScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
