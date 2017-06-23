@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: '2.32'
+  version: '2.33'
   title: "Balrog's Admin API"
   termsOfService: "https://wiki.mozilla.org/Balrog"
   license:
