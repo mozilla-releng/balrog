@@ -12,7 +12,7 @@ class TestRulesAPI_JSON(ViewTest):
     def testGetRules(self):
         ret = self._get("/rules")
         got = json.loads(ret.data)
-        self.assertEquals(got["count"], 6)
+        self.assertEquals(got["count"], 7)
 
     def testGetRulesWithProductFilter(self):
         ret = self._get("/rules", qs={"product": "fake"})
@@ -30,9 +30,16 @@ class TestRulesAPI_JSON(ViewTest):
                 "version": None, "buildID": None, "locale": None, "distribution": None, "osVersion": None,
                 "systemCapabilities": None, "distVersion": None, "headerArchitecture": None, "alias": None,
 
+            },
+            {
+                "rule_id": 7, "product": "fake", "priority": 30, "backgroundRate": 85, "mapping": "a", "update_type": "minor",
+                "channel": "c", "data_version": 1, "buildTarget": None, "comment": None, "fallbackMapping": None,
+                "version": None, "buildID": None, "locale": None, "distribution": None, "osVersion": None,
+                "systemCapabilities": None, "distVersion": None, "headerArchitecture": None, "alias": None,
+
             }
         ]
-        self.assertEquals(got["count"], 2)
+        self.assertEquals(got["count"], 3)
         rules = sorted(got["rules"], key=lambda r: r["rule_id"])
         self.assertEquals(rules, expected)
 
@@ -1375,9 +1382,9 @@ class TestRuleScheduledChanges(ViewTest):
         sc_row = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 2).execute().fetchall()[0]
         self.assertEquals(sc_row["complete"], True)
 
-        row = dbo.rules.t.select().where(dbo.rules.rule_id == 7).execute().fetchall()[0]
+        row = dbo.rules.t.select().where(dbo.rules.rule_id == 8).execute().fetchall()[0]
         expected = {
-            "rule_id": 7, "priority": 50, "version": None, "buildTarget": None, "backgroundRate": 100, "mapping": "ab", "fallbackMapping": None,
+            "rule_id": 8, "priority": 50, "version": None, "buildTarget": None, "backgroundRate": 100, "mapping": "ab", "fallbackMapping": None,
             "update_type": "minor", "data_version": 1, "alias": None, "product": "baz", "channel": None, "buildID": None,
             "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
             "comment": None, "systemCapabilities": None,
