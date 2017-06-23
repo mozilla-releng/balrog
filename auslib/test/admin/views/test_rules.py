@@ -482,6 +482,25 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(ret.status_code, 400)
         self.assertIn("This change requires signoff", ret.data)
 
+    # Regression test for https://bugzilla.mozilla.org/show_bug.cgi?id=1375670
+    def testPostWithRequiredSignoffForProductOnly(self):
+        ret = self._post("/rules/7", data=dict(osVersion="Darwin", data_version=1))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 7).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        r = r[0]
+        self.assertEquals(r["osVersion"], "Darwin")
+        # ...and that other fields weren't modified
+        self.assertEquals(r["priority"], 30)
+        self.assertEquals(r["backgroundRate"], 85)
+        self.assertEquals(r["mapping"], "a")
+        self.assertEquals(r["update_type"], "minor")
+        self.assertEquals(r["product"], "fake")
+        self.assertEquals(r["channel"], "c")
+
     def testBadAuthPost(self):
         ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
         self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
