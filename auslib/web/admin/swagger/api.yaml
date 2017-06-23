@@ -1978,10 +1978,9 @@ definitions:
     type: object
     properties:
       signoffs_required:
-        description: minimum number of signoffs required to execute the change
-        type: integer
-        format: int32
-        minimum: 1
+        description: The number of signoffs required for a given role
+        type: ["integer", "string"]
+        format: signoffs_required
         example: 2
 
   RoleModel:
