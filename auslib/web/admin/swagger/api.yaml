@@ -1158,7 +1158,6 @@ paths:
                         uniqueItems: true
                         items:
                           type: string
-                          enum: ["set", "unset", "create", "modify", "delete", "enact"]
           examples:
             application/json:
               data_version: 1
@@ -1772,7 +1771,6 @@ definitions:
                 uniqueItems: true
                 items:
                   type: string
-                  enum: ["create", "modify", "delete"]
                 example: ["modify"]
 
   UserPermissionsGET:
@@ -1829,7 +1827,6 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
-                      enum: ["modify"]
 
       release_read_only:
         description: "Read only Releases permission to perform modify action only on product releases."
@@ -1851,7 +1848,6 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
-                      enum: ["set", "unset"]
 
       permission:
         description: "permission to perform modify actions only."
@@ -1868,7 +1864,6 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
-                      enum: ["create", "modify", "delete"]
 
       scheduled_change:
         description: "permission to schedule a change to rule, release or permission. Only the Balrog Agent should be granted this permission."
@@ -1885,7 +1880,6 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
-                      enum: ["enact"]
 
   HistoryModel:
     title: History Table Model
