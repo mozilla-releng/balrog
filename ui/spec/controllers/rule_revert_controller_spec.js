@@ -53,7 +53,7 @@ describe("controller: RuleRevertCtrl", function() {
         "headerArchitecture": null,
         "distribution": null,
         "buildTarget": null,
-        "id": 19,
+        "rule_id": 19,
         "channel": null,
         "update_type": "minor",
         "whitelist": null
@@ -79,7 +79,7 @@ describe("controller: RuleRevertCtrl", function() {
         "headerArchitecture": null,
         "distribution": null,
         "buildTarget": null,
-        "id": 19,
+        "rule_id": 19,
         "channel": null,
         "update_type": "minor",
         "whitelist": null

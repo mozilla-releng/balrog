@@ -241,7 +241,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         self.assertEqual(query.execute().fetchone(), None)
 
     def testPermissionDeleteMissing(self):
-        ret = self._delete("/users/bill/permissions/release")
+        ret = self._delete("/users/bill/permissions/release", qs={"data_version": 1})
         self.assertStatusCode(ret, 404)
 
     def testPermissionDeleteBadInput(self):

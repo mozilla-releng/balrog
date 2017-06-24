@@ -414,7 +414,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 400)
 
     def testDeleteNonExistentRelease(self):
-        ret = self._delete("/releases/ueo")
+        ret = self._delete("/releases/ueo", qs=dict(data_version=1))
         self.assertStatusCode(ret, 404)
 
     def testDeleteWithoutPermission(self):
@@ -766,7 +766,15 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(ret.headers['X-Data-Version'], '1')
 
     def testLocalePutNotAllowed(self):
-        ret = self.client.put('/releases/d/builds/p/d', data=dict(product='a'))
+        data = json.dumps({
+            "complete": {
+                "filesize": 435,
+                "from": "*",
+                "hashValue": "abc",
+            }
+        })
+        inp_data = dict(csrf_token="lorem", data=data, product='d', data_version=1, schema_version=1)
+        ret = self.client.put('/releases/d/builds/p/d', data=json.dumps(inp_data), content_type="application/json")
         self.assertStatusCode(ret, 401)
 
     def testLocalePutReadOnlyRelease(self):
@@ -924,7 +932,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "platforms": {
                 "a": {
                     "filesize": 2,
-                    "hashValue": "3",
+                    "hashValue": "acbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda\
+cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbd",
                     "fileUrl": "http://good.com/4"
                 },
                 "a2": {
@@ -952,7 +961,8 @@ class TestReleasesAPI_JSON(ViewTest):
             "platforms": {
                 "a": {
                     "filesize": 2,
-                    "hashValue": "3",
+                    "hashValue": "acbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda\
+cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbd",
                     "fileUrl": "http://good.com/4"
                 },
                 "a2": {
@@ -993,7 +1003,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEquals(ret_data, json.loads("""
 {
     "releases": [
-        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4, 6]},
+        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4, 6, 7]},
         {"data_version": 1, "name": "ab", "product": "a", "read_only": false, "rule_ids": []}
     ]
 }
@@ -1564,7 +1574,7 @@ class TestReleaseHistoryView(ViewTest):
         )
         self.assertStatusCode(ret, 200)
         # when posting you need both the release name and the change_id
-        ret = self._post('/releases/CRAZYNAME/revisions', json.dumps({'change_id': 1}))
+        ret = self._post('/releases/CRAZYNAME/revisions', data={'change_id': 1})
         self.assertEquals(ret.status_code, 404, ret.data)
 
         url = '/releases/d/revisions'
@@ -1665,7 +1675,7 @@ class TestRuleIdsReturned(ViewTest):
 
     def testMappingIncluded(self):
         rel_name = 'ab'
-        rule_id = 7
+        rule_id = 8
 
         releases = self._get("/releases")
         releases_data = json.loads(releases.data)

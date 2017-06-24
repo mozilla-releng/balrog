@@ -14,38 +14,32 @@ validator_map = {
     'body': BalrogRequestBodyValidator
 }
 
+# TODO set debug=False after fully migrating all the admin APIs
 connexion_app = connexion.App(__name__, specification_dir='swagger/', validator_map=validator_map, debug=True)
 connexion_app.add_api("api.yaml", validate_responses=True, strict_validation=True)
 app = connexion_app.app
 sentry = Sentry()
 
-from auslib.web.admin.views.permissions import PermissionsView, \
-    SpecificPermissionView, UserRolesView, UserRoleView, AllRolesView, \
+from auslib.web.admin.views.permissions import \
     PermissionScheduledChangesView, PermissionScheduledChangeView, \
     EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, \
-    PermissionScheduledChangeSignoffsView, SpecificUserView
-from auslib.web.admin.views.releases import SingleLocaleView, \
-    SingleReleaseView, ReleaseHistoryView, \
-    ReleasesAPIView, SingleReleaseColumnView, ReleaseReadOnlyView, \
+    PermissionScheduledChangeSignoffsView
+from auslib.web.admin.views.releases import ReleaseScheduledChangeHistoryView, \
+    ReleaseScheduledChangeSignoffsView, \
     ReleaseScheduledChangesView, ReleaseScheduledChangeView, \
-    EnactReleaseScheduledChangeView, ReleaseScheduledChangeHistoryView, \
-    ReleaseScheduledChangeSignoffsView, ReleaseFieldView, ReleaseDiffView
-from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsView, \
-    ProductRequiredSignoffsHistoryAPIView, \
+    EnactReleaseScheduledChangeView
+from auslib.web.admin.views.required_signoffs import \
     ProductRequiredSignoffsScheduledChangesView, \
     ProductRequiredSignoffScheduledChangeView, \
     EnactProductRequiredSignoffScheduledChangeView, \
     ProductRequiredSignoffScheduledChangeSignoffsView, \
     ProductRequiredSignoffScheduledChangeHistoryView, \
-    PermissionsRequiredSignoffsView, \
-    PermissionsRequiredSignoffsHistoryAPIView, \
     PermissionsRequiredSignoffsScheduledChangesView, \
     PermissionsRequiredSignoffScheduledChangeView, \
     EnactPermissionsRequiredSignoffScheduledChangeView, \
     PermissionsRequiredSignoffScheduledChangeSignoffsView, \
     PermissionsRequiredSignoffScheduledChangeHistoryView
 from auslib.web.admin.views.rules import RuleScheduledChangeSignoffsView, \
-    SingleRuleView, RuleHistoryAPIView, SingleRuleColumnView, \
     RuleScheduledChangesView, RuleScheduledChangeView, \
     EnactRuleScheduledChangeView, RuleScheduledChangeHistoryView
 from auslib.dockerflow import create_dockerflow_endpoints
@@ -101,30 +95,6 @@ Compress(app)
 # and the static admin UI are hosted on the same domain. This API wsgi app is
 # hosted at "/api", which is stripped away by the web server before we see
 # these requests.
-app.add_url_rule("/users/roles", view_func=AllRolesView.as_view("all_users_roles"))
-app.add_url_rule("/users/<username>", view_func=SpecificUserView.as_view("specific_user"))
-app.add_url_rule("/users/<username>/permissions", view_func=PermissionsView.as_view("user_permissions"))
-app.add_url_rule("/users/<username>/permissions/<permission>", view_func=SpecificPermissionView.as_view("specific_permission"))
-app.add_url_rule("/users/<username>/roles", view_func=UserRolesView.as_view("user_roles"))
-app.add_url_rule("/users/<username>/roles/<role>", view_func=UserRoleView.as_view("user_role"))
-# Normal operations (get/update/delete) on rules can be done by id or alias...
-app.add_url_rule("/rules/<id_or_alias>", view_func=SingleRuleView.as_view("rule"))
-app.add_url_rule("/rules/columns/<column>", view_func=SingleRuleColumnView.as_view("rule_columns"))
-# ...but anything to do with history must be done by id, beacuse alias may change over time
-app.add_url_rule("/rules/<int:rule_id>/revisions", view_func=RuleHistoryAPIView.as_view("rules_revisions"))
-app.add_url_rule("/releases", view_func=ReleasesAPIView.as_view("releases"))
-app.add_url_rule("/releases/<release>", view_func=SingleReleaseView.as_view("single_release"))
-app.add_url_rule("/releases/<release>/read_only", view_func=ReleaseReadOnlyView.as_view("read_only"))
-app.add_url_rule("/releases/<release>/builds/<platform>/<locale>", view_func=SingleLocaleView.as_view("single_locale"))
-app.add_url_rule("/releases/<release>/revisions", view_func=ReleaseHistoryView.as_view("release_revisions"))
-app.add_url_rule("/releases/columns/<column>", view_func=SingleReleaseColumnView.as_view("release_columns"))
-app.add_url_rule("/required_signoffs/product", view_func=ProductRequiredSignoffsView.as_view("product_required_signoffs"))
-app.add_url_rule("/required_signoffs/product/revisions", view_func=ProductRequiredSignoffsHistoryAPIView.as_view("product_required_signoffs_revisions"))
-app.add_url_rule("/required_signoffs/permissions", view_func=PermissionsRequiredSignoffsView.as_view("permissions_required_signoffs"))
-app.add_url_rule("/required_signoffs/permissions/revisions",
-                 view_func=PermissionsRequiredSignoffsHistoryAPIView.as_view("permissions_required_signoffs_revisions"))
-app.add_url_rule("/history/diff/release/<change_id>/<field>", view_func=ReleaseDiffView.as_view("release_diff"))
-app.add_url_rule("/history/view/release/<change_id>/<field>", view_func=ReleaseFieldView.as_view("release_field"))
 app.add_url_rule("/scheduled_changes/rules", view_func=RuleScheduledChangesView.as_view("scheduled_changes_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>", view_func=RuleScheduledChangeView.as_view("scheduled_change_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/enact", view_func=EnactRuleScheduledChangeView.as_view("enact_scheduled_change_rules"))

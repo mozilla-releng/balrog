@@ -3,12 +3,10 @@ import os
 
 from auslib.log import configure_logging
 
-
-SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "seabld", "stage-ffxbld",
-                   "stage-tbirdbld", "stage-seabld"]
+SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "seabld"]
 DOMAIN_WHITELIST = {
-    "download.mozilla.org": ("Firefox", "Fennec", "SeaMonkey", "Thunderbird"),
-    "archive.mozilla.org": ("Firefox", "Fennec", "SeaMonkey", "Thunderbird"),
+    "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
+    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
     "download.cdn.mozilla.net": ("Firefox", "Fennec", "SeaMonkey"),
     "mozilla-nightly-updates.s3.amazonaws.com": ("Firefox",),
     "ciscobinary.openh264.org": ("OpenH264",),
@@ -17,6 +15,11 @@ DOMAIN_WHITELIST = {
     "redirector.gvt1.com": ("Widevine",),
     "ftp.mozilla.org": ("SystemAddons",),
 }
+if os.environ.get("STAGING"):
+    SYSTEM_ACCOUNTS.extend(["stage-ffxbld", "stage-tbirdbld", "stage-seabld"])
+    DOMAIN_WHITELIST.update({
+        "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird")
+    })
 
 # Logging needs to be set-up before importing the application to make sure that
 # logging done from other modules uses our Logger.

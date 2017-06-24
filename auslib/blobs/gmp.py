@@ -1,4 +1,5 @@
 from auslib.AUS import isForbiddenUrl
+from auslib.util.hashes import getHashLen
 from auslib.blobs.base import Blob
 from auslib.errors import BadDataError
 
@@ -10,6 +11,17 @@ class GMPBlobV1(Blob):
         Blob.__init__(self, **kwargs)
         if "schema_version" not in self:
             self["schema_version"] = 1000
+
+    def validate(self, product, whitelistedDomains):
+        Blob.validate(self, product, whitelistedDomains)
+        for vendor in self["vendors"]:
+            for platform in self["vendors"][vendor].get("platforms", {}).values():
+                if "hashValue" in platform:
+                    actualLen = len(platform["hashValue"])
+                    requiredLen = getHashLen(self["hashFunction"])
+                    if actualLen != requiredLen:
+                        raise ValueError("The hashValue length is different from the required length of {} for {}."
+                                         .format(getHashLen(self["hashFunction"]), self["hashFunction"].lower()))
 
     def getVendorsForPlatform(self, platform):
         for v in self["vendors"]:

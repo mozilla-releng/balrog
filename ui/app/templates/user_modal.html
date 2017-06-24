@@ -12,6 +12,12 @@
 
     <input type="hidden" name="data_version" ng-model="rule.data_version">
   </form>
+  <div class="form-group" ng-class="{'has-error': errors.detail}">
+    <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
+  </div>
+  <div class="form-group" ng-class="{'has-error': errors.exception}">
+    <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>
+  </div>
 </div>
 <div class="modal-footer">
   <div ng-show="saving" small-loader></div>

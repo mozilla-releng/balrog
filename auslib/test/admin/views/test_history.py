@@ -96,6 +96,41 @@ class TestHistoryView(ViewTest):
         self.assertTrue('"fakePartials": true' in ret.data)
         self.assertTrue('"fakePartials": false' in ret.data)
 
+    def testFieldViewDiffFirstRelease(self):
+        # Add first release
+        blob = """
+        {
+            "name": "ddd1",
+            "schema_version": 1,
+            "detailsUrl": "blah",
+            "fakePartials": true,
+            "hashFunction": "sha512",
+            "platforms": {
+                "p": {
+                    "locales": {
+                        "dd": {
+                            "complete": {
+                                "filesize": 1234,
+                                "from": "*",
+                                "hashValue": "abc"
+                            }
+                        }
+                    }
+                }
+            }
+        }"""
+
+        ret = self._put('/releases/ddd1', data=dict(blob=blob, name='ddd1',
+                        product='d', data_version=1))
+        self.assertStatusCode(ret, 201)
+        table = dbo.releases.history
+        row, = table.select(order_by=[table.change_id.asc()], limit=1)
+        change_id = row['change_id']
+
+        url = '/history/diff/release/%d/data' % change_id
+        ret = self.client.get(url)
+        self.assertStatusCode(ret, 200)
+
     def testFieldViewDiffRelease(self):
 
         # Add release history for d

@@ -27,6 +27,8 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                                             "/scheduled_changes/%s" % endpoint,
                                             auth=auth, loop=loop)
                 sc = (await resp.json())["scheduled_changes"]
+                if endpoint == 'rules':
+                    sc = sorted(sc, key=lambda k: (k["priority"], k["when"]), reverse=True)
                 resp.close()
                 logging.debug("Found %s", len(sc))
                 for change in sc:

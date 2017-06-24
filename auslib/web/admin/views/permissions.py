@@ -1,11 +1,10 @@
 import simplejson as json
-
-from flask import request, Response, jsonify
-
+import connexion
+from flask import Response, jsonify
+from auslib.web.admin.views.problem import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import requirelogin, AdminView
-from auslib.web.admin.views.forms import NewPermissionForm, ExistingPermissionForm, DbEditableForm, \
-    ScheduledChangeNewPermissionForm, ScheduledChangeExistingPermissionForm, \
+from auslib.web.admin.views.forms import ScheduledChangeNewPermissionForm, ScheduledChangeExistingPermissionForm, \
     EditScheduledChangeNewPermissionForm, EditScheduledChangeExistingPermissionForm, \
     ScheduledChangeDeletePermissionForm
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
@@ -32,7 +31,7 @@ class SpecificUserView(AdminView):
     access to REMOTE_USER, so it cannot query directly by name."""
 
     def get(self, username):
-        current_user = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
+        current_user = connexion.request.environ.get('REMOTE_USER', connexion.request.environ.get("HTTP_REMOTE_USER"))
         if username == "current":
             username = current_user
         # If the user is retrieving permissions other than their own, we need
@@ -42,10 +41,12 @@ class SpecificUserView(AdminView):
         # TODO: do this at the database layer
         else:
             if username != current_user and not dbo.hasPermission(current_user, "permission", "view"):
-                return Response(status=403, response="You are not authorized to view permissions of other users.")
+                return problem(status=403, title="Forbidden",
+                               detail="You are not authorized to view permissions of other users.")
+
         permissions = dbo.permissions.getUserPermissions(username)
         if not permissions:
-            return Response(status=404)
+            return problem(status=404, title="Not Found", detail="No permission found for username %s" % username)
         roles = {r["role"]: {"data_version": r["data_version"]} for r in dbo.permissions.getUserRoles(username)}
         return jsonify({"username": username, "permissions": permissions, "roles": roles})
 
@@ -64,67 +65,82 @@ class SpecificPermissionView(AdminView):
         try:
             perm = dbo.permissions.getUserPermissions(username)[permission]
         except KeyError:
-            return Response(status=404)
+            return problem(404, "Not Found", "Requested user permission"
+                                             " %s not found for %s" % (permission, username))
         return jsonify(perm)
 
     @requirelogin
     def _put(self, username, permission, changed_by, transaction):
         try:
             if dbo.permissions.getUserPermissions(username, transaction).get(permission):
-                form = ExistingPermissionForm()
-                if not form.validate():
-                    self.log.warning("Bad input: %s", form.errors)
-                    return Response(status=400, response=json.dumps(form.errors))
-                dbo.permissions.update(where={"username": username, "permission": permission}, what={"options": form.options.data},
-                                       changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
-                new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
+                # Existing Permission
+                if not connexion.request.json.get("data_version"):
+                    return problem(400, "Bad Request", "'data_version' is missing from request body")
+
+                options_dict = None
+                if connexion.request.json.get("options"):
+                    options_dict = json.loads(connexion.request.json.get("options"))
+
+                dbo.permissions.update(where={"username": username, "permission": permission},
+                                       what={"options": options_dict}, changed_by=changed_by,
+                                       old_data_version=connexion.request.json.get("data_version"),
+                                       transaction=transaction)
+                new_data_version = dbo.permissions.getPermission(username=username, permission=permission,
+                                                                 transaction=transaction)['data_version']
                 return jsonify(new_data_version=new_data_version)
             else:
-                form = NewPermissionForm()
-                if not form.validate():
-                    self.log.warning("Bad input: %s", form.errors)
-                    return Response(status=400, response=json.dumps(form.errors))
-                dbo.permissions.insert(changed_by, transaction=transaction, username=username, permission=permission, options=form.options.data)
+                # New Permission
+                options_dict = None
+                if connexion.request.json.get("options"):
+                    options_dict = json.loads(connexion.request.json.get("options"))
+                dbo.permissions.insert(changed_by, transaction=transaction, username=username, permission=permission,
+                                       options=options_dict)
                 return Response(status=201, response=json.dumps(dict(new_data_version=1)))
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
-            return Response(status=400, response=e.args)
+            return problem(400, "Bad Request", str(e.args))
 
     @requirelogin
     def _post(self, username, permission, changed_by, transaction):
         if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
-            return Response(status=404)
+            return problem(status=404, title="Not Found", detail="Requested user permission"
+                                                                 " %s not found for %s" % (permission, username))
         try:
-            form = ExistingPermissionForm()
-            if not form.validate():
-                self.log.warning("Bad input: %s", form.errors)
-                return Response(status=400, response=json.dumps(form.errors))
-            dbo.permissions.update(where={"username": username, "permission": permission}, what={"options": form.options.data},
-                                   changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
-            new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)['data_version']
+            # Existing Permission
+            if not connexion.request.json.get("data_version"):
+                return problem(400, "Bad Request", "'data_version' is missing from request body")
+            options_dict = None
+            if connexion.request.json.get("options"):
+                options_dict = json.loads(connexion.request.json.get("options"))
+
+            dbo.permissions.update(where={"username": username, "permission": permission},
+                                   what={"options": options_dict}, changed_by=changed_by,
+                                   old_data_version=connexion.request.json.get("data_version"),
+                                   transaction=transaction)
+            new_data_version = dbo.permissions.getPermission(username=username, permission=permission,
+                                                             transaction=transaction)['data_version']
             return jsonify(new_data_version=new_data_version)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
-            return Response(status=400, response=e.args)
+            return problem(status=400, title="Bad Request", detail=str(e.args))
 
     @requirelogin
     def _delete(self, username, permission, changed_by, transaction):
         if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
-            return Response(status=404)
+            return problem(404, "Not Found", "Requested user permission"
+                                             " %s not found for %s" % (permission, username))
         try:
             # For practical purposes, DELETE can't have a request body, which means the Form
             # won't find data where it's expecting it. Instead, we have to tell it to look at
             # the query string, which Flask puts in request.args.
-            form = ExistingPermissionForm(request.args)
-            if not form.validate():
-                self.log.warning("Bad input: %s", form.errors)
-                return Response(status=400, response=json.dumps(form.errors))
-            dbo.permissions.delete(where={"username": username, "permission": permission}, changed_by=changed_by,
-                                   old_data_version=form.data_version.data, transaction=transaction)
+
+            old_data_version = int(connexion.request.args.get("data_version"))
+            dbo.permissions.delete(where={"username": username, "permission": permission},
+                                   changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
             return Response(status=200)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
-            return Response(status=400, response=e.args)
+            return problem(400, "Bad Request", str(e.args))
 
 
 class PermissionScheduledChangesView(ScheduledChangesView):
@@ -133,7 +149,7 @@ class PermissionScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        change_type = request.json.get("change_type")
+        change_type = connexion.request.json.get("change_type")
 
         if change_type == "update":
             form = ScheduledChangeExistingPermissionForm()
@@ -153,7 +169,7 @@ class PermissionScheduledChangeView(ScheduledChangeView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if request.json and request.json.get("data_version"):
+        if connexion.request.json and connexion.request.json.get("data_version"):
             form = EditScheduledChangeExistingPermissionForm()
         else:
             form = EditScheduledChangeNewPermissionForm()
@@ -223,12 +239,11 @@ class UserRoleView(AdminView):
     def _delete(self, username, role, changed_by, transaction):
         roles = [r['role'] for r in dbo.permissions.getUserRoles(username)]
         if role not in roles:
-            return Response(status=404)
-
-        form = DbEditableForm(request.args)
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
-
-        dbo.permissions.revokeRole(username, role, changed_by=changed_by, old_data_version=form.data_version.data, transaction=transaction)
+            return problem(404, "Not Found", "Role not found", ext={"exception": "No role '%s' found for "
+                                                                                 "username '%s'" % (role, username)})
+        # query argument i.e. data_version  is also required.
+        # All input value validations already defined in swagger specification and carried out by connexion.
+        old_data_version = int(connexion.request.args.get("data_version"))
+        dbo.permissions.revokeRole(username, role, changed_by=changed_by,
+                                   old_data_version=old_data_version, transaction=transaction)
         return Response(status=200)

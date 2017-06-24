@@ -90,7 +90,7 @@ class API(object):
                 # because the caller may be acting on a modified version of
                 # a specific older version of the data.
                 if 'data_version' not in data:
-                    data['data_version'] = res.headers['X-Data-Version']
+                    data['data_version'] = int(res.headers['X-Data-Version'])
                 # We may already have a non-expired CSRF token, but it's
                 # faster/easier just to set it again even if we do, since
                 # we've already made the request.
@@ -119,10 +119,11 @@ class API(object):
         else:
             logging.debug('Data sent: %s', data)
         headers = {'Accept-Encoding': 'application/json',
-                   'Accept': 'application/json'}
+                   'Accept': 'application/json',
+                   'Content-Type': 'application/json'}
         before = time.time()
         req = self.session.request(
-            method=method, url=url, data=data, timeout=self.timeout,
+            method=method, url=url, data=json.dumps(data), timeout=self.timeout,
             verify=self.verify, auth=self.auth, headers=headers)
         try:
             if self.raise_exceptions:
@@ -143,7 +144,7 @@ class API(object):
 
     def get_data(self):
         resp = self.request()
-        return (json.loads(resp.content), resp.headers['X-Data-Version'])
+        return (json.loads(resp.content), int(resp.headers['X-Data-Version']))
 
 
 class Release(API):

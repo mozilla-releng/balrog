@@ -59,6 +59,31 @@ class TestSchema1Blob(unittest.TestCase):
 }
 """)
 
+    def testValidateHashLength(self):
+        blob = GMPBlobV1()
+        blob.whitelistedDomains = {'boring.com': ('gg',), }
+        blob.loadJSON("""
+{
+    "name": "validName",
+    "schema_version": 1000,
+    "hashFunction": "SHA512",
+    "vendors": {
+        "a": {
+            "version": "5",
+            "platforms": {
+                "default": {
+                    "filesize": 20,
+                    "hashValue": "50",
+                    "fileUrl": "http://boring.com/bar"
+                }
+            }
+        }
+    }
+}
+""")
+        self.assertRaisesRegexp(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+                                blob.validate, 'gg', self.whitelistedDomains)
+
     def testGetVendorsForPlatform(self):
         vendors = set([v for v in self.blob.getVendorsForPlatform("q")])
         self.assertEquals(set(["c", "d"]), vendors)
@@ -303,7 +328,8 @@ class TestSchema1Blob(unittest.TestCase):
                     },
                     "q": {
                         "filesize": 2,
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }
@@ -331,7 +357,8 @@ class TestSchema1Blob(unittest.TestCase):
                     },
                     "q": {
                         "filesize": 2,
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }
@@ -378,7 +405,8 @@ class TestSchema1Blob(unittest.TestCase):
                     "p": {},
                     "q": {
                         "filesize": 2,
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }
@@ -406,7 +434,8 @@ class TestSchema1Blob(unittest.TestCase):
                         "alias": "q"
                     },
                     "q": {
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }
