@@ -2451,6 +2451,8 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.rules.t.insert().execute(rule_id=5, priority=80, version='2.0.1,2.0.2,2.0.3', backgroundRate=100,
                                       update_type='z',
                                       data_version=1)
+        self.rules.t.insert().execute(rule_id=6, priority=70, channel="abc", memory="<=2000", backgroundRate=100, update_type="z",
+                                      data_version=1)
 
     def testGetRulesMatchingQueryVersionComparison(self):
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='>=4.0b1', update_type='z', data_version=1)]
@@ -2595,6 +2597,43 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, [])
+
+    def testGetRulesMatchingMemoryLessThanEqualTo(self):
+        expected = [dict(rule_id=6, priority=70, channel="abc", memory="<=2000", backgroundRate=100, update_type="z", data_version=1)]
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='abc', memory=1500,
+                 buildTarget='', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, expected)
+
+    def testGetRulesMatchingMemoryExactMatch(self):
+        expected = [dict(rule_id=6, priority=70, channel="abc", memory="<=2000", backgroundRate=100, update_type="z", data_version=1)]
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='abc', memory=2000,
+                 buildTarget='', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, expected)
+
+    def testGetRulesMatchingMemoryNoMatch(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='abc', memory=2500,
+                 buildTarget='', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6,
+                 ),
+            fallbackChannel=''
+        )
         self.assertEquals(rules, [])
 
 
