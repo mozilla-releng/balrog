@@ -30,6 +30,8 @@ def getHeaderArchitecture(buildTarget, ua):
 
 
 def getSystemCapabilities(systemCapabilities):
+    # Set defaults for the broken-down fields, because not all query versions
+    # will have all values.
     caps = {"instructionSet": None, "memory": None}
     # New-style SYSTEM_CAPABILITIES, as implemented in https://bugzilla.mozilla.org/show_bug.cgi?id=1373367
     if systemCapabilities.startswith("ISET:"):
