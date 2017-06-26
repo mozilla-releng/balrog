@@ -95,14 +95,15 @@ Following tables show columns according to different Categories:
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | product            | The name of the application requesting an update.| Exact string match only         | "Firefox" or "B2G"         |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | instructionSet     | The most modern instruction set supported by the | TODOTODOTODO boolean string     | "SSE" or "MMX, SSE"        |
+  |                        | instructionSet     | The most modern instruction set supported by the | Simplified boolean string       | "SSE" or "MMX, SSE"        |
   |                        |                    | client requesting an update. This field          | match. '&&' ANDs terms while    |                            |
-  |                        |                    | is primarily used to point desupported users     | ',' ORs them. Terms are matched |                            |
+  |                        |                    | is primarily used to desupport users             | ',' ORs them. Terms are matched |                            |
   |                        |                    | based on their hardware. Eg: users who do not    | using exact strings.            |                            |
   |                        |                    | support SSE2                                     |                                 |                            |
   |                        |--------------------+--------------------------------------------------+---------------------------------+----------------------------|
-  |                        | memory             | The amount of RAM, in megabytes, that the client | TODO                            | 8096                       |
-  |                        |                    | requesting the update has                        |                                 |                            |
+  |                        | memory             | The amount of RAM, in megabytes, that the client | Exact match or operator plus    | 8096, <8096, >=8096        |
+  |                        |                    | requesting the update has                        | memory to compare the incoming  |                            |
+  |                        |                    |                                                  | one against                     |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | version            | The version of the application requesting an     | Exact string match or exact     | "36.0" or "36.0,36.1,36.2" |
   |                        |                    | update.                                          | matches from list of values or  |  or ">=38.0a1"             |
