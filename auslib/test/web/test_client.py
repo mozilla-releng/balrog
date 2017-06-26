@@ -72,8 +72,9 @@ class ClientTestBase(ClientTestCommon):
         dbo.create()
         dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e')})
         self.client = app.test_client()
+        dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='b',
-                                     data_version=1)
+                                     data_version=1, alias="moz-releng")
         dbo.releases.t.insert().execute(name='b', product='b', data_version=1, data=createBlob("""
 {
     "name": "b",

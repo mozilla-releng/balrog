@@ -1,0 +1,198 @@
+paths:
+  /api/v1/rules:
+    get:
+      operationId: 'auslib.web.common.rules.get_rules'
+      description: Returns all of the Rules in Balrog’s database inside of a JSON Object.
+      produces: 
+        - application/json
+      parameters:
+        - $ref: '#/parameters/productQuery'
+      responses:
+        200:
+          description: The number of matched rules and a rules list.
+          schema:
+            $ref: '#/definitions/RulesWrapper'
+
+  /api/v1/rules/{id_or_alias}:
+    get:
+      operationId: 'auslib.web.common.rules.get_rule'
+      description: Returns the entire rule identified by the id or alias given in JSON format.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/idOrAlias'
+      responses:
+        200:
+          description: Rule object.
+          schema:
+            $ref: '#/definitions/Rule'
+          headers:
+            X-Data-Version:
+              description: The version of returned data.
+              type: integer
+        404:
+          description: Requested rule does not exist.
+
+  /api/v1/rules/{id_or_alias}/revisions:
+    get:
+      operationId: 'auslib.web.common.rules.get_rule_history'
+      description: Returns previous versions of the rule identified by the id or alias given in a JSON Object.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/idOrAlias'
+        - name: page
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: limit
+          in: query
+          required: false
+          type: integer
+          format: int32
+      responses:
+        200:
+          description: The number of versions and a list of versions.
+          schema:
+            $ref: '#/definitions/RuleHistoryWrapper'
+        400:
+          description: Bad input.
+
+definitions:
+  Rule:
+    type: object
+    required:
+      - rule_id
+      - update_type
+      - backgroundRate
+      - priority
+    properties:
+      rule_id:
+        type: integer
+        format: int32
+        description: The id of the rule. This id is necessary to make changes to the rule through the REST API.
+      alias:
+        type: ['string', 'null']
+        description: The alias of the rule. This id is necessary to make changes to the rule through the REST API.
+      priority:
+        type: ['integer', 'null']
+        format: int32
+        description: >
+          The priority of the rule, relative to other rules.
+          If multiple rules match an incoming request based on the Matchable columns, the rule with the highest priority is chosen.
+      mapping:
+        type: ['string', 'null']
+        description:  The Release to construct an update out of if the user is on the right side of a background rate dice roll, or if the background rate is 100.
+      fallbackMapping:
+        type: ['string', 'null']
+        description: The Release to construct an update out of when the user is on the wrong side of a background rate dice roll.
+      backgroundRate:
+        type: ['integer', 'null']
+        format: int32
+        description: >
+          The percentage of background update requests that if specified.
+          Generally, this is used as a throttle to increase or decrease the rate at which the majority of users receive the latest update.
+      update_type:
+        type: string
+        description: The update_type to use in the XML response. It’s very rare for a rule to use anything other than “minor” these days.
+      product:
+        type: ['string', 'null']
+        description: The name of the application requesting an update.
+      version:
+        type: ['string', 'null']
+        description: The version of the application requesting an update.
+      channel:
+        type: ['string', 'null']
+        description: The update channel of the application request an update.
+      buildTarget:
+        type: ['string', 'null']
+        description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
+      buildID:
+        type: ['string', 'null']
+        description: The build ID of the application requesting an update.
+      locale:
+        type: ['string', 'null']
+        description: The locale of the application requesting an update.
+      osVersion:
+        type: ['string', 'null']
+        description: >
+          The OS Version of the application requesting an update.
+          This field is primarily used to point desupported operating systems to their last supported build.
+      systemCapabilities:
+        type: ['string', 'null']
+        description: >
+          The supported hardware features of the application requesting an update.
+          This field is primarily used to point desupported users based on their hardware. Eg: users who do not support SSE2.
+      distribution:
+        type: ['string', 'null']
+        description: The partner distribution name of the application requesting an update or "default" if the application is not a partner build.
+      distVersion:
+        type: ['string', 'null']
+        description: The version of the partner distribution of the application requesting an update or "default" if the application is not a partner build.
+      headerArchitecture:
+        type: ['string', 'null']
+        description: The architecture of the OS of the client as guessed based on build target. This field is mostly deprecated now that this information is included in the build target.
+      comment:
+        type: ['string', 'null']
+        description: A string describing the purpose of the rule. Not always necessary for obvious rules.
+
+  RuleHistory:
+    allOf:
+    - $ref: '#/definitions/Rule'
+    - type: object
+    required:
+      - change_id
+      - changed_by
+      - timestamp
+    properties:
+      change_id:
+        type: integer
+        format: int32
+        description: Change Id.
+      changed_by:
+        type: string
+        description: User that made the change.
+      timestamp:
+        type: integer
+        format: int64
+        description: Time that the change was made.
+
+  RulesWrapper:
+    type: object
+    required:
+      - count
+      - rules
+    properties:
+      count:
+        type: integer
+        format: int32
+        description: Number of matched rules.
+      rules:
+        type: array
+        description: List of rules.
+        items:
+          $ref: '#/definitions/Rule'
+
+  RuleHistoryWrapper:
+    type: object
+    required:
+      - count
+      - rules
+    properties:
+      count:
+        type: integer
+        format: int32
+        description: Number of matched versions.
+      rules:
+        description: List of rules versions.
+        items:
+          $ref: '#/definitions/RuleHistory'
+
+parameters:
+  idOrAlias:
+    name: id_or_alias
+    description: Rule id or alias.
+    in: path
+    required: true
+    type: string
