@@ -22,7 +22,7 @@ import dictdiffer.merge
 
 from auslib.global_state import cache
 from auslib.blobs.base import createBlob
-from auslib.util.comparison import string_compare, version_compare
+from auslib.util.comparison import string_compare, version_compare, int_compare
 from auslib.util.timestamp import getMillisecondTimestamp
 
 import logging
@@ -1539,6 +1539,15 @@ class Rules(AUSTable):
             return True
         return string_compare(queryBuildID, ruleBuildID)
 
+    def _memoryMatchesRule(self, ruleMemory, queryMemory):
+        """Decides whether a buildID from the rules matches an incoming one.
+           If the ruleBuildID is null, we match any queryBuildID. If it's not
+           null, we must either match exactly, or match with a camparison
+           operator."""
+        if ruleMemory is None:
+            return True
+        return int_compare(queryMemory, ruleMemory)
+
     def _simpleBooleanMatchesSubRule(self, subRuleString, queryString, substring):
         """Performs the actual logical 'AND' operation on a rule as well as partial/full string matching
            for each section of a rule.
@@ -1663,6 +1672,9 @@ class Rules(AUSTable):
                 continue
             if not self._buildIDMatchesRule(rule['buildID'], updateQuery['buildID']):
                 self.log.debug("%s doesn't match %s", rule['buildID'], updateQuery['buildID'])
+                continue
+            if not self._memoryMatchesRule(rule['memory'], updateQuery.get("memory", "")):
+                self.log.debug("%s doesn't match %s", rule['memory'], updateQuery.get("memory"))
                 continue
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to
