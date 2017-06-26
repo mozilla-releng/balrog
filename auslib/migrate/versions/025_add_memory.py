@@ -1,19 +1,19 @@
-from sqlalchemy import Column, Integer, MetaData, Table
+from sqlalchemy import Column, String, MetaData, Table
 
 
 def upgrade(migrate_engine):
     metadata = MetaData(bind=migrate_engine)
 
-    memory = Column("memory", Integer)
+    memory = Column("memory", String(100))
     memory.create(Table("rules", metadata, autoload=True))
 
-    history_memory = Column("memory", Integer)
+    history_memory = Column("memory", String(100))
     history_memory.create(Table("rules_history", metadata, autoload=True))
 
-    base_memory = Column("base_memory", Integer)
+    base_memory = Column("base_memory", String(100))
     base_memory.create(Table("rules_scheduled_changes", metadata, autoload=True))
 
-    base_memory = Column("base_memory", Integer)
+    base_memory = Column("base_memory", String(100))
     base_memory.create(Table("rules_scheduled_changes_history", metadata, autoload=True))
 
 
