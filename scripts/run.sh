@@ -74,20 +74,19 @@ elif [ $1 == "test" ]; then
 
         if [[ $backend_rc == 0 && $frontend_rc == 0 ]]; then
             echo "All tests pass!!!"
-            export
-            if [[ $GITHUB_HEAD_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
-            then
-              password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:coveralls"
-              repo_token=$(curl ${password_url} | python -c 'import json, sys; a = json.load(sys.stdin); print a["secret"]["repo_token"]')
-              echo 'repo_token:' $repo_token >> .coveralls.yml
-              coveralls
-              echo "Coverage successfully sent to coveralls.io"
-            fi
             exit 0
         else
             echo "FAIL FAIL FAIL FAIL FAIL FAIL FAIL FAIL. Some tests failed, see above for details."
             exit 1
         fi
+    fi
+    if [[ $GITHUB_HEAD_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
+    then
+      password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:coveralls"
+      repo_token=$(curl ${password_url} | python -c 'import json, sys; a = json.load(sys.stdin); print a["secret"]["repo_token"]')
+      echo 'repo_token:' $repo_token >> .coveralls.yml
+      coveralls
+      echo "Coverage successfully sent to coveralls.io"
     fi
 else
    echo "unknown mode: $1"
