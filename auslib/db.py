@@ -1697,7 +1697,6 @@ class Rules(AUSTable):
             if not self._simpleBooleanMatchesRule(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
-            # Same deal for instruction set
             if not self._csvMatchesRule(rule['instructionSet'], updateQuery.get('instructionSet', ""), substring=False):
                 self.log.debug("%s doesn't match %s", rule['instructionSet'], updateQuery.get('instructionSet'))
                 continue

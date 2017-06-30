@@ -149,7 +149,7 @@ The following logic is used to figure out which rule a request matches, and how 
 
 -   Retrieve all rules where product, buildTarget, distribution, and distVersion are (each) unspecified, or match the request with a simple string match.
 
--   Discard any rules where the rule specifies a channel, version, buildID, osVersion, systemCapabilities, and/or locale, and that doesn't match the request. The method for each match is described in the table above.
+-   Discard any rules where the rule specifies a channel, version, buildID, osVersion, any part of systemCapabilities, and/or locale, and that doesn't match the request. The method for each match is described in the table above.
 
     -   The channel has special handling to try "falling back" to a simpler channel, for example a request with release-cck-foo will also consider rules for 'release'. This only applies to channels containing '-cck-'.
 

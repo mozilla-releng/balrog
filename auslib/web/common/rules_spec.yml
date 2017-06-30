@@ -119,11 +119,14 @@ definitions:
         description: >
           The OS Version of the application requesting an update.
           This field is primarily used to point desupported operating systems to their last supported build.
-      systemCapabilities:
+      instructionSet:
         type: ['string', 'null']
         description: >
           The supported hardware features of the application requesting an update.
           This field is primarily used to point desupported users based on their hardware. Eg: users who do not support SSE2.
+      memory:
+        type: ['integer', 'null']
+        description: The amount of RAM, in megabytes, that the client requesting the update has.
       distribution:
         type: ['string', 'null']
         description: The partner distribution name of the application requesting an update or "default" if the application is not a partner build.
