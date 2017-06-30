@@ -68,6 +68,10 @@
           <!-- display needs to be overriden to make colspan work -->
           <td class="help-block" colspan="2" style="display: table-cell">{{ errors.exception }}</td>
         </tr>
+        <tr ng-class="{'has-error': errors.detail}" ng-if="errors.detail">
+          <!-- display needs to be overriden to make colspan work -->
+          <td class="help-block" colspan="2" style="display: table-cell">{{ errors.detail }}</td>
+        </tr>
       </tbody>
     </table>
   </form>

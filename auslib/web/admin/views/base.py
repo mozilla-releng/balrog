@@ -44,7 +44,7 @@ def handleGeneralExceptions(messages):
                 logging.warning(e)
                 return problem(400, "Bad Request", "ChangeScheduledError", ext={"exception": msg})
             except SignoffRequiredError as e:
-                msg = "This change requires signoff, it cannot be done directly."
+                msg = "This change requires signoff, it cannot be done directly. {}".format(e.message)
                 logging.warning(msg)
                 logging.warning(e)
                 return problem(400, "Bad Request", "SignoffRequiredError", ext={"exception": msg})

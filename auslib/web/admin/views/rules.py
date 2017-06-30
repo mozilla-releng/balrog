@@ -87,9 +87,8 @@ class RulesAPIView(AdminView):
         what.pop("csrf_token", None)
 
         alias = what.get('alias', None)
-        if alias:
-            if dbo.rules.getRule(alias):
-                return problem(400, 'Bad Request', 'Rule with alias exists.')
+        if alias is not None and dbo.rules.getRule(alias):
+            return problem(400, 'Bad Request', 'Rule with alias exists.')
 
         rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
         return Response(status=200, response=str(rule_id))

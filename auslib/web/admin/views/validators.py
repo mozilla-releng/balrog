@@ -143,3 +143,10 @@ def rule_id_validator(field_value):
     if field_value is not None and field_value != '':
         logger.debug('starting in rule_id_validator: rule_id is %s' % field_value)
     return integer_and_range_validator("rule_id", field_value, 0)
+
+
+@draft4_format_checker.checks(format="signoffs_required", raises=JsonSchemaValidationError)
+def signoffs_required_validator(field_value):
+    if field_value is not None and field_value != '':
+        logger.debug('starting in signoffs_required_validator: signoffs_required is %s' % field_value)
+    return integer_and_range_validator("signoffs_required", field_value, 1)

@@ -1745,7 +1745,7 @@ class Rules(AUSTable):
             if not self.db.hasPermission(changed_by, "rule", "modify", what["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, what["product"]))
 
-        for current_rule in self.select(where=where, columns=[self.product], transaction=transaction):
+        for current_rule in self.select(where=where, transaction=transaction):
             if not self.db.hasPermission(changed_by, "rule", "modify", current_rule["product"], transaction):
                 raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_rule["product"]))
 

@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: '2.32'
+  version: '2.33'
   title: "Balrog's Admin API"
   termsOfService: "https://wiki.mozilla.org/Balrog"
   license:
@@ -60,6 +60,12 @@ tags:
     externalDocs:
       description: "Find out more about Releases"
       url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#releases"
+
+  - name: "Required Signoffs"
+    description: "Some types of changes to Balrog's database require more than one person to approve them before they can be done. The Required Signoffs tables specify how many signoffs are needed from different Roles for each type of change."
+    externalDocs:
+      description: "Find out more about Required Signoffs"
+      url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#required-signoffs"
 
   - name: "History"
     description: "The rules, releases, permissions, required signoffs, and all associated scheduled changes tables have a corresponding history table that records the time a change was made and who made it"
@@ -125,6 +131,33 @@ parameters:
     minimum: 1
     x-nullable: true
     required: false
+
+  productRequiredParam:
+    name: product
+    in: query
+    description: Name of the product to filter the rules/releases against.
+    type: string
+    minLength: 1
+    maxLength: 15
+    required: true
+
+  roleRequiredParam:
+    name: role
+    in: query
+    description: roles are used when signing off on Scheduled Changes
+    type: string
+    minLength: 1
+    maxLength: 50
+    required: true
+
+  channelRequiredParam:
+    name: channel
+    in: query
+    description: The update channel of the application request an update.
+    type: string
+    minLength: 1
+    maxLength: 75
+    required: true
 
   productParam:
     name: product
@@ -229,14 +262,9 @@ parameters:
     schema:
       allOf:
         - $ref: '#/definitions/CSRFModel'
+        - $ref: '#/definitions/DataVersionModel'
         - type: object
           properties:
-            data_version:
-              type: integer
-              format: int32
-              description: data_version of permission
-              minimum: 1
-              example: 1
             options:
               type: ["string", "null"]
               format: JSONStringField
@@ -263,14 +291,14 @@ responses:
           example: 2
 
   newObjectDataVersion:
-    description: "A new object (permission/role/release) is successfully created and its data version value is always 1"
+    description: "A new object (permission/role/release/signoff) is successfully created and its data version value is always 1"
     schema:
       type: object
       required:
         - new_data_version
       properties:
         new_data_version:
-          description: "data version of the new object (permission/role/release) assigned.Value is always 1"
+          description: "data version of the new object (permission/role/release/signoff) assigned. Value is always 1"
           type: integer
           format: int32
           minimum: 1
@@ -278,15 +306,18 @@ responses:
           example: 1
 
   # explicit Response for APIs utilizing changeRelease() method to serve requests
-  changeReleaseDataVersion:
-    description: "Create or Updated exisiting release"
+  # Also used in other APIs where data_version might not change after operation.
+  # Hence no minLimit: 1 , no maxLimit on new_data_version.
+  # Example: when attempting assign an already existing role to a user.
+  modifiedDataVersion:
+    description: "Created or Updated exisiting object."
     schema:
       type: object
       required:
         - new_data_version
       properties:
         new_data_version:
-          description: "data version of the updated or new release"
+          description: "data version of the updated or new object"
           type: integer
           format: int32
           minimum: 1
@@ -608,9 +639,9 @@ paths:
             $ref: '#/definitions/PartialRelease'
       responses:
         '200':
-          $ref: '#/responses/changeReleaseDataVersion'
+          $ref: '#/responses/modifiedDataVersion'
         '201':
-          $ref: '#/responses/changeReleaseDataVersion'
+          $ref: '#/responses/modifiedDataVersion'
         '400':
           $ref: '#/responses/invalidFormData'
         '403':
@@ -695,6 +726,8 @@ paths:
           description: Read Only Release modify Request paramaters
           required: true
           schema:
+            required:
+              - data_version
             allOf:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/DataVersionModel'
@@ -794,14 +827,13 @@ paths:
             $ref: '#/definitions/PartialRelease'
       responses:
         '200':
-          $ref: '#/responses/changeReleaseDataVersion'
+          $ref: '#/responses/modifiedDataVersion'
         '201':
-          $ref: '#/responses/changeReleaseDataVersion'
+          $ref: '#/responses/modifiedDataVersion'
         '400':
           $ref: '#/responses/invalidFormData'
         '403':
           $ref: '#/responses/unauthorizedUser'
-
 
   /releases/{release}/revisions:
     get:
@@ -827,21 +859,46 @@ paths:
           schema:
             type: object
             required:
-              - count
               - revisions
-            properties:
-              count:
-                description: count of total release revisions fetched
-                type: integer
-                minimum: 0
-                format: int32
-                example: 1
-              revisions:
-                description: array where each element is a release revision object
-                type: array
-                minItems: 0
-                items:
-                  $ref: '#/definitions/ReleaseRevision'
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  revisions:
+                    description: array where each element is a release revision object
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: "#/definitions/HistoryModel"
+                        - $ref: "#/definitions/ReleaseBase"
+                        - type: object
+                          properties:
+                            read_only:
+                              description: Flag that indicates whether release is marked read_only or not.
+                              type: string
+                              enum: [ "True", "False"]
+                              example: "True"
+                            _different:
+                              description: list of columns that were modified in revision
+                              type: array
+                              uniqueItems: true
+                              minItems: 0
+                              items:
+                                type: string
+                              example: ["product", "data"]
+                            _time_ago:
+                              description: Time passed since the particular change
+                              type: string
+                              example: "1 day ago"
+                      required:
+                        - name
+                        - product
+                        - data_version
+                        - read_only
+                        - _different
+                        - _time_ago
         '400':
           $ref: '#/responses/invalidFormData'
         '404':
@@ -871,6 +928,311 @@ paths:
           $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+
+  /required_signoffs/product:
+    get:
+      summary: Returns all the product required signoffs
+      description: >
+        Endpoint to view all Product Required Signoffs. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#product-required-signoffs)
+      tags:
+        - Required Signoffs
+      operationId: auslib.web.admin.views.mapper.required_signoffs_product_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#product-required-signoffs"
+        description: Returns list of all product required signoffs.
+      responses:
+        '200':
+          description: Returns JSON object of list of all product required signoffs plus total count
+          schema:
+            type: object
+            required:
+              - required_signoffs
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  required_signoffs:
+                    description: array where each element is a product required signoff object
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: "#/definitions/ProductModel"
+                        - $ref: "#/definitions/RoleModel"
+                        - $ref: "#/definitions/ChannelModel"
+                        - $ref: "#/definitions/SignoffsRequiredModel"
+                        - $ref: "#/definitions/DataVersionModel"
+                      required:
+                        - product
+                        - role
+                        - channel
+                        - data_version
+                        - signoffs_required
+
+    post:
+      summary: Create a new Product Required Signoff.
+      description: >
+        Create a new Product Required Signoff. If the product and channel provided already require signoff, a 400 will be returned (you must use a Scheduled Change and meet the existing signoff requirements to modify Required Signoffs for things that already require it). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#required-signoffs-product)
+      tags:
+        - Required Signoffs
+      operationId: auslib.web.admin.views.mapper.required_signoffs_product_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id30"
+        description: "Create a new Product Required Signoff."
+      parameters:
+        - name: signoff
+          in: body
+          description: product required signoff json body request data
+          required: true
+          schema:
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/ProductModel'
+              - $ref: '#/definitions/RoleModel'
+              - $ref: '#/definitions/ChannelModel'
+              - $ref: '#/definitions/SignoffsRequiredModel'
+            required:
+              - product
+              - role
+              - channel
+              - signoffs_required
+      responses:
+        '201':
+          $ref: '#/responses/newObjectDataVersion'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    delete:
+      summary: Throws exception when attempt to revoke product signoff
+      description: >
+        Endpoint defined only to throw error when user attempts to delete product required signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#product-required-signoffs).
+      tags:
+        - Required Signoffs
+      operationId: auslib.web.admin.views.mapper.required_signoffs_product_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#product-required-signoffs"
+        description: Throws exception when attempt to revoke product signoff
+      responses:
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /required_signoffs/product/revisions:
+    get:
+      summary: Returns all the product required signoffs revisions
+      description: >
+        Endpoint to view revisions of Product Required Signoffs.Changes that directly affect updates that clients receive (the Rules and Releases tables) are considered Product changes. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#product-required-signoffs)
+      tags:
+        - Required Signoffs
+      operationId: auslib.web.admin.views.mapper.required_signoffs_product_revisions_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#product-required-signoffs"
+        description: Returns all the revisions of product required signoffs.
+      parameters:
+        - $ref: '#/parameters/productRequiredParam'
+        - $ref: '#/parameters/roleRequiredParam'
+        - $ref: '#/parameters/channelRequiredParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of revisions of product required signoffs plus total count
+          schema:
+            type: object
+            required:
+              - required_signoffs
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  required_signoffs:
+                    description: array where each element is a product required signoffs revision object
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: "#/definitions/HistoryModel"
+                        - $ref: "#/definitions/ProductModel"
+                        - $ref: "#/definitions/RoleModel"
+                        - $ref: "#/definitions/ChannelModel"
+                        - $ref: "#/definitions/SignoffsRequiredModel"
+                        - $ref: "#/definitions/DataVersionModel"
+                      required:
+                        - product
+                        - role
+                        - channel
+                        - data_version
+                        - signoffs_required
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+
+  /required_signoffs/permissions:
+    get:
+      summary: Returns all the permissions required signoffs
+      description: >
+        Endpoint to view all Permissions Required Signoffs. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs)
+      tags:
+        - Required Signoffs
+      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs"
+        description: Returns list of all permissions required signoffs.
+      responses:
+        '200':
+          description: Returns JSON object of list of all permissions required signoffs plus total count
+          schema:
+            type: object
+            required:
+              - required_signoffs
+            allOf:
+              - $ref: '#/definitions/CountModel'
+              - type: object
+                properties:
+                  required_signoffs:
+                    description: array where each element is a permissions required signoff object
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: "#/definitions/ProductModel"
+                        - $ref: "#/definitions/RoleModel"
+                        - $ref: "#/definitions/SignoffsRequiredModel"
+                        - $ref: "#/definitions/DataVersionModel"
+                      required:
+                        - product
+                        - role
+                        - data_version
+                        - signoffs_required
+
+    post:
+      summary: Create a new Permission Required Signoff.
+      description: >
+        Create a new Permission Required Signoff. If the product provided already require signoff, a 400 will be returned (you must use a Scheduled Change and meet the existing signoff requirements to modify Required Signoffs for things that already require it). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs)
+      tags:
+        - Required Signoffs
+      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#permissions-required-signoffs"
+        description: "Create a new Permission Required Signoff."
+      parameters:
+        - name: signoff
+          in: body
+          description: permission required signoff json body request data
+          required: true
+          schema:
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/ProductModel'
+              - $ref: '#/definitions/RoleModel'
+              - $ref: '#/definitions/SignoffsRequiredModel'
+            required:
+              - product
+              - role
+              - signoffs_required
+      responses:
+        '201':
+          $ref: '#/responses/newObjectDataVersion'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    delete:
+      summary: Throws exception when attempt to revoke permissions signoff
+      description: >
+        Endpoint defined only to throw error when user attempts to delete permissions required signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs).
+      tags:
+        - Required Signoffs
+      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs"
+        description: Throws exception when attempt to revoke permissions signoff
+      responses:
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+
+  /required_signoffs/permissions/revisions:
+    get:
+      summary: Returns all the permissions required signoffs revisions
+      description: >
+        Endpoint to view revisions of Permissions Required Signoffs. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs)
+      tags:
+        - Required Signoffs
+      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_revisions_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#permissions-required-signoffs"
+        description: Returns all the revisions of permissions required signoffs.
+      parameters:
+        - $ref: '#/parameters/productRequiredParam'
+        - $ref: '#/parameters/roleRequiredParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of revisions of permissions required signoffs plus total count
+          schema:
+            type: object
+            required:
+              - required_signoffs
+            allOf:
+              - $ref: '#/definitions/CountModel'
+              - type: object
+                properties:
+                  required_signoffs:
+                    description: array where each element is a permissions required signoffs revision object
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: "#/definitions/HistoryModel"
+                        - $ref: "#/definitions/ProductModel"
+                        - $ref: "#/definitions/RoleModel"
+                        - $ref: "#/definitions/DataVersionModel"
+                        - $ref: "#/definitions/SignoffsRequiredModel"
+                      required:
+                        - product
+                        - role
+                        - data_version
+                        - signoffs_required
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /users:
     get:
@@ -1044,21 +1406,14 @@ paths:
                 description: list of roles
                 type: array
                 uniqueItems: true
+                minItems: 0
                 items:
-                  minItems: 0
-                  type: object
-                  properties:
-                    data_version:
-                      description: the version number of user role
-                      type: integer
-                      minimum: 1
-                      example: 1
-                    role:
-                      description: roles are used when signing off on Scheduled Changes
-                      type: string
-                      minLength: 1
-                      maxLength: 50
-                      example: 'releng'
+                  allOf:
+                    - $ref: '#/definitions/DataVersionModel'
+                    - $ref: '#/definitions/RoleModel'
+                  required:
+                    - data_version
+                    - role
 
   /users/{username}/roles/{role}:
     put:
@@ -1080,18 +1435,7 @@ paths:
         - $ref: '#/parameters/roleParam'
       responses:
         '200':
-          description: "If the user already has the desired role, no change needs to be made"
-          schema:
-            type: object
-            required:
-              - new_data_version
-            properties:
-              new_data_version:
-                description: "data version of the existing role"
-                type: integer
-                format: int32
-                minimum: 1
-                example: 2
+          $ref: '#/responses/modifiedDataVersion'
         '201':
           $ref: '#/responses/newObjectDataVersion'
     delete:
@@ -1140,6 +1484,8 @@ paths:
         '200':
           description: Successfully fetched the details of the given permission
           schema:
+            required:
+              - data_version
             allOf:
               - $ref: "#/definitions/DataVersionModel"
               - type: object
@@ -1158,7 +1504,6 @@ paths:
                         uniqueItems: true
                         items:
                           type: string
-                          enum: ["set", "unset", "create", "modify", "delete", "enact"]
           examples:
             application/json:
               data_version: 1
@@ -1495,7 +1840,6 @@ paths:
                   update_type: "minor"
                   version: null
                   whitelist: null
-
         '404':
           $ref: '#/responses/resourceNotFound'
         '400':
@@ -1595,76 +1939,94 @@ definitions:
         type: string
         example: "1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
 
-  DataVersionModel:
-    title: Data Version
-    description: version number of object
+  CountModel:
+    title: Count
+    description: count of total objects/elements fetched
     type: object
     required:
-      - data_version
+      - count
+    properties:
+      count:
+        description: count of total values fetched from DB
+        type: integer
+        minimum: 0
+        format: int32
+        example: 1
+
+  DataVersionModel:
+    title: Data Version
+    description: "model to re-use 'data_version' field."
+    type: object
     properties:
       data_version:
+        description: version number of object
         type: integer
         format: int32
         minimum: 1
         example: 3
 
+  SignoffsRequiredModel:
+    title: Signoffs Required
+    description: "model to re-use 'signoffs_required' field."
+    type: object
+    properties:
+      signoffs_required:
+        description: The number of signoffs required for a given role
+        type: ["integer", "string"]
+        format: signoffs_required
+        example: 2
+
+  RoleModel:
+    title: User Role
+    description: "model to re-use 'role' field."
+    type: object
+    properties:
+      role:
+        description: roles are used when signing off on Scheduled Changes
+        type: string
+        minLength: 1
+        maxLength: 50
+        example: releng
+
+  ChannelModel:
+    title: Channel
+    description: "model to define 'channel' field in request body."
+    type: object
+    properties:
+      channel:
+        description: The update channel of the application request an update.
+        type: string
+        minLength: 1
+        maxLength: 75
+        example: beta
+
+  ProductModel:
+    title: Product
+    description: "model to define 'product' field in request body"
+    type: object
+    properties:
+      product:
+        description: Name of the product
+        type: string
+        minLength: 1
+        maxLength: 15
+        example: Firefox
+
   ReleaseBase:
     title: Release Base
     description: "To Balrog, a 'release' is data about a related set of builds. This does _not_ match up with the concept of a 'release' being on the 'beta', 'release' or 'esr' channel elsewhere. In Balrog, each set of nightlies on any branch is considered a release"
     type: object
-    properties:
-      name:
-        description: Release name
-        type: string
-        maxLength: 100
-        example: "Firefox-47.0.2-build2-43.0.1"
-
-      product:
-        description: Name of the product
-        type: string
-        maxLength: 15
-        example: Firefox
-
-      data_version:
-        description: The data version number of release
-        type: integer
-        format: int32
-        example: 1
-        minimum: 1
-
-  ReleaseRevision:
-    title: Release Revision
-    description: "Release Revision object model"
-    type: object
     allOf:
-      - $ref: "#/definitions/HistoryModel"
-      - $ref: "#/definitions/ReleaseBase"
+      - $ref: '#/definitions/DataVersionModel'
+      - $ref: '#/definitions/ProductModel'
       - type: object
         properties:
-          read_only:
-            description: Flag that indicates whether release is marked read_only or not.
+          name:
+            description: Release name
             type: string
-            enum: [ "True", "False"]
-            example: "True"
-          _different:
-            description: list of columns that were modified in revision
-            type: array
-            uniqueItems: true
-            minItems: 0
-            items:
-              type: string
-            example: ["product", "data"]
-          _time_ago:
-            description: Time passed since the particular change
-            type: string
-            example: "1 day ago"
-    required:
-      - name
-      - product
-      - data_version
-      - read_only
-      - _different
-      - _time_ago
+            minLength: 1
+            maxLength: 100
+            example: "Firefox-47.0.2-build2-43.0.1"
 
   ReleaseData:
     title: Release form values plus blob
@@ -1753,6 +2115,7 @@ definitions:
   UserPermissionsModel:
     title: User Permissions
     description: "Model of user's permissions with all details of avaliable options and actions for the rule,release,required signoff and permission of user is assigned"
+    type: object
     allOf:
       - $ref: "#/definitions/DataVersionModel"
       - type: object
@@ -1772,8 +2135,9 @@ definitions:
                 uniqueItems: true
                 items:
                   type: string
-                  enum: ["create", "modify", "delete"]
                 example: ["modify"]
+    required:
+      - data_version
 
   UserPermissionsGET:
     title: GET User Permissions
@@ -1797,6 +2161,9 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
+
+        required:
+          - data_version
       release:
         description: "Release permission to perform actions on releases. Example actions: add create, delete or modify release of products"
         $ref: "#/definitions/UserPermissionsModel"
@@ -1829,8 +2196,8 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
-                      enum: ["modify"]
-
+        required:
+          - data_version
       release_read_only:
         description: "Read only Releases permission to perform modify action only on product releases."
         allOf:
@@ -1851,8 +2218,8 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
-                      enum: ["set", "unset"]
-
+        required:
+          - data_version
       permission:
         description: "permission to perform modify actions only."
         allOf:
@@ -1868,8 +2235,8 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
-                      enum: ["create", "modify", "delete"]
-
+        required:
+          - data_version
       scheduled_change:
         description: "permission to schedule a change to rule, release or permission. Only the Balrog Agent should be granted this permission."
         allOf:
@@ -1885,8 +2252,8 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
-                      enum: ["enact"]
-
+        required:
+          - data_version
   HistoryModel:
     title: History Table Model
     description: Contains fields to be added to base table models to generate a history table
@@ -1942,42 +2309,39 @@ definitions:
     description: Returns JSON object of list of rules with their count
     type: object
     required:
-      - count
       - rules
-    properties:
-      count:
-        description: count of total rules fetched
-        type: integer
-        minimum: 0
-        format: int32
-        example: 1
-      rules:
-        description: array where each element is a rule object
-        type: array
-        items:
-          $ref: '#/definitions/RulesBaseGET'
-        example:
-          - alias: "esr45-localtest"
-            backgroundRate: 100
-            buildID: null
-            buildTarget: null
-            channel: "esr-localtest"
-            comment: "esr45 esr-localtest rule"
-            data_version: 22
-            distVersion: null
-            distribution: null
-            fallbackMapping: null
-            headerArchitecture: null
-            locale: null
-            mapping: "Firefox-45.7.0esr-build1"
-            osVersion: null
-            priority: 43
-            product: "Firefox"
-            rule_id: 308
-            instructionSet: null
-            update_type: "minor"
-            version: null
-            whitelist: null
+    allOf:
+      - $ref: '#/definitions/CountModel'
+      - type: object
+        properties:
+          rules:
+            description: array where each element is a rule object
+            type: array
+            items:
+              $ref: '#/definitions/RulesBaseGET'
+            example:
+              - alias: "esr45-localtest"
+                backgroundRate: 100
+                buildID: null
+                buildTarget: null
+                channel: "esr-localtest"
+                comment: "esr45 esr-localtest rule"
+                data_version: 22
+                distVersion: null
+                distribution: null
+                fallbackMapping: null
+                headerArchitecture: null
+                locale: null
+                mapping: "Firefox-45.7.0esr-build1"
+                memory: null
+                osVersion: null
+                priority: 43
+                product: "Firefox"
+                rule_id: 308
+                instructionSet: null
+                update_type: "minor"
+                version: null
+                whitelist: null
 
   RulesBase:
     title: Rules object definition

@@ -28,15 +28,12 @@ from auslib.web.admin.views.releases import ReleaseScheduledChangeHistoryView, \
     ReleaseScheduledChangeSignoffsView, \
     ReleaseScheduledChangesView, ReleaseScheduledChangeView, \
     EnactReleaseScheduledChangeView
-from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsView, \
-    ProductRequiredSignoffsHistoryAPIView, \
+from auslib.web.admin.views.required_signoffs import \
     ProductRequiredSignoffsScheduledChangesView, \
     ProductRequiredSignoffScheduledChangeView, \
     EnactProductRequiredSignoffScheduledChangeView, \
     ProductRequiredSignoffScheduledChangeSignoffsView, \
     ProductRequiredSignoffScheduledChangeHistoryView, \
-    PermissionsRequiredSignoffsView, \
-    PermissionsRequiredSignoffsHistoryAPIView, \
     PermissionsRequiredSignoffsScheduledChangesView, \
     PermissionsRequiredSignoffScheduledChangeView, \
     EnactPermissionsRequiredSignoffScheduledChangeView, \
@@ -98,11 +95,6 @@ Compress(app)
 # and the static admin UI are hosted on the same domain. This API wsgi app is
 # hosted at "/api", which is stripped away by the web server before we see
 # these requests.
-app.add_url_rule("/required_signoffs/product", view_func=ProductRequiredSignoffsView.as_view("product_required_signoffs"))
-app.add_url_rule("/required_signoffs/product/revisions", view_func=ProductRequiredSignoffsHistoryAPIView.as_view("product_required_signoffs_revisions"))
-app.add_url_rule("/required_signoffs/permissions", view_func=PermissionsRequiredSignoffsView.as_view("permissions_required_signoffs"))
-app.add_url_rule("/required_signoffs/permissions/revisions",
-                 view_func=PermissionsRequiredSignoffsHistoryAPIView.as_view("permissions_required_signoffs_revisions"))
 app.add_url_rule("/scheduled_changes/rules", view_func=RuleScheduledChangesView.as_view("scheduled_changes_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>", view_func=RuleScheduledChangeView.as_view("scheduled_change_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/enact", view_func=EnactRuleScheduledChangeView.as_view("enact_scheduled_change_rules"))
