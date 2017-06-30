@@ -48,6 +48,12 @@ class TestGetSystemCapabilities(unittest.TestCase):
     def testNonIntegerMemory(self):
         self.assertRaises(ValueError, client_api.getSystemCapabilities, ("ISET:SSE2,MEM:63T1A"))
 
+    def testUnknownField(self):
+        self.assertEquals(
+            client_api.getSystemCapabilities("ISET:SSE3,MEM:6721,PROC:Intel"),
+            {"instructionSet": "SSE3", "memory": 6721}
+        )
+
 
 class ClientTestCommon(unittest.TestCase):
     def assertHttpResponse(self, http_reponse):
