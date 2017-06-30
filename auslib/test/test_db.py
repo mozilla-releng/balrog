@@ -1893,15 +1893,6 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.paths.t.insert().execute(rule_id=10, priority=100, buildTarget="g", mapping="g", fallbackMapping='fallback', backgroundRate=100,
                                       update_type="z", product="foo", channel="foo", data_version=1)
 
-        self.paths.t.insert().execute(rule_id=11, priority=100, buildTarget='h', mapping='h', instructionSet='GenuineIntel, SSE2', update_type='z',
-                                      product='a', channel='a', data_version=1)
-        self.paths.t.insert().execute(rule_id=12, priority=100, buildTarget='i', mapping='i', instructionSet='GenuineIntel && SSE2', update_type='z',
-                                      product='a', channel='a', data_version=1, version='5.0')
-        self.paths.t.insert().execute(rule_id=13, priority=100, buildTarget='j', mapping='j', instructionSet='GenuineIntel && SSE3, SSE2', update_type='z',
-                                      product='a', channel='a', data_version=1)
-        self.paths.t.insert().execute(rule_id=14, priority=100, buildTarget='k', mapping='k', instructionSet='GenuineIntel, SSE', update_type='z',
-                                      product='a', channel='a', data_version=1)
-
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.db.permissions.user_roles.t.insert(username="bill", role="bar", data_version=1)
         self.db.permissions.user_roles.t.insert(username="jane", role="bar", data_version=1)
@@ -1949,20 +1940,12 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  instructionSet='S', update_type='z'),
             dict(backgroundRate=100, buildTarget='g', channel='foo', data_version=1, fallbackMapping='fallback', mapping='g', priority=100, product='foo',
                  rule_id=10, update_type='z'),
-            dict(buildTarget='h', channel='a', data_version=1, mapping='h', priority=100, product='a', rule_id=11,
-                 instructionSet='GenuineIntel, SSE2', update_type='z'),
-            dict(buildTarget='j', channel='a', data_version=1, mapping='j', priority=100, product='a', rule_id=13,
-                 instructionSet='GenuineIntel && SSE3, SSE2', update_type='z'),
-            dict(buildTarget='k', channel='a', data_version=1, mapping='k', priority=100, product='a', rule_id=14,
-                 instructionSet='GenuineIntel, SSE', update_type='z'),
             dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='b', priority=100, product='a', rule_id=2,
                  update_type='z', version='3.3'),
             dict(backgroundRate=100, buildTarget='a', data_version=1, mapping='a', priority=100, product='a', rule_id=3,
                  update_type='z', version='3.5'),
             dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='c', priority=100, product='a', rule_id=1,
                  update_type='z', version='3.5'),
-            dict(buildTarget='i', channel='a', data_version=1, mapping='i', priority=100, product='a', rule_id=12,
-                 instructionSet='GenuineIntel && SSE2', update_type='z', version='5.0')
         ]
 
         self.assertEquals(rules, expected)
@@ -2139,149 +2122,6 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, [])
 
-    def testGetRulesMatchingQueryInstructionSetOrs(self):
-        match_1 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='GenuineIntel',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        match_2 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='SSE2', version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_1 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='SSE3', version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_2 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='SSE', version='5.0'),
-            fallbackChannel=''
-        )
-
-        self.assertEqual(1, len(match_1))
-        self.assertEqual(1, len(match_2))
-        self.assertEqual(11, match_1[0]['rule_id'])
-        self.assertEqual(11, match_2[0]['rule_id'])
-        self.assertEquals(no_match_1, [])
-        self.assertEquals(no_match_2, [])
-
-    def testGetRulesMatchingQueryInstructionSetBooleanAnds(self):
-        match = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='GenuineIntel,SSE2',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_1 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='AMD,SSE2',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_2 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='GenuineIntel,SSE3',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_3 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='GenuineIntel,SSE',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-
-        self.assertEqual(len(match), 1)
-        self.assertEqual(match[0]['rule_id'], 12)
-        self.assertEqual(no_match_1, [])
-        self.assertEqual(no_match_2, [])
-        self.assertEqual(no_match_3, [])
-
-    def testGetRulesMatchingQueryInstructionSetBooleanExact(self):
-        match = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='k', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='SSE',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='k', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='SSE2',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-
-        self.assertEqual(len(match), 1)
-        self.assertEqual(match[0]['rule_id'], 14)
-        self.assertEqual(no_match, [])
-
-    def testGetRulesMatchingQueryInstructionSetBooleanMixed(self):
-        match_1 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='GenuineIntel,SSE2',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        match_2 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='AMD,SSE2',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        match_3 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='GenuineIntel,SSE3',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_1 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='AMD,SSE3',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_2 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='GenuineIntel,SSE',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_3 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, instructionSet='AMD,SSE',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        self.assertEqual(len(match_1), 1)
-        self.assertEqual(match_1[0]['rule_id'], 13)
-        self.assertEqual(len(match_2), 1)
-        self.assertEqual(match_2[0]['rule_id'], 13)
-        self.assertEqual(len(match_3), 1)
-        self.assertEqual(match_3[0]['rule_id'], 13)
-        self.assertEqual(no_match_1, [])
-        self.assertEqual(no_match_2, [])
-        self.assertEqual(no_match_3, [])
-
     def testGetRulesMatchingQueryFallbackMapping(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product="foo", version="5.0", channel="foo", buildTarget="g",
@@ -2433,7 +2273,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertRaises(SignoffRequiredError, self.paths.delete, {"rule_id": 9}, changed_by="bill", old_data_version=1)
 
     def testGetNumberOfRules(self):
-        self.assertEquals(self.paths.countRules(), 14)
+        self.assertEquals(self.paths.countRules(), 10)
 
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):

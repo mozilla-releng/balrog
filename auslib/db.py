@@ -1548,6 +1548,21 @@ class Rules(AUSTable):
             return True
         return int_compare(queryMemory, ruleMemory)
 
+    def _csvMatchesRule(self, ruleString, queryString, substring=True):
+        """Decides whether a column from a rule matches an incoming one.
+           Some columns in a rule may specify multiple values delimited by a
+           comma. Once split we do a full or substring match against the query
+           string. Because we support substring matches, there's no need
+           to support globbing as well."""
+        if ruleString is None:
+            return True
+        for part in ruleString.split(','):
+            if substring and part in queryString:
+                return True
+            elif part == queryString:
+                return True
+        return False
+
     def _simpleBooleanMatchesSubRule(self, subRuleString, queryString, substring):
         """Performs the actual logical 'AND' operation on a rule as well as partial/full string matching
            for each section of a rule.
@@ -1683,7 +1698,7 @@ class Rules(AUSTable):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
             # Same deal for instruction set
-            if not self._simpleBooleanMatchesRule(rule['instructionSet'], updateQuery.get('instructionSet', ""), substring=False):
+            if not self._csvMatchesRule(rule['instructionSet'], updateQuery.get('instructionSet', ""), substring=False):
                 self.log.debug("%s doesn't match %s", rule['instructionSet'], updateQuery.get('instructionSet'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only
