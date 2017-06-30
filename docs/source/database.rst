@@ -90,17 +90,17 @@ Following tables show columns according to different Categories:
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | osVersion          | The OS Version of the application requesting an  | Simplified boolean string       | "Windows_NT 5.0" or        |
   |                        |                    | update. This field is primarily used to point    | match. '&&' ANDs terms while    | "Darwin 6, Darwin 7        |
-  |                        |                    | desupported operating systems to their last      | ',' ORs them. Terms are matched | , Darwin 8"                |
-  |                        |                    | supported build.                                 | using partial strings.          |                            |
+  |                        |                    | desupported operating systems to their last      | ',' ORs them. Terms are matched | , Darwin 8" or             |
+  |                        |                    | supported build.                                 | using partial strings.          | "Windows && (websense-"    |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | product            | The name of the application requesting an update.| Exact string match only         | "Firefox" or "B2G"         |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | instructionSet     | The most modern instruction set supported by the | Simplified boolean string       | "SSE" or "MMX, SSE"        |
-  |                        |                    | client requesting an update. This field          | match. '&&' ANDs terms while    |                            |
-  |                        |                    | is primarily used to desupport users             | ',' ORs them. Terms are matched |                            |
-  |                        |                    | based on their hardware. Eg: users who do not    | using exact strings.            |                            |
+  |                        | instructionSet     | The most modern instruction set supported by the | Full string match or comma      | "SSE" or "MMX, SSE"        |
+  |                        |                    | client requesting an update. This field          | separated list of full strings  |                            |
+  |                        |                    | is primarily used to desupport users             | to match on                     |                            |
+  |                        |                    | based on their hardware. Eg: users who do not    |                                 |                            |
   |                        |                    | support SSE2                                     |                                 |                            |
-  |                        |--------------------+--------------------------------------------------+---------------------------------+----------------------------|
+  |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | memory             | The amount of RAM, in megabytes, that the client | Exact match or operator plus    | 8096, <8096, >=8096        |
   |                        |                    | requesting the update has                        | memory to compare the incoming  |                            |
   |                        |                    |                                                  | one against                     |                            |
