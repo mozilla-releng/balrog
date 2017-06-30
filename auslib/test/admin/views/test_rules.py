@@ -77,6 +77,18 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(r[0]['priority'], 0)
         self.assertEquals(r[0]['data_version'], 1)
 
+    def testCreateRuleWithMemory(self):
+        ret = self._post('/rules', data=dict(backgroundRate=33, mapping='c', priority=0, memory="<7373",
+                                             product='Firefox', update_type='minor', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], 'c')
+        self.assertEquals(r[0]['backgroundRate'], 33)
+        self.assertEquals(r[0]['priority'], 0)
+        self.assertEquals(r[0]['memory'], "<7373")
+        self.assertEquals(r[0]['data_version'], 1)
+
     def testVersionMaxFieldLength(self):
         # Max field length of rules.version is 75
         version = '3.3,3.4,3.5,3.6,3.8,3.9,3.10,3.11,3.12,3.13,3.14,3.15'
@@ -319,6 +331,23 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r[0]['backgroundRate'], 71)
         self.assertEquals(r[0]['instructionSet'], "SSE")
         self.assertEquals(r[0]['priority'], 73)
+        self.assertEquals(r[0]['data_version'], 2)
+        # And that we didn't modify other fields
+        self.assertEquals(r[0]['update_type'], 'minor')
+        self.assertEquals(r[0]['version'], '3.5')
+        self.assertEquals(r[0]['buildTarget'], 'd')
+
+    def testPostChangeToMemory(self):
+        # Make some changes to a rule
+        ret = self._post('/rules/1', data=dict(memory="42", data_version=1))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['memory'], '42')
         self.assertEquals(r[0]['data_version'], 2)
         # And that we didn't modify other fields
         self.assertEquals(r[0]['update_type'], 'minor')
@@ -1075,7 +1104,7 @@ class TestRuleScheduledChanges(ViewTest):
 
     def testAddScheduledChangeExistingRule(self):
         data = {
-            "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "rule_id": 5,
+            "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "rule_id": 5, "memory": "5555",
             "priority": 80, "buildTarget": "d", "version": "3.3", "backgroundRate": 100, "mapping": "c", "update_type": "minor",
             "data_version": 1, "change_type": "update",
         }
@@ -1090,7 +1119,7 @@ class TestRuleScheduledChanges(ViewTest):
             "scheduled_by": "bill", "base_rule_id": 5, "base_priority": 80, "base_buildTarget": "d", "base_version": "3.3", "base_backgroundRate": 100,
             "base_mapping": "c", "base_update_type": "minor", "base_data_version": 1, "data_version": 1, "sc_id": 8, "complete": False, "base_alias": None,
             "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None,
-            "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_memory": None,
+            "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_memory": "5555",
             "base_instructionSet": None, "change_type": "update",
         }
         self.assertEquals(db_data, expected)
@@ -1231,7 +1260,7 @@ class TestRuleScheduledChanges(ViewTest):
     def testUpdateScheduledChange(self):
         data = {
             "when": 2000000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d",
-            "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
+            "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1, "memory": "888"
         }
         ret = self._post("/scheduled_changes/rules/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -1245,7 +1274,7 @@ class TestRuleScheduledChanges(ViewTest):
             "base_mapping": "c", "base_update_type": "minor", "base_data_version": 1, "base_alias": None,
             "base_product": "a", "base_channel": "a", "base_buildID": None, "base_locale": None, "base_osVersion": None,
             "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
-            "base_headerArchitecture": None, "base_comment": None, "base_instructionSet": None, "base_memory": None,
+            "base_headerArchitecture": None, "base_comment": None, "base_instructionSet": None, "base_memory": "888",
             "change_type": "update",
         }
         self.assertEquals(db_data, expected)

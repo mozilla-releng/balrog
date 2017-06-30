@@ -125,7 +125,7 @@ definitions:
           The supported hardware features of the application requesting an update.
           This field is primarily used to point desupported users based on their hardware. Eg: users who do not support SSE2.
       memory:
-        type: ['integer', 'null']
+        type: ['string', 'null']
         description: The amount of RAM, in megabytes, that the client requesting the update has.
       distribution:
         type: ['string', 'null']

@@ -1832,6 +1832,7 @@ paths:
                   headerArchitecture: null
                   locale: null
                   mapping: "Firefox-45.7.0esr-build1"
+                  memory: null
                   osVersion: null
                   priority: 43
                   product: "Firefox"
@@ -2296,6 +2297,7 @@ definitions:
       - headerArchitecture
       - locale
       - mapping
+      - memory
       - osVersion
       - priority
       - product
@@ -2485,6 +2487,13 @@ definitions:
         minLength: 0
         maxLength: 1000
         example: 'SSE'
+
+      memory:
+        description: The amount of RAM, in megabytes, that the client requesting the update has
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 100
+        example: '<8000'
 
       fallbackMapping:
         description: The Release to construct an update out of when the user is on the wrong side of a background rate dice roll. This is a foreign key to the “name” column of the Releases table.
