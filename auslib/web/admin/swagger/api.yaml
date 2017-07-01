@@ -835,7 +835,6 @@ paths:
         '403':
           $ref: '#/responses/unauthorizedUser'
 
-
   /releases/{release}/revisions:
     get:
       summary: Returns previous versions of the named Release
@@ -860,50 +859,46 @@ paths:
           schema:
             type: object
             required:
-              - count
               - revisions
-            properties:
-              count:
-                description: count of total release revisions fetched
-                type: integer
-                minimum: 0
-                format: int32
-                example: 1
-              revisions:
-                description: array where each element is a release revision object
-                type: array
-                minItems: 0
-                items:
-                  type: object
-                  allOf:
-                    - $ref: "#/definitions/HistoryModel"
-                    - $ref: "#/definitions/ReleaseBase"
-                    - type: object
-                      properties:
-                        read_only:
-                          description: Flag that indicates whether release is marked read_only or not.
-                          type: string
-                          enum: [ "True", "False"]
-                          example: "True"
-                        _different:
-                          description: list of columns that were modified in revision
-                          type: array
-                          uniqueItems: true
-                          minItems: 0
-                          items:
-                            type: string
-                          example: ["product", "data"]
-                        _time_ago:
-                          description: Time passed since the particular change
-                          type: string
-                          example: "1 day ago"
-                  required:
-                    - name
-                    - product
-                    - data_version
-                    - read_only
-                    - _different
-                    - _time_ago
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  revisions:
+                    description: array where each element is a release revision object
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: "#/definitions/HistoryModel"
+                        - $ref: "#/definitions/ReleaseBase"
+                        - type: object
+                          properties:
+                            read_only:
+                              description: Flag that indicates whether release is marked read_only or not.
+                              type: string
+                              enum: [ "True", "False"]
+                              example: "True"
+                            _different:
+                              description: list of columns that were modified in revision
+                              type: array
+                              uniqueItems: true
+                              minItems: 0
+                              items:
+                                type: string
+                              example: ["product", "data"]
+                            _time_ago:
+                              description: Time passed since the particular change
+                              type: string
+                              example: "1 day ago"
+                      required:
+                        - name
+                        - product
+                        - data_version
+                        - read_only
+                        - _different
+                        - _time_ago
         '400':
           $ref: '#/responses/invalidFormData'
         '404':
@@ -954,33 +949,29 @@ paths:
           schema:
             type: object
             required:
-              - count
               - required_signoffs
-            properties:
-              count:
-                description: count of total product required signoffs fetched
-                type: integer
-                minimum: 0
-                format: int32
-                example: 1
-              required_signoffs:
-                description: array where each element is a product required signoff object
-                type: array
-                minItems: 0
-                items:
-                  type: object
-                  allOf:
-                    - $ref: "#/definitions/ProductModel"
-                    - $ref: "#/definitions/RoleModel"
-                    - $ref: "#/definitions/ChannelModel"
-                    - $ref: "#/definitions/SignoffsRequiredModel"
-                    - $ref: "#/definitions/DataVersionModel"
-                  required:
-                    - product
-                    - role
-                    - channel
-                    - data_version
-                    - signoffs_required
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  required_signoffs:
+                    description: array where each element is a product required signoff object
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: "#/definitions/ProductModel"
+                        - $ref: "#/definitions/RoleModel"
+                        - $ref: "#/definitions/ChannelModel"
+                        - $ref: "#/definitions/SignoffsRequiredModel"
+                        - $ref: "#/definitions/DataVersionModel"
+                      required:
+                        - product
+                        - role
+                        - channel
+                        - data_version
+                        - signoffs_required
 
     post:
       summary: Create a new Product Required Signoff.
@@ -1064,34 +1055,30 @@ paths:
           schema:
             type: object
             required:
-              - count
               - required_signoffs
-            properties:
-              count:
-                description: count of total revisions of product required signoffs fetched
-                type: integer
-                minimum: 0
-                format: int32
-                example: 1
-              required_signoffs:
-                description: array where each element is a product required signoffs revision object
-                type: array
-                minItems: 0
-                items:
-                  type: object
-                  allOf:
-                    - $ref: "#/definitions/HistoryModel"
-                    - $ref: "#/definitions/ProductModel"
-                    - $ref: "#/definitions/RoleModel"
-                    - $ref: "#/definitions/ChannelModel"
-                    - $ref: "#/definitions/SignoffsRequiredModel"
-                    - $ref: "#/definitions/DataVersionModel"
-                  required:
-                    - product
-                    - role
-                    - channel
-                    - data_version
-                    - signoffs_required
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  required_signoffs:
+                    description: array where each element is a product required signoffs revision object
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: "#/definitions/HistoryModel"
+                        - $ref: "#/definitions/ProductModel"
+                        - $ref: "#/definitions/RoleModel"
+                        - $ref: "#/definitions/ChannelModel"
+                        - $ref: "#/definitions/SignoffsRequiredModel"
+                        - $ref: "#/definitions/DataVersionModel"
+                      required:
+                        - product
+                        - role
+                        - channel
+                        - data_version
+                        - signoffs_required
         '400':
           $ref: '#/responses/invalidFormData'
         '404':
@@ -1118,31 +1105,27 @@ paths:
           schema:
             type: object
             required:
-              - count
               - required_signoffs
-            properties:
-              count:
-                description: count of total permissions required signoffs fetched
-                type: integer
-                minimum: 0
-                format: int32
-                example: 1
-              required_signoffs:
-                description: array where each element is a permissions required signoff object
-                type: array
-                minItems: 0
-                items:
-                  type: object
-                  allOf:
-                    - $ref: "#/definitions/ProductModel"
-                    - $ref: "#/definitions/RoleModel"
-                    - $ref: "#/definitions/SignoffsRequiredModel"
-                    - $ref: "#/definitions/DataVersionModel"
-                  required:
-                    - product
-                    - role
-                    - data_version
-                    - signoffs_required
+            allOf:
+              - $ref: '#/definitions/CountModel'
+              - type: object
+                properties:
+                  required_signoffs:
+                    description: array where each element is a permissions required signoff object
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: "#/definitions/ProductModel"
+                        - $ref: "#/definitions/RoleModel"
+                        - $ref: "#/definitions/SignoffsRequiredModel"
+                        - $ref: "#/definitions/DataVersionModel"
+                      required:
+                        - product
+                        - role
+                        - data_version
+                        - signoffs_required
 
     post:
       summary: Create a new Permission Required Signoff.
@@ -1224,32 +1207,28 @@ paths:
           schema:
             type: object
             required:
-              - count
               - required_signoffs
-            properties:
-              count:
-                description: count of total revisions of permissions required signoffs fetched
-                type: integer
-                minimum: 0
-                format: int32
-                example: 1
-              required_signoffs:
-                description: array where each element is a permissions required signoffs revision object
-                type: array
-                minItems: 0
-                items:
-                  type: object
-                  allOf:
-                    - $ref: "#/definitions/HistoryModel"
-                    - $ref: "#/definitions/ProductModel"
-                    - $ref: "#/definitions/RoleModel"
-                    - $ref: "#/definitions/DataVersionModel"
-                    - $ref: "#/definitions/SignoffsRequiredModel"
-                  required:
-                    - product
-                    - role
-                    - data_version
-                    - signoffs_required
+            allOf:
+              - $ref: '#/definitions/CountModel'
+              - type: object
+                properties:
+                  required_signoffs:
+                    description: array where each element is a permissions required signoffs revision object
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: "#/definitions/HistoryModel"
+                        - $ref: "#/definitions/ProductModel"
+                        - $ref: "#/definitions/RoleModel"
+                        - $ref: "#/definitions/DataVersionModel"
+                        - $ref: "#/definitions/SignoffsRequiredModel"
+                      required:
+                        - product
+                        - role
+                        - data_version
+                        - signoffs_required
         '400':
           $ref: '#/responses/invalidFormData'
         '404':
@@ -1960,6 +1939,20 @@ definitions:
         type: string
         example: "1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
 
+  CountModel:
+    title: Count
+    description: count of total objects/elements fetched
+    type: object
+    required:
+      - count
+    properties:
+      count:
+        description: count of total values fetched from DB
+        type: integer
+        minimum: 0
+        format: int32
+        example: 1
+
   DataVersionModel:
     title: Data Version
     description: "model to re-use 'data_version' field."
@@ -2122,6 +2115,7 @@ definitions:
   UserPermissionsModel:
     title: User Permissions
     description: "Model of user's permissions with all details of avaliable options and actions for the rule,release,required signoff and permission of user is assigned"
+    type: object
     allOf:
       - $ref: "#/definitions/DataVersionModel"
       - type: object
@@ -2315,42 +2309,38 @@ definitions:
     description: Returns JSON object of list of rules with their count
     type: object
     required:
-      - count
       - rules
-    properties:
-      count:
-        description: count of total rules fetched
-        type: integer
-        minimum: 0
-        format: int32
-        example: 1
-      rules:
-        description: array where each element is a rule object
-        type: array
-        items:
-          $ref: '#/definitions/RulesBaseGET'
-        example:
-          - alias: "esr45-localtest"
-            backgroundRate: 100
-            buildID: null
-            buildTarget: null
-            channel: "esr-localtest"
-            comment: "esr45 esr-localtest rule"
-            data_version: 22
-            distVersion: null
-            distribution: null
-            fallbackMapping: null
-            headerArchitecture: null
-            locale: null
-            mapping: "Firefox-45.7.0esr-build1"
-            osVersion: null
-            priority: 43
-            product: "Firefox"
-            rule_id: 308
-            systemCapabilities: null
-            update_type: "minor"
-            version: null
-            whitelist: null
+    allOf:
+      - $ref: '#/definitions/CountModel'
+      - type: object
+        properties:
+          rules:
+            description: array where each element is a rule object
+            type: array
+            items:
+              $ref: '#/definitions/RulesBaseGET'
+            example:
+              - alias: "esr45-localtest"
+                backgroundRate: 100
+                buildID: null
+                buildTarget: null
+                channel: "esr-localtest"
+                comment: "esr45 esr-localtest rule"
+                data_version: 22
+                distVersion: null
+                distribution: null
+                fallbackMapping: null
+                headerArchitecture: null
+                locale: null
+                mapping: "Firefox-45.7.0esr-build1"
+                osVersion: null
+                priority: 43
+                product: "Firefox"
+                rule_id: 308
+                systemCapabilities: null
+                update_type: "minor"
+                version: null
+                whitelist: null
 
   RulesBase:
     title: Rules object definition
