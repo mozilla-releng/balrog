@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: '2.30'
+  version: '1.0'
   title: Balrog Public API
   license:
     name: Mozilla Public License 2.0
