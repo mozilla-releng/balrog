@@ -89,24 +89,24 @@ Following tables show columns according to different Categories:
   |                        |                    |                                                  | locales to do an exact match on |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | osVersion          | The OS Version of the application requesting an  | Simplified boolean string       | "Windows_NT 5.0" or        |
-  |                        |                    | update. This field is primarily used to point    | match. '&&' ANDs terms while    | "Darwin 6, Darwin 7        |
-  |                        |                    | desupported operating systems to their last      | ',' ORs them. Terms are matched | , Darwin 8" or             |
-  |                        |                    | supported build.                                 | using partial strings.          | "Windows && (websense-"    |
+  |                        |                    | update. This field is primarily used to point    | match. '&&' ANDs terms while    | "Darwin 6,Darwin 7," or    |
+  |                        |                    | desupported operating systems to their last      | ',' ORs them. Terms are matched | "Windows && (websense-"    |
+  |                        |                    | supported build.                                 | using partial strings.          |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | product            | The name of the application requesting an update.| Exact string match only         | "Firefox" or "B2G"         |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | instructionSet     | The most modern instruction set supported by the | Full string match or comma      | "SSE" or "MMX, SSE"        |
+  |                        | instructionSet     | The most modern instruction set supported by the | Full string match or comma      | "SSE" or "MMX,SSE"         |
   |                        |                    | client requesting an update. This field          | separated list of full strings  |                            |
   |                        |                    | is primarily used to desupport users             | to match on                     |                            |
   |                        |                    | based on their hardware. Eg: users who do not    |                                 |                            |
   |                        |                    | support SSE2                                     |                                 |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | memory             | The amount of RAM, in megabytes, that the client | Exact match or operator plus    | 8096, <8096, >=8096        |
-  |                        |                    | requesting the update has                        | memory to compare the incoming  |                            |
+  |                        | memory             | The amount of RAM, in megabytes, that the client | Exact match or operator plus    | "8096" or "<8096" or       |
+  |                        |                    | requesting the update has                        | memory to compare the incoming  | ">=8096"                   |
   |                        |                    |                                                  | one against                     |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | version            | The version of the application requesting an     | Exact string match or exact     | "36.0" or "36.0,36.1,36.2" |
-  |                        |                    | update.                                          | matches from list of values or  |  or ">=38.0a1"             |
+  |                        |                    | update.                                          | matches from list of values or  | or ">=38.0a1"              |
   |                        |                    |                                                  | operator plus version           |                            |
   |                        |                    |                                                  | to compare the incoming         |                            |
   |                        |                    |                                                  | one against                     |                            |
