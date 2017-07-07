@@ -216,7 +216,7 @@ parameters:
   rule_id_param:
     name: rule_id
     in: path
-    description:  Field value to uniquely identfiy the rule
+    description: Field value to uniquely identfiy the rule
     type: integer
     minimum: 0
     required: true
@@ -1830,6 +1830,7 @@ paths:
                   distribution: null
                   fallbackMapping: null
                   headerArchitecture: null
+                  instructionSet: null
                   locale: null
                   mapping: "Firefox-45.7.0esr-build1"
                   memory: null
@@ -1837,7 +1838,6 @@ paths:
                   priority: 43
                   product: "Firefox"
                   rule_id: 308
-                  instructionSet: null
                   update_type: "minor"
                   version: null
                   whitelist: null
@@ -2295,6 +2295,7 @@ definitions:
       - distribution
       - fallbackMapping
       - headerArchitecture
+      - instructionSet
       - locale
       - mapping
       - memory
@@ -2302,7 +2303,6 @@ definitions:
       - priority
       - product
       - rule_id
-      - instructionSet
       - update_type
       - version
 
@@ -2333,6 +2333,7 @@ definitions:
                 distribution: null
                 fallbackMapping: null
                 headerArchitecture: null
+                instructionSet: null
                 locale: null
                 mapping: "Firefox-45.7.0esr-build1"
                 memory: null
@@ -2340,7 +2341,6 @@ definitions:
                 priority: 43
                 product: "Firefox"
                 rule_id: 308
-                instructionSet: null
                 update_type: "minor"
                 version: null
                 whitelist: null
@@ -2355,14 +2355,14 @@ definitions:
 
     properties:
       rule_id:
-        description: The id of the rule. This id is necessary to make changes to the rule through the REST API.
+        description: The id of the rule. This id (or the rule's alias, if set) is necessary to make changes to the rule through the REST API.
         type: ["integer", "string"]
         format: rule_id
         readOnly: true
         example: 10
 
       priority:
-        description: The priority of the rule, relative to other rules. If multiple rules match an incoming request based on the Matchable columns, the rule with the highest priority is chosen.
+        description: The priority of the rule, relative to other rules. The higher the value, the higher the priority of the rule.
         type: ["integer", "string", "null"]
         format: priority
         example: 1
@@ -2375,7 +2375,9 @@ definitions:
         example: No-Update
 
       backgroundRate:
-        description: The percentage of background update requests that if specified. Generally, this is used as a throttle to increase or decrease the rate at which the majority of users receive the latest update.
+        description: >
+          The percentage of background update requests to serve the "mapping" to.
+          Generally, this is used as a throttle to increase or decrease the number of clients which receive new updates.
         type: ["integer", "string", "null"]
         format: backgroundRate
         example: 100
@@ -2387,7 +2389,7 @@ definitions:
         example: 1
 
       update_type:
-        description: "The update_type to use in the XML response. It's very rare for a rule to use anything other than 'minor' these days."
+        description: The update_type to use in the XML response. "minor" is almost always the correct value these days.
         type: string
         minLength: 0
         maxLength: 15
@@ -2395,14 +2397,15 @@ definitions:
         example: minor
 
       product:
-        description: The name of the application requesting an update.
+        description: The product name that the client must send in order for the rule to match. Only full string matches are supported.
         type: ["string", "null"]
         minLength: 0
         maxLength: 15
         example: Firefox
 
       version:
-        description: The version of the application requesting an update.
+        description: >
+          The version requirements that the client must meet in order for the rule to match. Exact matches, comma separated lists (eg: "36.0,36.0.1") and comparisons (eg: "<45.0") are allowed.
         type: ["string", "null"]
         format: version
         minLength: 0
@@ -2410,21 +2413,21 @@ definitions:
         example: '36.0'
 
       channel:
-        description: The update channel of the application request an update.
+        description: The update channel that the client must send in order for the rule to match. "*" can be used to glob at the end of the channel name.
         type: ["string", "null"]
         minLength: 0
         maxLength: 75
         example: beta
 
       buildTarget:
-        description: "The 'build target' of the application requesting an update. This is usually related to the target platform the app was built for."
+        description: The “build target” that the client must send in order for the rule to match. This is usually related to the target platform the app was built for. Only full string matches are supported.
         type: ["string", "null"]
         minLength: 0
         maxLength: 75
         example: Darwin_x86_64-gcc3-u-i386-x86_64
 
       buildID:
-        description: The build ID of the application requesting an update.
+        description: The build ID requirements that the client must meet in order for the rule to match. Comparisons such as "<20170504030201" may be used.
         type: ["string", "null"]
         format: buildID
         minLength: 0
@@ -2432,35 +2435,36 @@ definitions:
         example: '201410010830'
 
       locale:
-        description: The locale of the application requesting an update.
+        description: The locale that the client must send in order for the rule to match. A comma separated list may be used to list multiple locales.
         type: ["string", "null"]
         minLength: 0
         maxLength: 200
         example: de
 
       osVersion:
-        description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+        description: >
+          The OS Version requirements that the client must meet in order for the rule to match. && may be used to match multiple substrings at once (eg: "Windows && (websense-"). Commas may be used to match any of a list of substrings.
         type: ["string", "null"]
         minLength: 0
         maxLength: 1000
         example: 'Windows_NT 5.0'
 
       distribution:
-        description: The partner distribution name of the application requesting an update or “default” if the application is not a partner build.
+        description: The partner distribution name that the application must send in order for the rule to match.
         type: ["string", "null"]
         minLength: 0
         maxLength: 100
         example: default
 
       distVersion:
-        description: The version of the partner distribution of the application requesting an update or “default” if the application is not a partner build.
+        description: The version of the partner distribution that the application must send in order for the rule to match.
         type: ["string", "null"]
         minLength: 0
         maxLength: 100
         example: '1.19'
 
       headerArchitecture:
-        description: The architecture of the OS of the client as guessed based on build target. This field is mostly deprecated now that this information is included in the build target.
+        description: The client architecture (as guessed based on the User Agent) that the client must provide in order for the rule to match. This field is deprecated in favour of build target.
         type: ["string", "null"]
         minLength: 0
         maxLength: 10
@@ -2474,7 +2478,7 @@ definitions:
         example: lorem ipso facto
 
       alias:
-        description: The id of the rule. This id is necessary to make changes to the rule through the REST API.
+        description: The alias of the rule. This value must be unique across the entire set of rules.
         type: ["string", "null"]
         minLength: 0
         maxLength: 50
@@ -2482,14 +2486,15 @@ definitions:
         example: 'firefox-nightly'
 
       instructionSet:
-        description: The supported hardware features of the application requesting an update. This field is primarily used to point desupported users based on their hardware. Example - users who do not support SSE2
+        description: >
+          The most modern CPU instruction set that the client must support in order for the rule to match. A comma separated list may be used to list multiple instruction sets.
         type: ["string", "null"]
         minLength: 0
         maxLength: 1000
         example: 'SSE'
 
       memory:
-        description: The amount of RAM, in megabytes, that the client requesting the update has
+        description: The amount of RAM, in megabytes, that the client must have for the rule to match. Comparisons such as "<8000" may be used.
         type: ["string", "null"]
         minLength: 0
         maxLength: 100

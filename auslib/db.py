@@ -1540,8 +1540,8 @@ class Rules(AUSTable):
         return string_compare(queryBuildID, ruleBuildID)
 
     def _memoryMatchesRule(self, ruleMemory, queryMemory):
-        """Decides whether a buildID from the rules matches an incoming one.
-           If the ruleBuildID is null, we match any queryBuildID. If it's not
+        """Decides whether a memory value from the rules matches an incoming one.
+           If the ruleMemory is null, we match any queryMemory. If it's not
            null, we must either match exactly, or match with a camparison
            operator."""
         if ruleMemory is None:
