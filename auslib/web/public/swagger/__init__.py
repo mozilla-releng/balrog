@@ -28,6 +28,8 @@ def get_spec():
         .add_spec(_join_web_path('common/swagger/releases_responses.yml'))
 
     spec.add_spec(_join_current_path('rules_spec.yml'))\
-        .add_spec(_join_web_path('common/swagger/rules_parameters.yml'))
+        .add_spec(_join_web_path('common/swagger/rules_parameters.yml'))\
+        .add_spec(_join_web_path('common/swagger/rules_definitions.yml'))\
+        .add_spec(_join_web_path('common/swagger/rules_responses.yml'))
 
     return spec

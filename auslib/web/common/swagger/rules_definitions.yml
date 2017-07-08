@@ -1,0 +1,216 @@
+definitions:
+  RulesBase:
+    title: Rules object definition
+    description: Balrog's Rule Attributes
+    type: object
+
+    # Cannot have additionalProperties as false for strict validation ,else it disallows csrf_token or any other model's properties to be added
+    #additionalProperties: false
+
+    properties:
+      rule_id:
+        description: The id of the rule. This id is necessary to make changes to the rule through the REST API.
+        type: ["integer", "string"]
+        format: rule_id
+        readOnly: true
+        example: 10
+
+      priority:
+        description: The priority of the rule, relative to other rules. If multiple rules match an incoming request based on the Matchable columns, the rule with the highest priority is chosen.
+        type: ["integer", "string", "null"]
+        format: priority
+        example: 1
+
+      mapping:
+        description: The Release to construct an update out of if the user is on the right side of a background rate dice roll, or if the background rate is 100. This is a foreign key to the "name" column of the Releases table.
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 100
+        example: No-Update
+
+      backgroundRate:
+        description: The percentage of background update requests that if specified. Generally, this is used as a throttle to increase or decrease the rate at which the majority of users receive the latest update.
+        type: ["integer", "string", "null"]
+        format: backgroundRate
+        example: 100
+
+      data_version:
+        description: the version number of rule
+        type: ["integer", "string"]
+        format: data_version
+        example: 1
+
+      update_type:
+        description: "The update_type to use in the XML response. It's very rare for a rule to use anything other than 'minor' these days."
+        type: string
+        minLength: 0
+        maxLength: 15
+        enum: [ "major", "minor"]
+        example: minor
+
+      product:
+        description: The name of the application requesting an update.
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 15
+        example: Firefox
+
+      version:
+        description: The version of the application requesting an update.
+        type: ["string", "null"]
+        format: version
+        minLength: 0
+        maxLength: 75
+        example: '36.0'
+
+      channel:
+        description: The update channel of the application request an update.
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 75
+        example: beta
+
+      buildTarget:
+        description: "The 'build target' of the application requesting an update. This is usually related to the target platform the app was built for."
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 75
+        example: Darwin_x86_64-gcc3-u-i386-x86_64
+
+      buildID:
+        description: The build ID of the application requesting an update.
+        type: ["string", "null"]
+        format: buildID
+        minLength: 0
+        maxLength: 20
+        example: '201410010830'
+
+      locale:
+        description: The locale of the application requesting an update.
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 200
+        example: de
+
+      osVersion:
+        description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 1000
+        example: 'Windows_NT 5.0'
+
+      distribution:
+        description: The partner distribution name of the application requesting an update or “default” if the application is not a partner build.
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 100
+        example: default
+
+      distVersion:
+        description: The version of the partner distribution of the application requesting an update or “default” if the application is not a partner build.
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 100
+        example: '1.19'
+
+      headerArchitecture:
+        description: The architecture of the OS of the client as guessed based on build target. This field is mostly deprecated now that this information is included in the build target.
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 10
+        example: 'PPC'
+
+      comment:
+        description: A string describing the purpose of the rule. Not always necessary for obvious rules.
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 500
+        example: lorem ipso facto
+
+      alias:
+        description: The id of the rule. This id is necessary to make changes to the rule through the REST API.
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 50
+        pattern: "(^[a-zA-Z][a-zA-Z0-9-]*$|^$)"
+        example: 'firefox-nightly'
+
+      systemCapabilities:
+        description: The supported hardware features of the application requesting an update. This field is primarily used to point desupported users based on their hardware. Example - users who do not support SSE2
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 1000
+        example: 'SSE'
+
+      fallbackMapping:
+        description: The Release to construct an update out of when the user is on the wrong side of a background rate dice roll. This is a foreign key to the “name” column of the Releases table.
+        type: ["string", "null"]
+        minLength: 0
+        maxLength: 100
+        example: null
+
+    #Warning: Do NOT add an example object here. Interferes with Example Value during
+    # request generation in Swagger-UI
+
+  RulesBaseGET:
+    title: GET Operations on Rules Base
+    description: "Operations on /rules GET"
+    allOf:
+      - $ref: "#/definitions/RulesBase"
+    required:
+      - alias
+      - backgroundRate
+      - buildID
+      - buildTarget
+      - channel
+      - comment
+      - data_version
+      - distVersion
+      - distribution
+      - fallbackMapping
+      - headerArchitecture
+      - locale
+      - mapping
+      - osVersion
+      - priority
+      - product
+      - rule_id
+      - systemCapabilities
+      - update_type
+      - version
+
+  RulesListGET:
+    type: object
+    required:
+      - rules
+    allOf:
+      - $ref: '#/definitions/CountModel'
+      - type: object
+        properties:
+          rules:
+            description: array where each element is a rule object
+            type: array
+            items:
+              $ref: '#/definitions/RulesBaseGET'
+            example:
+              - alias: "esr45-localtest"
+                backgroundRate: 100
+                buildID: null
+                buildTarget: null
+                channel: "esr-localtest"
+                comment: "esr45 esr-localtest rule"
+                data_version: 22
+                distVersion: null
+                distribution: null
+                fallbackMapping: null
+                headerArchitecture: null
+                locale: null
+                mapping: "Firefox-45.7.0esr-build1"
+                osVersion: null
+                priority: 43
+                product: "Firefox"
+                rule_id: 308
+                systemCapabilities: null
+                update_type: "minor"
+                version: null
+                whitelist: null

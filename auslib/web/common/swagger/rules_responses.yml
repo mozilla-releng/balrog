@@ -1,0 +1,42 @@
+responses:
+  RuleHistoryWrapper:
+    description: Returns JSON object of list of rules with their count
+    schema:
+      type: object
+      allOf:
+        - $ref: "#/definitions/RulesListGET"
+        - type: object
+          properties:
+            rules:
+              description: array where each element is a rule object plus timestamp, change_id and changed_by
+              type: array
+              items:
+                $ref: '#/definitions/HistoryModel'
+    examples:
+      application/json:
+        count: 1
+        rules:
+          - alias: "esr45-localtest"
+            backgroundRate: 100
+            buildID: null
+            buildTarget: null
+            channel: "esr-localtest"
+            comment: "esr45 esr-localtest rule"
+            changed_by: "balrogadmin"
+            change_id: 10
+            timestamp: 149530544
+            data_version: 22
+            distVersion: null
+            distribution: null
+            fallbackMapping: null
+            headerArchitecture: null
+            locale: null
+            mapping: "Firefox-45.7.0esr-build1"
+            osVersion: null
+            priority: 43
+            product: "Firefox"
+            rule_id: 308
+            systemCapabilities: null
+            update_type: "minor"
+            version: null
+            whitelist: null
