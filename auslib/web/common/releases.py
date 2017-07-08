@@ -4,6 +4,7 @@ from auslib.global_state import dbo
 from connexion import request
 from flask import jsonify, Response
 from sqlalchemy.sql.expression import null
+from auslib.web.common.problem import problem
 from auslib.web.common.history import (
     annotateRevisionDifferences, HistoryHelper)
 
@@ -54,7 +55,7 @@ def _get_release(release):
 def get_release(release):
     release = _get_release(release)
     if not release:
-        return Response(status=404, mimetype="application/json")
+        return problem(404, "Not Found", "Release name: %s not found" % release)
     headers = {'X-Data-Version': release['data_version']}
     if request.args.get("pretty"):
         indent = 4
@@ -111,9 +112,7 @@ def get_release_single_locale(release, platform, locale):
     try:
         locale = dbo.releases.getLocale(release, platform, locale)
     except KeyError as e:
-        return Response(status=404,
-                        response=json.dumps(e.args),
-                        mimetype='application/json')
+        return problem(404, "Not Found", json.dumps(e.args))
     data_version = dbo.releases.getReleases(name=release)[0]['data_version']
     headers = {'X-Data-Version': data_version}
     return Response(response=json.dumps(locale),

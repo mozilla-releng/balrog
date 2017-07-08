@@ -1,13 +1,14 @@
 import urllib
 import re
+import logging
+import connexion
 
-from flask import request
+from flask import request, Response
 from flask_compress import Compress
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
+from swagger import get_spec
 from raven.contrib.flask import Sentry
 
-import connexion
-import logging
 log = logging.getLogger(__name__)
 
 validator_map = {
@@ -15,9 +16,21 @@ validator_map = {
 }
 
 # TODO set debug=False after fully migrating all the admin APIs
-connexion_app = connexion.App(__name__, specification_dir='swagger/', validator_map=validator_map, debug=True)
-connexion_app.add_api("api.yaml", validate_responses=True, strict_validation=True)
+connexion_app = connexion.App(__name__, validator_map=validator_map, debug=True)
+spec = get_spec()
+connexion_app.add_api(spec, validate_responses=True, strict_validation=True)
 app = connexion_app.app
+
+
+@app.route('/debug/api.yml')
+def get_yaml():
+    if app.config.get('SWAGGER_DEBUG', False):
+        import yaml
+        app_spec = yaml.dump(spec, default_flow_style=False)
+        return Response(mimetype='text/plain', response=app_spec)
+    return Response(status=404)
+
+
 sentry = Sentry()
 
 from auslib.web.admin.views.permissions import \

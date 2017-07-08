@@ -18,7 +18,7 @@ from auslib.web.admin.views.forms import \
     EditScheduledChangeNewPermissionsRequiredSignoffForm, \
     EditScheduledChangeExistingPermissionsRequiredSignoffForm
 from auslib.web.admin.views.history import HistoryView
-from auslib.web.admin.views.problem import problem
+from auslib.web.common.problem import problem
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, SignoffsView, \
     ScheduledChangeHistoryView

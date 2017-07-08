@@ -1,7 +1,7 @@
 from flask import request, Response
 from flask.views import MethodView
 from auslib.global_state import dbo
-from auslib.web.admin.views.problem import problem
+from auslib.web.common.problem import problem
 from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
     SignoffRequiredError
 import logging

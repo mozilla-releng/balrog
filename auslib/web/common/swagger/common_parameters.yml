@@ -1,0 +1,25 @@
+parameters:
+  pageQuery:
+    name: page
+    in: query
+    description: Variable value used pagination of response revisions.
+    type: integer
+    minimum: 1
+    x-nullable: true
+    required: false
+
+  limitQuery:
+    name: limit
+    in: query
+    description: Variable value used for calculating offset for pagination.
+    type: integer
+    minimum: 1
+    x-nullable: true
+    required: false
+
+  locale:
+    name: locale
+    in: path
+    description: The locale of the application requesting an update.
+    required: true
+    type: string

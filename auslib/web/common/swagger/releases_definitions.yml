@@ -1,0 +1,68 @@
+definitions:
+  DataVersionModel:
+    title: Data Version
+    description: "model to re-use 'data_version' field."
+    type: object
+    properties:
+      data_version:
+        description: version number of object
+        type: integer
+        format: int32
+        minimum: 1
+        example: 3
+
+  ProductModel:
+    title: Product
+    description: "model to define 'product' field in request body"
+    type: object
+    properties:
+      product:
+        description: Name of the product
+        type: string
+        minLength: 1
+        maxLength: 15
+        example: Firefox
+
+  ReleaseBase:
+    title: Release Base
+    description: "To Balrog, a 'release' is data about a related set of builds. This does _not_ match up with the concept of a 'release' being on the 'beta', 'release' or 'esr' channel elsewhere. In Balrog, each set of nightlies on any branch is considered a release"
+    type: object
+    allOf:
+      - $ref: '#/definitions/DataVersionModel'
+      - $ref: '#/definitions/ProductModel'
+      - type: object
+        properties:
+          name:
+            description: Release name
+            type: string
+            minLength: 1
+            maxLength: 100
+            example: "Firefox-47.0.2-build2-43.0.1"
+
+  ReleaseGET:
+    title: Release form values plus read only and rule ids
+    description: "Release Base Model + read only + list of mapped rule_ids"
+    type: object
+    allOf:
+      - $ref: "#/definitions/ReleaseBase"
+      - type: object
+        properties:
+          read_only:
+            type: ["boolean", "null"]
+            example: true
+            description: "flag value is true if release is marked as read_only else release is modifiable"
+          rule_ids:
+            description: list of rule_ids
+            type: array
+            uniqueItems: true
+            minItems: 0
+            items:
+              type: integer
+              minimum: 0
+            example: [487, 589]
+    required:
+      - name
+      - product
+      - data_version
+      - read_only
+      - rule_ids

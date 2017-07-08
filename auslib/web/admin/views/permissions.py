@@ -1,7 +1,7 @@
 import simplejson as json
 import connexion
 from flask import Response, jsonify
-from auslib.web.admin.views.problem import problem
+from auslib.web.common.problem import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import requirelogin, AdminView
 from auslib.web.admin.views.forms import ScheduledChangeNewPermissionForm, ScheduledChangeExistingPermissionForm, \

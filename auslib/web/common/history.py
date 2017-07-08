@@ -1,8 +1,9 @@
 import json
 import time
 from connexion import request
-from flask import Response, jsonify
+from flask import jsonify
 from sqlalchemy import and_
+from auslib.web.common.problem import problem
 from auslib.util.timesince import timesince
 
 
@@ -28,8 +29,7 @@ class HistoryHelper():
 
         obj = self.fn_get_object()
         if not obj:
-            return Response(status=404,
-                            response=self.obj_not_found_msg)
+            return problem(status=404, title="Not Found", detail=self.obj_not_found_msg)
 
         offset = limit * (page - 1)
 

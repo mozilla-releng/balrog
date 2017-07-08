@@ -1,0 +1,67 @@
+paths:
+  /api/v1/releases:
+    get:
+      operationId: 'auslib.web.common.releases.get_releases'
+      description: >
+        Returns a JSON Object containing metadata about Releases in Balrog’s database. Due to its size, the actual Release “blob” is never returned from this endpoint.
+        There are a few query arguments that affect its response:
+          -If no arguments are provided, it returns information about all of the Releases;
+          -If "product" is passed, only Releases with the given product name will be returned;
+          -If "name_prefix" is passed, only Releases whose name starts with the given prefix will be returned;
+          -If "names_only" is set to true, the response changes format and provides a list of all of the Release names.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/productQuery'
+        - $ref: '#/parameters/namePrefixQuery'
+        - $ref: '#/parameters/namesOnlyQuery'
+      responses:
+        200:
+          $ref: '#/responses/ReleasesWrapper'
+
+  /api/v1/releases/{release}:
+    get:
+      operationId: 'auslib.web.common.releases.get_release'
+      description: Returns the "data" portion of the named Release, which is a JSON Object.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/release'
+        - $ref: '#/parameters/prettyQuery'
+      responses:
+        200:
+          $ref: '#/responses/releaseDataResponse'
+        404:
+          $ref: '#/responses/resourceNotFound'
+
+  /api/v1/releases/{release}/revisions:
+    get:
+      operationId: 'auslib.web.common.releases.get_release_history'
+      description: Returns previous versions of the named Release in a JSON Object.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/release'
+        - $ref: '#/parameters/pageQuery'
+        - $ref: '#/parameters/limitQuery'
+      responses:
+        200:
+          $ref: '#/responses/ReleaseHistoryWrapper'
+        404:
+          $ref: '#/responses/resourceNotFound'
+
+  /api/v1/releases/{release}/builds/{platform}/{locale}:
+    get:
+      operationId: 'auslib.web.common.releases.get_release_single_locale'
+      description: Returns the platform+locale specific data of the named Release, which is a JSON Object.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/release'
+        - $ref: '#/parameters/platform'
+        - $ref: '#/parameters/locale'
+      responses:
+        200:
+          $ref: '#/responses/releaseDataResponse'
+        404:
+          $ref: '#/responses/resourceNotFound'

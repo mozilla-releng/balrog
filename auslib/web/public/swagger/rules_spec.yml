@@ -31,7 +31,7 @@ paths:
               description: The version of returned data.
               type: integer
         404:
-          description: Requested rule does not exist.
+          $ref: '#/responses/resourceNotFound'
 
   /api/v1/rules/{id_or_alias}/revisions:
     get:
@@ -56,8 +56,10 @@ paths:
           description: The number of versions and a list of versions.
           schema:
             $ref: '#/definitions/RuleHistoryWrapper'
+        404:
+          $ref: '#/responses/resourceNotFound'
         400:
-          description: Bad input.
+          $ref: '#/responses/invalidFormData'
 
 definitions:
   Rule:
@@ -188,11 +190,3 @@ definitions:
         description: List of rules versions.
         items:
           $ref: '#/definitions/RuleHistory'
-
-parameters:
-  idOrAlias:
-    name: id_or_alias
-    description: Rule id or alias.
-    in: path
-    required: true
-    type: string

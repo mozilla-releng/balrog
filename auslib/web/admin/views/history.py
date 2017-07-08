@@ -3,7 +3,7 @@ import time
 import connexion
 from flask import Response, jsonify
 from sqlalchemy import and_
-from auslib.web.admin.views.problem import problem
+from auslib.web.common.problem import problem
 from auslib.web.admin.views.base import AdminView
 from auslib.util.timesince import timesince
 

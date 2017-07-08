@@ -1,0 +1,45 @@
+parameters:
+  productQuery:
+    name: product
+    in: query
+    description: Name of the product to filter the rules/releases against.
+    type: string
+    x-nullable: true
+    required: false
+
+  namePrefixQuery:
+    name: name_prefix
+    in: query
+    description: "If 'name_prefix' is passed, only Releases whose name starts with the given prefix will be returned."
+    type: string
+    x-nullable: true
+    required: false
+
+  namesOnlyQuery:
+    name: names_only
+    in: query
+    description: "If 'names_only' is set to true, the response changes format and provides a list of all of the Release names in the database"
+    type: string
+    x-nullable: true
+    required: false
+
+  prettyQuery:
+    name: pretty
+    in: query
+    description: "If 'pretty' is present in the query string and set to true, it will be pretty formatted."
+    type: string
+    x-nullable: true
+    required: false
+
+  release:
+    name: release
+    in: path
+    required: true
+    type: string
+
+  platform:
+    name: platform
+    in: path
+    description: platform name
+    type: string
+    required: true

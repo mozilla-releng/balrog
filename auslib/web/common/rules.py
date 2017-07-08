@@ -3,6 +3,7 @@ import logging
 from auslib.global_state import dbo
 from connexion import request
 from flask import jsonify, Response
+from auslib.web.common.problem import problem
 from auslib.web.common.history import HistoryHelper
 from sqlalchemy.sql.expression import null
 
@@ -31,7 +32,9 @@ def get_rules():
 def get_rule(id_or_alias):
     rule = dbo.rules.getRule(id_or_alias)
     if not rule:
-        return Response(status=404, response="Requested rule does not exist")
+            return problem(status=404, title="Not Found",
+                           detail="Requested rule wasn't found",
+                           ext={"exception": "Requested rule does not exist"})
 
     headers = {'X-Data-Version': rule['data_version']}
     return Response(response=json.dumps(rule),
@@ -96,4 +99,6 @@ def get_rule_history(id_or_alias):
         return history_helper.get_history(response_key='rules')
     except (ValueError, AssertionError) as msg:
         log.warning("Bad input: %s", msg)
-        return Response(status=400, response=str(msg))
+        return problem(400, "Bad Request", "Error occurred when trying to fetch"
+                       " Rule's revisions having rule_id {0}".format(id_or_alias),
+                       ext={"exception": str(msg)})

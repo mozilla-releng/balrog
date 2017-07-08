@@ -18,11 +18,6 @@ def csrf_get():
     return CSRFView().get()
 
 
-def rules_get():
-    """GET /rules"""
-    return RulesAPIView().get()
-
-
 def rules_post():
     """POST /rules"""
     return RulesAPIView().post()
@@ -53,14 +48,9 @@ def single_rule_column_get(column):
     return SingleRuleColumnView().get(column)
 
 
-def rules_revisions_get(rule_id):
-    """GET /rules/:id/revisions"""
-    return RuleHistoryAPIView().get(rule_id)
-
-
-def rules_revisions_post(rule_id):
+def rules_revisions_post(id_or_alias):
     """POST /rules/:id/revisions"""
-    return RuleHistoryAPIView().post(rule_id)
+    return RuleHistoryAPIView().post(id_or_alias)
 
 
 def users_get():
@@ -128,19 +118,9 @@ def release_view_history_get(change_id, field):
     return ReleaseFieldView().get(change_id, field)
 
 
-def release_get():
-    """GET /releases"""
-    return ReleasesAPIView().get()
-
-
 def release_post():
     """POST /releases"""
     return ReleasesAPIView().post()
-
-
-def single_release_get(release):
-    """GET /releases/:release"""
-    return SingleReleaseView().get(release)
 
 
 def single_release_post(release):
@@ -173,19 +153,9 @@ def release_single_column_get(column):
     return SingleReleaseColumnView().get(column)
 
 
-def release_single_locale_view_get(release, platform, locale):
-    """GET /releases/[release]/builds/[platform]/[locale]"""
-    return SingleLocaleView().get(release, platform, locale)
-
-
 def release_single_locale_view_put(release, platform, locale):
     """PUT /releases/[release]/builds/[platform]/[locale]"""
     return SingleLocaleView().put(release, platform, locale)
-
-
-def release_history_view_get(release):
-    """GET /releases/:release/revisions"""
-    return ReleaseHistoryView().get(release)
 
 
 def release_history_view_post(release):

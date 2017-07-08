@@ -1,0 +1,85 @@
+responses:
+  releaseDataResponse:
+    description: Returns release object data
+    schema:
+      type: object
+    headers:
+      X-Data-Version:
+        description: data version of the release
+        type: integer
+        format: int32
+        minimum: 1
+
+  ReleasesWrapper:
+    description: A releases list or a list of releases names.
+    schema:
+      type: object
+      properties:
+        names:
+          description: List of release names
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            type: string
+            maxLength: 100
+        releases:
+          description: list of release objects
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/definitions/ReleaseGET'
+    examples:
+      application/json:
+        releases:
+          - data_version: 2
+            name: XP-Vista-Desupport
+            product: Firefox
+            read_only: false
+            rule_ids: [468, 498]
+
+  ReleaseHistoryWrapper:
+    description: Returns JSON object of list of release revisions plus total count
+    schema:
+      type: object
+      required:
+        - revisions
+      allOf:
+        - $ref: "#/definitions/CountModel"
+        - type: object
+          properties:
+            revisions:
+              description: array where each element is a release revision object
+              type: array
+              minItems: 0
+              items:
+                type: object
+                allOf:
+                  - $ref: "#/definitions/HistoryModel"
+                  - $ref: "#/definitions/ReleaseBase"
+                  - type: object
+                    properties:
+                      read_only:
+                        description: Flag that indicates whether release is marked read_only or not.
+                        type: string
+                        enum: [ "True", "False"]
+                        example: "True"
+                      _different:
+                        description: list of columns that were modified in revision
+                        type: array
+                        uniqueItems: true
+                        minItems: 0
+                        items:
+                          type: string
+                        example: ["product", "data"]
+                      _time_ago:
+                        description: Time passed since the particular change
+                        type: string
+                        example: "1 day ago"
+                required:
+                  - name
+                  - product
+                  - data_version
+                  - read_only
+                  - _different
+                  - _time_ago

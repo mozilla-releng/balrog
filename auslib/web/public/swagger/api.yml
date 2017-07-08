@@ -333,13 +333,6 @@ parameters:
     required: true
     type: string
 
-  productQuery:
-    name: product
-    description: The name of the application.
-    in: query
-    required: false
-    type: string
-
   version:
     name: version
     in: path
@@ -358,13 +351,6 @@ parameters:
     name: buildTarget
     in: path
     description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
-    required: true
-    type: string
-
-  locale:
-    name: locale
-    in: path
-    description: The locale of the application requesting an update.
     required: true
     type: string
 

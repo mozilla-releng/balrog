@@ -1,0 +1,27 @@
+responses:
+  unauthorizedUser:
+    description: Not authorized to access resource
+    schema:
+      $ref: "#/definitions/4xxClientErrorResponseModel"
+    examples:
+      application/json:
+        detail: "You are not authorized to access this resource"
+        status: 403
+
+  resourceNotFound:
+    description: Resource Not Found
+    schema:
+      $ref: "#/definitions/4xxClientErrorResponseModel"
+    examples:
+      application/json:
+        detail: "Requested resource was not found"
+        status: 404
+
+  invalidFormData:
+    description: Error in form data
+    schema:
+      $ref: '#/definitions/4xxClientErrorResponseModel'
+    examples:
+      application/json:
+        detail: "Invalid field value"
+        status: 400

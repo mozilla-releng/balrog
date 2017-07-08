@@ -1,0 +1,7 @@
+parameters:
+  idOrAlias:
+    name: id_or_alias
+    description: Rule id or alias.
+    in: path
+    required: true
+    type: string
