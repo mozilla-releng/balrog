@@ -18,25 +18,25 @@ responses:
         rules:
           - alias: "esr45-localtest"
             backgroundRate: 100
-            buildID: null
-            buildTarget: null
+            buildID: ""
+            buildTarget: ""
             channel: "esr-localtest"
             comment: "esr45 esr-localtest rule"
             changed_by: "balrogadmin"
             change_id: 10
             timestamp: 149530544
             data_version: 22
-            distVersion: null
-            distribution: null
-            fallbackMapping: null
-            headerArchitecture: null
-            locale: null
+            distVersion: ""
+            distribution: ""
+            fallbackMapping: ""
+            headerArchitecture: ""
+            locale: ""
             mapping: "Firefox-45.7.0esr-build1"
-            osVersion: null
+            osVersion: ""
             priority: 43
             product: "Firefox"
             rule_id: 308
-            systemCapabilities: null
+            systemCapabilities: ""
             update_type: "minor"
-            version: null
-            whitelist: null
+            version: ""
+            whitelist: ""
