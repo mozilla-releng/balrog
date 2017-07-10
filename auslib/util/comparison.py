@@ -31,15 +31,6 @@ def string_compare(value, compstr):
     return opfunc(value, operand)
 
 
-def int_compare(value, compstr):
-    """Do a int comparison of a bare int with another,
-    which may carry a comparison operator.
-      eg int_compare(1, '>2') is False
-    """
-    opfunc, operand = get_op(compstr)
-    return opfunc(value, int(operand))
-
-
 def version_compare(value, compstr):
     """Do a version comparison between a string (representing a version),
     with another which may carry a comparison operator. A true version
