@@ -320,7 +320,7 @@ class TestSingleRuleView_JSON(ViewTest):
         # Make some changes to a rule
         ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', update_type='minor',
                                                fallbackMapping="b", priority=73, data_version=1,
-                                               product='Firefox', channel='nightly', systemCapabilities="SSE"))
+                                               product='Firefox', channel='nightly', instructionSet="SSE"))
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
         load = json.loads(ret.data)
         self.assertEquals(load['new_data_version'], 2)
@@ -331,7 +331,7 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r[0]['mapping'], 'd')
         self.assertEquals(r[0]['fallbackMapping'], 'b')
         self.assertEquals(r[0]['backgroundRate'], 71)
-        self.assertEquals(r[0]['systemCapabilities'], "SSE")
+        self.assertEquals(r[0]['instructionSet'], "SSE")
         self.assertEquals(r[0]['priority'], 73)
         self.assertEquals(r[0]['data_version'], 2)
         # And that we didn't modify other fields
@@ -992,8 +992,8 @@ class TestRuleScheduledChanges(ViewTest):
                     "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "update_type": "minor",
                     "data_version": 1, "alias": None, "product": "a", "channel": "a", "buildID": None, "locale": None, "memory": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
-                    "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "systemCapabilities": None,
-                    "change_type": "update", "signoffs": {}, "required_signoffs": {},
+                    "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                    "change_type": "update", "signoffs": {}, "required_signoffs": {}, "systemCapabilities": None,
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
@@ -1073,8 +1073,8 @@ class TestRuleScheduledChanges(ViewTest):
                     "version": "3.3", "buildTarget": "d", "backgroundRate": 0, "mapping": "c", "update_type": "minor",
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None, "memory": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
-                    "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "systemCapabilities": None,
-                    "change_type": "update", "signoffs": {}, "required_signoffs": {},
+                    "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                    "change_type": "update", "signoffs": {}, "required_signoffs": {}, "systemCapabilities": None,
                 },
                 {
                     "sc_id": 5, "when": 600000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 4, "priority": None,

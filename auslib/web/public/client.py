@@ -29,6 +29,33 @@ def getHeaderArchitecture(buildTarget, ua):
         return 'Intel'
 
 
+def getSystemCapabilities(systemCapabilities):
+    # Set defaults for the broken-down fields, because not all query versions
+    # will have all values.
+    caps = {"instructionSet": None, "memory": None}
+    # New-style SYSTEM_CAPABILITIES, as implemented in https://bugzilla.mozilla.org/show_bug.cgi?id=1373367
+    if systemCapabilities.startswith("ISET:"):
+        for part in systemCapabilities.split(","):
+            key, value = part.split(":", 1)
+            if key == "ISET":
+                caps["instructionSet"] = value
+            elif key == "MEM":
+                caps["memory"] = int(value)
+    # Old-style, unprefixed SYSTEM_CAPABILITIES
+    else:
+        parts = systemCapabilities.split(",")
+        # The only known valid formats for this field are either a single part,
+        # or two parts separated by a comma. Anything else is unparsable, so we
+        # we cannot safely assign any fields.
+        if len(parts) == 1:
+            caps["instructionSet"] = parts[0]
+        elif len(parts) == 2:
+            caps["instructionSet"] = parts[0]
+            caps["memory"] = int(parts[1])
+
+    return caps
+
+
 def getCleanQueryFromURL(url):
     query = url.copy()
     # Some versions of Avast make requests and blindly append "?avast=1" to
@@ -56,6 +83,9 @@ def getCleanQueryFromURL(url):
 
 def getQueryFromURL(url):
     query = getCleanQueryFromURL(url)
+    if "systemCapabilities" in query:
+        query.update(getSystemCapabilities(url["systemCapabilities"]))
+        del query["systemCapabilities"]
     query['osVersion'] = urllib.unquote(query['osVersion'])
     ua = request.headers.get('User-Agent')
     query['headerArchitecture'] = getHeaderArchitecture(query['buildTarget'], ua)
