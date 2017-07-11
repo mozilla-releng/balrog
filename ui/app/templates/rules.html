@@ -30,18 +30,38 @@
       ></pagination>
     </div>
   </div>
-  <div class="col-sm-5 text-right">
+  <div class="col-sm-5">
     <div class="row" ng-show="!rule_id">
-      <label>Product/Channel filter:</label>
-      <select ng-model="pr_ch_filter" name="pr_ch_filter"
-        ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
+      <div class="rules-filers__wrapper">
+        <label class="rules-filters__label">Product/Channel filter:</label>
+        <select
+          ng-model="pr_ch_filter"
+          name="pr_ch_filter"
+          ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair"
+        >
       </select>
+      </div>
     </div>
     <div class="row">
-      <label>Order by:</label>
-      <select ng-model="ordering_str" name="ordering_str"
-        ng-options="o.text for o in ordering_options track by o.value">
-      </select>
+      <div class="rules-filers__wrapper">
+        <label class="rules-filters__label">Order by:</label>
+        <select
+          ng-model="ordering_str"
+          name="ordering_str"
+          ng-options="o.text for o in ordering_options track by o.value"
+        >
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="rules-filers__wrapper">
+        <label class="rules-filters__label">Results on page:</label>
+        <select
+          ng-model="pagesize"
+          name="pagesize"
+          ng-options="o.text for o in pagesize_options track by o.value">
+        </select>
+      </div>
     </div>
   </div>
 </div>

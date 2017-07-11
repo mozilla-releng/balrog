@@ -77,6 +77,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     $scope.ordering = value.value.split(',');
   });
 
+  $scope.$watch('pagesize', function(value) {
+    $scope.pageSize = value.value;
+  });
+
   $scope.$watch('pr_ch_filter', function(value) {
     if (value) {
       localStorage.setItem("pr_ch_filter", value);
@@ -112,6 +116,28 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.filters = {
     search: $location.hash(),
   };
+
+
+  $scope.pagesize_options = [
+    {
+      text: '10',
+      value: 10
+    },
+    {
+      text: '25',
+      value: 25
+    },
+    {
+      text: '50',
+      value: 50
+    },
+    {
+      text: '100',
+      value: 100
+    }
+  ];
+
+  $scope.pagesize = $scope.pagesize_options[0];
 
   $scope.hasFilter = function() {
     return !!(false || $scope.filters.search.length);
