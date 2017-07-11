@@ -48,9 +48,9 @@ def single_rule_column_get(column):
     return SingleRuleColumnView().get(column)
 
 
-def rules_revisions_post(id_or_alias):
+def rules_revisions_post(rule_id):
     """POST /rules/:id/revisions"""
-    return RuleHistoryAPIView().post(id_or_alias)
+    return RuleHistoryAPIView().post(rule_id)
 
 
 def users_get():

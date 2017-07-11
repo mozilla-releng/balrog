@@ -35,14 +35,14 @@ paths:
         404:
           $ref: '#/responses/resourceNotFound'
 
-  /api/v1/rules/{id_or_alias}/revisions:
+  /api/v1/rules/{rule_id}/revisions:
     get:
       operationId: 'auslib.web.common.rules.get_rule_history'
       description: Returns previous versions of the rule identified by the id or alias given in a JSON Object.
       produces:
         - application/json
       parameters:
-        - $ref: '#/parameters/idOrAlias'
+        - $ref: '#/parameters/ruleId'
         - $ref: '#/parameters/pageQuery'
         - $ref: '#/parameters/limitQuery'
       responses:

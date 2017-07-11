@@ -1592,7 +1592,7 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
-  /rules/{id_or_alias}/revisions:
+  /rules/{rule_id}/revisions:
     get:
       summary: Fetches all revisions of a Rule
       description: Fetches list and count of all the revisions of the rule given by rule_id
@@ -1606,7 +1606,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#rules"
         description: "Fetches list and count of all the revisions of the rule given by rule_id"
       parameters:
-        - $ref: '#/parameters/idOrAlias'
+        - $ref: '#/parameters/ruleId'
         - $ref: '#/parameters/pageQuery'
         - $ref: '#/parameters/limitQuery'
       responses:
@@ -1632,7 +1632,7 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field"
         description: "Updates the rule identified by the rule_id to a previous revision identified by change_id."
       parameters:
-        - $ref: '#/parameters/idOrAlias'
+        - $ref: '#/parameters/ruleId'
         - $ref: '#/parameters/change_id_body_param'
       responses:
         '200':

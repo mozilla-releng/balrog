@@ -5,3 +5,11 @@ parameters:
     in: path
     required: true
     type: string
+
+  ruleId:
+    name: rule_id
+    in: path
+    description: Field value to uniquely identfiy the rule
+    type: integer
+    minimum: 0
+    required: true
