@@ -12,6 +12,14 @@
       ng-options="o.text for o in ordering_options track by o.value">
     </select>
   </div>
+  <div class="form-group form-group-ordering" ng-show="ordering_options.length > 1">
+    <label>Items per page:</label>
+    <select
+      ng-model="pageSize"
+      name="pageSize"
+      ng-options="o for o in pagesize_options track by o">
+    </select>
+  </div>
 </form>
 
 

@@ -9,7 +9,8 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
   $scope.release_name = $routeParams.name;
 
   $scope.currentPage = 1;
-  $scope.pageSize = 10;
+  $scope.pagesize_options = [10, 25, 50, 100];
+  $scope.pageSize = $scope.pagesize_options[0];
   $scope.maxSize = 10;
 
   function loadPage(newPage) {
@@ -50,6 +51,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
   $scope.$watch('ordering_str', function(value) {
     $scope.ordering = value.value.split(',');
   });
+  
   if ($scope.release_name) {
     $scope.ordering_options = [
       {
@@ -74,6 +76,11 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
     ];
   }
   $scope.ordering_str = $scope.ordering_options[0];
+
+
+  $scope.$watch('pageSize', function(value) {
+    $scope.pageSize = value;
+  });
 
   $scope.filters = {
     search: $location.hash(),
