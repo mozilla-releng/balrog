@@ -84,8 +84,8 @@ sqlalchemy==0.7.1 \ # pyup: ignore
     --hash=sha256:5ef95d19c31a8cd3905c697be0a7e94e70ab1926ecd4159c3e6c1cf01fc3c492
 sqlalchemy-migrate==0.7.2 \ # pyup: ignore
     --hash=sha256:7f55c768ee26f143fedb11b365a4c57c3bbdb5211e049c7f04b8ae8107c28333
-tempita==0.5.1 \
-    --hash=sha256:0ebe6938ca7401db79bac279849fffcb5752029150bcb6f3c3edbe7aa9a077d8
+tempita==0.5.2 \
+    --hash=sha256:cacecf0baa674d356641f1d406b8bff1d756d739c46b869a54de515d08e6fc9c
 uwsgi==2.0.15 \
     --hash=sha256:572ef9696b97595b4f44f6198fe8c06e6f4e6351d930d22e5330b071391272ff
 Werkzeug==0.12.2 \
