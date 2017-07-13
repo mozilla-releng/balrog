@@ -54,10 +54,10 @@ contextlib2==0.5.4 \
     --hash=sha256:710626cde569f51a87f216ff757fe60f5cd13ae8f8114706590510cd5649ce88 --hash=sha256:399f659f2a8b5d5d529f132e1136fc404fbbc28e34e4618c5c92bd595be9b162
 sphinx==1.5.2 \
     --hash=sha256:049c48393909e4704a6ed4de76fd39c8622e165414660bfb767e981e7931c722 --hash=sha256:57c8636e1d23f6c01fb19911a8f255f1b4934ba69feb55bd4dd0f097ebb04f05
-sqlalchemy==0.7.1 \ # pyup: ignore
-    --hash=sha256:5ef95d19c31a8cd3905c697be0a7e94e70ab1926ecd4159c3e6c1cf01fc3c492
-sqlalchemy-migrate==0.7.2 \ # pyup: ignore
-    --hash=sha256:7f55c768ee26f143fedb11b365a4c57c3bbdb5211e049c7f04b8ae8107c28333
+sqlalchemy==0.7.1 \
+    --hash=sha256:5ef95d19c31a8cd3905c697be0a7e94e70ab1926ecd4159c3e6c1cf01fc3c492 # pyup: ignore
+sqlalchemy-migrate==0.7.2 \
+    --hash=sha256:7f55c768ee26f143fedb11b365a4c57c3bbdb5211e049c7f04b8ae8107c28333 # pyup: ignore
 tempita==0.5.1 \
     --hash=sha256:0ebe6938ca7401db79bac279849fffcb5752029150bcb6f3c3edbe7aa9a077d8
 uwsgi==2.0.13.1 \
