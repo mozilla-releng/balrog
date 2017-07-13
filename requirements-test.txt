@@ -81,8 +81,8 @@ pytest-cov==2.5.1 \
 execnet==1.4.1 \
     --hash=sha256:d2b909c7945832e1c19cfacd96e78da68bdadc656440cfc7dfe59b766744eb8c \
     --hash=sha256:f66dd4a7519725a1b7e14ad9ae7d3df8e09b2da88062386e08e941cafc0ef3e6
-pytest-xdist==1.15.0 \
-    --hash=sha256:6238395f8bd050f9288a3b10f34330edece80f4424cf2b4204d6e7d622f0f00b
+pytest-xdist==1.18.1 \
+    --hash=sha256:346ae327f12be3747fb273652cf393fab7373536d7fadee6c44c76fa42ede423
 requests==2.18.1 \
     --hash=sha256:6afd3371c1f4c1970497cdcace5c5ecbbe58267bf05ca1abd93d99d170803ab7 \
     --hash=sha256:c6f3bdf4a4323ac7b45d01e04a6f6c20e32a052cd04de81e05103abc049ad9b9
