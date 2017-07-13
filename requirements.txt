@@ -74,8 +74,8 @@ sqlalchemy-migrate==0.7.2 \ # pyup: ignore
     --hash=sha256:7f55c768ee26f143fedb11b365a4c57c3bbdb5211e049c7f04b8ae8107c28333
 tempita==0.5.1 \
     --hash=sha256:0ebe6938ca7401db79bac279849fffcb5752029150bcb6f3c3edbe7aa9a077d8
-uwsgi==2.0.13.1 \
-    --hash=sha256:2eca0c2f12ab76f032154cd147f4d5957d3195a022678d59cb507f4995a48d7f
+uwsgi==2.0.15 \
+    --hash=sha256:572ef9696b97595b4f44f6198fe8c06e6f4e6351d930d22e5330b071391272ff
 Werkzeug==0.11.2 \
     --hash=sha256:eb4f98994b40a8e2edce289e811c9a38880ae53eb9ff6f031d0e243a69b0fcbf --hash=sha256:b6a93e909b31e3e14659584ff7329864275905ddc1b8653861bdfe1e597250f4
 wtforms==2.1 \
