@@ -20,41 +20,6 @@ def setUpModule():
     logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
-class TestGetSystemCapabilities(unittest.TestCase):
-    def testUnprefixedInstructionSetOnly(self):
-        self.assertEquals(
-            client_api.getSystemCapabilities("SSE3"),
-            {"instructionSet": "SSE3", "memory": None}
-        )
-
-    def testUnprefixedInstructionSetAndMemory(self):
-        self.assertEquals(
-            client_api.getSystemCapabilities("SSE3,8095"),
-            {"instructionSet": "SSE3", "memory": 8095}
-        )
-
-    def testPrefixedInstructionSetAndMemory(self):
-        self.assertEquals(
-            client_api.getSystemCapabilities("ISET:SSE2,MEM:6321"),
-            {"instructionSet": "SSE2", "memory": 6321}
-        )
-
-    def testNothingProvided(self):
-        self.assertEquals(
-            client_api.getSystemCapabilities("NA"),
-            {"instructionSet": "NA", "memory": None}
-        )
-
-    def testNonIntegerMemory(self):
-        self.assertRaises(ValueError, client_api.getSystemCapabilities, ("ISET:SSE2,MEM:63T1A"))
-
-    def testUnknownField(self):
-        self.assertEquals(
-            client_api.getSystemCapabilities("ISET:SSE3,MEM:6721,PROC:Intel"),
-            {"instructionSet": "SSE3", "memory": 6721}
-        )
-
-
 class ClientTestCommon(unittest.TestCase):
     def assertHttpResponse(self, http_reponse):
         self.assertEqual(http_reponse.status_code, 200)
@@ -92,7 +57,7 @@ class ClientTestBase(ClientTestCommon):
         self.version_fd, self.version_file = mkstemp()
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
-        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'f', 'response-a', 'response-b', 's', 'responseblob-a',
+        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'response-a', 'response-b', 's', 'responseblob-a',
                                                        'responseblob-b', 'q', 'fallback')}
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
@@ -144,7 +109,7 @@ class ClientTestBase(ClientTestCommon):
 """))
 
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='s', update_type='minor', product='s',
-                                     instructionSet="SSE", data_version=1)
+                                     systemCapabilities="SSE", data_version=1)
         dbo.releases.t.insert().execute(name='s', product='s', data_version=1, data=createBlob("""
 {
     "name": "s",
@@ -288,37 +253,6 @@ class ClientTestBase(ClientTestCommon):
                         "from": "*",
                         "hashValue": "23",
                         "fileUrl": "http://a.com/y"
-                    }
-                }
-            }
-        }
-    }
-}
-"""))
-
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f",
-                                     channel="a", memory="<=8000", data_version=1)
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f",
-                                     channel="b", memory="9000", data_version=1)
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f",
-                                     channel="c", memory=">10000", data_version=1)
-        dbo.releases.t.insert().execute(name="f", product="f", data_version=1, data=createBlob("""
-{
-    "name": "f",
-    "schema_version": 1,
-    "hashFunction": "sha512",
-    "appv": "1.0",
-    "extv": "1.0",
-    "platforms": {
-        "p": {
-            "buildID": "35",
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 33,
-                        "from": "*",
-                        "hashValue": "34",
-                        "fileUrl": "http://a.com/f"
                     }
                 }
             }
@@ -672,42 +606,12 @@ class ClientTest(ClientTestBase):
 </updates>
 """)
 
-    def testVersion6GetWithInstructionSetMatch(self):
+    def testVersion6GetWithSystemCapabilitiesMatch(self):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="5">
         <patch type="complete" URL="http://a.com/s" hashFunction="sha512" hashValue="5" size="5"/>
-    </update>
-</updates>
-""")
-
-    def testVersion6GetWithLessThanEqualToMemory(self):
-        ret = self.client.get('/update/6/f/1.0/1/p/l/a/a/ISET:SSE3,MEM:8000/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="1.0" extensionVersion="1.0" buildID="35">
-        <patch type="complete" URL="http://a.com/f" hashFunction="sha512" hashValue="34" size="33"/>
-    </update>
-</updates>
-""")
-
-    def testVersion6GetWithExactMemory(self):
-        ret = self.client.get('/update/6/f/1.0/1/p/l/b/a/ISET:SSE3,MEM:9000/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="1.0" extensionVersion="1.0" buildID="35">
-        <patch type="complete" URL="http://a.com/f" hashFunction="sha512" hashValue="34" size="33"/>
-    </update>
-</updates>
-""")
-
-    def testVersion6GetWithGreaterThanMemory(self):
-        ret = self.client.get('/update/6/f/1.0/1/p/l/c/a/ISET:SSE3,MEM:11000/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
-<updates>
-    <update type="minor" version="1.0" extensionVersion="1.0" buildID="35">
-        <patch type="complete" URL="http://a.com/f" hashFunction="sha512" hashValue="34" size="33"/>
     </update>
 </updates>
 """)
@@ -729,7 +633,7 @@ class ClientTest(ClientTestBase):
 </updates>
 """)
 
-    def testVersion6GetWithoutInstructionSetMatch(self):
+    def testVersion6GetWithoutSystemCapabilitiesMatch(self):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
         self.assertUpdatesAreEmpty(ret)
 

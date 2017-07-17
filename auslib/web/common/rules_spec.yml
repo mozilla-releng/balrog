@@ -71,69 +71,68 @@ definitions:
       rule_id:
         type: integer
         format: int32
-        description: The id of the rule. This id (or the rule's alias, if set) is necessary to make changes to the rule through the REST API.
+        description: The id of the rule. This id is necessary to make changes to the rule through the REST API.
       alias:
         type: ['string', 'null']
-        description: The alias of the rule. This value must be unique across the entire set of rules.
+        description: The alias of the rule. This id is necessary to make changes to the rule through the REST API.
       priority:
         type: ['integer', 'null']
         format: int32
         description: >
-          The priority of the rule, relative to other rules. The higher the value, the higher the priority of the rule.
+          The priority of the rule, relative to other rules.
+          If multiple rules match an incoming request based on the Matchable columns, the rule with the highest priority is chosen.
       mapping:
         type: ['string', 'null']
-        description: The Release to construct an update out of if the user is on the right side of a background rate dice roll, or if the background rate is 100. This is a foreign key to the "name" column of the Releases table.
+        description:  The Release to construct an update out of if the user is on the right side of a background rate dice roll, or if the background rate is 100.
       fallbackMapping:
         type: ['string', 'null']
-        description: The Release to construct an update out of when the user is on the wrong side of a background rate dice roll. This is a foreign key to the "name" column of the Releases table.
+        description: The Release to construct an update out of when the user is on the wrong side of a background rate dice roll.
       backgroundRate:
         type: ['integer', 'null']
         format: int32
         description: >
-          The percentage of background update requests to serve the "mapping" to.
-          Generally, this is used as a throttle to increase or decrease the number of clients which receive new updates.
+          The percentage of background update requests that if specified.
+          Generally, this is used as a throttle to increase or decrease the rate at which the majority of users receive the latest update.
       update_type:
         type: string
-        description: The update_type to use in the XML response. "minor" is almost always the correct value these days.
+        description: The update_type to use in the XML response. It’s very rare for a rule to use anything other than “minor” these days.
       product:
         type: ['string', 'null']
-        description: The product name that the client must send in order for the rule to match. Only full string matches are supported.
+        description: The name of the application requesting an update.
       version:
         type: ['string', 'null']
-        description: >
-          The version requirements that the client must meet in order for the rule to match. Exact matches, comma separated lists (eg: "36.0,36.0.1") and comparisons (eg: "<45.0") are allowed.
+        description: The version of the application requesting an update.
       channel:
         type: ['string', 'null']
-        description: The update channel that the client must send in order for the rule to match. "*" can be used to glob at the end of the channel name.
+        description: The update channel of the application request an update.
       buildTarget:
         type: ['string', 'null']
-        description: The “build target” that the client must send in order for the rule to match. This is usually related to the target platform the app was built for. Only full string matches are supported.
+        description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
       buildID:
         type: ['string', 'null']
-        description: The build ID requirements that the client must meet in order for the rule to match. Comparisons such as "<20170504030201" may be used.
+        description: The build ID of the application requesting an update.
       locale:
         type: ['string', 'null']
-        description: The locale that the client must send in order for the rule to match. A comma separated list may be used to list multiple locales.
+        description: The locale of the application requesting an update.
       osVersion:
         type: ['string', 'null']
         description: >
-          The OS Version requirements that the client must meet in order for the rule to match. && may be used to match multiple substrings at once (eg: "Windows && (websense-"). Commas may be used to match any of a list of substrings.
-      instructionSet:
+          The OS Version of the application requesting an update.
+          This field is primarily used to point desupported operating systems to their last supported build.
+      systemCapabilities:
         type: ['string', 'null']
         description: >
-          The most modern CPU instruction set that the client must support in order for the rule to match. A comma separated list may be used to list multiple instruction sets.
-      memory:
-        type: ['string', 'null']
-        description: The amount of RAM, in megabytes, that the client must have for the rule to match. Comparisons such as "<8000" may be used.
+          The supported hardware features of the application requesting an update.
+          This field is primarily used to point desupported users based on their hardware. Eg: users who do not support SSE2.
       distribution:
         type: ['string', 'null']
-        description: The partner distribution name that the application must send in order for the rule to match.
+        description: The partner distribution name of the application requesting an update or "default" if the application is not a partner build.
       distVersion:
         type: ['string', 'null']
-        description: The version of the partner distribution that the application must send in order for the rule to match.
+        description: The version of the partner distribution of the application requesting an update or "default" if the application is not a partner build.
       headerArchitecture:
         type: ['string', 'null']
-        description: The client architecture (as guessed based on the User Agent) that the client must provide in order for the rule to match. This field is deprecated in favour of build target.
+        description: The architecture of the OS of the client as guessed based on build target. This field is mostly deprecated now that this information is included in the build target.
       comment:
         type: ['string', 'null']
         description: A string describing the purpose of the rule. Not always necessary for obvious rules.

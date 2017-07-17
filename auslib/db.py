@@ -22,7 +22,7 @@ import dictdiffer.merge
 
 from auslib.global_state import cache
 from auslib.blobs.base import createBlob
-from auslib.util.comparison import string_compare, version_compare, int_compare
+from auslib.util.comparison import string_compare, version_compare
 from auslib.util.timestamp import getMillisecondTimestamp
 
 import logging
@@ -1453,8 +1453,9 @@ class Rules(AUSTable):
                            Column('buildID', String(20)),
                            Column('locale', String(200)),
                            Column('osVersion', String(1000)),
-                           Column('instructionSet', String(1000)),
                            Column('memory', String(100)),
+                           Column('instructionSet', String(1000)),
+                           Column('systemCapabilities', String(1000)),
                            Column('distribution', String(100)),
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),
@@ -1538,30 +1539,6 @@ class Rules(AUSTable):
         if ruleBuildID is None:
             return True
         return string_compare(queryBuildID, ruleBuildID)
-
-    def _memoryMatchesRule(self, ruleMemory, queryMemory):
-        """Decides whether a memory value from the rules matches an incoming one.
-           If the ruleMemory is null, we match any queryMemory. If it's not
-           null, we must either match exactly, or match with a camparison
-           operator."""
-        if ruleMemory is None:
-            return True
-        return int_compare(queryMemory, ruleMemory)
-
-    def _csvMatchesRule(self, ruleString, queryString, substring=True):
-        """Decides whether a column from a rule matches an incoming one.
-           Some columns in a rule may specify multiple values delimited by a
-           comma. Once split we do a full or substring match against the query
-           string. Because we support substring matches, there's no need
-           to support globbing as well."""
-        if ruleString is None:
-            return True
-        for part in ruleString.split(','):
-            if substring and part in queryString:
-                return True
-            elif part == queryString:
-                return True
-        return False
 
     def _simpleBooleanMatchesSubRule(self, subRuleString, queryString, substring):
         """Performs the actual logical 'AND' operation on a rule as well as partial/full string matching
@@ -1688,17 +1665,15 @@ class Rules(AUSTable):
             if not self._buildIDMatchesRule(rule['buildID'], updateQuery['buildID']):
                 self.log.debug("%s doesn't match %s", rule['buildID'], updateQuery['buildID'])
                 continue
-            if not self._memoryMatchesRule(rule['memory'], updateQuery.get("memory", "")):
-                self.log.debug("%s doesn't match %s", rule['memory'], updateQuery.get("memory"))
-                continue
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to
             # break them out and create clauses for each one.
             if not self._simpleBooleanMatchesRule(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
-            if not self._csvMatchesRule(rule['instructionSet'], updateQuery.get('instructionSet', ""), substring=False):
-                self.log.debug("%s doesn't match %s", rule['instructionSet'], updateQuery.get('instructionSet'))
+            # Same deal for system capabilities
+            if not self._simpleBooleanMatchesRule(rule['systemCapabilities'], updateQuery.get('systemCapabilities', ""), substring=False):
+                self.log.debug("%s doesn't match %s", rule['systemCapabilities'], updateQuery.get('systemCapabilities'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):

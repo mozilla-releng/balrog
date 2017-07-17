@@ -64,7 +64,7 @@ class CommonTestBase(unittest.TestCase):
 }
 """))
         dbo.rules.t.insert().execute(rule_id=2, priority=90, backgroundRate=100, mapping='Firefox.55.0a1', update_type='minor', product='Firefox',
-                                     instructionSet="SSE", data_version=1)
+                                     systemCapabilities="SSE", data_version=1)
         dbo.releases.t.insert().execute(name='Firefox.55.0a1', product='Firefox', data_version=1, data=createBlob("""
 {
     "name": "Firefox.55.0a1",
