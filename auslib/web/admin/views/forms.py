@@ -1,7 +1,7 @@
 import simplejson as json
 import operator
 
-from flask_wtf import Form
+from flask_wtf import FlaskForm as Form
 from wtforms import StringField, IntegerField, SelectField, BooleanField
 from wtforms.widgets import TextInput, FileInput, HiddenInput
 from wtforms.validators import InputRequired, Optional, NumberRange, Length, Regexp, ValidationError

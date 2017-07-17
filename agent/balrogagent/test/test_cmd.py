@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import asynctest
 import json
+from yarl import URL
 
 from ..cmd import run_agent
 
@@ -20,7 +21,7 @@ class TestRunAgent(asynctest.TestCase):
             else:
                 endpoint = endpoint.split('/')[-1]
             response = aiohttp.client.ClientResponse("GET",
-                                                     "http://balrog.fake/scheduled_changes/%s" % endpoint)
+                                                     URL("http://balrog.fake/scheduled_changes/{}".format(endpoint)))
             response.headers = {"Content-Type": "application/json"}
             changes = scheduled_changes.get(endpoint) or []
             if method != 'GET':

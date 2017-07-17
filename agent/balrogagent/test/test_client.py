@@ -1,6 +1,7 @@
 import aiohttp
 import asynctest
 import json
+from yarl import URL
 
 from .. import client
 
@@ -14,13 +15,13 @@ class fake_request:
 
     async def __call__(self, method, url, data={}, **kwargs):
         if url.endswith("csrf_token"):
-            self.csrf_resp = aiohttp.client.ClientResponse("HEAD", "http://balrog.fake/api/csrf_token")
+            self.csrf_resp = aiohttp.client.ClientResponse("HEAD", URL("http://balrog.fake/api/csrf_token"))
             self.csrf_resp.headers = {"X-CSRF-Token": "foo"}
             self.csrf_resp.status = 200
             return self.csrf_resp
         else:
             self.request_data = data
-            resp = aiohttp.client.ClientResponse(method, url)
+            resp = aiohttp.client.ClientResponse(method, URL(url))
             resp.headers = {"Content-Type": "application/json"}
             resp._content = bytes(json.dumps(self.response_body), "utf-8")
             resp.status = self.response_code
