@@ -1883,24 +1883,15 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.paths.t.insert().execute(rule_id=6, alias="radagast", priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1',
                                       update_type='z', product="a", channel="a", data_version=1)
         self.paths.t.insert().execute(
-            rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z',
+            rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6,bar && baz', update_type='z',
             product="a", channel="a", data_version=1)
         self.paths.t.insert().execute(
             rule_id=8, priority=100, buildTarget='e', mapping='d', backgroundRate=100, locale='foo,bar-baz', update_type='z',
             product="a", channel="a", data_version=1)
-        self.paths.t.insert().execute(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z",
+        self.paths.t.insert().execute(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, instructionSet="S", update_type="z",
                                       product="foo", channel="foo*", data_version=1)
         self.paths.t.insert().execute(rule_id=10, priority=100, buildTarget="g", mapping="g", fallbackMapping='fallback', backgroundRate=100,
                                       update_type="z", product="foo", channel="foo", data_version=1)
-
-        self.paths.t.insert().execute(rule_id=11, priority=100, buildTarget='h', mapping='h', systemCapabilities='GenuineIntel, SSE2', update_type='z',
-                                      product='a', channel='a', data_version=1)
-        self.paths.t.insert().execute(rule_id=12, priority=100, buildTarget='i', mapping='i', systemCapabilities='GenuineIntel && SSE2', update_type='z',
-                                      product='a', channel='a', data_version=1, version='5.0')
-        self.paths.t.insert().execute(rule_id=13, priority=100, buildTarget='j', mapping='j', systemCapabilities='GenuineIntel && SSE3, SSE2', update_type='z',
-                                      product='a', channel='a', data_version=1)
-        self.paths.t.insert().execute(rule_id=14, priority=100, buildTarget='k', mapping='k', systemCapabilities='GenuineIntel, SSE', update_type='z',
-                                      product='a', channel='a', data_version=1)
 
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.db.permissions.user_roles.t.insert(username="bill", role="bar", data_version=1)
@@ -1915,6 +1906,25 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertTrue(self.db.rules.scheduled_changes.conditions)
         self.assertTrue(self.db.rules.scheduled_changes.conditions.history)
 
+    def testAllColumnsExist(self):
+        columns = [c.name for c in self.db.rules.t.get_children()]
+        expected = ["rule_id", "alias", "priority", "mapping", "fallbackMapping", "backgroundRate", "update_type",
+                    "product", "version", "channel", "buildTarget", "buildID", "locale", "osVersion",
+                    "instructionSet", "distribution", "distVersion", "headerArchitecture", "comment",
+                    "data_version", "memory", "systemCapabilities"]
+        sc_expected = ["base_{}".format(c) for c in expected]
+        self.assertEquals(set(columns), set(expected))
+        # No need to test the non-base parts of history nor scheduled changes table
+        # because tests for those table types verify them.
+        history_columns = [c.name for c in self.db.rules.history.t.get_children()]
+        self.assertTrue(set(expected).issubset(set(history_columns)))
+
+        sc_columns = [c.name for c in self.db.rules.scheduled_changes.t.get_children()]
+        self.assertTrue(set(sc_expected).issubset(set(sc_columns)))
+
+        sc_history_columns = [c.name for c in self.db.rules.scheduled_changes.history.t.get_children()]
+        self.assertTrue(set(sc_expected).issubset(set(sc_history_columns)))
+
     def testGetOrderedRules(self):
         rules = self._stripNullColumns(self.paths.getOrderedRules())
         expected = [
@@ -1922,28 +1932,20 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             dict(backgroundRate=0, buildTarget='d', data_version=1, mapping='c', priority=80, rule_id=5, update_type='z', version='3.3'),
             dict(alias='radagast', backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', osVersion='foo 1', priority=100, product='a',
                  rule_id=6, update_type='z'),
-            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', osVersion='foo 2,blah 6', priority=100, product='a', rule_id=7,
-                 update_type='z'),
+            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', osVersion='foo 2,blah 6,bar && baz', priority=100, product='a',
+                 rule_id=7, update_type='z'),
             dict(backgroundRate=100, buildTarget='e', channel='a', data_version=1, locale='foo,bar-baz', mapping='d', priority=100, product='a', rule_id=8,
                  update_type='z'),
             dict(backgroundRate=100, buildTarget='f', channel='foo*', data_version=1, mapping='f', priority=100, product='foo', rule_id=9,
-                 systemCapabilities='S', update_type='z'),
+                 instructionSet='S', update_type='z'),
             dict(backgroundRate=100, buildTarget='g', channel='foo', data_version=1, fallbackMapping='fallback', mapping='g', priority=100, product='foo',
                  rule_id=10, update_type='z'),
-            dict(buildTarget='h', channel='a', data_version=1, mapping='h', priority=100, product='a', rule_id=11,
-                 systemCapabilities='GenuineIntel, SSE2', update_type='z'),
-            dict(buildTarget='j', channel='a', data_version=1, mapping='j', priority=100, product='a', rule_id=13,
-                 systemCapabilities='GenuineIntel && SSE3, SSE2', update_type='z'),
-            dict(buildTarget='k', channel='a', data_version=1, mapping='k', priority=100, product='a', rule_id=14,
-                 systemCapabilities='GenuineIntel, SSE', update_type='z'),
             dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='b', priority=100, product='a', rule_id=2,
                  update_type='z', version='3.3'),
             dict(backgroundRate=100, buildTarget='a', data_version=1, mapping='a', priority=100, product='a', rule_id=3,
                  update_type='z', version='3.5'),
             dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='c', priority=100, product='a', rule_id=1,
                  update_type='z', version='3.5'),
-            dict(buildTarget='i', channel='a', data_version=1, mapping='i', priority=100, product='a', rule_id=12,
-                 systemCapabilities='GenuineIntel && SSE2', update_type='z', version='5.0')
         ]
 
         self.assertEquals(rules, expected)
@@ -1957,7 +1959,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  data_version=1),
             dict(rule_id=6, alias="radagast", priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 1', update_type='z',
                  product="a", channel="a", data_version=1),
-            dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z',
+            dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6,bar && baz', update_type='z',
                  product="a", channel="a", data_version=1),
             dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z',
                  product="a", channel="a", data_version=1),
@@ -2087,181 +2089,56 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         expected = [
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
                  channel="a", data_version=1),
-            dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6', update_type='z',
+            dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6,bar && baz', update_type='z',
                  product="a", channel="a", data_version=1),
         ]
         self.assertEquals(rules, expected)
 
-    def testGetRulesMatchingQuerySystemCapabilities(self):
+    def testGetRulesMatchingQueryOsVersionAndMatching(self):
+        rules = self.paths.getRulesMatchingQuery(
+            dict(product="a", version='5.0', channel="a", buildTarget='d',
+                 buildID='', locale='', osVersion='bar 1.3 baz 2.3', distribution='',
+                 distVersion='', headerArchitecture='', force=False,
+                 queryVersion=3,
+                 ),
+            fallbackChannel='',
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
+                 channel="a", data_version=1),
+            dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6,bar && baz', update_type='z',
+                 product="a", channel="a", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testGetRulesMatchingQueryInstructionSet(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product="foo", version="5.0", channel="foo", buildTarget="f",
                  buildID="", locale="", osVersion="", distribution="",
                  distVersion="", headerArchitecture="", force=False,
-                 queryVersion=6, systemCapabilities="S"
+                 queryVersion=6, instructionSet="S"
                  ),
             fallbackChannel="",
         )
         rules = self._stripNullColumns(rules)
         expected = [
-            dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, systemCapabilities="S", update_type="z",
+            dict(rule_id=9, priority=100, buildTarget="f", mapping="f", backgroundRate=100, instructionSet="S", update_type="z",
                  product="foo", channel="foo*", data_version=1),
         ]
         self.assertEquals(rules, expected)
 
-    def testGetRulesMatchingQuerySystemCapabilitiesNoSubstringMatch(self):
+    def testGetRulesMatchingQueryInstructionSetNoSubstringMatch(self):
         rules = self.paths.getRulesMatchingQuery(
             dict(product="a", version="5.0", channel="a", buildTarget="f",
                  buildID="", locale="", osVersion="", distribution="",
                  distVersion="", headerArchitecture="", force=False,
-                 queryVersion=6, systemCapabilities="SA"
+                 queryVersion=6, instructionSet="SA"
                  ),
             fallbackChannel="",
         )
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, [])
-
-    def testGetRulesMatchingQuerySystemCapabilitiesOrs(self):
-        match_1 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='GenuineIntel',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        match_2 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='SSE2', version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_1 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='SSE3', version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_2 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='h', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='SSE', version='5.0'),
-            fallbackChannel=''
-        )
-
-        self.assertEqual(1, len(match_1))
-        self.assertEqual(1, len(match_2))
-        self.assertEqual(11, match_1[0]['rule_id'])
-        self.assertEqual(11, match_2[0]['rule_id'])
-        self.assertEquals(no_match_1, [])
-        self.assertEquals(no_match_2, [])
-
-    def testGetRulesMatchingQuerySystemCapabilitiesBooleanAnds(self):
-        match = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE2',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_1 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='AMD,SSE2',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_2 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE3',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_3 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='i', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-
-        self.assertEqual(len(match), 1)
-        self.assertEqual(match[0]['rule_id'], 12)
-        self.assertEqual(no_match_1, [])
-        self.assertEqual(no_match_2, [])
-        self.assertEqual(no_match_3, [])
-
-    def testGetRulesMatchingQuerySystemCapabilitiesBooleanExact(self):
-        match = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='k', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='SSE',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='k', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='SSE2',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-
-        self.assertEqual(len(match), 1)
-        self.assertEqual(match[0]['rule_id'], 14)
-        self.assertEqual(no_match, [])
-
-    def testGetRulesMatchingQuerySystemCapabilitiesBooleanMixed(self):
-        match_1 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE2',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        match_2 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='AMD,SSE2',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        match_3 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE3',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_1 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='AMD,SSE3',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_2 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='GenuineIntel,SSE',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        no_match_3 = self.paths.getRulesMatchingQuery(
-            dict(product='a', channel='a', buildTarget='j', buildID='', locale='',
-                 osVersion='', distribution='', distVersion='', headerArchitecture='',
-                 force=False, queryVersion=6, systemCapabilities='AMD,SSE',
-                 version='5.0'),
-            fallbackChannel=''
-        )
-        self.assertEqual(len(match_1), 1)
-        self.assertEqual(match_1[0]['rule_id'], 13)
-        self.assertEqual(len(match_2), 1)
-        self.assertEqual(match_2[0]['rule_id'], 13)
-        self.assertEqual(len(match_3), 1)
-        self.assertEqual(match_3[0]['rule_id'], 13)
-        self.assertEqual(no_match_1, [])
-        self.assertEqual(no_match_2, [])
-        self.assertEqual(no_match_3, [])
 
     def testGetRulesMatchingQueryFallbackMapping(self):
         rules = self.paths.getRulesMatchingQuery(
@@ -2414,7 +2291,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertRaises(SignoffRequiredError, self.paths.delete, {"rule_id": 9}, changed_by="bill", old_data_version=1)
 
     def testGetNumberOfRules(self):
-        self.assertEquals(self.paths.countRules(), 14)
+        self.assertEquals(self.paths.countRules(), 10)
 
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
@@ -2431,6 +2308,8 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                                       data_version=1)
         self.rules.t.insert().execute(rule_id=5, priority=80, version='2.0.1,2.0.2,2.0.3', backgroundRate=100,
                                       update_type='z',
+                                      data_version=1)
+        self.rules.t.insert().execute(rule_id=6, priority=70, channel="abc", memory="<=2000", backgroundRate=100, update_type="z",
                                       data_version=1)
 
     def testGetRulesMatchingQueryVersionComparison(self):
@@ -2576,6 +2455,43 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
             fallbackChannel=''
         )
         rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, [])
+
+    def testGetRulesMatchingMemoryLessThanEqualTo(self):
+        expected = [dict(rule_id=6, priority=70, channel="abc", memory="<=2000", backgroundRate=100, update_type="z", data_version=1)]
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='abc', memory=1500,
+                 buildTarget='', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, expected)
+
+    def testGetRulesMatchingMemoryExactMatch(self):
+        expected = [dict(rule_id=6, priority=70, channel="abc", memory="<=2000", backgroundRate=100, update_type="z", data_version=1)]
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='abc', memory=2000,
+                 buildTarget='', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, expected)
+
+    def testGetRulesMatchingMemoryNoMatch(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='abc', memory=2500,
+                 buildTarget='', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 force=False, queryVersion=6,
+                 ),
+            fallbackChannel=''
+        )
         self.assertEquals(rules, [])
 
 
@@ -4387,6 +4303,22 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table_name in base_capabilities_tables:
                 self.assertNotIn("base_instructionSet", metadata.tables[table_name].c)
 
+    def _remove_systemCapabilities_test(self, db, upgrade=True):
+        metadata = self._get_reflected_metadata(db)
+        capabilities_tables = ["rules", "rules_history"]
+        base_capabilities_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
+
+        if upgrade:
+            for table_name in capabilities_tables:
+                self.assertNotIn("systemCapabilities", metadata.tables[table_name].c)
+            for table_name in base_capabilities_tables:
+                self.assertNotIn("base_systemCapabilities", metadata.tables[table_name].c)
+        else:
+            for table_name in capabilities_tables:
+                self.assertIn("systemCapabilities", metadata.tables[table_name].c)
+            for table_name in base_capabilities_tables:
+                self.assertIn("base_systemCapabilities", metadata.tables[table_name].c)
+
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
         """
         Tests the upgrades and downgrades for version 22 work properly.
@@ -4424,7 +4356,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table_name in when_nullable_tables:
                 self.assertFalse(meta_data.tables[table_name].c.when.nullable)
 
-    def testDowngradesWorkAsExpected(self):
+    def testVersionChangesWorkAsExpected(self):
         """
         Tests that downgrades and upgrades work as expected. Since the DB will never
         be rolled back beyond version 21 we treat it as the base version for all future versions from now.
@@ -4439,6 +4371,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            27: self._remove_systemCapabilities_test,
             26: self._add_instructionSet_test,
             # No-op migration
             25: _noop,
