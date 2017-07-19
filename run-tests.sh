@@ -8,8 +8,8 @@ docker build  -t balrogtest -f Dockerfile.dev .
 # test runs.
 if [ -n "${NO_VOLUME_MOUNT}" ]; then
     echo "Running tests without volume mount"
-    docker run --rm balrogtest test $@
+    docker run -e GITHUB_BASE_REPO_URL=$GITHUB_BASE_REPO_URL -e GITHUB_PULL_REQUEST=$GITHUB_PULL_REQUEST --rm balrogtest test $@
 else
     echo "Running tests with volume mount"
-    docker run --rm -v `pwd`:/app balrogtest test $@
+    docker run -e GITHUB_BASE_REPO_URL=$GITHUB_BASE_REPO_URL -e GITHUB_PULL_REQUEST=$GITHUB_PULL_REQUEST --rm -v `pwd`:/app balrogtest test $@
 fi

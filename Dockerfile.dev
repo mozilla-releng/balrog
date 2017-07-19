@@ -12,9 +12,10 @@ MAINTAINER bhearsum@mozilla.com
 # mysql-client is needed to import sample data
 # libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # libfontconfig1 is required by phantomjs
+# git is needed to send coverage information
 RUN apt-get -q update \
     && apt-get -q --yes install netcat libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev mysql-client \
-                                libfontconfig1 netcat \
+                                libfontconfig1 netcat git \
     && apt-get clean
 
 WORKDIR /app
@@ -31,6 +32,8 @@ COPY ui/ /app/ui/
 COPY scripts/ /app/scripts/
 COPY uwsgi/ /app/uwsgi/
 COPY .coveragerc MANIFEST.in requirements-test.txt setup.py tox.ini version.json version.txt /app/
+# we need .git to gather information for coverage reports
+COPY .git/ /app/.git/
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.
