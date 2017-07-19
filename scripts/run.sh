@@ -60,11 +60,14 @@ elif [ $1 == "extract-active-data" ]; then
     export
 elif [ $1 == "test" ]; then
     shift
+    rc=0
     if [[ $1 == "backend" ]]; then
         shift
         run_back_end_tests $@
+        rc=$?
     elif [[ $1 == "frontend" ]]; then
         run_front_end_tests
+        rc=$?
     else
         run_back_end_tests $@
         backend_rc=$?
@@ -88,6 +91,7 @@ elif [ $1 == "test" ]; then
       coveralls
       echo "Coverage successfully sent to coveralls.io"
     fi
+    exit $rc
 else
    echo "unknown mode: $1"
    exit 1

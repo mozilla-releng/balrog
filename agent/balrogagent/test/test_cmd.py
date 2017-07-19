@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import asynctest
 import json
+from yarl import URL
 
 from ..cmd import run_agent
 
@@ -20,7 +21,7 @@ class TestRunAgent(asynctest.TestCase):
             else:
                 endpoint = endpoint.split('/')[-1]
             response = aiohttp.client.ClientResponse("GET",
-                                                     "http://balrog.fake/scheduled_changes/%s" % endpoint)
+                                                     URL("http://balrog.fake/scheduled_changes/{}".format(endpoint)))
             response.headers = {"Content-Type": "application/json"}
             changes = scheduled_changes.get(endpoint) or []
             if method != 'GET':
@@ -235,7 +236,9 @@ class TestRunAgent(asynctest.TestCase):
                             "telemetry_product": None, "telemetry_channel": None}],
               'rules': [{"priority": 100, "sc_id": 1, "when": 23400, "telemetry_uptake": None,
                          "telemetry_product": None, "telemetry_channel": None},
-                        {"priority": 300, "sc_id": 2, "when": 7000, "telemetry_uptake": None,
+                        {"priority": None, "sc_id": 2, "when": 7000, "telemetry_uptake": None,
+                         "telemetry_product": None, "telemetry_channel": None},
+                        {"priority": 70, "sc_id": 4, "when": 7000, "telemetry_uptake": None,
                          "telemetry_product": None, "telemetry_channel": None},
                         {"priority": 50, "sc_id": 3, "when": 329, "telemetry_uptake": None,
                          "telemetry_product": None, "telemetry_channel": None}],
@@ -249,9 +252,10 @@ class TestRunAgent(asynctest.TestCase):
               }
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
-        self.assertEquals(time_is_ready.call_count, 10)
-        self.assertEquals(request.call_count, 15)
+        self.assertEquals(time_is_ready.call_count, 11)
+        self.assertEquals(request.call_count, 16)
         called_endpoints = [call[0][1] for call in request.call_args_list]
         self.assertLess(called_endpoints.index('/scheduled_changes/rules'), called_endpoints.index('/scheduled_changes/releases'))
-        self.assertLess(called_endpoints.index('/scheduled_changes/rules/2/enact'), called_endpoints.index('/scheduled_changes/rules/1/enact'))
-        self.assertLess(called_endpoints.index('/scheduled_changes/rules/1/enact'), called_endpoints.index('/scheduled_changes/rules/3/enact'))
+        self.assertLess(called_endpoints.index('/scheduled_changes/rules/1/enact'), called_endpoints.index('/scheduled_changes/rules/4/enact'))
+        self.assertLess(called_endpoints.index('/scheduled_changes/rules/4/enact'), called_endpoints.index('/scheduled_changes/rules/2/enact'))
+        self.assertLess(called_endpoints.index('/scheduled_changes/rules/2/enact'), called_endpoints.index('/scheduled_changes/rules/3/enact'))
