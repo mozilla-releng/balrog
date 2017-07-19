@@ -87,9 +87,9 @@ elif [ $1 == "test" ]; then
         fi
     fi
     # Only send coverage data for the authoritative Balrog repo.
-    if [[ $coveralls == 1 && $GITHUB_BASE_REPO_URL == "https://github.com/testbhearsum/balrog.git" ]];
+    if [[ $coveralls == 1 && $GITHUB_BASE_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
     then
-      password_url="taskcluster/secrets/v1/secret/repo:github.com/testbhearsum/balrog:coveralls"
+      password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:coveralls"
       repo_token=$(curl ${password_url} | python -c 'import json, sys; a = json.load(sys.stdin); print a["secret"]["repo_token"]')
       export COVERALLS_REPO_TOKEN=$repo_token
       export CIRCLECI=1
