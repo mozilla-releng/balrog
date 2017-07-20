@@ -19,6 +19,7 @@ tasks:
         - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh backend"
       features:
         dind: true
+        taskclusterProxy: true
     extra:
       github:
         env: true
