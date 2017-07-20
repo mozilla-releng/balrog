@@ -5,7 +5,7 @@
 docker build  -t balrogtest -f Dockerfile.dev .
 # When running in Taskcluster, we want to send coverage data. To do that we need the repo token
 # that is stored in the Secrets Service. We cannot access that from within the test container,
-# so we must do it here, and that pass it in.
+# so we must do it here, and that pass it in
 COVERALLS_REPO_TOKEN=""
 if [[ $GITHUB_BASE_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
 then
