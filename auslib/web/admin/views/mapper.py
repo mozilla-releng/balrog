@@ -1,17 +1,20 @@
 from auslib.web.admin.views.csrf import CSRFView
 
 from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRuleColumnView, \
-    RuleHistoryAPIView, RuleScheduledChangesView
+    RuleHistoryAPIView, RuleScheduledChangesView, EnactRuleScheduledChangeView
 
 from auslib.web.admin.views.permissions import UsersView, AllRolesView, SpecificUserView,\
-    PermissionsView, UserRolesView, UserRoleView, SpecificPermissionView, PermissionScheduledChangesView
+    PermissionsView, UserRolesView, UserRoleView, SpecificPermissionView, PermissionScheduledChangesView, \
+    EnactPermissionScheduledChangeView
 
 from auslib.web.admin.views.releases import ReleaseDiffView, ReleaseFieldView, ReleasesAPIView, SingleReleaseView,\
-    ReleaseReadOnlyView, SingleReleaseColumnView, SingleLocaleView, ReleaseHistoryView, ReleaseScheduledChangesView
+    ReleaseReadOnlyView, SingleReleaseColumnView, SingleLocaleView, ReleaseHistoryView, ReleaseScheduledChangesView, \
+    EnactReleaseScheduledChangeView
 
 from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsHistoryAPIView, \
     PermissionsRequiredSignoffsHistoryAPIView, ProductRequiredSignoffsView, PermissionsRequiredSignoffsView,\
-    ProductRequiredSignoffsScheduledChangesView, PermissionsRequiredSignoffsScheduledChangesView
+    ProductRequiredSignoffsScheduledChangesView, PermissionsRequiredSignoffsScheduledChangesView, \
+    EnactProductRequiredSignoffScheduledChangeView, EnactPermissionsRequiredSignoffScheduledChangeView
 
 
 def csrf_get():
@@ -282,3 +285,28 @@ def scheduled_changes_rs_permissions_get():
 def scheduled_changes_rs_permissions_post():
     """POST /scheduled_changes/required_signoffs/permissions"""
     return PermissionsRequiredSignoffsScheduledChangesView().post()
+
+
+def enact_scheduled_change_rules_post(sc_id):
+    """POST /scheduled_changes/rules/<int:sc_id>/enact"""
+    return EnactRuleScheduledChangeView().post(sc_id)
+
+
+def enact_scheduled_change_permissions_post(sc_id):
+    """POST /scheduled_changes/permissions/<int:sc_id>/enact"""
+    return EnactPermissionScheduledChangeView().post(sc_id)
+
+
+def enact_scheduled_change_releases_post(sc_id):
+    """POST /scheduled_changes/releases/<int:sc_id>/enact"""
+    return EnactReleaseScheduledChangeView().post(sc_id)
+
+
+def enact_scheduled_change_product_rs_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/product/<int:sc_id>/enact"""
+    return EnactProductRequiredSignoffScheduledChangeView().post(sc_id)
+
+
+def enact_scheduled_change_permissions_rs_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/permissions/<int:sc_id>/enact"""
+    return EnactPermissionsRequiredSignoffScheduledChangeView().post(sc_id)

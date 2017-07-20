@@ -21,22 +21,19 @@ app = connexion_app.app
 sentry = Sentry()
 
 from auslib.web.admin.views.permissions import PermissionScheduledChangeView, \
-    EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, \
+    PermissionScheduledChangeHistoryView, \
     PermissionScheduledChangeSignoffsView
 from auslib.web.admin.views.releases import ReleaseScheduledChangeHistoryView, \
-    ReleaseScheduledChangeSignoffsView, ReleaseScheduledChangeView, \
-    EnactReleaseScheduledChangeView
+    ReleaseScheduledChangeSignoffsView, ReleaseScheduledChangeView
 from auslib.web.admin.views.required_signoffs import \
     ProductRequiredSignoffScheduledChangeView, \
-    EnactProductRequiredSignoffScheduledChangeView, \
     ProductRequiredSignoffScheduledChangeSignoffsView, \
     ProductRequiredSignoffScheduledChangeHistoryView, \
     PermissionsRequiredSignoffScheduledChangeView, \
-    EnactPermissionsRequiredSignoffScheduledChangeView, \
     PermissionsRequiredSignoffScheduledChangeSignoffsView, \
     PermissionsRequiredSignoffScheduledChangeHistoryView
 from auslib.web.admin.views.rules import RuleScheduledChangeSignoffsView, RuleScheduledChangeView, \
-    EnactRuleScheduledChangeView, RuleScheduledChangeHistoryView
+    RuleScheduledChangeHistoryView
 from auslib.dockerflow import create_dockerflow_endpoints
 
 
@@ -91,27 +88,22 @@ Compress(app)
 # hosted at "/api", which is stripped away by the web server before we see
 # these requests.
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>", view_func=RuleScheduledChangeView.as_view("scheduled_change_rules"))
-app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/enact", view_func=EnactRuleScheduledChangeView.as_view("enact_scheduled_change_rules"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/signoffs", view_func=RuleScheduledChangeSignoffsView.as_view("scheduled_change_rules_signoffs"))
 app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/revisions", view_func=RuleScheduledChangeHistoryView.as_view("scheduled_change_rules_history"))
 
 app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>", view_func=PermissionScheduledChangeView.as_view("scheduled_change_permissions"))
-app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/enact", view_func=EnactPermissionScheduledChangeView.as_view("enact_scheduled_change_permissions"))
 app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/signoffs",
                  view_func=PermissionScheduledChangeSignoffsView.as_view("scheduled_change_permissions_signoffs"))
 app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/revisions",
                  view_func=PermissionScheduledChangeHistoryView.as_view("scheduled_change_permissions_history"))
 
 app.add_url_rule("/scheduled_changes/releases/<int:sc_id>", view_func=ReleaseScheduledChangeView.as_view("scheduled_change_releases"))
-app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/enact", view_func=EnactReleaseScheduledChangeView.as_view("enact_scheduled_change_releases"))
 app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/signoffs", view_func=ReleaseScheduledChangeSignoffsView.as_view("scheduled_change_release_signoffs"))
 app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/revisions",
                  view_func=ReleaseScheduledChangeHistoryView.as_view("scheduled_change_releases_history"))
 
 app.add_url_rule("/scheduled_changes/required_signoffs/product/<int:sc_id>",
                  view_func=ProductRequiredSignoffScheduledChangeView.as_view("scheduled_change_product_rs"))
-app.add_url_rule("/scheduled_changes/required_signoffs/product/<int:sc_id>/enact",
-                 view_func=EnactProductRequiredSignoffScheduledChangeView.as_view("enact_scheduled_change_product_rs"))
 app.add_url_rule("/scheduled_changes/required_signoffs/product/<int:sc_id>/signoffs",
                  view_func=ProductRequiredSignoffScheduledChangeSignoffsView.as_view("scheduled_change_product_rs_signoffs"))
 app.add_url_rule("/scheduled_changes/required_signoffs/product/<int:sc_id>/revisions",
@@ -119,8 +111,6 @@ app.add_url_rule("/scheduled_changes/required_signoffs/product/<int:sc_id>/revis
 
 app.add_url_rule("/scheduled_changes/required_signoffs/permissions/<int:sc_id>",
                  view_func=PermissionsRequiredSignoffScheduledChangeView.as_view("scheduled_change_permissions_rs"))
-app.add_url_rule("/scheduled_changes/required_signoffs/permissions/<int:sc_id>/enact",
-                 view_func=EnactPermissionsRequiredSignoffScheduledChangeView.as_view("enact_scheduled_change_permissions_rs"))
 app.add_url_rule("/scheduled_changes/required_signoffs/permissions/<int:sc_id>/signoffs",
                  view_func=PermissionsRequiredSignoffScheduledChangeSignoffsView.as_view("scheduled_change_permissions_rs_signoffs"))
 app.add_url_rule("/scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions",

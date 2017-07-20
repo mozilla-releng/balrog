@@ -361,6 +361,8 @@ class RuleScheduledChangeView(ScheduledChangeView):
 
 
 class EnactRuleScheduledChangeView(EnactScheduledChangeView):
+    """/scheduled_changes/rules/<int:sc_id>/enact"""
+
     def __init__(self):
         super(EnactRuleScheduledChangeView, self).__init__("rules", dbo.rules)
 
