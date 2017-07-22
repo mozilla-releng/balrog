@@ -205,6 +205,8 @@ class EnactPermissionScheduledChangeView(EnactScheduledChangeView):
 
 
 class PermissionScheduledChangeSignoffsView(SignoffsView):
+    """/scheduled_changes/permissions/<int:sc_id>/signoffs"""
+
     def __init__(self):
         super(PermissionScheduledChangeSignoffsView, self).__init__("permissions", dbo.permissions)
 

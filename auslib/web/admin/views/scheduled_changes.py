@@ -3,11 +3,10 @@ import connexion
 from sqlalchemy.sql.expression import null
 
 from flask import jsonify, Response
-from flask_wtf import Form
 
 from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.web.admin.views.base import AdminView, requirelogin
-from auslib.web.admin.views.forms import DbEditableForm, SignoffForm
+from auslib.web.admin.views.forms import DbEditableForm
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 
@@ -153,12 +152,8 @@ class SignoffsView(AdminView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        form = SignoffForm()
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
-
-        self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **form.data)
+        what = {"role": connexion.request.json.get("role")}
+        self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **what)
         return Response(status=200)
 
     @requirelogin
@@ -167,8 +162,21 @@ class SignoffsView(AdminView):
         where = {"sc_id": sc_id, "username": username}
         signoff = self.signoffs_table.select(where, transaction)
         if not signoff:
+<<<<<<< HEAD
             return Response(status=404, response="{} has no signoff to revoke".format(changed_by))
 
+||||||| merged common ancestors
+            return Response(status=404, response="{} has no signoff to revoke".format(changed_by))
+
+        form = Form(connexion.request.args)
+        if not form.validate():
+            self.log.warning("Bad input: %s", form.errors)
+            return Response(status=400, response=json.dumps(form.errors))
+
+=======
+            return problem(404, "Not Found", "{} has no signoff to revoke".format(changed_by))
+
+>>>>>>> Bug 1336452: Scheduled Changes SignOff APIs
         self.signoffs_table.delete(where, changed_by=changed_by, transaction=transaction)
         return Response(status=200)
 

@@ -582,6 +582,8 @@ class EnactReleaseScheduledChangeView(EnactScheduledChangeView):
 
 
 class ReleaseScheduledChangeSignoffsView(SignoffsView):
+    """/scheduled_changes/releases/<int:sc_id>/signoffs"""
+
     def __init__(self):
         super(ReleaseScheduledChangeSignoffsView, self).__init__("releases", dbo.releases)
 

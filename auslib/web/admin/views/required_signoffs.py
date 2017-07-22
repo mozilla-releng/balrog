@@ -177,6 +177,8 @@ class EnactProductRequiredSignoffScheduledChangeView(EnactScheduledChangeView):
 
 
 class ProductRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
+    """/scheduled_changes/required_signoffs/product/<int:sc_id>/signoffs"""
+
     def __init__(self):
         super(ProductRequiredSignoffScheduledChangeSignoffsView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
 
@@ -284,6 +286,8 @@ class EnactPermissionsRequiredSignoffScheduledChangeView(EnactScheduledChangeVie
 
 
 class PermissionsRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
+    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/signoffs"""
+
     def __init__(self):
         super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
 
