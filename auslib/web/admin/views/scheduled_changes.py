@@ -164,15 +164,16 @@ class SignoffsView(AdminView):
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
-        where = {"sc_id": sc_id}
-        signoff = self.signoffs_table.select(where, transaction)
-        if not signoff:
-            return Response(status=404, response="{} has no signoff to revoke".format(changed_by))
-
         form = Form(request.args)
         if not form.validate():
             self.log.warning("Bad input: %s", form.errors)
             return Response(status=400, response=json.dumps(form.errors))
+
+        username = request.args.get("username", changed_by)
+        where = {"sc_id": sc_id, "username": username}
+        signoff = self.signoffs_table.select(where, transaction)
+        if not signoff:
+            return Response(status=404, response="{} has no signoff to revoke".format(changed_by))
 
         self.signoffs_table.delete(where, changed_by=changed_by, transaction=transaction)
         return Response(status=200)
