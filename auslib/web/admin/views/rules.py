@@ -10,8 +10,6 @@ from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
 from auslib.web.admin.views.csrf import get_csrf_headers
-from auslib.web.admin.views.forms import EditScheduledChangeNewRuleForm, \
-    EditScheduledChangeExistingRuleForm, EditScheduledChangeDeleteRuleForm
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
@@ -336,26 +334,54 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
 
 class RuleScheduledChangeView(ScheduledChangeView):
+    """/scheduled_changes/rules/<int:sc_id>"""
+
     def __init__(self):
         super(RuleScheduledChangeView, self).__init__("rules", dbo.rules)
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if connexion.request.get_json() and connexion.request.get_json().get("data_version"):
-            if connexion.request.get_json().get("change_type") == "delete":
-                form = EditScheduledChangeDeleteRuleForm()
-            else:
-                form = EditScheduledChangeExistingRuleForm()
+        # TODO: modify UI and clients to stop sending 'change_type' in request body
+        sc_rule = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+        if sc_rule:
+            change_type = sc_rule[0]["change_type"]
         else:
-            form = EditScheduledChangeNewRuleForm()
+            return problem(404, "Not Found", "Unknown sc_id",
+                           ext={"exception": "No scheduled change for rule found for given sc_id"})
 
-        if connexion.request.get_json().get("change_type") != "delete":
-            release_names = dbo.releases.getReleaseNames(transaction=transaction)
+        what = {}
+        for field in connexion.request.get_json():
+            # Unlike when scheduling a new change to an existing rule, rule_id is not
+            # required (or even allowed) when modifying a scheduled change for an
+            # existing rule. Allowing it to be modified would be confusing.
+            if (field in ["csrf_token", "rule_id"] or (change_type == "insert" and field == "data_version") or
+                    (change_type == "delete" and field not in ["sc_data_version", "when", "telemetry_product",
+                                                               "telemetry_channel", "telemetry_uptake"])):
+                continue
 
-            form.mapping.choices = [(item['name'], item['name']) for item in release_names]
-            form.mapping.choices.insert(0, ('', 'NULL'))
+            what[field] = connexion.request.get_json()[field]
 
-        return super(RuleScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+        if change_type == "update" and not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+        if change_type == "insert":
+            # edit scheduled change for new rule
+            for field in ["update_type", "backgroundRate", "priority"]:
+                if field in what and not what.get(field):
+                    return problem(400, "Bad Request", "Null/Empty Value",
+                                   ext={"exception": "%s cannot be set to null "
+                                                     "when scheduling insertion of a new rule" % field})
+
+        elif change_type in ["update", "insert"]:
+            rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
+            what = rule_dict
+            if what.get('mapping') is not None and len(mapping_values) != 1:
+                return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
+
+            if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
+                return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
+
+        return super(RuleScheduledChangeView, self)._post(sc_id, what, transaction, changed_by)
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):

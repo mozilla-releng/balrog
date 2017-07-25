@@ -296,6 +296,17 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledUnknownScheduledChangeID(self):
+        data = {
+            "signoffs_required": 1, "data_version": 1, "sc_data_version": 1, "when": 200000000,
+        }
+        ret = self._post("/scheduled_changes/required_signoffs/product/98765432", data=data)
+        self.assertEquals(ret.status_code, 404, ret.data)
+
+        ret = self._post("/scheduled_changes/required_signoffs/permissions/98765432", data=data)
+        self.assertEquals(ret.status_code, 404, ret.data)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingRequiredSignoff(self):
         data = {
             "signoffs_required": 1, "data_version": 1, "sc_data_version": 1, "when": 200000000,

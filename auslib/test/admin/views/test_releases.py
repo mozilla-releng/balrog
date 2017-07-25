@@ -1233,6 +1233,15 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledUnknownScheduledChangeID(self):
+        data = {
+            "data": '{"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "a",
+            "data_version": 1, "sc_data_version": 1, "when": 78900000000, "change_type": "update",
+        }
+        ret = self._post("/scheduled_changes/releases/98765432", data=data)
+        self.assertEquals(ret.status_code, 404, ret.data)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingRelease(self):
         data = {
             "data": '{"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "a",

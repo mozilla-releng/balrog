@@ -4,8 +4,6 @@ from flask import Response, jsonify
 from auslib.web.admin.views.problem import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import requirelogin, AdminView
-from auslib.web.admin.views.forms import EditScheduledChangeNewPermissionForm,\
-    EditScheduledChangeExistingPermissionForm
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
@@ -172,17 +170,46 @@ class PermissionScheduledChangesView(ScheduledChangesView):
 
 
 class PermissionScheduledChangeView(ScheduledChangeView):
+    """/scheduled_changes/permissions/<int:sc_id>"""
+
     def __init__(self):
         super(PermissionScheduledChangeView, self).__init__("permissions", dbo.permissions)
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if connexion.request.get_json() and connexion.request.get_json().get("data_version"):
-            form = EditScheduledChangeExistingPermissionForm()
+        # TODO: modify UI and clients to stop sending 'change_type' in request body
+        sc_permission = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+        if sc_permission:
+            change_type = sc_permission[0]["change_type"]
         else:
-            form = EditScheduledChangeNewPermissionForm()
+            return problem(404, "Not Found", "Unknown sc_id",
+                           ext={"exception": "No scheduled change for permission found for given sc_id"})
 
-        return super(PermissionScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+        # TODO: UI passes too many extra non-required fields apart from 'change_type' in request body
+        # Only required fields must be passed to DB layer
+        what = {}
+        for field in connexion.request.get_json():
+
+            # When editing an existing Scheduled Change for a Permission only options may be
+            # provided. Because edits are identified by sc_id (in the URL), permission and username
+            # are not required (nor allowed, because they are PK fields).
+            if change_type in ["update", "delete"] and \
+                    field not in ["when", "options", "data_version", "sc_data_version"]:
+                continue
+            # When editing an existing Scheduled Change for a new Permission, any field
+            # may be changed.
+            if change_type == "insert" and \
+                    field not in ["when", "options", "permission", "username", "sc_data_version"]:
+                continue
+            what[field] = connexion.request.get_json()[field]
+
+        if change_type in ["update", "delete"] and not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+        if what.get("options", None):
+            what["options"] = json.loads(what["options"])
+
+        return super(PermissionScheduledChangeView, self)._post(sc_id, what, transaction, changed_by)
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):

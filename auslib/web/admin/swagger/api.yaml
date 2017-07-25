@@ -2034,6 +2034,72 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
+  /scheduled_changes/rules/{sc_id}:
+    post:
+      summary: Modifies existing scheduled change for a Rule.
+      description: >
+        Modifies existing scheduled change for a rule. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: "Modifies existing scheduled change for a Rule."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - name: sc_rule_body
+          in: body
+          description: request body for editing sc rule
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCChangeType'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/SCUptake'
+              - $ref: '#/definitions/SCDataVersion'
+              - $ref: '#/definitions/RulesNonNullable'
+              - $ref: '#/definitions/RulesBase'
+      responses:
+        '200':
+          $ref: '#/responses/updateExistingObject'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    delete:
+      summary: Deletes the given Scheduled Change for the Rule.
+      description: >
+        Deletes the given Scheduled Change for the named Rule object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: Deletes the given Scheduled Change for the Rule.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the given scheduled change.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
   /scheduled_changes/permissions:
     get:
       summary: Returns scheduled changes for permissions.
@@ -2080,6 +2146,8 @@ paths:
                         - change_type
                         - data_version
                         - when
+                        - permission
+                        - username
     post:
       summary: create scheduled change for permissions.
       description: >
@@ -2111,6 +2179,8 @@ paths:
               - $ref: '#/definitions/OptionsJSON'
             required:
               - change_type
+              - permission
+              - username
       responses:
         '200':
           description: Returns sc_id of change
@@ -2118,6 +2188,71 @@ paths:
             $ref: '#/definitions/SCIdModel'
         '400':
           $ref: '#/responses/invalidFormData'
+
+  /scheduled_changes/permissions/{sc_id}:
+    post:
+      summary: Modifies existing scheduled change for a Permission.
+      description: >
+        Modifies existing scheduled change for a permission. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: "Modifies existing scheduled change for a Permission."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - name: sc_permission_body
+          in: body
+          description: request body for editing sc permission
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/SCDataVersion'
+              - $ref: "#/definitions/DataVersionModel"
+              - $ref: '#/definitions/OptionsJSON'
+              - $ref: '#/definitions/PermissionsModel'
+      responses:
+        '200':
+          $ref: '#/responses/updateExistingObject'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    delete:
+      summary: Deletes the given Scheduled Change for the Permission.
+      description: >
+        Deletes the given Scheduled Change for the named Permission object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: Deletes the given Scheduled Change for the Permission.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the given scheduled change.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /scheduled_changes/releases:
     get:
@@ -2227,6 +2362,72 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
+  /scheduled_changes/releases/{sc_id}:
+    post:
+      summary: Modifies existing scheduled change for a Release.
+      description: >
+        Modifies existing scheduled change for a release. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: "Modifies existing scheduled change for a Release."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - name: sc_release_body
+          in: body
+          description: request body for editing sc release
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/SCDataVersion'
+              - $ref: "#/definitions/DataVersionModel"
+              - $ref: '#/definitions/ReleaseDataField'
+              - $ref: '#/definitions/ProductModel'
+              - $ref: '#/definitions/ReleaseName'
+      responses:
+        '200':
+          $ref: '#/responses/updateExistingObject'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    delete:
+      summary: Deletes the given Scheduled Change for the Release.
+      description: >
+        Deletes the given Scheduled Change for the named Release object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: Deletes the given Scheduled Change for the Release.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the given scheduled change.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
   /scheduled_changes/required_signoffs/product:
     get:
       summary: Returns scheduled changes for required signoffs of Products.
@@ -2305,6 +2506,7 @@ paths:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
+              # TODO: UI passes data_version as 'null' for change_type == 'insert'. It shouldn't pass it at all in request body. Fix it and change the below model to 'DataVersionModel'
               - $ref: '#/definitions/DataVersionNullable'
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/RoleModel'
@@ -2322,6 +2524,73 @@ paths:
             $ref: '#/definitions/SCIdModel'
         '400':
           $ref: '#/responses/invalidFormData'
+
+  /scheduled_changes/required_signoffs/product/{sc_id}:
+    post:
+      summary: Modifies existing scheduled change for a Product Required Signoff.
+      description: >
+        Modifies existing scheduled change for a Product Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: "Modifies existing scheduled change for a Product Required Signoff."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - name: sc_product_rs_body
+          in: body
+          description: request body for editing sc product required signoff
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/SCDataVersion'
+              - $ref: "#/definitions/DataVersionModel"
+              - $ref: '#/definitions/ProductModel'
+              - $ref: '#/definitions/RoleModel'
+              - $ref: '#/definitions/ChannelModel'
+              - $ref: '#/definitions/SignoffsRequiredModel'
+      responses:
+        '200':
+          $ref: '#/responses/updateExistingObject'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    delete:
+      summary: Deletes the given Scheduled Change for the Product Required Signoff.
+      description: >
+        Deletes the given Scheduled Change for the named Product Required Signoff object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: Deletes the given Scheduled Change for the Product Required Signoff.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the given scheduled change.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /scheduled_changes/required_signoffs/permissions:
     get:
@@ -2399,6 +2668,7 @@ paths:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
+              # TODO: UI passes data_version as 'null' for change_type == 'insert'. It shouldn't pass it at all in request body. Fix it and change the below model to 'DataVersionModel'
               - $ref: '#/definitions/DataVersionNullable'
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/RoleModel'
@@ -2414,6 +2684,72 @@ paths:
             $ref: '#/definitions/SCIdModel'
         '400':
           $ref: '#/responses/invalidFormData'
+
+  /scheduled_changes/required_signoffs/permissions/{sc_id}:
+    post:
+      summary: Modifies existing scheduled change for a Permission Required Signoff.
+      description: >
+        Modifies existing scheduled change for a Permission Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_post
+      consumes:
+        - application/json
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: "Modifies existing scheduled change for a Permission Required Signoff."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - name: sc_permission_rs_body
+          in: body
+          description: request body for editing sc permission required signoff
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/SCDataVersion'
+              - $ref: "#/definitions/DataVersionModel"
+              - $ref: '#/definitions/ProductModel'
+              - $ref: '#/definitions/RoleModel'
+              - $ref: '#/definitions/SignoffsRequiredModel'
+      responses:
+        '200':
+          $ref: '#/responses/updateExistingObject'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    delete:
+      summary: Deletes the given Scheduled Change for the Permission Required Signoff.
+      description: >
+        Deletes the given Scheduled Change for the named Permission Required Signoff object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_delete
+      consumes: []
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: Deletes the given Scheduled Change for the Permission Required Signoff.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the given scheduled change.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /scheduled_changes/rules/{sc_id}/enact:
     post:
@@ -2937,9 +3273,6 @@ definitions:
     title: Permissions
     description: User Permissions JSON field model.
     type: object
-    required:
-      - permission
-      - username
     properties:
       permission:
         description: Permission name

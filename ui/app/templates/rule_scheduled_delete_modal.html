@@ -26,6 +26,12 @@
         </ul>
         <p class="help-block" ng-show="errors.when">{{ errors.when.join(', ') }}</p>
       </div>
+      <div class="form-group" ng-class="{'has-error': errors.exception}">
+        <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>
+      </div>
+      <div class="form-group" ng-class="{'has-error': errors.detail}">
+        <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
+      </div>
     </div>
 
     <input type="hidden" class="form-control" id="id_rule_id" ng-model="sc.rule_id">

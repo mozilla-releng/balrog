@@ -1258,6 +1258,15 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(ret.status_code, 400, ret.data)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateUnknownScheduledChangeID(self):
+        data = {
+            "when": 2000000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d",
+            "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
+        }
+        ret = self._post("/scheduled_changes/rules/9876", data=data)
+        self.assertEquals(ret.status_code, 404, ret.data)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChange(self):
         data = {
             "when": 2000000, "data_version": 1, "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d",

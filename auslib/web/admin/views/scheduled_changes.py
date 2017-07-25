@@ -5,7 +5,6 @@ from sqlalchemy.sql.expression import null
 from flask import jsonify, Response
 
 from auslib.web.admin.views.base import AdminView, requirelogin
-from auslib.web.admin.views.forms import DbEditableForm
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
@@ -86,32 +85,18 @@ class ScheduledChangeView(AdminView):
         self.sc_table = table.scheduled_changes
         super(ScheduledChangeView, self).__init__()
 
-    def _post(self, sc_id, form, transaction, changed_by):
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
+    def _post(self, sc_id, what, transaction, changed_by):
+        if is_when_present_and_in_past_validator(what):
+            return problem(400, "Bad Request", "Changes may not be scheduled in the past")
 
-        what = dict()
-        # We need to be able to support changing AND removing things
-        # and because of how Flask's request object and WTForm's defaults work
-        # this gets a little hairy.
-        for k, v in form._fields.iteritems():
-            # sc_data_version is a "special" column, in that it's not part of the
-            # primary data, and shouldn't be updatable by the user.
-            if k == "sc_data_version":
-                continue
-            # If the key is not present in the request we treat it as a no-op
-            # and shouldn't modify the data for that key.
-            # If the key is present we should modify the data as requested.
-            # If a value is an empty string, we should remove that restriction
-            # from the rule (aka, set as NULL in the db). The underlying Form
-            # will have already converted it to None, so we can treat it the
-            # same as a modification here.
-            if connexion.request.get_json() and k in connexion.request.get_json():
-                what[k] = v.data
+        if what.get("data_version", None):
+            what["data_version"] = int(what["data_version"])
+
+        old_sc_data_version = int(what.get("sc_data_version"))
+        what.pop("sc_data_version")
 
         where = {"sc_id": sc_id}
-        self.sc_table.update(where, what, changed_by, form.sc_data_version.data, transaction)
+        self.sc_table.update(where, what, changed_by, old_sc_data_version, transaction)
         sc = self.sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
         return jsonify(new_data_version=sc["data_version"])
 
@@ -119,10 +104,12 @@ class ScheduledChangeView(AdminView):
         where = {"sc_id": sc_id}
         sc = self.sc_table.select(where, transaction, columns=["sc_id"])
         if not sc:
-            return Response(status=404, response="Scheduled change does not exist")
+            return problem(404, "Bad Request", "Scheduled change does not exist")
 
-        form = DbEditableForm(connexion.request.args)
-        self.sc_table.delete(where, changed_by, form.data_version.data, transaction)
+        if not connexion.request.args.get("data_version", None):
+            return problem(400, "Bad Request", "data_version is missing")
+
+        self.sc_table.delete(where, changed_by, int(connexion.request.args.get("data_version")), transaction)
         return Response(status=200)
 
 
