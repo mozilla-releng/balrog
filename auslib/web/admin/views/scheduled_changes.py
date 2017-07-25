@@ -4,11 +4,11 @@ from sqlalchemy.sql.expression import null
 
 from flask import jsonify, Response
 
-from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.web.admin.views.base import AdminView, requirelogin
 from auslib.web.admin.views.forms import DbEditableForm
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
+from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
 
 
 class ScheduledChangesView(AdminView):
@@ -66,10 +66,7 @@ class ScheduledChangesView(AdminView):
         return jsonify(ret)
 
     def _post(self, what, transaction, changed_by):
-        what.pop("csrf_token", None)
-
-        # Validate 'when' is not in past
-        if what.get("when", None) and int(what.get("when")) < getMillisecondTimestamp():
+        if is_when_present_and_in_past_validator(what):
             return problem(400, "Bad Request", "Changes may not be scheduled in the past")
 
         sc_id = self.sc_table.insert(changed_by, transaction, **what)
@@ -162,21 +159,8 @@ class SignoffsView(AdminView):
         where = {"sc_id": sc_id, "username": username}
         signoff = self.signoffs_table.select(where, transaction)
         if not signoff:
-<<<<<<< HEAD
             return Response(status=404, response="{} has no signoff to revoke".format(changed_by))
 
-||||||| merged common ancestors
-            return Response(status=404, response="{} has no signoff to revoke".format(changed_by))
-
-        form = Form(connexion.request.args)
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
-
-=======
-            return problem(404, "Not Found", "{} has no signoff to revoke".format(changed_by))
-
->>>>>>> Bug 1336452: Scheduled Changes SignOff APIs
         self.signoffs_table.delete(where, changed_by=changed_by, transaction=transaction)
         return Response(status=200)
 

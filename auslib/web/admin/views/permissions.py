@@ -150,26 +150,26 @@ class PermissionScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        what = connexion.request.json
-        change_type = what.get("change_type")
+        change_type = connexion.request.json.get("change_type")
+        connexion.request.json.pop("csrf_token", None)
 
-        if what.get("options"):
+        what = {}
+        for field in connexion.request.json:
+            if change_type == "delete" and field == "options" or change_type == "insert" and field == "data_version":
+                continue
+
+            what[field] = connexion.request.json[field]
+
+        if what.get("options", None):
             what["options"] = json.loads(what.get("options"))
 
         if change_type in ["update", "delete"]:
             if not what.get("data_version", None):
-                return problem(400, "Bad Request", "data_version is missing")
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
             else:
-                what["data_version"] = int(what.get("data_version"))
+                what["data_version"] = int(what["data_version"])
 
-            # Safety check: Remove 'options' if passed in "delete" change type request.
-            if change_type == "delete":
-                what.pop("options", None)
-
-        elif change_type == "insert":
-            # Safety check: Remove data_version if passed in "insert" change type request.
-            what.pop("data_version", None)
-        else:
+        elif change_type != "insert":
             return problem(400, "Bad Request", "Invalid or missing change_type")
 
         return super(PermissionScheduledChangesView, self)._post(what, transaction, changed_by)

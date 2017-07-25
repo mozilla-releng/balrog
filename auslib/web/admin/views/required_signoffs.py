@@ -117,28 +117,33 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        what = connexion.request.json
-        change_type = what.get("change_type")
+        change_type = connexion.request.json.get("change_type")
+        connexion.request.json.pop("csrf_token", None)
+
+        what = {}
+        for field in connexion.request.json:
+            if change_type == "insert" and field == "data_version":
+                continue
+            what[field] = connexion.request.json[field]
 
         if change_type == "update":
             for field in ["signoffs_required", "data_version"]:
                 if not what.get(field, None):
-                    return problem(400, "Bad Request", "%s is missing" % field)
+                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
                 else:
-                    what[field] = int(what.get(field))
+                    what[field] = int(what[field])
 
         elif change_type == "insert":
             if not what.get("signoffs_required", None):
-                return problem(400, "Bad Request", "signoffs_required is missing")
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "signoffs_required is missing"})
             else:
-                what["signoffs_required"] = int(what.get("signoffs_required"))
-            what.pop("data_version", None)
+                what["signoffs_required"] = int(what["signoffs_required"])
 
         elif change_type == "delete":
             if not what.get("data_version", None):
-                return problem(400, "Bad Request", "data_version is missing")
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
             else:
-                what["data_version"] = int(what.get("data_version"))
+                what["data_version"] = int(what["data_version"])
 
         else:
             self.log.warning("Bad input: %s", change_type)
@@ -226,28 +231,33 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        what = connexion.request.json
-        change_type = what.get("change_type")
+        change_type = connexion.request.json.get("change_type")
+        connexion.request.json.pop("csrf_token", None)
+
+        what = {}
+        for field in connexion.request.json:
+            if change_type == "insert" and field == "data_version":
+                continue
+            what[field] = connexion.request.json[field]
 
         if change_type == "update":
             for field in ["signoffs_required", "data_version"]:
                 if not what.get(field, None):
-                    return problem(400, "Bad Request", "%s is missing" % field)
+                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
                 else:
-                    what[field] = int(what.get(field))
+                    what[field] = int(what[field])
 
         elif change_type == "insert":
             if not what.get("signoffs_required", None):
-                return problem(400, "Bad Request", "signoffs_required is missing")
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "signoffs_required is missing"})
             else:
-                what["signoffs_required"] = int(what.get("signoffs_required"))
-            what.pop("data_version", None)
+                what["signoffs_required"] = int(what["signoffs_required"])
 
         elif change_type == "delete":
             if not what.get("data_version", None):
-                return problem(400, "Bad Request", "data_version is missing")
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
             else:
-                what["data_version"] = int(what.get("data_version"))
+                what["data_version"] = int(what["data_version"])
 
         else:
             self.log.warning("Bad input: %s", change_type)

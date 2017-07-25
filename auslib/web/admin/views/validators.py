@@ -3,6 +3,7 @@ from jsonschema.compat import str_types
 # To be able to Differentitate from wftForms.ValidationError.
 from jsonschema import ValidationError as JsonSchemaValidationError
 from auslib.util.comparison import get_op
+from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.util.versions import MozillaVersion
 from connexion.decorators.validation import RequestBodyValidator
 from connexion.utils import is_null
@@ -164,3 +165,9 @@ def signoffs_required_validator(field_value):
     if field_value is not None and field_value != '':
         logger.debug('starting in signoffs_required_validator: signoffs_required is %s' % field_value)
     return integer_and_range_validator("signoffs_required", field_value, 1)
+
+
+def is_when_present_and_in_past_validator(what):
+    """Validates if scheduled_change_time value i.e. 'when' field value is present in
+    input dictionary/object and if its value is in past or not"""
+    return what.get("when", None) and int(what.get("when")) < getMillisecondTimestamp()

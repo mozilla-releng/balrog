@@ -294,9 +294,31 @@ class RuleScheduledChangesView(ScheduledChangesView):
             change_type = connexion.request.json.get("change_type")
         else:
             change_type = connexion.request.values.get("change_type")
-        what = connexion.request.json
+
+        connexion.request.json.pop("csrf_token", None)
+        what = {}
+        for field in connexion.request.json:
+            if change_type == "insert" and field in ["rule_id", "data_version"]:
+                continue
+
+            if field in ["rule_id", "data_version"]:
+                what[field] = int(connexion.request.json[field])
+            else:
+                what[field] = connexion.request.json[field]
 
         # Explicit checks for each change_type
+        if change_type in ["update", "delete"]:
+            for field in ["rule_id", "data_version"]:
+                if not what.get(field, None):
+                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
+
+        elif change_type == "insert":
+            for field in ["update_type", "backgroundRate", "priority"]:
+                if not what.get(field, None):
+                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
+        else:
+            return problem(400, "Bad Request", "Invalid or missing change_type")
+
         if change_type in ["update", "insert"]:
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
@@ -306,29 +328,13 @@ class RuleScheduledChangesView(ScheduledChangesView):
             if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
-        if change_type in ["update", "delete"]:
-            for field in ["rule_id", "data_version"]:
-                if not what.get(field, None):
-                    return problem(400, "Bad Request", "%s is missing" % field)
-                else:
-                    what[field] = int(what.get(field))
-
-            if change_type == "delete":
-                what.pop("csrf_token", None)
-                for key in what:
-                    if key not in ["telemetry_product", "telemetry_channel", "telemetry_uptake", "when", "rule_id",
-                                   "data_version", "change_type"]:
-                        return problem(400, "Bad Request", "{} isn't required when scheduling a 'delete' change"
-                                       .format(key))
-        elif change_type == "insert":
-            for field in ["update_type", "backgroundRate", "priority"]:
-                if not what.get(field):
-                    return problem(400, "Bad Request", "%s is missing" % field)
-            # Delete rule_id and data_version if accidentally passed in request.json when scheduling new rule change
-            what.pop("rule_id", None)
-            what.pop("data_version", None)
-        else:
-            return problem(400, "Bad Request", "Invalid or missing change_type")
+        # TODO: currently UI passes extra rule model fields in change_type == 'delete' request body. Fix it and
+        # TODO: change the below operation from filter/pop to throw Error when extra fields are passed.
+        elif change_type == "delete":
+            for key in list(what):
+                if key not in ["telemetry_product", "telemetry_channel", "telemetry_uptake", "when", "rule_id",
+                               "data_version", "change_type"]:
+                    what.pop(key, None)
 
         return super(RuleScheduledChangesView, self)._post(what, transaction, changed_by)
 
