@@ -115,8 +115,13 @@ class ReleaseBlobBase(Blob):
         if isForbiddenUrl(url, updateQuery['product'], whitelistedDomains):
             return None
 
-        return '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
+        patchXML = '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"' % \
             (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
+        proof = self._getProof(patch)
+        patchXML += proof
+        patchXML += '/>'
+
+        return patchXML
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         buildTarget = updateQuery["buildTarget"]
@@ -888,6 +893,52 @@ class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 7
+
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        referencedReleases = set()
+        for platform in self.get('platforms', {}):
+            for locale in self['platforms'][platform].get('locales', {}):
+                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
+                    referencedReleases.add(
+                        partial['from']
+                    )
+        for fileUrlKey in self.get('fileUrls', {}):
+            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+                referencedReleases.add(partial)
+
+        return referencedReleases
+
+
+class ProofXMLMixin(object):
+
+    def _getProof(self, patch):
+        if 'proof' in patch:
+            proof = ' proof="%s"' % patch["proof"]
+        else:
+            proof = ''
+
+        return proof
+
+
+class ReleaseBlobV8(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin, ProofXMLMixin):
+    jsonschema = "apprelease-v8.yml"
+
+    # for the benefit of get*XML
+    optional_ = ('showPrompt', 'showNeverForVersion',
+                 'actions', 'openURL', 'notificationURL', 'alertURL',
+                 'promptWaitTime', 'backgroundInterval')
+    # params that can have %LOCALE% interpolated
+    interpolable_ = ('openURL', 'notificationURL', 'alertURL')
+
+    def __init__(self, **kwargs):
+        # ensure schema_version is set if we init ReleaseBlobV8 directly
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 8
 
     def getReferencedReleases(self):
         """
