@@ -61,14 +61,17 @@ elif [ $1 == "extract-active-data" ]; then
 elif [ $1 == "test" ]; then
     shift
     rc=0
+    coveralls=0
     if [[ $1 == "backend" ]]; then
         shift
+        coveralls=1
         run_back_end_tests $@
         rc=$?
     elif [[ $1 == "frontend" ]]; then
         run_front_end_tests
         rc=$?
     else
+        coveralls=1
         run_back_end_tests $@
         backend_rc=$?
         run_front_end_tests
@@ -83,13 +86,14 @@ elif [ $1 == "test" ]; then
             exit 1
         fi
     fi
-    if [[ $GITHUB_HEAD_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
+    # Only send coverage data for the authoritative Balrog repo.
+    if [[ $coveralls == 1 && $GITHUB_BASE_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
     then
-      password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:coveralls"
-      repo_token=$(curl ${password_url} | python -c 'import json, sys; a = json.load(sys.stdin); print a["secret"]["repo_token"]')
-      echo 'repo_token:' $repo_token >> .coveralls.yml
-      coveralls
-      echo "Coverage successfully sent to coveralls.io"
+        # COVERALLS_REPO_TOKEN is already in the environment
+        export CIRCLECI=1
+        export CI_PULL_REQUEST=$GITHUB_PULL_REQUEST
+        cd /app
+        coveralls
     fi
     exit $rc
 else

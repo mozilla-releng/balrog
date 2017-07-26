@@ -8,6 +8,8 @@ metadata:
 tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
+    scopes:
+      - secrets:get:repo:github.com/mozilla/balrog:coveralls
     payload:
       maxRunTime: 1200
       image: "rail/python-test-runner"
@@ -19,6 +21,7 @@ tasks:
         - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh backend"
       features:
         dind: true
+        taskclusterProxy: true
     extra:
       github:
         env: true
