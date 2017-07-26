@@ -84,6 +84,9 @@ class ReleaseBlobBase(Blob):
         else:
             return None
 
+    def _getProof(self, patch):
+        return ''
+
     def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
         fromRelease = self._getFromRelease(patch)
         # don't return an update if we don't match the from restriction
