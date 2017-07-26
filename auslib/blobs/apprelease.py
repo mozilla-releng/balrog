@@ -927,7 +927,7 @@ class ProofXMLMixin(object):
         return proof
 
 
-class ReleaseBlobV8(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin, ProofXMLMixin):
+class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
     jsonschema = "apprelease-v8.yml"
 
     # for the benefit of get*XML
