@@ -918,6 +918,7 @@ class TestRuleScheduledChanges(ViewTest):
         dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=2, changed_by="bill", timestamp=6, sc_id=3, when=2000000, data_version=1)
         dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=10, sc_id=3, when=2900000, data_version=2)
         dbo.rules.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="bill", role="releng")
+        dbo.rules.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="mary", role="relman")
 
         dbo.rules.scheduled_changes.t.insert().execute(
             sc_id=4, scheduled_by="bill", data_version=2, complete=True, base_rule_id=5, base_priority=80, base_version="3.3",
@@ -1007,7 +1008,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "product": None, "buildID": None, "locale": None, "osVersion": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "change_type": "insert", "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1},
                 },
                 {
                     "sc_id": 5, "when": 600000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 4, "priority": None,
@@ -1064,7 +1065,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "product": None, "buildID": None, "locale": None, "osVersion": None, "memory": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "change_type": "insert", "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1},
                 },
                 {
                     "sc_id": 4, "when": 500000, "scheduled_by": "bill", "complete": True, "sc_data_version": 2, "rule_id": 5, "priority": 80,
@@ -1331,7 +1332,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
             dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(rows), 1)
+        self.assertEquals(len(rows), 2)
         ret = self._post("/scheduled_changes/rules/3", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
 
@@ -1500,9 +1501,10 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(role="releng"), username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
         r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        db_data = dict(r[0])
-        self.assertEquals(db_data, {"sc_id": 3, "username": "bill", "role": "releng"})
+        self.assertEquals(len(r), 2)
+        db_data = [dict(row) for row in r]
+        self.assertIn({"sc_id": 3, "username": "bill", "role": "releng"}, db_data)
+        self.assertIn({"sc_id": 3, "username": "mary", "role": "relman"}, db_data)
 
     def testSignoffWithSecondRole(self):
         ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(role="qa"), username="bill")
@@ -1512,8 +1514,16 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._delete("/scheduled_changes/rules/3/signoffs", username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
         r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(r), 0)
+        self.assertEquals(len(r), 1)
 
-    def testRevokeOtherUsersSignoff(self):
-        ret = self._delete("/scheduled_changes/rules/3/signoffs", username="bob")
+    def testRevokeOtherUsersSignoffAsAdmin(self):
+        # The username passed to _delete is the user performing the action.
+        # The username in the query string is the person who's signoff we want to revoke.
+        ret = self._delete("/scheduled_changes/rules/3/signoffs", username="bill", qs={"username": "mary"})
+        self.assertEquals(ret.status_code, 200, ret.data)
+
+    def testCannotRevokeOtherUsersSignoffAsNormalUser(self):
+        # The username passed to _delete is the user performing the action.
+        # The username in the query string is the person who's signoff we want to revoke.
+        ret = self._delete("/scheduled_changes/rules/3/signoffs", username="julie", qs={"username": "mary"})
         self.assertEquals(ret.status_code, 403, ret.data)
