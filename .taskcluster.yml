@@ -12,7 +12,7 @@ tasks:
       - secrets:get:repo:github.com/mozilla/balrog:coveralls
     payload:
       maxRunTime: 1200
-      image: "rail/python-test-runner"
+      image: "mozillareleases/python-test-runner"
       env:
         NO_VOLUME_MOUNT: 1
       command:
@@ -40,7 +40,7 @@ tasks:
     workerType: "{{ taskcluster.docker.workerType }}"
     payload:
       maxRunTime: 1200
-      image: "rail/python-test-runner"
+      image: "mozillareleases/python-test-runner"
       env:
         NO_VOLUME_MOUNT: 1
       command:
@@ -67,7 +67,7 @@ tasks:
     workerType: "{{ taskcluster.docker.workerType }}"
     payload:
       maxRunTime: 1200
-      image: "rail/python-test-runner"
+      image: "mozillareleases/python-test-runner"
       env:
         NO_VOLUME_MOUNT: 1
       command:
@@ -122,7 +122,7 @@ tasks:
     workerType: "{{ taskcluster.docker.workerType }}"
     payload:
       maxRunTime: 1200
-      image: "rail/python-test-runner"
+      image: "mozillareleases/python-test-runner"
       env:
         NO_VOLUME_MOUNT: 1
       command:

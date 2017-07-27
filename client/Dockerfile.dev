@@ -1,5 +1,5 @@
 
-FROM rail/python-test-runner
+FROM mozillareleases/python-test-runner
 
 WORKDIR /app
 
