@@ -39,7 +39,7 @@ services:
         test: nc -z -v balrogadmin 7070
         interval: 5s
         timeout: 30s
-        retries: 10
+        retries: 50
 
 
   balrogpub:
