@@ -14,7 +14,7 @@ from auslib.web.public.base import app
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, \
     ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV7, ReleaseBlobV8, DesupportBlob, \
-    UnifiedFileUrlsMixin
+    UnifiedFileUrlsMixin, AdditionalPatchAttributesXMLMixin
 
 
 def setUpModule():
@@ -3176,3 +3176,36 @@ class TestUnifiedFileUrlsMixin(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.mixin_instance._getUrl(updateQuery, patchKey, patch, specialForceHosts)
+
+
+class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
+
+    def setUp(self):
+        self.mixin_instance = AdditionalPatchAttributesXMLMixin()
+
+    def testGetAdditionalPatchAttributesComplete(self):
+        patch = {
+            'hashValue': 'd456a23ff5a6b35146d9edf05ccc983b0b7b6695fdc11e8d4f44a704c63ae69a585c3429bb90fece5a34a59b06f54b1c947178b9038ce6c83a1b6ac8a86f4274',
+            'from': '*',
+            'filesize': 49376124,
+            'proof': 'foobar'
+        }
+
+        expected_additional_patch_attributes = {'proof': 'foobar'}
+        additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
+
+        self.assertEquals(expected_additional_patch_attributes, additionalPatchAttributes)
+
+
+    def testGetAdditionalPatchAttributesPartial(self):
+        patch = {
+            'hashValue': 'dffd728108a176b1aeca390a420200daa9272f246587f81fde41ad3f5c44bf6de17fb7899b4353e5cbaa8528ea389234890221188db5bb58588ad366c2be0676',
+            'from': 'Firefox-54.0b12-build1',
+            'filesize': 28264739,
+            'proof': 'foobar'
+        }
+
+        expected_additional_patch_attributes = {'proof': 'foobar'}
+        additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
+
+        self.assertEquals(expected_additional_patch_attributes, additionalPatchAttributes)

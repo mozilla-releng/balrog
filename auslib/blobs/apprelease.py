@@ -85,7 +85,7 @@ class ReleaseBlobBase(Blob):
             return None
 
     def _getAdditionalPatchAttributes(self, patch):
-        return {}
+        return {'proof': ''}
 
     def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
         fromRelease = self._getFromRelease(patch)
@@ -121,7 +121,7 @@ class ReleaseBlobBase(Blob):
         patchXML = '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"' % \
             (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
         additionalPatchAttributes = self._getAdditionalPatchAttributes(patch)
-        patchXML += additionalPatchAttributes.get('proof')
+        patchXML += additionalPatchAttributes['proof']
         patchXML += '/>'
 
         return patchXML
@@ -919,7 +919,7 @@ class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 class AdditionalPatchAttributesXMLMixin(object):
 
     def _getAdditionalPatchAttributes(self, patch):
-        additionalPatchAttributes = {}
+        additionalPatchAttributes = {'proof': ''}
 
         if 'proof' in patch:
             additionalPatchAttributes['proof'] = ' proof="%s"' % patch["proof"]
