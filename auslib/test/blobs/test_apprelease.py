@@ -3196,7 +3196,6 @@ class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
 
         self.assertEquals(expected_additional_patch_attributes, additionalPatchAttributes)
 
-
     def testGetAdditionalPatchAttributesPartial(self):
         patch = {
             'hashValue': 'dffd728108a176b1aeca390a420200daa9272f246587f81fde41ad3f5c44bf6de17fb7899b4353e5cbaa8528ea389234890221188db5bb58588ad366c2be0676',
