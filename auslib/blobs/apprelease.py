@@ -84,8 +84,8 @@ class ReleaseBlobBase(Blob):
         else:
             return None
 
-    def _getProof(self, patch):
-        return ''
+    def _getAdditionalPatchAttributes(self, patch):
+        return {}
 
     def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
         fromRelease = self._getFromRelease(patch)
@@ -120,8 +120,8 @@ class ReleaseBlobBase(Blob):
 
         patchXML = '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"' % \
             (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
-        proof = self._getProof(patch)
-        patchXML += proof
+        additionalPatchAttributes = self._getAdditionalPatchAttributes(patch)
+        patchXML += additionalPatchAttributes.get('proof')
         patchXML += '/>'
 
         return patchXML
@@ -916,18 +916,27 @@ class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         return referencedReleases
 
 
-class ProofXMLMixin(object):
+class AdditionalPatchAttributesXMLMixin(object):
 
-    def _getProof(self, patch):
+    def _getAdditionalPatchAttributes(self, patch):
+        additionalPatchAttributes = {}
+
         if 'proof' in patch:
-            proof = ' proof="%s"' % patch["proof"]
-        else:
-            proof = ''
+            additionalPatchAttributes['proof'] = ' proof="%s"' % patch["proof"]
 
-        return proof
+        return additionalPatchAttributes
 
 
-class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+class ReleaseBlobV8(AdditionalPatchAttributesXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+    """
+
+    Changes from ReleaseBlobV7:
+        * Adds support for ProofXMLMixin (ProofXMLMixin is placed as first parameter for inheritance preference)
+
+    For further information:
+        * https://bugzilla.mozilla.org/show_bug.cgi?id=1384296
+
+    """
     jsonschema = "apprelease-v8.yml"
 
     # for the benefit of get*XML
