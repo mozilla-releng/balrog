@@ -7,6 +7,7 @@ from xml.dom import minidom
 import json
 
 import auslib.web.public.client as client_api
+from auslib.web.public.client import update_query_version
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
@@ -906,6 +907,54 @@ class ClientTest(ClientTestBase):
                 ret = self.client.get(request)
                 self.assertEqual(ret.status_code, 404)
                 self.assertFalse(mock_cr_view.called)
+
+    def testUpdateQueryVersion(self):
+        version_key = 'queryVersion'
+        url_params = {}
+        update_query_version('/update/1/a/b/c.xml', url_params)
+        self.assertIn(version_key, url_params)
+        self.assertIn('osVersion', url_params)
+        self.assertEqual(url_params[version_key], 1)
+
+        url_params = {}
+        update_query_version('/update/2/a/b/c.xml', url_params)
+        self.assertIn(version_key, url_params)
+        self.assertEqual(url_params[version_key], 2)
+
+        url_params = {}
+        update_query_version('/update/3/a/b/c.xml', url_params)
+        self.assertIn(version_key, url_params)
+        self.assertEqual(url_params[version_key], 3)
+
+        url_params = {}
+        update_query_version('/update/4/a/b/c.xml', url_params)
+        self.assertIn(version_key, url_params)
+        self.assertEqual(url_params[version_key], 4)
+
+        url_params = {}
+        update_query_version('/update/5/a/b/c.xml', url_params)
+        self.assertIn(version_key, url_params)
+        self.assertEqual(url_params[version_key], 5)
+
+        url_params = {}
+        update_query_version('/update/6/a/b/c.xml', url_params)
+        self.assertIn(version_key, url_params)
+        self.assertEqual(url_params[version_key], 6)
+
+        url_params = {}
+        update_query_version('/update/7/a/b/c.xml', url_params)
+        self.assertIn(version_key, url_params)
+        self.assertEqual(url_params[version_key], 0)
+
+        url_params = {}
+        update_query_version('/update/x/a/b/c.xml', url_params)
+        self.assertIn(version_key, url_params)
+        self.assertEqual(url_params[version_key], 0)
+
+        url_params = {}
+        update_query_version('/update/x1/a/b/c.xml', url_params)
+        self.assertIn(version_key, url_params)
+        self.assertEqual(url_params[version_key], 0)
 
 
 class ClientTestWithErrorHandlers(ClientTestCommon):

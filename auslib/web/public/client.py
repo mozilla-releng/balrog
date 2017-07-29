@@ -93,7 +93,31 @@ def getQueryFromURL(url):
     return query
 
 
+def extract_query_version(request_url):
+    version = 0
+    pattern = '^.*/update/([1-6])/.*\.xml$'
+    match = re.match(pattern, request_url)
+    if match:
+        version = int(match.group(1))
+    return version
+
+
+def update_query_version(request_url, url_params):
+    version = extract_query_version(request_url)
+    defaults = {'queryVersion': version}
+
+    # Underlying code depends on osVersion being set. Since this route only
+    # exists to support ancient queries, and all newer versions have osVersion
+    # in them it's easier to set this here than make the all of the underlying
+    # code support queries without it.
+    if version == 1:
+        defaults['osVersion'] = ""
+
+    url_params.update(defaults)
+
+
 def get_update_blob(**url):
+    update_query_version(request.url, url)
     query = getQueryFromURL(url)
     LOG.debug("Got query: %s", query)
     release, update_type = AUS.evaluateRules(query)
