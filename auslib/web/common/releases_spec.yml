@@ -109,7 +109,7 @@ definitions:
       product:
         type: string
       read_only:
-        type: ['boolean', 'null']
+        type: boolean
       rule_ids:
         type: array
         items:

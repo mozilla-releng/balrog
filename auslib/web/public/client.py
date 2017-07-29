@@ -93,7 +93,30 @@ def getQueryFromURL(url):
     return query
 
 
+def update_url_version(url):
+    defaults = {}
+    if '/update/1/' in request.url:
+        # Underlying code depends on osVersion being set. Since this route only
+        # exists to support ancient queries, and all newer versions have osVersion
+        # in them it's easier to set this here than make the all of the underlying
+        # code support queries without it.
+        defaults = {"queryVersion": 2, "osVersion": ""}
+    elif '/update/2/' in request.url:
+        defaults = {'queryVersion': 2}
+    elif '/update/3/' in request.url:
+        defaults = {'queryVersion': 3}
+    elif '/update/4/' in request.url:
+        defaults = {'queryVersion': 4}
+    elif '/update/5/' in request.url:
+        defaults = {'queryVersion': 5}
+    elif '/update/6/' in request.url:
+        defaults = {'queryVersion': 6}
+
+    url.update(defaults)
+
+
 def get_update_blob(**url):
+    update_url_version(url)
     query = getQueryFromURL(url)
     LOG.debug("Got query: %s", query)
     release, update_type = AUS.evaluateRules(query)
