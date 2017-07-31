@@ -85,7 +85,7 @@ class ReleaseBlobBase(Blob):
             return None
 
     def _getAdditionalPatchAttributes(self, patch):
-        return {'proof': ''}
+        return {}
 
     def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
         fromRelease = self._getFromRelease(patch)
