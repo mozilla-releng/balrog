@@ -1,4 +1,0 @@
-balrogtest:
-  build: .
-  dockerfile: Dockerfile.dev
-  command: test
