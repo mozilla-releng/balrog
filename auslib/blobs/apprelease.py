@@ -121,7 +121,8 @@ class ReleaseBlobBase(Blob):
         patchXML = '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"' % \
             (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
         additionalPatchAttributes = self._getAdditionalPatchAttributes(patch)
-        patchXML += additionalPatchAttributes['proof']
+        for attribute in additionalPatchAttributes:
+            patchXML += (' ' + attribute + '="' + additionalPatchAttributes[attribute] + '"')
         patchXML += '/>'
 
         return patchXML
@@ -916,22 +917,22 @@ class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         return referencedReleases
 
 
-class AdditionalPatchAttributesXMLMixin(object):
+class ProofXMLMixin(object):
 
     def _getAdditionalPatchAttributes(self, patch):
-        additionalPatchAttributes = {'proof': ''}
+        additionalPatchAttributes = {}
 
         if 'proof' in patch:
-            additionalPatchAttributes['proof'] = ' proof="%s"' % patch["proof"]
+            additionalPatchAttributes['proof'] = patch["proof"]
 
         return additionalPatchAttributes
 
 
-class ReleaseBlobV8(AdditionalPatchAttributesXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
     """
 
     Changes from ReleaseBlobV7:
-        * Adds support for ProofXMLMixin (ProofXMLMixin is placed as first parameter for inheritance preference)
+        * Adds support for ProofXMLMixin (placed as first parameter for inheritance preference)
 
     For further information:
         * https://bugzilla.mozilla.org/show_bug.cgi?id=1384296
@@ -942,7 +943,8 @@ class ReleaseBlobV8(AdditionalPatchAttributesXMLMixin, ReleaseBlobBase, NewStyle
     # for the benefit of get*XML
     optional_ = ('showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL',
-                 'promptWaitTime', 'backgroundInterval')
+                 'promptWaitTime', 'backgroundInterval',
+                 'transparencyCert', 'SCT1', 'SCT2')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('openURL', 'notificationURL', 'alertURL')
 

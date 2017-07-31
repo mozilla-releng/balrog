@@ -3191,7 +3191,7 @@ class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
             'proof': 'foobar'
         }
 
-        expected_additional_patch_attributes = {'proof': ' proof="foobar"'}
+        expected_additional_patch_attributes = {'proof': 'foobar'}
         additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
 
         self.assertEquals(expected_additional_patch_attributes, additionalPatchAttributes)
@@ -3204,7 +3204,7 @@ class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
             'proof': 'foobar'
         }
 
-        expected_additional_patch_attributes = {'proof': ' proof="foobar"'}
+        expected_additional_patch_attributes = {'proof': 'foobar'}
         additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
 
         self.assertEquals(expected_additional_patch_attributes, additionalPatchAttributes)
