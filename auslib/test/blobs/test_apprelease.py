@@ -14,7 +14,7 @@ from auslib.web.public.base import app
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, \
     ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV7, ReleaseBlobV8, DesupportBlob, \
-    UnifiedFileUrlsMixin, AdditionalPatchAttributesXMLMixin
+    UnifiedFileUrlsMixin, ProofXMLMixin
 
 
 def setUpModule():
@@ -3181,7 +3181,7 @@ class TestUnifiedFileUrlsMixin(unittest.TestCase):
 class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
 
     def setUp(self):
-        self.mixin_instance = AdditionalPatchAttributesXMLMixin()
+        self.mixin_instance = ProofXMLMixin()
 
     def testGetAdditionalPatchAttributesComplete(self):
         patch = {
