@@ -121,7 +121,7 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
         what = {}
         for field in connexion.request.json:
-            if field == "csrf_token" or change_type == "insert" and field == "data_version":
+            if field == "csrf_token":
                 continue
             what[field] = connexion.request.json[field]
 
@@ -231,7 +231,7 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
         what = {}
         for field in connexion.request.json:
-            if field == "csrf_token" or change_type == "insert" and field == "data_version":
+            if field == "csrf_token":
                 continue
             what[field] = connexion.request.json[field]
 

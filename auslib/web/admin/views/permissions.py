@@ -154,10 +154,7 @@ class PermissionScheduledChangesView(ScheduledChangesView):
 
         what = {}
         for field in connexion.request.json:
-            # TODO: currently UI passes extra field(options) in change_type == 'delete' request body. Fix it and
-            # TODO: change the below operation from filter/pop to throw Error when extra field is passed.
-            if (field == "csrf_token" or (change_type == "delete" and field == "options") or
-                    (change_type == "insert" and field == "data_version")):
+            if field == "csrf_token":
                 continue
 
             what[field] = connexion.request.json[field]
