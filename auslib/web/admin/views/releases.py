@@ -517,11 +517,10 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
     @requirelogin
     def _post(self, transaction, changed_by):
         change_type = connexion.request.json.get("change_type")
-        connexion.request.json.pop("csrf_token", None)
 
         what = {}
         for field in connexion.request.json:
-            if change_type == "insert" and field == "data_version":
+            if field == "csrf_token" or change_type == "insert" and field == "data_version":
                 continue
             what[field] = connexion.request.json[field]
 
@@ -545,10 +544,7 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
             if not what.get("data_version", None):
                 return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-        else:
-            return problem(400, "Bad Request", "Invalid or missing change_type")
-
-        return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by)
+        return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
 
 
 class ReleaseScheduledChangeView(ScheduledChangeView):

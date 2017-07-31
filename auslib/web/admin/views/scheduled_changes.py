@@ -65,7 +65,10 @@ class ScheduledChangesView(AdminView):
             ret["scheduled_changes"].append(scheduled_change)
         return jsonify(ret)
 
-    def _post(self, what, transaction, changed_by):
+    def _post(self, what, transaction, changed_by, change_type):
+        if change_type not in ["insert", "update", "delete"]:
+            return problem(400, "Bad Request", "Invalid or missing change_type")
+
         if is_when_present_and_in_past_validator(what):
             return problem(400, "Bad Request", "Changes may not be scheduled in the past")
 

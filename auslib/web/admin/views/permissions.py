@@ -151,11 +151,13 @@ class PermissionScheduledChangesView(ScheduledChangesView):
     @requirelogin
     def _post(self, transaction, changed_by):
         change_type = connexion.request.json.get("change_type")
-        connexion.request.json.pop("csrf_token", None)
 
         what = {}
         for field in connexion.request.json:
-            if change_type == "delete" and field == "options" or change_type == "insert" and field == "data_version":
+            # TODO: currently UI passes extra field(options) in change_type == 'delete' request body. Fix it and
+            # TODO: change the below operation from filter/pop to throw Error when extra field is passed.
+            if (field == "csrf_token" or (change_type == "delete" and field == "options") or
+                    (change_type == "insert" and field == "data_version")):
                 continue
 
             what[field] = connexion.request.json[field]
@@ -169,10 +171,7 @@ class PermissionScheduledChangesView(ScheduledChangesView):
             else:
                 what["data_version"] = int(what["data_version"])
 
-        elif change_type != "insert":
-            return problem(400, "Bad Request", "Invalid or missing change_type")
-
-        return super(PermissionScheduledChangesView, self)._post(what, transaction, changed_by)
+        return super(PermissionScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
 
 
 class PermissionScheduledChangeView(ScheduledChangeView):

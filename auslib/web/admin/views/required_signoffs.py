@@ -118,11 +118,10 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
     @requirelogin
     def _post(self, transaction, changed_by):
         change_type = connexion.request.json.get("change_type")
-        connexion.request.json.pop("csrf_token", None)
 
         what = {}
         for field in connexion.request.json:
-            if change_type == "insert" and field == "data_version":
+            if field == "csrf_token" or change_type == "insert" and field == "data_version":
                 continue
             what[field] = connexion.request.json[field]
 
@@ -145,11 +144,8 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
             else:
                 what["data_version"] = int(what["data_version"])
 
-        else:
-            self.log.warning("Bad input: %s", change_type)
-            return problem(400, "Bad Request", "Invalid or missing change_type")
-
-        return super(ProductRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by)
+        return super(ProductRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by,
+                                                                              change_type)
 
 
 class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
@@ -232,11 +228,10 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
     @requirelogin
     def _post(self, transaction, changed_by):
         change_type = connexion.request.json.get("change_type")
-        connexion.request.json.pop("csrf_token", None)
 
         what = {}
         for field in connexion.request.json:
-            if change_type == "insert" and field == "data_version":
+            if field == "csrf_token" or change_type == "insert" and field == "data_version":
                 continue
             what[field] = connexion.request.json[field]
 
@@ -259,11 +254,8 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
             else:
                 what["data_version"] = int(what["data_version"])
 
-        else:
-            self.log.warning("Bad input: %s", change_type)
-            return problem(400, "Bad Request", "Invalid or missing change_type")
-
-        return super(PermissionsRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by)
+        return super(PermissionsRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by,
+                                                                                  change_type)
 
 
 class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):

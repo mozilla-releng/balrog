@@ -295,10 +295,14 @@ class RuleScheduledChangesView(ScheduledChangesView):
         else:
             change_type = connexion.request.values.get("change_type")
 
-        connexion.request.json.pop("csrf_token", None)
         what = {}
+        delete_change_type_allowed_fields = ["telemetry_product", "telemetry_channel", "telemetry_uptake", "when",
+                                             "rule_id", "data_version", "change_type"]
         for field in connexion.request.json:
-            if change_type == "insert" and field in ["rule_id", "data_version"]:
+            # TODO: currently UI passes extra rule model fields in change_type == 'delete' request body. Fix it and
+            # TODO: change the below operation from filter/pop to throw Error when extra fields are passed.
+            if (field == "csrf_token" or (change_type == "insert" and field in ["rule_id", "data_version"]) or
+                    (change_type == "delete" and field not in delete_change_type_allowed_fields)):
                 continue
 
             if field in ["rule_id", "data_version"]:
@@ -328,15 +332,7 @@ class RuleScheduledChangesView(ScheduledChangesView):
             if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
-        # TODO: currently UI passes extra rule model fields in change_type == 'delete' request body. Fix it and
-        # TODO: change the below operation from filter/pop to throw Error when extra fields are passed.
-        elif change_type == "delete":
-            for key in list(what):
-                if key not in ["telemetry_product", "telemetry_channel", "telemetry_uptake", "when", "rule_id",
-                               "data_version", "change_type"]:
-                    what.pop(key, None)
-
-        return super(RuleScheduledChangesView, self)._post(what, transaction, changed_by)
+        return super(RuleScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
 
 
 class RuleScheduledChangeView(ScheduledChangeView):
