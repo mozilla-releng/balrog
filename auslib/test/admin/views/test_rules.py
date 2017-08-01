@@ -1510,6 +1510,10 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(role="qa"), username="bill")
         self.assertEquals(ret.status_code, 403, ret.data)
 
+    def testSignoffWithoutRole(self):
+        ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(lorem_ipso="random"), username="bill")
+        self.assertEquals(ret.status_code, 400, ret.data)
+
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/rules/3/signoffs", username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
