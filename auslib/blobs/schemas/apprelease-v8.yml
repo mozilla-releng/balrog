@@ -58,6 +58,15 @@
     backgroundInterval:
       type: number
       description: This decides how quickly or slowly Firefox downloads an MAR.
+    transparencyCert:
+      type: string
+      description: Certificate recieved from script worker used to submit to CT.
+    SCT1:
+      type: string
+      description: Signed certificate timestamp response when valid certificate is submitted to log.
+    SCT2:
+      type: string
+      description: Signed certificate timestamp response when valid certificate is submitted to log.
     # Top level fileUrls are useful primarily for release style builds,
     # where the URLs are predictable and only vary by locale and platform.
     # It"s worth noting that while we normally serve different channels
@@ -180,6 +189,8 @@
                               proof:
                                 type: string
                                 description: The inclusion proof required for binary transparency test.
+                                minLength: 1
+                                maxLength: 834
                               from:
                                 type: string
                                 description: The release this partial update can be applied to. Should match another release in Balrog"s database.
@@ -214,6 +225,8 @@
                               proof:
                                 type: string
                                 description: The inclusion proof required for binary transparency test.
+                                minLength: 1
+                                maxLength: 834
                               from:
                                 type: string
                                 description: The release this partial update can be applied to. Should match another release in Balrog"s database.
