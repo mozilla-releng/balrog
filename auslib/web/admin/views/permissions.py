@@ -4,9 +4,8 @@ from flask import Response, jsonify
 from auslib.web.admin.views.problem import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import requirelogin, AdminView
-from auslib.web.admin.views.forms import ScheduledChangeNewPermissionForm, ScheduledChangeExistingPermissionForm, \
-    EditScheduledChangeNewPermissionForm, EditScheduledChangeExistingPermissionForm, \
-    ScheduledChangeDeletePermissionForm
+from auslib.web.admin.views.forms import EditScheduledChangeNewPermissionForm,\
+    EditScheduledChangeExistingPermissionForm
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
@@ -144,6 +143,8 @@ class SpecificPermissionView(AdminView):
 
 
 class PermissionScheduledChangesView(ScheduledChangesView):
+    """/scheduled_changes/permissions"""
+
     def __init__(self):
         super(PermissionScheduledChangesView, self).__init__("permissions", dbo.permissions)
 
@@ -151,16 +152,23 @@ class PermissionScheduledChangesView(ScheduledChangesView):
     def _post(self, transaction, changed_by):
         change_type = connexion.request.json.get("change_type")
 
-        if change_type == "update":
-            form = ScheduledChangeExistingPermissionForm()
-        elif change_type == "insert":
-            form = ScheduledChangeNewPermissionForm()
-        elif change_type == "delete":
-            form = ScheduledChangeDeletePermissionForm()
-        else:
-            return Response(status=400, response="Invalid or missing change_type")
+        what = {}
+        for field in connexion.request.json:
+            if field == "csrf_token":
+                continue
 
-        return super(PermissionScheduledChangesView, self)._post(form, transaction, changed_by)
+            what[field] = connexion.request.json[field]
+
+        if what.get("options", None):
+            what["options"] = json.loads(what.get("options"))
+
+        if change_type in ["update", "delete"]:
+            if not what.get("data_version", None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+            else:
+                what["data_version"] = int(what["data_version"])
+
+        return super(PermissionScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
 
 
 class PermissionScheduledChangeView(ScheduledChangeView):
@@ -182,6 +190,8 @@ class PermissionScheduledChangeView(ScheduledChangeView):
 
 
 class EnactPermissionScheduledChangeView(EnactScheduledChangeView):
+    """/scheduled_changes/permissions/<int:sc_id>/enact"""
+
     def __init__(self):
         super(EnactPermissionScheduledChangeView, self).__init__("permissions", dbo.permissions)
 
@@ -191,6 +201,8 @@ class EnactPermissionScheduledChangeView(EnactScheduledChangeView):
 
 
 class PermissionScheduledChangeSignoffsView(SignoffsView):
+    """/scheduled_changes/permissions/<int:sc_id>/signoffs"""
+
     def __init__(self):
         super(PermissionScheduledChangeSignoffsView, self).__init__("permissions", dbo.permissions)
 

@@ -13,7 +13,6 @@ from auslib.web.admin.views.base import (
 )
 from auslib.web.admin.views.csrf import get_csrf_headers
 from auslib.web.admin.views.forms import EditScheduledChangeExistingReleaseForm, \
-    ScheduledChangeNewReleaseForm, ScheduledChangeExistingReleaseForm, ScheduledChangeDeleteReleaseForm, \
     EditScheduledChangeNewReleaseForm
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
@@ -510,6 +509,8 @@ class SingleReleaseColumnView(AdminView):
 
 
 class ReleaseScheduledChangesView(ScheduledChangesView):
+    """/scheduled_changes/releases"""
+
     def __init__(self):
         super(ReleaseScheduledChangesView, self).__init__("releases", dbo.releases)
 
@@ -517,18 +518,33 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
     def _post(self, transaction, changed_by):
         change_type = connexion.request.json.get("change_type")
 
-        if change_type == "update":
-            form = ScheduledChangeExistingReleaseForm()
-            form.data.data = createBlob(form.data.data)
-        elif change_type == "insert":
-            form = ScheduledChangeNewReleaseForm()
-            form.data.data = createBlob(form.data.data)
-        elif change_type == "delete":
-            form = ScheduledChangeDeleteReleaseForm()
-        else:
-            return Response(status=400, response="Invalid or missing change_type")
+        what = {}
+        for field in connexion.request.json:
+            if field == "csrf_token":
+                continue
+            what[field] = connexion.request.json[field]
 
-        return super(ReleaseScheduledChangesView, self)._post(form, transaction, changed_by)
+        if change_type == "update":
+            if not what.get("data_version", None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+            if what.get("data", None):
+                what["data"] = createBlob(what.get("data"))
+
+        elif change_type == "insert":
+            if not what.get("product", None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "product is missing"})
+
+            if what.get("data", None):
+                what["data"] = createBlob(what.get("data"))
+            else:
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "Missing blob 'data' value"})
+
+        elif change_type == "delete":
+            if not what.get("data_version", None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+        return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
 
 
 class ReleaseScheduledChangeView(ScheduledChangeView):
@@ -557,6 +573,8 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
 
 
 class EnactReleaseScheduledChangeView(EnactScheduledChangeView):
+    """/scheduled_changes/releases/<int:sc_id>/enact"""
+
     def __init__(self):
         super(EnactReleaseScheduledChangeView, self).__init__("releases", dbo.releases)
 
@@ -566,6 +584,8 @@ class EnactReleaseScheduledChangeView(EnactScheduledChangeView):
 
 
 class ReleaseScheduledChangeSignoffsView(SignoffsView):
+    """/scheduled_changes/releases/<int:sc_id>/signoffs"""
+
     def __init__(self):
         super(ReleaseScheduledChangeSignoffsView, self).__init__("releases", dbo.releases)
 
