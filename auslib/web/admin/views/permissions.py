@@ -73,16 +73,16 @@ class SpecificPermissionView(AdminView):
         try:
             if dbo.permissions.getUserPermissions(username, transaction).get(permission):
                 # Existing Permission
-                if not connexion.request.json.get("data_version"):
+                if not connexion.request.get_json().get("data_version"):
                     return problem(400, "Bad Request", "'data_version' is missing from request body")
 
                 options_dict = None
-                if connexion.request.json.get("options"):
-                    options_dict = json.loads(connexion.request.json.get("options"))
+                if connexion.request.get_json().get("options"):
+                    options_dict = json.loads(connexion.request.get_json().get("options"))
 
                 dbo.permissions.update(where={"username": username, "permission": permission},
                                        what={"options": options_dict}, changed_by=changed_by,
-                                       old_data_version=connexion.request.json.get("data_version"),
+                                       old_data_version=connexion.request.get_json().get("data_version"),
                                        transaction=transaction)
                 new_data_version = dbo.permissions.getPermission(username=username, permission=permission,
                                                                  transaction=transaction)['data_version']
@@ -90,8 +90,8 @@ class SpecificPermissionView(AdminView):
             else:
                 # New Permission
                 options_dict = None
-                if connexion.request.json.get("options"):
-                    options_dict = json.loads(connexion.request.json.get("options"))
+                if connexion.request.get_json().get("options"):
+                    options_dict = json.loads(connexion.request.get_json().get("options"))
                 dbo.permissions.insert(changed_by, transaction=transaction, username=username, permission=permission,
                                        options=options_dict)
                 return Response(status=201, response=json.dumps(dict(new_data_version=1)))
@@ -106,15 +106,15 @@ class SpecificPermissionView(AdminView):
                                                                  " %s not found for %s" % (permission, username))
         try:
             # Existing Permission
-            if not connexion.request.json.get("data_version"):
+            if not connexion.request.get_json().get("data_version"):
                 return problem(400, "Bad Request", "'data_version' is missing from request body")
             options_dict = None
-            if connexion.request.json.get("options"):
-                options_dict = json.loads(connexion.request.json.get("options"))
+            if connexion.request.get_json().get("options"):
+                options_dict = json.loads(connexion.request.get_json().get("options"))
 
             dbo.permissions.update(where={"username": username, "permission": permission},
                                    what={"options": options_dict}, changed_by=changed_by,
-                                   old_data_version=connexion.request.json.get("data_version"),
+                                   old_data_version=connexion.request.get_json().get("data_version"),
                                    transaction=transaction)
             new_data_version = dbo.permissions.getPermission(username=username, permission=permission,
                                                              transaction=transaction)['data_version']
@@ -150,14 +150,14 @@ class PermissionScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        change_type = connexion.request.json.get("change_type")
+        change_type = connexion.request.get_json().get("change_type")
 
         what = {}
-        for field in connexion.request.json:
+        for field in connexion.request.get_json():
             if field == "csrf_token":
                 continue
 
-            what[field] = connexion.request.json[field]
+            what[field] = connexion.request.get_json()[field]
 
         if what.get("options", None):
             what["options"] = json.loads(what.get("options"))
@@ -177,7 +177,7 @@ class PermissionScheduledChangeView(ScheduledChangeView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if connexion.request.json and connexion.request.json.get("data_version"):
+        if connexion.request.get_json() and connexion.request.get_json().get("data_version"):
             form = EditScheduledChangeExistingPermissionForm()
         else:
             form = EditScheduledChangeNewPermissionForm()
