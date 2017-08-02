@@ -10,6 +10,7 @@ DOMAIN_WHITELIST = {
     "download.cdn.mozilla.net": ("Firefox", "Fennec", "SeaMonkey"),
     "mozilla-nightly-updates.s3.amazonaws.com": ("Firefox",),
     "ciscobinary.openh264.org": ("OpenH264",),
+    "c7ab4fbd1155b1257820-fefb1450afc680271ea365edabf976ea.ssl.cf1.rackcdn.com": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
     "clients2.googleusercontent.com": ("Widevine",),
     "redirector.gvt1.com": ("Widevine",),
