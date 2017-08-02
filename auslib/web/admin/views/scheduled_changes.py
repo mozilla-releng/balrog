@@ -107,7 +107,7 @@ class ScheduledChangeView(AdminView):
             # from the rule (aka, set as NULL in the db). The underlying Form
             # will have already converted it to None, so we can treat it the
             # same as a modification here.
-            if connexion.request.json and k in connexion.request.json:
+            if connexion.request.get_json() and k in connexion.request.get_json():
                 what[k] = v.data
 
         where = {"sc_id": sc_id}
@@ -152,7 +152,7 @@ class SignoffsView(AdminView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        what = {"role": connexion.request.json.get("role")}
+        what = {"role": connexion.request.get_json().get("role")}
         self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **what)
         return Response(status=200)
 

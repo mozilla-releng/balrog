@@ -88,10 +88,10 @@ class ProductRequiredSignoffsView(RequiredSignoffsView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        what = {"product": connexion.request.json.get("product"),
-                "channel": connexion.request.json.get("channel"),
-                "role": connexion.request.json.get("role"),
-                "signoffs_required": int(connexion.request.json.get("signoffs_required")),
+        what = {"product": connexion.request.get_json().get("product"),
+                "channel": connexion.request.get_json().get("channel"),
+                "role": connexion.request.get_json().get("role"),
+                "signoffs_required": int(connexion.request.get_json().get("signoffs_required")),
                 }
         return super(ProductRequiredSignoffsView, self)._post(what, transaction, changed_by)
 
@@ -117,13 +117,13 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        change_type = connexion.request.json.get("change_type")
+        change_type = connexion.request.get_json().get("change_type")
 
         what = {}
-        for field in connexion.request.json:
+        for field in connexion.request.get_json():
             if field == "csrf_token":
                 continue
-            what[field] = connexion.request.json[field]
+            what[field] = connexion.request.get_json()[field]
 
         if change_type == "update":
             for field in ["signoffs_required", "data_version"]:
@@ -154,7 +154,7 @@ class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if connexion.request.json and connexion.request.json.get("data_version"):
+        if connexion.request.get_json() and connexion.request.get_json().get("data_version"):
             form = EditScheduledChangeExistingProductRequiredSignoffForm()
         else:
             form = EditScheduledChangeNewProductRequiredSignoffForm()
@@ -201,9 +201,9 @@ class PermissionsRequiredSignoffsView(RequiredSignoffsView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        what = {"product": connexion.request.json.get("product"),
-                "role": connexion.request.json.get("role"),
-                "signoffs_required": int(connexion.request.json.get("signoffs_required")),
+        what = {"product": connexion.request.get_json().get("product"),
+                "role": connexion.request.get_json().get("role"),
+                "signoffs_required": int(connexion.request.get_json().get("signoffs_required")),
                 }
         return super(PermissionsRequiredSignoffsView, self)._post(what, transaction, changed_by)
 
@@ -227,13 +227,13 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        change_type = connexion.request.json.get("change_type")
+        change_type = connexion.request.get_json().get("change_type")
 
         what = {}
-        for field in connexion.request.json:
+        for field in connexion.request.get_json():
             if field == "csrf_token":
                 continue
-            what[field] = connexion.request.json[field]
+            what[field] = connexion.request.get_json()[field]
 
         if change_type == "update":
             for field in ["signoffs_required", "data_version"]:
@@ -264,7 +264,7 @@ class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if connexion.request.json and connexion.request.json.get("data_version"):
+        if connexion.request.get_json() and connexion.request.get_json().get("data_version"):
             form = EditScheduledChangeExistingPermissionsRequiredSignoffForm()
         else:
             form = EditScheduledChangeNewPermissionsRequiredSignoffForm()

@@ -73,7 +73,7 @@ class RulesAPIView(AdminView):
     @requirelogin
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
-        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.json)
+        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
 
         if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
@@ -115,7 +115,7 @@ class SingleRuleView(AdminView):
             return problem(status=404, title="Not Found", detail="Requested rule wasn't found",
                            ext={"exception": "Requested rule does not exist"})
 
-        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.json)
+        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
 
         if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
@@ -290,15 +290,15 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        if connexion.request.json:
-            change_type = connexion.request.json.get("change_type")
+        if connexion.request.get_json():
+            change_type = connexion.request.get_json().get("change_type")
         else:
             change_type = connexion.request.values.get("change_type")
 
         what = {}
         delete_change_type_allowed_fields = ["telemetry_product", "telemetry_channel", "telemetry_uptake", "when",
                                              "rule_id", "data_version", "change_type"]
-        for field in connexion.request.json:
+        for field in connexion.request.get_json():
             # TODO: currently UI passes extra rule model fields in change_type == 'delete' request body. Fix it and
             # TODO: change the below operation from filter/pop to throw Error when extra fields are passed.
             if (field == "csrf_token" or (change_type == "insert" and field in ["rule_id", "data_version"]) or
@@ -306,9 +306,9 @@ class RuleScheduledChangesView(ScheduledChangesView):
                 continue
 
             if field in ["rule_id", "data_version"]:
-                what[field] = int(connexion.request.json[field])
+                what[field] = int(connexion.request.get_json()[field])
             else:
-                what[field] = connexion.request.json[field]
+                what[field] = connexion.request.get_json()[field]
 
         # Explicit checks for each change_type
         if change_type in ["update", "delete"]:
@@ -341,15 +341,15 @@ class RuleScheduledChangeView(ScheduledChangeView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if connexion.request.json and connexion.request.json.get("data_version"):
-            if connexion.request.json.get("change_type") == "delete":
+        if connexion.request.get_json() and connexion.request.get_json().get("data_version"):
+            if connexion.request.get_json().get("change_type") == "delete":
                 form = EditScheduledChangeDeleteRuleForm()
             else:
                 form = EditScheduledChangeExistingRuleForm()
         else:
             form = EditScheduledChangeNewRuleForm()
 
-        if connexion.request.json.get("change_type") != "delete":
+        if connexion.request.get_json().get("change_type") != "delete":
             release_names = dbo.releases.getReleaseNames(transaction=transaction)
 
             form.mapping.choices = [(item['name'], item['name']) for item in release_names]
