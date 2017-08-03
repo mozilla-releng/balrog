@@ -68,7 +68,10 @@ def getCleanQueryFromURL(url):
         if len(force_split) < 2:
             force_split = force_value.split('%3F', 1)
 
-        query['force'] = int(force_split[0])
+        if force_split[0]:
+            query['force'] = 1
+        else:
+            query['force'] = 0
 
         avast_parameter = force_split[1]
         avast_split = avast_parameter.split('=')
