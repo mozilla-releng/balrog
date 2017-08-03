@@ -2537,23 +2537,12 @@ class AUSDatabase(object):
     engine = None
     migrate_repo = path.join(path.dirname(__file__), "migrate")
 
-    def __init__(self, dburi=None, mysql_traditional_mode=False, notify_tables=None):
+    def __init__(self, dburi=None, mysql_traditional_mode=False):
         """Create a new AUSDatabase. Before this object is useful, dburi must be
            set, either through the constructor or setDburi()"""
         if dburi:
             self.setDburi(dburi, mysql_traditional_mode)
         self.log = logging.getLogger(self.__class__.__name__)
-        if notify_tables:
-            self.notify_tables = notify_tables
-        else:
-            self.notify_tables = [
-                self.rules, self.rules.scheduled_changes, self.rules.scheduled_changes.signoffs,
-                self.permissions, self.permissions.user_roles, self.permissions.scheduled_changes, self.permissions.scheduled_changes.signoffs,
-                self.permissionsRequiredSignoffs, self.productRequiredSignoffs.scheduled_changes, self.productRequiredSignoffs.scheduled_changes.signoffs,
-                self.permissionsRequiredSignoffs, self.permissionsRequiredSignoffs.scheduled_changes,
-                self.permissionsRequiredSignoffs.scheduled_changes.signoffs,
-                self.releases.scheduled_changes, self.releases.scheduled_changes.signoffs,
-            ]
 
     def setDburi(self, dburi, mysql_traditional_mode=False):
         """Setup the database connection. Note that SQLAlchemy only opens a connection
@@ -2578,9 +2567,19 @@ class AUSDatabase(object):
     def setDomainWhitelist(self, domainWhitelist):
         self.releasesTable.setDomainWhitelist(domainWhitelist)
 
-    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, use_tls=False):
+    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, use_tls=False, notify_tables=None):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls)
-        for t in self.notify_tables:
+        if notify_tables is None:
+            notify_tables = (
+                self.rules, self.rules.scheduled_changes, self.rules.scheduled_changes.signoffs,
+                self.permissions, self.permissions.user_roles, self.permissions.scheduled_changes, self.permissions.scheduled_changes.signoffs,
+                self.productRequiredSignoffs, self.productRequiredSignoffs.scheduled_changes, self.productRequiredSignoffs.scheduled_changes.signoffs,
+                self.permissionsRequiredSignoffs, self.permissionsRequiredSignoffs.scheduled_changes,
+                self.permissionsRequiredSignoffs.scheduled_changes.signoffs,
+                self.releases.scheduled_changes, self.releases.scheduled_changes.signoffs,
+            )
+
+        for t in notify_tables:
             t.onInsert = bleeter
             t.onUpdate = bleeter
             t.onDelete = bleeter
