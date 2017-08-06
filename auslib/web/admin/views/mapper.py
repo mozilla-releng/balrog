@@ -2,22 +2,25 @@ from auslib.web.admin.views.csrf import CSRFView
 
 from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRuleColumnView, \
     RuleHistoryAPIView, RuleScheduledChangesView, EnactRuleScheduledChangeView, RuleScheduledChangeSignoffsView, \
-    RuleScheduledChangeView
+    RuleScheduledChangeView, RuleScheduledChangeHistoryView
 
 from auslib.web.admin.views.permissions import UsersView, AllRolesView, SpecificUserView,\
     PermissionsView, UserRolesView, UserRoleView, SpecificPermissionView, PermissionScheduledChangesView, \
-    EnactPermissionScheduledChangeView, PermissionScheduledChangeSignoffsView, PermissionScheduledChangeView
+    EnactPermissionScheduledChangeView, PermissionScheduledChangeSignoffsView, PermissionScheduledChangeView, \
+    PermissionScheduledChangeHistoryView
 
 from auslib.web.admin.views.releases import ReleaseDiffView, ReleaseFieldView, ReleasesAPIView, SingleReleaseView,\
     ReleaseReadOnlyView, SingleReleaseColumnView, SingleLocaleView, ReleaseHistoryView, ReleaseScheduledChangesView, \
-    EnactReleaseScheduledChangeView, ReleaseScheduledChangeSignoffsView, ReleaseScheduledChangeView
+    EnactReleaseScheduledChangeView, ReleaseScheduledChangeSignoffsView, ReleaseScheduledChangeView, \
+    ReleaseScheduledChangeHistoryView
 
 from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsHistoryAPIView, \
     PermissionsRequiredSignoffsHistoryAPIView, ProductRequiredSignoffsView, PermissionsRequiredSignoffsView,\
     ProductRequiredSignoffsScheduledChangesView, PermissionsRequiredSignoffsScheduledChangesView, \
     EnactProductRequiredSignoffScheduledChangeView, EnactPermissionsRequiredSignoffScheduledChangeView, \
     ProductRequiredSignoffScheduledChangeSignoffsView, PermissionsRequiredSignoffScheduledChangeSignoffsView, \
-    ProductRequiredSignoffScheduledChangeView, PermissionsRequiredSignoffScheduledChangeView
+    ProductRequiredSignoffScheduledChangeView, PermissionsRequiredSignoffScheduledChangeView, \
+    ProductRequiredSignoffScheduledChangeHistoryView, PermissionsRequiredSignoffScheduledChangeHistoryView
 
 
 def csrf_get():
@@ -413,3 +416,53 @@ def scheduled_change_permissions_rs_post(sc_id):
 def scheduled_change_permissions_rs_delete(sc_id):
     """DELETE /scheduled_changes/required_signoffs/permissions/<int:sc_id>"""
     return PermissionsRequiredSignoffScheduledChangeView().delete(sc_id)
+
+
+def scheduled_change_rules_history_get(sc_id):
+    """GET /scheduled_changes/rules/<int:sc_id>/revisions"""
+    return RuleScheduledChangeHistoryView().get(sc_id)
+
+
+def scheduled_change_rules_history_post(sc_id):
+    """POST /scheduled_changes/rules/<int:sc_id>/revisions"""
+    return RuleScheduledChangeHistoryView().post(sc_id)
+
+
+def scheduled_change_permissions_history_get(sc_id):
+    """GET /scheduled_changes/permissions/<int:sc_id>/revisions"""
+    return PermissionScheduledChangeHistoryView().get(sc_id)
+
+
+def scheduled_change_permissions_history_post(sc_id):
+    """POST /scheduled_changes/permissions/<int:sc_id>/revisions"""
+    return PermissionScheduledChangeHistoryView().post(sc_id)
+
+
+def scheduled_change_releases_history_get(sc_id):
+    """GET /scheduled_changes/releases/<int:sc_id>/revisions"""
+    return ReleaseScheduledChangeHistoryView().get(sc_id)
+
+
+def scheduled_change_releases_history_post(sc_id):
+    """POST /scheduled_changes/releases/<int:sc_id>/revisions"""
+    return ReleaseScheduledChangeHistoryView().post(sc_id)
+
+
+def scheduled_change_product_rs_history_get(sc_id):
+    """GET /scheduled_changes/required_signoffs/product/<int:sc_id>/revisions"""
+    return ProductRequiredSignoffScheduledChangeHistoryView().get(sc_id)
+
+
+def scheduled_change_product_rs_history_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/product/<int:sc_id>/revisions"""
+    return ProductRequiredSignoffScheduledChangeHistoryView().post(sc_id)
+
+
+def scheduled_change_permissions_rs_history_get(sc_id):
+    """GET /scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions"""
+    return PermissionsRequiredSignoffScheduledChangeHistoryView().get(sc_id)
+
+
+def scheduled_change_permissions_rs_history_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions"""
+    return PermissionsRequiredSignoffScheduledChangeHistoryView().post(sc_id)

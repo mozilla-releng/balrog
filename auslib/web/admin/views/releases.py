@@ -610,6 +610,8 @@ class ReleaseScheduledChangeSignoffsView(SignoffsView):
 
 
 class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    """/scheduled_changes/releases/<int:sc_id>/revisions"""
+
     def __init__(self):
         super(ReleaseScheduledChangeHistoryView, self).__init__("releases", dbo.releases)
 

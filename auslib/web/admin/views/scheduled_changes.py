@@ -1,4 +1,3 @@
-import json
 import connexion
 from sqlalchemy.sql.expression import null
 
@@ -236,8 +235,7 @@ class ScheduledChangeHistoryView(HistoryView):
                 obj_not_found_msg='Scheduled change does not exist')
         except (ValueError, AssertionError) as msg:
             self.log.warning("Bad input: %s", msg)
-            return Response(status=400,
-                            response=json.dumps({"exception": msg}))
+            return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
 
     def _post(self, sc_id, transaction, changed_by):
         return self.revert_to_revision(
@@ -249,4 +247,4 @@ class ScheduledChangeHistoryView(HistoryView):
             changed_by=changed_by,
             response_message='Success',
             transaction=transaction,
-            obj_not_found_msg=json.dumps({"exception": "bad sc_id"}))
+            obj_not_found_msg="given sc_id was not found in the database")

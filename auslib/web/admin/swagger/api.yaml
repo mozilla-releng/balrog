@@ -952,7 +952,8 @@ paths:
       tags:
         - Releases
       operationId: auslib.web.admin.views.mapper.release_history_view_post
-      consumes: []
+      consumes:
+        - application/json
       produces:
         - application/json
         - text/html
@@ -1876,7 +1877,8 @@ paths:
       tags:
         - Rules
       operationId: auslib.web.admin.views.mapper.rules_revisions_post
-      consumes: []
+      consumes:
+        - application/json
       produces:
         - application/json
         - text/html
@@ -1950,41 +1952,8 @@ paths:
                     items:
                       type: object
                       allOf:
-                        - $ref: '#/definitions/SCChangeType'
-                        - $ref: '#/definitions/SCTime'
-                        - $ref: '#/definitions/SCUptake'
-                        - $ref: '#/definitions/SCIdModel'
-                        - $ref: '#/definitions/RulesBase'
-                        - $ref: '#/definitions/RulesSCNullable'
-                        - $ref: '#/definitions/SCDataVersion'
-                        - $ref: '#/definitions/SCGetModel'
-                      required:
-                        - alias
-                        - backgroundRate
-                        - buildID
-                        - buildTarget
-                        - change_type
-                        - channel
-                        - comment
-                        - data_version
-                        - distVersion
-                        - distribution
-                        - fallbackMapping
-                        - headerArchitecture
-                        - instructionSet
-                        - locale
-                        - mapping
-                        - memory
-                        - osVersion
-                        - priority
-                        - product
-                        - rule_id
-                        - telemetry_channel
-                        - telemetry_product
-                        - telemetry_uptake
-                        - update_type
-                        - version
-                        - when
+                        - $ref: '#/definitions/SCSignoffsModel'
+                        - $ref: '#/definitions/SCRulesItemBase'
     post:
       summary: create scheduled change for rules.
       description: >
@@ -2064,7 +2033,7 @@ paths:
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCUptake'
               - $ref: '#/definitions/SCDataVersion'
-              - $ref: '#/definitions/RulesNonNullable'
+              - $ref: '#/definitions/RulesSCNullable'
               - $ref: '#/definitions/RulesBase'
       responses:
         '200':
@@ -2099,6 +2068,74 @@ paths:
           $ref: '#/responses/invalidFormData'
         '404':
           $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/rules/{sc_id}/revisions:
+    get:
+      summary: Returns previous versions of the scheduled change
+      description: >
+        Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_history_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions"
+        description: "Returns previous versions of the scheduled change identified by the sc_id"
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of revisions of sc rules along with their count
+          schema:
+            type: object
+            required:
+              - revisions
+            allOf:
+              - $ref: '#/definitions/CountModel'
+              - type: object
+                properties:
+                  revisions:
+                    description: array where each element is a SC Rule object
+                    type: array
+                    minItems: 0
+                    items:
+                      allOf:
+                        - $ref: "#/definitions/SCRulesItemBase"
+                        - $ref: '#/definitions/HistoryModel'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    post:
+      summary: Reverts to any previous version of scheduled change
+      description: >
+        Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_history_post
+      consumes:
+        - application/json
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions"
+        description: "Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/change_id_body_param'
+      responses:
+        '200':
+          description: Successfully reverted back the scheduled change object
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'
 
   /scheduled_changes/permissions:
     get:
@@ -2138,7 +2175,8 @@ paths:
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
                         - $ref: '#/definitions/SCDataVersion'
-                        - $ref: '#/definitions/SCGetModel'
+                        - $ref: '#/definitions/SCSignoffsModel'
+                        - $ref: '#/definitions/SCMiscModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/OptionsModel'
                         - $ref: '#/definitions/PermissionsModel'
@@ -2217,7 +2255,7 @@ paths:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCDataVersion'
-              - $ref: "#/definitions/DataVersionModel"
+              - $ref: "#/definitions/DataVersionNullable"
               - $ref: '#/definitions/OptionsJSON'
               - $ref: '#/definitions/PermissionsModel'
       responses:
@@ -2253,6 +2291,89 @@ paths:
           $ref: '#/responses/invalidFormData'
         '404':
           $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/permissions/{sc_id}/revisions:
+    get:
+      summary: Returns previous versions of the scheduled change
+      description: >
+        Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_history_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions"
+        description: "Returns previous versions of the scheduled change identified by the sc_id"
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of revisions of sc permissions along with their count
+          schema:
+            type: object
+            required:
+              - revisions
+            allOf:
+              - $ref: '#/definitions/CountModel'
+              - type: object
+                properties:
+                  revisions:
+                    description: array where each element is a scheduled change for a SC Permission.
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCTime'
+                        - $ref: '#/definitions/SCChangeType'
+                        - $ref: '#/definitions/SCDataVersion'
+                        - $ref: '#/definitions/SCIdModel'
+                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: "#/definitions/DataVersionNullable"
+                        - $ref: '#/definitions/OptionsModel'
+                        - $ref: '#/definitions/PermissionsModel'
+                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/HistoryModel'
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - permission
+                        - username
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    post:
+      summary: Reverts to any previous version of scheduled change
+      description: >
+        Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_history_post
+      consumes:
+        - application/json
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions"
+        description: "Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/change_id_body_param'
+      responses:
+        '200':
+          description: Successfully reverted back the scheduled change object
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'
 
   /scheduled_changes/releases:
     get:
@@ -2292,27 +2413,13 @@ paths:
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
                         - $ref: '#/definitions/SCDataVersion'
-                        - $ref: '#/definitions/SCGetModel'
+                        - $ref: '#/definitions/SCSignoffsModel'
+                        - $ref: '#/definitions/SCMiscModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/ProductNullable'
                         - $ref: '#/definitions/ReleaseReadOnly'
+                        - $ref: '#/definitions/ReleaseDataObject'
                         - $ref: '#/definitions/ReleaseName'
-                        - type: object
-                          properties:
-                            data:
-                              description: json blob containing information about the release
-                              type: ["object", "null"]
-                              example:
-                                hashFunction: sha512
-                                name: CDM-15
-                                product: Firefox
-                                schema_version: 1000
-                                vendors:
-                                  gmp-eme-adobe:
-                                    platforms:
-                                      WINNT_x86_64-msvc-x64:
-                                        alias: WINNT_x86_64-msvc
-                                    version: '15'
                       required:
                         - change_type
                         - data_version
@@ -2390,7 +2497,7 @@ paths:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCDataVersion'
-              - $ref: "#/definitions/DataVersionModel"
+              - $ref: "#/definitions/DataVersionNullable"
               - $ref: '#/definitions/ReleaseDataField'
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/ReleaseName'
@@ -2427,6 +2534,92 @@ paths:
           $ref: '#/responses/invalidFormData'
         '404':
           $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/releases/{sc_id}/revisions:
+    get:
+      summary: Returns previous versions of the scheduled change
+      description: >
+        Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_history_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions"
+        description: "Returns previous versions of the scheduled change identified by the sc_id"
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of revisions of sc releases along with their count
+          schema:
+            type: object
+            required:
+              - revisions
+            allOf:
+              - $ref: '#/definitions/CountModel'
+              - type: object
+                properties:
+                  revisions:
+                    description: array where each element is a scheduled change for a SC Release.
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCChangeType'
+                        - $ref: '#/definitions/SCTime'
+                        - $ref: '#/definitions/SCIdModel'
+                        - $ref: '#/definitions/SCDataVersion'
+                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/DataVersionNullable'
+                        - $ref: '#/definitions/ProductNullable'
+                        - $ref: '#/definitions/ReleaseReadOnly'
+                        - $ref: '#/definitions/ReleaseDataObject'
+                        - $ref: '#/definitions/ReleaseName'
+                        - $ref: '#/definitions/HistoryModel'
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - name
+                        - data
+                        - read_only
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    post:
+      summary: Reverts to any previous version of scheduled change
+      description: >
+        Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_history_post
+      consumes:
+        - application/json
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions"
+        description: "Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/change_id_body_param'
+      responses:
+        '200':
+          description: Successfully reverted back the scheduled change object
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'
 
   /scheduled_changes/required_signoffs/product:
     get:
@@ -2466,7 +2659,8 @@ paths:
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
                         - $ref: '#/definitions/SCDataVersion'
-                        - $ref: '#/definitions/SCGetModel'
+                        - $ref: '#/definitions/SCSignoffsModel'
+                        - $ref: '#/definitions/SCMiscModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/SignoffsRequiredNullable'
                         - $ref: '#/definitions/ProductModel'
@@ -2553,7 +2747,7 @@ paths:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCDataVersion'
-              - $ref: "#/definitions/DataVersionModel"
+              - $ref: "#/definitions/DataVersionNullable"
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/RoleModel'
               - $ref: '#/definitions/ChannelModel'
@@ -2591,6 +2785,92 @@ paths:
           $ref: '#/responses/invalidFormData'
         '404':
           $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/required_signoffs/product/{sc_id}/revisions:
+    get:
+      summary: Returns previous versions of the scheduled change
+      description: >
+        Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_history_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions"
+        description: "Returns previous versions of the scheduled change identified by the sc_id"
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of revisions of sc product required signoffs along with their count
+          schema:
+            type: object
+            required:
+              - revisions
+            allOf:
+              - $ref: '#/definitions/CountModel'
+              - type: object
+                properties:
+                  revisions:
+                    description: array where each element is a scheduled change for an sc product required signoffs.
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCChangeType'
+                        - $ref: '#/definitions/SCTime'
+                        - $ref: '#/definitions/SCIdModel'
+                        - $ref: '#/definitions/SCDataVersion'
+                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/DataVersionNullable'
+                        - $ref: '#/definitions/SignoffsRequiredNullable'
+                        - $ref: '#/definitions/ProductModel'
+                        - $ref: '#/definitions/RoleModel'
+                        - $ref: '#/definitions/ChannelModel'
+                        - $ref: '#/definitions/HistoryModel'
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - channel
+                        - role
+                        - signoffs_required
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    post:
+      summary: Reverts to any previous version of scheduled change
+      description: >
+        Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_history_post
+      consumes:
+        - application/json
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions"
+        description: "Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/change_id_body_param'
+      responses:
+        '200':
+          description: Successfully reverted back the scheduled change object
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'
 
   /scheduled_changes/required_signoffs/permissions:
     get:
@@ -2630,7 +2910,8 @@ paths:
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
                         - $ref: '#/definitions/SCDataVersion'
-                        - $ref: '#/definitions/SCGetModel'
+                        - $ref: '#/definitions/SCSignoffsModel'
+                        - $ref: '#/definitions/SCMiscModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/SignoffsRequiredNullable'
                         - $ref: '#/definitions/ProductModel'
@@ -2713,7 +2994,7 @@ paths:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCDataVersion'
-              - $ref: "#/definitions/DataVersionModel"
+              - $ref: "#/definitions/DataVersionNullable"
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/RoleModel'
               - $ref: '#/definitions/SignoffsRequiredModel'
@@ -2750,6 +3031,90 @@ paths:
           $ref: '#/responses/invalidFormData'
         '404':
           $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/required_signoffs/permissions/{sc_id}/revisions:
+    get:
+      summary: Returns previous versions of the scheduled change
+      description: >
+        Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_history_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions"
+        description: "Returns previous versions of the scheduled change identified by the sc_id"
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of revisions of sc permission required signoffs along with their count
+          schema:
+            type: object
+            required:
+              - revisions
+            allOf:
+              - $ref: '#/definitions/CountModel'
+              - type: object
+                properties:
+                  revisions:
+                    description: array where each element is a scheduled change for an sc permission required signoffs.
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCChangeType'
+                        - $ref: '#/definitions/SCTime'
+                        - $ref: '#/definitions/SCIdModel'
+                        - $ref: '#/definitions/SCDataVersion'
+                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/DataVersionNullable'
+                        - $ref: '#/definitions/SignoffsRequiredNullable'
+                        - $ref: '#/definitions/ProductModel'
+                        - $ref: '#/definitions/RoleModel'
+                        - $ref: '#/definitions/HistoryModel'
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - role
+                        - signoffs_required
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    post:
+      summary: Reverts to any previous version of scheduled change
+      description: >
+        Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_history_post
+      consumes:
+        - application/json
+      produces:
+        - application/json
+        - text/html
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions"
+        description: "Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/change_id_body_param'
+      responses:
+        '200':
+          description: Successfully reverted back the scheduled change object
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'
 
   /scheduled_changes/rules/{sc_id}/enact:
     post:
@@ -3310,31 +3675,38 @@ definitions:
           minimum: 1
           example: 2
 
-  SCGetModel:
-    title: SC GET
-    description: "model for defining common fields in scheduled changes GET operations"
+  SCMiscModel:
+    title: SC Misc
+    description: "model for defining and re-using miscellaneous common fields in scheduled changes GET operations"
     type: object
     required:
       - complete
-      - required_signoffs
       - scheduled_by
-      - signoffs
     properties:
       complete:
         type: boolean
         description: is Scheduled change complete
         example: false
-      required_signoffs:
-        type: object
-        description: Contains key-value pairs of role names and number of minimum signoffs needed from each role
-        example:
-          releng: 2
       scheduled_by:
         type: string
         description: user who scheduled the change
         minLength: 1
         maxLength: 100
         example: balrogadmin
+
+  SCSignoffsModel:
+    title: SC GET
+    description: "model for defining signoffs fields in scheduled changes GET operations"
+    type: object
+    required:
+      - required_signoffs
+      - signoffs
+    properties:
+      required_signoffs:
+        type: object
+        description: Contains key-value pairs of role names and number of minimum signoffs needed from each role
+        example:
+          releng: 2
       signoffs:
         type: object
         description: Contains key-value pairs of user name and role name via which the change was signed off
@@ -3458,6 +3830,26 @@ definitions:
       - data_version
       - read_only
       - rule_ids
+
+  ReleaseDataObject:
+    title: Release Data object
+    description: "release's blob data fetched as json object"
+    type: object
+    properties:
+      data:
+        description: json blob containing information about the release
+        type: ["object", "null"]
+        example:
+          hashFunction: sha512
+          name: CDM-15
+          product: Firefox
+          schema_version: 1000
+          vendors:
+            gmp-eme-adobe:
+              platforms:
+                WINNT_x86_64-msvc-x64:
+                  alias: WINNT_x86_64-msvc
+              version: '15'
 
   ReleaseDataField:
     title: Release Data field
@@ -3651,6 +4043,47 @@ definitions:
         minimum: 1
         maximum: 100
         example: "balrogadmin"
+
+  SCRulesItemBase:
+    title: SC Rules Base Model
+    description: defines base model for operations on SC Rules
+    type: object
+    allOf:
+      - $ref: '#/definitions/SCChangeType'
+      - $ref: '#/definitions/SCTime'
+      - $ref: '#/definitions/SCUptake'
+      - $ref: '#/definitions/SCIdModel'
+      - $ref: '#/definitions/RulesBase'
+      - $ref: '#/definitions/RulesSCNullable'
+      - $ref: '#/definitions/SCDataVersion'
+      - $ref: '#/definitions/SCMiscModel'
+    required:
+      - alias
+      - backgroundRate
+      - buildID
+      - buildTarget
+      - change_type
+      - channel
+      - comment
+      - data_version
+      - distVersion
+      - distribution
+      - fallbackMapping
+      - headerArchitecture
+      - instructionSet
+      - locale
+      - mapping
+      - memory
+      - osVersion
+      - priority
+      - product
+      - rule_id
+      - telemetry_channel
+      - telemetry_product
+      - telemetry_uptake
+      - update_type
+      - version
+      - when
 
   RuleObject:
     title: GET Operations on Rules

@@ -202,6 +202,8 @@ class ProductRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
 
 
 class ProductRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    """/scheduled_changes/required_signoffs/product/<int:sc_id>/revisions"""
+
     def __init__(self):
         super(ProductRequiredSignoffScheduledChangeHistoryView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
 
@@ -336,6 +338,8 @@ class PermissionsRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
 
 
 class PermissionsRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions"""
+
     def __init__(self):
         super(PermissionsRequiredSignoffScheduledChangeHistoryView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
 

@@ -407,6 +407,8 @@ class RuleScheduledChangeSignoffsView(SignoffsView):
 
 
 class RuleScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    """/scheduled_changes/rules/<int:sc_id>/revisions"""
+
     def __init__(self):
         super(RuleScheduledChangeHistoryView, self).__init__("rules", dbo.rules)
 

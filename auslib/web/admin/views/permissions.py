@@ -235,6 +235,8 @@ class PermissionScheduledChangeSignoffsView(SignoffsView):
 
 
 class PermissionScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    """/scheduled_changes/permissions/<int:sc_id>/revisions"""
+
     def __init__(self):
         super(PermissionScheduledChangeHistoryView, self).__init__("permissions", dbo.permissions)
 
