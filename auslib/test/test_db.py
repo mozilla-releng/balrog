@@ -2422,6 +2422,32 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, expected)
 
+        # To ensure length of ruleChannel is >=3
+        expected = [dict(rule_id=2, priority=100, backgroundRate=100, channel='r*', update_type='z', data_version=1)]
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='releasetest',
+                 buildTarget='', buildID='', locale='', osVersion='', distribution='',
+                 distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+                 ),
+            fallbackChannel='releasetest'
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertNotEquals(rules, expected)
+
+        # To ensure globbing at end only
+        expected = [dict(rule_id=2, priority=100, backgroundRate=100, channel='r*test*', update_type='z', data_version=1)]
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='releasetest-cck-blah',
+                 buildTarget='', buildID='', locale='', osVersion='', distribution='',
+                 distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+                 ),
+            fallbackChannel='releasetest'
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertNotEquals(rules, expected)
+
     def testGetRulesMatchingBuildIDComparison(self):
         expected = [dict(rule_id=3, priority=100, backgroundRate=100, buildID='>=20010101222222', update_type='z', data_version=1)]
         rules = self.rules.getRulesMatchingQuery(
