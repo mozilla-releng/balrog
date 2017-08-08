@@ -2567,9 +2567,19 @@ class AUSDatabase(object):
     def setDomainWhitelist(self, domainWhitelist):
         self.releasesTable.setDomainWhitelist(domainWhitelist)
 
-    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, use_tls=False):
+    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, use_tls=False, notify_tables=None):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls)
-        for t in (self.rules, self.rules.scheduled_changes, self.permissions):
+        if notify_tables is None:
+            notify_tables = (
+                self.rules, self.rules.scheduled_changes, self.rules.scheduled_changes.signoffs,
+                self.permissions, self.permissions.user_roles, self.permissions.scheduled_changes, self.permissions.scheduled_changes.signoffs,
+                self.productRequiredSignoffs, self.productRequiredSignoffs.scheduled_changes, self.productRequiredSignoffs.scheduled_changes.signoffs,
+                self.permissionsRequiredSignoffs, self.permissionsRequiredSignoffs.scheduled_changes,
+                self.permissionsRequiredSignoffs.scheduled_changes.signoffs,
+                self.releases.scheduled_changes, self.releases.scheduled_changes.signoffs,
+            )
+
+        for t in notify_tables:
             t.onInsert = bleeter
             t.onUpdate = bleeter
             t.onDelete = bleeter
