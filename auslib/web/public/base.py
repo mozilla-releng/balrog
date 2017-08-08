@@ -37,7 +37,6 @@ spec = SpecBuilder().add_spec(path.join(current_dir, 'api.yml'))\
                     .add_spec(path.join(web_dir, 'common/releases_spec.yml'))\
                     .add_spec(path.join(web_dir, 'common/rules_spec.yml'))
 connexion_app.add_api(spec,
-                      validate_responses=True,
                       strict_validation=True)
 
 
