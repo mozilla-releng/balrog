@@ -14,8 +14,7 @@ validator_map = {
     'body': BalrogRequestBodyValidator
 }
 
-# TODO set debug=False after fully migrating all the admin APIs
-connexion_app = connexion.App(__name__, specification_dir='swagger/', validator_map=validator_map, debug=True)
+connexion_app = connexion.App(__name__, specification_dir='swagger/', validator_map=validator_map, debug=False)
 connexion_app.add_api("api.yaml", validate_responses=True, strict_validation=True)
 app = connexion_app.app
 sentry = Sentry()
