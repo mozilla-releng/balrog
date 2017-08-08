@@ -318,8 +318,6 @@ class RuleScheduledChangesView(ScheduledChangesView):
             for field in ["update_type", "backgroundRate", "priority"]:
                 if not what.get(field, None):
                     return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
-        else:
-            return problem(400, "Bad Request", "Invalid or missing change_type")
 
         if change_type in ["update", "insert"]:
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
@@ -327,7 +325,7 @@ class RuleScheduledChangesView(ScheduledChangesView):
             if what.get('mapping') is not None and len(mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-            if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
+            elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
         return super(RuleScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
@@ -364,7 +362,7 @@ class RuleScheduledChangeView(ScheduledChangeView):
         if change_type == "update" and not what.get("data_version", None):
             return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-        if change_type == "insert":
+        elif change_type == "insert":
             # edit scheduled change for new rule
             for field in ["update_type", "backgroundRate", "priority"]:
                 if field in what and not what.get(field):
@@ -372,13 +370,13 @@ class RuleScheduledChangeView(ScheduledChangeView):
                                    ext={"exception": "%s cannot be set to null "
                                                      "when scheduling insertion of a new rule" % field})
 
-        elif change_type in ["update", "insert"]:
+        if change_type in ["update", "insert"]:
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
             if what.get('mapping') is not None and len(mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-            if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
+            elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
         return super(RuleScheduledChangeView, self)._post(sc_id, what, transaction, changed_by)
