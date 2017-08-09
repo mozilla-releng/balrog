@@ -47,6 +47,7 @@ paths:
           default: ""
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -73,6 +74,7 @@ paths:
           default: 2
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -101,6 +103,7 @@ paths:
           default: 3
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -134,6 +137,7 @@ paths:
           default: 4
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -167,6 +171,7 @@ paths:
           default: 5
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -201,6 +206,7 @@ paths:
           default: 6
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -231,6 +237,7 @@ paths:
           default: 3
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -408,5 +415,12 @@ parameters:
     name: force
     in: query
     description: force
+    required: false
+    type: string
+
+  mig64:
+    name: mig64
+    in: query
+    description: mig64
     required: false
     type: string
