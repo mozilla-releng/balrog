@@ -567,11 +567,12 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
             # a Release. Name cannot be changed because it is a PK field, and product
             # cannot be changed because it almost never makes sense to (and can be done
             # by deleting/recreating instead).
-            if change_type in ["update", "delete"] and field not in ["when", "data", "data_version", "sc_data_version"]:
-                continue
             # Any Release field may be changed when editing an Scheduled Change for a new Release
-            if change_type == "insert" and field not in ["when", "name", "product", "data", "sc_data_version"]:
+            if ((change_type == "delete" and field not in ["when", "data_version"]) or
+                    (change_type == "update" and field not in ["when", "data", "data_version"]) or
+                    (change_type == "insert" and field not in ["when", "name", "product", "data"])):
                 continue
+
             what[field] = connexion.request.get_json()[field]
 
         if change_type in ["update", "delete"] and not what.get("data_version", None):
@@ -584,7 +585,8 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
         if what.get("data", None):
             what["data"] = createBlob(what.get("data"))
 
-        return super(ReleaseScheduledChangeView, self)._post(sc_id, what, transaction, changed_by)
+        return super(ReleaseScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
+                                                             connexion.request.get_json().get("sc_data_version", None))
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):

@@ -73,10 +73,13 @@ class RulesAPIView(AdminView):
         # a Post here creates a new rule
         what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
 
-        if what.get('mapping', None) is not None and len(mapping_values) != 1:
+        if not what.get('mapping', None):
+            return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
+
+        elif len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-        if what.get('fallbackMapping', None) is not None and len(fallback_mapping_values) != 1:
+        elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
         # Solves Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
@@ -115,10 +118,13 @@ class SingleRuleView(AdminView):
 
         what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
 
-        if what.get('mapping', None) is not None and len(mapping_values) != 1:
+        if not what.get('mapping', None):
+            return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
+
+        elif len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-        if what.get('fallbackMapping', None) is not None and len(fallback_mapping_values) != 1:
+        elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
         # Solves https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
@@ -316,13 +322,20 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
         elif change_type == "insert":
             for field in ["update_type", "backgroundRate", "priority"]:
-                if not what.get(field, None):
-                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
+                if what.get(field, None) is None or \
+                        isinstance(what.get(field), str_types) and what.get(field).strip() == '':
+                    return problem(400, "Bad Request", "Null/Empty Value",
+                                   ext={"exception": "%s cannot be set to null/empty "
+                                                     "when scheduling insertion of a new rule" % field})
 
         if change_type in ["update", "insert"]:
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
-            if what.get('mapping') is not None and len(mapping_values) != 1:
+
+            if not what.get('mapping', None) and (change_type == "insert" or 'mapping' in what):
+                return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
+
+            elif what.get('mapping') is not None and len(mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
             elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
@@ -352,7 +365,8 @@ class RuleScheduledChangeView(ScheduledChangeView):
             # Unlike when scheduling a new change to an existing rule, rule_id is not
             # required (or even allowed) when modifying a scheduled change for an
             # existing rule. Allowing it to be modified would be confusing.
-            if (field in ["csrf_token", "rule_id"] or (change_type == "insert" and field == "data_version") or
+            if (field in ["csrf_token", "rule_id", "sc_data_version"] or
+                    (change_type == "insert" and field == "data_version") or
                     (change_type == "delete" and field not in ["sc_data_version", "when", "telemetry_product",
                                                                "telemetry_channel", "telemetry_uptake"])):
                 continue
@@ -373,13 +387,18 @@ class RuleScheduledChangeView(ScheduledChangeView):
         if change_type in ["update", "insert"]:
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
-            if what.get('mapping') is not None and len(mapping_values) != 1:
+
+            if not what.get('mapping', None) and (change_type == "insert" or 'mapping' in what):
+                return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
+
+            elif what.get('mapping') is not None and len(mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
             elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
-        return super(RuleScheduledChangeView, self)._post(sc_id, what, transaction, changed_by)
+        return super(RuleScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
+                                                          connexion.request.get_json().get("sc_data_version", None))
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):

@@ -90,7 +90,11 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
       if (!$scope.dataFile) {
         delete $scope.sc.data;
       }
-    } 
+    }
+
+    if ($scope.sc.change_type === "delete") {
+      delete $scope.sc.data;
+    }
 
     $scope.saving = true;
 

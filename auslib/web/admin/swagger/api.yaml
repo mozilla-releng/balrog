@@ -2176,7 +2176,7 @@ paths:
                         - $ref: '#/definitions/SCIdModel'
                         - $ref: '#/definitions/SCDataVersion'
                         - $ref: '#/definitions/SCSignoffsModel'
-                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/SCCommonFieldsModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/OptionsModel'
                         - $ref: '#/definitions/PermissionsModel'
@@ -2332,11 +2332,10 @@ paths:
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCDataVersion'
                         - $ref: '#/definitions/SCIdModel'
-                        - $ref: '#/definitions/SCMiscModel'
                         - $ref: "#/definitions/DataVersionNullable"
                         - $ref: '#/definitions/OptionsModel'
                         - $ref: '#/definitions/PermissionsModel'
-                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/SCCommonFieldsModel'
                         - $ref: '#/definitions/HistoryModel'
                       required:
                         - change_type
@@ -2414,7 +2413,7 @@ paths:
                         - $ref: '#/definitions/SCIdModel'
                         - $ref: '#/definitions/SCDataVersion'
                         - $ref: '#/definitions/SCSignoffsModel'
-                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/SCCommonFieldsModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/ProductNullable'
                         - $ref: '#/definitions/ReleaseReadOnly'
@@ -2575,7 +2574,7 @@ paths:
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
                         - $ref: '#/definitions/SCDataVersion'
-                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/SCCommonFieldsModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/ProductNullable'
                         - $ref: '#/definitions/ReleaseReadOnly'
@@ -2660,7 +2659,7 @@ paths:
                         - $ref: '#/definitions/SCIdModel'
                         - $ref: '#/definitions/SCDataVersion'
                         - $ref: '#/definitions/SCSignoffsModel'
-                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/SCCommonFieldsModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/SignoffsRequiredNullable'
                         - $ref: '#/definitions/ProductModel'
@@ -2826,7 +2825,7 @@ paths:
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
                         - $ref: '#/definitions/SCDataVersion'
-                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/SCCommonFieldsModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/SignoffsRequiredNullable'
                         - $ref: '#/definitions/ProductModel'
@@ -2911,7 +2910,7 @@ paths:
                         - $ref: '#/definitions/SCIdModel'
                         - $ref: '#/definitions/SCDataVersion'
                         - $ref: '#/definitions/SCSignoffsModel'
-                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/SCCommonFieldsModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/SignoffsRequiredNullable'
                         - $ref: '#/definitions/ProductModel'
@@ -3072,7 +3071,7 @@ paths:
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
                         - $ref: '#/definitions/SCDataVersion'
-                        - $ref: '#/definitions/SCMiscModel'
+                        - $ref: '#/definitions/SCCommonFieldsModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/SignoffsRequiredNullable'
                         - $ref: '#/definitions/ProductModel'
@@ -3675,8 +3674,8 @@ definitions:
           minimum: 1
           example: 2
 
-  SCMiscModel:
-    title: SC Misc
+  SCCommonFieldsModel:
+    title: SC Common Fields
     description: "model for defining and re-using miscellaneous common fields in scheduled changes GET operations"
     type: object
     required:
@@ -4056,7 +4055,7 @@ definitions:
       - $ref: '#/definitions/RulesBase'
       - $ref: '#/definitions/RulesSCNullable'
       - $ref: '#/definitions/SCDataVersion'
-      - $ref: '#/definitions/SCMiscModel'
+      - $ref: '#/definitions/SCCommonFieldsModel'
     required:
       - alias
       - backgroundRate

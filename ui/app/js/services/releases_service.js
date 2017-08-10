@@ -102,10 +102,7 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
     updateScheduledChange: function(sc_id, data, csrf_token) {
       data = jQuery.extend({}, data);
       data = Helpers.replaceEmptyStrings(data);
-      if (data.when === null) {
-        data.when = "";
-      }
-      else {
+      if (data.when !== null) {
         data.when = data.when.getTime();
       }
       data.csrf_token = csrf_token;

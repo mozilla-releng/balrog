@@ -160,12 +160,10 @@ class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
                            ext={"exception": "No scheduled change for product required signoff found for given sc_id"})
         what = {}
         for field in connexion.request.get_json():
-            if change_type == "insert" and \
-                    field not in ["when", "product", "channel", "role", "signoffs_required", "sc_data_version"]:
-                continue
-
-            if change_type in ["update", "delete"] and \
-                    field not in ["when", "signoffs_required", "data_version", "sc_data_version"]:
+            if ((change_type == "insert" and field not in
+                ["when", "product", "channel", "role", "signoffs_required"]) or
+                (change_type == "update" and field not in ["when", "signoffs_required", "data_version"]) or
+                    (change_type == "delete" and field not in ["when", "data_version"])):
                 continue
 
             what[field] = connexion.request.get_json()[field]
@@ -176,7 +174,9 @@ class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
         if what.get("signoffs_required", None):
             what["signoffs_required"] = int(what["signoffs_required"])
 
-        return super(ProductRequiredSignoffScheduledChangeView, self)._post(sc_id, what, transaction, changed_by)
+        return super(ProductRequiredSignoffScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
+                                                                            connexion.request.get_json().
+                                                                            get("sc_data_version", None))
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
@@ -296,14 +296,10 @@ class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):
                                              "signoff found for given sc_id"})
         what = {}
         for field in connexion.request.get_json():
-            if change_type == "insert" and \
-                    field not in ["when", "product", "role", "signoffs_required", "sc_data_version"]:
+            if ((change_type == "insert" and field not in ["when", "product", "role", "signoffs_required"]) or
+                    (change_type == "update" and field not in ["when", "signoffs_required", "data_version"]) or
+                    (change_type == "delete" and field not in ["when", "data_version"])):
                 continue
-
-            if change_type in ["update", "delete"] and \
-                    field not in ["when", "signoffs_required", "data_version", "sc_data_version"]:
-                continue
-
             what[field] = connexion.request.get_json()[field]
 
         if change_type in ["update", "delete"] and not what.get("data_version", None):
@@ -312,7 +308,9 @@ class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):
         if what.get("signoffs_required", None):
             what["signoffs_required"] = int(what["signoffs_required"])
 
-        return super(PermissionsRequiredSignoffScheduledChangeView, self)._post(sc_id, what, transaction, changed_by)
+        return super(PermissionsRequiredSignoffScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
+                                                                                connexion.request.get_json().
+                                                                                get("sc_data_version", None))
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):

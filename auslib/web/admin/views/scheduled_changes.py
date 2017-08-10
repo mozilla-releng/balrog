@@ -84,18 +84,15 @@ class ScheduledChangeView(AdminView):
         self.sc_table = table.scheduled_changes
         super(ScheduledChangeView, self).__init__()
 
-    def _post(self, sc_id, what, transaction, changed_by):
+    def _post(self, sc_id, what, transaction, changed_by, old_sc_data_version):
         if is_when_present_and_in_past_validator(what):
             return problem(400, "Bad Request", "Changes may not be scheduled in the past")
 
         if what.get("data_version", None):
             what["data_version"] = int(what["data_version"])
 
-        old_sc_data_version = int(what.get("sc_data_version"))
-        what.pop("sc_data_version")
-
         where = {"sc_id": sc_id}
-        self.sc_table.update(where, what, changed_by, old_sc_data_version, transaction)
+        self.sc_table.update(where, what, changed_by, int(old_sc_data_version), transaction)
         sc = self.sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
         return jsonify(new_data_version=sc["data_version"])
 

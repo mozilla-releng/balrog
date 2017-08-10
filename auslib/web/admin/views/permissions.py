@@ -193,14 +193,13 @@ class PermissionScheduledChangeView(ScheduledChangeView):
             # When editing an existing Scheduled Change for a Permission only options may be
             # provided. Because edits are identified by sc_id (in the URL), permission and username
             # are not required (nor allowed, because they are PK fields).
-            if change_type in ["update", "delete"] and \
-                    field not in ["when", "options", "data_version", "sc_data_version"]:
-                continue
             # When editing an existing Scheduled Change for a new Permission, any field
             # may be changed.
-            if change_type == "insert" and \
-                    field not in ["when", "options", "permission", "username", "sc_data_version"]:
+            if ((change_type == "delete" and field not in ["when", "data_version"]) or
+                    (change_type == "update" and field not in ["when", "options", "data_version"]) or
+                    (change_type == "insert" and field not in ["when", "options", "permission", "username"])):
                 continue
+
             what[field] = connexion.request.get_json()[field]
 
         if change_type in ["update", "delete"] and not what.get("data_version", None):
@@ -209,7 +208,8 @@ class PermissionScheduledChangeView(ScheduledChangeView):
         if what.get("options", None):
             what["options"] = json.loads(what["options"])
 
-        return super(PermissionScheduledChangeView, self)._post(sc_id, what, transaction, changed_by)
+        return super(PermissionScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
+                                                                connexion.request.get_json().get("sc_data_version"))
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):

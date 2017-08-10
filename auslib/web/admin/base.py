@@ -64,10 +64,3 @@ def add_security_headers(response):
 
 
 Compress(app)
-
-
-# Endpoints required for the Balrog 2.0 UI.
-# In the Mozilla deployments of Balrog, both the the admin API (these endpoints)
-# and the static admin UI are hosted on the same domain. This API wsgi app is
-# hosted at "/api", which is stripped away by the web server before we see
-# these requests.
