@@ -6,8 +6,11 @@ import unittest
 from xml.dom import minidom
 import json
 
+from hypothesis import given
+from hypothesis.strategies import integers, just
+
 import auslib.web.public.client as client_api
-from auslib.web.public.client import update_query_version
+from auslib.web.public.client import extract_query_version
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
@@ -908,53 +911,64 @@ class ClientTest(ClientTestBase):
                 self.assertEqual(ret.status_code, 404)
                 self.assertFalse(mock_cr_view.called)
 
-    def testUpdateQueryVersion(self):
-        version_key = 'queryVersion'
-        url_params = {}
-        update_query_version('/update/1/a/b/c.xml', url_params)
-        self.assertIn(version_key, url_params)
-        self.assertIn('osVersion', url_params)
-        self.assertEqual(url_params[version_key], 1)
+    @given(just(1))
+    def testUpdateQueryVersion1ToEnsureOsVersion(self, v1_qv):
+        query_version = extract_query_version('/update/{}/a/b/c/update.xml'.format(v1_qv))
+        self.assertEqual(query_version, v1_qv)
 
-        url_params = {}
-        update_query_version('/update/2/a/b/c.xml', url_params)
-        self.assertIn(version_key, url_params)
-        self.assertEqual(url_params[version_key], 2)
+    @given(just("x1"), just("1x"))
+    def testUpdateInvalidQueryVersion(self, invalid_prefix, invalid_suffix):
+        query_version = extract_query_version('/update/x1/a/b/c/update.xml')
+        self.assertEqual(query_version, 0)
+        query_version = extract_query_version('/update/1x/a/b/c/update.xml')
+        self.assertEqual(query_version, 0)
 
-        url_params = {}
-        update_query_version('/update/3/a/b/c.xml', url_params)
-        self.assertIn(version_key, url_params)
-        self.assertEqual(url_params[version_key], 3)
+    @given(integers(min_value=1, max_value=100))
+    def testUpdateQueryVersion(self, qv):
+        query_version = extract_query_version('/update/{}/a/b/c/update.xml'.format(qv))
+        self.assertEqual(query_version, qv)
 
-        url_params = {}
-        update_query_version('/update/4/a/b/c.xml', url_params)
-        self.assertIn(version_key, url_params)
-        self.assertEqual(url_params[version_key], 4)
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV1(self, param, val):
+        ret = self.client.get("/update/1/b/1.0/1/p/l/a/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
 
-        url_params = {}
-        update_query_version('/update/5/a/b/c.xml', url_params)
-        self.assertIn(version_key, url_params)
-        self.assertEqual(url_params[version_key], 5)
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV2(self, param, val):
+        ret = self.client.get("/update/2/c/10.0/1/p/l/a/a/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
 
-        url_params = {}
-        update_query_version('/update/6/a/b/c.xml', url_params)
-        self.assertIn(version_key, url_params)
-        self.assertEqual(url_params[version_key], 6)
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV3(self, param, val):
+        ret = self.client.get("/update/3/b/1.0/1/p/l/a/a/a/a/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
 
-        url_params = {}
-        update_query_version('/update/7/a/b/c.xml', url_params)
-        self.assertIn(version_key, url_params)
-        self.assertEqual(url_params[version_key], 0)
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV4(self, param, val):
+        ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
 
-        url_params = {}
-        update_query_version('/update/x/a/b/c.xml', url_params)
-        self.assertIn(version_key, url_params)
-        self.assertEqual(url_params[version_key], 0)
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV5(self, param, val):
+        ret = self.client.get("/update/5/b/1.0/1/p/l/a/a/a/a/1/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
 
-        url_params = {}
-        update_query_version('/update/x1/a/b/c.xml', url_params)
-        self.assertIn(version_key, url_params)
-        self.assertEqual(url_params[version_key], 0)
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV6(self, param, val):
+        ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
 
 
 class ClientTestWithErrorHandlers(ClientTestCommon):

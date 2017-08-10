@@ -1464,6 +1464,10 @@ class TestReleasesScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/releases/1/signoffs", data=dict(role="relman"), username="bill")
         self.assertEquals(ret.status_code, 403, ret.data)
 
+    def testSignoffWithoutRole(self):
+        ret = self._post("/scheduled_changes/releases/1/signoffs", data=dict(lorem="random"), username="bill")
+        self.assertEquals(ret.status_code, 400, ret.data)
+
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/releases/2/signoffs", username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)

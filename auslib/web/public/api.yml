@@ -31,6 +31,7 @@ paths:
         - $ref: '#/parameters/channel'
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -51,6 +52,7 @@ paths:
         - $ref: '#/parameters/osVersion'
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -73,6 +75,7 @@ paths:
         - $ref: '#/parameters/distVersion'
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -100,6 +103,7 @@ paths:
           type: string
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -127,6 +131,7 @@ paths:
           type: string
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -155,6 +160,7 @@ paths:
         - $ref: '#/parameters/distVersion'
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -179,6 +185,7 @@ paths:
         - $ref: '#/parameters/distVersion'
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -356,5 +363,12 @@ parameters:
     name: force
     in: query
     description: force
+    required: false
+    type: string
+
+  mig64:
+    name: mig64
+    in: query
+    description: mig64
     required: false
     type: string
