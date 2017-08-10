@@ -1487,11 +1487,21 @@ class Rules(AUSTable):
     def _matchesRegex(self, foo, bar):
         # Expand wildcards and use ^/$ to make sure we don't succeed on partial
         # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
-        test = foo.replace('.', '\.').replace('*', '.*')
-        test = '^%s$' % test
-        if re.match(test, bar):
+        # Channel length must be strictly greater than two
+        # And globbing is allowed at the end of channel-name only
+        if foo.endswith('*'):
+            if(len(foo) >= 3):
+                test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
+                test = '^{}.*$'.format(test[:-1])
+                if re.match(test, bar):
+                    return True
+                return False
+            else:
+                return False
+        elif (foo == bar):
             return True
-        return False
+        else:
+            return False
 
     def _channelMatchesRule(self, ruleChannel, queryChannel, fallbackChannel):
         """Decides whether a channel from the rules matches an incoming one.
