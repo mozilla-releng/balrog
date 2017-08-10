@@ -6,6 +6,9 @@ import unittest
 from xml.dom import minidom
 import json
 
+from hypothesis import given
+from hypothesis.strategies import just
+
 import auslib.web.public.client as client_api
 
 from auslib.blobs.base import createBlob
@@ -906,6 +909,48 @@ class ClientTest(ClientTestBase):
                 ret = self.client.get(request)
                 self.assertEqual(ret.status_code, 404)
                 self.assertFalse(mock_cr_view.called)
+
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV1(self, param, val):
+        ret = self.client.get("/update/1/b/1.0/1/p/l/a/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
+
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV2(self, param, val):
+        ret = self.client.get("/update/2/c/10.0/1/p/l/a/a/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
+
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV3(self, param, val):
+        ret = self.client.get("/update/3/b/1.0/1/p/l/a/a/a/a/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
+
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV4(self, param, val):
+        ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
+
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV5(self, param, val):
+        ret = self.client.get("/update/5/b/1.0/1/p/l/a/a/a/a/1/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
+
+    # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
+    # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
+    @given(just("mig64"), just(1))
+    def testUnknownQueryStringParametersAreAllowedV6(self, param, val):
+        ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml?{}={}".format(param, val))
+        self.assertEquals(ret.status_code, 200)
 
 
 class ClientTestWithErrorHandlers(ClientTestCommon):
