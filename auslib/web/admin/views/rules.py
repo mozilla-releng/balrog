@@ -76,7 +76,7 @@ class RulesAPIView(AdminView):
         if not what.get('mapping', None):
             return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
 
-        elif len(mapping_values) != 1:
+        elif what.get('mapping', None) and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
         elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
@@ -118,10 +118,10 @@ class SingleRuleView(AdminView):
 
         what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
 
-        if not what.get('mapping', None):
+        if 'mapping' in what and not what.get('mapping', None):
             return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
 
-        elif len(mapping_values) != 1:
+        elif what.get('mapping', None) and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
         elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
@@ -332,7 +332,8 @@ class RuleScheduledChangesView(ScheduledChangesView):
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
 
-            if not what.get('mapping', None) and (change_type == "insert" or 'mapping' in what):
+            # Either mapping isn't present or set as null
+            if not what.get('mapping', None) and (change_type == "insert" or ('mapping' in what)):
                 return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
 
             elif what.get('mapping') is not None and len(mapping_values) != 1:
@@ -388,7 +389,7 @@ class RuleScheduledChangeView(ScheduledChangeView):
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
 
-            if not what.get('mapping', None) and (change_type == "insert" or 'mapping' in what):
+            if 'mapping' in what and not what.get('mapping', None):
                 return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
 
             elif what.get('mapping') is not None and len(mapping_values) != 1:
