@@ -2710,7 +2710,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertRaises(ReadOnlyError, self.releases._proceedIfNotReadOnly, 'a')
 
-    def testGetRulesMatchingQueryChannelImprovedGlobbing(self):
+    def testGetRulesMatchingQueryChannelCheckMinLengthGlobbing(self):
         # To ensure length of ruleChannel is >=3
         expected = []
         rules = self.rules.getRulesMatchingQuery(
@@ -2724,10 +2724,25 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, expected)
 
-        # To ensure globbing at end only
+    def testtestGetRulesMatchingQueryChannelGlobbingAtEndPass(self):
+        # To ensure globbing at end only -- Pass case
         expected = [dict(rule_id=6, priority=100, backgroundRate=100, channel='r*test*', update_type='z', data_version=1)]
         rules = self.rules.getRulesMatchingQuery(
             dict(name='', product='', version='3.0', channel='r*test-cck-blah',
+                 buildTarget='', buildID='', locale='', osVersion='', distribution='',
+                 distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+                 ),
+            fallbackChannel='releasetest'
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, expected)
+
+    def testtestGetRulesMatchingQueryChannelGlobbingAtEndFail(self):
+        # To ensure globbing at end only -- Fail case
+        expected = []
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='raaatest',
                  buildTarget='', buildID='', locale='', osVersion='', distribution='',
                  distVersion='', headerArchitecture='',
                  force=False, queryVersion=3,
