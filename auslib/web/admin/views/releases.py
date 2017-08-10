@@ -514,6 +514,9 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
+        if connexion.request.get_json().get("when", None) is None:
+            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change "
+                                               "for a Release")
         change_type = connexion.request.get_json().get("change_type")
 
         what = {}
@@ -564,7 +567,7 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
         what = {}
         for field in connexion.request.get_json():
             # Only data may be changed when editing an existing Scheduled Change for
-            # a Release. Name cannot be changed because it is a PK field, and product
+            # an existing Release. Name cannot be changed because it is a PK field, and product
             # cannot be changed because it almost never makes sense to (and can be done
             # by deleting/recreating instead).
             # Any Release field may be changed when editing an Scheduled Change for a new Release
@@ -578,7 +581,7 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
         if change_type in ["update", "delete"] and not what.get("data_version", None):
             return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-        elif change_type == "insert" and not what.get("data", None):
+        elif change_type == "insert" and 'data' in what and not what.get("data", None):
             # edit scheduled change for new release
             return problem(400, "Bad Request", "Null/Empty Value",
                            ext={"exception": "data cannot be set to null when scheduling insertion of a new release"})

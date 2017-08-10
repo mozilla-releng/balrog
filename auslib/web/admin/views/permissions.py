@@ -148,6 +148,9 @@ class PermissionScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
+        if connexion.request.get_json().get("when", None) is None:
+            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change "
+                                               "for a Permission")
         change_type = connexion.request.get_json().get("change_type")
 
         what = {}
@@ -190,7 +193,7 @@ class PermissionScheduledChangeView(ScheduledChangeView):
         what = {}
         for field in connexion.request.get_json():
 
-            # When editing an existing Scheduled Change for a Permission only options may be
+            # When editing an existing Scheduled Change for an for an existing Permission only options may be
             # provided. Because edits are identified by sc_id (in the URL), permission and username
             # are not required (nor allowed, because they are PK fields).
             # When editing an existing Scheduled Change for a new Permission, any field

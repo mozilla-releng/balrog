@@ -2219,6 +2219,7 @@ paths:
               - change_type
               - permission
               - username
+              - when
       responses:
         '200':
           description: Returns sc_id of change
@@ -2460,6 +2461,7 @@ paths:
             required:
               - change_type
               - name
+              - when
       responses:
         '200':
           description: Returns sc_id of change
@@ -2710,6 +2712,7 @@ paths:
               - product
               - channel
               - role
+              - when
       responses:
         '200':
           description: Returns sc_id of change
@@ -2957,6 +2960,7 @@ paths:
               - change_type
               - product
               - role
+              - when
       responses:
         '200':
           description: Returns sc_id of change

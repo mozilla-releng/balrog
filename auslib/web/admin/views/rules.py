@@ -118,6 +118,7 @@ class SingleRuleView(AdminView):
 
         what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
 
+        # If 'mapping' key is present in request body but is either blank/null
         if 'mapping' in what and not what.get('mapping', None):
             return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
 
@@ -332,10 +333,12 @@ class RuleScheduledChangesView(ScheduledChangesView):
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
 
-            # Either mapping isn't present or set as null
+            # Either change_type == "insert" and 'mapping' key-value is blank/null/not-present-in-request-body
+            # OR 'mapping' key is present in request body but is either blank/null
             if not what.get('mapping', None) and (change_type == "insert" or ('mapping' in what)):
                 return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
 
+            # If mapping is present in request body and is non-empty string which does not match any release name
             elif what.get('mapping') is not None and len(mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
@@ -380,7 +383,8 @@ class RuleScheduledChangeView(ScheduledChangeView):
         elif change_type == "insert":
             # edit scheduled change for new rule
             for field in ["update_type", "backgroundRate", "priority"]:
-                if field in what and not what.get(field):
+                if field in what and what.get(field) is None or \
+                        isinstance(what.get(field), str_types) and what.get(field).strip() == '':
                     return problem(400, "Bad Request", "Null/Empty Value",
                                    ext={"exception": "%s cannot be set to null "
                                                      "when scheduling insertion of a new rule" % field})
@@ -389,9 +393,11 @@ class RuleScheduledChangeView(ScheduledChangeView):
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
 
+            # If 'mapping' key is present in request body but is either blank/null
             if 'mapping' in what and not what.get('mapping', None):
                 return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
 
+            # If 'mapping' key is present in request body and is non-empty string which does not match any release name
             elif what.get('mapping') is not None and len(mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 

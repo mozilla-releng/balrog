@@ -112,6 +112,9 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
+        if connexion.request.get_json().get("when", None) is None:
+            return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change "
+                                               "for a Product Required Signoff")
         change_type = connexion.request.get_json().get("change_type")
 
         what = {}
@@ -246,6 +249,9 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
+        if connexion.request.get_json().get("when", None) is None:
+            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change "
+                                               "for a Permissions Required Signoff")
         change_type = connexion.request.get_json().get("change_type")
 
         what = {}
