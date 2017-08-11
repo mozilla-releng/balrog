@@ -6,10 +6,11 @@ import unittest
 from xml.dom import minidom
 import json
 
-from hypothesis import given
-from hypothesis.strategies import just
+from hypothesis import example, given
+from hypothesis.strategies import integers, just
 
 import auslib.web.public.client as client_api
+from auslib.web.public.client import extract_query_version
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
@@ -909,6 +910,19 @@ class ClientTest(ClientTestBase):
                 ret = self.client.get(request)
                 self.assertEqual(ret.status_code, 404)
                 self.assertFalse(mock_cr_view.called)
+
+    @given(just('x'))
+    @example(invalid_version='1x')
+    @example(invalid_version='x1')
+    def testUpdateInvalidQueryVersion(self, invalid_version):
+        query_version = extract_query_version('/update/{}/a/b/c/update.xml'.format(invalid_version))
+        self.assertEqual(query_version, 0)
+
+    @given(integers(min_value=1, max_value=100))
+    @example(qv=1)
+    def testUpdateQueryVersion(self, qv):
+        query_version = extract_query_version('/update/{}/a/b/c/update.xml'.format(qv))
+        self.assertEqual(query_version, qv)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
