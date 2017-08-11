@@ -4373,6 +4373,22 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table_name in base_capabilities_tables:
                 self.assertIn("base_systemCapabilities", metadata.tables[table_name].c)
 
+    def _add_mig64_test(self, db, upgrade=True):
+        metadata = self._get_reflected_metadata(db)
+        mig64_tables = ["rules", "rules_history"]
+        base_mig64_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
+
+        if upgrade:
+            for table_name in mig64_tables:
+                self.assertIn("mig64", metadata.tables[table_name].c)
+            for table_name in base_mig64_tables:
+                self.assertIn("base_mig64", metadata.tables[table_name].c)
+        else:
+            for table_name in mig64_tables:
+                self.assertNotIn("mig64", metadata.tables[table_name].c)
+            for table_name in base_mig64_tables:
+                self.assertNotIn("base_mig64", metadata.tables[table_name].c)
+
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
         """
         Tests the upgrades and downgrades for version 22 work properly.
@@ -4425,6 +4441,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            28: self._add_mig64_test,
             27: self._remove_systemCapabilities_test,
             26: self._add_instructionSet_test,
             # No-op migration

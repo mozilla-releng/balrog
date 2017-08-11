@@ -1461,6 +1461,14 @@ class Rules(AUSTable):
                            Column('comment', String(500)),
                            )
 
+        if dialect == 'mysql':
+            from sqlalchemy.dialects.mysql import BIT
+            self.table.append_column(Column("mig64", BIT))
+        else:
+            # It's not ideal to disable the constraint here, but if we leave it enabled
+            # the database cannot be downgraded (t
+            self.table.append_column(Column("mig64", Boolean(create_constraint=False)))
+
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
