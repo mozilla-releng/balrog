@@ -6,7 +6,7 @@ import unittest
 from xml.dom import minidom
 import json
 
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis.strategies import integers, just
 
 import auslib.web.public.client as client_api
@@ -911,19 +911,15 @@ class ClientTest(ClientTestBase):
                 self.assertEqual(ret.status_code, 404)
                 self.assertFalse(mock_cr_view.called)
 
-    @given(just(1))
-    def testUpdateQueryVersion1ToEnsureOsVersion(self, v1_qv):
-        query_version = extract_query_version('/update/{}/a/b/c/update.xml'.format(v1_qv))
-        self.assertEqual(query_version, v1_qv)
-
-    @given(just("x1"), just("1x"))
-    def testUpdateInvalidQueryVersion(self, invalid_prefix, invalid_suffix):
-        query_version = extract_query_version('/update/x1/a/b/c/update.xml')
-        self.assertEqual(query_version, 0)
-        query_version = extract_query_version('/update/1x/a/b/c/update.xml')
+    @given(just('x'))
+    @example(invalid_version='1x')
+    @example(invalid_version='x1')
+    def testUpdateInvalidQueryVersion(self, invalid_version):
+        query_version = extract_query_version('/update/{}/a/b/c/update.xml'.format(invalid_version))
         self.assertEqual(query_version, 0)
 
     @given(integers(min_value=1, max_value=100))
+    @example(qv=1)
     def testUpdateQueryVersion(self, qv):
         query_version = extract_query_version('/update/{}/a/b/c/update.xml'.format(qv))
         self.assertEqual(query_version, qv)
