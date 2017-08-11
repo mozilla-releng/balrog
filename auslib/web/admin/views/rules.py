@@ -25,7 +25,6 @@ def process_rule_form(form_data):
     release_names = dbo.releases.getReleaseNames()
 
     mapping_choices = [(item['name'], item['name']) for item in release_names]
-    mapping_choices.insert(0, ('', 'NULL'))
 
     # Replaces wtfForms validations
     rule_form_dict = dict()
@@ -73,13 +72,13 @@ class RulesAPIView(AdminView):
         # a Post here creates a new rule
         what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
 
-        if not what.get('mapping', None):
+        if what.get('mapping', None) is None:
             return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
 
-        elif what.get('mapping', None) and len(mapping_values) != 1:
+        if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-        elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
+        if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
         # Solves Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
@@ -119,13 +118,13 @@ class SingleRuleView(AdminView):
         what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
 
         # If 'mapping' key is present in request body but is either blank/null
-        if 'mapping' in what and not what.get('mapping', None):
+        if 'mapping' in what and what.get('mapping', None) is None:
             return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
 
-        elif what.get('mapping', None) and len(mapping_values) != 1:
+        if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-        elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
+        if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
         # Solves https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
@@ -333,16 +332,21 @@ class RuleScheduledChangesView(ScheduledChangesView):
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
 
-            # Either change_type == "insert" and 'mapping' key-value is blank/null/not-present-in-request-body
-            # OR 'mapping' key is present in request body but is either blank/null
-            if not what.get('mapping', None) and (change_type == "insert" or ('mapping' in what)):
-                return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
+            # if 'mapping' key is present in request body but is null
+            if 'mapping' in what:
+                if what.get('mapping', None) is None:
+                    return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
+
+            # if 'mapping' key-value is null/not-present-in-request-body and change_type == "insert"
+            if what.get('mapping', None) is None:
+                if change_type == "insert":
+                    return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
 
             # If mapping is present in request body and is non-empty string which does not match any release name
-            elif what.get('mapping') is not None and len(mapping_values) != 1:
+            if what.get('mapping') is not None and len(mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-            elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
+            if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
         return super(RuleScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
@@ -393,15 +397,15 @@ class RuleScheduledChangeView(ScheduledChangeView):
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
 
-            # If 'mapping' key is present in request body but is either blank/null
-            if 'mapping' in what and not what.get('mapping', None):
+            # If 'mapping' key is present in request body but is null
+            if 'mapping' in what and what.get('mapping', None) is None:
                 return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
 
             # If 'mapping' key is present in request body and is non-empty string which does not match any release name
-            elif what.get('mapping') is not None and len(mapping_values) != 1:
+            if what.get('mapping') is not None and len(mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-            elif what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
+            if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
         return super(RuleScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
