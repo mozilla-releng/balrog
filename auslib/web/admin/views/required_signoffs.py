@@ -6,11 +6,6 @@ from sqlalchemy.sql.expression import null
 from flask import jsonify, Response
 
 from auslib.web.admin.views.base import requirelogin, AdminView
-from auslib.web.admin.views.forms import \
-    EditScheduledChangeNewProductRequiredSignoffForm, \
-    EditScheduledChangeExistingProductRequiredSignoffForm, \
-    EditScheduledChangeNewPermissionsRequiredSignoffForm, \
-    EditScheduledChangeExistingPermissionsRequiredSignoffForm
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
@@ -117,11 +112,14 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
+        if connexion.request.get_json().get("when", None) is None:
+            return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change "
+                                               "for a Product Required Signoff")
         change_type = connexion.request.get_json().get("change_type")
 
         what = {}
         for field in connexion.request.get_json():
-            if field == "csrf_token":
+            if field == "csrf_token" or change_type == "insert" and field == "data_version":
                 continue
             what[field] = connexion.request.get_json()[field]
 
@@ -149,17 +147,39 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
 
 class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
+    """/scheduled_changes/required_signoffs/product/<int:sc_id>"""
+
     def __init__(self):
         super(ProductRequiredSignoffScheduledChangeView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if connexion.request.get_json() and connexion.request.get_json().get("data_version"):
-            form = EditScheduledChangeExistingProductRequiredSignoffForm()
+        # TODO: modify UI and clients to stop sending 'change_type' in request body
+        sc_rs_product = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+        if sc_rs_product:
+            change_type = sc_rs_product[0]["change_type"]
         else:
-            form = EditScheduledChangeNewProductRequiredSignoffForm()
+            return problem(404, "Not Found", "Unknown sc_id",
+                           ext={"exception": "No scheduled change for product required signoff found for given sc_id"})
+        what = {}
+        for field in connexion.request.get_json():
+            if ((change_type == "insert" and field not in
+                ["when", "product", "channel", "role", "signoffs_required"]) or
+                (change_type == "update" and field not in ["when", "signoffs_required", "data_version"]) or
+                    (change_type == "delete" and field not in ["when", "data_version"])):
+                continue
 
-        return super(ProductRequiredSignoffScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+            what[field] = connexion.request.get_json()[field]
+
+        if change_type in ["update", "delete"] and not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+        if what.get("signoffs_required", None):
+            what["signoffs_required"] = int(what["signoffs_required"])
+
+        return super(ProductRequiredSignoffScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
+                                                                            connexion.request.get_json().
+                                                                            get("sc_data_version", None))
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
@@ -185,6 +205,8 @@ class ProductRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
 
 
 class ProductRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    """/scheduled_changes/required_signoffs/product/<int:sc_id>/revisions"""
+
     def __init__(self):
         super(ProductRequiredSignoffScheduledChangeHistoryView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
 
@@ -227,11 +249,14 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
+        if connexion.request.get_json().get("when", None) is None:
+            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change "
+                                               "for a Permissions Required Signoff")
         change_type = connexion.request.get_json().get("change_type")
 
         what = {}
         for field in connexion.request.get_json():
-            if field == "csrf_token":
+            if field == "csrf_token" or change_type == "insert" and field == "data_version":
                 continue
             what[field] = connexion.request.get_json()[field]
 
@@ -259,17 +284,39 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
 
 class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):
+    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>"""
+
     def __init__(self):
         super(PermissionsRequiredSignoffScheduledChangeView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if connexion.request.get_json() and connexion.request.get_json().get("data_version"):
-            form = EditScheduledChangeExistingPermissionsRequiredSignoffForm()
+        # TODO: modify UI and clients to stop sending 'change_type' in request body
+        sc_rs_permission = self.sc_table.select(where={"sc_id": sc_id},
+                                                transaction=transaction, columns=["change_type"])
+        if sc_rs_permission:
+            change_type = sc_rs_permission[0]["change_type"]
         else:
-            form = EditScheduledChangeNewPermissionsRequiredSignoffForm()
+            return problem(404, "Not Found", "Unknown sc_id",
+                           ext={"exception": "No scheduled change for permission required "
+                                             "signoff found for given sc_id"})
+        what = {}
+        for field in connexion.request.get_json():
+            if ((change_type == "insert" and field not in ["when", "product", "role", "signoffs_required"]) or
+                    (change_type == "update" and field not in ["when", "signoffs_required", "data_version"]) or
+                    (change_type == "delete" and field not in ["when", "data_version"])):
+                continue
+            what[field] = connexion.request.get_json()[field]
 
-        return super(PermissionsRequiredSignoffScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+        if change_type in ["update", "delete"] and not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+        if what.get("signoffs_required", None):
+            what["signoffs_required"] = int(what["signoffs_required"])
+
+        return super(PermissionsRequiredSignoffScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
+                                                                                connexion.request.get_json().
+                                                                                get("sc_data_version", None))
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
@@ -295,6 +342,8 @@ class PermissionsRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
 
 
 class PermissionsRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions"""
+
     def __init__(self):
         super(PermissionsRequiredSignoffScheduledChangeHistoryView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
 

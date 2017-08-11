@@ -10,8 +10,6 @@ from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
 from auslib.web.admin.views.csrf import get_csrf_headers
-from auslib.web.admin.views.forms import EditScheduledChangeNewRuleForm, \
-    EditScheduledChangeExistingRuleForm, EditScheduledChangeDeleteRuleForm
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
@@ -27,7 +25,6 @@ def process_rule_form(form_data):
     release_names = dbo.releases.getReleaseNames()
 
     mapping_choices = [(item['name'], item['name']) for item in release_names]
-    mapping_choices.insert(0, ('', 'NULL'))
 
     # Replaces wtfForms validations
     rule_form_dict = dict()
@@ -75,10 +72,13 @@ class RulesAPIView(AdminView):
         # a Post here creates a new rule
         what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
 
+        if what.get('mapping', None) is None:
+            return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
+
         if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-        if what.get('fallbackMapping', None) is not None and len(fallback_mapping_values) != 1:
+        if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
         # Solves Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
@@ -117,10 +117,14 @@ class SingleRuleView(AdminView):
 
         what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
 
+        # If 'mapping' key is present in request body but is either blank/null
+        if 'mapping' in what and what.get('mapping', None) is None:
+            return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
+
         if what.get('mapping', None) is not None and len(mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
-        if what.get('fallbackMapping', None) is not None and len(fallback_mapping_values) != 1:
+        if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
             return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
 
         # Solves https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
@@ -318,14 +322,27 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
         elif change_type == "insert":
             for field in ["update_type", "backgroundRate", "priority"]:
-                if not what.get(field, None):
-                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
-        else:
-            return problem(400, "Bad Request", "Invalid or missing change_type")
+                if what.get(field, None) is None or \
+                        isinstance(what.get(field), str_types) and what.get(field).strip() == '':
+                    return problem(400, "Bad Request", "Null/Empty Value",
+                                   ext={"exception": "%s cannot be set to null/empty "
+                                                     "when scheduling insertion of a new rule" % field})
 
         if change_type in ["update", "insert"]:
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
+
+            # if 'mapping' key is present in request body but is null
+            if 'mapping' in what:
+                if what.get('mapping', None) is None:
+                    return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
+
+            # if 'mapping' key-value is null/not-present-in-request-body and change_type == "insert"
+            if what.get('mapping', None) is None:
+                if change_type == "insert":
+                    return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
+
+            # If mapping is present in request body and is non-empty string which does not match any release name
             if what.get('mapping') is not None and len(mapping_values) != 1:
                 return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
 
@@ -336,26 +353,63 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
 
 class RuleScheduledChangeView(ScheduledChangeView):
+    """/scheduled_changes/rules/<int:sc_id>"""
+
     def __init__(self):
         super(RuleScheduledChangeView, self).__init__("rules", dbo.rules)
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        if connexion.request.get_json() and connexion.request.get_json().get("data_version"):
-            if connexion.request.get_json().get("change_type") == "delete":
-                form = EditScheduledChangeDeleteRuleForm()
-            else:
-                form = EditScheduledChangeExistingRuleForm()
+        # TODO: modify UI and clients to stop sending 'change_type' in request body
+        sc_rule = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+        if sc_rule:
+            change_type = sc_rule[0]["change_type"]
         else:
-            form = EditScheduledChangeNewRuleForm()
+            return problem(404, "Not Found", "Unknown sc_id",
+                           ext={"exception": "No scheduled change for rule found for given sc_id"})
 
-        if connexion.request.get_json().get("change_type") != "delete":
-            release_names = dbo.releases.getReleaseNames(transaction=transaction)
+        what = {}
+        for field in connexion.request.get_json():
+            # Unlike when scheduling a new change to an existing rule, rule_id is not
+            # required (or even allowed) when modifying a scheduled change for an
+            # existing rule. Allowing it to be modified would be confusing.
+            if (field in ["csrf_token", "rule_id", "sc_data_version"] or
+                    (change_type == "insert" and field == "data_version") or
+                    (change_type == "delete" and field not in ["sc_data_version", "when", "telemetry_product",
+                                                               "telemetry_channel", "telemetry_uptake"])):
+                continue
 
-            form.mapping.choices = [(item['name'], item['name']) for item in release_names]
-            form.mapping.choices.insert(0, ('', 'NULL'))
+            what[field] = connexion.request.get_json()[field]
 
-        return super(RuleScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+        if change_type == "update" and not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+        elif change_type == "insert":
+            # edit scheduled change for new rule
+            for field in ["update_type", "backgroundRate", "priority"]:
+                if field in what and what.get(field) is None or \
+                        isinstance(what.get(field), str_types) and what.get(field).strip() == '':
+                    return problem(400, "Bad Request", "Null/Empty Value",
+                                   ext={"exception": "%s cannot be set to null "
+                                                     "when scheduling insertion of a new rule" % field})
+
+        if change_type in ["update", "insert"]:
+            rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
+            what = rule_dict
+
+            # If 'mapping' key is present in request body but is null
+            if 'mapping' in what and what.get('mapping', None) is None:
+                return problem(400, 'Bad Request', 'mapping value cannot be set to null/empty')
+
+            # If 'mapping' key is present in request body and is non-empty string which does not match any release name
+            if what.get('mapping') is not None and len(mapping_values) != 1:
+                return problem(400, 'Bad Request', 'Invalid mapping value. No release name found in DB')
+
+            if what.get('fallbackMapping') is not None and len(fallback_mapping_values) != 1:
+                return problem(400, 'Bad Request', 'Invalid fallbackMapping value. No release name found in DB')
+
+        return super(RuleScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
+                                                          connexion.request.get_json().get("sc_data_version", None))
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
@@ -381,6 +435,8 @@ class RuleScheduledChangeSignoffsView(SignoffsView):
 
 
 class RuleScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    """/scheduled_changes/rules/<int:sc_id>/revisions"""
+
     def __init__(self):
         super(RuleScheduledChangeHistoryView, self).__init__("rules", dbo.rules)
 

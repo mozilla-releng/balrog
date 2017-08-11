@@ -14,23 +14,12 @@ validator_map = {
     'body': BalrogRequestBodyValidator
 }
 
-# TODO set debug=False after fully migrating all the admin APIs
-connexion_app = connexion.App(__name__, specification_dir='swagger/', validator_map=validator_map, debug=True)
+connexion_app = connexion.App(__name__, specification_dir='swagger/', validator_map=validator_map, debug=False)
 connexion_app.add_api("api.yaml", validate_responses=True, strict_validation=True)
 app = connexion_app.app
 sentry = Sentry()
 
-from auslib.web.admin.views.permissions import PermissionScheduledChangeView, \
-    PermissionScheduledChangeHistoryView
-from auslib.web.admin.views.releases import ReleaseScheduledChangeHistoryView, ReleaseScheduledChangeView
-from auslib.web.admin.views.required_signoffs import \
-    ProductRequiredSignoffScheduledChangeView, \
-    ProductRequiredSignoffScheduledChangeHistoryView, \
-    PermissionsRequiredSignoffScheduledChangeView, \
-    PermissionsRequiredSignoffScheduledChangeHistoryView
-from auslib.web.admin.views.rules import RuleScheduledChangeHistoryView, RuleScheduledChangeView
 from auslib.dockerflow import create_dockerflow_endpoints
-
 
 create_dockerflow_endpoints(app)
 
@@ -75,30 +64,3 @@ def add_security_headers(response):
 
 
 Compress(app)
-
-
-# Endpoints required for the Balrog 2.0 UI.
-# In the Mozilla deployments of Balrog, both the the admin API (these endpoints)
-# and the static admin UI are hosted on the same domain. This API wsgi app is
-# hosted at "/api", which is stripped away by the web server before we see
-# these requests.
-app.add_url_rule("/scheduled_changes/rules/<int:sc_id>", view_func=RuleScheduledChangeView.as_view("scheduled_change_rules"))
-app.add_url_rule("/scheduled_changes/rules/<int:sc_id>/revisions", view_func=RuleScheduledChangeHistoryView.as_view("scheduled_change_rules_history"))
-
-app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>", view_func=PermissionScheduledChangeView.as_view("scheduled_change_permissions"))
-app.add_url_rule("/scheduled_changes/permissions/<int:sc_id>/revisions",
-                 view_func=PermissionScheduledChangeHistoryView.as_view("scheduled_change_permissions_history"))
-
-app.add_url_rule("/scheduled_changes/releases/<int:sc_id>", view_func=ReleaseScheduledChangeView.as_view("scheduled_change_releases"))
-app.add_url_rule("/scheduled_changes/releases/<int:sc_id>/revisions",
-                 view_func=ReleaseScheduledChangeHistoryView.as_view("scheduled_change_releases_history"))
-
-app.add_url_rule("/scheduled_changes/required_signoffs/product/<int:sc_id>",
-                 view_func=ProductRequiredSignoffScheduledChangeView.as_view("scheduled_change_product_rs"))
-app.add_url_rule("/scheduled_changes/required_signoffs/product/<int:sc_id>/revisions",
-                 view_func=ProductRequiredSignoffScheduledChangeHistoryView.as_view("scheduled_change_product_rs_history"))
-
-app.add_url_rule("/scheduled_changes/required_signoffs/permissions/<int:sc_id>",
-                 view_func=PermissionsRequiredSignoffScheduledChangeView.as_view("scheduled_change_permissions_rs"))
-app.add_url_rule("/scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions",
-                 view_func=PermissionsRequiredSignoffScheduledChangeHistoryView.as_view("scheduled_change_permissions_rs_history"))

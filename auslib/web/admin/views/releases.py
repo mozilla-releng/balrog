@@ -12,8 +12,6 @@ from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
 from auslib.web.admin.views.csrf import get_csrf_headers
-from auslib.web.admin.views.forms import EditScheduledChangeExistingReleaseForm, \
-    EditScheduledChangeNewReleaseForm
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
     SignoffsView
@@ -516,6 +514,9 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
+        if connexion.request.get_json().get("when", None) is None:
+            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change "
+                                               "for a Release")
         change_type = connexion.request.get_json().get("change_type")
 
         what = {}
@@ -548,24 +549,47 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
 
 
 class ReleaseScheduledChangeView(ScheduledChangeView):
+    """/scheduled_changes/releases/<int:sc_id>"""
+
     def __init__(self):
         super(ReleaseScheduledChangeView, self).__init__("releases", dbo.releases)
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        change_type = connexion.request.get_json().get("change_type")
-
-        if change_type == "update":
-            form = EditScheduledChangeExistingReleaseForm()
-        elif change_type == "insert":
-            form = EditScheduledChangeNewReleaseForm()
-        elif change_type == "delete":
-            form = EditScheduledChangeExistingReleaseForm()
+        # TODO: modify UI and clients to stop sending 'change_type' in request body
+        sc_release = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+        if sc_release:
+            change_type = sc_release[0]["change_type"]
         else:
-            return Response(status=400, response="Invalid or missing change_type")
-        if form.data.data:
-            form.data.data = createBlob(form.data.data)
-        return super(ReleaseScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+            return problem(404, "Not Found", "Unknown sc_id",
+                           ext={"exception": "No scheduled change for release found for given sc_id"})
+
+        what = {}
+        for field in connexion.request.get_json():
+            # Only data may be changed when editing an existing Scheduled Change for
+            # an existing Release. Name cannot be changed because it is a PK field, and product
+            # cannot be changed because it almost never makes sense to (and can be done
+            # by deleting/recreating instead).
+            # Any Release field may be changed when editing an Scheduled Change for a new Release
+            if ((change_type == "delete" and field not in ["when", "data_version"]) or
+                    (change_type == "update" and field not in ["when", "data", "data_version"]) or
+                    (change_type == "insert" and field not in ["when", "name", "product", "data"])):
+                continue
+
+            what[field] = connexion.request.get_json()[field]
+
+        if change_type in ["update", "delete"] and not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+        elif change_type == "insert" and 'data' in what and not what.get("data", None):
+            # edit scheduled change for new release
+            return problem(400, "Bad Request", "Null/Empty Value",
+                           ext={"exception": "data cannot be set to null when scheduling insertion of a new release"})
+        if what.get("data", None):
+            what["data"] = createBlob(what.get("data"))
+
+        return super(ReleaseScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
+                                                             connexion.request.get_json().get("sc_data_version", None))
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
@@ -591,6 +615,8 @@ class ReleaseScheduledChangeSignoffsView(SignoffsView):
 
 
 class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    """/scheduled_changes/releases/<int:sc_id>/revisions"""
+
     def __init__(self):
         super(ReleaseScheduledChangeHistoryView, self).__init__("releases", dbo.releases)
 

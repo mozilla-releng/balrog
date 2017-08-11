@@ -163,8 +163,8 @@ class HistoryView(HistoryAdminView):
             return problem(404, "Not Found", obj_not_found_msg)
 
         change_id = None
-        if connexion.request.json:
-            change_id = connexion.request.json.get('change_id')
+        if connexion.request.get_json():
+            change_id = connexion.request.get_json().get('change_id')
         if not change_id:
             self.log.warning("Bad input: %s", "no change_id")
             return problem(400, "Bad Request", "No change_id passed in the request body")
