@@ -44,7 +44,8 @@ class SpecificUserView(AdminView):
                                detail="You are not authorized to view permissions of other users.")
 
         permissions = dbo.permissions.getUserPermissions(username)
-        if not permissions:
+
+        if username != current_user and not permissions:
             return problem(status=404, title="Not Found", detail="No permission found for username %s" % username)
         roles = {r["role"]: {"data_version": r["data_version"]} for r in dbo.permissions.getUserRoles(username)}
         return jsonify({"username": username, "permissions": permissions, "roles": roles})
