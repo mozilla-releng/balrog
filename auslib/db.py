@@ -1466,8 +1466,10 @@ class Rules(AUSTable):
             self.table.append_column(Column("mig64", BIT))
         else:
             # It's not ideal to disable the constraint here, but if we leave it enabled
-            # the database cannot be downgraded (t
-            self.table.append_column(Column("mig64", Boolean(create_constraint=False)))
+            # the database cannot be downgraded (dropping the column will try to remove
+            # the column, but not the constraint). This is sqlite-only, so it only
+            # applies to unit tests, not deployed instances.
+            self.table.append_column(Column("mig64", Integer))
 
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 

@@ -1911,7 +1911,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         expected = ["rule_id", "alias", "priority", "mapping", "fallbackMapping", "backgroundRate", "update_type",
                     "product", "version", "channel", "buildTarget", "buildID", "locale", "osVersion",
                     "instructionSet", "distribution", "distVersion", "headerArchitecture", "comment",
-                    "data_version", "memory"]
+                    "data_version", "memory", "mig64"]
         sc_expected = ["base_{}".format(c) for c in expected]
         self.assertEquals(set(columns), set(expected))
         # No need to test the non-base parts of history nor scheduled changes table
