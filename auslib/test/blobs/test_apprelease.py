@@ -2958,7 +2958,7 @@ class TestSchema8Blob(unittest.TestCase):
                             "filesize": 8,
                             "from": "h1",
                             "hashValue": "9",
-                            "proof": "barfoo"
+                            "binTransInclusionProof": "barfoo"
                         }
                     ],
                     "completes": [
@@ -2966,7 +2966,7 @@ class TestSchema8Blob(unittest.TestCase):
                             "filesize": 40,
                             "from": "*",
                             "hashValue": "41",
-                            "proof": "foobar"
+                            "binTransInclusionProof": "foobar"
                         }
                     ]
                 }
@@ -3028,7 +3028,7 @@ class TestSchema8Blob(unittest.TestCase):
                                     "filesize": 8,
                                     "from": "h2",
                                     "hashValue": "9",
-                                    "proof": "barfoo"
+                                    "binTransInclusionProof": "barfoo"
                                 }
                             ],
                             "completes": [
@@ -3036,7 +3036,7 @@ class TestSchema8Blob(unittest.TestCase):
                                     "filesize": 40,
                                     "from": "*",
                                     "hashValue": "41",
-                                    "proof": "foobar"
+                                    "binTransInclusionProof": "foobar"
                                 }
                             ]
                         }
@@ -3071,9 +3071,9 @@ class TestSchema8Blob(unittest.TestCase):
             'binTransMerkleRoot="merkle_root" binTransCertificate="cert" binTransSCTList="sct_list" ' \
             'binTransIssuerDigestSPKI="spki">'
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" proof="foobar"/>
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" binTransInclusionProof="foobar"/>
 """, """
-<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8" proof="barfoo"/>
+<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8" binTransInclusionProof="barfoo"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"

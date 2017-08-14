@@ -175,7 +175,7 @@
                               - filesize
                               - from
                               - hashValue
-                              - proof
+                              - binTransInclusionProof
                             additionalProperties: false
                             description: A list of available partial updates for this platform+locale. Order is significant here, in that a database query is required to determine whether or not the partial is appropriate for an incoming request. For best performance, this list should be organized from most common to least common partial.
                             properties:
@@ -189,10 +189,10 @@
                                     type: string
                                     description: The filesize of this partial update
                                     pattern: ^[0-9]*$
-                              proof:
+                              binTransInclusionProof:
                                 type: string
                                 description: The inclusion proof required for binary transparency test.
-                                minLength: 834
+                                minLength: 1
                                 maxLength: 834
                               from:
                                 type: string
@@ -212,7 +212,7 @@
                               - filesize
                               - from
                               - hashValue
-                              - proof
+                              - binTransInclusionProof
                             additionalProperties: false
                             properties:
                               filesize:
@@ -225,10 +225,10 @@
                                     type: string
                                     description: The filesize of this complete update
                                     pattern: ^[0-9]*$
-                              proof:
+                              binTransInclusionProof:
                                 type: string
                                 description: The inclusion proof required for binary transparency test.
-                                minLength: 834
+                                minLength: 1
                                 maxLength: 834
                               from:
                                 type: string
