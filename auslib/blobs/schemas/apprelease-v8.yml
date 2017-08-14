@@ -192,7 +192,7 @@
                               binTransInclusionProof:
                                 type: string
                                 description: The inclusion proof required for binary transparency test.
-                                minLength: 1
+                                minLength: 834
                                 maxLength: 834
                               from:
                                 type: string
@@ -228,7 +228,7 @@
                               binTransInclusionProof:
                                 type: string
                                 description: The inclusion proof required for binary transparency test.
-                                minLength: 1
+                                minLength: 834
                                 maxLength: 834
                               from:
                                 type: string
