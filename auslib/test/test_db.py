@@ -2508,6 +2508,8 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
                                       data_version=1)
         self.rules.t.insert().execute(rule_id=2, product="b", channel="h", mapping="c", fallbackMapping="h", backgroundRate=100, priority=100,
                                       update_type="minor", data_version=1)
+        self.rules.t.insert().execute(rule_id=5, priority=100, channel='r*', backgroundRate=100, update_type='z', data_version=1)
+        self.rules.t.insert().execute(rule_id=6, priority=100, channel='r*test*', backgroundRate=100, update_type='z', data_version=1)
         self.releases.t.insert().execute(name='a', product='a', data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")),
                                          data_version=1)
         self.releases.t.insert().execute(name='ab', product='a', data=createBlob(dict(name="ab", schema_version=1, hashFunction="sha512")),
@@ -2527,6 +2529,16 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def tearDown(self):
         dbo.reset()
+
+    def _stripNullColumns(self, rules):
+        # We know a bunch of columns are going to be empty...easier to strip them out
+        # than to be super verbose (also should let this test continue to work even
+        # if the schema changes).
+        for rule in rules:
+            for key in rule.keys():
+                if rule[key] is None:
+                    del rule[key]
+        return rules
 
     def testAllTablesCreated(self):
         self.assertTrue(dbo.releases)
@@ -2697,6 +2709,48 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testProceedIfNotReadOnly(self):
         self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
         self.assertRaises(ReadOnlyError, self.releases._proceedIfNotReadOnly, 'a')
+
+    def testGetRulesMatchingQueryChannelCheckMinLengthGlobbing(self):
+        # To ensure length of ruleChannel is >=3
+        expected = []
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='releasetest',
+                 buildTarget='', buildID='', locale='', osVersion='', distribution='',
+                 distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+                 ),
+            fallbackChannel='releasetest'
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, expected)
+
+    def testtestGetRulesMatchingQueryChannelGlobbingAtEndPass(self):
+        # To ensure globbing at end only -- Pass case
+        expected = [dict(rule_id=6, priority=100, backgroundRate=100, channel='r*test*', update_type='z', data_version=1)]
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='r*test-cck-blah',
+                 buildTarget='', buildID='', locale='', osVersion='', distribution='',
+                 distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+                 ),
+            fallbackChannel='releasetest'
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, expected)
+
+    def testtestGetRulesMatchingQueryChannelGlobbingAtEndFail(self):
+        # To ensure globbing at end only -- Fail case
+        expected = []
+        rules = self.rules.getRulesMatchingQuery(
+            dict(name='', product='', version='3.0', channel='raaatest',
+                 buildTarget='', buildID='', locale='', osVersion='', distribution='',
+                 distVersion='', headerArchitecture='',
+                 force=False, queryVersion=3,
+                 ),
+            fallbackChannel='releasetest'
+        )
+        rules = self._stripNullColumns(rules)
+        self.assertEquals(rules, expected)
 
 
 class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):

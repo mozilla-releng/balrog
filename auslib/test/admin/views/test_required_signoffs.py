@@ -296,6 +296,17 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledUnknownScheduledChangeID(self):
+        data = {
+            "signoffs_required": 1, "data_version": 1, "sc_data_version": 1, "when": 200000000,
+        }
+        ret = self._post("/scheduled_changes/required_signoffs/product/98765432", data=data)
+        self.assertEquals(ret.status_code, 404, ret.data)
+
+        ret = self._post("/scheduled_changes/required_signoffs/permissions/98765432", data=data)
+        self.assertEquals(ret.status_code, 404, ret.data)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingRequiredSignoff(self):
         data = {
             "signoffs_required": 1, "data_version": 1, "sc_data_version": 1, "when": 200000000,
@@ -912,8 +923,14 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         self.assertEquals(dict(r[3]), {"change_id": 11, "changed_by": "bob", "timestamp": 100000, "sc_id": 2, "username": "bob", "role": "relman"})
 
     def testSignoffWithoutPermission(self):
-        ret = self._post("/scheduled_changes/required_signoffs/permissions/2/signoffs", data=dict(role="relman"), username="bill")
+        ret = self._post("/scheduled_changes/required_signoffs/permissions/2/signoffs", data=dict(role="relman"),
+                         username="bill")
         self.assertEquals(ret.status_code, 403, ret.data)
+
+    def testSignoffWithoutRole(self):
+        ret = self._post("/scheduled_changes/required_signoffs/permissions/2/signoffs", data=dict(lorem="random"),
+                         username="bill")
+        self.assertEquals(ret.status_code, 400, ret.data)
 
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/required_signoffs/permissions/1/signoffs", username="bob")

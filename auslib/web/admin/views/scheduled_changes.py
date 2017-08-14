@@ -1,13 +1,12 @@
-import json
-
+import connexion
 from sqlalchemy.sql.expression import null
 
-from flask import jsonify, request, Response
-from flask_wtf import Form
+from flask import jsonify, Response
 
 from auslib.web.admin.views.base import AdminView, requirelogin
-from auslib.web.admin.views.forms import DbEditableForm, SignoffForm
 from auslib.web.admin.views.history import HistoryView
+from auslib.web.admin.views.problem import problem
+from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
 
 
 class ScheduledChangesView(AdminView):
@@ -21,7 +20,7 @@ class ScheduledChangesView(AdminView):
         super(ScheduledChangesView, self).__init__()
 
     def get(self):
-        if request.args.get("all"):
+        if connexion.request.args.get("all"):
             rows = self.sc_table.select()
         else:
             rows = self.sc_table.select(where={"complete": False})
@@ -64,17 +63,14 @@ class ScheduledChangesView(AdminView):
             ret["scheduled_changes"].append(scheduled_change)
         return jsonify(ret)
 
-    def _post(self, form, transaction, changed_by):
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
+    def _post(self, what, transaction, changed_by, change_type):
+        if change_type not in ["insert", "update", "delete"]:
+            return problem(400, "Bad Request", "Invalid or missing change_type")
 
-        # Forms can normally be accessed as a dict through form.data,
-        # but because some of the Forms we end up using have a Field
-        # called "data", this gets overridden, so we need to construct
-        # a dict ourselves.
-        columns = {k: v.data for k, v in form._fields.iteritems()}
-        sc_id = self.sc_table.insert(changed_by, transaction, **columns)
+        if is_when_present_and_in_past_validator(what):
+            return problem(400, "Bad Request", "Changes may not be scheduled in the past")
+
+        sc_id = self.sc_table.insert(changed_by, transaction, **what)
         return jsonify(sc_id=sc_id)
 
 
@@ -88,32 +84,15 @@ class ScheduledChangeView(AdminView):
         self.sc_table = table.scheduled_changes
         super(ScheduledChangeView, self).__init__()
 
-    def _post(self, sc_id, form, transaction, changed_by):
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
+    def _post(self, sc_id, what, transaction, changed_by, old_sc_data_version):
+        if is_when_present_and_in_past_validator(what):
+            return problem(400, "Bad Request", "Changes may not be scheduled in the past")
 
-        what = dict()
-        # We need to be able to support changing AND removing things
-        # and because of how Flask's request object and WTForm's defaults work
-        # this gets a little hairy.
-        for k, v in form._fields.iteritems():
-            # sc_data_version is a "special" column, in that it's not part of the
-            # primary data, and shouldn't be updatable by the user.
-            if k == "sc_data_version":
-                continue
-            # If the key is not present in the request we treat it as a no-op
-            # and shouldn't modify the data for that key.
-            # If the key is present we should modify the data as requested.
-            # If a value is an empty string, we should remove that restriction
-            # from the rule (aka, set as NULL in the db). The underlying Form
-            # will have already converted it to None, so we can treat it the
-            # same as a modification here.
-            if request.json and k in request.json:
-                what[k] = v.data
+        if what.get("data_version", None):
+            what["data_version"] = int(what["data_version"])
 
         where = {"sc_id": sc_id}
-        self.sc_table.update(where, what, changed_by, form.sc_data_version.data, transaction)
+        self.sc_table.update(where, what, changed_by, int(old_sc_data_version), transaction)
         sc = self.sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
         return jsonify(new_data_version=sc["data_version"])
 
@@ -121,10 +100,12 @@ class ScheduledChangeView(AdminView):
         where = {"sc_id": sc_id}
         sc = self.sc_table.select(where, transaction, columns=["sc_id"])
         if not sc:
-            return Response(status=404, response="Scheduled change does not exist")
+            return problem(404, "Bad Request", "Scheduled change does not exist")
 
-        form = DbEditableForm(request.args)
-        self.sc_table.delete(where, changed_by, form.data_version.data, transaction)
+        if not connexion.request.args.get("data_version", None):
+            return problem(400, "Bad Request", "data_version is missing")
+
+        self.sc_table.delete(where, changed_by, int(connexion.request.args.get("data_version")), transaction)
         return Response(status=200)
 
 
@@ -154,22 +135,13 @@ class SignoffsView(AdminView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        form = SignoffForm()
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
-
-        self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **form.data)
+        what = {"role": connexion.request.get_json().get("role")}
+        self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **what)
         return Response(status=200)
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
-        form = Form(request.args)
-        if not form.validate():
-            self.log.warning("Bad input: %s", form.errors)
-            return Response(status=400, response=json.dumps(form.errors))
-
-        username = request.args.get("username", changed_by)
+        username = connexion.request.args.get("username", changed_by)
         where = {"sc_id": sc_id, "username": username}
         signoff = self.signoffs_table.select(where, transaction)
         if not signoff:
@@ -260,8 +232,7 @@ class ScheduledChangeHistoryView(HistoryView):
                 obj_not_found_msg='Scheduled change does not exist')
         except (ValueError, AssertionError) as msg:
             self.log.warning("Bad input: %s", msg)
-            return Response(status=400,
-                            response=json.dumps({"exception": msg}))
+            return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
 
     def _post(self, sc_id, transaction, changed_by):
         return self.revert_to_revision(
@@ -273,4 +244,4 @@ class ScheduledChangeHistoryView(HistoryView):
             changed_by=changed_by,
             response_message='Success',
             transaction=transaction,
-            obj_not_found_msg=json.dumps({"exception": "bad sc_id"}))
+            obj_not_found_msg="given sc_id was not found in the database")

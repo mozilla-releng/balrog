@@ -29,24 +29,9 @@ paths:
         - $ref: '#/parameters/buildTarget'
         - $ref: '#/parameters/locale'
         - $ref: '#/parameters/channel'
-        - name: queryVersion
-          in: path
-          description: queryVersion
-          required: true
-          type: integer
-          default: 1
-        # Underlying code depends on osVersion being set. Since this route only
-        # exists to support ancient queries, and all newer versions have osVersion
-        # in them it's easier to set this here than make the all of the underlying
-        # code support queries without it.
-        - name: osVersion
-          in: path
-          description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
-          required: true
-          type: string
-          default: ""
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -65,14 +50,9 @@ paths:
         - $ref: '#/parameters/locale'
         - $ref: '#/parameters/channel'
         - $ref: '#/parameters/osVersion'
-        - name: queryVersion
-          in: path
-          description: queryVersion
-          required: true
-          type: integer
-          default: 2
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -93,14 +73,9 @@ paths:
         - $ref: '#/parameters/osVersion'
         - $ref: '#/parameters/distribution'
         - $ref: '#/parameters/distVersion'
-        - name: queryVersion
-          in: path
-          description: queryVersion
-          required: true
-          type: integer
-          default: 3
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -126,14 +101,9 @@ paths:
           description: Platform Version.
           required: true
           type: string
-        - name: queryVersion
-          in: path
-          description: queryVersion
-          required: true
-          type: integer
-          default: 4
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -159,14 +129,9 @@ paths:
           description: IMEI
           required: true
           type: string
-        - name: queryVersion
-          in: path
-          description: queryVersion
-          required: true
-          type: integer
-          default: 5
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -193,14 +158,9 @@ paths:
           type: string
         - $ref: '#/parameters/distribution'
         - $ref: '#/parameters/distVersion'
-        - name: queryVersion
-          in: path
-          description: queryVersion
-          required: true
-          type: integer
-          default: 6
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -223,14 +183,9 @@ paths:
         - $ref: '#/parameters/osVersion'
         - $ref: '#/parameters/distribution'
         - $ref: '#/parameters/distVersion'
-        - name: queryVersion
-          in: path
-          description: queryVersion
-          required: true
-          type: integer
-          default: 3
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
       responses:
         200:
           description: Update blob in text/xml format.
@@ -408,5 +363,12 @@ parameters:
     name: force
     in: query
     description: force
+    required: false
+    type: string
+
+  mig64:
+    name: mig64
+    in: query
+    description: mig64
     required: false
     type: string

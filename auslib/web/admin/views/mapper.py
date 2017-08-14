@@ -1,16 +1,26 @@
 from auslib.web.admin.views.csrf import CSRFView
 
 from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRuleColumnView, \
-    RuleHistoryAPIView
+    RuleHistoryAPIView, RuleScheduledChangesView, EnactRuleScheduledChangeView, RuleScheduledChangeSignoffsView, \
+    RuleScheduledChangeView, RuleScheduledChangeHistoryView
 
 from auslib.web.admin.views.permissions import UsersView, AllRolesView, SpecificUserView,\
-    PermissionsView, UserRolesView, UserRoleView, SpecificPermissionView
+    PermissionsView, UserRolesView, UserRoleView, SpecificPermissionView, PermissionScheduledChangesView, \
+    EnactPermissionScheduledChangeView, PermissionScheduledChangeSignoffsView, PermissionScheduledChangeView, \
+    PermissionScheduledChangeHistoryView
 
 from auslib.web.admin.views.releases import ReleaseDiffView, ReleaseFieldView, ReleasesAPIView, SingleReleaseView,\
-    ReleaseReadOnlyView, SingleReleaseColumnView, SingleLocaleView, ReleaseHistoryView
+    ReleaseReadOnlyView, SingleReleaseColumnView, SingleLocaleView, ReleaseHistoryView, ReleaseScheduledChangesView, \
+    EnactReleaseScheduledChangeView, ReleaseScheduledChangeSignoffsView, ReleaseScheduledChangeView, \
+    ReleaseScheduledChangeHistoryView
 
 from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsHistoryAPIView, \
-    PermissionsRequiredSignoffsHistoryAPIView, ProductRequiredSignoffsView, PermissionsRequiredSignoffsView
+    PermissionsRequiredSignoffsHistoryAPIView, ProductRequiredSignoffsView, PermissionsRequiredSignoffsView,\
+    ProductRequiredSignoffsScheduledChangesView, PermissionsRequiredSignoffsScheduledChangesView, \
+    EnactProductRequiredSignoffScheduledChangeView, EnactPermissionsRequiredSignoffScheduledChangeView, \
+    ProductRequiredSignoffScheduledChangeSignoffsView, PermissionsRequiredSignoffScheduledChangeSignoffsView, \
+    ProductRequiredSignoffScheduledChangeView, PermissionsRequiredSignoffScheduledChangeView, \
+    ProductRequiredSignoffScheduledChangeHistoryView, PermissionsRequiredSignoffScheduledChangeHistoryView
 
 
 def csrf_get():
@@ -231,3 +241,228 @@ def required_signoffs_permissions_post():
 def required_signoffs_permissions_delete():
     """DELETE /required_signoffs/permissions"""
     return PermissionsRequiredSignoffsView().delete()
+
+
+def scheduled_changes_rules_get():
+    """GET /scheduled_changes/rules"""
+    return RuleScheduledChangesView().get()
+
+
+def scheduled_changes_rules_post():
+    """POST /scheduled_changes/rules"""
+    return RuleScheduledChangesView().post()
+
+
+def scheduled_changes_permissions_get():
+    """GET /scheduled_changes/permissions"""
+    return PermissionScheduledChangesView().get()
+
+
+def scheduled_changes_permissions_post():
+    """POST /scheduled_changes/permissions"""
+    return PermissionScheduledChangesView().post()
+
+
+def scheduled_changes_releases_get():
+    """GET /scheduled_changes/releases"""
+    return ReleaseScheduledChangesView().get()
+
+
+def scheduled_changes_releases_post():
+    """POST /scheduled_changes/releases"""
+    return ReleaseScheduledChangesView().post()
+
+
+def scheduled_changes_rs_product_get():
+    """GET /scheduled_changes/required_signoffs/product"""
+    return ProductRequiredSignoffsScheduledChangesView().get()
+
+
+def scheduled_changes_rs_product_post():
+    """POST /scheduled_changes/required_signoffs/product"""
+    return ProductRequiredSignoffsScheduledChangesView().post()
+
+
+def scheduled_changes_rs_permissions_get():
+    """GET /scheduled_changes/required_signoffs/permissions"""
+    return PermissionsRequiredSignoffsScheduledChangesView().get()
+
+
+def scheduled_changes_rs_permissions_post():
+    """POST /scheduled_changes/required_signoffs/permissions"""
+    return PermissionsRequiredSignoffsScheduledChangesView().post()
+
+
+def enact_scheduled_change_rules_post(sc_id):
+    """POST /scheduled_changes/rules/<int:sc_id>/enact"""
+    return EnactRuleScheduledChangeView().post(sc_id)
+
+
+def enact_scheduled_change_permissions_post(sc_id):
+    """POST /scheduled_changes/permissions/<int:sc_id>/enact"""
+    return EnactPermissionScheduledChangeView().post(sc_id)
+
+
+def enact_scheduled_change_releases_post(sc_id):
+    """POST /scheduled_changes/releases/<int:sc_id>/enact"""
+    return EnactReleaseScheduledChangeView().post(sc_id)
+
+
+def enact_scheduled_change_product_rs_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/product/<int:sc_id>/enact"""
+    return EnactProductRequiredSignoffScheduledChangeView().post(sc_id)
+
+
+def enact_scheduled_change_permissions_rs_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/permissions/<int:sc_id>/enact"""
+    return EnactPermissionsRequiredSignoffScheduledChangeView().post(sc_id)
+
+
+def scheduled_change_rules_signoffs_post(sc_id):
+    """POST /scheduled_changes/rules/<int:sc_id>/signoffs"""
+    return RuleScheduledChangeSignoffsView().post(sc_id)
+
+
+def scheduled_change_rules_signoffs_delete(sc_id):
+    """DELETE /scheduled_changes/rules/<int:sc_id>/signoffs"""
+    return RuleScheduledChangeSignoffsView().delete(sc_id)
+
+
+def scheduled_change_permissions_signoffs_post(sc_id):
+    """POST /scheduled_changes/permissions/<int:sc_id>/signoffs"""
+    return PermissionScheduledChangeSignoffsView().post(sc_id)
+
+
+def scheduled_change_permissions_signoffs_delete(sc_id):
+    """DELETE /scheduled_changes/permissions/<int:sc_id>/signoffs"""
+    return PermissionScheduledChangeSignoffsView().delete(sc_id)
+
+
+def scheduled_change_release_signoffs_post(sc_id):
+    """POST /scheduled_changes/releases/<int:sc_id>/signoffs"""
+    return ReleaseScheduledChangeSignoffsView().post(sc_id)
+
+
+def scheduled_change_release_signoffs_delete(sc_id):
+    """DELETE /scheduled_changes/releases/<int:sc_id>/signoffs"""
+    return ReleaseScheduledChangeSignoffsView().delete(sc_id)
+
+
+def scheduled_change_product_rs_signoffs_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/product/<int:sc_id>/signoffs"""
+    return ProductRequiredSignoffScheduledChangeSignoffsView().post(sc_id)
+
+
+def scheduled_change_product_rs_signoffs_delete(sc_id):
+    """DELETE /scheduled_changes/required_signoffs/product/<int:sc_id>/signoffs"""
+    return ProductRequiredSignoffScheduledChangeSignoffsView().delete(sc_id)
+
+
+def scheduled_change_permissions_rs_signoffs_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/permissions/<int:sc_id>/signoffs"""
+    return PermissionsRequiredSignoffScheduledChangeSignoffsView().post(sc_id)
+
+
+def scheduled_change_permissions_rs_signoffs_delete(sc_id):
+    """DELETE /scheduled_changes/required_signoffs/permissions/<int:sc_id>/signoffs"""
+    return PermissionsRequiredSignoffScheduledChangeSignoffsView().delete(sc_id)
+
+
+def scheduled_change_rules_post(sc_id):
+    """POST /scheduled_changes/rules/<int:sc_id>"""
+    return RuleScheduledChangeView().post(sc_id)
+
+
+def scheduled_change_rules_delete(sc_id):
+    """DELETE /scheduled_changes/rules/<int:sc_id>"""
+    return RuleScheduledChangeView().delete(sc_id)
+
+
+def scheduled_change_permissions_post(sc_id):
+    """POST /scheduled_changes/permissions/<int:sc_id>"""
+    return PermissionScheduledChangeView().post(sc_id)
+
+
+def scheduled_change_permissions_delete(sc_id):
+    """DELETE /scheduled_changes/permissions/<int:sc_id>"""
+    return PermissionScheduledChangeView().delete(sc_id)
+
+
+def scheduled_change_releases_post(sc_id):
+    """POST /scheduled_changes/releases/<int:sc_id>"""
+    return ReleaseScheduledChangeView().post(sc_id)
+
+
+def scheduled_change_releases_delete(sc_id):
+    """DELETE /scheduled_changes/releases/<int:sc_id>"""
+    return ReleaseScheduledChangeView().delete(sc_id)
+
+
+def scheduled_change_product_rs_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/product/<int:sc_id>"""
+    return ProductRequiredSignoffScheduledChangeView().post(sc_id)
+
+
+def scheduled_change_product_rs_delete(sc_id):
+    """DELETE /scheduled_changes/required_signoffs/product/<int:sc_id>"""
+    return ProductRequiredSignoffScheduledChangeView().delete(sc_id)
+
+
+def scheduled_change_permissions_rs_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/permissions/<int:sc_id>"""
+    return PermissionsRequiredSignoffScheduledChangeView().post(sc_id)
+
+
+def scheduled_change_permissions_rs_delete(sc_id):
+    """DELETE /scheduled_changes/required_signoffs/permissions/<int:sc_id>"""
+    return PermissionsRequiredSignoffScheduledChangeView().delete(sc_id)
+
+
+def scheduled_change_rules_history_get(sc_id):
+    """GET /scheduled_changes/rules/<int:sc_id>/revisions"""
+    return RuleScheduledChangeHistoryView().get(sc_id)
+
+
+def scheduled_change_rules_history_post(sc_id):
+    """POST /scheduled_changes/rules/<int:sc_id>/revisions"""
+    return RuleScheduledChangeHistoryView().post(sc_id)
+
+
+def scheduled_change_permissions_history_get(sc_id):
+    """GET /scheduled_changes/permissions/<int:sc_id>/revisions"""
+    return PermissionScheduledChangeHistoryView().get(sc_id)
+
+
+def scheduled_change_permissions_history_post(sc_id):
+    """POST /scheduled_changes/permissions/<int:sc_id>/revisions"""
+    return PermissionScheduledChangeHistoryView().post(sc_id)
+
+
+def scheduled_change_releases_history_get(sc_id):
+    """GET /scheduled_changes/releases/<int:sc_id>/revisions"""
+    return ReleaseScheduledChangeHistoryView().get(sc_id)
+
+
+def scheduled_change_releases_history_post(sc_id):
+    """POST /scheduled_changes/releases/<int:sc_id>/revisions"""
+    return ReleaseScheduledChangeHistoryView().post(sc_id)
+
+
+def scheduled_change_product_rs_history_get(sc_id):
+    """GET /scheduled_changes/required_signoffs/product/<int:sc_id>/revisions"""
+    return ProductRequiredSignoffScheduledChangeHistoryView().get(sc_id)
+
+
+def scheduled_change_product_rs_history_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/product/<int:sc_id>/revisions"""
+    return ProductRequiredSignoffScheduledChangeHistoryView().post(sc_id)
+
+
+def scheduled_change_permissions_rs_history_get(sc_id):
+    """GET /scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions"""
+    return PermissionsRequiredSignoffScheduledChangeHistoryView().get(sc_id)
+
+
+def scheduled_change_permissions_rs_history_post(sc_id):
+    """POST /scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions"""
+    return PermissionsRequiredSignoffScheduledChangeHistoryView().post(sc_id)

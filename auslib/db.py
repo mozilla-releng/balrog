@@ -1487,11 +1487,21 @@ class Rules(AUSTable):
     def _matchesRegex(self, foo, bar):
         # Expand wildcards and use ^/$ to make sure we don't succeed on partial
         # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
-        test = foo.replace('.', '\.').replace('*', '.*')
-        test = '^%s$' % test
-        if re.match(test, bar):
+        # Channel length must be strictly greater than two
+        # And globbing is allowed at the end of channel-name only
+        if foo.endswith('*'):
+            if(len(foo) >= 3):
+                test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
+                test = '^{}.*$'.format(test[:-1])
+                if re.match(test, bar):
+                    return True
+                return False
+            else:
+                return False
+        elif (foo == bar):
             return True
-        return False
+        else:
+            return False
 
     def _channelMatchesRule(self, ruleChannel, queryChannel, fallbackChannel):
         """Decides whether a channel from the rules matches an incoming one.
@@ -1505,17 +1515,6 @@ class Rules(AUSTable):
             return True
         if self._matchesRegex(ruleChannel, fallbackChannel):
             return True
-
-    def _matchesList(self, ruleString, queryString):
-        """Decides whether a ruleString from a rule matches an incoming string.
-           The rule may specify multiple matches, delimited by a comma. Once
-           split we look for an exact match against the string from the queries.
-           We want an exact match so (eg) we only get the locales we specify"""
-        if ruleString is None:
-            return True
-        for subString in ruleString.split(','):
-            if subString == queryString:
-                return True
 
     def _versionMatchesRule(self, ruleVersion, queryVersion):
         """Decides whether a version from the rules matches an incoming version.
@@ -1603,7 +1602,7 @@ class Rules(AUSTable):
     def _localeMatchesRule(self, ruleLocales, queryLocale):
         """Decides if a comma seperated list of locales in a rule matches an
         update request"""
-        return self._matchesList(ruleLocales, queryLocale)
+        return self._csvMatchesRule(ruleLocales, queryLocale, substring=False)
 
     def _isAlias(self, id_or_alias):
         if re.match("^[a-zA-Z][a-zA-Z0-9-]*$", str(id_or_alias)):
@@ -2567,9 +2566,19 @@ class AUSDatabase(object):
     def setDomainWhitelist(self, domainWhitelist):
         self.releasesTable.setDomainWhitelist(domainWhitelist)
 
-    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, use_tls=False):
+    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, use_tls=False, notify_tables=None):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls)
-        for t in (self.rules, self.rules.scheduled_changes, self.permissions):
+        if notify_tables is None:
+            notify_tables = (
+                self.rules, self.rules.scheduled_changes, self.rules.scheduled_changes.signoffs,
+                self.permissions, self.permissions.user_roles, self.permissions.scheduled_changes, self.permissions.scheduled_changes.signoffs,
+                self.productRequiredSignoffs, self.productRequiredSignoffs.scheduled_changes, self.productRequiredSignoffs.scheduled_changes.signoffs,
+                self.permissionsRequiredSignoffs, self.permissionsRequiredSignoffs.scheduled_changes,
+                self.permissionsRequiredSignoffs.scheduled_changes.signoffs,
+                self.releases.scheduled_changes, self.releases.scheduled_changes.signoffs,
+            )
+
+        for t in notify_tables:
             t.onInsert = bleeter
             t.onUpdate = bleeter
             t.onDelete = bleeter

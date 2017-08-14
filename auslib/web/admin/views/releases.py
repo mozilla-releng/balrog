@@ -12,9 +12,6 @@ from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
 from auslib.web.admin.views.csrf import get_csrf_headers
-from auslib.web.admin.views.forms import EditScheduledChangeExistingReleaseForm, \
-    ScheduledChangeNewReleaseForm, ScheduledChangeExistingReleaseForm, ScheduledChangeDeleteReleaseForm, \
-    EditScheduledChangeNewReleaseForm
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
     SignoffsView
@@ -77,32 +74,32 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                               - the old_data_version from the PartialReleaseForm
     """
     new = True
-    product = connexion.request.json.get("product")
-    incomingData = json.loads(connexion.request.json.get("data"))
+    product = connexion.request.get_json().get("product")
+    incomingData = json.loads(connexion.request.get_json().get("data"))
 
     copyTo = list()
-    if connexion.request.json.get("copyTo"):
-        copyTo = json.loads(connexion.request.json.get("copyTo"))
+    if connexion.request.get_json().get("copyTo"):
+        copyTo = json.loads(connexion.request.get_json().get("copyTo"))
 
     alias = list()
-    if connexion.request.json.get("alias"):
-        alias = json.loads(connexion.request.json.get("alias"))
+    if connexion.request.get_json().get("alias"):
+        alias = json.loads(connexion.request.get_json().get("alias"))
 
-    old_data_version = connexion.request.json.get("data_version")
+    old_data_version = connexion.request.get_json().get("data_version")
 
     # schema_version is an attribute at the root level of a blob.
     # Endpoints that receive an entire blob can find it there.
     # Those that don't have to pass it as a form element instead.
 
-    if connexion.request.json.get("schema_version"):
-        schema_version = connexion.request.json.get("schema_version")
+    if connexion.request.get_json().get("schema_version"):
+        schema_version = connexion.request.get_json().get("schema_version")
     elif incomingData.get("schema_version"):
         schema_version = incomingData.get("schema_version")
     else:
         return problem(400, "Bad Request", "schema_version is required")
 
-    if connexion.request.json.get("hashFunction"):
-        hashFunction = connexion.request.json.get("hashFunction")
+    if connexion.request.get_json().get("hashFunction"):
+        hashFunction = connexion.request.get_json().get("hashFunction")
     elif incomingData.get("hashFunction"):
         hashFunction = incomingData.get("hashFunction")
     else:
@@ -241,13 +238,13 @@ class SingleReleaseView(AdminView):
     @requirelogin
     def _put(self, release, changed_by, transaction):
         if dbo.releases.getReleases(name=release, limit=1):
-            if not connexion.request.json.get("data_version"):
+            if not connexion.request.get_json().get("data_version"):
                 return problem(400, "Bad Request", "data_version field is missing")
             try:
-                blob = createBlob(connexion.request.json.get("blob"))
+                blob = createBlob(connexion.request.get_json().get("blob"))
                 dbo.releases.update(where={"name": release},
-                                    what={"data": blob, "product": connexion.request.json.get("product")},
-                                    changed_by=changed_by, old_data_version=connexion.request.json.get("data_version"),
+                                    what={"data": blob, "product": connexion.request.get_json().get("product")},
+                                    changed_by=changed_by, old_data_version=connexion.request.get_json().get("data_version"),
                                     transaction=transaction)
             except BlobValidationError as e:
                 msg = "Couldn't update release: %s" % e
@@ -268,9 +265,9 @@ class SingleReleaseView(AdminView):
             return jsonify(new_data_version=data_version)
         else:
             try:
-                blob = createBlob(connexion.request.json.get("blob"))
+                blob = createBlob(connexion.request.get_json().get("blob"))
                 dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release,
-                                    product=connexion.request.json.get("product"), data=blob)
+                                    product=connexion.request.get_json().get("product"), data=blob)
             except BlobValidationError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
@@ -337,10 +334,10 @@ class ReleaseReadOnlyView(AdminView):
         if not releases:
             return problem(404, "Not Found", "Release: %s not found" % release)
 
-        data_version = connexion.request.json.get("data_version")
+        data_version = connexion.request.get_json().get("data_version")
         is_release_read_only = dbo.releases.isReadOnly(release)
 
-        if connexion.request.json.get("read_only"):
+        if connexion.request.get_json().get("read_only"):
             if not is_release_read_only:
                 dbo.releases.update(where={"name": release}, what={"read_only": True}, changed_by=changed_by,
                                     old_data_version=data_version, transaction=transaction)
@@ -465,15 +462,15 @@ class ReleasesAPIView(AdminView):
 
     @requirelogin
     def _post(self, changed_by, transaction):
-        if dbo.releases.getReleaseInfo(name=connexion.request.json.get("name"), transaction=transaction, nameOnly=True,
+        if dbo.releases.getReleaseInfo(name=connexion.request.get_json().get("name"), transaction=transaction, nameOnly=True,
                                        limit=1):
-            return problem(400, "Bad Request", "Release: %s already exists" % connexion.request.json.get("name"),
+            return problem(400, "Bad Request", "Release: %s already exists" % connexion.request.get_json().get("name"),
                            ext={"data": "Database already contains the release"})
         try:
-            blob = createBlob(connexion.request.json.get("blob"))
+            blob = createBlob(connexion.request.get_json().get("blob"))
             name = dbo.releases.insert(changed_by=changed_by, transaction=transaction,
-                                       name=connexion.request.json.get("name"),
-                                       product=connexion.request.json.get("product"),
+                                       name=connexion.request.get_json().get("name"),
+                                       product=connexion.request.get_json().get("product"),
                                        data=blob)
         except BlobValidationError as e:
             msg = "Couldn't create release: %s" % e
@@ -510,46 +507,89 @@ class SingleReleaseColumnView(AdminView):
 
 
 class ReleaseScheduledChangesView(ScheduledChangesView):
+    """/scheduled_changes/releases"""
+
     def __init__(self):
         super(ReleaseScheduledChangesView, self).__init__("releases", dbo.releases)
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        change_type = connexion.request.json.get("change_type")
+        if connexion.request.get_json().get("when", None) is None:
+            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change "
+                                               "for a Release")
+        change_type = connexion.request.get_json().get("change_type")
+
+        what = {}
+        for field in connexion.request.get_json():
+            if field == "csrf_token":
+                continue
+            what[field] = connexion.request.get_json()[field]
 
         if change_type == "update":
-            form = ScheduledChangeExistingReleaseForm()
-            form.data.data = createBlob(form.data.data)
-        elif change_type == "insert":
-            form = ScheduledChangeNewReleaseForm()
-            form.data.data = createBlob(form.data.data)
-        elif change_type == "delete":
-            form = ScheduledChangeDeleteReleaseForm()
-        else:
-            return Response(status=400, response="Invalid or missing change_type")
+            if not what.get("data_version", None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-        return super(ReleaseScheduledChangesView, self)._post(form, transaction, changed_by)
+            if what.get("data", None):
+                what["data"] = createBlob(what.get("data"))
+
+        elif change_type == "insert":
+            if not what.get("product", None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "product is missing"})
+
+            if what.get("data", None):
+                what["data"] = createBlob(what.get("data"))
+            else:
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "Missing blob 'data' value"})
+
+        elif change_type == "delete":
+            if not what.get("data_version", None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+        return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
 
 
 class ReleaseScheduledChangeView(ScheduledChangeView):
+    """/scheduled_changes/releases/<int:sc_id>"""
+
     def __init__(self):
         super(ReleaseScheduledChangeView, self).__init__("releases", dbo.releases)
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        change_type = connexion.request.json.get("change_type")
-
-        if change_type == "update":
-            form = EditScheduledChangeExistingReleaseForm()
-        elif change_type == "insert":
-            form = EditScheduledChangeNewReleaseForm()
-        elif change_type == "delete":
-            form = EditScheduledChangeExistingReleaseForm()
+        # TODO: modify UI and clients to stop sending 'change_type' in request body
+        sc_release = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+        if sc_release:
+            change_type = sc_release[0]["change_type"]
         else:
-            return Response(status=400, response="Invalid or missing change_type")
-        if form.data.data:
-            form.data.data = createBlob(form.data.data)
-        return super(ReleaseScheduledChangeView, self)._post(sc_id, form, transaction, changed_by)
+            return problem(404, "Not Found", "Unknown sc_id",
+                           ext={"exception": "No scheduled change for release found for given sc_id"})
+
+        what = {}
+        for field in connexion.request.get_json():
+            # Only data may be changed when editing an existing Scheduled Change for
+            # an existing Release. Name cannot be changed because it is a PK field, and product
+            # cannot be changed because it almost never makes sense to (and can be done
+            # by deleting/recreating instead).
+            # Any Release field may be changed when editing an Scheduled Change for a new Release
+            if ((change_type == "delete" and field not in ["when", "data_version"]) or
+                    (change_type == "update" and field not in ["when", "data", "data_version"]) or
+                    (change_type == "insert" and field not in ["when", "name", "product", "data"])):
+                continue
+
+            what[field] = connexion.request.get_json()[field]
+
+        if change_type in ["update", "delete"] and not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+        elif change_type == "insert" and 'data' in what and not what.get("data", None):
+            # edit scheduled change for new release
+            return problem(400, "Bad Request", "Null/Empty Value",
+                           ext={"exception": "data cannot be set to null when scheduling insertion of a new release"})
+        if what.get("data", None):
+            what["data"] = createBlob(what.get("data"))
+
+        return super(ReleaseScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
+                                                             connexion.request.get_json().get("sc_data_version", None))
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
@@ -557,6 +597,8 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
 
 
 class EnactReleaseScheduledChangeView(EnactScheduledChangeView):
+    """/scheduled_changes/releases/<int:sc_id>/enact"""
+
     def __init__(self):
         super(EnactReleaseScheduledChangeView, self).__init__("releases", dbo.releases)
 
@@ -566,11 +608,15 @@ class EnactReleaseScheduledChangeView(EnactScheduledChangeView):
 
 
 class ReleaseScheduledChangeSignoffsView(SignoffsView):
+    """/scheduled_changes/releases/<int:sc_id>/signoffs"""
+
     def __init__(self):
         super(ReleaseScheduledChangeSignoffsView, self).__init__("releases", dbo.releases)
 
 
 class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
+    """/scheduled_changes/releases/<int:sc_id>/revisions"""
+
     def __init__(self):
         super(ReleaseScheduledChangeHistoryView, self).__init__("releases", dbo.releases)
 
