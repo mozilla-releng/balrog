@@ -922,8 +922,8 @@ class ProofXMLMixin(object):
     def _getAdditionalPatchAttributes(self, patch):
         additionalPatchAttributes = {}
 
-        if 'proof' in patch:
-            additionalPatchAttributes['proof'] = patch["proof"]
+        if 'binTransInclusionProof' in patch:
+            additionalPatchAttributes['binTransInclusionProof'] = patch["binTransInclusionProof"]
 
         return additionalPatchAttributes
 
