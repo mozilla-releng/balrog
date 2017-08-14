@@ -205,10 +205,24 @@
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
+        <div class="form-group" ng-class="{'has-error': errors.mig64}">
+          <label for="id_mig64">Match clients that have done 32-bit to 64-bit migration?</label>
+          <select id="id_mig64" ng-model="rule.mig64" class="form-control"
+                  ng-options="value as key for (key, value) in {'Both': null, 'Yes': true, 'No': false}">
+            <!-- Angular creates an extra entry because one of our values is null. This hides it.
+                 From https://stackoverflow.com/a/24321497 -->
+            <option value="" ng-if="false"></option>
+          </select>
+          <p class="help-block" ng-show="errors.mig64">{{ errors.mig64.join(', ') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
         <div class="form-group" ng-class="{'has-error': errors.comment}">
-        <label for="id_comment">Comment</label>
-        <input type="text" class="form-control" id="id_comment" ng-model="sc.comment">
-        <p class="help-block" ng-show="errors.comment">{{ errors.comment.join(', ') }}</p>
+          <label for="id_comment">Comment</label>
+          <input type="text" class="form-control" id="id_comment" ng-model="sc.comment">
+          <p class="help-block" ng-show="errors.comment">{{ errors.comment.join(', ') }}</p>
         </div>
       </div>
     </div>
