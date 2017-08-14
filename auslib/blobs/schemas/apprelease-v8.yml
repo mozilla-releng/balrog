@@ -58,15 +58,18 @@
     backgroundInterval:
       type: number
       description: This decides how quickly or slowly Firefox downloads an MAR.
-    transparencyCert:
+    binTransMerkleRoot:
+      type: string
+      description: Merkle root from tree computed over SHA256SUMS used to construct domain name.
+    binTransCertificate:
       type: string
       description: Certificate recieved from script worker used to submit to CT.
-    SCT1:
+    binTransSCTList:
       type: string
       description: Signed certificate timestamp response when valid certificate is submitted to log.
-    SCT2:
+    binTransIssuerDigestSPKI:
       type: string
-      description: Signed certificate timestamp response when valid certificate is submitted to log.
+      description: SHA256 of the SPKI from the Issuer Certificate.
     # Top level fileUrls are useful primarily for release style builds,
     # where the URLs are predictable and only vary by locale and platform.
     # It"s worth noting that while we normally serve different channels

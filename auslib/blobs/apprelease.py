@@ -943,8 +943,8 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
     # for the benefit of get*XML
     optional_ = ('showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL',
-                 'promptWaitTime', 'backgroundInterval',
-                 'transparencyCert', 'SCT1', 'SCT2')
+                 'promptWaitTime', 'backgroundInterval', 'binTransMerkleRoot',
+                 'binTransCertificate', 'binTransSCTList', 'binTransIssuerDigestSPKI')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('openURL', 'notificationURL', 'alertURL')
 
