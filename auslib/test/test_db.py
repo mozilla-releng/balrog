@@ -1,12 +1,12 @@
 import logging
 import mock
 import os
+from os import path
 import sys
 from tempfile import mkstemp
 import unittest
 import re
 
-from os import path
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
 
@@ -2292,6 +2292,146 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def testGetNumberOfRules(self):
         self.assertEquals(self.paths.countRules(), 10)
+
+
+class TestMig64Rules(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
+
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.rules = self.db.rules
+        self.rules.t.insert().execute(rule_id=1, priority=90, mapping="myes", backgroundRate=100, mig64=True,
+                                      update_type="z", product="mm", channel="mm", data_version=1)
+        self.rules.t.insert().execute(rule_id=2, priority=100, mapping="mno", backgroundRate=100, mig64=False,
+                                      update_type="z", product="nn", channel="nn", data_version=1)
+
+        self.rules.t.insert().execute(rule_id=3, priority=110, mapping="anything", backgroundRate=100,
+                                      update_type="z", product="oo", channel="oo", data_version=1)
+
+    def testRuleFalseQueryFalse(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="nn", version='53.0', channel="nn",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=False, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=2, priority=100, mapping="mno", backgroundRate=100, mig64=False, update_type="z",
+                 product="nn", channel="nn", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleFalseQueryTrue(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="nn", version='53.0', channel="nn",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=True, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleFalseQueryNull(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="nn", version='53.0', channel="nn",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=None, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleTrueQueryFalse(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="mm", version='53.0', channel="mm",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=False, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleTrueQueryTrue(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="mm", version='53.0', channel="mm",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=True, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=1, priority=90, mapping="myes", backgroundRate=100, mig64=True, update_type="z",
+                 product="mm", channel="mm", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleTrueQueryNull(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="mm", version='53.0', channel="mm",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=None, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleNullQueryFalse(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="oo", version='53.0', channel="oo",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=False, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=3, priority=110, mapping="anything", backgroundRate=100, update_type="z",
+                 product="oo", channel="oo", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleNullQueryTrue(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="oo", version='53.0', channel="oo",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=True, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=3, priority=110, mapping="anything", backgroundRate=100, update_type="z",
+                 product="oo", channel="oo", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleNullQueryNull(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="oo", version='53.0', channel="oo",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=None, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=3, priority=110, mapping="anything", backgroundRate=100, update_type="z",
+                 product="oo", channel="oo", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
 
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):

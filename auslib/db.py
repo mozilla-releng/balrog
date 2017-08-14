@@ -1619,6 +1619,16 @@ class Rules(AUSTable):
             return True
         return False
 
+    def select(self, *args, **kwargs):
+        ret = []
+        for row in super(Rules, self).select(*args, **kwargs):
+            # mig64 needs to be treated as a bool (if it's not None), but not all databases
+            # support this type. To workaround this, we ensure it is cast to one.
+            if row.get("mig64") is not None:
+                row["mig64"] = bool(row["mig64"])
+            ret.append(row)
+        return ret
+
     def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
@@ -1713,6 +1723,26 @@ class Rules(AUSTable):
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
                 continue
+            # As with all other columns, if mig64 isn't present in the Rule, the Rule matches.
+            # Unlike other columns, mig64 is optional, so we must handle False, True, and None values.
+            # We treat None as "unknown", which means that any Rule that sets mig64 must match the
+            # updateQuery precisely. i.e.: False and None are not the same thing.
+            # The full truth table is:
+            # rule | query | matches?
+            #   F      0        Y
+            #   F      1        N
+            #   F     null      N
+            #   T      0        N
+            #   T      1        Y
+            #   T     null      N
+            # null     0        Y
+            # null     1        Y
+            # null    null      Y
+            #
+            # Additional context in https://bugzilla.mozilla.org/show_bug.cgi?id=1386756
+            if rule["mig64"] is not None:
+                if updateQuery.get("mig64") is None or rule["mig64"] != updateQuery["mig64"]:
+                    continue
 
             matchingRules.append(rule)
 
