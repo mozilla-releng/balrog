@@ -186,6 +186,7 @@ class RuleHistoryAPIView(HistoryView):
             'osVersion': 'osVersion',
             'instructionSet': 'instructionSet',
             'memory': 'memory',
+            'mig64': 'mig64',
             'distVersion': 'distVersion',
             'comment': 'comment',
             'update_type': 'update_type',

@@ -12,7 +12,7 @@ class TestRulesAPI_JSON(ViewTest):
     def testGetRules(self):
         ret = self._get("/rules")
         got = json.loads(ret.data)
-        self.assertEquals(got["count"], 7)
+        self.assertEquals(got["count"], 8)
 
     def testGetRulesWithProductFilter(self):
         ret = self._get("/rules", qs={"product": "fake"})
@@ -87,6 +87,18 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(r[0]['backgroundRate'], 33)
         self.assertEquals(r[0]['priority'], 0)
         self.assertEquals(r[0]['memory'], "<7373")
+        self.assertEquals(r[0]['data_version'], 1)
+
+    def testCreateRuleWithMig64(self):
+        ret = self._post('/rules', data=dict(backgroundRate=33, mapping='c', priority=0, mig64=True,
+                                             product='Firefox', update_type='minor', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], 'c')
+        self.assertEquals(r[0]['backgroundRate'], 33)
+        self.assertEquals(r[0]['priority'], 0)
+        self.assertEquals(r[0]['mig64'], True)
         self.assertEquals(r[0]['data_version'], 1)
 
     def testVersionMaxFieldLength(self):
@@ -355,6 +367,39 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r[0]['update_type'], 'minor')
         self.assertEquals(r[0]['version'], '3.5')
         self.assertEquals(r[0]['buildTarget'], 'd')
+
+    def testPostChangeToMig64(self):
+        # Make some changes to a rule
+        ret = self._post('/rules/1', data=dict(mig64=True, data_version=1))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mig64'], True)
+        self.assertEquals(r[0]['data_version'], 2)
+        # And that we didn't modify other fields
+        self.assertEquals(r[0]['update_type'], 'minor')
+        self.assertEquals(r[0]['version'], '3.5')
+        self.assertEquals(r[0]['buildTarget'], 'd')
+
+    def testPostUnsetMig64(self):
+        # Make some changes to a rule
+        ret = self._post('/rules/8', data=dict(mig64=None, data_version=1))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 8).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mig64'], None)
+        self.assertEquals(r[0]['data_version'], 2)
+        # And that we didn't modify other fields
+        self.assertEquals(r[0]['update_type'], 'minor')
+        self.assertEquals(r[0]['priority'], 25)
 
     def testPutRuleOutdatedData(self):
         # Make changes to a rule
@@ -865,8 +910,8 @@ class TestRuleHistoryView(ViewTest):
 class TestSingleColumn_JSON(ViewTest):
 
     def testGetRules(self):
-        expected_product = ["fake", "a"]
-        expected = dict(count=2, product=expected_product)
+        expected_product = ["fake", "fake2", "a"]
+        expected = dict(count=3, product=expected_product)
         ret = self._get("/rules/columns/product")
         returned_data = json.loads(ret.data)
         self.assertEquals(returned_data['count'], expected['count'])
@@ -1426,9 +1471,9 @@ class TestRuleScheduledChanges(ViewTest):
         sc_row = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 2).execute().fetchall()[0]
         self.assertEquals(sc_row["complete"], True)
 
-        row = dbo.rules.t.select().where(dbo.rules.rule_id == 8).execute().fetchall()[0]
+        row = dbo.rules.t.select().where(dbo.rules.rule_id == 9).execute().fetchall()[0]
         expected = {
-            "rule_id": 8, "priority": 50, "version": None, "buildTarget": None, "backgroundRate": 100, "mapping": "ab", "fallbackMapping": None,
+            "rule_id": 9, "priority": 50, "version": None, "buildTarget": None, "backgroundRate": 100, "mapping": "ab", "fallbackMapping": None,
             "update_type": "minor", "data_version": 1, "alias": None, "product": "baz", "channel": None, "buildID": None,
             "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
             "comment": None, "instructionSet": None, "memory": None, "mig64": None,

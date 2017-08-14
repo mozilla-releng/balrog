@@ -124,6 +124,10 @@ class ViewTest(unittest.TestCase):
         )
         dbo.rules.t.insert().execute(rule_id=6, product='fake', priority=40, backgroundRate=50, mapping='a', update_type='minor', channel="e", data_version=1)
         dbo.rules.t.insert().execute(rule_id=7, product='fake', priority=30, backgroundRate=85, mapping='a', update_type='minor', channel="c", data_version=1)
+        dbo.rules.t.insert().execute(
+            rule_id=8, product='fake2', priority=25, backgroundRate=100, mapping='a', update_type='minor', channel="c", mig64=True,
+            data_version=1
+        )
         self.client = app.test_client()
 
     def tearDown(self):
