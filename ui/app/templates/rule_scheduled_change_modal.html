@@ -206,9 +206,14 @@
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.mig64}">
-          <label for="id_mig64">Match clients that have opted into 32-bit to 64-bit migration?</label>
+          <label for="id_mig64">
+            64-bit Migration Opt-in
+            <span class="glyphicon glyphicon-question-sign"
+                  title='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status. "Ignore" is usually what you want.'>
+            </span>
+          </label>
           <select id="id_mig64" ng-model="rule.mig64" class="form-control"
-                  ng-options="value as key for (key, value) in {'Both': null, 'Yes': true, 'No': false}">
+                  ng-options="value as key for (key, value) in {'Ignore': null, 'Yes': true, 'No': false}">
             <!-- Angular creates an extra entry because one of our values is null. This hides it.
                  From https://stackoverflow.com/a/24321497 -->
             <option value="" ng-if="false"></option>

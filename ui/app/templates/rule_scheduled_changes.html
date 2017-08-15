@@ -162,7 +162,7 @@
       <dt ng-show="sc.memory">Memory:</dt>
       <dd>{{ sc.memory }}</dd>
       <!-- TODO: find better name for this -->
-      <dt ng-show="rule.mig64">64-Bit Migration Opt-in:</dt>
+      <dt ng-show="rule.mig64 !== null">64-Bit Migration Opt-in:</dt>
       <dd ng-if="rule.mig64 === true">Yes</dd>
       <dd ng-if="rule.mig64 === false">No</dd>
       <dt ng-show="sc.distVersion">Dist Version:</dt>
