@@ -2958,16 +2958,7 @@ class TestSchema8Blob(unittest.TestCase):
                             "filesize": 8,
                             "from": "h1",
                             "hashValue": "9",
-                            "binTransInclusionProof": "834charpartialsproof834charpartialsproof834charpartialsproof834ch
-                            arpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialspr
-                            oof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpa
-                            rtialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof8
-                            34charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartia
-                            lsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834ch
-                            arpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialspr
-                            oof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpa
-                            rtialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof8
-                            34charpartialsproof834charpartial"
+                            "binTransInclusionProof": "834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartial"
                         }
                     ],
                     "completes": [
@@ -2975,16 +2966,7 @@ class TestSchema8Blob(unittest.TestCase):
                             "filesize": 40,
                             "from": "*",
                             "hashValue": "41",
-                            "binTransInclusionProof": "834charcompletesproof834charcompletesproof834charcompletesproof83
-                            4charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcom
-                            pletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletespr
-                            oof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834ch
-                            arcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomple
-                            tesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof
-                            834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charc
-                            ompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletes
-                            proof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834
-                            charcompletesproof834charcomplete"
+                            "binTransInclusionProof": "834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete"
                         }
                     ]
                 }
@@ -3046,17 +3028,7 @@ class TestSchema8Blob(unittest.TestCase):
                                     "filesize": 8,
                                     "from": "h2",
                                     "hashValue": "9",
-                                    "binTransInclusionProof": "834charpartialsproof834charpartialsproof834charpartialspr
-                                    oof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof8
-                                    34charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834ch
-                                    arpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpa
-                                    rtialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartia
-                                    lsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialspr
-                                    oof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof8
-                                    34charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834ch
-                                    arpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpa
-                                    rtialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartia
-                                    lsproof834charpartial"
+                                    "binTransInclusionProof": "834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartial"
                                 }
                             ],
                             "completes": [
@@ -3064,17 +3036,7 @@ class TestSchema8Blob(unittest.TestCase):
                                     "filesize": 40,
                                     "from": "*",
                                     "hashValue": "41",
-                                    "binTransInclusionProof": "834charcompletesproof834charcompletesproof834charcomplete
-                                    sproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete
-                                    sproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete
-                                    sproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete
-                                    sproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete
-                                    sproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete
-                                    sproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete
-                                    sproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete
-                                    sproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete
-                                    sproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete
-                                    sproof834charcomplete"
+                                    "binTransInclusionProof": "834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete"
                                 }
                             ]
                         }
@@ -3109,24 +3071,10 @@ class TestSchema8Blob(unittest.TestCase):
             'binTransMerkleRoot="merkle_root" binTransCertificate="cert" binTransSCTList="sct_list" ' \
             'binTransIssuerDigestSPKI="spki">'
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" binTransInclusionP
-roof="834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charco
-mpletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834
-charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletespr
-oof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompl
-etesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834cha
-rcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof
-834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" binTransInclusionProof="834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete
 "/>
 """, """
-<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8" binTransInclusionPr
-oof="834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials
-proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials
-proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials
-proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials
-proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials
-proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials
-proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartial"
+<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8" binTransInclusionProof="834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartial"
 />
 """]
         expected = [x.strip() for x in expected]
@@ -3255,7 +3203,7 @@ class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
             'binTransInclusionProof': 'foobar'
         }
 
-        expected_additional_patch_attributes = {'binTransInclusionProof': 'foobar'}
+        expected_additional_patch_attributes = {'binTransInclusionProof': '834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplete'}
         additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
 
         self.assertEquals(expected_additional_patch_attributes, additionalPatchAttributes)
@@ -3268,7 +3216,7 @@ class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
             'binTransInclusionProof': 'barfoo'
         }
 
-        expected_additional_patch_attributes = {'binTransInclusionProof': 'barfoo'}
+        expected_additional_patch_attributes = {'binTransInclusionProof': '834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartial'}
         additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
 
         self.assertEquals(expected_additional_patch_attributes, additionalPatchAttributes)
