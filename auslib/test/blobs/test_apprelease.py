@@ -3120,24 +3120,28 @@ class TestSchema8Blob(unittest.TestCase):
             'binTransIssuerDigestSPKI="spki">'
         expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" """ +
-'''binTransInclusionProof="''' + ("834charcompletesproof834charcompletesproof834charcompletesproof834charcompletespro"
-"of834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charco"
-"mpletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproo"
-"f834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcom"
-"pletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof"
-"834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomp"
-"letesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof8"
-"34charcompletesproof834charcompletesproof834charcomplete" + '''"/>
+                    '''binTransInclusionProof="''' +
+                    ("834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomp"
+                     "letesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof8"
+                     "34charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompl"
+                     "etesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof83"
+                     "4charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomple"
+                     "tesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834"
+                     "charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplet"
+                     "esproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834c"
+                     "harcompletesproof834charcompletesproof834charcompletesproof834charcomplete" + '''"/>
 '''), """
 <patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8" """ +
-'''binTransInclusionProof="''' + ("834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof83"
-"4charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialspro"
-"of834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartial"
-"sproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpar"
-"tialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834cha"
-"rpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof83"
-"4charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialspro"
-"of834charpartialsproof834charpartialsproof834charpartial" + '''"/>
+                    '''binTransInclusionProof="''' +
+                    ("834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials"
+                     "proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpar"
+                     "tialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834ch"
+                     "arpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof"
+                     "834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials"
+                     "proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpar"
+                     "tialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834ch"
+                     "arpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof"
+                     "834charpartialsproof834charpartialsproof834charpartialsproof834charpartial" + '''"/>
 ''')]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
