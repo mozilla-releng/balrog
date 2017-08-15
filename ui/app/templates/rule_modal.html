@@ -159,7 +159,6 @@
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.mig64}">
           <!-- TODO: Find better string for this -->
-          <!-- TODO: why is there no drop down indicator? -->
           <label for="id_mig64">Match clients that have opted into 32-bit to 64-bit migration?</label>
           <select id="id_mig64" ng-model="rule.mig64" class="form-control"
                   ng-options="value as key for (key, value) in {'Both': null, 'Yes': true, 'No': false}">
