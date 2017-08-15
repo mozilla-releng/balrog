@@ -60,9 +60,9 @@ class TestGetSystemCapabilities(unittest.TestCase):
 
 
 class ClientTestCommon(unittest.TestCase):
-    def assertHttpResponse(self, http_reponse):
-        self.assertEqual(http_reponse.status_code, 200)
-        self.assertEqual(http_reponse.mimetype, 'text/xml')
+    def assertHttpResponse(self, http_response):
+        self.assertEqual(http_response.status_code, 200, http_response.data)
+        self.assertEqual(http_response.mimetype, 'text/xml')
 
     def assertUpdatesAreEmpty(self, http_reponse):
         self.assertHttpResponse(http_reponse)
@@ -967,6 +967,152 @@ class ClientTest(ClientTestBase):
         self.assertEquals(ret.status_code, 200)
 
 
+class ClientTestMig64(ClientTestCommon):
+    """Tests the expected real world scenarios for the mig64 query parameter.
+    mig64=0 is not tested because we have no client code that sends it. These
+    cases are tested in the db layer tests, though."""
+
+    @classmethod
+    def setUpClass(cls):
+        # Error handlers are removed in order to give us better debug messages
+        cls.error_spec = app.error_handler_spec
+        # Ripped from https://github.com/mitsuhiko/flask/blob/1f5927eee2288b4aaf508af5dc1f148aa2140d91/flask/app.py#L394
+        app.error_handler_spec = {None: {}}
+
+    @classmethod
+    def tearDownClass(cls):
+        app.error_handler_spec = cls.error_spec
+
+    def setUp(self):
+        app.config["DEBUG"] = True
+        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
+        dbo.setDb("sqlite:///:memory:")
+        dbo.create()
+        self.client = app.test_client()
+        dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a",
+                                     data_version=1)
+        dbo.releases.t.insert().execute(name="a", product="a", data_version=1, data=createBlob("""
+{
+    "name": "a",
+    "schema_version": 1,
+    "appv": "1.0",
+    "extv": "1.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "2",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/z"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b",
+                                     mig64=True, data_version=1)
+        dbo.releases.t.insert().execute(name="b", product="b", data_version=1, data=createBlob("""
+{
+    "name": "b",
+    "schema_version": 1,
+    "appv": "2.0",
+    "extv": "2.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "12",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "13",
+                        "from": "*",
+                        "hashValue": "14",
+                        "fileUrl": "http://a.com/z1"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c",
+                                     mig64=False, data_version=1)
+        dbo.releases.t.insert().execute(name="c", product="c", data_version=1, data=createBlob("""
+{
+    "name": "c",
+    "schema_version": 1,
+    "appv": "3.0",
+    "extv": "3.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "22",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "23",
+                        "from": "*",
+                        "hashValue": "24",
+                        "fileUrl": "http://a.com/z2"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+
+    def testRuleFalseQueryNull(self):
+        ret = self.client.get("/update/3/c/1.0/2/p/l/a/a/a/a/update.xml")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testRuleFalseQueryTrue(self):
+        ret = self.client.get("/update/3/c/1.0/2/p/l/a/a/a/a/update.xml?mig64=1")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testRuleTrueQueryNull(self):
+        ret = self.client.get("/update/3/b/1.0/2/p/l/a/a/a/a/update.xml")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testRuleTrueQueryTrue(self):
+        ret = self.client.get("/update/3/b/1.0/2/p/l/a/a/a/a/update.xml?mig64=1")
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="2.0" extensionVersion="2.0" buildID="12">
+        <patch type="complete" URL="http://a.com/z1" hashFunction="sha512" hashValue="14" size="13"/>
+    </update>
+</updates>
+""")
+
+    def testRuleNullQueryNull(self):
+        ret = self.client.get("/update/3/a/1.0/1/p/l/a/a/a/a/update.xml")
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+
+    def testRuleNullQueryTrue(self):
+        ret = self.client.get("/update/3/a/1.0/1/p/l/a/a/a/a/update.xml?mig64=1")
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+
+
 class ClientTestWithErrorHandlers(ClientTestCommon):
     """Most of the tests are run without the error handler because it gives more
        useful output when things break. However, we still need to test that our
@@ -974,7 +1120,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
 
     def setUp(self):
         app.config['DEBUG'] = True
-        app.config['WHITELISTED_DOMAINS'] = ('a.com',)
+        app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a",)}
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         self.client = app.test_client()
