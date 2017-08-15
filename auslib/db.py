@@ -107,6 +107,28 @@ class JSONColumn(sqlalchemy.types.TypeDecorator):
         return value
 
 
+class CompatibleBooleanColumn(sqlalchemy.types.TypeDecorator):
+    """A Boolean column that is compatible with all of our supported
+    database engines (mysql, sqlite). SQLAlchemy's built-in Boolean
+    does not work because it creates a CHECK constraint that makes
+    it impossible to downgrade a database."""
+
+    impl = Integer
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            if value is True:
+                value = 1
+            else:
+                value = 0
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            value = bool(value)
+        return value
+
+
 def BlobColumn(impl=Text):
     """BlobColumns are used to store Release Blobs, which are ultimately dicts.
     Release Blobs must be serialized before storage, and deserialized upon
@@ -1455,21 +1477,12 @@ class Rules(AUSTable):
                            Column('osVersion', String(1000)),
                            Column('memory', String(100)),
                            Column('instructionSet', String(1000)),
+                           Column('mig64', CompatibleBooleanColumn),
                            Column('distribution', String(100)),
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),
                            Column('comment', String(500)),
                            )
-
-        if dialect == 'mysql':
-            from sqlalchemy.dialects.mysql import BIT
-            self.table.append_column(Column("mig64", BIT))
-        else:
-            # It's not ideal to disable the constraint here, but if we leave it enabled
-            # the database cannot be downgraded (dropping the column will try to remove
-            # the column, but not the constraint). This is sqlite-only, so it only
-            # applies to unit tests, not deployed instances.
-            self.table.append_column(Column("mig64", Integer))
 
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
@@ -1618,16 +1631,6 @@ class Rules(AUSTable):
         if re.match("^[a-zA-Z][a-zA-Z0-9-]*$", str(id_or_alias)):
             return True
         return False
-
-    def select(self, *args, **kwargs):
-        ret = []
-        for row in super(Rules, self).select(*args, **kwargs):
-            # mig64 needs to be treated as a bool (if it's not None), but not all databases
-            # support this type. To workaround this, we ensure it is cast to one.
-            if row.get("mig64") is not None:
-                row["mig64"] = bool(row["mig64"])
-            ret.append(row)
-        return ret
 
     def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
