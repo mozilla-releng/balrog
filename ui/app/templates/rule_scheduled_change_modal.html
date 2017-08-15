@@ -212,7 +212,7 @@
                   title='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status. "Ignore" is usually what you want.'>
             </span>
           </label>
-          <select id="id_mig64" ng-model="rule.mig64" class="form-control"
+          <select id="id_mig64" ng-model="sc.mig64" class="form-control"
                   ng-options="value as key for (key, value) in {'Ignore': null, 'Yes': true, 'No': false}">
             <!-- Angular creates an extra entry because one of our values is null. This hides it.
                  From https://stackoverflow.com/a/24321497 -->
@@ -250,4 +250,4 @@
   <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Save Changes</button>
   <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
 </div>
-
+G

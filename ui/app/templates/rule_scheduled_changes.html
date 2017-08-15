@@ -161,15 +161,15 @@
       <dd>{{ sc.instructionSet }}</dd>
       <dt ng-show="sc.memory">Memory:</dt>
       <dd>{{ sc.memory }}</dd>
-      <dt ng-show="rule.mig64 !== null">
+      <dt ng-show="sc.mig64 !== null">
         64-Bit Migration Opt-in
         <span class="glyphicon glyphicon-question-sign"
            title='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'>
         </span>
         : 
       </dt>
-      <dd ng-if="rule.mig64 === true">Yes</dd>
-      <dd ng-if="rule.mig64 === false">No</dd>
+      <dd ng-if="sc.mig64 === true">Yes</dd>
+      <dd ng-if="sc.mig64 === false">No</dd>
       <dt ng-show="sc.distVersion">Dist Version:</dt>
       <dd>{{ sc.distVersion }}</dd>
       <dt ng-show="sc.update_type">Update type:</dt>
