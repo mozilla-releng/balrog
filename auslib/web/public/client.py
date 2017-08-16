@@ -92,8 +92,11 @@ def getQueryFromURL(url):
     query['force'] = (int(query.get('force', 0)) == 1)
     # "1" is the only value that official clients send. We ignore any other values
     # by setting mig64 to None.
-    if query.get("mig64") == "1":
-        query["mig64"] = True
+    if "mig64" in query:
+        if query.get("mig64") == "1":
+            query["mig64"] = True
+        else:
+            query["mig64"] = False
     else:
         query["mig64"] = None
     return query
