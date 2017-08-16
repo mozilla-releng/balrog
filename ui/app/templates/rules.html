@@ -146,7 +146,7 @@
       <dd>{{ rule.instructionSet }}</dd>
       <dt ng-show="rule.memory">Memory:</dt>
       <dd>{{ rule.memory }}</dd>
-      <dt ng-show="rule.mig64 !== null">
+      <dt ng-show="rule.mig64 !== null && rule.mig64 !== undefined">
         64-Bit Migration Opt-in
         <span class="glyphicon glyphicon-question-sign"
            title='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'>
