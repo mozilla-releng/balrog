@@ -3064,8 +3064,8 @@ class TestSchema8Blob(unittest.TestCase):
                                          "f834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsp"
                                          "roof834charpartialsproof834charpartialsproof834charpartialsproof834charpartia"
                                          "lsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpar"
-                                         "tialsproof834charpartialsproof834charpartialsproof834charpartial" + '''"''')
-                                        + """
+                                         "tialsproof834charpartialsproof834charpartialsproof834charpartial" + '''"''') +
+                                        """
                                 }
                             ],
                             "completes": [
@@ -3085,8 +3085,8 @@ class TestSchema8Blob(unittest.TestCase):
                                          "esproof834charcompletesproof834charcompletesproof834charcompletesproof834char"
                                          "completesproof834charcompletesproof834charcompletesproof834charcompletesproof"
                                          "834charcompletesproof834charcompletesproof834charcompletesproof834charcomplet"
-                                         "esproof834charcompletesproof834charcompletesproof834charcomplete" + '''"''')
-                                        + """
+                                         "esproof834charcompletesproof834charcompletesproof834charcomplete" + '''"''') +
+                                        """
                                 }
                             ]
                         }
