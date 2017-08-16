@@ -105,6 +105,11 @@ Following tables show columns according to different Categories:
   |                        |                    | requesting the update has                        | memory to compare the incoming  | ">=8096"                   |
   |                        |                    |                                                  | one against                     |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
+  |                        | mig64              | Whether or not the Rule should apply to queries  | Exact match only                | True, False, or NULL       |
+  |                        |                    | that have opted into 32 -> 64-bit migration.     |                                 |                            |
+  |                        |                    | If set to True or False the Rule and the query   |                                 |                            |
+  |                        |                    | must match precisely.                            |                                 |                            |
+  |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | version            | The version of the application requesting an     | Exact string match or exact     | "36.0" or "36.0,36.1,36.2" |
   |                        |                    | update.                                          | matches from list of values or  | or ">=38.0a1"              |
   |                        |                    |                                                  | operator plus version           |                            |

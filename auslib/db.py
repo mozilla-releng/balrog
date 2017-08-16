@@ -111,12 +111,15 @@ class CompatibleBooleanColumn(sqlalchemy.types.TypeDecorator):
     """A Boolean column that is compatible with all of our supported
     database engines (mysql, sqlite). SQLAlchemy's built-in Boolean
     does not work because it creates a CHECK constraint that makes
-    it impossible to downgrade a database."""
+    it impossible to downgrade a database with sqlalchemy-migrate."""
 
     impl = Integer
 
     def process_bind_param(self, value, dialect):
         if value is not None:
+            if not isinstance(value, bool):
+                raise TypeError("{} is invalid type ({}), must be bool".format(value, type(value)))
+
             if value is True:
                 value = 1
             else:
@@ -124,6 +127,8 @@ class CompatibleBooleanColumn(sqlalchemy.types.TypeDecorator):
         return value
 
     def process_result_value(self, value, dialect):
+        # Boolean columns may be nullable, we need to be sure to preserve nulls
+        # in case consumers treat them differently than False.
         if value is not None:
             value = bool(value)
         return value
@@ -1727,9 +1732,9 @@ class Rules(AUSTable):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
                 continue
             # As with all other columns, if mig64 isn't present in the Rule, the Rule matches.
-            # Unlike other columns, mig64 is optional, so we must handle False, True, and None values.
-            # We treat None as "unknown", which means that any Rule that sets mig64 must match the
-            # updateQuery precisely. i.e.: False and None are not the same thing.
+            # Unlike other columns, mig64 is optional in the update query, so we must handle False,
+            # True, and None values. Note that None in the updateQuery is treated as "unknown",
+            # i.e.: False and None are not the same thing.
             # The full truth table is:
             # rule | query | matches?
             #   F      0        Y
