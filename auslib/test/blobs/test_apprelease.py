@@ -3053,18 +3053,19 @@ class TestSchema8Blob(unittest.TestCase):
                                     "from": "h2",
                                     "hashValue": "9",
                                     "binTransInclusionProof": """ +
-                                    ('''"''' +
-                                     "834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproo"
-                                     "f834charpartialsproof834charpartialsproof834charpartialsproof834charpartialspro"
-                                     "of834charpartialsproof834charpartialsproof834charpartialsproof834charpartialspr"
-                                     "oof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsp"
-                                     "roof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials"
-                                     "proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartial"
-                                     "sproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartia"
-                                     "lsproof834charpartialsproof834charpartialsproof834charpartialsproof834charparti"
-                                     "alsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpart"
-                                     "ialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpar"
-                                     "tialsproof834charpartialsproof834charpartial" + '''"''') + """
+                                        ('''"''' +
+                                         "834charpartialsproof834charpartialsproof834charpartialsproof834charpartialspr"
+                                         "oof834charpartialsproof834charpartialsproof834charpartialsproof834charpartial"
+                                         "sproof834charpartialsproof834charpartialsproof834charpartialsproof834charpart"
+                                         "ialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charp"
+                                         "artialsproof834charpartialsproof834charpartialsproof834charpartialsproof834ch"
+                                         "arpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof83"
+                                         "4charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproo"
+                                         "f834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsp"
+                                         "roof834charpartialsproof834charpartialsproof834charpartialsproof834charpartia"
+                                         "lsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpar"
+                                         "tialsproof834charpartialsproof834charpartialsproof834charpartial" + '''"''')
+                                        + """
                                 }
                             ],
                             "completes": [
@@ -3073,18 +3074,19 @@ class TestSchema8Blob(unittest.TestCase):
                                     "from": "*",
                                     "hashValue": "41",
                                     "binTransInclusionProof": """ +
-                                    ('''"''' +
-                                     "834charcompletesproof834charcompletesproof834charcompletesproof834charcompletes"
-                                     "proof834charcompletesproof834charcompletesproof834charcompletesproof834charcomp"
-                                     "letesproof834charcompletesproof834charcompletesproof834charcompletesproof834cha"
-                                     "rcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof8"
-                                     "34charcompletesproof834charcompletesproof834charcompletesproof834charcompletesp"
-                                     "roof834charcompletesproof834charcompletesproof834charcompletesproof834charcompl"
-                                     "etesproof834charcompletesproof834charcompletesproof834charcompletesproof834char"
-                                     "completesproof834charcompletesproof834charcompletesproof834charcompletesproof83"
-                                     "4charcompletesproof834charcompletesproof834charcompletesproof834charcompletespr"
-                                     "oof834charcompletesproof834charcompletesproof834charcompletesproof834charcomple"
-                                     "tesproof834charcompletesproof834charcomplete" + '''"''') + """
+                                        ('''"''' +
+                                         "834charcompletesproof834charcompletesproof834charcompletesproof834charcomplet"
+                                         "esproof834charcompletesproof834charcompletesproof834charcompletesproof834char"
+                                         "completesproof834charcompletesproof834charcompletesproof834charcompletesproof"
+                                         "834charcompletesproof834charcompletesproof834charcompletesproof834charcomplet"
+                                         "esproof834charcompletesproof834charcompletesproof834charcompletesproof834char"
+                                         "completesproof834charcompletesproof834charcompletesproof834charcompletesproof"
+                                         "834charcompletesproof834charcompletesproof834charcompletesproof834charcomplet"
+                                         "esproof834charcompletesproof834charcompletesproof834charcompletesproof834char"
+                                         "completesproof834charcompletesproof834charcompletesproof834charcompletesproof"
+                                         "834charcompletesproof834charcompletesproof834charcompletesproof834charcomplet"
+                                         "esproof834charcompletesproof834charcompletesproof834charcomplete" + '''"''')
+                                        + """
                                 }
                             ]
                         }
