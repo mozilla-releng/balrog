@@ -2958,19 +2958,7 @@ class TestSchema8Blob(unittest.TestCase):
                             "filesize": 8,
                             "from": "h1",
                             "hashValue": "9",
-                            "binTransInclusionProof": """ +
-                             ('''"''' +
-                              "834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproo"
-                              "f834charpartialsproof834charpartialsproof834charpartialsproof834charpartialspro"
-                              "of834charpartialsproof834charpartialsproof834charpartialsproof834charpartialspr"
-                              "oof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsp"
-                              "roof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials"
-                              "proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartial"
-                              "sproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartia"
-                              "lsproof834charpartialsproof834charpartialsproof834charpartialsproof834charparti"
-                              "alsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpart"
-                              "ialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpar"
-                              "tialsproof834charpartialsproof834charpartial" + '''"''') + """
+                            "binTransInclusionProof": """ + '"' + ('834charpartialsproof'*42)[:834] + '"' + """
                         }
                     ],
                     "completes": [
@@ -2978,19 +2966,7 @@ class TestSchema8Blob(unittest.TestCase):
                             "filesize": 40,
                             "from": "*",
                             "hashValue": "41",
-                            "binTransInclusionProof": """ +
-                             ('''"''' +
-                              "834charcompletesproof834charcompletesproof834charcompletesproof834charcompletes"
-                              "proof834charcompletesproof834charcompletesproof834charcompletesproof834charcomp"
-                              "letesproof834charcompletesproof834charcompletesproof834charcompletesproof834cha"
-                              "rcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof8"
-                              "34charcompletesproof834charcompletesproof834charcompletesproof834charcompletesp"
-                              "roof834charcompletesproof834charcompletesproof834charcompletesproof834charcompl"
-                              "etesproof834charcompletesproof834charcompletesproof834charcompletesproof834char"
-                              "completesproof834charcompletesproof834charcompletesproof834charcompletesproof83"
-                              "4charcompletesproof834charcompletesproof834charcompletesproof834charcompletespr"
-                              "oof834charcompletesproof834charcompletesproof834charcompletesproof834charcomple"
-                              "tesproof834charcompletesproof834charcomplete" + '''"''') + """
+                            "binTransInclusionProof": """ + '"' + ('834charcompletesproof'*40)[:834] + '"' + """
                         }
                     ]
                 }
@@ -3052,20 +3028,7 @@ class TestSchema8Blob(unittest.TestCase):
                                     "filesize": 8,
                                     "from": "h2",
                                     "hashValue": "9",
-                                    "binTransInclusionProof": """ +
-                                        ('''"''' +
-                                         "834charpartialsproof834charpartialsproof834charpartialsproof834charpartialspr"
-                                         "oof834charpartialsproof834charpartialsproof834charpartialsproof834charpartial"
-                                         "sproof834charpartialsproof834charpartialsproof834charpartialsproof834charpart"
-                                         "ialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charp"
-                                         "artialsproof834charpartialsproof834charpartialsproof834charpartialsproof834ch"
-                                         "arpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof83"
-                                         "4charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproo"
-                                         "f834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsp"
-                                         "roof834charpartialsproof834charpartialsproof834charpartialsproof834charpartia"
-                                         "lsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpar"
-                                         "tialsproof834charpartialsproof834charpartialsproof834charpartial" + '''"''') +
-                                        """
+                                    "binTransInclusionProof": """ + '"' + ('834charpartialsproof'*42)[:834] + '"' + """
                                 }
                             ],
                             "completes": [
@@ -3073,20 +3036,7 @@ class TestSchema8Blob(unittest.TestCase):
                                     "filesize": 40,
                                     "from": "*",
                                     "hashValue": "41",
-                                    "binTransInclusionProof": """ +
-                                        ('''"''' +
-                                         "834charcompletesproof834charcompletesproof834charcompletesproof834charcomplet"
-                                         "esproof834charcompletesproof834charcompletesproof834charcompletesproof834char"
-                                         "completesproof834charcompletesproof834charcompletesproof834charcompletesproof"
-                                         "834charcompletesproof834charcompletesproof834charcompletesproof834charcomplet"
-                                         "esproof834charcompletesproof834charcompletesproof834charcompletesproof834char"
-                                         "completesproof834charcompletesproof834charcompletesproof834charcompletesproof"
-                                         "834charcompletesproof834charcompletesproof834charcompletesproof834charcomplet"
-                                         "esproof834charcompletesproof834charcompletesproof834charcompletesproof834char"
-                                         "completesproof834charcompletesproof834charcompletesproof834charcompletesproof"
-                                         "834charcompletesproof834charcompletesproof834charcompletesproof834charcomplet"
-                                         "esproof834charcompletesproof834charcompletesproof834charcomplete" + '''"''') +
-                                        """
+                                    "binTransInclusionProof": """ + '"' + ('834charcompletesproof'*40)[:834] + '"' + """
                                 }
                             ]
                         }
@@ -3122,29 +3072,11 @@ class TestSchema8Blob(unittest.TestCase):
             'binTransIssuerDigestSPKI="spki">'
         expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" """ +
-                    '''binTransInclusionProof="''' +
-                    ("834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomp"
-                     "letesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof8"
-                     "34charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompl"
-                     "etesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof83"
-                     "4charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomple"
-                     "tesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834"
-                     "charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834charcomplet"
-                     "esproof834charcompletesproof834charcompletesproof834charcompletesproof834charcompletesproof834c"
-                     "harcompletesproof834charcompletesproof834charcompletesproof834charcomplete" + '''"/>
-'''), """
+                    'binTransInclusionProof="' + ('834charcompletesproof'*40)[:834] + '"/>\n',
+                    """
 <patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8" """ +
-                    '''binTransInclusionProof="''' +
-                    ("834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials"
-                     "proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpar"
-                     "tialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834ch"
-                     "arpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof"
-                     "834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartials"
-                     "proof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpar"
-                     "tialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834ch"
-                     "arpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof834charpartialsproof"
-                     "834charpartialsproof834charpartialsproof834charpartialsproof834charpartial" + '''"/>
-''')]
+                    'binTransInclusionProof="' + ('834charpartialsproof'*42)[:834] + '"/>\n'
+]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())

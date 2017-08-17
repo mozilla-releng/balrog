@@ -122,7 +122,7 @@ class ReleaseBlobBase(Blob):
             (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
         additionalPatchAttributes = self._getAdditionalPatchAttributes(patch)
         for attribute in additionalPatchAttributes:
-            patchXML += (' ' + attribute + '="' + additionalPatchAttributes[attribute] + '"')
+            patchXML += ' %s="%s"' % (attribute, additionalPatchAttributes[attribute])
         patchXML += '/>'
 
         return patchXML
