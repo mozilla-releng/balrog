@@ -3078,7 +3078,7 @@ class TestSchema8Blob(unittest.TestCase):
                     """
 <patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8" """ +
                     'binTransInclusionProof="' + ('834charpartialsproof' * 42)[:834] + '"/>\n'
-]
+                    ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
