@@ -2958,7 +2958,7 @@ class TestSchema8Blob(unittest.TestCase):
                             "filesize": 8,
                             "from": "h1",
                             "hashValue": "9",
-                            "binTransInclusionProof": """ + '"' + ('834charpartialsproof'*42)[:834] + '"' + """
+                            "binTransInclusionProof": """ + '"' + ('834charpartialsproof' * 42)[:834] + '"' + """
                         }
                     ],
                     "completes": [
@@ -2966,7 +2966,7 @@ class TestSchema8Blob(unittest.TestCase):
                             "filesize": 40,
                             "from": "*",
                             "hashValue": "41",
-                            "binTransInclusionProof": """ + '"' + ('834charcompletesproof'*40)[:834] + '"' + """
+                            "binTransInclusionProof": """ + '"' + ('834charcompletesproof' * 40)[:834] + '"' + """
                         }
                     ]
                 }
@@ -3028,7 +3028,8 @@ class TestSchema8Blob(unittest.TestCase):
                                     "filesize": 8,
                                     "from": "h2",
                                     "hashValue": "9",
-                                    "binTransInclusionProof": """ + '"' + ('834charpartialsproof'*42)[:834] + '"' + """
+                                    "binTransInclusionProof": """ + '"' + ('834charpartialsproof' * 42)[:834] + '"' +
+                                        """
                                 }
                             ],
                             "completes": [
@@ -3036,7 +3037,8 @@ class TestSchema8Blob(unittest.TestCase):
                                     "filesize": 40,
                                     "from": "*",
                                     "hashValue": "41",
-                                    "binTransInclusionProof": """ + '"' + ('834charcompletesproof'*40)[:834] + '"' + """
+                                    "binTransInclusionProof": """ + '"' + ('834charcompletesproof' * 40)[:834] + '"' +
+                                        """
                                 }
                             ]
                         }
@@ -3072,10 +3074,10 @@ class TestSchema8Blob(unittest.TestCase):
             'binTransIssuerDigestSPKI="spki">'
         expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" """ +
-                    'binTransInclusionProof="' + ('834charcompletesproof'*40)[:834] + '"/>\n',
+                    'binTransInclusionProof="' + ('834charcompletesproof' * 40)[:834] + '"/>\n',
                     """
 <patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8" """ +
-                    'binTransInclusionProof="' + ('834charpartialsproof'*42)[:834] + '"/>\n'
+                    'binTransInclusionProof="' + ('834charpartialsproof' * 42)[:834] + '"/>\n'
 ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
