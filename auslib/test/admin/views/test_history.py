@@ -14,7 +14,7 @@ class TestHistoryView(ViewTest):
     def testFieldViewBadValuesBadChangeId(self):
         url = '/history/view/release/9999/whatever'
         ret = self.client.get(url)
-        self.assertStatusCode(ret, 404)
+        self.assertStatusCode(ret, 400)
 
     def testFieldViewCheckIntegerValue(self):
         data = json.dumps(dict(detailsUrl='InbhalInt', fakePartials=True, schema_version=1, name="d", hashFunction="sha512"))
