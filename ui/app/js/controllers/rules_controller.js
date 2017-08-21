@@ -49,6 +49,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
               // Note the big honking assumption that there's only one scheduled change.
               // At the time this code was written, this was enforced by the backend.
               rule.scheduled_change = sc;
+              rule.scheduled_change.when = new Date(rule.scheduled_change.when);
             }
           });
           $scope.rules.push(rule);
@@ -143,6 +144,14 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       ['product', 'channel', 'mapping', 'comment']
     );
   });
+
+  $scope.formatMoment = function(when) {
+    date = moment(when);
+    // This is copied from app/js/directives/moment_directive.js
+    // We can't use that for this page, because it doesn't re-render when
+    // values change.
+    return '<time title="' + date.format('dddd, MMMM D, YYYY HH:mm:ss ') + 'GMT' + date.format('ZZ') + '">' + date.fromNow() + '</time>';
+  };
 
   // I don't know how else to expose this to the templates
   $scope.getWordRegexes = Search.getWordRegexes;
@@ -240,7 +249,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       backdrop: 'static',
       resolve: {
         sc: function() {
-          rule.scheduled_change.when = new Date(rule.scheduled_change.when);
           return rule.scheduled_change;
         }
       }
