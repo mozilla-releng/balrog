@@ -2927,7 +2927,6 @@ class TestSchema8Blob(unittest.TestCase):
     "binTransMerkleRoot": "merkle_root",
     "binTransCertificate": "cert",
     "binTransSCTList": "sct_list",
-    "binTransIssuerDigestSPKI": "spki",
     "fileUrls": {
         "c1": {
             "partials": {
@@ -2997,7 +2996,6 @@ class TestSchema8Blob(unittest.TestCase):
             "binTransMerkleRoot": "merkle_root",
             "binTransCertificate": "cert",
             "binTransSCTList": "sct_list",
-            "binTransIssuerDigestSPKI": "spki",
             "fileUrls": {
                 "c1": {
                     "partials": {
@@ -3070,8 +3068,7 @@ class TestSchema8Blob(unittest.TestCase):
             'buildID="50" detailsURL="http://example.org/details/l" showPrompt="false" showNeverForVersion="true" ' \
             'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
             'alertURL="http://example.org/alert/l" promptWaitTime="12345" backgroundInterval="123" ' \
-            'binTransMerkleRoot="merkle_root" binTransCertificate="cert" binTransSCTList="sct_list" ' \
-            'binTransIssuerDigestSPKI="spki">'
+            'binTransMerkleRoot="merkle_root" binTransCertificate="cert" binTransSCTList="sct_list">'
         expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" """ +
                     'binTransInclusionProof="' + ('834charcompletesproof' * 40)[:834] + '"/>\n',

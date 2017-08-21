@@ -67,9 +67,6 @@
     binTransSCTList:
       type: string
       description: Signed certificate timestamp response when valid certificate is submitted to log.
-    binTransIssuerDigestSPKI:
-      type: string
-      description: SHA256 of the SPKI from the Issuer Certificate.
     # Top level fileUrls are useful primarily for release style builds,
     # where the URLs are predictable and only vary by locale and platform.
     # It"s worth noting that while we normally serve different channels

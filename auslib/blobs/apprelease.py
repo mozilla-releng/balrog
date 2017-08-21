@@ -944,7 +944,7 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
     optional_ = ('showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL',
                  'promptWaitTime', 'backgroundInterval', 'binTransMerkleRoot',
-                 'binTransCertificate', 'binTransSCTList', 'binTransIssuerDigestSPKI')
+                 'binTransCertificate', 'binTransSCTList')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('openURL', 'notificationURL', 'alertURL')
 
