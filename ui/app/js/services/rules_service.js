@@ -38,8 +38,13 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers
       data.csrf_token = csrf_token;
       return $http.post('/api/rules/' + id + '/revisions', data);
     },
-    getScheduledChanges: function() {
-      return $http.get("/api/scheduled_changes/rules?all=1");
+    getScheduledChanges: function(all) {
+      if (all === undefined || all === true) {
+        return $http.get("/api/scheduled_changes/rules?all=1");
+      }
+      else {
+        return $http.get("/api/scheduled_changes/rules");
+      }
     },
     getScheduledChange: function(sc_id) {
       return $http.get("/api/scheduled_changes/rules/" + sc_id);

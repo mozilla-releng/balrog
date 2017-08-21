@@ -38,8 +38,23 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   } else {
     Rules.getRules()
     .success(function(response) {
-      $scope.rules = response.rules;
       $scope.rules_count = response.count;
+
+      Rules.getScheduledChanges(false)
+      .success(function(sc_response) {
+        response.rules.forEach(function(rule) {
+          rule.scheduled_change = null;
+          sc_response.scheduled_changes.forEach(function(sc) {
+            if (rule.rule_id === sc.rule_id) {
+              // Note the big honking assumption that there's only one scheduled change.
+              // At the time this code was written, this was enforced by the backend.
+              rule.scheduled_change = sc.change_type;
+            }
+          });
+          $scope.rules.push(rule);
+        });
+      });
+
       var pairExists = function(pr, ch) {
         var _rules = $scope.rules.filter(function(rule) {
           return rule.product === pr && rule.channel === ch;
@@ -189,6 +204,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         }
       }
     });
+    modalInstance.result.then(function(change_type) {
+      rule.scheduled_change = change_type;
+    });
   };
 
   $scope.openNewScheduledRuleChangeModal = function(rule) {
@@ -208,6 +226,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           return sc;
         }
       }
+    });
+    modalInstance.result.then(function(change_type) {
+      rule.scheduled_change = change_type;
     });
   };
 

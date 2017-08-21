@@ -65,8 +65,10 @@
       <div style="float: right">
         <i ng-if="rule_id && $first && (currentPage == 1)">Current</i>
         <button ng-if="rule_id && ((currentPage != 1) || !$first )" class="btn btn-default btn-xs" ng-click="openRevertModal(rule)">Revert to this</button>
-        <button ng-show="!rule_id" class="btn btn-warning btn-xs" ng-click="openNewScheduledRuleChangeModal(rule)">Schedule an Update</button>
-        <button ng-show="!rule_id" class="btn btn-danger btn-xs" ng-click="openNewScheduledDeleteModal(rule)">Schedule for Deletion</button>
+        <span ng-show="!rule_id && rule.scheduled_change === 'update'" class="label label-warning">Pending Update</span>
+        <span ng-show="!rule_id && rule.scheduled_change === 'delete'" class="label label-danger">Pending Delete</span>
+        <button ng-show="!rule_id && rule.scheduled_change === null" class="btn btn-warning btn-xs" ng-click="openNewScheduledRuleChangeModal(rule)">Schedule an Update</button>
+        <button ng-show="!rule_id && rule.scheduled_change === null" class="btn btn-danger btn-xs" ng-click="openNewScheduledDeleteModal(rule)">Schedule for Deletion</button>
         <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">Update</button>
         <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button>
         <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openDuplicateModal(rule)">Duplicate</button>
