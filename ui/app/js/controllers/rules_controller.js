@@ -54,6 +54,14 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           });
           $scope.rules.push(rule);
         });
+        sc_response.scheduled_changes.forEach(function(sc) {
+          if (sc.change_type === "insert") {
+            // FIXME HORRIBLE HACK
+            var rule = sc;
+            rule.scheduled_change = sc;
+            $scope.rules.push(rule);
+          }
+        });
       });
 
       var pairExists = function(pr, ch) {
