@@ -65,8 +65,8 @@
       <div style="float: right">
         <i ng-if="rule_id && $first && (currentPage == 1)">Current</i>
         <button ng-if="rule_id && ((currentPage != 1) || !$first )" class="btn btn-default btn-xs" ng-click="openRevertModal(rule)">Revert to this</button>
-        <span ng-show="!rule_id && rule.scheduled_change === 'update'" class="label label-warning">Pending Update</span>
-        <span ng-show="!rule_id && rule.scheduled_change === 'delete'" class="label label-danger">Pending Delete</span>
+        <button ng-show="!rule_id && rule.scheduled_change.change_type === 'update'" class="btn btn-warning btn-xs" ng-click="openEditScheduledRuleChangeModal(rule)">Pending Update</button>
+        <button ng-show="!rule_id && rule.scheduled_change.change_type === 'delete'" class="btn btn-danger btn-xs" ng-click="openEditScheduledRuleChangeModal(rule)">Pending Delete</button>
         <button ng-show="!rule_id && rule.scheduled_change === null" class="btn btn-warning btn-xs" ng-click="openNewScheduledRuleChangeModal(rule)">Schedule an Update</button>
         <button ng-show="!rule_id && rule.scheduled_change === null" class="btn btn-danger btn-xs" ng-click="openNewScheduledDeleteModal(rule)">Schedule for Deletion</button>
         <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">Update</button>
@@ -129,9 +129,19 @@
       <dt ng-show="rule.alias" title="Can be used in place of rule_id in REST operations">Alias:</dt>
       <dd>{{ rule.alias }}</dd>
       <dt ng-show="rule.backgroundRate !== null">Rate:</dt>
-      <dd>{{ rule.backgroundRate }}</dd>
+      <dd>
+        {{ rule.backgroundRate }}
+        <span ng-if="rule.backgroundRate !== rule.scheduled_change.backgroundRate">
+          (<span class="label-warning">{{ rule.scheduled_change.backgroundRate }}</span>)
+        </span>
+      </dd>
       <dt ng-show="rule.priority !== null">Priority:</dt>
-      <dd>{{ rule.priority }}</dd>
+      <dd>
+        {{ rule.priority }}
+        <span ng-if="rule.priority !== rule.scheduled_change.priority">
+          (<span class="label-warning">{{ rule.scheduled_change.priority }}</span>)
+        </span>
+      </dd>
       <dt ng-show="rule.version">Version:</dt>
       <dd>{{ rule.version }}</dd>
       <dt ng-show="rule.buildID">Build ID:</dt>

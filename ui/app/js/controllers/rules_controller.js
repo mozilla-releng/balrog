@@ -48,7 +48,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             if (rule.rule_id === sc.rule_id) {
               // Note the big honking assumption that there's only one scheduled change.
               // At the time this code was written, this was enforced by the backend.
-              rule.scheduled_change = sc.change_type;
+              rule.scheduled_change = sc;
             }
           });
           $scope.rules.push(rule);
@@ -204,8 +204,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         }
       }
     });
-    modalInstance.result.then(function(change_type) {
-      rule.scheduled_change = change_type;
+    modalInstance.result.then(function(sc) {
+      rule.scheduled_change = sc;
     });
   };
 
@@ -227,8 +227,26 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         }
       }
     });
-    modalInstance.result.then(function(change_type) {
-      rule.scheduled_change = change_type;
+    modalInstance.result.then(function(sc) {
+      rule.scheduled_change = sc;
+    });
+  };
+
+  $scope.openEditScheduledRuleChangeModal = function(rule) {
+    var modalInstance = $modal.open({
+      templateUrl: 'rule_scheduled_change_modal.html',
+      controller: "EditRuleScheduledChangeCtrl",
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        sc: function() {
+          rule.scheduled_change.when = new Date(rule.scheduled_change.when);
+          return rule.scheduled_change;
+        }
+      }
+    });
+    modalInstance.result.then(function(sc) {
+      rule.scheduled_change = sc;
     });
   };
 

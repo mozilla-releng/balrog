@@ -68,7 +68,7 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
         sc.sc_data_version = response.new_data_version;
         angular.copy(sc, $scope.original_sc);
         $scope.saving = false;
-        $modalInstance.close();
+        $modalInstance.close($scope.sc);
       })
       .error(function(response) {
         if (typeof response === 'object') {
