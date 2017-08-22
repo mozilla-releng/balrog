@@ -4,7 +4,7 @@ import sys
 
 from connexion import request
 
-from flask import abort, make_response, current_app as app
+from flask import make_response, current_app as app
 
 from auslib.AUS import AUS
 from auslib.global_state import dbo
@@ -13,10 +13,6 @@ import logging
 
 AUS = AUS()
 LOG = logging.getLogger(__name__)
-
-
-def unsubstituted_url_variables():
-    abort(404)
 
 
 def getHeaderArchitecture(buildTarget, ua):
@@ -215,4 +211,3 @@ unsubstituted_url_var_functions = ["unsubstituted_url_variables_1",
 
 
 _set_functions(update_blob_functions, get_update_blob)
-_set_functions(unsubstituted_url_var_functions, unsubstituted_url_variables)
