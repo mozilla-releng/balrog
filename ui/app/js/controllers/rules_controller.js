@@ -14,6 +14,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.maxSize = 10;
   $scope.rules = [];
   $scope.pr_ch_filter = "";
+  $scope.show_sc = true;
 
   function loadPage(newPage) {
     Rules.getHistory($scope.rule_id, $scope.pageSize, newPage)
@@ -167,6 +168,11 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.removeFilterSearchWord = Search.removeFilterSearchWord;
 
   $scope.filterBySelect = function(rule) {
+    // TODO: put this elesewhere
+    if (! $scope.show_sc && rule.scheduled_change !== null && rule.scheduled_change.change_type === "insert") {
+      return false;
+    }
+
     // Always return all entries if "all rules" is the filter
     // or if $scope.rule_id is set (meaning we're on the history page).
     if ($scope.pr_ch_selected[0].toLowerCase() === "all rules" || $scope.rule_id) {
@@ -204,6 +210,38 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
   /* End openUpdateModal */
+
+  $scope.openNewScheduledRuleModal = function() {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'rule_scheduled_change_modal.html',
+      controller: 'NewRuleScheduledChangeCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        scheduled_changes: function() {
+          return [];
+        },
+        sc: function() {
+          // blank new default rule
+          return {
+            product: '',
+            backgroundRate: 0,
+            priority: 0,
+            update_type: 'minor',
+            when: null,
+            change_type: 'insert',
+          };
+        }
+      }
+    });
+    modalInstance.result.then(function(sc) {
+      var rule = sc;
+      rule.scheduled_change = sc;
+      $scope.rules.push(rule);
+    });
+  };
+
   $scope.openNewScheduledDeleteModal = function(rule) {
 
     var modalInstance = $modal.open({
@@ -262,6 +300,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       }
     });
     modalInstance.result.then(function(sc) {
+      // todo: need to handle deletes in here, too
       rule.scheduled_change = sc;
     });
   };

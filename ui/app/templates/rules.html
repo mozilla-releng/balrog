@@ -15,6 +15,12 @@
     <i class="glyphicon glyphicon-plus"></i>
   </button>
 
+  <button class="btn btn-info btn-xs"
+          ng-show="!rule_id" ng-click="openNewScheduledRuleModal()">
+    Schedule a new Rule
+    <i class="glyphicon glyphicon-plus"></i>
+  </button>
+
 </h2>
 
 <div class="row">
@@ -43,18 +49,11 @@
         ng-options="o.text for o in ordering_options track by o.value">
       </select>
     </div>
+    <div class="row">
+      <label for="include_sc">Include Scheduled Changes?</label>
+      <input type="checkbox" id="include_sc" ng-model="show_sc" checked>
+    </div>
   </div>
-</div>
-<div class="undofilters" ng-show="!filtered_items.length" ng-cloak>
-  <p ng-if="filters.search">
-    Filtered too much?<br>
-    Remove
-    <ul>
-      <li ng-repeat="word_regex in getWordRegexes()">
-        <a href="#" ng-click="filters.search = removeFilterSearchWord(word_regex[2], filters.search)">{{ word_regex[2] }}</a>
-      </li>
-    </ul>
-  </p>
 </div>
 
 <div class="panel panel-default" style="clear:right"
@@ -65,14 +64,14 @@
       <div style="float: right">
         <i ng-if="rule_id && $first && (currentPage == 1)">Current</i>
         <button ng-if="rule_id && ((currentPage != 1) || !$first )" class="btn btn-default btn-xs" ng-click="openRevertModal(rule)">Revert to this</button>
-        <button ng-show="!rule_id && rule.scheduled_change.change_type === 'insert'" class="btn btn-info btn-xs" ng-click="openEditScheduledRuleChangeModal(rule)">Pending Creation <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span></button>
-        <button ng-show="!rule_id && rule.scheduled_change.change_type === 'update'" class="btn btn-warning btn-xs" ng-click="openEditScheduledRuleChangeModal(rule)">Pending Update <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span></button>
-        <button ng-show="!rule_id && rule.scheduled_change.change_type === 'delete'" class="btn btn-danger btn-xs" ng-click="openEditScheduledRuleChangeModal(rule)">Pending Delete <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span></button>
+        <button ng-show="!rule_id && show_sc && rule.scheduled_change.change_type === 'insert'" class="btn btn-info btn-xs" ng-click="openEditScheduledRuleChangeModal(rule)">Pending Creation <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span></button>
+        <button ng-show="!rule_id && show_sc && rule.scheduled_change.change_type === 'update'" class="btn btn-warning btn-xs" ng-click="openEditScheduledRuleChangeModal(rule)">Pending Update <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span></button>
+        <button ng-show="!rule_id && show_sc && rule.scheduled_change.change_type === 'delete'" class="btn btn-danger btn-xs" ng-click="openEditScheduledRuleChangeModal(rule)">Pending Delete <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span></button>
         <button ng-show="!rule_id && rule.scheduled_change === null" class="btn btn-warning btn-xs" ng-click="openNewScheduledRuleChangeModal(rule)">Schedule an Update</button>
         <button ng-show="!rule_id && rule.scheduled_change === null" class="btn btn-danger btn-xs" ng-click="openNewScheduledDeleteModal(rule)">Schedule for Deletion</button>
-        <button ng-show="!rule_id && rule.scheduled_change !== null && rule.scheduled_change.change_type !== 'insert'" class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">Update</button>
-        <button ng-show="!rule_id && rule.scheduled_change !== null && rule.scheduled_change.change_type !== 'insert'" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button>
-        <button ng-show="!rule_id && rule.scheduled_change !== null && rule.scheduled_change.change_type !== 'insert'" class="btn btn-default btn-xs" ng-click="openDuplicateModal(rule)">Duplicate</button>
+        <button ng-show="!rule_id && (rule.scheduled_change === null || rule.scheduled_change !== null && rule.scheduled_change.change_type !== 'insert')" class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">Update</button>
+        <button ng-show="!rule_id && (rule.scheduled_change === null || rule.scheduled_change !== null && rule.scheduled_change.change_type !== 'insert')" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button>
+        <button ng-show="!rule_id && (rule.scheduled_change === null || rule.scheduled_change !== null && rule.scheduled_change.change_type !== 'insert')" class="btn btn-default btn-xs" ng-click="openDuplicateModal(rule)">Duplicate</button>
         <a ng-show="!rule_id && rule.scheduled_change !== null && rule.scheduled_change.change_type !== 'insert'" class="btn btn-default btn-xs" ng-href="/rules/{{ rule.rule_id }}">History</a>
       </div>
 
@@ -132,15 +131,16 @@
       <dt ng-show="rule.backgroundRate !== null">Rate:</dt>
       <dd>
         {{ rule.backgroundRate }}
-        <span ng-show="rule.scheduled_change !== null && rule.scheduled_change.change_type === 'update' && rule.backgroundRate !== rule.scheduled_change.backgroundRate">
+        <span ng-show="show_sc && rule.scheduled_change !== null && rule.scheduled_change.change_type === 'update' && rule.backgroundRate !== rule.scheduled_change.backgroundRate">
           (<span class="label-warning">{{ rule.scheduled_change.backgroundRate }}</span>)
         </span>
       </dd>
       <dt ng-show="rule.priority !== null">Priority:</dt>
       <dd>
-        {{ rule.priority }}
-        <span ng-show="rule.scheduled_change !== null && rule.scheduled_change.change_type === 'update' && rule.priority !== rule.scheduled_change.priority">
-          (<span class="label-warning">{{ rule.scheduled_change.priority }}</span>)
+        <span ng-show="!show_sc || rule.scheduled_change === null || rule.scheduled_change.change_type !== 'update'">{{ rule.priority }}</span>
+        <s style="color: red" ng-show="show_sc && rule.scheduled_change !== null && rule.scheduled_change.change_type === 'update' && rule.priority !== rule.scheduled_change.priority">{{ rule.priority }}</s>
+        <span style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.scheduled_change.change_type === 'update' && rule.priority !== rule.scheduled_change.priority">
+          {{ rule.scheduled_change.priority }}
         </span>
       </dd>
       <dt ng-show="rule.version">Version:</dt>

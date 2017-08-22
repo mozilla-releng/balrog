@@ -84,7 +84,31 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
         $scope.saving = false;
       });
     });
+  };
 
+  $scope.delete = function() {
+    $scope.saving = true;
+    CSRF.getToken()
+    .then(function(csrf_token) {
+      Rules.deleteScheduledChange($scope.sc.sc_id, $scope.sc, csrf_token)
+      .success(function(response) {
+        $modalInstance.close($scope.sc);
+      })
+      .error(function(response) {
+        if (typeof response === 'object') {
+          sweetAlert(
+            {
+              title: "Form submission error",
+              text: response.exception
+            },
+            function() { $scope.cancel(); }
+          );
+        }
+      })
+      .finally(function() {
+        $scope.saving = false;
+      });
+    });
   };
 
   $scope.cancel = function () {
