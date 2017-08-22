@@ -1030,8 +1030,17 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
 
     def testEmptySnippetOn404(self):
-        ret = self.client.get('/whizzybang')
+        ret = self.client.get('/update/whizzybang')
         self.assertUpdatesAreEmpty(ret)
+
+    @given(just('/whizzybang'))
+    @example(path='/')
+    @example(path='/api/v1')
+    @example(path='/api/v1/releases/')
+    @example(path='/api/v1/rules/')
+    def test404ResponseForNonUpdateEndpoint(self, path):
+        ret = self.client.get(path)
+        self.assertEqual(ret.status_code, 404)
 
     def testErrorMessageOn500(self):
         with mock.patch('auslib.web.public.client.getQueryFromURL') as m:

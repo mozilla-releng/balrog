@@ -61,10 +61,12 @@ def apply_security_headers(response):
 
 @app.errorhandler(404)
 def fourohfour(error):
-    """We don't return 404s in AUS. Instead, we return empty XML files"""
-    response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
-    response.mimetype = 'text/xml'
-    return response
+    if re.match("^/update", request.path):
+        """We don't return 404s for AUS /update endpoints. Instead, we return empty XML files"""
+        response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
+        response.mimetype = 'text/xml'
+        return response
+    return Response(status=404, mimetype="text/plain", response=error.description)
 
 
 @app.errorhandler(Exception)
