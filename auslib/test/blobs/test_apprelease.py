@@ -12,9 +12,9 @@ from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.web.public.base import app
 from auslib.blobs.base import BlobValidationError, createBlob
-from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, \
-    ReleaseBlobV3, ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV7, DesupportBlob, \
-    UnifiedFileUrlsMixin
+from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, \
+    ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV7, ReleaseBlobV8, DesupportBlob, \
+    UnifiedFileUrlsMixin, ProofXMLMixin
 
 
 def setUpModule():
@@ -2883,6 +2883,132 @@ class TestSchema7Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
+class TestSchema8Blob(unittest.TestCase):
+
+    def setUp(self):
+        self.specialForceHosts = ["http://a.com"]
+        self.whitelistedDomains = {'a.com': ('h',)}
+        app.config['DEBUG'] = True
+        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
+        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
+        dbo.setDb('sqlite:///:memory:')
+        dbo.create()
+        dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data=createBlob("""
+{
+    "name": "h1",
+    "schema_version": 8,
+    "platforms": {
+        "p": {
+            "buildID": "10",
+            "locales": {
+                "l": {}
+            }
+        }
+    }
+}
+"""))
+        self.blobH2 = ReleaseBlobV8()
+        self.blobH2.loadJSON("""
+{
+    "name": "h2",
+    "schema_version": 8,
+    "hashFunction": "sha512",
+    "appVersion": "31.0",
+    "displayVersion": "31.0",
+    "detailsUrl": "http://example.org/details/%LOCALE%",
+    "actions": "silent",
+    "openURL": "http://example.org/url/%LOCALE%",
+    "notificationURL": "http://example.org/notification/%LOCALE%",
+    "alertURL": "http://example.org/alert/%LOCALE%",
+    "showPrompt": false,
+    "showNeverForVersion": true,
+    "promptWaitTime": 12345,
+    "backgroundInterval": 123,
+    "binTransMerkleRoot": "merkle_root",
+    "binTransCertificate": "cert",
+    "binTransSCTList": "sct_list",
+    "fileUrls": {
+        "c1": {
+            "partials": {
+                "h1": "http://a.com/h1-partial.mar"
+            },
+            "completes": {
+                "*": "http://a.com/complete.mar"
+            }
+        },
+        "*": {
+            "partials": {
+                "h1": "http://a.com/h1-partial-catchall"
+            },
+            "completes": {
+                "*": "http://a.com/complete-catchall"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 50,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "9",
+                            "binTransInclusionProof": """ + '"' + ('834charpartialsproof' * 42)[:834] + '"' + """
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41",
+                            "binTransInclusionProof": """ + '"' + ('834charcompletesproof' * 40)[:834] + '"' + """
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+
+    def testIsValid(self):
+        # Raises on error
+        self.blobH2.validate('h', self.whitelistedDomains)
+
+    def testSchema8OptionalAttributes(self):
+        updateQuery = {
+            "product": "h", "buildID": "10",
+            "buildTarget": "p", "locale": "l", "channel": "c1",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": 0
+        }
+        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected_header = '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="None" ' \
+            'buildID="50" detailsURL="http://example.org/details/l" showPrompt="false" showNeverForVersion="true" ' \
+            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
+            'alertURL="http://example.org/alert/l" promptWaitTime="12345" backgroundInterval="123" ' \
+            'binTransMerkleRoot="merkle_root" binTransCertificate="cert" binTransSCTList="sct_list">'
+        expected = ["""
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" """ +
+                    'binTransInclusionProof="' + ('834charcompletesproof' * 40)[:834] + '"/>\n',
+                    """
+<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8" """ +
+                    'binTransInclusionProof="' + ('834charpartialsproof' * 42)[:834] + '"/>\n'
+                    ]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+
 class TestDesupportBlob(unittest.TestCase):
 
     def setUp(self):
@@ -2987,3 +3113,37 @@ class TestUnifiedFileUrlsMixin(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.mixin_instance._getUrl(updateQuery, patchKey, patch, specialForceHosts)
+
+
+class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
+
+    def setUp(self):
+        self.mixin_instance = ProofXMLMixin()
+
+    def testGetAdditionalPatchAttributesComplete(self):
+        patch = {
+            'hashValue': 'd456a23ff5a6b35146d9edf05ccc983b0b7b6695fdc11e8d4f44a704c63ae69a585c3429bb90fece5a34a59b06f54'
+                         'b1c947178b9038ce6c83a1b6ac8a86f4274',
+            'from': '*',
+            'filesize': 49376124,
+            'binTransInclusionProof': 'foobar'
+        }
+
+        expected_additional_patch_attributes = {'binTransInclusionProof': 'foobar'}
+        additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
+
+        self.assertEquals(expected_additional_patch_attributes, additionalPatchAttributes)
+
+    def testGetAdditionalPatchAttributesPartial(self):
+        patch = {
+            'hashValue': 'dffd728108a176b1aeca390a420200daa9272f246587f81fde41ad3f5c44bf6de17fb7899b4353e5cbaa8528ea389'
+                         '234890221188db5bb58588ad366c2be0676',
+            'from': 'Firefox-54.0b12-build1',
+            'filesize': 28264739,
+            'binTransInclusionProof': 'barfoo'
+        }
+
+        expected_additional_patch_attributes = {'binTransInclusionProof': 'barfoo'}
+        additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
+
+        self.assertEquals(expected_additional_patch_attributes, additionalPatchAttributes)
