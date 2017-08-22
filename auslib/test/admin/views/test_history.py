@@ -14,7 +14,7 @@ class TestHistoryView(ViewTest):
     def testFieldViewBadValuesBadChangeId(self):
         url = '/history/view/release/9999/whatever'
         ret = self.client.get(url)
-        self.assertStatusCode(ret, 404)
+        self.assertStatusCode(ret, 400)
 
     def testFieldViewCheckIntegerValue(self):
         data = json.dumps(dict(detailsUrl='InbhalInt', fakePartials=True, schema_version=1, name="d", hashFunction="sha512"))
@@ -95,6 +95,11 @@ class TestHistoryView(ViewTest):
         self.assertStatusCode(ret, 200)
         self.assertTrue('"fakePartials": true' in ret.data)
         self.assertTrue('"fakePartials": false' in ret.data)
+
+    def testFieldViewReleaseUnknownChangeId(self):
+        url = '/history/view/release/10676782/data'
+        ret = self.client.get(url)
+        self.assertStatusCode(ret, 400)
 
     def testFieldViewDiffFirstRelease(self):
         # Add first release

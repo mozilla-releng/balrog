@@ -3,7 +3,7 @@ import simplejson as json
 
 from sqlalchemy.sql.expression import null
 import connexion
-from flask import Response, jsonify
+from flask import Response, jsonify, abort
 
 from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
@@ -633,7 +633,7 @@ class ReleaseFieldView(AdminView):
     def get_value(self, change_id, field):
         revision = self.table.history.getChange(change_id=change_id)
         if not revision:
-            raise ValueError('Bad change_id')
+            abort(400, 'Bad change_id')
         if field not in revision:
             raise KeyError('Bad field')
         return revision[field]
