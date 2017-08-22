@@ -10,7 +10,7 @@ Balrog's code is divided into the following parts:
 
 -   `User-facing application <https://github.com/mozilla/balrog/tree/master/auslib/web>`_: The entry point to requests from applications looking for updates.
 
--   `Admin API <https://github.com/mozilla/balrog/tree/master/auslib/admin>`_: A simple RESTful API that allows the Admin UI and automation to make changes to Balrog's database.
+-   `Admin API <https://github.com/mozilla/balrog/tree/master/auslib/web/admin>`_: A simple RESTful API that allows the Admin UI and automation to make changes to Balrog's database.
 
 -   `The Admin UI <https://github.com/mozilla/balrog/tree/master/ui>`_ : A human-friendly interface to manage updates.
 
