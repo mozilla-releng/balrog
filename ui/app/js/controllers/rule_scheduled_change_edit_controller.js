@@ -68,7 +68,7 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
         sc.sc_data_version = response.new_data_version;
         angular.copy(sc, $scope.original_sc);
         $scope.saving = false;
-        $modalInstance.close($scope.sc);
+        $modalInstance.close("update");
       })
       .error(function(response) {
         if (typeof response === 'object') {
@@ -92,7 +92,7 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
     .then(function(csrf_token) {
       Rules.deleteScheduledChange($scope.sc.sc_id, $scope.sc, csrf_token)
       .success(function(response) {
-        $modalInstance.close($scope.sc);
+        $modalInstance.close("delete");
       })
       .error(function(response) {
         if (typeof response === 'object') {

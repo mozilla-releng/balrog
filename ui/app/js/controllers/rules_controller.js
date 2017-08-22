@@ -224,28 +224,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
 
-  $scope.openNewScheduledDeleteModal = function(rule) {
-
-    var modalInstance = $modal.open({
-      templateUrl: 'rule_scheduled_delete_modal.html',
-      controller: 'NewRuleScheduledChangeCtrl',
-      size: 'lg',
-      resolve: {
-        scheduled_changes: function() {
-          return [];
-        },
-        sc: function() {
-          sc = angular.copy(rule);
-          sc["change_type"] = "delete";
-          return sc;
-        }
-      }
-    });
-    modalInstance.result.then(function(sc) {
-      rule.scheduled_change = sc;
-    });
-  };
-
   $scope.openNewScheduledRuleChangeModal = function(rule) {
 
     var modalInstance = $modal.open({
@@ -269,6 +247,28 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
 
+  $scope.openNewScheduledDeleteModal = function(rule) {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'rule_scheduled_delete_modal.html',
+      controller: 'NewRuleScheduledChangeCtrl',
+      size: 'lg',
+      resolve: {
+        scheduled_changes: function() {
+          return [];
+        },
+        sc: function() {
+          sc = angular.copy(rule);
+          sc["change_type"] = "delete";
+          return sc;
+        }
+      }
+    });
+    modalInstance.result.then(function(sc) {
+      rule.scheduled_change = sc;
+    });
+  };
+
   $scope.openEditScheduledRuleChangeModal = function(rule) {
     var modalInstance = $modal.open({
       templateUrl: 'rule_scheduled_change_modal.html',
@@ -281,9 +281,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         }
       }
     });
-    modalInstance.result.then(function(sc) {
-      // todo: need to handle deletes in here, too
-      rule.scheduled_change = sc;
+    modalInstance.result.then(function(action) {
+      if (action === "delete") {
+        rule.scheduled_change = null;
+      }
     });
   };
 
