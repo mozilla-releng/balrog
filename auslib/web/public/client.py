@@ -4,7 +4,7 @@ import sys
 
 from connexion import request
 
-from flask import abort, make_response, current_app as app
+from flask import make_response, current_app as app
 
 from auslib.AUS import AUS
 from auslib.global_state import dbo
