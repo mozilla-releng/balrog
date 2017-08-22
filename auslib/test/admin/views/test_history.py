@@ -96,6 +96,11 @@ class TestHistoryView(ViewTest):
         self.assertTrue('"fakePartials": true' in ret.data)
         self.assertTrue('"fakePartials": false' in ret.data)
 
+    def testFieldViewReleaseUnknownChangeId(self):
+        url = '/history/view/release/10676782/data'
+        ret = self.client.get(url)
+        self.assertStatusCode(ret, 400)
+
     def testFieldViewDiffFirstRelease(self):
         # Add first release
         blob = """
