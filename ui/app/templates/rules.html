@@ -76,10 +76,10 @@
       </div>
 
       <i title="Product" ng-show="!rule.product">no product</i>
-      <b title="Product" ng-show="rule.product" ng-bind-html="highlightSearch(rule.product, 'product')"></b>
+      <b title="Product" ng-show="rule.product">{{ rule.product }}</b>
       :
       <i title="Channel" ng-show="!rule.channel">no channel</i>
-      <b title="Channel" ng-show="rule.channel" ng-bind-html="highlightSearch(rule.channel, 'channel')"></b>
+      <b title="Channel" ng-show="rule.channel">{{ rule.channel }}</b>
     </h3>
   </div>
   <div class="panel-body">
@@ -87,7 +87,7 @@
 
       <h5 title="Mapping">
         Mapping: <span ng-show="rule.mapping">
-            <b ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></b>
+            <b>{{ rule.mapping }}</b>
             <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.mapping)">
                 <i class="glyphicon glyphicon-eye-open"></i>
                 View
@@ -100,7 +100,7 @@
       </h5>
       <h5 title="FallBack Mapping">
        Fallback Mapping: <span ng-show="rule.fallbackMapping">
-            <b ng-bind-html="highlightSearch(rule.fallbackMapping, 'fallbackMapping')"></b>
+            <b>{{ rule.fallbackMapping }}</b>
             <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.fallbackMapping)">
                 <i class="glyphicon glyphicon-eye-open"></i>
                 View
@@ -120,7 +120,7 @@
 
       <p ng-if="rule.comment">
         <b>Comment:</b>
-        <span ng-bind-html="highlightSearch(rule.comment, 'comment')"></span>
+        <span>{{ rule.comment }}</span>
       </p>
 
     </div>
@@ -137,9 +137,9 @@
       </dd>
       <dt ng-show="rule.priority !== null">Priority:</dt>
       <dd>
-        <span ng-show="!show_sc || rule.scheduled_change === null || rule.scheduled_change.change_type !== 'update'">{{ rule.priority }}</span>
-        <s style="color: red" ng-show="show_sc && rule.scheduled_change !== null && rule.scheduled_change.change_type === 'update' && rule.priority !== rule.scheduled_change.priority">{{ rule.priority }}</s>
-        <span style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.scheduled_change.change_type === 'update' && rule.priority !== rule.scheduled_change.priority">
+        <span ng-show="!show_sc || rule.scheduled_change === null">{{ rule.priority }}</span>
+        <s style="color: red" ng-show="show_sc && rule.scheduled_change !== null && rule.priority !== rule.scheduled_change.priority">{{ rule.priority }}</s>
+        <span style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.priority !== rule.scheduled_change.priority">
           {{ rule.scheduled_change.priority }}
         </span>
       </dd>

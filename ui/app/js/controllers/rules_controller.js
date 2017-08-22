@@ -57,9 +57,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         });
         sc_response.scheduled_changes.forEach(function(sc) {
           if (sc.change_type === "insert") {
-            // FIXME HORRIBLE HACK
-            var rule = sc;
-            rule.scheduled_change = sc;
+            // FIXME how to do maintain ordering without setting priority in the rule
+            var rule = {"priority": sc.priority, "scheduled_change": sc};
             $scope.rules.push(rule);
           }
         });
@@ -142,18 +141,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     return !!(false || $scope.filters.search.length);
   };
 
-  function escapeRegExp(string){
-    return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-  }
-
-  $scope.$watchCollection('filters.search', function(value) {
-    $location.hash(value);
-    Search.noticeSearchChange(
-      value,
-      ['product', 'channel', 'mapping', 'comment']
-    );
-  });
-
   $scope.formatMoment = function(when) {
     date = moment(when);
     // This is copied from app/js/directives/moment_directive.js
@@ -161,11 +148,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     // values change.
     return '<time title="' + date.format('dddd, MMMM D, YYYY HH:mm:ss ') + 'GMT' + date.format('ZZ') + '">' + date.fromNow() + '</time>';
   };
-
-  // I don't know how else to expose this to the templates
-  $scope.getWordRegexes = Search.getWordRegexes;
-  $scope.highlightSearch = Search.highlightSearch;
-  $scope.removeFilterSearchWord = Search.removeFilterSearchWord;
 
   $scope.filterBySelect = function(rule) {
     // TODO: put this elesewhere
