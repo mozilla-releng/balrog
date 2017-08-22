@@ -15,10 +15,6 @@ AUS = AUS()
 LOG = logging.getLogger(__name__)
 
 
-def unsubstituted_url_variables():
-    abort(404)
-
-
 def getHeaderArchitecture(buildTarget, ua):
     if buildTarget.startswith('Darwin'):
         if ua and 'PPC' in ua:
@@ -215,4 +211,3 @@ unsubstituted_url_var_functions = ["unsubstituted_url_variables_1",
 
 
 _set_functions(update_blob_functions, get_update_blob)
-_set_functions(unsubstituted_url_var_functions, unsubstituted_url_variables)
