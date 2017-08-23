@@ -4,7 +4,7 @@ import sys
 
 from connexion import request
 
-from flask import abort, make_response, current_app as app
+from flask import make_response, current_app as app
 
 from auslib.AUS import AUS
 from auslib.global_state import dbo
@@ -13,10 +13,6 @@ import logging
 
 AUS = AUS()
 LOG = logging.getLogger(__name__)
-
-
-def unsubstituted_url_variables():
-    abort(404)
 
 
 def getHeaderArchitecture(buildTarget, ua):
@@ -90,6 +86,15 @@ def getQueryFromURL(url):
     ua = request.headers.get('User-Agent')
     query['headerArchitecture'] = getHeaderArchitecture(query['buildTarget'], ua)
     query['force'] = (int(query.get('force', 0)) == 1)
+    if "mig64" in query:
+        # "1" is the only value that official clients send. We ignore any other values
+        # by setting mig64 to None.
+        if query.get("mig64") == "1":
+            query["mig64"] = True
+        else:
+            query["mig64"] = False
+    else:
+        query["mig64"] = None
     return query
 
 
@@ -215,4 +220,3 @@ unsubstituted_url_var_functions = ["unsubstituted_url_variables_1",
 
 
 _set_functions(update_blob_functions, get_update_blob)
-_set_functions(unsubstituted_url_var_functions, unsubstituted_url_variables)

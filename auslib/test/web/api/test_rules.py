@@ -6,7 +6,7 @@ class TestPublicRulesAPI(CommonTestBase):
     def test_get_rules(self):
         ret = self.public_client.get("/api/v1/rules")
         got = json.loads(ret.data)
-        self.assertEquals(got["count"], 3)
+        self.assertEquals(got["count"], 4)
         rules = [(rule["mapping"], rule["product"]) for rule in got["rules"]]
         self.assertIn(("Fennec.55.0a1", "Fennec"), rules)
         self.assertIn(("Firefox.55.0a1", "Firefox"), rules)
@@ -39,7 +39,7 @@ class TestPublicRulesAPI(CommonTestBase):
                         channel=None, comment=None, distVersion=None,
                         distribution=None, fallbackMapping=None,
                         headerArchitecture=None, locale=None, version=None,
-                        osVersion=None, memory=None, instructionSet=None)
+                        osVersion=None, memory=None, instructionSet=None, mig64=None)
         ret = self.public_client.get("/api/v1/rules/moz-releng")
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)

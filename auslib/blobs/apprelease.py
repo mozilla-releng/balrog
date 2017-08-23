@@ -84,6 +84,9 @@ class ReleaseBlobBase(Blob):
         else:
             return None
 
+    def _getAdditionalPatchAttributes(self, patch):
+        return {}
+
     def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
         fromRelease = self._getFromRelease(patch)
         # don't return an update if we don't match the from restriction
@@ -115,8 +118,14 @@ class ReleaseBlobBase(Blob):
         if isForbiddenUrl(url, updateQuery['product'], whitelistedDomains):
             return None
 
-        return '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"/>' % \
+        patchXML = '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"' % \
             (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
+        additionalPatchAttributes = self._getAdditionalPatchAttributes(patch)
+        for attribute in additionalPatchAttributes:
+            patchXML += ' %s="%s"' % (attribute, additionalPatchAttributes[attribute])
+        patchXML += '/>'
+
+        return patchXML
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         buildTarget = updateQuery["buildTarget"]
@@ -888,6 +897,62 @@ class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 7
+
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        referencedReleases = set()
+        for platform in self.get('platforms', {}):
+            for locale in self['platforms'][platform].get('locales', {}):
+                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
+                    referencedReleases.add(
+                        partial['from']
+                    )
+        for fileUrlKey in self.get('fileUrls', {}):
+            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+                referencedReleases.add(partial)
+
+        return referencedReleases
+
+
+class ProofXMLMixin(object):
+
+    def _getAdditionalPatchAttributes(self, patch):
+        additionalPatchAttributes = {}
+
+        if 'binTransInclusionProof' in patch:
+            additionalPatchAttributes['binTransInclusionProof'] = patch["binTransInclusionProof"]
+
+        return additionalPatchAttributes
+
+
+class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+    """
+
+    Changes from ReleaseBlobV7:
+        * Adds support for ProofXMLMixin (placed as first parameter for inheritance preference)
+
+    For further information:
+        * https://bugzilla.mozilla.org/show_bug.cgi?id=1384296
+
+    """
+    jsonschema = "apprelease-v8.yml"
+
+    # for the benefit of get*XML
+    optional_ = ('showPrompt', 'showNeverForVersion',
+                 'actions', 'openURL', 'notificationURL', 'alertURL',
+                 'promptWaitTime', 'backgroundInterval', 'binTransMerkleRoot',
+                 'binTransCertificate', 'binTransSCTList')
+    # params that can have %LOCALE% interpolated
+    interpolable_ = ('openURL', 'notificationURL', 'alertURL')
+
+    def __init__(self, **kwargs):
+        # ensure schema_version is set if we init ReleaseBlobV8 directly
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 8
 
     def getReferencedReleases(self):
         """

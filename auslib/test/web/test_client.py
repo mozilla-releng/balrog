@@ -60,9 +60,9 @@ class TestGetSystemCapabilities(unittest.TestCase):
 
 
 class ClientTestCommon(unittest.TestCase):
-    def assertHttpResponse(self, http_reponse):
-        self.assertEqual(http_reponse.status_code, 200)
-        self.assertEqual(http_reponse.mimetype, 'text/xml')
+    def assertHttpResponse(self, http_response):
+        self.assertEqual(http_response.status_code, 200, http_response.data)
+        self.assertEqual(http_response.mimetype, 'text/xml')
 
     def assertUpdatesAreEmpty(self, http_reponse):
         self.assertHttpResponse(http_reponse)
@@ -893,24 +893,6 @@ class ClientTest(ClientTestBase):
         ret = self.client.get('/update/3/product_that_should_not_be_updated/1.0/1/p/l/a/a/a/a/update.xml')
         self.assertUpdatesAreEmpty(ret)
 
-    def testNonSubstitutedUrlVariablesReturn404(self):
-        request1 = '/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml'
-        request2 = '/update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml'
-        request3 = '/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
-            'update.xml'
-        request4 = '/update/4/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
-            '%MOZ_VERSION%/update.xml'
-        request5 = '/update/5/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
-            '%IMEI%/update.xml'
-        request6 = '/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/' \
-            '%DISTRIBUTION_VERSION%/update.xml'
-
-        with mock.patch('auslib.web.public.client.get_update_blob') as mock_cr_view:
-            for request in [request1, request2, request3, request4, request5, request6]:
-                ret = self.client.get(request)
-                self.assertEqual(ret.status_code, 404)
-                self.assertFalse(mock_cr_view.called)
-
     @given(just('x'))
     @example(invalid_version='1x')
     @example(invalid_version='x1')
@@ -967,6 +949,152 @@ class ClientTest(ClientTestBase):
         self.assertEquals(ret.status_code, 200)
 
 
+class ClientTestMig64(ClientTestCommon):
+    """Tests the expected real world scenarios for the mig64 query parameter.
+    mig64=0 is not tested because we have no client code that sends it. These
+    cases are tested in the db layer tests, though."""
+
+    @classmethod
+    def setUpClass(cls):
+        # Error handlers are removed in order to give us better debug messages
+        cls.error_spec = app.error_handler_spec
+        # Ripped from https://github.com/mitsuhiko/flask/blob/1f5927eee2288b4aaf508af5dc1f148aa2140d91/flask/app.py#L394
+        app.error_handler_spec = {None: {}}
+
+    @classmethod
+    def tearDownClass(cls):
+        app.error_handler_spec = cls.error_spec
+
+    def setUp(self):
+        app.config["DEBUG"] = True
+        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
+        dbo.setDb("sqlite:///:memory:")
+        dbo.create()
+        self.client = app.test_client()
+        dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a",
+                                     data_version=1)
+        dbo.releases.t.insert().execute(name="a", product="a", data_version=1, data=createBlob("""
+{
+    "name": "a",
+    "schema_version": 1,
+    "appv": "1.0",
+    "extv": "1.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "2",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/z"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b",
+                                     mig64=True, data_version=1)
+        dbo.releases.t.insert().execute(name="b", product="b", data_version=1, data=createBlob("""
+{
+    "name": "b",
+    "schema_version": 1,
+    "appv": "2.0",
+    "extv": "2.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "12",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "13",
+                        "from": "*",
+                        "hashValue": "14",
+                        "fileUrl": "http://a.com/z1"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c",
+                                     mig64=False, data_version=1)
+        dbo.releases.t.insert().execute(name="c", product="c", data_version=1, data=createBlob("""
+{
+    "name": "c",
+    "schema_version": 1,
+    "appv": "3.0",
+    "extv": "3.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "22",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "23",
+                        "from": "*",
+                        "hashValue": "24",
+                        "fileUrl": "http://a.com/z2"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+
+    def testRuleFalseQueryNull(self):
+        ret = self.client.get("/update/3/c/1.0/2/p/l/a/a/a/a/update.xml")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testRuleFalseQueryTrue(self):
+        ret = self.client.get("/update/3/c/1.0/2/p/l/a/a/a/a/update.xml?mig64=1")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testRuleTrueQueryNull(self):
+        ret = self.client.get("/update/3/b/1.0/2/p/l/a/a/a/a/update.xml")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testRuleTrueQueryTrue(self):
+        ret = self.client.get("/update/3/b/1.0/2/p/l/a/a/a/a/update.xml?mig64=1")
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="2.0" extensionVersion="2.0" buildID="12">
+        <patch type="complete" URL="http://a.com/z1" hashFunction="sha512" hashValue="14" size="13"/>
+    </update>
+</updates>
+""")
+
+    def testRuleNullQueryNull(self):
+        ret = self.client.get("/update/3/a/1.0/1/p/l/a/a/a/a/update.xml")
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+
+    def testRuleNullQueryTrue(self):
+        ret = self.client.get("/update/3/a/1.0/1/p/l/a/a/a/a/update.xml?mig64=1")
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+
+
 class ClientTestWithErrorHandlers(ClientTestCommon):
     """Most of the tests are run without the error handler because it gives more
        useful output when things break. However, we still need to test that our
@@ -974,7 +1102,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
 
     def setUp(self):
         app.config['DEBUG'] = True
-        app.config['WHITELISTED_DOMAINS'] = ('a.com',)
+        app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a",)}
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         self.client = app.test_client()
@@ -1048,8 +1176,17 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
 
     def testEmptySnippetOn404(self):
-        ret = self.client.get('/whizzybang')
+        ret = self.client.get('/update/whizzybang')
         self.assertUpdatesAreEmpty(ret)
+
+    @given(just('/whizzybang'))
+    @example(path='/')
+    @example(path='/api/v1')
+    @example(path='/api/v1/releases/')
+    @example(path='/api/v1/rules/')
+    def test404ResponseForNonUpdateEndpoint(self, path):
+        ret = self.client.get(path)
+        self.assertEqual(ret.status_code, 404)
 
     def testErrorMessageOn500(self):
         with mock.patch('auslib.web.public.client.getQueryFromURL') as m:

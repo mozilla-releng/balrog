@@ -1858,6 +1858,7 @@ paths:
                   locale: null
                   mapping: "Firefox-45.7.0esr-build1"
                   memory: null
+                  mig64: null
                   osVersion: null
                   priority: 43
                   product: "Firefox"
@@ -4077,6 +4078,7 @@ definitions:
       - locale
       - mapping
       - memory
+      - mig64
       - osVersion
       - priority
       - product
@@ -4110,6 +4112,7 @@ definitions:
       - locale
       - mapping
       - memory
+      - mig64
       - osVersion
       - priority
       - product
@@ -4148,6 +4151,7 @@ definitions:
                 locale: null
                 mapping: "Firefox-45.7.0esr-build1"
                 memory: null
+                mig64: null
                 osVersion: null
                 priority: 43
                 product: "Firefox"
@@ -4356,6 +4360,11 @@ definitions:
         minLength: 0
         maxLength: 100
         example: null
+
+      mig64:
+        description: Whether or not the Rule should apply to queries that specify their 32 -> 64-bit migration status. If set to false or true, the query and the rule must match precisely. If set to null, the mig64 in the updateQuery is ignored.
+        type: ["boolean", "null"]
+        example: true
 
     #Warning: Do NOT add an example object here. Interferes with Example Value during
     # request generation in Swagger-UI

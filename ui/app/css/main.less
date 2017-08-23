@@ -92,5 +92,17 @@ div.xor-group > div {
     margin: 10px 0px 10px;
 }
 
+/* This class is used in the primary Rule, Release, and Permissions UI. Some of our field
+   names don't fit into the default size, so we needed to make it wider */
+@media (min-width: 768px) {
+  .dl-horizontal dt {
+      width: 200px;
+  }
+
+  .dl-horizontal dd {
+      margin-left: 220px;
+  }
+}
+
 @import 'loader';
 @import 'smallloader';
