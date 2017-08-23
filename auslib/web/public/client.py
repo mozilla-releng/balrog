@@ -68,11 +68,8 @@ def getCleanQueryFromURL(url):
         if len(force_split) < 2:
             force_split = force_value.split('%3F', 1)
 
-        if force_split[0]:
-            query['force'] = 1
-        else:
-            query['force'] = 0
-
+    query['force'] = force_split[0]
+    
         avast_parameter = force_split[1]
         avast_split = avast_parameter.split('=')
         query[avast_split[0]] = int(avast_split[1])
@@ -92,7 +89,7 @@ def getQueryFromURL(url):
     query['osVersion'] = urllib.unquote(query['osVersion'])
     ua = request.headers.get('User-Agent')
     query['headerArchitecture'] = getHeaderArchitecture(query['buildTarget'], ua)
-    query['force'] = (int(query.get('force', 0)) == 1)
+    query['force'] = (query.get('force', 0) == "1")
     return query
 
 
