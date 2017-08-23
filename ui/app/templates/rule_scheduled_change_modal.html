@@ -205,10 +205,29 @@
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
+        <div class="form-group" ng-class="{'has-error': errors.mig64}">
+          <label for="id_mig64">
+            64-bit Migration Opt-in
+            <span class="glyphicon glyphicon-question-sign"
+                  title='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status. "Ignore" is usually what you want.'>
+            </span>
+          </label>
+          <select id="id_mig64" ng-model="sc.mig64" class="form-control"
+                  ng-options="value as key for (key, value) in {'Ignore': null, 'Yes': true, 'No': false}">
+            <!-- Angular creates an extra entry because one of our values is null. This hides it.
+                 From https://stackoverflow.com/a/24321497 -->
+            <option value="" ng-if="false"></option>
+          </select>
+          <p class="help-block" ng-show="errors.mig64">{{ errors.mig64.join(', ') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
         <div class="form-group" ng-class="{'has-error': errors.comment}">
-        <label for="id_comment">Comment</label>
-        <input type="text" class="form-control" id="id_comment" ng-model="sc.comment">
-        <p class="help-block" ng-show="errors.comment">{{ errors.comment.join(', ') }}</p>
+          <label for="id_comment">Comment</label>
+          <input type="text" class="form-control" id="id_comment" ng-model="sc.comment">
+          <p class="help-block" ng-show="errors.comment">{{ errors.comment.join(', ') }}</p>
         </div>
       </div>
     </div>
@@ -231,4 +250,4 @@
   <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Save Changes</button>
   <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
 </div>
-
+G

@@ -1003,7 +1003,7 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
         self.assertEquals(ret_data, json.loads("""
 {
     "releases": [
-        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4, 6, 7]},
+        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4, 6, 7, 8]},
         {"data_version": 1, "name": "ab", "product": "a", "read_only": false, "rule_ids": []}
     ]
 }
@@ -1688,7 +1688,7 @@ class TestRuleIdsReturned(ViewTest):
 
     def testMappingIncluded(self):
         rel_name = 'ab'
-        rule_id = 8
+        rule_id = 9
 
         releases = self._get("/releases")
         releases_data = json.loads(releases.data)

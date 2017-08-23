@@ -1,12 +1,12 @@
 import logging
 import mock
 import os
+from os import path
 import sys
 from tempfile import mkstemp
 import unittest
 import re
 
-from os import path
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
 
@@ -1911,7 +1911,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         expected = ["rule_id", "alias", "priority", "mapping", "fallbackMapping", "backgroundRate", "update_type",
                     "product", "version", "channel", "buildTarget", "buildID", "locale", "osVersion",
                     "instructionSet", "distribution", "distVersion", "headerArchitecture", "comment",
-                    "data_version", "memory"]
+                    "data_version", "memory", "mig64"]
         sc_expected = ["base_{}".format(c) for c in expected]
         self.assertEquals(set(columns), set(expected))
         # No need to test the non-base parts of history nor scheduled changes table
@@ -2292,6 +2292,146 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def testGetNumberOfRules(self):
         self.assertEquals(self.paths.countRules(), 10)
+
+
+class TestMig64Rules(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
+
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.rules = self.db.rules
+        self.rules.t.insert().execute(rule_id=1, priority=90, mapping="myes", backgroundRate=100, mig64=True,
+                                      update_type="z", product="mm", channel="mm", data_version=1)
+        self.rules.t.insert().execute(rule_id=2, priority=100, mapping="mno", backgroundRate=100, mig64=False,
+                                      update_type="z", product="nn", channel="nn", data_version=1)
+
+        self.rules.t.insert().execute(rule_id=3, priority=110, mapping="anything", backgroundRate=100,
+                                      update_type="z", product="oo", channel="oo", data_version=1)
+
+    def testRuleFalseQueryFalse(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="nn", version='53.0', channel="nn",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=False, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=2, priority=100, mapping="mno", backgroundRate=100, mig64=False, update_type="z",
+                 product="nn", channel="nn", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleFalseQueryTrue(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="nn", version='53.0', channel="nn",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=True, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleFalseQueryNull(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="nn", version='53.0', channel="nn",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=None, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleTrueQueryFalse(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="mm", version='53.0', channel="mm",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=False, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleTrueQueryTrue(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="mm", version='53.0', channel="mm",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=True, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=1, priority=90, mapping="myes", backgroundRate=100, mig64=True, update_type="z",
+                 product="mm", channel="mm", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleTrueQueryNull(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="mm", version='53.0', channel="mm",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=None, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleNullQueryFalse(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="oo", version='53.0', channel="oo",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=False, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=3, priority=110, mapping="anything", backgroundRate=100, update_type="z",
+                 product="oo", channel="oo", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleNullQueryTrue(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="oo", version='53.0', channel="oo",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=True, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=3, priority=110, mapping="anything", backgroundRate=100, update_type="z",
+                 product="oo", channel="oo", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleNullQueryNull(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="oo", version='53.0', channel="oo",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, mig64=None, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=3, priority=110, mapping="anything", backgroundRate=100, update_type="z",
+                 product="oo", channel="oo", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
 
 
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
@@ -4373,6 +4513,22 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table_name in base_capabilities_tables:
                 self.assertIn("base_systemCapabilities", metadata.tables[table_name].c)
 
+    def _add_mig64_test(self, db, upgrade=True):
+        metadata = self._get_reflected_metadata(db)
+        mig64_tables = ["rules", "rules_history"]
+        base_mig64_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
+
+        if upgrade:
+            for table_name in mig64_tables:
+                self.assertIn("mig64", metadata.tables[table_name].c)
+            for table_name in base_mig64_tables:
+                self.assertIn("base_mig64", metadata.tables[table_name].c)
+        else:
+            for table_name in mig64_tables:
+                self.assertNotIn("mig64", metadata.tables[table_name].c)
+            for table_name in base_mig64_tables:
+                self.assertNotIn("base_mig64", metadata.tables[table_name].c)
+
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
         """
         Tests the upgrades and downgrades for version 22 work properly.
@@ -4425,6 +4581,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            28: self._add_mig64_test,
             27: self._remove_systemCapabilities_test,
             26: self._add_instructionSet_test,
             # No-op migration

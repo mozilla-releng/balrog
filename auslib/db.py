@@ -107,6 +107,33 @@ class JSONColumn(sqlalchemy.types.TypeDecorator):
         return value
 
 
+class CompatibleBooleanColumn(sqlalchemy.types.TypeDecorator):
+    """A Boolean column that is compatible with all of our supported
+    database engines (mysql, sqlite). SQLAlchemy's built-in Boolean
+    does not work because it creates a CHECK constraint that makes
+    it impossible to downgrade a database with sqlalchemy-migrate."""
+
+    impl = Integer
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            if not isinstance(value, bool):
+                raise TypeError("{} is invalid type ({}), must be bool".format(value, type(value)))
+
+            if value is True:
+                value = 1
+            else:
+                value = 0
+        return value
+
+    def process_result_value(self, value, dialect):
+        # Boolean columns may be nullable, we need to be sure to preserve nulls
+        # in case consumers treat them differently than False.
+        if value is not None:
+            value = bool(value)
+        return value
+
+
 def BlobColumn(impl=Text):
     """BlobColumns are used to store Release Blobs, which are ultimately dicts.
     Release Blobs must be serialized before storage, and deserialized upon
@@ -1455,6 +1482,7 @@ class Rules(AUSTable):
                            Column('osVersion', String(1000)),
                            Column('memory', String(100)),
                            Column('instructionSet', String(1000)),
+                           Column('mig64', CompatibleBooleanColumn),
                            Column('distribution', String(100)),
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),
@@ -1561,6 +1589,30 @@ class Rules(AUSTable):
             elif part == queryString:
                 return True
         return False
+
+    def _mig64MatchesRule(self, ruleMig64, queryMig64):
+        """As with all other columns, if mig64 isn't present in the Rule, the Rule matches.
+        Unlike other columns, mig64 is optional in the update query, so we must handle False,
+        True, and None values. Note that None in the updateQuery is treated as "unknown",
+        i.e.: False and None are not the same thing.
+        The full truth table is:
+        rule | query | matches?
+          F      0        Y
+          F      1        N
+          F     null      N
+          T      0        N
+          T      1        Y
+          T     null      N
+        null     0        Y
+        null     1        Y
+        null    null      Y
+
+        Additional context in https://bugzilla.mozilla.org/show_bug.cgi?id=1386756"""
+
+        if ruleMig64 is not None:
+            if queryMig64 is None or ruleMig64 != queryMig64:
+                return False
+        return True
 
     def _simpleBooleanMatchesSubRule(self, subRuleString, queryString, substring):
         """Performs the actual logical 'AND' operation on a rule as well as partial/full string matching
@@ -1702,6 +1754,8 @@ class Rules(AUSTable):
             # Locales may be a comma delimited rule too, exact matches only
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
+                continue
+            if not self._mig64MatchesRule(rule["mig64"], updateQuery.get("mig64")):
                 continue
 
             matchingRules.append(rule)
