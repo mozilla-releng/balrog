@@ -1590,6 +1590,30 @@ class Rules(AUSTable):
                 return True
         return False
 
+    def _mig64MatchesRule(self, ruleMig64, queryMig64):
+        """As with all other columns, if mig64 isn't present in the Rule, the Rule matches.
+        Unlike other columns, mig64 is optional in the update query, so we must handle False,
+        True, and None values. Note that None in the updateQuery is treated as "unknown",
+        i.e.: False and None are not the same thing.
+        The full truth table is:
+        rule | query | matches?
+          F      0        Y
+          F      1        N
+          F     null      N
+          T      0        N
+          T      1        Y
+          T     null      N
+        null     0        Y
+        null     1        Y
+        null    null      Y
+
+        Additional context in https://bugzilla.mozilla.org/show_bug.cgi?id=1386756"""
+
+        if ruleMig64 is not None:
+            if queryMig64 is None or ruleMig64 != queryMig64:
+                return False
+        return True
+
     def _simpleBooleanMatchesSubRule(self, subRuleString, queryString, substring):
         """Performs the actual logical 'AND' operation on a rule as well as partial/full string matching
            for each section of a rule.
@@ -1731,26 +1755,8 @@ class Rules(AUSTable):
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
                 continue
-            # As with all other columns, if mig64 isn't present in the Rule, the Rule matches.
-            # Unlike other columns, mig64 is optional in the update query, so we must handle False,
-            # True, and None values. Note that None in the updateQuery is treated as "unknown",
-            # i.e.: False and None are not the same thing.
-            # The full truth table is:
-            # rule | query | matches?
-            #   F      0        Y
-            #   F      1        N
-            #   F     null      N
-            #   T      0        N
-            #   T      1        Y
-            #   T     null      N
-            # null     0        Y
-            # null     1        Y
-            # null    null      Y
-            #
-            # Additional context in https://bugzilla.mozilla.org/show_bug.cgi?id=1386756
-            if rule["mig64"] is not None:
-                if updateQuery.get("mig64") is None or rule["mig64"] != updateQuery["mig64"]:
-                    continue
+            if not self._mig64MatchesRule(rule["mig64"], updateQuery.get("mig64")):
+                continue
 
             matchingRules.append(rule)
 

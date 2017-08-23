@@ -148,15 +148,6 @@
         </div>
       </div>
       <div class="col-md-6">
-        <div class="form-group" ng-class="{'has-error': errors.alias}">
-          <label for="id_distribution">Alias</label>
-          <input type="text" class="form-control" id="id_distribution" ng-model="rule.alias">
-          <p class="help-block" ng-show="errors.alias">{{ errors.alias.join(', ') }}</p>
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.mig64}">
           <label for="id_mig64">
             64-bit Migration Opt-in
@@ -171,6 +162,15 @@
             <option value="" ng-if="false"></option>
           </select>
           <p class="help-block" ng-show="errors.mig64">{{ errors.mig64.join(', ') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group" ng-class="{'has-error': errors.alias}">
+          <label for="id_distribution">Alias</label>
+          <input type="text" class="form-control" id="id_distribution" ng-model="rule.alias">
+          <p class="help-block" ng-show="errors.alias">{{ errors.alias.join(', ') }}</p>
         </div>
       </div>
     </div>
