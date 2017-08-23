@@ -57,7 +57,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         });
         sc_response.scheduled_changes.forEach(function(sc) {
           if (sc.change_type === "insert") {
-            // FIXME how to do maintain ordering without setting priority in the rule
             var rule = {"scheduled_change": sc};
             $scope.rules.push(rule);
           }
@@ -97,38 +96,12 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   }
 
-  $scope.$watch('ordering_str', function(value) {
-    if (typeof value === "string") {
-      $scope.ordering = value.value.split(',');
-    }
-    else {
-      $scope.ordering = value;
-    }
-  });
-
   $scope.$watch('pr_ch_filter', function(value) {
     if (value) {
       localStorage.setItem("pr_ch_filter", value);
     }
     $scope.pr_ch_selected = value.split(',');
   });
-
-  if ($scope.rule_id) {
-    $scope.ordering_options = [
-      {
-        text: "Data Version",
-        value: "-data_version"
-      },
-    ];
-  } else {
-    $scope.ordering_options = [
-      {
-        text: "Priority",
-        value: $scope.orderRules
-      }
-    ];
-  }
-  $scope.ordering_str = $scope.ordering_options[0];
 
   $scope.filters = {
     search: $location.hash(),
