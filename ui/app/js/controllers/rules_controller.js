@@ -58,7 +58,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         sc_response.scheduled_changes.forEach(function(sc) {
           if (sc.change_type === "insert") {
             // FIXME how to do maintain ordering without setting priority in the rule
-            var rule = {"priority": sc.priority, "scheduled_change": sc};
+            var rule = {"scheduled_change": sc};
             $scope.rules.push(rule);
           }
         });
@@ -98,7 +98,12 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   }
 
   $scope.$watch('ordering_str', function(value) {
-    $scope.ordering = value.value.split(',');
+    if (typeof value === "string") {
+      $scope.ordering = value.value.split(',');
+    }
+    else {
+      $scope.ordering = value;
+    }
   });
 
   $scope.$watch('pr_ch_filter', function(value) {
@@ -118,17 +123,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   } else {
     $scope.ordering_options = [
       {
-        text: "Priority, Version, Mapping",
-        value: "-priority,version,mapping"
-      },
-      {
-        text: "Product, Channel",
-        value: "product,channel"
-      },
-      {
-        text: "Mapping",
-        value: "mapping"
-      },
+        text: "Priority",
+        value: $scope.orderRules
+      }
     ];
   }
   $scope.ordering_str = $scope.ordering_options[0];
@@ -147,6 +144,15 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     // We can't use that for this page, because it doesn't re-render when
     // values change.
     return '<time title="' + date.format('dddd, MMMM D, YYYY HH:mm:ss ') + 'GMT' + date.format('ZZ') + '">' + date.fromNow() + '</time>';
+  };
+
+  $scope.orderRules = function(rule) {
+    if (rule.priority === null || rule.priority === undefined) {
+        return rule.scheduled_change.priority * -1;
+    }
+    else {
+        return rule.priority * -1;
+    }
   };
 
   $scope.filterBySelect = function(rule) {
