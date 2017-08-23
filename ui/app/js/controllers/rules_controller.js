@@ -58,6 +58,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         sc_response.scheduled_changes.forEach(function(sc) {
           if (sc.change_type === "insert") {
             var rule = {"scheduled_change": sc};
+            rule.scheduled_change.when = new Date(rule.scheduled_change.when);
             $scope.rules.push(rule);
           }
         });
@@ -174,6 +175,15 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
 
   $scope.openNewScheduledRuleModal = function() {
 
+    var product = "";
+    var channel = "";
+    if ($scope.pr_ch_selected[0].toLowerCase() !== "all rules") {
+      product = $scope.pr_ch_selected[0];
+      if ($scope.pr_ch_selected.length > 1) {
+        channel = $scope.pr_ch_selected[1];
+      }
+    }
+
     var modalInstance = $modal.open({
       templateUrl: 'rule_scheduled_change_modal.html',
       controller: 'NewRuleScheduledChangeCtrl',
@@ -186,7 +196,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         sc: function() {
           // blank new default rule
           return {
-            product: '',
+            product: product,
+            channel: channel,
             backgroundRate: 0,
             priority: 0,
             update_type: 'minor',
@@ -197,8 +208,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       }
     });
     modalInstance.result.then(function(sc) {
-      var rule = sc;
-      rule.scheduled_change = sc;
+      var rule = {"scheduled_change": sc};
       $scope.rules.push(rule);
     });
   };
