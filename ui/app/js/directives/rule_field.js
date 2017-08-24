@@ -8,6 +8,7 @@ angular.module("app").directive("rulefield", function() {
       rule: "=",
       fieldname: "@",
       fieldtitle: "@",
+      help: "@",
     },
     templateUrl: "rule_field.html",
     controller: function($scope) {

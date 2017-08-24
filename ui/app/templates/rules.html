@@ -149,32 +149,21 @@
     </div>
 
     <dl class="dl-horizontal" style="float:right">
-      <dt ng-show="rule.alias" title="Can be used in place of rule_id in REST operations">Alias:</dt>
-      <dd>{{ rule.alias }}</dd>
-      <dt ng-show="rule.backgroundRate !== null">Rate:</dt>
-      <dd>
-        {{ rule.backgroundRate }}
-        <span ng-show="show_sc && sc !== null && sc.change_type === 'update' && rule.backgroundRate !== sc.backgroundRate">
-          (<span class="label-warning">{{ sc.backgroundRate }}</span>)
-        </span>
-      </dd>
+      <rulefield showsc="show_sc" rule="rule" fieldname="alias" fieldtitle="Alias" help="Can be used in place of rule_id in REST operations"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="backgroundRate" fieldtitle="Background Rate"></rulefield>
       <rulefield showsc="show_sc" rule="rule" fieldname="priority" fieldtitle="Priority"></rulefield>
-      <dt ng-show="rule.version">Version:</dt>
-      <dd>{{ rule.version }}</dd>
-      <dt ng-show="rule.buildID">Build ID:</dt>
-      <dd>{{ rule.buildID }}</dd>
-      <dt ng-show="rule.locale">Locale:</dt>
-      <dd>{{ rule.locale }}</dd>
-      <dt ng-show="rule.distribution">Distribution:</dt>
-      <dd>{{ rule.distribution }}</dd>
-      <dt ng-show="rule.buildTarget">Build Target:</dt>
-      <dd>{{ rule.buildTarget }}</dd>
-      <dt ng-show="rule.osVersion">OS Version:</dt>
-      <dd>{{ rule.osVersion }}</dd>
-      <dt ng-show="rule.instructionSet">Instruction Set:</dt>
-      <dd>{{ rule.instructionSet }}</dd>
-      <dt ng-show="rule.memory">Memory:</dt>
-      <dd>{{ rule.memory }}</dd>
+      <rulefield showsc="show_sc" rule="rule" fieldname="version" fieldtitle="Version"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="buildID" fieldtitle="Build ID"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="locale" fieldtitle="Locale(s)"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="distribution" fieldtitle="Distribution"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="distVersion" fieldtitle="Distribution Version"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="osVersion" fieldtitle="OS Version"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="instructionSet" fieldtitle="Instruction Set"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="memory" fieldtitle="Memory"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="mig64" fieldtitle="64-bit Migration Opt-in" help='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="update_type" fieldtitle="Update type"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="headerArchitecture" fieldtitle="Header Architecture"></rulefield>
+      <!--
       <dt ng-show="rule.mig64 !== null && rule.mig64 !== undefined">
         64-Bit Migration Opt-in
         <span class="glyphicon glyphicon-question-sign"
@@ -184,12 +173,7 @@
       </dt>
       <dd ng-if="rule.mig64 === true">Yes</dd>
       <dd ng-if="rule.mig64 === false">No</dd>
-      <dt ng-show="rule.distVersion">Dist Version:</dt>
-      <dd>{{ rule.distVersion }}</dd>
-      <dt ng-show="rule.update_type">Update type:</dt>
-      <dd>{{ rule.update_type }}</dd>
-      <dt ng-show="rule.headerArchitecture">Header Architecture:</dt>
-      <dd>{{ rule.headerArchitecture }}</dd>
+      -->
     </dl>
 
   </div>

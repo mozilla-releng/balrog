@@ -1,5 +1,14 @@
-<dt ng-show="rule[fieldname] !== null">{{ fieldtitle }}:</dt>
+<dt ng-show="rule[fieldname] || (showsc && sc[fieldname])">
+    {{ fieldtitle }}
+    <span ng-show="help && (rule[fieldname] || (showsc && sc[fieldname]))" class="glyphicon glyphicon-question-sign" title="{{ help }}"></span>
+    :
+</dt>
 <dd>
+<!-- we have two display modes: with and without scheduled changes.
+     if scheduled changes are being shown, we shown any fields that are
+     changing as a "diff", where the current value is struck out, and
+     the scheduled change version is in green. if scheduled changes aren't
+     being shown, we just show the current value plainly -->
 <span ng-show="!showsc || sc === null">{{ rule[fieldname] }}</span>
 <s style="color: red" ng-show="showsc && sc !== null && rule[fieldname] !== sc[fieldname]">{{ rule[fieldname] }}</s>
 <span style="color: green" ng-show="showsc && sc !== null && rule[fieldname] !== sc[fieldname]">
