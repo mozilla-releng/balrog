@@ -158,14 +158,7 @@
           (<span class="label-warning">{{ sc.backgroundRate }}</span>)
         </span>
       </dd>
-      <dt ng-show="rule.priority !== null">Priority:</dt>
-      <dd>
-        <span ng-show="!show_sc || sc === null">{{ rule.priority }}</span>
-        <s style="color: red" ng-show="show_sc && sc !== null && rule.priority !== sc.priority">{{ rule.priority }}</s>
-        <span style="color: green" ng-show="show_sc && sc !== null && rule.priority !== sc.priority">
-          {{ sc.priority }}
-        </span>
-      </dd>
+      <rulefield showsc="{{ show_sc }}" rule="rule" fieldname="priority" fieldtitle="Priority"></rulefield>
       <dt ng-show="rule.version">Version:</dt>
       <dd>{{ rule.version }}</dd>
       <dt ng-show="rule.buildID">Build ID:</dt>

@@ -1,0 +1,8 @@
+<dt ng-show="rule[fieldname] !== null">{{ fieldtitle }}:</dt>
+<dd>
+<span ng-show="!showsc || sc === null">{{ rule[fieldname] }}</span>
+<s style="color: red" ng-show="showsc && sc !== null && rule[fieldname] !== sc[fieldname]">{{ rule[fieldname] }}</s>
+<span style="color: green" ng-show="showsc && sc !== null && rule[fieldname] !== sc[fieldname]">
+    {{ sc[fieldname] }}
+</span>
+</dd>
