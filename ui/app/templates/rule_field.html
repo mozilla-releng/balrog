@@ -1,6 +1,6 @@
-<dt ng-show="rule[fieldname] || (showsc && sc[fieldname])">
+<dt ng-show="fieldvalue !== null || (showsc && scvalue !== null)">
     {{ fieldtitle }}
-    <span ng-show="help && (rule[fieldname] || (showsc && sc[fieldname]))" class="glyphicon glyphicon-question-sign" title="{{ help }}"></span>
+    <span ng-show="help && (fieldvalue !== null || (showsc && scvalue !== null))" class="glyphicon glyphicon-question-sign" title="{{ help }}"></span>
     :
 </dt>
 <dd>
@@ -9,9 +9,9 @@
      changing as a "diff", where the current value is struck out, and
      the scheduled change version is in green. if scheduled changes aren't
      being shown, we just show the current value plainly -->
-<span ng-show="!showsc || sc === null">{{ rule[fieldname] }}</span>
-<s style="color: red" ng-show="showsc && sc !== null && rule[fieldname] !== sc[fieldname]">{{ rule[fieldname] }}</s>
-<span style="color: green" ng-show="showsc && sc !== null && rule[fieldname] !== sc[fieldname]">
-    {{ sc[fieldname] }}
+<span ng-show="!showsc || sc === null || fieldvalue === scvalue">{{ fieldvalue }}</span>
+<s style="color: red" ng-show="showsc && sc !== null && fieldvalue !== scvalue">{{ fieldvalue }}</s>
+<span style="color: green" ng-show="showsc && sc !== null && fieldvalue !== scvalue">
+    {{ scvalue }}
 </span>
 </dd>
