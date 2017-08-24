@@ -66,7 +66,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
         $scope.sc.sc_data_version = 1;
         $scope.sc.sc_id = response.sc_id;
         $scope.scheduled_changes.push($scope.sc);
-        $modalInstance.close();
+        $modalInstance.close($scope.sc.change_type);
       })
       .error(function(response, status) {
         if (typeof response === 'object') {
