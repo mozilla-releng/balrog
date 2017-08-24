@@ -174,17 +174,9 @@
             </a>
           </span>
       </h5>
-      <h5 title="Data version" ng-show="rule.data_version">
-        Data version: <b>{{ rule.data_version }}</b>
-      </h5>
-      <h5 title="Rule ID" ng-show="rule.rule_id">
-        Rule ID: <b>{{ rule.rule_id }}</b>
-      </h5>
-
-      <p ng-show="rule.comment">
-        <b>Comment:</b>
-        <span>{{ rule.comment }}</span>
-      </p>
+      <rulefield showsc="show_sc" rule="rule" fieldname="data_version" fieldtitle="Data Version"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="rule_id" fieldtitle="Rule ID"></rulefield>
+      <rulefield showsc="show_sc" rule="rule" fieldname="comment" fieldtitle="Comment"></rulefield>
 
     </div>
 
