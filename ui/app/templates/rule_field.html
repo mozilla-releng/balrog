@@ -9,8 +9,7 @@
      changing as a "diff", where the current value is struck out, and
      the scheduled change version is in green. if scheduled changes aren't
      being shown, we just show the current value plainly -->
-<span ng-show="!showsc || sc === null || fieldvalue === scvalue">{{ fieldvalue }}</span>
-<s style="color: red" ng-show="showsc && sc !== null && fieldvalue !== scvalue">{{ fieldvalue }}</s>
+<span ng-style="(!showsc || sc === null || fieldvalue === scvalue) ? {'text-decoration': 'line-through'} : {};">{{ fieldvalue }}</span>
 <span style="color: green" ng-show="showsc && sc !== null && fieldvalue !== scvalue">
     {{ scvalue }}
 </span>
