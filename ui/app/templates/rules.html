@@ -78,11 +78,19 @@
         <a ng-show="!rule_id && sc !== null && sc.change_type !== 'insert'" class="btn btn-default btn-xs" ng-href="/rules/{{ rule.rule_id }}">History</a>
       </div>
 
-      <i title="Product" ng-show="!rule.product">no product</i>
-      <b title="Product" ng-show="rule.product">{{ rule.product }}</b>
+      <i title="Product" ng-show="!rule.product && !sc.product">no product</i>
+      <b title="Product">
+        <span ng-show="!show_sc || sc === null || rule.product === sc.product">{{ rule.product }}</span>
+        <s style="color: red" ng-show="show_sc && sc !== null && rule.product !== sc.product">{{ rule.product }}</s>
+        <span style="color: green" ng-show="show_sc && sc !== null && rule.product !== sc.product">{{ sc.product }}</span>
+      </b>
       :
-      <i title="Channel" ng-show="!rule.channel">no channel</i>
-      <b title="Channel" ng-show="rule.channel">{{ rule.channel }}</b>
+      <i title="Channel" ng-show="!rule.channel && !sc.channel">no channel</i>
+      <b title="Channel">
+        <span ng-show="!show_sc || sc === null || rule.channel === sc.channel">{{ rule.channel }}</span>
+        <s style="color: red" ng-show="show_sc && sc !== null && rule.channel !== sc.channel">{{ rule.channel }}</s>
+        <span style="color: green" ng-show="show_sc && sc !== null && rule.channel !== sc.channel">{{ sc.channel }}</span>
+      </b>
     </h3>
   </div>
   <div class="panel-body">
