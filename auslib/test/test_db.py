@@ -2185,6 +2185,33 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         expected = []
         self.assertEquals(rules, expected)
 
+    def testSelectWithRequiredSignoffs(self):
+        rules = self.paths.select(includeRequiredSignoffs=True)
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='c', priority=100, product='a', rule_id=1,
+                 update_type='z', version='3.5', required_signoffs={}),
+            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='b', priority=100, product='a', rule_id=2,
+                 update_type='z', version='3.3', required_signoffs={}),
+            dict(backgroundRate=100, buildTarget='a', data_version=1, mapping='a', priority=100, product='a', rule_id=3,
+                 update_type='z', version='3.5', required_signoffs={}),
+            dict(alias='gandalf', backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', priority=80, rule_id=4,
+                 update_type='z', required_signoffs={}),
+            dict(backgroundRate=0, buildTarget='d', data_version=1, mapping='c', priority=80, rule_id=5, update_type='z', version='3.3',
+                 required_signoffs={"bar": 2}),
+            dict(alias='radagast', backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', osVersion='foo 1', priority=100, product='a',
+                 rule_id=6, update_type='z', required_signoffs={}),
+            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', osVersion='foo 2,blah 6,bar && baz', priority=100, product='a',
+                 rule_id=7, update_type='z', required_signoffs={}),
+            dict(backgroundRate=100, buildTarget='e', channel='a', data_version=1, locale='foo,bar-baz', mapping='d', priority=100, product='a', rule_id=8,
+                 update_type='z', required_signoffs={}),
+            dict(backgroundRate=100, buildTarget='f', channel='foo*', data_version=1, mapping='f', priority=100, product='foo', rule_id=9,
+                 instructionSet='S', update_type='z', required_signoffs={"bar": 2}),
+            dict(backgroundRate=100, buildTarget='g', channel='foo', data_version=1, fallbackMapping='fallback', mapping='g', priority=100, product='foo',
+                 rule_id=10, update_type='z', required_signoffs={"bar": 2}),
+        ]
+        self.assertEquals(rules, expected)
+
     def testGetRuleById(self):
         rule = self._stripNullColumns([self.paths.getRule(1)])
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z',

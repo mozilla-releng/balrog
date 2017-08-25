@@ -1661,6 +1661,21 @@ class Rules(AUSTable):
             return True
         return False
 
+    def select(self, where=None, transaction=None, includeRequiredSignoffs=False, **kwargs):
+        ret = []
+        for rule in super(Rules, self).select(where=where, transaction=transaction, **kwargs):
+            # TODO: what kind of performance penalty does this cause?
+            # maybe we should cache the selects from the required signoffs tables?
+            # We always returned this key in the rule to ensure that callers
+            # have a consistent data structure to work with.
+            rule["required_signoffs"] = {}
+            if includeRequiredSignoffs:
+                for rs in self.getPotentialRequiredSignoffs([rule]):
+                    signoffs_required = max(rule["required_signoffs"].get(rs["role"], 0), rs["signoffs_required"])
+                    rule["required_signoffs"][rs["role"]] = signoffs_required
+            ret.append(rule)
+        return ret
+
     def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
