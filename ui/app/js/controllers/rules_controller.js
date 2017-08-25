@@ -125,6 +125,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   };
 
   $scope.isEmpty = function(obj) {
+    if (obj === null || obj === undefined) {
+      return true;
+    }
     return Object.keys(obj).length === 0;
   };
 
@@ -289,6 +292,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     modalInstance.result.then(function(action) {
       if (action === "delete") {
         rule.scheduled_change = null;
+      }
+      if (rule.rule_id === null) {
+        delete $scope.rules[rule];
       }
     });
   };
