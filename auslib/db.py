@@ -1661,6 +1661,21 @@ class Rules(AUSTable):
             return True
         return False
 
+    def select(self, where=None, transaction=None, includeRequiredSignoffs=False, **kwargs):
+        ret = []
+        for rule in super(Rules, self).select(where=where, transaction=transaction, **kwargs):
+            # TODO: what kind of performance penalty does this cause?
+            # maybe we should cache the selects from the required signoffs tables?
+            if includeRequiredSignoffs:
+                # We always returned this key in the rule to ensure that callers
+                # have a consistent data structure to work with.
+                rule["required_signoffs"] = {}
+                for rs in self.getPotentialRequiredSignoffs([rule]):
+                    signoffs_required = max(rule["required_signoffs"].get(rs["role"], 0), rs["signoffs_required"])
+                    rule["required_signoffs"][rs["role"]] = signoffs_required
+            ret.append(rule)
+        return ret
+
     def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         if not self.db.hasPermission(changed_by, "rule", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
@@ -1672,10 +1687,6 @@ class Rules(AUSTable):
         ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
             return ret.inserted_primary_key[0]
-
-    def getOrderedRules(self, where=None, transaction=None):
-        """Returns all of the rules, sorted in ascending order"""
-        return self.select(where=where, order_by=(self.priority, self.version, self.mapping), transaction=transaction)
 
     def countRules(self, transaction=None):
         """Returns a number of the count of rules"""
@@ -1766,7 +1777,7 @@ class Rules(AUSTable):
                 self.log.debug(r)
         return matchingRules
 
-    def getRule(self, id_or_alias, transaction=None):
+    def getRule(self, id_or_alias, transaction=None, includeRequiredSignoffs=False):
         """ Returns the unique rule that matches the give rule_id or alias."""
         where = []
         # Figuring out which column to use ahead of times means there's only
@@ -1777,7 +1788,7 @@ class Rules(AUSTable):
         else:
             where.append(self.rule_id == id_or_alias)
 
-        rules = self.select(where=where, transaction=transaction)
+        rules = self.select(where=where, transaction=transaction, includeRequiredSignoffs=includeRequiredSignoffs)
         found = len(rules)
         if found > 1 or found == 0:
             self.log.debug("Found %s rules, should have been 1", found)

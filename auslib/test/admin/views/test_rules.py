@@ -23,21 +23,21 @@ class TestRulesAPI_JSON(ViewTest):
                 "update_type": "minor", "channel": "a", "data_version": 1, "comment": None, "fallbackMapping": None,
                 "version": None, "buildID": None, "locale": None, "distribution": None, "osVersion": None,
                 "instructionSet": None, "distVersion": None, "headerArchitecture": None, "alias": None,
-                "memory": None, "mig64": None,
+                "memory": None, "mig64": None, "required_signoffs": {"releng": 1},
             },
             {
                 "rule_id": 6, "product": "fake", "priority": 40, "backgroundRate": 50, "mapping": "a", "update_type": "minor",
                 "channel": "e", "data_version": 1, "buildTarget": None, "comment": None, "fallbackMapping": None,
                 "version": None, "buildID": None, "locale": None, "distribution": None, "osVersion": None,
                 "instructionSet": None, "distVersion": None, "headerArchitecture": None, "alias": None,
-                "memory": None, "mig64": None,
+                "memory": None, "mig64": None, "required_signoffs": {"releng": 1},
             },
             {
                 "rule_id": 7, "product": "fake", "priority": 30, "backgroundRate": 85, "mapping": "a", "update_type": "minor",
                 "channel": "c", "data_version": 1, "buildTarget": None, "comment": None, "fallbackMapping": None,
                 "version": None, "buildID": None, "locale": None, "distribution": None, "osVersion": None,
                 "instructionSet": None, "distVersion": None, "headerArchitecture": None, "alias": None,
-                "memory": None, "mig64": None,
+                "memory": None, "mig64": None, "required_signoffs": {},
             }
         ]
         self.assertEquals(got["count"], 3)
@@ -293,6 +293,7 @@ class TestSingleRuleView_JSON(ViewTest):
             alias=None,
             memory=None,
             mig64=None,
+            required_signoffs={},
         )
         self.assertEquals(json.loads(ret.data), expected)
 
@@ -321,6 +322,7 @@ class TestSingleRuleView_JSON(ViewTest):
             alias="frodo",
             memory=None,
             mig64=None,
+            required_signoffs={},
         )
         self.assertEquals(json.loads(ret.data), expected)
 

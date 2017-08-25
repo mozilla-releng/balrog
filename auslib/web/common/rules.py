@@ -16,7 +16,7 @@ def get_rules():
         if request.args.get(field):
             where[field] = request.args[field]
 
-    rules = dbo.rules.getOrderedRules(where=where)
+    rules = dbo.rules.select(where=where)
     count = 0
     _rules = []
     for rule in rules:
