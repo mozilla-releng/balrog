@@ -55,7 +55,7 @@ class RulesAPIView(AdminView):
             if connexion.request.args.get(field):
                 where[field] = connexion.request.args[field]
 
-        rules = dbo.rules.getOrderedRules(where=where)
+        rules = dbo.rules.getOrderedRules(where=where, includeRequiredSignoffs=True)
         count = 0
         _rules = []
         for rule in rules:
@@ -96,7 +96,7 @@ class SingleRuleView(AdminView):
     """ /rules/:id"""
 
     def get(self, id_or_alias):
-        rule = dbo.rules.getRule(id_or_alias)
+        rule = dbo.rules.getRule(id_or_alias, includeRequiredSignoffs=True)
         if not rule:
             return problem(status=404, title="Not Found", detail="Requested rule wasn't found",
                            ext={"exception": "Requested rule does not exist"})

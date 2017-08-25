@@ -1690,7 +1690,7 @@ class Rules(AUSTable):
 
     def getOrderedRules(self, where=None, transaction=None):
         """Returns all of the rules, sorted in ascending order"""
-        return self.select(where=where, order_by=(self.priority, self.version, self.mapping), transaction=transaction)
+        return self.select(where=where, order_by=(self.priority, self.version, self.mapping), transaction=transaction, includeRequiredSignoffs=True)
 
     def countRules(self, transaction=None):
         """Returns a number of the count of rules"""
@@ -1781,7 +1781,7 @@ class Rules(AUSTable):
                 self.log.debug(r)
         return matchingRules
 
-    def getRule(self, id_or_alias, transaction=None):
+    def getRule(self, id_or_alias, transaction=None, includeRequiredSignoffs=False):
         """ Returns the unique rule that matches the give rule_id or alias."""
         where = []
         # Figuring out which column to use ahead of times means there's only
@@ -1792,7 +1792,7 @@ class Rules(AUSTable):
         else:
             where.append(self.rule_id == id_or_alias)
 
-        rules = self.select(where=where, transaction=transaction)
+        rules = self.select(where=where, transaction=transaction, includeRequiredSignoffs=includeRequiredSignoffs)
         found = len(rules)
         if found > 1 or found == 0:
             self.log.debug("Found %s rules, should have been 1", found)
