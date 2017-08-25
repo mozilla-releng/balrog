@@ -55,7 +55,7 @@ class RulesAPIView(AdminView):
             if connexion.request.args.get(field):
                 where[field] = connexion.request.args[field]
 
-        rules = dbo.rules.getOrderedRules(where=where, includeRequiredSignoffs=True)
+        rules = dbo.rules.getOrderedRules(where=where)
         count = 0
         _rules = []
         for rule in rules:
