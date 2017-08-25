@@ -203,7 +203,7 @@ if __name__ == "__main__":
                 "Rules are \n(id, priority, mapping, backgroundRate, product, version, channel, "
                 "buildTarget, buildID, locale, osVersion, distribution, distVersion, UA arch):"
             )
-            for rule in dbo.rules.getOrderedRules():
+            for rule in dbo.rules.select(order_by=(dbo.rules.priority,)):
                 log.info(", ".join([str(rule[k]) for k in rule.keys()]))
             log.info("-" * 50)
 

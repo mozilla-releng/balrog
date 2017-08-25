@@ -1666,10 +1666,10 @@ class Rules(AUSTable):
         for rule in super(Rules, self).select(where=where, transaction=transaction, **kwargs):
             # TODO: what kind of performance penalty does this cause?
             # maybe we should cache the selects from the required signoffs tables?
-            # We always returned this key in the rule to ensure that callers
-            # have a consistent data structure to work with.
-            rule["required_signoffs"] = {}
             if includeRequiredSignoffs:
+                # We always returned this key in the rule to ensure that callers
+                # have a consistent data structure to work with.
+                rule["required_signoffs"] = {}
                 for rs in self.getPotentialRequiredSignoffs([rule]):
                     signoffs_required = max(rule["required_signoffs"].get(rs["role"], 0), rs["signoffs_required"])
                     rule["required_signoffs"][rs["role"]] = signoffs_required
@@ -1687,10 +1687,6 @@ class Rules(AUSTable):
         ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
             return ret.inserted_primary_key[0]
-
-    def getOrderedRules(self, where=None, transaction=None):
-        """Returns all of the rules, sorted in ascending order"""
-        return self.select(where=where, order_by=(self.priority, self.version, self.mapping), transaction=transaction, includeRequiredSignoffs=True)
 
     def countRules(self, transaction=None):
         """Returns a number of the count of rules"""

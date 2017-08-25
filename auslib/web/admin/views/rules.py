@@ -55,7 +55,7 @@ class RulesAPIView(AdminView):
             if connexion.request.args.get(field):
                 where[field] = connexion.request.args[field]
 
-        rules = dbo.rules.getOrderedRules(where=where)
+        rules = dbo.rules.select(where=where, includeRequiredSignoffs=True)
         count = 0
         _rules = []
         for rule in rules:
@@ -269,7 +269,7 @@ class SingleRuleColumnView(AdminView):
     """/rules/columns/:column"""
 
     def get(self, column):
-        rules = dbo.rules.getOrderedRules()
+        rules = dbo.rules.select()
         column_values = []
         if column not in rules[0].keys():
             return problem(status=404, title="Not Found", detail="Rule column was not found",
