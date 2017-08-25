@@ -223,7 +223,7 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-md-12">
+      <div class="col-md-12" ng-show="sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.comment}">
           <label for="id_comment">Comment</label>
           <input type="text" class="form-control" id="id_comment" ng-model="sc.comment">
@@ -250,4 +250,3 @@
   <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Save Changes</button>
   <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
 </div>
-G
