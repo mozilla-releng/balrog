@@ -29,7 +29,8 @@ describe("controller: RulesController", function() {
         "channel": "nightly",
         "alias": null,
         "distVersion": null,
-        "whitelist": null
+        "whitelist": null,
+        "scheduled_change": null
     },
     {
         "comment": null,
@@ -53,7 +54,8 @@ describe("controller: RulesController", function() {
         "channel": null,
         "alias": null,
         "distVersion": null,
-        "whitelist": null
+        "whitelist": null,
+        "scheduled_change": null
     }
     ]
   };
@@ -79,6 +81,8 @@ describe("controller: RulesController", function() {
     it("should return all rules empty", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, '{"rules": [], "count": 0}');
+      this.$httpBackend.expectGET('/api/scheduled_changes/rules')
+      .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
       .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
@@ -90,6 +94,8 @@ describe("controller: RulesController", function() {
     it("should return all rules some", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, JSON.stringify(sample_rules));
+      this.$httpBackend.expectGET('/api/scheduled_changes/rules')
+      .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
       .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
@@ -105,6 +111,8 @@ describe("controller: RulesController", function() {
     it("should be possible to change selected filter", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, JSON.stringify(sample_rules));
+      this.$httpBackend.expectGET('/api/scheduled_changes/rules')
+      .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
       .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
@@ -125,6 +133,8 @@ describe("controller: RulesController", function() {
     it("should be possible to change ordering", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, JSON.stringify(sample_rules));
+      this.$httpBackend.expectGET('/api/scheduled_changes/rules')
+      .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
       .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
