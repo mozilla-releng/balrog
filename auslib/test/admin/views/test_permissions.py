@@ -68,6 +68,10 @@ class TestCurrentUserAPI_JSON(ViewTest):
         }
         self.assertEqual(data, expected)
 
+    def testGetSelfPermissionWithoutRolesAndWithoutPermission(self):
+        ret = self._get("/users/vikas", username="vikas")
+        self.assertEqual(ret.status_code, 404)
+
     def testGetNamedUser(self):
         ret = self._get("/users/mary", username="bill")
         self.assertEqual(ret.status_code, 200)
