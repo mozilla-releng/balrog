@@ -1,9 +1,10 @@
 import json
 import logging
 from auslib.global_state import dbo
-from connexion import request
+from connexion import problem, request
 from flask import jsonify, Response
 from sqlalchemy.sql.expression import null
+from auslib.web.common.csrf import get_csrf_headers
 from auslib.web.common.history import (
     annotateRevisionDifferences, HistoryHelper)
 
@@ -51,16 +52,23 @@ def _get_release(release):
     return releases[0] if releases else None
 
 
-def get_release(release):
+def get_release(release, with_csrf_header=False):
     release = _get_release(release)
     if not release:
-        return Response(status=404, mimetype="application/json")
+        return problem(404, "Not Found", "Release name: %s not found" % release)
     headers = {'X-Data-Version': release['data_version']}
+    if with_csrf_header:
+        headers.update(get_csrf_headers())
     if request.args.get("pretty"):
         indent = 4
     else:
         indent = None
-    return Response(response=json.dumps(release['data'], indent=indent, sort_keys=True), mimetype='application/json', headers=headers)
+    return Response(response=json.dumps(release['data'], indent=indent, sort_keys=True),
+                    mimetype='application/json', headers=headers)
+
+
+def get_release_with_csrf_header(release):
+    return get_release(release, with_csrf_header=True)
 
 
 def _get_filters(release, history_table):
@@ -104,18 +112,22 @@ def get_release_history(release):
         return history_helper.get_history()
     except (ValueError, AssertionError) as e:
         log.warning("Bad input: %s", json.dumps(e.args))
-        return Response(status=400, response=json.dumps({"data": e.args}))
+        return problem(400, "Bad Request", "Invalid input", ext={"data": e.args})
 
 
-def get_release_single_locale(release, platform, locale):
+def get_release_single_locale(release, platform, locale, with_csrf_header=False):
     try:
         locale = dbo.releases.getLocale(release, platform, locale)
     except KeyError as e:
-        return Response(status=404,
-                        response=json.dumps(e.args),
-                        mimetype='application/json')
+        return problem(404, "Not Found", json.dumps(e.args))
     data_version = dbo.releases.getReleases(name=release)[0]['data_version']
     headers = {'X-Data-Version': data_version}
+    if with_csrf_header:
+        headers.update(get_csrf_headers())
     return Response(response=json.dumps(locale),
                     mimetype='application/json',
                     headers=headers)
+
+
+def get_release_single_locale_with_csrf_header(release, platform, locale):
+    return get_release_single_locale(release, platform, locale, with_csrf_header=True)
