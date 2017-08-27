@@ -35,7 +35,6 @@ current_dir = path.dirname(__file__)
 web_dir = path.dirname(auslib.web.__file__)
 spec = SpecBuilder().add_spec(path.join(current_dir, 'swagger/api.yml'))\
                     .add_spec(path.join(current_dir, 'swagger/public_api_spec.yml'))\
-                    .add_spec(path.join(web_dir, 'common/rules_spec.yml'))\
                     .add_spec(path.join(web_dir, 'common/swagger/common_spec.yml'))
 connexion_app.add_api(spec,
                       validate_responses=True,

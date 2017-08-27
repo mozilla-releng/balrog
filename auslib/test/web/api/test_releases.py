@@ -40,6 +40,7 @@ class TestPublicReleasesAPI(CommonTestBase):
         ret = self.public_client.get("/api/v1/releases/{}".format(release))
         self.assertTrue(ret.status_code, 200)
         got = json.loads(ret.data)
+        self.assertNotIn('X-CSRF-Token', ret.headers)
         self.assertEquals(got["name"], release)
         self.assertEquals(got["schema_version"], 1)
         self.assertIn("p", got["platforms"])
