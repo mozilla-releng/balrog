@@ -27,7 +27,7 @@ def RandomAUSTestWithoutFallback(backgroundRate, force, mapping):
         def se(*args, **kwargs):
             return results.pop()
 
-        aus = AUS(mock.Mock(getInt=mock.Mock(side_effect=se)))
+        aus = AUS(se)
         served = 0
         tested = 0
         while len(results) > 0:
@@ -55,7 +55,7 @@ def RandomAUSTestWithFallback(backgroundRate, force, mapping):
 
         def se(*args, **kwargs):
             return results.pop()
-        aus = AUS(mock.Mock(getInt=mock.Mock(side_effect=se)))
+        aus = AUS(se)
 
         served_mapping = 0
         served_fallback = 0

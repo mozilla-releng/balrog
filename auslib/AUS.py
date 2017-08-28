@@ -46,7 +46,7 @@ class AUS:
 
     def __init__(self, rand=None):
         self.specialForceHosts = None
-        self.rand = rand or AUSRandom()
+        self.rand = rand or AUSRandom().getInt
         self.log = logging.getLogger(self.__class__.__name__)
 
     def evaluateRules(self, updateQuery):
@@ -78,7 +78,7 @@ class AUS:
         # backgroundRate=25 means only one quarter of requests are served
         if not updateQuery['force'] and rule['backgroundRate'] < 100:
             self.log.debug("backgroundRate < 100, rolling the dice")
-            if self.rand.getInt() >= rule['backgroundRate']:
+            if self.rand() >= rule['backgroundRate']:
                 fallbackReleaseName = rule['fallbackMapping']
                 if fallbackReleaseName:
                     release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1)[0]
