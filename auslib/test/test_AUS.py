@@ -32,7 +32,8 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
     def tearDown(self):
         dbo.reset()
 
-    def random_aus_test(self, background_rate, force, mapping, fallback=False):
+    def random_aus_test(self, background_rate, force, fallback=False):
+        mapping = 'b'
         with mock.patch('auslib.db.Rules.getRulesMatchingQuery') as m:
             fallback = fallback and 'fallback'  # convert True to string
             m.return_value = [dict(backgroundRate=background_rate, priority=1, mapping=mapping, update_type='minor',
@@ -65,37 +66,37 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
             return (served_mapping, served_fallback, tested)
 
     def testThrottling100(self):
-        (served, _, tested) = self.random_aus_test(background_rate=100, force=False, mapping='b')
+        (served, _, tested) = self.random_aus_test(background_rate=100, force=False)
 
         self.assertEqual(served, 1)
         self.assertEqual(tested, 1)
 
     def testThrottling50(self):
-        (served, _, tested) = self.random_aus_test(background_rate=50, force=False, mapping='b')
+        (served, _, tested) = self.random_aus_test(background_rate=50, force=False)
 
         self.assertEqual(served, 50)
         self.assertEqual(tested, 100)
 
     def testThrottling25(self):
-        (served, _, tested) = self.random_aus_test(background_rate=25, force=False, mapping='b')
+        (served, _, tested) = self.random_aus_test(background_rate=25, force=False)
 
         self.assertEqual(served, 25)
         self.assertEqual(tested, 100)
 
     def testThrottlingZero(self):
-        (served, _, tested) = self.random_aus_test(background_rate=0, force=False, mapping='b')
+        (served, _, tested) = self.random_aus_test(background_rate=0, force=False)
         self.assertEqual(served, 0)
         self.assertEqual(tested, 100)
 
     def testThrottling25WithForcing(self):
-        (served, _, tested) = self.random_aus_test(background_rate=25, force=True, mapping='b')
+        (served, _, tested) = self.random_aus_test(background_rate=25, force=True)
 
         self.assertEqual(served, 1)
         self.assertEqual(tested, 1)
 
     def testThrottling100WithFallback(self):
         (served_mapping, served_fallback, tested) = self.random_aus_test(background_rate=100,
-                                                                         force=False, mapping='b',
+                                                                         force=False,
                                                                          fallback=True)
 
         self.assertEqual(served_mapping, 1)
@@ -104,7 +105,7 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
 
     def testThrottling50WithFallback(self):
         (served_mapping, served_fallback, tested) = self.random_aus_test(background_rate=50,
-                                                                         force=False, mapping='b',
+                                                                         force=False,
                                                                          fallback=True)
 
         self.assertEqual(served_mapping, 50)
@@ -113,7 +114,7 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
 
     def testThrottling25WithFallback(self):
         (served_mapping, served_fallback, tested) = self.random_aus_test(background_rate=25,
-                                                                         force=False, mapping='b',
+                                                                         force=False,
                                                                          fallback=True)
 
         self.assertEqual(served_mapping, 25)
@@ -122,7 +123,7 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
 
     def testThrottlingZeroWithFallback(self):
         (served_mapping, served_fallback, tested) = self.random_aus_test(background_rate=0,
-                                                                         force=False, mapping='b',
+                                                                         force=False,
                                                                          fallback=True)
 
         self.assertEqual(served_mapping, 0)
@@ -131,7 +132,7 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
 
     def testThrottling25WithForcingAndFallback(self):
         (served_mapping, served_fallback, tested) = self.random_aus_test(background_rate=25,
-                                                                         force=True, mapping='b',
+                                                                         force=True,
                                                                          fallback=True)
 
         self.assertEqual(served_mapping, 1)
