@@ -211,12 +211,4 @@ update_blob_functions = ["get_update_blob_1",
                          "get_update_blob_5",
                          "get_update_blob_6"]
 
-unsubstituted_url_var_functions = ["unsubstituted_url_variables_1",
-                                   "unsubstituted_url_variables_2",
-                                   "unsubstituted_url_variables_3",
-                                   "unsubstituted_url_variables_4",
-                                   "unsubstituted_url_variables_5",
-                                   "unsubstituted_url_variables_6"]
-
-
 _set_functions(update_blob_functions, get_update_blob)
