@@ -16,12 +16,13 @@ def setUpModule():
     logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
-def RandomAUSTestWithoutFallback(AUS, backgroundRate, force, mapping):
+def RandomAUSTestWithoutFallback(backgroundRate, force, mapping):
     with mock.patch('auslib.db.Rules.getRulesMatchingQuery') as m:
         m.return_value = [dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor',
                                fallbackMapping=None)]
 
-        results = getRange(AUS.rand)
+        aus = AUS()
+        results = getRange(aus.rand)
         resultsLength = len(results)
 
         def se(*args, **kwargs):
@@ -35,7 +36,7 @@ def RandomAUSTestWithoutFallback(AUS, backgroundRate, force, mapping):
                     channel='foo', force=force, buildTarget='a', buildID='0',
                     locale='a', version='1.0',
                 )
-                r, _ = AUS.evaluateRules(updateQuery)
+                r, _ = aus.evaluateRules(updateQuery)
                 tested += 1
                 if r:
                     served += 1
@@ -45,12 +46,13 @@ def RandomAUSTestWithoutFallback(AUS, backgroundRate, force, mapping):
             return (served, tested)
 
 
-def RandomAUSTestWithFallback(AUS, backgroundRate, force, mapping):
+def RandomAUSTestWithFallback(backgroundRate, force, mapping):
     with mock.patch('auslib.db.Rules.getRulesMatchingQuery') as m:
         m.return_value = [dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor',
                                fallbackMapping='fallback')]
 
-        results = getRange(AUS.rand)
+        aus = AUS()
+        results = getRange(aus.rand)
         resultsLength = len(results)
 
         def se(*args, **kwargs):
@@ -65,7 +67,7 @@ def RandomAUSTestWithFallback(AUS, backgroundRate, force, mapping):
                     channel='foo', force=force, buildTarget='a', buildID='0',
                     locale='a', version='1.0',
                 )
-                r, _ = AUS.evaluateRules(updateQuery)
+                r, _ = aus.evaluateRules(updateQuery)
                 tested += 1
                 if r['name'] == mapping:
                     served_mapping += 1
@@ -80,7 +82,6 @@ def RandomAUSTestWithFallback(AUS, backgroundRate, force, mapping):
 class TestAUSThrottlingWithoutFallback(unittest.TestCase):
 
     def setUp(self):
-        self.AUS = AUS()
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         dbo.releases.t.insert().execute(
@@ -95,30 +96,30 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
         dbo.reset()
 
     def testThrottling100(self):
-        (served, tested) = RandomAUSTestWithoutFallback(self.AUS, backgroundRate=100, force=False, mapping='b')
+        (served, tested) = RandomAUSTestWithoutFallback(backgroundRate=100, force=False, mapping='b')
 
         self.assertEqual(served, 1)
         self.assertEqual(tested, 1)
 
     def testThrottling50(self):
-        (served, tested) = RandomAUSTestWithoutFallback(self.AUS, backgroundRate=50, force=False, mapping='b')
+        (served, tested) = RandomAUSTestWithoutFallback(backgroundRate=50, force=False, mapping='b')
 
         self.assertEqual(served, 50)
         self.assertEqual(tested, 100)
 
     def testThrottling25(self):
-        (served, tested) = RandomAUSTestWithoutFallback(self.AUS, backgroundRate=25, force=False, mapping='b')
+        (served, tested) = RandomAUSTestWithoutFallback(backgroundRate=25, force=False, mapping='b')
 
         self.assertEqual(served, 25)
         self.assertEqual(tested, 100)
 
     def testThrottlingZero(self):
-        (served, tested) = RandomAUSTestWithoutFallback(self.AUS, backgroundRate=0, force=False, mapping='b')
+        (served, tested) = RandomAUSTestWithoutFallback(backgroundRate=0, force=False, mapping='b')
         self.assertEqual(served, 0)
         self.assertEqual(tested, 100)
 
     def testThrottling25WithForcing(self):
-        (served, tested) = RandomAUSTestWithoutFallback(self.AUS, backgroundRate=25, force=True, mapping='b')
+        (served, tested) = RandomAUSTestWithoutFallback(backgroundRate=25, force=True, mapping='b')
 
         self.assertEqual(served, 1)
         self.assertEqual(tested, 1)
@@ -126,7 +127,6 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
 
 class TestAUSThrottlingWithFallback(unittest.TestCase):
     def setUp(self):
-        self.AUS = AUS()
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
         dbo.releases.t.insert().execute(
@@ -141,7 +141,7 @@ class TestAUSThrottlingWithFallback(unittest.TestCase):
         dbo.reset()
 
     def testThrottling100WithFallback(self):
-        (served_mapping, served_fallback, tested) = RandomAUSTestWithFallback(self.AUS, backgroundRate=100,
+        (served_mapping, served_fallback, tested) = RandomAUSTestWithFallback(backgroundRate=100,
                                                                               force=False, mapping='b')
 
         self.assertEqual(served_mapping, 1)
@@ -149,7 +149,7 @@ class TestAUSThrottlingWithFallback(unittest.TestCase):
         self.assertEqual(tested, 1)
 
     def testThrottling50(self):
-        (served_mapping, served_fallback, tested) = RandomAUSTestWithFallback(self.AUS, backgroundRate=50,
+        (served_mapping, served_fallback, tested) = RandomAUSTestWithFallback(backgroundRate=50,
                                                                               force=False, mapping='b')
 
         self.assertEqual(served_mapping, 50)
@@ -157,7 +157,7 @@ class TestAUSThrottlingWithFallback(unittest.TestCase):
         self.assertEqual(tested, 100)
 
     def testThrottling25(self):
-        (served_mapping, served_fallback, tested) = RandomAUSTestWithFallback(self.AUS, backgroundRate=25,
+        (served_mapping, served_fallback, tested) = RandomAUSTestWithFallback(backgroundRate=25,
                                                                               force=False, mapping='b')
 
         self.assertEqual(served_mapping, 25)
@@ -165,7 +165,7 @@ class TestAUSThrottlingWithFallback(unittest.TestCase):
         self.assertEqual(tested, 100)
 
     def testThrottlingZero(self):
-        (served_mapping, served_fallback, tested) = RandomAUSTestWithFallback(self.AUS, backgroundRate=0,
+        (served_mapping, served_fallback, tested) = RandomAUSTestWithFallback(backgroundRate=0,
                                                                               force=False, mapping='b')
 
         self.assertEqual(served_mapping, 0)
@@ -173,7 +173,7 @@ class TestAUSThrottlingWithFallback(unittest.TestCase):
         self.assertEqual(tested, 100)
 
     def testThrottling25WithForcing(self):
-        (served_mapping, served_fallback, tested) = RandomAUSTestWithFallback(self.AUS, backgroundRate=25,
+        (served_mapping, served_fallback, tested) = RandomAUSTestWithFallback(backgroundRate=25,
                                                                               force=True, mapping='b')
 
         self.assertEqual(served_mapping, 1)
