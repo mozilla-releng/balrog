@@ -44,9 +44,9 @@ class AUSRandom:
 
 class AUS:
 
-    def __init__(self):
+    def __init__(self, rand=None):
         self.specialForceHosts = None
-        self.rand = AUSRandom()
+        self.rand = rand or AUSRandom()
         self.log = logging.getLogger(self.__class__.__name__)
 
     def evaluateRules(self, updateQuery):

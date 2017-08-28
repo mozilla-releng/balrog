@@ -27,24 +27,22 @@ def RandomAUSTestWithoutFallback(backgroundRate, force, mapping):
         def se(*args, **kwargs):
             return results.pop()
 
-        aus = AUS()
-        with mock.patch('auslib.AUS.AUSRandom.getInt') as m2:
-            m2.side_effect = se
-            served = 0
-            tested = 0
-            while len(results) > 0:
-                updateQuery = dict(
-                    channel='foo', force=force, buildTarget='a', buildID='0',
-                    locale='a', version='1.0',
-                )
-                r, _ = aus.evaluateRules(updateQuery)
-                tested += 1
-                if r:
-                    served += 1
-                # bail out if we're not asking for any randint's
-                if resultsLength == len(results):
-                    break
-            return (served, tested)
+        aus = AUS(mock.Mock(getInt=mock.Mock(side_effect=se)))
+        served = 0
+        tested = 0
+        while len(results) > 0:
+            updateQuery = dict(
+                channel='foo', force=force, buildTarget='a', buildID='0',
+                locale='a', version='1.0',
+            )
+            r, _ = aus.evaluateRules(updateQuery)
+            tested += 1
+            if r:
+                served += 1
+            # bail out if we're not asking for any randint's
+            if resultsLength == len(results):
+                break
+        return (served, tested)
 
 
 def RandomAUSTestWithFallback(backgroundRate, force, mapping):
@@ -57,27 +55,26 @@ def RandomAUSTestWithFallback(backgroundRate, force, mapping):
 
         def se(*args, **kwargs):
             return results.pop()
-        aus = AUS()
-        with mock.patch('auslib.AUS.AUSRandom.getInt') as m2:
-            m2.side_effect = se
-            served_mapping = 0
-            served_fallback = 0
-            tested = 0
-            while len(results) > 0:
-                updateQuery = dict(
-                    channel='foo', force=force, buildTarget='a', buildID='0',
-                    locale='a', version='1.0',
-                )
-                r, _ = aus.evaluateRules(updateQuery)
-                tested += 1
-                if r['name'] == mapping:
-                    served_mapping += 1
-                elif r['name'] == "fallback":
-                    served_fallback += 1
-                # bail out if we're not asking for any randint's
-                if resultsLength == len(results):
-                    break
-            return (served_mapping, served_fallback, tested)
+        aus = AUS(mock.Mock(getInt=mock.Mock(side_effect=se)))
+
+        served_mapping = 0
+        served_fallback = 0
+        tested = 0
+        while len(results) > 0:
+            updateQuery = dict(
+                channel='foo', force=force, buildTarget='a', buildID='0',
+                locale='a', version='1.0',
+            )
+            r, _ = aus.evaluateRules(updateQuery)
+            tested += 1
+            if r['name'] == mapping:
+                served_mapping += 1
+            elif r['name'] == "fallback":
+                served_fallback += 1
+            # bail out if we're not asking for any randint's
+            if resultsLength == len(results):
+                break
+        return (served_mapping, served_fallback, tested)
 
 
 class TestAUSThrottlingWithoutFallback(unittest.TestCase):
