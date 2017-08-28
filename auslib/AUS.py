@@ -43,9 +43,6 @@ class AUSRandom:
     def getInt(self):
         return randint(self.min, self.max)
 
-    def getRange(self):
-        return range(self.min, self.max + 1)
-
 
 class AUS:
 

@@ -7,6 +7,10 @@ from auslib.AUS import AUS
 from auslib.blobs.base import createBlob
 
 
+def getRange(rand):
+    return range(rand.min, rand.max + 1)
+
+
 def setUpModule():
     # Silence SQLAlchemy-Migrate's debugging logger
     logging.getLogger('migrate').setLevel(logging.CRITICAL)
@@ -17,7 +21,7 @@ def RandomAUSTestWithoutFallback(AUS, backgroundRate, force, mapping):
         m.return_value = [dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor',
                                fallbackMapping=None)]
 
-        results = AUS.rand.getRange()
+        results = getRange(AUS.rand)
         resultsLength = len(results)
 
         def se(*args, **kwargs):
@@ -46,7 +50,7 @@ def RandomAUSTestWithFallback(AUS, backgroundRate, force, mapping):
         m.return_value = [dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor',
                                fallbackMapping='fallback')]
 
-        results = AUS.rand.getRange()
+        results = getRange(AUS.rand)
         resultsLength = len(results)
 
         def se(*args, **kwargs):
