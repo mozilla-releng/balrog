@@ -35,10 +35,8 @@ def getFallbackChannel(channel):
 class AUSRandom:
     """Abstract getting a randint to make it easier to test the range of
     possible values"""
-
-    def __init__(self, min=0, max=99):
-        self.min = min
-        self.max = max
+    min = 0
+    max = 99
 
     def getInt(self):
         return randint(self.min, self.max)

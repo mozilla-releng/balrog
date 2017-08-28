@@ -3,7 +3,7 @@ import mock
 import unittest
 
 from auslib.global_state import dbo
-from auslib.AUS import AUS
+from auslib.AUS import AUS, AUSRandom
 from auslib.blobs.base import createBlob
 
 
@@ -21,12 +21,13 @@ def RandomAUSTestWithoutFallback(backgroundRate, force, mapping):
         m.return_value = [dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor',
                                fallbackMapping=None)]
 
-        aus = AUS()
-        results = getRange(aus.rand)
+        results = getRange(AUSRandom)
         resultsLength = len(results)
 
         def se(*args, **kwargs):
             return results.pop()
+
+        aus = AUS()
         with mock.patch('auslib.AUS.AUSRandom.getInt') as m2:
             m2.side_effect = se
             served = 0
@@ -51,12 +52,12 @@ def RandomAUSTestWithFallback(backgroundRate, force, mapping):
         m.return_value = [dict(backgroundRate=backgroundRate, priority=1, mapping=mapping, update_type='minor',
                                fallbackMapping='fallback')]
 
-        aus = AUS()
-        results = getRange(aus.rand)
+        results = getRange(AUSRandom)
         resultsLength = len(results)
 
         def se(*args, **kwargs):
             return results.pop()
+        aus = AUS()
         with mock.patch('auslib.AUS.AUSRandom.getInt') as m2:
             m2.side_effect = se
             served_mapping = 0
