@@ -6,6 +6,17 @@ import logging
 from auslib.global_state import dbo
 
 
+class ForceResult(object):
+    """Enumerated "result" class that represents a non-random result chosen by a caller."""
+    def __init__(self, name):
+        self.name = name
+
+
+# Magic constants that callers can use to choose a specific "random" result.
+SUCCEED = ForceResult('succeed')
+FAIL = ForceResult('fail')
+
+
 def isSpecialURL(url, specialForceHosts):
     if not specialForceHosts:
         return False
@@ -76,9 +87,9 @@ class AUS:
         # serve every request an update
         # backgroundRate=100 means all requests are served
         # backgroundRate=25 means only one quarter of requests are served
-        if not updateQuery['force'] and rule['backgroundRate'] < 100:
+        if not updateQuery['force'] == SUCCEED and rule['backgroundRate'] < 100:
             self.log.debug("backgroundRate < 100, rolling the dice")
-            if self.rand() >= rule['backgroundRate']:
+            if updateQuery['force'] == FAIL or self.rand() >= rule['backgroundRate']:
                 fallbackReleaseName = rule['fallbackMapping']
                 if fallbackReleaseName:
                     release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1)[0]
