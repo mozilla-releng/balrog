@@ -21,8 +21,8 @@ class HistoryView(AdminView):
     def get_revisions(self,
                       get_object_callback,
                       history_filters_callback,
-                      process_revisions_callback,
                       revisions_order_by,
+                      process_revisions_callback=None,
                       obj_not_found_msg='Requested object does not exist',
                       response_key='revisions'):
         """Get revisions for Releases, Rules or ScheduledChanges.
@@ -68,10 +68,11 @@ class HistoryView(AdminView):
             offset=offset,
             order_by=revisions_order_by)
 
-        _revisions = process_revisions_callback(revisions)
+        if process_revisions_callback:
+            revisions = process_revisions_callback(revisions)
 
         ret = dict()
-        ret[response_key] = _revisions
+        ret[response_key] = revisions
         ret['count'] = total_count
         return jsonify(ret)
 
