@@ -12,6 +12,18 @@ from auslib.web.common.history import (
 log = logging.getLogger(__name__)
 
 
+def strip_data(release):
+    """Return a release with all the fields except data.
+
+    This is used in multiple APIs to save bandwidth and present a
+    simplified view of the release by removing its largest field,
+    data, which is of no use except when serving clients.
+    """
+    return dict(
+        (k, v) for (k, v) in release.iteritems() if k != 'data'
+    )
+
+
 def get_releases():
     kwargs = {}
     if request.args.get('product'):
@@ -27,22 +39,8 @@ def get_releases():
             names.append(release['name'])
         data = {'names': names}
     else:
-        _releases = []
-        _mapping = {
-            # return : db name
-            'name': 'name',
-            'product': 'product',
-            'data_version': 'data_version',
-            'read_only': 'read_only',
-            'rule_ids': 'rule_ids',
-        }
-        for release in releases:
-            _releases.append(dict(
-                (key, release[db_key])
-                for key, db_key in _mapping.items()
-            ))
         data = {
-            'releases': _releases,
+            'releases': map(strip_data, releases),
         }
     return jsonify(data)
 
@@ -76,28 +74,10 @@ def _get_filters(release, history_table):
             history_table.data_version != null()]
 
 
-def _process_revisions(revisions):
+def process_release_revisions(revisions):
     annotateRevisionDifferences(revisions)
 
-    _mapping = [
-        'data_version',
-        'name',
-        'product',
-        'read_only',
-        '_different',
-        '_time_ago',
-        'change_id',
-        'changed_by',
-        "timestamp"]
-
-    _revisions = []
-    for r in revisions:
-        _revisions.append(dict(
-            (item, r[item])
-            for item in _mapping
-        ))
-
-    return _revisions
+    return map(strip_data, revisions)
 
 
 def get_release_history(release):
@@ -107,7 +87,7 @@ def get_release_history(release):
                                    order_by=order_by,
                                    get_object_callback=lambda: _get_release(release),
                                    history_filters_callback=_get_filters,
-                                   process_revisions_callback=_process_revisions)
+                                   process_revisions_callback=process_release_revisions)
     try:
         return history_helper.get_history()
     except (ValueError, AssertionError) as e:
