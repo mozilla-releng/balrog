@@ -1,8 +1,13 @@
 <div class="modal-header">
-    <h3 class="modal-title">{{ user.username }}</h3>
+  <h3 class="modal-title" ng-hide="showRow()">Add New User and permission</h3>
+  <h3 class="modal-title" ng-show="showRow()"> Username: {{ user.username }}</h3>
 </div>
 <div class="modal-body">
-
+  <div class="form-group" ng-class="{'has-error': errors.username}" ng-show="!showRow()">
+    <label for="id_username">Username</label>
+    <input type="text" class="form-control" id="id_product" ng-model="user.username">
+    <p class="help-block" ng-show="errors.product">{{ errors.username.join(', ') }}</p>
+  </div>
   <div ng-show="!loading">
     <div class="tabbable tabs-below">
       <ul class="nav nav-pills" role="tablist">
@@ -15,10 +20,20 @@
       </ul>
       <div class="tab-content" ng-show="currentItemTab == 1">
         <h4>Add a new Permission</h4>
-        <form role="form" ng-submit="addPermission()">
+        <form role="form" ng-submit="is_edit ? updatePermission(permission) : addPermission()">
           <div class="form-group" ng-class="{'has-error': errors.permission}">
-            <label for="id_permission">Permission</label>
-            <input type="text" class="form-control" id="id_permission" ng-model="permission.permission">
+            <label for="id_permission">Permission</label><br>
+              <select name="singleSelect" class="form-control" id="id_permission" ng-model="permission.permission">
+                  <option value="">---Please select---</option>
+                  <option value="admin">Admin</option>
+                  <option value="rule">Rule</option>
+                  <option value="release">Release</option>
+                  <option value="release_read_only">Release Read Only</option>
+                  <option value="release_locale">Release Locale</option>
+                  <option value="required_signoff">Required Signoff</option>
+                  <option value="permission">Permission</option>
+                  <option value="scheduled_change">Scheduled Change</option>
+                </select><br>  
             <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
           </div>
           <div class="form-group" ng-class="{'has-error': errors.options_as_json}">

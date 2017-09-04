@@ -37,6 +37,7 @@ describe("controller: UserPermissionsCtrl", function() {
       $location: $location,
       Permissions: Permissions,
       user: user,
+      is_edit: true,
       users: [user],
     });
   }));
@@ -115,7 +116,7 @@ describe("controller: UserPermissionsCtrl", function() {
       this.$httpBackend.flush();
       this.$httpBackend.expectGET('/api/csrf_token')
       .respond(200, 'token');
-      this.$httpBackend.expectPOST('/api/users/peterbe/permissions/admin')
+      this.$httpBackend.expectPUT('/api/users/peterbe/permissions/admin')
       .respond(201, JSON.stringify({new_data_version: 1}));
 
       this.scope.permission = {

@@ -4,6 +4,8 @@ describe("controller: PermissionsController", function() {
     module("app");
   });
 
+  var empty_user = '';
+
   var sample_users = {
     "users": ["peterbe", "bhearsum@example.com"]
   };
@@ -109,6 +111,8 @@ describe("controller: PermissionsController", function() {
     it("should be possible to open the add modal", function() {
       this.$httpBackend.expectGET('/api/users')
       .respond(200, JSON.stringify(sample_users));
+      this.$httpBackend.expectGET('/api/users/roles')
+      .respond(200, JSON.stringify(sample_all_roles));
       this.scope.openNewModal();
     });
 
