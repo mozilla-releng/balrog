@@ -19,6 +19,8 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
       $scope.sc.when = newDate;
     }
     $scope.calendar_is_open = false;
+    $scope.auto_time = false;
+
     if (newDate <= new Date()) {
       $scope.errors.when = ["Scheduled time cannot be in the past"];
       $scope.sc.when = $scope.original_sc.when;
@@ -97,6 +99,9 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
     }
 
     $scope.saving = true;
+    asap = new Date();
+    asap.setMinutes(asap.getMinutes() + 5);
+    $scope.sc.when = ($scope.auto_time) ? asap : $scope.sc.when;
 
     CSRF.getToken()
     .then(function(csrf_token) {

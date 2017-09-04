@@ -8,6 +8,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
   $scope.errors = {};
   $scope.saving = false;
   $scope.calendar_is_open = false;
+  $scope.auto_time = false;
 
 
 
@@ -41,6 +42,9 @@ function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
 
     $scope.saving = true;
     $scope.errors = {};
+    asap = new Date();
+    asap.setMinutes(asap.getMinutes() + 5);
+    $scope.sc.when = ($scope.auto_time) ? asap : $scope.sc.when;
 
 
       CSRF.getToken()
