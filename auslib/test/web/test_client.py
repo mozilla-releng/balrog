@@ -6,8 +6,8 @@ import unittest
 from xml.dom import minidom
 import json
 
-from hypothesis import example, given
-from hypothesis.strategies import integers, just
+from hypothesis import assume, example, given
+from hypothesis.strategies import integers, just, text
 
 import auslib.web.public.client as client_api
 from auslib.web.public.client import extract_query_version
@@ -804,6 +804,23 @@ class ClientTest(ClientTestBase):
     </update>
 </updates>
 """)
+
+    @given(text(max_size=128))
+    @example('')
+    @example('1" name="Firefox 54.0" isOSUpdate="false" installDate="1498012260998')
+    @example('1)')
+    @example('"|sleep 7 #')
+    def testForceParamWithBadInputs(self, x):
+        assume(x != '1')
+        force_output = """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+"""
+        ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=%s" % x)
+        self.assertUpdateEqual(ret, force_output)
 
     def testDeprecatedEsrVersionStyleGetsUpdates(self):
         ret = self.client.get('/update/3/b/1.0esrpre/1/p/l/a/a/a/a/update.xml')
