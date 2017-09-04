@@ -58,6 +58,8 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
 
   $scope.saveChanges = function() {
     $scope.saving = true;
+    $scope.sc.when = ($scope.auto_time) ?
+          new Date().getTime() + 5 * 60 * 1000: $scope.sc.when;
 
     CSRF.getToken()
     .then(function(csrf_token) {
