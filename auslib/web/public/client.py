@@ -86,7 +86,10 @@ def getQueryFromURL(url):
     ua = request.headers.get('User-Agent')
     query['headerArchitecture'] = getHeaderArchitecture(query['buildTarget'], ua)
     force = query.get('force')
-    query['force'] = {'1': SUCCEED, '-1': FAIL}.get(force)
+    query['force'] = {
+        SUCCEED.query_value: SUCCEED,
+        FAIL.query_value: FAIL
+    }.get(force)
     if "mig64" in query:
         # "1" is the only value that official clients send. We ignore any other values
         # by setting mig64 to None.

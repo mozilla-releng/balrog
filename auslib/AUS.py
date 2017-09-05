@@ -8,13 +8,14 @@ from auslib.global_state import dbo
 
 class ForceResult(object):
     """Enumerated "result" class that represents a non-random result chosen by a caller."""
-    def __init__(self, name):
+    def __init__(self, name, query_value):
         self.name = name
+        self.query_value = query_value
 
 
 # Magic constants that callers can use to choose a specific "random" result.
-SUCCEED = ForceResult('succeed')
-FAIL = ForceResult('fail')
+SUCCEED = ForceResult('succeed', '1')
+FAIL = ForceResult('fail', '-1')
 
 
 def isSpecialURL(url, specialForceHosts):

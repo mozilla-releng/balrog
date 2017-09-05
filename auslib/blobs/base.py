@@ -120,12 +120,12 @@ class Blob(dict):
         failing open)."""
         return False
 
-    def processSpecialForceHosts(self, url, specialForceHosts):
+    def processSpecialForceHosts(self, url, specialForceHosts, force_arg):
         if isSpecialURL(url, specialForceHosts):
             if '?' in url:
-                url += '&force=1'
+                url += '&force=' + force_arg.query_value
             else:
-                url += '?force=1'
+                url += '?force=' + force_arg.query_value
         return url
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
