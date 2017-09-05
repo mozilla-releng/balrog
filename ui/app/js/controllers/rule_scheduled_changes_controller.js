@@ -82,7 +82,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   } else {
     $scope.ordering_options = [
     {
-      text: "When (local time)",
+      text: "When",
       value: "when"
     },
     {
