@@ -28,7 +28,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
       }else{
           $('#btn__auto-time').removeClass('active');
       }
-  }
+  };
 
   $scope.toggleType = function(newType) {
     $scope.sc_type = newType;
