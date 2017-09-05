@@ -1,3 +1,4 @@
+import functools
 from random import randint
 from urlparse import urlparse
 
@@ -44,21 +45,11 @@ def getFallbackChannel(channel):
     return channel.split('-cck-')[0]
 
 
-class AUSRandom:
-    """Abstract getting a randint to make it easier to test the range of
-    possible values"""
-    min = 0
-    max = 99
-
-    def getInt(self):
-        return randint(self.min, self.max)
-
-
 class AUS:
 
-    def __init__(self, rand=None):
+    def __init__(self):
         self.specialForceHosts = None
-        self.rand = rand or AUSRandom().getInt
+        self.rand = functools.partial(randint, 0, 99)
         self.log = logging.getLogger(self.__class__.__name__)
 
     def evaluateRules(self, updateQuery):

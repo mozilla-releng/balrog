@@ -3,12 +3,11 @@ import mock
 import unittest
 
 from auslib.global_state import dbo
-from auslib.AUS import AUS, AUSRandom, SUCCEED, FAIL
+from auslib.AUS import AUS, SUCCEED, FAIL
 from auslib.blobs.base import createBlob
 
 
-def getRange(rand):
-    return range(rand.min, rand.max + 1)
+ENTIRE_RANGE = range(0, 100)
 
 
 def setUpModule():
@@ -39,13 +38,14 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
             m.return_value = [dict(backgroundRate=background_rate, priority=1, mapping=mapping, update_type='minor',
                                    fallbackMapping=fallback)]
 
-            results = getRange(AUSRandom)
+            results = list(ENTIRE_RANGE)
             resultsLength = len(results)
 
             def se(*args, **kwargs):
                 return results.pop()
 
-            aus = AUS(se)
+            aus = AUS()
+            aus.rand = mock.Mock(side_effect=se)
             served_mapping = 0
             served_fallback = 0
             tested = 0
