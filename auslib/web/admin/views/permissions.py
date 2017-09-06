@@ -261,22 +261,6 @@ class PermissionScheduledChangeHistoryView(ScheduledChangeHistoryView):
         return super(PermissionScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
 
 
-class UserRolesView(AdminView):
-    """/users/:username/roles"""
-
-    def get(self, username):
-        roles = dbo.permissions.getUserRoles(username)
-        return jsonify({"roles": roles})
-
-
-class AllRolesView(AdminView):
-    """/users/roles"""
-
-    def get(self):
-        roles = dbo.permissions.getAllRoles()
-        return jsonify({"roles": roles})
-
-
 class UserRoleView(AdminView):
     """/users/:username/roles/:role"""
 
