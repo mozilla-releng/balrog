@@ -1,9 +1,22 @@
+import functools
 from random import randint
 from urlparse import urlparse
 
 import logging
 
 from auslib.global_state import dbo
+
+
+class ForceResult(object):
+    """Enumerated "result" class that represents a non-random result chosen by a caller."""
+    def __init__(self, name, query_value):
+        self.name = name
+        self.query_value = query_value
+
+
+# Magic constants that callers can use to choose a specific "random" result.
+SUCCEED = ForceResult('succeed', '1')
+FAIL = ForceResult('fail', '-1')
 
 
 def isSpecialURL(url, specialForceHosts):
@@ -32,26 +45,11 @@ def getFallbackChannel(channel):
     return channel.split('-cck-')[0]
 
 
-class AUSRandom:
-    """Abstract getting a randint to make it easier to test the range of
-    possible values"""
-
-    def __init__(self, min=0, max=99):
-        self.min = min
-        self.max = max
-
-    def getInt(self):
-        return randint(self.min, self.max)
-
-    def getRange(self):
-        return range(self.min, self.max + 1)
-
-
 class AUS:
 
     def __init__(self):
         self.specialForceHosts = None
-        self.rand = AUSRandom()
+        self.rand = functools.partial(randint, 0, 99)
         self.log = logging.getLogger(self.__class__.__name__)
 
     def evaluateRules(self, updateQuery):
@@ -81,9 +79,9 @@ class AUS:
         # serve every request an update
         # backgroundRate=100 means all requests are served
         # backgroundRate=25 means only one quarter of requests are served
-        if not updateQuery['force'] and rule['backgroundRate'] < 100:
+        if not updateQuery['force'] == SUCCEED and rule['backgroundRate'] < 100:
             self.log.debug("backgroundRate < 100, rolling the dice")
-            if self.rand.getInt() >= rule['backgroundRate']:
+            if updateQuery['force'] == FAIL or self.rand() >= rule['backgroundRate']:
                 fallbackReleaseName = rule['fallbackMapping']
                 if fallbackReleaseName:
                     release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1)[0]

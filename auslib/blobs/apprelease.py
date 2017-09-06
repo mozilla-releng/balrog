@@ -271,7 +271,7 @@ class SeparatedFileUrlsMixin(object):
             url = url.replace('%os_bouncer%', platformData['OS_BOUNCER'])
         # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
         if updateQuery['force']:
-            url = self.processSpecialForceHosts(url, specialForceHosts)
+            url = self.processSpecialForceHosts(url, specialForceHosts, updateQuery['force'])
 
         return url
 
@@ -697,7 +697,7 @@ class UnifiedFileUrlsMixin(object):
 
         # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
         if updateQuery['force']:
-            url = self.processSpecialForceHosts(url, specialForceHosts)
+            url = self.processSpecialForceHosts(url, specialForceHosts, updateQuery['force'])
 
         return url
 
