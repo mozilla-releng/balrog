@@ -75,7 +75,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         })
         .finally(function() {
           $scope.pr_ch_options.sort().unshift("All rules");
-          $scope.pr_ch_filter = localStorage.getItem('pr_ch_filter');
+          $scope.pr_ch_filter = $scope.pr_ch_options.includes(localStorage.getItem('pr_ch_filter')) ? localStorage.getItem('pr_ch_filter') : "All rules";
         });
       });
     })
@@ -95,9 +95,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.$watch('pr_ch_filter', function(value) {
     if (value) {
       localStorage.setItem("pr_ch_filter", value);
-    }
-    else{
-      localStorage.setItem("pr_ch_filter", "All rules");
     }
     $scope.pr_ch_selected = value.split(',');
   });
