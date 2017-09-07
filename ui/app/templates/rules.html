@@ -105,16 +105,16 @@
       </div>
       <i title="Product" ng-show="!rule.product && !rule.scheduled_change.product">no product</i>
       <b title="Product">
-        <span ng-show="!show_sc || rule.scheduled_change === null || rule.product === rule.scheduled_change.product">{{ rule.product }}</span>
-        <s style="color: red" ng-show="show_sc && rule.scheduled_change !== null && rule.product !== rule.scheduled_change.product">{{ rule.product }}</s>
-        <span style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.product !== rule.scheduled_change.product">{{ rule.scheduled_change.product }}</span>
+        <span ng-show="rule_id || !show_sc || rule.scheduled_change === null || rule.product === rule.scheduled_change.product">{{ rule.product }}</span>
+        <s style="color: red" ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.product !== rule.scheduled_change.product">{{ rule.product }}</s>
+        <span style="color: green" ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.product !== rule.scheduled_change.product">{{ rule.scheduled_change.product }}</span>
       </b>
       :
       <i title="Channel" ng-show="!rule.channel && !rule.scheduled_change.channel">no channel</i>
       <b title="Channel">
-        <span ng-show="!show_sc || rule.scheduled_change === null || rule.channel === rule.scheduled_change.channel">{{ rule.channel }}</span>
-        <s style="color: red" ng-show="show_sc && rule.scheduled_change !== null && rule.channel !== rule.scheduled_change.channel">{{ rule.channel }}</s>
-        <span style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.channel !== rule.scheduled_change.channel">{{ rule.scheduled_change.channel }}</span>
+        <span ng-show="!rule_id || !show_sc || rule.scheduled_change === null || rule.channel === rule.scheduled_change.channel">{{ rule.channel }}</span>
+        <s style="color: red" ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.channel !== rule.scheduled_change.channel">{{ rule.channel }}</s>
+        <span style="color: green" ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.channel !== rule.scheduled_change.channel">{{ rule.scheduled_change.channel }}</span>
       </b>
     </h3>
   </div>
@@ -144,7 +144,7 @@
       <h5 title="Mapping" ng-show="rule.mapping || (show_sc && rule.scheduled_change !== null && rule.scheduled_change.mapping)">
         Mapping: 
           <span ng-show="rule.mapping">
-            <b ng-style="show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
+            <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
               {{ rule.mapping }}
             </b>
             <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.mapping)">
@@ -156,7 +156,7 @@
                 Edit
             </a>
           </span>
-          <span ng-show="show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping && rule.scheduled_change.mapping">
+          <span ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping && rule.scheduled_change.mapping">
             <b style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping">
               {{ rule.scheduled_change.mapping }}
             </b>
@@ -173,7 +173,7 @@
       <h5 title="Fallback Mapping" ng-show="rule.fallbackMapping || (show_sc && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping)">
         Fallback Mapping: 
           <span ng-show="rule.fallbackMapping">
-            <b ng-style="show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
+            <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
               {{ rule.fallbackMapping }}
             </b>
             <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.fallbackMapping)">
@@ -185,7 +185,7 @@
                 Edit
             </a>
           </span>
-          <span ng-show="show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping && rule.scheduled_change.fallbackMapping">
+          <span ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping && rule.scheduled_change.fallbackMapping">
             <b style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping">
               {{ rule.scheduled_change.fallbackMapping }}
             </b>
