@@ -156,7 +156,7 @@
                 Edit
             </a>
           </span>
-          <span ng-show="show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping && rule.scheduled_change.mapping !== null">
+          <span ng-show="show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping && rule.scheduled_change.mapping">
             <b style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping">
               {{ rule.scheduled_change.mapping }}
             </b>
@@ -185,7 +185,7 @@
                 Edit
             </a>
           </span>
-          <span ng-show="show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping && rule.scheduled_change.fallbackMapping !== null">
+          <span ng-show="show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping && rule.scheduled_change.fallbackMapping">
             <b style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping">
               {{ rule.scheduled_change.fallbackMapping }}
             </b>
