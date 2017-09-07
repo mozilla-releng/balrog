@@ -75,8 +75,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         })
         .finally(function() {
           $scope.pr_ch_options.sort().unshift("All rules");
-          if (!$scope.pr_ch_options.includes(localStorage.getItem('pr_ch_filter'))){
-            $scope.pr_ch_filter = "All rules";            
+          if (!$scope.pr_ch_options.includes(localStorage.getItem('pr_ch_filter')) || localStorage.getItem('pr_ch_filter') === ''){
+            $scope.pr_ch_filter = "All rules";
           }
           else {
             $scope.pr_ch_filter = localStorage.getItem('pr_ch_filter');
