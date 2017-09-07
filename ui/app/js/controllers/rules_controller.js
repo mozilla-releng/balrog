@@ -131,12 +131,17 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     return Object.keys(obj).length === 0;
   };
 
+  $scope.humanizeDate = function(when) {
+    date = moment(when);
+    return date.format('dddd, MMMM D, YYYY HH:mm:ss ') + 'GMT' + date.format('ZZ');
+  };
+
   $scope.formatMoment = function(when) {
     date = moment(when);
     // This is copied from app/js/directives/moment_directive.js
     // We can't use that for this page, because it doesn't re-render when
     // values change.
-    return '<time title="' + date.format('dddd, MMMM D, YYYY HH:mm:ss ') + 'GMT' + date.format('ZZ') + '">' + date.fromNow() + '</time>';
+    return '<time title="' + $scope.humanizeDate(when) + '">' + date.fromNow() + '</time>';
   };
 
   $scope.orderRules = function(rule) {
