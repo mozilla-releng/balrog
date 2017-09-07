@@ -271,9 +271,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           return [];
         },
         sc: function() {
-          sc = angular.copy(rule);
-          sc["change_type"] = "delete";
-          return sc;
+          return {"rule_id": rule.rule_id, "data_version": rule.data_version, "change_type": "delete"};
         }
       }
     });
