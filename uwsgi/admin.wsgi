@@ -44,7 +44,6 @@ cache.make_cache("blob", 500, 3600)
 # apps will be created at that time, with an empty cache).
 # Our cache doesn't support never expiring items, so we have set something.
 cache.make_cache("blob_schema", 50, 24 * 60 * 60)
-cache.make_cache("product_required_signoffs", 100, 24 * 60 * 60)
 
 dbo.setDb(os.environ["DBURI"])
 if os.environ.get("NOTIFY_TO_ADDR"):

@@ -1925,15 +1925,9 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         sc_history_columns = [c.name for c in self.db.rules.scheduled_changes.history.t.get_children()]
         self.assertTrue(set(sc_expected).issubset(set(sc_history_columns)))
 
-    def testSelect(self):
-        rules = self._stripNullColumns(self.paths.select())
+    def testGetOrderedRules(self):
+        rules = self._stripNullColumns(self.paths.getOrderedRules())
         expected = [
-            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='c', priority=100, product='a', rule_id=1,
-                 update_type='z', version='3.5'),
-            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='b', priority=100, product='a', rule_id=2,
-                 update_type='z', version='3.3'),
-            dict(backgroundRate=100, buildTarget='a', data_version=1, mapping='a', priority=100, product='a', rule_id=3,
-                 update_type='z', version='3.5'),
             dict(alias='gandalf', backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', priority=80, rule_id=4, update_type='z'),
             dict(backgroundRate=0, buildTarget='d', data_version=1, mapping='c', priority=80, rule_id=5, update_type='z', version='3.3'),
             dict(alias='radagast', backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', osVersion='foo 1', priority=100, product='a',
@@ -1946,17 +1940,19 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  instructionSet='S', update_type='z'),
             dict(backgroundRate=100, buildTarget='g', channel='foo', data_version=1, fallbackMapping='fallback', mapping='g', priority=100, product='foo',
                  rule_id=10, update_type='z'),
+            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='b', priority=100, product='a', rule_id=2,
+                 update_type='z', version='3.3'),
+            dict(backgroundRate=100, buildTarget='a', data_version=1, mapping='a', priority=100, product='a', rule_id=3,
+                 update_type='z', version='3.5'),
+            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='c', priority=100, product='a', rule_id=1,
+                 update_type='z', version='3.5'),
         ]
 
         self.assertEquals(rules, expected)
 
-    def testSelectWithCondition(self):
-        rules = self._stripNullColumns(self.paths.select(where=[self.paths.buildTarget == "d"]))
+    def testGetOrderedRulesWithCondition(self):
+        rules = self._stripNullColumns(self.paths.getOrderedRules(where=[self.paths.buildTarget == "d"]))
         expected = [
-            dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z',
-                 product="a", channel="a", data_version=1),
-            dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z',
-                 product="a", channel="a", data_version=1),
             dict(rule_id=4, alias="gandalf", priority=80, backgroundRate=100, buildTarget='d', mapping='a', update_type='z',
                  channel="a", data_version=1),
             dict(rule_id=5, priority=80, backgroundRate=0, version='3.3', buildTarget='d', mapping='c', update_type='z',
@@ -1965,33 +1961,10 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                  product="a", channel="a", data_version=1),
             dict(rule_id=7, priority=100, buildTarget='d', mapping='a', backgroundRate=100, osVersion='foo 2,blah 6,bar && baz', update_type='z',
                  product="a", channel="a", data_version=1),
-        ]
-        self.assertEquals(rules, expected)
-
-    def testSelectWithRequiredSignoffs(self):
-        rules = self.paths.select(includeRequiredSignoffs=True)
-        rules = self._stripNullColumns(rules)
-        expected = [
-            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='c', priority=100, product='a', rule_id=1,
-                 update_type='z', version='3.5', required_signoffs={}),
-            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='b', priority=100, product='a', rule_id=2,
-                 update_type='z', version='3.3', required_signoffs={}),
-            dict(backgroundRate=100, buildTarget='a', data_version=1, mapping='a', priority=100, product='a', rule_id=3,
-                 update_type='z', version='3.5', required_signoffs={}),
-            dict(alias='gandalf', backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', priority=80, rule_id=4,
-                 update_type='z', required_signoffs={}),
-            dict(backgroundRate=0, buildTarget='d', data_version=1, mapping='c', priority=80, rule_id=5, update_type='z', version='3.3',
-                 required_signoffs={"bar": 2}),
-            dict(alias='radagast', backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', osVersion='foo 1', priority=100, product='a',
-                 rule_id=6, update_type='z', required_signoffs={}),
-            dict(backgroundRate=100, buildTarget='d', channel='a', data_version=1, mapping='a', osVersion='foo 2,blah 6,bar && baz', priority=100, product='a',
-                 rule_id=7, update_type='z', required_signoffs={}),
-            dict(backgroundRate=100, buildTarget='e', channel='a', data_version=1, locale='foo,bar-baz', mapping='d', priority=100, product='a', rule_id=8,
-                 update_type='z', required_signoffs={}),
-            dict(backgroundRate=100, buildTarget='f', channel='foo*', data_version=1, mapping='f', priority=100, product='foo', rule_id=9,
-                 instructionSet='S', update_type='z', required_signoffs={"bar": 2}),
-            dict(backgroundRate=100, buildTarget='g', channel='foo', data_version=1, fallbackMapping='fallback', mapping='g', priority=100, product='foo',
-                 rule_id=10, update_type='z', required_signoffs={"bar": 2}),
+            dict(rule_id=2, priority=100, backgroundRate=100, version='3.3', buildTarget='d', mapping='b', update_type='z',
+                 product="a", channel="a", data_version=1),
+            dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z',
+                 product="a", channel="a", data_version=1),
         ]
         self.assertEquals(rules, expected)
 
@@ -2216,17 +2189,6 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         rule = self._stripNullColumns([self.paths.getRule(1)])
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version='3.5', buildTarget='d', mapping='c', update_type='z',
                          product="a", channel="a", data_version=1)]
-        self.assertEquals(rule, expected)
-
-    def testGetRuleByIdWithRequiredSignoffs(self):
-        rule = self._stripNullColumns([self.paths.getRule(5, includeRequiredSignoffs=True)])
-        expected = [dict(backgroundRate=0, buildTarget='d', data_version=1, mapping='c', priority=80, rule_id=5, update_type='z', version='3.3',
-                         required_signoffs={"bar": 2})]
-        self.assertEquals(rule, expected)
-
-    def testGetRuleByIdDontIncludeRequiredSignoffs(self):
-        rule = self._stripNullColumns([self.paths.getRule(5)])
-        expected = [dict(backgroundRate=0, buildTarget='d', data_version=1, mapping='c', priority=80, rule_id=5, update_type='z', version='3.3')]
         self.assertEquals(rule, expected)
 
     def testGetRuleByAlias(self):
@@ -2902,7 +2864,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, expected)
 
-    def testGetRulesMatchingQueryChannelGlobbingAtEndPass(self):
+    def testtestGetRulesMatchingQueryChannelGlobbingAtEndPass(self):
         # To ensure globbing at end only -- Pass case
         expected = [dict(rule_id=6, priority=100, backgroundRate=100, channel='r*test*', update_type='z', data_version=1)]
         rules = self.rules.getRulesMatchingQuery(
@@ -2916,7 +2878,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, expected)
 
-    def testGetRulesMatchingQueryChannelGlobbingAtEndFail(self):
+    def testtestGetRulesMatchingQueryChannelGlobbingAtEndFail(self):
         # To ensure globbing at end only -- Fail case
         expected = []
         rules = self.rules.getRulesMatchingQuery(

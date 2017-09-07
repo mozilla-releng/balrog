@@ -23,21 +23,21 @@ class TestRulesAPI_JSON(ViewTest):
                 "update_type": "minor", "channel": "a", "data_version": 1, "comment": None, "fallbackMapping": None,
                 "version": None, "buildID": None, "locale": None, "distribution": None, "osVersion": None,
                 "instructionSet": None, "distVersion": None, "headerArchitecture": None, "alias": None,
-                "memory": None, "mig64": None, "required_signoffs": {"releng": 1},
+                "memory": None, "mig64": None,
             },
             {
                 "rule_id": 6, "product": "fake", "priority": 40, "backgroundRate": 50, "mapping": "a", "update_type": "minor",
                 "channel": "e", "data_version": 1, "buildTarget": None, "comment": None, "fallbackMapping": None,
                 "version": None, "buildID": None, "locale": None, "distribution": None, "osVersion": None,
                 "instructionSet": None, "distVersion": None, "headerArchitecture": None, "alias": None,
-                "memory": None, "mig64": None, "required_signoffs": {"releng": 1},
+                "memory": None, "mig64": None,
             },
             {
                 "rule_id": 7, "product": "fake", "priority": 30, "backgroundRate": 85, "mapping": "a", "update_type": "minor",
                 "channel": "c", "data_version": 1, "buildTarget": None, "comment": None, "fallbackMapping": None,
                 "version": None, "buildID": None, "locale": None, "distribution": None, "osVersion": None,
                 "instructionSet": None, "distVersion": None, "headerArchitecture": None, "alias": None,
-                "memory": None, "mig64": None, "required_signoffs": {},
+                "memory": None, "mig64": None,
             }
         ]
         self.assertEquals(got["count"], 3)
@@ -293,7 +293,6 @@ class TestSingleRuleView_JSON(ViewTest):
             alias=None,
             memory=None,
             mig64=None,
-            required_signoffs={},
         )
         self.assertEquals(json.loads(ret.data), expected)
 
@@ -322,7 +321,6 @@ class TestSingleRuleView_JSON(ViewTest):
             alias="frodo",
             memory=None,
             mig64=None,
-            required_signoffs={},
         )
         self.assertEquals(json.loads(ret.data), expected)
 
@@ -1170,7 +1168,7 @@ class TestRuleScheduledChanges(ViewTest):
             "base_mapping": "c", "base_update_type": "minor", "base_data_version": 1, "data_version": 1, "sc_id": 8, "complete": False, "base_alias": None,
             "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None,
             "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_memory": None,
-            "base_mig64": None, "base_instructionSet": None, "change_type": "update", "required_signoffs": {},
+            "base_mig64": None, "base_instructionSet": None, "change_type": "update",
         }
         self.assertEquals(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 8).execute().fetchall()
@@ -1195,7 +1193,7 @@ class TestRuleScheduledChanges(ViewTest):
             "base_mapping": None, "base_update_type": None, "base_data_version": 1, "data_version": 1, "sc_id": 8, "complete": False, "base_alias": None,
             "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None,
             "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_memory": None,
-            "base_mig64": None, "base_instructionSet": None, "change_type": "delete", "required_signoffs": {},
+            "base_mig64": None, "base_instructionSet": None, "change_type": "delete",
         }
         self.assertEquals(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 8).execute().fetchall()
@@ -1206,7 +1204,7 @@ class TestRuleScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewRule(self):
         data = {
-            "when": 1234567, "priority": 120, "backgroundRate": 100, "product": "fake", "channel": "aa",
+            "when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah",
             "update_type": "minor", "mapping": "a", "change_type": "insert"
         }
         ret = self._post("/scheduled_changes/rules", data=data)
@@ -1217,12 +1215,11 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
         expected = {
-            "scheduled_by": "bill", "base_priority": 120, "base_backgroundRate": 100, "base_product": "fake", "base_channel": "a",
+            "scheduled_by": "bill", "base_priority": 120, "base_backgroundRate": 100, "base_product": "blah", "base_channel": "blah",
             "base_update_type": "minor", "base_mapping": "a", "sc_id": 8, "data_version": 1, "complete": False, "base_data_version": None,
             "base_rule_id": None, "base_buildTarget": None, "base_version": None, "base_alias": None, "base_buildID": None, "base_locale": None,
             "base_osVersion": None, "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None,
             "base_comment": None, "base_instructionSet": None, "change_type": "insert", "base_memory": None, "base_mig64": None,
-            "required_signoffs": {"releng": 1},
         }
         self.assertEquals(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 8).execute().fetchall()
@@ -1335,7 +1332,7 @@ class TestRuleScheduledChanges(ViewTest):
             "base_product": "a", "base_channel": "a", "base_buildID": None, "base_locale": None, "base_osVersion": None,
             "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
             "base_headerArchitecture": None, "base_comment": None, "base_instructionSet": None, "base_memory": "888",
-            "base_mig64": None, "change_type": "update", "required_signoffs": {}
+            "base_mig64": None, "change_type": "update",
         }
         self.assertEquals(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
@@ -1363,7 +1360,6 @@ class TestRuleScheduledChanges(ViewTest):
             "base_alias": None, "base_product": "a", "base_channel": "a", "base_buildID": None, "base_locale": None,
             "base_osVersion": None, "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None, "base_memory": None,
             "base_mig64": None, "base_headerArchitecture": None, "base_comment": None, "base_instructionSet": None, "change_type": "update",
-            "required_signoffs": {},
         }
         self.assertEquals(db_data, expected)
 
@@ -1407,7 +1403,7 @@ class TestRuleScheduledChanges(ViewTest):
             "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
             "base_headerArchitecture": None, "base_comment": None, "base_memory": None, "base_mig64": None,
             "base_instructionSet": None, "base_version": None, "base_rule_id": None, "base_buildTarget": None,
-            "change_type": "insert", "required_signoffs": {},
+            "change_type": "insert",
         }
         self.assertEquals(db_data, expected)
         rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
