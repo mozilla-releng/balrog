@@ -17,7 +17,9 @@ current_dir = path.dirname(__file__)
 web_dir = path.dirname(auslib.web.__file__)
 
 spec = SpecBuilder().add_spec(path.join(current_dir, 'swagger/api.yaml'))\
-                    .add_spec(path.join(web_dir, 'common/swagger/common_spec.yml'))
+                    .add_spec(path.join(web_dir, 'common/swagger/definitions.yml'))\
+                    .add_spec(path.join(web_dir, 'common/swagger/parameters.yml'))\
+                    .add_spec(path.join(web_dir, 'common/swagger/responses.yml'))
 
 validator_map = {
     'body': BalrogRequestBodyValidator
