@@ -8,6 +8,7 @@ import logging
 import mock
 import unittest
 
+from auslib.AUS import SUCCEED, FAIL
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.web.public.base import app
@@ -330,7 +331,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "product": "h", "version": "2.0.0.20", "buildID": "0",
             "buildTarget": "p", "locale": "m", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
@@ -353,7 +354,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "product": "h", "version": "3.0.9", "buildID": "0",
             "buildTarget": "p", "locale": "m", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
@@ -376,7 +377,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "product": "h", "version": "3.5.19", "buildID": "0",
             "buildTarget": "p", "locale": "m", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
@@ -399,7 +400,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "product": "h", "version": "3.6", "buildID": "0",
             "buildTarget": "p", "locale": "m", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
@@ -488,7 +489,7 @@ class TestSpecialQueryParams(unittest.TestCase):
             "product": "h", "version": "0.5", "buildID": "0",
             "buildTarget": "p", "locale": "l", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -511,7 +512,7 @@ class TestSpecialQueryParams(unittest.TestCase):
             "product": "h", "version": "0.5", "buildID": "0",
             "buildTarget": "p", "locale": "l", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 1
+            "force": SUCCEED,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -529,12 +530,35 @@ class TestSpecialQueryParams(unittest.TestCase):
         self.assertItemsEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
+    def testSpecialQueryParamForcedFail(self):
+        updateQuery = {
+            "product": "h", "version": "0.5", "buildID": "0",
+            "buildTarget": "p", "locale": "l", "channel": "a",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": FAIL,
+        }
+        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected_header = """
+<update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
+"""
+        expected = ["""
+<patch type="complete" URL="http://a.com/?foo=a&force=-1" hashFunction="sha512" hashValue="1" size="1"/>
+"""]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</update>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertItemsEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
     def testNonSpecialQueryParam(self):
         updateQuery = {
             "product": "h", "version": "0.5", "buildID": "0",
             "buildTarget": "p", "locale": "m", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -557,7 +581,7 @@ class TestSpecialQueryParams(unittest.TestCase):
             "product": "h", "version": "0.5", "buildID": "0",
             "buildTarget": "p", "locale": "m", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 1
+            "force": SUCCEED,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -580,7 +604,7 @@ class TestSpecialQueryParams(unittest.TestCase):
             "product": "h", "version": "0.5", "buildID": "0",
             "buildTarget": "p", "locale": "m", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -811,7 +835,7 @@ class TestSchema2Blob(unittest.TestCase):
             "product": "j", "version": "35.0", "buildID": "4",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -834,7 +858,7 @@ class TestSchema2Blob(unittest.TestCase):
             "product": "j", "version": "39.0", "buildID": "28",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -859,7 +883,7 @@ class TestSchema2Blob(unittest.TestCase):
             "product": "k", "version": "35.0", "buildID": "4",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobK.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobK.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -884,7 +908,7 @@ class TestSchema2Blob(unittest.TestCase):
             "product": "k", "version": "35.0", "buildID": "4",
             "buildTarget": "p", "locale": "l2", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobK.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobK.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -981,7 +1005,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
             "product": "j", "version": "0.5", "buildID": "0",
             "buildTarget": "p", "locale": "l", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1004,7 +1028,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
             "product": "j", "version": "0.5", "buildID": "1",
             "buildTarget": "p", "locale": "l", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1340,7 +1364,7 @@ class TestSchema3Blob(unittest.TestCase):
             "product": "f", "version": "22.0", "buildID": "5",
             "buildTarget": "p", "locale": "l", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1364,7 +1388,7 @@ class TestSchema3Blob(unittest.TestCase):
             "product": "f", "version": "23.0", "buildID": "6",
             "buildTarget": "p", "locale": "l", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1389,7 +1413,7 @@ class TestSchema3Blob(unittest.TestCase):
             "product": "f", "version": "20.0", "buildID": "1",
             "buildTarget": "p", "locale": "l", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1412,7 +1436,7 @@ class TestSchema3Blob(unittest.TestCase):
             "product": "f", "version": "20.0", "buildID": "1",
             "buildTarget": "p", "locale": "m", "channel": "a",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1435,7 +1459,7 @@ class TestSchema3Blob(unittest.TestCase):
             "product": "g", "version": "23.0", "buildID": "8",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobG2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobG2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1460,7 +1484,7 @@ class TestSchema3Blob(unittest.TestCase):
             "product": "g", "version": "23.0", "buildID": "8",
             "buildTarget": "p", "locale": "l", "channel": "c2",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobG2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobG2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1860,7 +1884,7 @@ class TestSchema4Blob(unittest.TestCase):
             "product": "h", "version": "30.0", "buildID": "10",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1884,7 +1908,7 @@ class TestSchema4Blob(unittest.TestCase):
             "product": "h", "version": "30.0", "buildID": "10",
             "buildTarget": "p", "locale": "l", "channel": "c2",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1908,7 +1932,7 @@ class TestSchema4Blob(unittest.TestCase):
             "product": "h", "version": "30.0", "buildID": "10",
             "buildTarget": "p", "locale": "l", "channel": "c3",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1933,7 +1957,7 @@ class TestSchema4Blob(unittest.TestCase):
             "product": "h", "version": "25.0", "buildID": "2",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1955,7 +1979,7 @@ class TestSchema4Blob(unittest.TestCase):
             "product": "h", "version": "25.0", "buildID": "2",
             "buildTarget": "p", "locale": "l", "channel": "c2",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1977,7 +2001,7 @@ class TestSchema4Blob(unittest.TestCase):
             "product": "h", "version": "25.0", "buildID": "2",
             "buildTarget": "p", "locale": "l", "channel": "c3",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -2000,7 +2024,7 @@ class TestSchema4Blob(unittest.TestCase):
             "product": "h", "version": "29.0", "buildID": "5",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobH3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -2407,7 +2431,7 @@ class TestSchema5Blob(unittest.TestCase):
             "product": "h", "version": "30.0", "buildID": "10",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -2609,7 +2633,7 @@ class TestSchema6Blob(unittest.TestCase):
             "product": "h", "buildID": "10",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -2861,7 +2885,7 @@ class TestSchema7Blob(unittest.TestCase):
             "product": "h", "buildID": "10",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -2984,7 +3008,7 @@ class TestSchema8Blob(unittest.TestCase):
             "product": "h", "buildID": "10",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -3089,7 +3113,7 @@ class TestUnifiedFileUrlsMixin(unittest.TestCase):
             "product": "h", "version": "30.0", "buildID": "10",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         patchKey = "partials"
         patch = {"from": "h1"}
@@ -3105,7 +3129,7 @@ class TestUnifiedFileUrlsMixin(unittest.TestCase):
             "product": "h", "version": "30.0", "buildID": "10",
             "buildTarget": "p", "locale": "l", "channel": "c1",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "force": None,
         }
         patchKey = "partials"
         patch = {"from": "h2"}
