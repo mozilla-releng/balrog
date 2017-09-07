@@ -66,6 +66,7 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
       Rules.updateScheduledChange(sc.sc_id, sc, csrf_token)
       .success(function(response) {
         sc.sc_data_version = response.new_data_version;
+        sc.signoffs = response.signoffs;
         angular.copy(sc, $scope.original_sc);
         $scope.saving = false;
         $modalInstance.close("update");

@@ -62,7 +62,7 @@
                 ng-show="!rule_id && show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs) && ! rule.scheduled_change.signoffs.hasOwnProperty(current_user)">
             Signoff as...
         </button>
-        <button class="btn btn-xs btn-danger" ng-click="revokeSignoff(sc)"
+        <button class="btn btn-xs btn-danger" ng-click="revokeSignoff(rule.scheduled_change)"
                 ng-show="!rule_id && show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs) && rule.scheduled_change.signoffs.hasOwnProperty(current_user)">
             Revoke your Signoff
         </button>

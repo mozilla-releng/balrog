@@ -97,7 +97,10 @@ class ScheduledChangeView(AdminView):
         where = {"sc_id": sc_id}
         self.sc_table.update(where, what, changed_by, int(old_sc_data_version), transaction)
         sc = self.sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
-        return jsonify(new_data_version=sc["data_version"])
+        signoffs = {}
+        for signoff in self.sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
+            signoffs[signoff["username"]] = signoff["role"]
+        return jsonify(new_data_version=sc["data_version"], signoffs=signoffs)
 
     def _delete(self, sc_id, transaction, changed_by):
         where = {"sc_id": sc_id}
