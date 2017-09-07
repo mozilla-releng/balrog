@@ -1175,7 +1175,7 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/releases", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -1196,7 +1196,7 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/releases", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -1218,7 +1218,7 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/releases", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -1249,7 +1249,7 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/releases/2", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
 
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1275,7 +1275,7 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(len(rows), 2)
         ret = self._post("/scheduled_changes/releases/4", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
 
         r = dbo.releases.scheduled_changes.t.select().where(
             dbo.releases.scheduled_changes.sc_id == 4).execute().fetchall()
@@ -1328,7 +1328,7 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/releases/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
 
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1353,7 +1353,7 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/releases/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
 
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
