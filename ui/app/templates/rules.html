@@ -43,7 +43,7 @@
         ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
       </select>
     </div>
-    <div class="row">
+    <div class="row" ng-if="!rule_id">
       <label for="include_sc">Include Scheduled Changes?</label>
       <input type="checkbox" id="include_sc" ng-model="show_sc" checked>
     </div>
@@ -86,19 +86,19 @@
                 ng-click="openNewScheduledDeleteModal(rule)">
             Schedule for Deletion
         </button>
-        <button ng-show="!rule_id && isEmpty(rule.required_signoffs) && (rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert')"
+        <button ng-show="!rule_id && rule.scheduled_change !== null && rule.scheduled_change.change_type !== 'insert'"
                 class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">
             Update
         </button>
-        <button ng-show="!rule_id && isEmpty(rule.required_signoffs) && (rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert')"
+        <button ng-show="!rule_id && rule.scheduled_change !== null && rule.scheduled_change.change_type !== 'insert'"
                 class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">
             Delete
         </button>
-        <button ng-show="!rule_id && isEmpty(rule.required_signoffs) && (rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert')"
+        <button ng-show="!rule_id && rule.scheduled_change !== null && rule.scheduled_change.change_type !== 'insert'"
                 class="btn btn-default btn-xs" ng-click="openDuplicateModal(rule)">
             Duplicate
         </button>
-        <a ng-show="!rule_id && (rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert')"
+        <a ng-show="!rule_id && rule.scheduled_change !== null && rule.scheduled_change.change_type !== 'insert'"
            class="btn btn-default btn-xs" ng-href="/rules/{{ rule.rule_id }}">
             History
         </a>
