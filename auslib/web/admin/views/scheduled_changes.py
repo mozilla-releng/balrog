@@ -71,7 +71,10 @@ class ScheduledChangesView(AdminView):
             return problem(400, "Bad Request", "Changes may not be scheduled in the past")
 
         sc_id = self.sc_table.insert(changed_by, transaction, **what)
-        return jsonify(sc_id=sc_id)
+        signoffs = {}
+        for signoff in self.sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
+            signoffs[signoff["username"]] = signoff["role"]
+        return jsonify(sc_id=sc_id, signoffs=signoffs)
 
 
 class ScheduledChangeView(AdminView):
