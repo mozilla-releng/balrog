@@ -145,6 +145,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   };
 
   $scope.orderRules = function(rule) {
+    // Rules are sorted by priority. Rules that are pending (ie: still just a Scheduled Change)
+    // will be inserted based on the priority in the Scheduled Change.
+    // Rules that have Scheduled updates or deletes will remain sorted on their current priority
+    // because it's more important to make it easy to assess current state than future state.
     if (rule.priority === null || rule.priority === undefined) {
         return rule.scheduled_change.priority * -1;
     }
@@ -154,11 +158,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   };
 
   $scope.filterBySelect = function(rule) {
-    // TODO: put this elesewhere
-    if (! $scope.show_sc && rule.scheduled_change !== null && rule.scheduled_change.change_type === "insert") {
-      return false;
-    }
-
     // Always return all entries if "all rules" is the filter
     // or if $scope.rule_id is set (meaning we're on the history page).
     if ($scope.pr_ch_selected[0].toLowerCase() === "all rules" || $scope.rule_id) {
@@ -173,6 +172,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       product = rule.product === $scope.pr_ch_selected[0];
       return (product || !rule.product);
     }
+  };
+
+  $scope.filterScheduledChanges = function(rule) {
+    if (! $scope.show_sc && rule.scheduled_change !== null && rule.scheduled_change.change_type === "insert") {
+      return false;
+    }
+    return true;
   };
 
   $scope.openUpdateModal = function(rule) {
@@ -199,6 +205,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
 
   $scope.openNewScheduledRuleModal = function() {
 
+    // prepopulate the product and channel if the Rules have already been filtered by one.
     var product = "";
     var channel = "";
     if ($scope.pr_ch_selected[0].toLowerCase() !== "all rules") {

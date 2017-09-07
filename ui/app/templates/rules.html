@@ -51,7 +51,7 @@
 </div>
 
 <div class="panel panel-default" style="clear:right"
-     ng-repeat="rule in filtered_items = (rules | filter: filterBySelect) | orderBy:orderRules | startFrom:(disableFilter || !rule_id) && ((currentPage - 1)*pageSize) | limitTo:pageSize">
+     ng-repeat="rule in filtered_items = (rules | filter: filterScheduledChanges | filter: filterBySelect) | orderBy:orderRules | startFrom:(disableFilter || !rule_id) && ((currentPage - 1)*pageSize) | limitTo:pageSize">
   <div class="panel-heading">
 
     <h3 class="panel-title">
