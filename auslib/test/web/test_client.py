@@ -7,7 +7,7 @@ from xml.dom import minidom
 import json
 
 from hypothesis import assume, example, given
-from hypothesis.strategies import integers, just, text
+from hypothesis.strategies import characters, integers, just, text
 
 import auslib.web.public.client as client_api
 from auslib.web.public.client import extract_query_version
@@ -805,7 +805,7 @@ class ClientTest(ClientTestBase):
 </updates>
 """)
 
-    @given(text(max_size=128))
+    @given(text(alphabet=characters(blacklist_categories=('Cs', 'Po')), max_size=128))
     @example('')
     @example('1" name="Firefox 54.0" isOSUpdate="false" installDate="1498012260998')
     @example('1)')
