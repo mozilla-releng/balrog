@@ -95,7 +95,7 @@
         Data version: <b>{{ release.data_version }}</b>
       </h5>
 
-      <h5 title="Rules referencing it" ng-switch="release.rule_ids">
+      <h5 title="Rules referencing it" ng-switch="release.rule_ids" ng-show="!release_name">
         <b ng-show="!release.rule_ids.length">
             Not mapped to.
         </b>
