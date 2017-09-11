@@ -9,13 +9,14 @@
       <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': errors.when}">
         <div class="input-group">
           <span class="input-group-btn">
-            <button class="btn btn-secondary dropdown-toggle" type="button"><i class="glyphicon glyphicon-calendar"></i></button>
+            <label class="btn btn-default" ng-click="toggleAutoTime()" id="btn__auto-time"><input type="checkbox" ng-show="false" ng-model="auto_time" auto-complete="off">ASAP</label>
+            <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time"><i class="glyphicon glyphicon-calendar"></i></button>
           </span>
           <!-- Manual edits of this field throw deprecation warnings, but no errors. This is because the
                way we display dates is not an ISO format, and Moment.js will be removing support for parsing
                those directly in the near future. We will probably have to handle ng-change when we upgrade moment
                to have this continue to work. https://github.com/moment/moment/issues/1407 has more details. -->
-          <input type="text" id="id_when" class="form-control" data-ng-model="sc.when" ng-blur="setWhen()">
+          <input type="text" id="id_when" class="form-control" data-ng-model="sc.when" ng-blur="setWhen()" ng-disabled="auto_time">
           <span class="input-group-btn">
             <button class="btn btn-secondary" type="button" ng-click="clearWhen()">Clear</button>
           </span>
