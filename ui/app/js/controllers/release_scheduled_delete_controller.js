@@ -9,6 +9,13 @@ function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
   $scope.saving = false;
   $scope.calendar_is_open = false;
   $scope.auto_time = false;
+  $scope.toggleAutoTime = function(){
+      if ($scope.auto_time){
+          $("#btn__auto-time").addClass('active');
+      }else{
+          $('#btn__auto-time').removeClass('active');
+      }
+  };
 
 
 

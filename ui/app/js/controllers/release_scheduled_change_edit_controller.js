@@ -12,6 +12,15 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
 
   $scope.errors = {};
   $scope.saving = false;
+  $scope.auto_time = false;
+  $scope.toggleAutoTime = function(){
+      if ($scope.auto_time){
+          $("#btn__auto-time").addClass('active');
+      }else{
+          $('#btn__auto-time').removeClass('active');
+      }
+  };
+
 
   $scope.setWhen = function(newDate) {
     if (!newDate) {
@@ -19,7 +28,6 @@ function ($scope, $modalInstance, CSRF, Releases, sc) {
       $scope.sc.when = newDate;
     }
     $scope.calendar_is_open = false;
-    $scope.auto_time = false;
 
     if (newDate <= new Date()) {
       $scope.errors.when = ["Scheduled time cannot be in the past"];
