@@ -98,14 +98,6 @@ parameters:
     x-nullable: true
     required: false
 
-  releaseParam:
-    name: release
-    in: path
-    description: release name
-    type: string
-    maxLength: 100
-    required: true
-
   csrfTokenParam:
     name: csrf_token
     in: query
@@ -130,29 +122,11 @@ parameters:
     maxLength: 50
     required: true
 
-  pageParam:
-    name: page
-    in: query
-    description: Variable value used pagination of response revisions.
-    type: integer
-    minimum: 1
-    x-nullable: true
-    required: false
-
   allSCParam:
     name: all
     in: query
     description: if argument is present in request then response returns all scheduled changes else only returns unfinished changes
     type: string
-    x-nullable: true
-    required: false
-
-  limitParam:
-    name: limit
-    in: query
-    description: Variable value used for calculating offset for pagination.
-    type: integer
-    minimum: 1
     x-nullable: true
     required: false
 
@@ -183,14 +157,6 @@ parameters:
     maxLength: 75
     required: true
 
-  productParam:
-    name: product
-    in: query
-    description: Name of the product to filter the rules/releases against.
-    type: string
-    x-nullable: true
-    required: false
-
   permissionParam:
     name: permission
     in: path
@@ -214,35 +180,6 @@ parameters:
     description: user role to grant access to
     type: string
     maxLength: 50
-    required: true
-
-  platformParam:
-    name: platform
-    in: path
-    description: platform name
-    type: string
-    required: true
-
-  localeParam:
-    name: locale
-    in: path
-    description: locale identifier
-    type: string
-    required: true
-
-  rule_id_or_alias_param:
-    name: id_or_alias
-    in: path
-    description: rule_id or alias field value to update the rule against
-    type: string
-    required: true
-
-  rule_id_param:
-    name: rule_id
-    in: path
-    description: Field value to uniquely identfiy the rule
-    type: integer
-    minimum: 0
     required: true
 
   sc_id_param:
@@ -362,17 +299,6 @@ responses:
           minimum: 1
           example: 2
 
-  releaseDataResponse:
-    description: Returns release object data
-    schema:
-      type: object
-    headers:
-      X-Data-Version:
-        description: data version of the release
-        type: integer
-        format: int32
-        minimum: 1
-
   columnResponse:
     description:  returns all distinct column values from database
     schema:
@@ -398,33 +324,6 @@ responses:
       application/json:
         count: 5
         data_version: [1,2,3,4,5]
-
-  invalidFormData:
-    description: Error in form data
-    schema:
-      $ref: '#/definitions/4xxClientErrorResponseModel'
-    examples:
-      application/json:
-        detail: "Invalid field value"
-        status: 400
-
-  unauthorizedUser:
-    description: Not authorized to access resource
-    schema:
-      $ref: "#/definitions/4xxClientErrorResponseModel"
-    examples:
-      application/json:
-        detail: "You are not authorized to access this resource"
-        status: 403
-
-  resourceNotFound:
-    description: Resource Not Found
-    schema:
-      $ref: "#/definitions/4xxClientErrorResponseModel"
-    examples:
-      application/json:
-        detail: "Requested resource was not found"
-        status: 404
 
 paths:
   /csrf_token:
@@ -510,7 +409,7 @@ paths:
         Returns a JSON object containing metadata about Releases in Balrog's database. Due to its size, the actual Release 'blob' is never returned from this endpoint. There are a few query arguments that affect its response. If no arguments are provided, it returns all information about all of the Releases in the database. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_get
+      operationId: auslib.web.common.releases.get_releases
       consumes: []
       produces:
         - application/json
@@ -531,7 +430,6 @@ paths:
           type: string
           x-nullable: true
           required: false
-
       responses:
         '200':
           description: Returns metadata about Releases
@@ -599,7 +497,7 @@ paths:
         Returns the 'data' portion of the named Release, which is a JSON Object. If 'pretty' is present in the query string and set to true, it will be pretty formatted. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.single_release_get
+      operationId: auslib.web.common.releases.get_release_with_csrf_header
       consumes: []
       produces:
         - application/json
@@ -608,12 +506,7 @@ paths:
         description: "Returns the 'data' portion of the named Release, which is a JSON Object."
       parameters:
         - $ref: '#/parameters/releaseParam'
-        - name: pretty
-          in: query
-          description: "If 'pretty' is present in the query string and set to true, it will be pretty formatted."
-          type: string
-          x-nullable: true
-          required: false
+        - $ref: '#/parameters/pretty'
       responses:
         '200':
           $ref: '#/responses/releaseDataResponse'
@@ -822,7 +715,7 @@ paths:
         Returns the platform+locale specific data of the named Release, which is a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-builds-platform-locale)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_single_locale_view_get
+      operationId: auslib.web.common.releases.get_release_single_locale_with_csrf_header
       consumes: []
       produces:
         - application/json
@@ -881,7 +774,7 @@ paths:
         Returns previous versions of the named Release in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-revisions)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_history_view_get
+      operationId: auslib.web.common.releases.get_release_history
       consumes: []
       produces:
         - application/json
@@ -1623,7 +1516,7 @@ paths:
         Returns filtered list Rules in Balrog’s database inside of a JSON Object. Returns all rules if 'product' query parameter isn't passed. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id1)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_get
+      operationId: auslib.web.common.rules.get_rules
       consumes: []
       produces: [application/json]
       externalDocs:
@@ -1687,7 +1580,7 @@ paths:
         Returns the entire rule identified by the id or alias given in JSON format. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#rules-id-or-alias)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_id_or_alias_get
+      operationId: auslib.web.common.rules.get_rule_with_csrf_headers
       consumes: []
       produces:
         - application/json
@@ -1811,7 +1704,7 @@ paths:
       description: Fetches list and count of all the revisions of the rule given by rule_id
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_revisions_get
+      operationId: auslib.web.common.rules.get_rule_history
       consumes: []
       produces:
         - application/json
@@ -3471,41 +3364,6 @@ paths:
           $ref: '#/responses/resourceNotFound'
 
 definitions:
-  4xxClientErrorResponseModel:
-    title: "4xx Response"
-    description: "Invalid request's response object. The 4xx class of status codes is intended for situations in which the client seems to have erred. This model describes the response format"
-    type: object
-    # currently we're using 'detail' and 'status' in the UI.
-    # 'exception' is seldom used. Therefore rest of fields aren't always required.
-    required:
-      - detail
-      - status
-      - title
-    properties:
-      detail:
-        description: An human readable explanation specific to this occurrence of the problem.
-        type: string
-        example: "field_name is a required property"
-      exception:
-        description: An human readable explanation specific to this occurrence of the problem. Same as detail. Used in some UI forms.
-        type: string
-        example: "field_name is missing"
-      status:
-        description: The HTTP status code generated by the origin server for this occurrence of the problem.
-        type: integer
-        format: int32
-        minimum: 400
-        maximum: 499
-        example: 400
-      title:
-        description: A short, human-readable summary of the problem type. It SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localisation.
-        type: string
-        example: "Bad Request"
-      type:
-        description: "An absolute URI that identifies the problem type.  When dereferenced, it SHOULD provide human-readable documentation for the problem type (e.g., using HTML).When this member is not present its value is assumed to be 'about:blank'"
-        type: string
-        example: "about:blank"
-
   CSRFModel:
     title: CSRF Token
     description: CSRF Token in POST/PUT or UPDATE requests
@@ -3516,32 +3374,6 @@ definitions:
       csrf_token:
         type: string
         example: "1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
-
-  CountModel:
-    title: Count
-    description: count of total objects/elements fetched
-    type: object
-    required:
-      - count
-    properties:
-      count:
-        description: count of total values fetched from DB
-        type: integer
-        minimum: 0
-        format: int32
-        example: 1
-
-  DataVersionModel:
-    title: Data Version
-    description: "model to re-use 'data_version' field."
-    type: object
-    properties:
-      data_version:
-        description: version number of object
-        type: integer
-        format: int32
-        minimum: 1
-        example: 3
 
   DataVersionNullable:
     title: Nullable Data Version
@@ -3613,18 +3445,6 @@ definitions:
         minLength: 1
         maxLength: 75
         example: beta
-
-  ProductModel:
-    title: Product
-    description: "model to define 'product' field in request/response JSON body"
-    type: object
-    properties:
-      product:
-        description: The product name that the client must send in order for the rule to match. Only full string matches are supported.
-        type: string
-        minLength: 1
-        maxLength: 15
-        example: Firefox
 
   ProductNullable:
     title: Product Nullable
@@ -3765,18 +3585,6 @@ definitions:
         maxLength: 50
         example: update
 
-  ReleaseName:
-    title: Release Name
-    description: name of release
-    type: object
-    properties:
-      name:
-        description: Release name
-        type: string
-        minLength: 1
-        maxLength: 100
-        example: "Firefox-47.0.2-build2-43.0.1"
-
   ReleaseData:
     title: Release form values plus blob
     description: "Release Base Model + release blob"
@@ -3797,43 +3605,6 @@ definitions:
       - name
       - product
       - blob
-
-  ReleaseReadOnly:
-    title: Release Read Only
-    description: "Release's read_only flag field marks whether release can only be read and not modified"
-    type: object
-    properties:
-      read_only:
-        type: ["boolean", "null"]
-        example: true
-        description: "flag value is true if release is marked as read_only else release is modifiable"
-
-  ReleaseGET:
-    title: Release form values plus read only and rule ids
-    description: "Release Base Model + read only + list of mapped rule_ids"
-    type: object
-    allOf:
-      - $ref: '#/definitions/DataVersionModel'
-      - $ref: '#/definitions/ProductModel'
-      - $ref: '#/definitions/ReleaseName'
-      - $ref: '#/definitions/ReleaseReadOnly'
-      - type: object
-        properties:
-          rule_ids:
-            description: list of rule_ids
-            type: array
-            uniqueItems: true
-            minItems: 0
-            items:
-              type: integer
-              minimum: 0
-            example: [487, 589]
-    required:
-      - name
-      - product
-      - data_version
-      - read_only
-      - rule_ids
 
   ReleaseDataObject:
     title: Release Data object
@@ -4025,29 +3796,6 @@ definitions:
         required:
           - data_version
 
-  HistoryModel:
-    title: History Table Model
-    description: Contains fields to be added to base table models to generate a history table
-    type: object
-    required:
-      - timestamp
-      - change_id
-      - changed_by
-    properties:
-      timestamp:
-        type: integer
-        minimum: 0
-        example: 1495308
-      change_id:
-        type: integer
-        minimum: 0
-        example: 10
-      changed_by:
-        type: string
-        minimum: 1
-        maximum: 100
-        example: "balrogadmin"
-
   SCRulesItemBase:
     title: SC Rules Base Model
     description: defines base model for operations on SC Rules
@@ -4090,110 +3838,6 @@ definitions:
       - version
       - when
 
-  RuleObject:
-    title: GET Operations on Rules
-    description: "Operations on /rules GET"
-    allOf:
-      - $ref: "#/definitions/RulesBase"
-      - $ref: "#/definitions/RulesNonNullable"
-    required:
-      - alias
-      - backgroundRate
-      - buildID
-      - buildTarget
-      - channel
-      - comment
-      - data_version
-      - distVersion
-      - distribution
-      - fallbackMapping
-      - headerArchitecture
-      - instructionSet
-      - locale
-      - mapping
-      - memory
-      - mig64
-      - osVersion
-      - priority
-      - product
-      - rule_id
-      - update_type
-      - version
-
-  RulesListGET:
-    title: Rules List
-    description: Returns JSON object of list of rules with their count
-    type: object
-    required:
-      - rules
-    allOf:
-      - $ref: '#/definitions/CountModel'
-      - type: object
-        properties:
-          rules:
-            description: array where each element is a rule object
-            type: array
-            items:
-              $ref: '#/definitions/RuleObject'
-            example:
-              - alias: "esr45-localtest"
-                backgroundRate: 100
-                buildID: null
-                buildTarget: null
-                channel: "esr-localtest"
-                comment: "esr45 esr-localtest rule"
-                data_version: 22
-                distVersion: null
-                distribution: null
-                fallbackMapping: null
-                headerArchitecture: null
-                instructionSet: null
-                locale: null
-                mapping: "Firefox-45.7.0esr-build1"
-                memory: null
-                mig64: null
-                osVersion: null
-                priority: 43
-                product: "Firefox"
-                rule_id: 308
-                update_type: "minor"
-                version: null
-                whitelist: null
-
-  UpdateType:
-    title: Rule's update_type field
-    description: Non-Null field of Rule to specify type of update
-    type: object
-    properties:
-      update_type:
-        description: "The update_type to use in the XML response. 'minor' is almost always the correct value these days."
-        type: string
-        minLength: 0
-        maxLength: 15
-        enum: [ "major", "minor"]
-        example: minor
-
-  RulesNonNullable:
-    title: Rule non-nullable fields
-    description: Balrog's Rule Attributes having non-null values
-    type: object
-    allOf:
-      - $ref: '#/definitions/UpdateType'
-      - type: object
-        properties:
-          rule_id:
-            description: "The id of the rule. This id (or the rule's alias, if set) is necessary to make changes to the rule through the REST API."
-            type: ["integer", "string"]
-            format: rule_id
-            readOnly: true
-            example: 10
-
-          data_version:
-            description: the version number of rule
-            type: ["integer", "string"]
-            format: data_version
-            example: 1
-
   RulesSCNullable:
     title: Rule nullable fields
     description: Balrog's Rule Attributes that can have null values in scheduled changes tables
@@ -4219,152 +3863,6 @@ definitions:
         maxLength: 15
         enum: [ "major", "minor", null]
         example: minor
-
-  RulesBase:
-    title: Rules Base Attributes
-    description: Balrog's Rule Attributes except rule_id and data_version
-    type: object
-
-    # Cannot have additionalProperties as false for strict validation ,else it disallows csrf_token or any other model's properties to be added
-    #additionalProperties: false
-
-    properties:
-      priority:
-        description: The priority of the rule, relative to other rules. The higher the value, the higher the priority of the rule.
-        type: ["integer", "string", "null"]
-        format: priority
-        example: 1
-
-      mapping:
-        description: The Release to construct an update out of if the user is on the right side of a background rate dice roll, or if the background rate is 100. This is a foreign key to the "name" column of the Releases table.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 100
-        example: No-Update
-
-      backgroundRate:
-        description: >
-          The percentage of background update requests to serve the "mapping" to.
-          Generally, this is used as a throttle to increase or decrease the number of clients which receive new updates.
-        type: ["integer", "string", "null"]
-        format: backgroundRate
-        example: 100
-
-      product:
-        description: The product name that the client must send in order for the rule to match. Only full string matches are supported.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 15
-        example: Firefox
-
-      version:
-        description: >
-          The version requirements that the client must meet in order for the rule to match. Exact matches, comma separated lists (eg: "36.0,36.0.1") and comparisons (eg: "<45.0") are allowed.
-        type: ["string", "null"]
-        format: version
-        minLength: 0
-        maxLength: 75
-        example: '36.0'
-
-      channel:
-        description: The update channel that the client must send in order for the rule to match. "*" can be used to glob at the end of the channel name.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 75
-        example: beta
-
-      buildTarget:
-        description: The “build target” that the client must send in order for the rule to match. This is usually related to the target platform the app was built for. Only full string matches are supported.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 75
-        example: Darwin_x86_64-gcc3-u-i386-x86_64
-
-      buildID:
-        description: The build ID requirements that the client must meet in order for the rule to match. Comparisons such as "<20170504030201" may be used.
-        type: ["string", "null"]
-        format: buildID
-        minLength: 0
-        maxLength: 20
-        example: '201410010830'
-
-      locale:
-        description: The locale that the client must send in order for the rule to match. A comma separated list may be used to list multiple locales.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 200
-        example: de
-
-      osVersion:
-        description: >
-          The OS Version requirements that the client must meet in order for the rule to match. && may be used to match multiple substrings at once (eg: "Windows && (websense-"). Commas may be used to match any of a list of substrings.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 1000
-        example: 'Windows_NT 5.0'
-
-      distribution:
-        description: The partner distribution name that the application must send in order for the rule to match.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 100
-        example: default
-
-      distVersion:
-        description: The version of the partner distribution that the application must send in order for the rule to match.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 100
-        example: '1.19'
-
-      headerArchitecture:
-        description: The client architecture (as guessed based on the User Agent) that the client must provide in order for the rule to match. This field is deprecated in favour of build target.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 10
-        example: 'PPC'
-
-      comment:
-        description: A string describing the purpose of the rule. Not always necessary for obvious rules.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 500
-        example: lorem ipso facto
-
-      alias:
-        description: The alias of the rule. This value must be unique across the entire set of rules.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 50
-        pattern: "(^[a-zA-Z][a-zA-Z0-9-]*$|^$)"
-        example: 'firefox-nightly'
-
-      instructionSet:
-        description: >
-          The most modern CPU instruction set that the client must support in order for the rule to match. A comma separated list may be used to list multiple instruction sets.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 1000
-        example: 'SSE'
-
-      memory:
-        description: The amount of RAM, in megabytes, that the client must have for the rule to match. Comparisons such as "<8000" may be used.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 100
-        example: '<8000'
-
-      fallbackMapping:
-        description: The Release to construct an update out of when the user is on the wrong side of a background rate dice roll. This is a foreign key to the “name” column of the Releases table.
-        type: ["string", "null"]
-        minLength: 0
-        maxLength: 100
-        example: null
-
-      mig64:
-        description: Whether or not the Rule should apply to queries that specify their 32 -> 64-bit migration status. If set to false or true, the query and the rule must match precisely. If set to null, the mig64 in the updateQuery is ignored.
-        type: ["boolean", "null"]
-        example: true
 
     #Warning: Do NOT add an example object here. Interferes with Example Value during
     # request generation in Swagger-UI
