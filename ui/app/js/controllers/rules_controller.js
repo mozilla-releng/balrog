@@ -41,6 +41,18 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     .success(function(response) {
       $scope.rules_count = response.count;
 
+      Permissions.getCurrentUser()
+      .success(function(response) {
+        $scope.current_user = response["username"];
+        $scope.user_roles = Object.keys(response["roles"]);
+      })
+      .error(function(response) {
+        sweetAlert(
+          "Failed to load current user Roles:",
+          response
+        );
+      });
+
       Rules.getScheduledChanges(false)
       .success(function(sc_response) {
         response.rules.forEach(function(rule) {
@@ -96,18 +108,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       $scope.loading = false;
     });
   }
-
-  Permissions.getCurrentUser()
-  .success(function(response) {
-    $scope.current_user = response["username"];
-    $scope.user_roles = Object.keys(response["roles"]);
-  })
-  .error(function(response) {
-    sweetAlert(
-      "Failed to load current user Roles:",
-      response
-    );
-  });
 
   $scope.$watch('pr_ch_filter', function(value) {
     if (value) {
