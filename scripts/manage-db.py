@@ -124,7 +124,7 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
     ))
 
     # Extract the entire database schema, without any rows.
-    # This is done to ensure that any the database dump generated can be
+    # This is done to ensure that any database dump generated can be
     # imported to an empty database without issue. From there, a Balrog
     # installation can be upgraded or downgraded to a different database
     # schema version if desired.
@@ -188,6 +188,13 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
             WHERE rules.alias=\'firefox-release\' \
         ) LIMIT 50" >> %s' % (mysql_default_command, database, dump_location))
     )
+
+    # Notably absent from this dump are all Permissions, Roles, and Scheduled
+    # Changes tables. Permissions & Roles are excluded to avoid leaking any
+    # account information from production. Scheduled Changes are not included
+    # to avoid any potential confusion when a dump is imported.
+    # Eg: Scheduled Changes may enact shortly after a user starts their Balrog
+    # instance without any interaction, which would be confusing.
 
 
 def _strip_multiple_spaces(string):
