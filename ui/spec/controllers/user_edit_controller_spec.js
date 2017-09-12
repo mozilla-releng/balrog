@@ -127,7 +127,7 @@ describe("controller: UserPermissionsCtrl", function() {
       expect(this.scope.saving).toEqual(true);
       this.$httpBackend.flush();
       expect(this.scope.saving).toEqual(false);
-      expect(this.scope.user.permissions.length).toEqual(1);
+      expect(this.scope.user.permissions.length).toEqual(2);
       expect(this.scope.saving).toEqual(false);
       expect(this.scope.errors).toEqual({permissions:{}});
     });

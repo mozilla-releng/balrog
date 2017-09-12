@@ -270,15 +270,15 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
     $scope.usersaved = true;
     CSRF.getToken()
     .then(function(csrf_token) {
-      if (!$scope.user.username) {
-        $scope.errors.nullValue = 'The username field cannot be empty';
-        sweetAlert("failed", $scope.errors.nullValue, "error");
-        return false;
-      }
       permission.options = permission.options_as_json;
       Permissions.updatePermission($scope.user.username, permission, csrf_token)
       .success(function(response) {
         permission.data_version = response.new_data_version;
+        $scope.user.permissions.push($scope.permission);
+        $scope.permission = {
+          permission: '',
+          options_as_json: ''
+        };
         $scope.errors = {
             permissions: {}
         };
@@ -287,11 +287,23 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
       .error(function(response) {
         if (typeof response === 'object') {
           $scope.errors.permissions[permission.permission] = response;
-          sweetAlert(
-            "Form submission error",
-            "See fields highlighted in red.",
-            "error"
-          );
+          var permission_found = $scope.user.permissions.filter(function(permission) {
+            return (permission.permission === $scope.permission.permission);
+          });
+          if(permission_found.length){
+            sweetAlert(
+              "Form submission error",
+              "This persmission has already been granted",
+              "error"
+            );
+          }
+          else{
+            sweetAlert(
+              "Form submission error",
+              "Persmissions must be selected",
+              "error"
+            );
+          }
         } else if (typeof response === 'string') {
           // quite possibly an error in the blob validation
           sweetAlert(
