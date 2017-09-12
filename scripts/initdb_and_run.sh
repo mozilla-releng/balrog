@@ -4,7 +4,7 @@ export LOCAL_DUMP="/app/scripts/prod_db_dump.sql"
 
 if [ ! -e /app/.cache/mysql/db.done ]; then
     echo "Initializing DB..."
-    python scripts/import-db.py
+    python scripts/get-prod-db-dump.py
 
     if [ -e "$LOCAL_DUMP" ]; then
       db_source="cat $LOCAL_DUMP"
