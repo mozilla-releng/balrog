@@ -87,7 +87,7 @@ elif [ $1 == "test" ]; then
         fi
     fi
     # Only send coverage data for the authoritative Balrog repo.
-    if [[ $coveralls == 1 && $GITHUB_BASE_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
+    if [[ $coveralls == 1 && $GITHUB_BASE_REPO_URL == "https://github.com/testbhearsum/balrog.git" ]];
     then
         # COVERALLS_REPO_TOKEN is already in the environment
         export CIRCLECI=1
