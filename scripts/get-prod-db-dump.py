@@ -34,7 +34,7 @@ def getRemoteDBModifiedTS():
             debug_msg.format(
                 "Cannot connect to '%s', error: %s"),
             HOST + PATH, e)
-        exit()
+        exit(1)
 
     rsp = conn.getresponse()
 
@@ -42,13 +42,13 @@ def getRemoteDBModifiedTS():
         logging.debug(
             debug_msg.format('Server responded with: %d %s'), rsp.status,
             rsp.reason)
-        exit()
+        exit(1)
 
     last_modified = rsp.getheader('last-modified', None)
     if last_modified is None:
         logging.debug(debug_msg.format(
             'Response doesnt include Last-Modified Header'))
-        exit()
+        exit(1)
 
     last_m_dt = datetime.strptime(
         last_modified.split(', ')[1], '%d %b %Y %H:%M:%S %Z')
@@ -92,7 +92,7 @@ if __name__ == '__main__':
             except (HTTPError, URLError) as e:
                 logging.debug('Downloading the latest database dump failed'
                               'due to network error: %s', e)
-                exit()
+                exit(1)
 
             with open(LOCAL_DB_PATH, 'wb') as f:
                 f.write(rsp.read())
