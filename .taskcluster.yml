@@ -9,7 +9,7 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:coveralls
+      - secrets:get:repo:github.com/testbhearsum/balrog:coveralls
     payload:
       maxRunTime: 1200
       image: "mozillareleases/python-test-runner"
@@ -94,7 +94,7 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+      - secrets:get:repo:github.com/testbhearsum/balrog:dockerhub
     payload:
       maxRunTime: 3600
       image: "taskcluster/image_builder:0.1.3"
@@ -150,7 +150,7 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+      - secrets:get:repo:github.com/testbhearsum/balrog:dockerhub
     payload:
       maxRunTime: 3600
       image: "taskcluster/image_builder:0.1.3"
@@ -178,7 +178,7 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+      - secrets:get:repo:github.com/testbhearsum/balrog:dockerhub
     payload:
       maxRunTime: 3600
       image: "taskcluster/image_builder:0.1.3"
@@ -204,7 +204,7 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+      - secrets:get:repo:github.com/testbhearsum/balrog:dockerhub
     payload:
       maxRunTime: 3600
       image: "taskcluster/image_builder:0.1.3"
