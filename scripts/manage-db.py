@@ -173,13 +173,14 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
             ))
 
     popen("{} >> {}".format(
-        mysql_data_only_command(host, user, password, db, "releases_history --where=\"releases_history.name='Firefox-mozilla-central-nightly-latest' LIMIT 50\""),
+        mysql_data_only_command(host, user, password, db,
+                                "releases_history --where=\"releases_history.name='Firefox-mozilla-central-nightly-latest' ORDER BY timestamp DESC LIMIT 50\""),
         dump_location,
     ))
 
     query = "SELECT rules.mapping FROM rules WHERE rules.alias='firefox-release'"
     popen("{} >> {}".format(
-        mysql_data_only_command(host, user, password, db, 'releases_history --where="name = ({}) LIMIT 50"'.format(query)),
+        mysql_data_only_command(host, user, password, db, 'releases_history --where="name = ({}) ORDER BY timestamp DESC LIMIT 50"'.format(query)),
         dump_location,
     ))
 
