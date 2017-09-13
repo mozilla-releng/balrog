@@ -195,7 +195,7 @@ tasks:
         events:
           - release
     routes:
-      - index.garbage.github.testbhearsum.balrog.releases.{{ event.version }}
+      - index.garbage.github.testbhearsum.balrog.releases.{{ event.version }}.webapps
     metadata:
       name: Balrog Docker Image Creation (release event)
       description: Balrog Docker Image Creation (release event)
@@ -223,7 +223,7 @@ tasks:
         events:
           - release
     routes:
-      - index.garbage.github.testbhearsum.balrog.releases.{{ event.version }}
+      - index.garbage.github.testbhearsum.balrog.releases.{{ event.version }}.agent
     metadata:
       name: Balrog Agent Docker Image Creation (release event)
       description: Balrog Agent Docker Image Creation (release event)
