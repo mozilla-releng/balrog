@@ -13,7 +13,6 @@ from flask import make_response, send_from_directory, Response
 from raven.contrib.flask import Sentry
 
 from auslib.AUS import AUS
-from auslib.web.api_validator import BalrogParameterValidator
 from auslib.util.swagger import SpecBuilder
 
 from auslib.errors import BadDataError
@@ -22,13 +21,8 @@ log = logging.getLogger(__name__)
 AUS = AUS()
 sentry = Sentry()
 
-validator_map = {
-    'parameter': BalrogParameterValidator
-}
-
 connexion_app = connexion.App(__name__,
-                              specification_dir='.',
-                              validator_map=validator_map)
+                              specification_dir='.')
 app = connexion_app.app
 
 current_dir = path.dirname(__file__)
