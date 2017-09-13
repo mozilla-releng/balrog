@@ -1,3 +1,27 @@
+# There's a lot going on in this file, and a lot of duplicated logic across multiple tasks.
+# Here's a summary of what we're doing for CI and Release:
+#  - We run backend, frontend, agent, and client tests on every push
+#    to the master branch, and every pull request.
+#
+#    - Ideally, we'd run tests for pushes to any branch, but every time
+#      a tag is created, it makes a push event that overrides the tests
+#      that already ran on that commit on the master branch. Limiting
+#      push events to the master branch avoids the messiness this
+#      generates.
+#
+#  - We build new docker images upon every push to the master branch.
+#    These show up on Dockerhub with tags that reference the commit.
+#
+#  - We build new docker images upon every Release (the official kind
+#    that are created through the Github UI -- not just tags). These
+#    show up on Dockerhub with tags that reference the Release version.
+#
+# Things we would like to do in the future:
+#  - Block all docker image creation tasks on tests passing. This is blocked
+#    on support for decision tasks (https://bugzilla.mozilla.org/show_bug.cgi?id=1252144).
+#
+#  - Build and publish the client library whenever a Release happens.
+#
 version: 0
 allowPullRequests: public
 metadata:
@@ -30,6 +54,8 @@ tasks:
           - pull_request.synchronize
           - pull_request.reopened
           - push
+        branches:
+          - master
     metadata:
       name: Balrog back-end tests
       description: Balrog Python tests
@@ -57,6 +83,8 @@ tasks:
           - pull_request.synchronize
           - pull_request.reopened
           - push
+        branches:
+          - master
     metadata:
       name: Balrog front-end tests
       description: Balrog JavaScript tests
@@ -84,13 +112,43 @@ tasks:
           - pull_request.synchronize
           - pull_request.reopened
           - push
+        branches:
+          - master
     metadata:
       name: Balrog Agent Tests
       description: Balrog Agent Tests
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
 
-# TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    payload:
+      maxRunTime: 1200
+      image: "mozillareleases/python-test-runner"
+      env:
+        NO_VOLUME_MOUNT: 1
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd client && bash run-tests.sh"
+      features:
+        dind: true
+    extra:
+      github:
+        env: true
+        events:
+          - pull_request.opened
+          - pull_request.synchronize
+          - pull_request.reopened
+          - push
+        branches:
+          - master
+    metadata:
+      name: Balrog Python Client Tests
+      description: Balrog Python Client Tests
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
@@ -118,35 +176,7 @@ tasks:
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
 
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    payload:
-      maxRunTime: 1200
-      image: "mozillareleases/python-test-runner"
-      env:
-        NO_VOLUME_MOUNT: 1
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd client && bash run-tests.sh"
-      features:
-        dind: true
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-    metadata:
-      name: Balrog Python Client Tests
-      description: Balrog Python Client Tests
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
 
-
-# TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
@@ -174,7 +204,6 @@ tasks:
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
 
-# TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
@@ -188,19 +217,21 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog && scripts/push-dockerimage.sh"
+        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog && scripts/push-dockerimage.sh {{ event.version }}"
     extra:
       github:
         env: true
         events:
           - release
+    routes:
+      - index.github.mozilla.balrog.releases.latest.app
+      - index.github.mozilla.balrog.releases.{{ event.version }}.app
     metadata:
       name: Balrog Docker Image Creation (release event)
       description: Balrog Docker Image Creation (release event)
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
 
-# TODO: make this depend on the test task after https://bugzilla.mozilla.org/show_bug.cgi?id=1252144 is fixed
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
@@ -214,12 +245,15 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog/agent && scripts/push-dockerimage.sh"
+        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog/agent && scripts/push-dockerimage.sh {{ event.version }}"
     extra:
       github:
         env: true
         events:
           - release
+    routes:
+      - index.github.mozilla.balrog.releases.latest.agent
+      - index.github.mozilla.balrog.releases.{{ event.version }}.agent
     metadata:
       name: Balrog Agent Docker Image Creation (release event)
       description: Balrog Agent Docker Image Creation (release event)
