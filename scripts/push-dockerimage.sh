@@ -2,6 +2,8 @@
 
 set -e
 
+extra_tag=$1
+
 password_url="taskcluster/secrets/v1/secret/repo:github.com/testbhearsum/balrog:dockerhub"
 artifact_url="taskcluster/queue/v1/task/${TASK_ID}/runs/${RUN_ID}/artifacts/public/docker-image-shasum256.txt"
 artifact_expiry=$(date -d "+1 year" -u +%FT%TZ)
@@ -49,6 +51,11 @@ echo "Pushing Docker image"
 docker push bhearsumtesttest/balrog:${branch_tag}
 docker push bhearsumtesttest/balrog:${date_tag}
 docker push bhearsumtesttest/balrog:${commit_tag}
+
+if [ ! -z $extra_tag ]; then
+  echo "Tagging Docker image with ${extra_tag}"
+  docker tag bhearsumtesttest/balrog:${branch_tag} "bhearsumtesttest/balrog:${extra_tag}"
+  docker push bhearsumtesttest/balrog:${extra_tag}
 
 sha256=$(docker images --no-trunc bhearsumtesttest/balrog | grep "${date_tag}" | awk '/^bhearsumtesttest/ {print $3}')
 echo "SHA256 is ${sha256}, creating artifact for it"

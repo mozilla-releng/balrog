@@ -30,6 +30,8 @@ tasks:
           - pull_request.synchronize
           - pull_request.reopened
           - push
+    routes:
+      - index.github.testbhearsum.balrog.test
     metadata:
       name: Balrog back-end tests
       description: Balrog Python tests
@@ -188,7 +190,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog && scripts/push-dockerimage.sh"
+        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog && scripts/push-dockerimage.sh {{ event.version }}"
     extra:
       github:
         env: true
@@ -214,7 +216,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog/agent && scripts/push-dockerimage.sh"
+        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog/agent && scripts/push-dockerimage.sh {{ event.version }}"
     extra:
       github:
         env: true
