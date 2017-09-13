@@ -10,7 +10,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.pr_ch_options = [];
 
   $scope.currentPage = 1;
-  $scope.pageSize = 20;
+  $scope.pagesize_options = [10, 25, 50, 100]
+  $scope.pageSize = $scope.pagesize_options[0];
   $scope.maxSize = 10;
   $scope.rules = [];
   $scope.pr_ch_filter = "";
@@ -93,6 +94,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
 
   $scope.$watch('ordering_str', function(value) {
     $scope.ordering = value.value.split(',');
+  });
+
+  $scope.$watch('pageSize', function(value) {
+    $scope.pageSize = value;
   });
 
   $scope.$watch('pr_ch_filter', function(value) {
