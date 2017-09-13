@@ -18,7 +18,11 @@ fi
 
 commit=$(git rev-parse HEAD)
 version=$(cat version.txt)
-branch=$(git rev-parse --abbrev-ref HEAD)
+# This is hardcoded because we can't accurately set it programatically for
+# release events, where we've updated to a tag. At the time of writing,
+# we only built docker images for commits to master or release events...
+branch=master
+#branch=$(git rev-parse --abbrev-ref HEAD)
 date=$(date --utc +%Y-%m-%d-%H-%M)
 
 echo "{
@@ -56,6 +60,7 @@ if [ ! -z $extra_tag ]; then
   echo "Tagging Docker image with ${extra_tag}"
   docker tag bhearsumtesttest/balrog:${branch_tag} "bhearsumtesttest/balrog:${extra_tag}"
   docker push bhearsumtesttest/balrog:${extra_tag}
+fi
 
 sha256=$(docker images --no-trunc bhearsumtesttest/balrog | grep "${date_tag}" | awk '/^bhearsumtesttest/ {print $3}')
 echo "SHA256 is ${sha256}, creating artifact for it"
