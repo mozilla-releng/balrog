@@ -38,7 +38,7 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
       data = Helpers.replaceEmptyStrings(data);
       var url = '/api/users/' + encodeURIComponent(username) + '/permissions';
       url += '/' + encodeURIComponent(data.permission);
-      return $http.post(url, data);
+      return $http.put(url, data);
     },
     deletePermission: function(username, data, csrf_token) {
       var url = '/api/users/' + encodeURIComponent(username) + '/permissions';

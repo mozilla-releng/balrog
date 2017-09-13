@@ -8,6 +8,7 @@ class SpecBuilder(OrderedDict):
         self._paths_key = "paths"
         self._definitions_key = "definitions"
         self._parameters_key = "parameters"
+        self._response_key = "responses"
 
     def _load_spec(self, file_name):
         with file(file_name, 'r') as spec_file:
@@ -40,10 +41,12 @@ class SpecBuilder(OrderedDict):
         paths = self._cut_part(spec, self._paths_key)
         definitions = self._cut_part(spec, self._definitions_key)
         parameters = self._cut_part(spec, self._parameters_key)
+        responses = self._cut_part(spec, self._response_key)
 
         self._merge_dict(self, spec)
         self._merge_part(self._paths_key, paths)
         self._merge_part(self._definitions_key, definitions)
         self._merge_part(self._parameters_key, parameters)
+        self._merge_part(self._response_key, responses)
 
         return self

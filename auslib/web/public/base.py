@@ -13,7 +13,6 @@ from flask import make_response, send_from_directory, Response
 from raven.contrib.flask import Sentry
 
 from auslib.AUS import AUS
-from auslib.web.api_validator import BalrogParameterValidator
 from auslib.util.swagger import SpecBuilder
 
 from auslib.errors import BadDataError
@@ -22,20 +21,17 @@ log = logging.getLogger(__name__)
 AUS = AUS()
 sentry = Sentry()
 
-validator_map = {
-    'parameter': BalrogParameterValidator
-}
-
 connexion_app = connexion.App(__name__,
-                              specification_dir='.',
-                              validator_map=validator_map)
+                              specification_dir='.')
 app = connexion_app.app
 
 current_dir = path.dirname(__file__)
 web_dir = path.dirname(auslib.web.__file__)
-spec = SpecBuilder().add_spec(path.join(current_dir, 'api.yml'))\
-                    .add_spec(path.join(web_dir, 'common/releases_spec.yml'))\
-                    .add_spec(path.join(web_dir, 'common/rules_spec.yml'))
+spec = SpecBuilder().add_spec(path.join(current_dir, 'swagger/api.yml'))\
+                    .add_spec(path.join(current_dir, 'swagger/public_api_spec.yml'))\
+                    .add_spec(path.join(web_dir, 'common/swagger/definitions.yml'))\
+                    .add_spec(path.join(web_dir, 'common/swagger/parameters.yml'))\
+                    .add_spec(path.join(web_dir, 'common/swagger/responses.yml'))
 connexion_app.add_api(spec,
                       validate_responses=True,
                       strict_validation=True)

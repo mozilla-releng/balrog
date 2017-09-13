@@ -77,7 +77,7 @@ describe("Service: Permissions", function() {
   }));
 
   it('should be able to update a user permission', inject(function(Permissions) {
-    this.$httpBackend.expectPOST('/api/users/peterbe/permissions/admin')
+    this.$httpBackend.expectPUT('/api/users/peterbe/permissions/admin')
     .respond(200, JSON.stringify({new_data_version: 2}));
     Permissions.updatePermission('peterbe', {permission: 'admin'}, 'mytoken')
     .success(function(response) {

@@ -28,6 +28,7 @@ class TestPublicRulesAPI(CommonTestBase):
         got = json.loads(ret.data)
         self.assertTrue(got, "Rule not found by rule_id={}".format(rule_id))
         self.assertEqual(ret.headers['X-Data-Version'], '1')
+        self.assertNotIn('X-CSRF-Token', ret.headers)
         self.assertEqual(got["rule_id"], rule_id)
         self.assertEqual(got["mapping"], "Firefox.55.0a1")
         self.assertEqual(got["product"], "Firefox")
