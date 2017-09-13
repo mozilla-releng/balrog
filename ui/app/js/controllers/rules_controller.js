@@ -99,6 +99,17 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     $scope.pr_ch_selected = value.split(',');
   });
 
+  $scope.locationChanger = function() {
+    var pr_ch_array = $scope.pr_ch_filter.split(',');
+    if (pr_ch_array[0].toLowerCase() === "all rules" || $scope.rule_id) {
+      $location.path('/rules');
+    } else if (pr_ch_array && pr_ch_array.length > 1) {
+      $location.path('/rules/' + pr_ch_array[0] + '/' + pr_ch_array[1]);
+    } else {
+      $location.path('/rules/' + pr_ch_array[0]);
+    }
+  };
+
   if ($scope.rule_id) {
     $scope.ordering_options = [
       {

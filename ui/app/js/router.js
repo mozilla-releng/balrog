@@ -74,6 +74,12 @@ angular.module("app").config(function($routeProvider, $locationProvider) {
     reloadOnSearch: false
   })
 
+  .when('/rules/:id/:pr_ch_filter', {
+    templateUrl: 'rules.html',
+    controller: 'RulesController',
+    reloadOnSearch: false
+  })
+
   .when('/required_signoffs', {
     templateUrl: 'required_signoffs.html',
     controller: 'RequiredSignoffsController',
