@@ -30,8 +30,6 @@ tasks:
           - pull_request.synchronize
           - pull_request.reopened
           - push
-    routes:
-      - index.garbage.github.testbhearsum.balrog.test
     metadata:
       name: Balrog back-end tests
       description: Balrog Python tests
@@ -196,6 +194,8 @@ tasks:
         env: true
         events:
           - release
+    routes:
+      - index.garbage.github.testbhearsum.balrog.releases.{{ event.version }}
     metadata:
       name: Balrog Docker Image Creation (release event)
       description: Balrog Docker Image Creation (release event)
@@ -222,6 +222,8 @@ tasks:
         env: true
         events:
           - release
+    routes:
+      - index.garbage.github.testbhearsum.balrog.releases.{{ event.version }}
     metadata:
       name: Balrog Agent Docker Image Creation (release event)
       description: Balrog Agent Docker Image Creation (release event)
