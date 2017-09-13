@@ -93,6 +93,16 @@ def chunk_list(list_object, n):
         yield list_object[i:i + n]
 
 
+def mysql_command(host, user, password, db, cmd):
+    # --protocol=tcp prevent's a socket from being used, so that balrogdb
+    # in docker can be called from localhost (via port forwarding for instance)
+    return "mysqldump -h {} -u {} -p{} --protocol=tcp --single-transaction --lock-tables=false {} {}".format(host, user, password, db, cmd)
+
+
+def mysql_data_only_command(host, user, password, db, cmd):
+    return mysql_command(host, user, password, db, "--skip-add-drop-table --no-create-info {}".format(cmd))
+
+
 def extract_active_data(trans, url, dump_location='dump.sql'):
     """
     Stores sqldump data in the specified location. If not specified, stores it in current directory in file dump.sql
@@ -108,78 +118,78 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
     user = url.username
     password = url.password
     host = url.host
-    database = url.database
-    port = url.port
+    db = url.database
 
-    mysql_default_command = ' '.join((
-        'mysqldump',
-        '-h %s' % host,
-        '-u %s' % user,
-        '-p%s' % password,
-        '' if port is None else '-P %s' % port,
-        # Prevent socket from being used, so that balrogdb in docker can be called from localhost (via port forwarding for instance)
-        '--protocol=tcp',
-        '--single-transaction',
-        '--lock-tables=false',
+    # Extract the entire database schema, without any rows.
+    # This is done to ensure that any database dump generated can be
+    # imported to an empty database without issue. From there, a Balrog
+    # installation can be upgraded or downgraded to a different database
+    # schema version if desired.
+    # See https://bugzilla.mozilla.org/show_bug.cgi?id=1376331 for additional
+    # background on this.
+    popen("{} > {}".format(
+        mysql_command(host, user, password, db, "--no-data"),
+        dump_location,
     ))
 
-    popen(
-        _strip_multiple_spaces('%s %s dockerflow rules rules_history migrate_version  > %s' % (mysql_default_command, database, dump_location))
-    )
+    # Now extract the data we actually want....
+    # We always want all the data from a few tables...
+    popen("{} >> {}".format(
+        mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version"),
+        dump_location,
+    ))
 
-    popen(
-        _strip_multiple_spaces('%s %s releases --where="EXISTS ( \
-            SELECT * \
-            FROM rules, rules_scheduled_changes \
-            WHERE releases.name IN ( \
-                rules.mapping, \
-                rules.fallbackMapping, \
-                rules_scheduled_changes.base_mapping, \
-                rules_scheduled_changes.base_fallbackMapping) \
-            )" \
-        >> %s' % (mysql_default_command, database, dump_location))
-    )
-
-    popen(
-        _strip_multiple_spaces('%s %s releases_history --where="releases_history.name=\'Firefox-mozilla-central-nightly-latest\' \
-        limit 50" >> %s' % (mysql_default_command, database, dump_location))
-    )
-
-    popen(
-        _strip_multiple_spaces('%s --skip-add-drop-table --no-create-info %s releases_history --where "name = ( \
-            SELECT rules.mapping \
-            FROM rules \
-            WHERE rules.alias=\'firefox-release\' \
-        ) LIMIT 50" >> %s' % (mysql_default_command, database, dump_location))
-    )
-
+    # Because Releases are so massive, we only want the actively used ones,
+    # and very little Release history. Specifically:
+    #   - All releases referenced by a Rule or a Scheduled Rule Change
+    #   - All releases referenced by a Release from the above query
+    #   - 50 rows of history for the "Firefox-mozilla-central-nightly-latest" Release
+    #   - Full history for the Release currently referenced by the "firefox-release" Rule.
     query_release_mapping = """SELECT DISTINCT releases.* \
         FROM releases, rules, rules_scheduled_changes \
-        WHERE releases.name IN ( \
+        WHERE rules_scheduled_changes.complete = 0 AND releases.name IN ( \
             rules.mapping, \
             rules.fallbackMapping, \
             rules_scheduled_changes.base_mapping, \
             rules_scheduled_changes.base_fallbackMapping \
-            )"""
+        )"""
 
     result = trans.execute(query_release_mapping).fetchall()
-    partial_release_names = set()
     release_names = set()
     for row in result:
         try:
             release_names.add(str(row['name']))
             release_blob = createBlob(row['data'])
-            partial_release_names.update(release_blob.getReferencedReleases())
+            release_names.update(release_blob.getReferencedReleases())
         except ValueError:
             continue
-    partial_release_names.difference_update(release_names)
-    if partial_release_names:
-        batch_generator = chunk_list(list(partial_release_names), 30)
-        for batched_partial_release_list in batch_generator:
-            qry = ", ".join("'" + release_names + "'" for release_names in batched_partial_release_list)
-            popen(_strip_multiple_spaces('%s --skip-add-drop-table --no-create-info %s '
-                                         'releases --where="releases.name IN (%s)" \
-                   >> %s' % (mysql_default_command, database, qry, dump_location)))
+    if release_names:
+        batch_generator = chunk_list(list(release_names), 30)
+        for batched_release_list in batch_generator:
+            query = ", ".join("'" + names + "'" for names in batched_release_list)
+            popen("{} >> {}".format(
+                mysql_data_only_command(host, user, password, db, 'releases --where="releases.name IN ({})"'.format(query)),
+                dump_location,
+            ))
+
+    popen("{} >> {}".format(
+        mysql_data_only_command(host, user, password, db,
+                                "releases_history --where=\"releases_history.name='Firefox-mozilla-central-nightly-latest' ORDER BY timestamp DESC LIMIT 50\""),
+        dump_location,
+    ))
+
+    query = "SELECT rules.mapping FROM rules WHERE rules.alias='firefox-release'"
+    popen("{} >> {}".format(
+        mysql_data_only_command(host, user, password, db, 'releases_history --where="name = ({}) ORDER BY timestamp DESC LIMIT 50"'.format(query)),
+        dump_location,
+    ))
+
+    # Notably absent from this dump are all Permissions, Roles, and Scheduled
+    # Changes tables. Permissions & Roles are excluded to avoid leaking any
+    # account information from production. Scheduled Changes are not included
+    # to avoid any potential confusion when a dump is imported.
+    # Eg: Scheduled Changes may enact shortly after a user starts their Balrog
+    # instance without any interaction, which would be confusing.
 
 
 def _strip_multiple_spaces(string):
