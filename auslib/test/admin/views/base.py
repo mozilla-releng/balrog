@@ -94,7 +94,8 @@ class ViewTest(unittest.TestCase):
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }

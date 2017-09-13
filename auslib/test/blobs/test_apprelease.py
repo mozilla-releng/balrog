@@ -194,6 +194,46 @@ class TestReleaseBlobV1(unittest.TestCase):
         }
         """)
 
+    def testValidateHashLength(self):
+        blob = ReleaseBlobV1()
+        blob.loadJSON("""
+        {
+            "name": "j1",
+            "schema_version": 1,
+            "hashFunction": "sha512",
+            "fileUrls": {
+                "c1": "http://a.com/%FILENAME%"
+            },
+            "ftpFilenames": {
+                "partial": "j1-partial.mar",
+                "complete": "complete.mar"
+            },
+            "platforms": {
+                "p": {
+                    "buildID": 31,
+                    "OS_FTP": "o",
+                    "OS_BOUNCER": "o",
+                    "locales": {
+                        "en-GB": {
+                            "partial": {
+                                "filesize": 6,
+                                "from": "samplePartial4",
+                                "hashValue": "5"
+                            },
+                            "complete": {
+                                "filesize": 38,
+                                "from": "*",
+                                "hashValue": "34"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        """)
+        self.assertRaisesRegexp(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+                                blob.validate, 'a', self.whitelistedDomains)
+
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
@@ -313,7 +353,8 @@ class TestOldVersionSpecialCases(unittest.TestCase):
                     "complete": {
                         "filesize": 1,
                         "from": "*",
-                        "hashValue": "1",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/a"
                     }
                 }
@@ -341,7 +382,8 @@ class TestOldVersionSpecialCases(unittest.TestCase):
 <update type="minor" version="2.0.0.20" buildID="1" detailsURL="http://example.org/details">
 """
         expected = ["""
-<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="1"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -364,7 +406,8 @@ class TestOldVersionSpecialCases(unittest.TestCase):
 <update type="minor" version="3.0.9" buildID="1" detailsURL="http://example.org/details">
 """
         expected = ["""
-<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="1"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -387,7 +430,8 @@ class TestOldVersionSpecialCases(unittest.TestCase):
 <update type="minor" version="12.0" buildID="1" detailsURL="http://example.org/details">
 """
         expected = ["""
-<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="1"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -410,7 +454,8 @@ class TestOldVersionSpecialCases(unittest.TestCase):
 <update type="minor" version="12.0" extensionVersion="3.6" buildID="1" detailsURL="http://example.org/details">
 """
         expected = ["""
-<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
+<patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="1"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -671,12 +716,14 @@ class TestSchema2Blob(unittest.TestCase):
                     "partial": {
                         "filesize": 6,
                         "from": "j1",
-                        "hashValue": "5"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdaacdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     },
                     "complete": {
                         "filesize": 38,
                         "from": "*",
-                        "hashValue": "34"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcaabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -718,7 +765,8 @@ class TestSchema2Blob(unittest.TestCase):
                     "complete": {
                         "filesize": 40,
                         "from": "*",
-                        "hashValue": "35"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+ccdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 },
                 "l2": {
@@ -726,7 +774,8 @@ class TestSchema2Blob(unittest.TestCase):
                     "complete": {
                         "filesize": 50,
                         "from": "*",
-                        "hashValue": "45"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -818,6 +867,49 @@ class TestSchema2Blob(unittest.TestCase):
                 }
                 """)
 
+    def testValidateHashLength(self):
+        blob = ReleaseBlobV2()
+        blob.loadJSON("""
+{
+    "name": "j2",
+    "schema_version": 2,
+    "hashFunction": "sha512",
+    "appVersion": "40.0",
+    "displayVersion": "40.0",
+    "platformVersion": "40.0",
+    "fileUrls": {
+        "c1": "http://a.com/%FILENAME%"
+    },
+    "ftpFilenames": {
+        "partial": "j1-partial.mar",
+        "complete": "complete.mar"
+    },
+    "platforms": {
+        "p": {
+            "buildID": 30,
+            "OS_FTP": "o",
+            "OS_BOUNCER": "o",
+            "locales": {
+                "l": {
+                    "partial": {
+                        "filesize": 6,
+                        "from": "j1",
+                        "hashValue": "12"
+                    },
+                    "complete": {
+                        "filesize": 38,
+                        "from": "*",
+                        "hashValue": "40"
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+        self.assertRaisesRegexp(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+                                blob.validate, 'k', self.whitelistedDomains)
+
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
@@ -845,7 +937,8 @@ class TestSchema2Blob(unittest.TestCase):
 <update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="34" size="38"/>
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcaabcdabcdabcdabcdabcdabcd" size="38"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -868,9 +961,11 @@ class TestSchema2Blob(unittest.TestCase):
 <update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="34" size="38"/>
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcaabcdabcdabcdabcdabcdabcd" size="38"/>
 """, """
-<patch type="partial" URL="http://a.com/j1-partial.mar" hashFunction="sha512" hashValue="5" size="6"/>
+<patch type="partial" URL="http://a.com/j1-partial.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdaacdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="6"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -895,7 +990,8 @@ class TestSchema2Blob(unittest.TestCase):
             'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
             'alertURL="http://example.org/alert/l">'
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="35" size="40"/>
+<patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+ccdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="40"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -920,7 +1016,8 @@ class TestSchema2Blob(unittest.TestCase):
             'showNeverForVersion="true" actions="silent" openURL="http://example.org/url/l2" ' \
             'notificationURL="http://example.org/notification/l2" alertURL="http://example.org/alert/l2">'
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="45" size="50"/>
+<patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="50"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -980,13 +1077,15 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
                     "partial": {
                         "filesize": 3,
                         "from": "j1",
-                        "hashValue": "4",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://a.com/p"
                     },
                     "complete": {
                         "filesize": 5,
                         "from": "*",
-                        "hashValue": "6",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabccabcdabcd",
                         "fileUrl": "http://a.com/c"
                     }
                 }
@@ -1015,7 +1114,8 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 <update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="6" size="5"/>
+<patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabccabcdabcd" size="5"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1038,9 +1138,11 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 <update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="6" size="5"/>
+<patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabccabcdabcd" size="5"/>
 """, """
-<patch type="partial" URL="http://a.com/p" hashFunction="sha512" hashValue="4" size="3"/>
+<patch type="partial" URL="http://a.com/p" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="3"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1116,13 +1218,15 @@ class TestSchema3Blob(unittest.TestCase):
                         {
                             "filesize": 2,
                             "from": "f1",
-                            "hashValue": "3",
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdcbcdabcd",
                             "fileUrl": "http://a.com/p1"
                         },
                         {
                             "filesize": 4,
                             "from": "f2",
-                            "hashValue": "5",
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                             "fileUrl": "http://a.com/p2"
                         }
                     ],
@@ -1130,13 +1234,15 @@ class TestSchema3Blob(unittest.TestCase):
                         {
                             "filesize": 29,
                             "from": "f2",
-                            "hashValue": "6",
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcc",
                             "fileUrl": "http://a.com/c1"
                         },
                         {
                             "filesize": 30,
                             "from": "*",
-                            "hashValue": "31",
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabccabcd",
                             "fileUrl": "http://a.com/c2"
                         }
                     ]
@@ -1146,7 +1252,8 @@ class TestSchema3Blob(unittest.TestCase):
                         {
                             "filesize": 32,
                             "from": "*",
-                            "hashValue": "33",
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabca",
                             "fileUrl": "http://a.com/c2m"
                         }
                     ]
@@ -1210,14 +1317,16 @@ class TestSchema3Blob(unittest.TestCase):
                         {
                             "filesize": 4,
                             "from": "g1",
-                            "hashValue": "5"
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                         }
                     ],
                     "completes": [
                         {
                             "filesize": 34,
                             "from": "*",
-                            "hashValue": "35"
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcc"
                         }
                     ]
                 }
@@ -1291,6 +1400,58 @@ class TestSchema3Blob(unittest.TestCase):
             }
         }
         """)
+
+    def testValidateHashLength(self):
+        blob = ReleaseBlobV3()
+        blob.loadJSON("""
+        {
+            "name": "f3",
+            "schema_version": 3,
+            "hashFunction": "sha512",
+            "appVersion": "25.0",
+            "displayVersion": "25.0",
+            "platformVersion": "25.0",
+            "platforms": {
+                "p": {
+                    "buildID": 29,
+                    "locales": {
+                        "l": {
+                            "partials": [
+                                {
+                                    "filesize": 2,
+                                    "from": "g1",
+                                    "hashValue": "3",
+                                    "fileUrl": "http://a.com/p1"
+                                },
+                                {
+                                    "filesize": 4,
+                                    "from": "g1",
+                                    "hashValue": "5",
+                                    "fileUrl": "http://a.com/p2"
+                                }
+                            ],
+                            "completes": [
+                                {
+                                    "filesize": 29,
+                                    "from": "f2",
+                                    "hashValue": "6",
+                                    "fileUrl": "http://a.com/c1"
+                                },
+                                {
+                                    "filesize": 30,
+                                    "from": "*",
+                                    "hashValue": "31",
+                                    "fileUrl": "http://a.com/c2"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+        """)
+        self.assertRaisesRegexp(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+                                blob.validate, 'f', self.whitelistedDomains)
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlobV3.getReferencedReleases()
@@ -1374,9 +1535,11 @@ class TestSchema3Blob(unittest.TestCase):
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="31" size="30"/>
+<patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabccabcd" size="30"/>
 """, """
-<patch type="partial" URL="http://a.com/p1" hashFunction="sha512" hashValue="3" size="2"/>
+<patch type="partial" URL="http://a.com/p1" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdcbcdabcd" size="2"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1398,9 +1561,11 @@ class TestSchema3Blob(unittest.TestCase):
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/c1" hashFunction="sha512" hashValue="6" size="29"/>
+<patch type="complete" URL="http://a.com/c1" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcc" size="29"/>
 """, """
-<patch type="partial" URL="http://a.com/p2" hashFunction="sha512" hashValue="5" size="4"/>
+<patch type="partial" URL="http://a.com/p2" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="4"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1423,7 +1588,8 @@ class TestSchema3Blob(unittest.TestCase):
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="31" size="30"/>
+<patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabccabcd" size="30"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1446,7 +1612,8 @@ class TestSchema3Blob(unittest.TestCase):
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/c2m" hashFunction="sha512" hashValue="33" size="32"/>
+<patch type="complete" URL="http://a.com/c2m" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabca" size="32"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1469,9 +1636,11 @@ class TestSchema3Blob(unittest.TestCase):
 <update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="35" size="34"/>
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcc" size="34"/>
 """, """
-<patch type="partial" URL="http://a.com/g1-partial.mar" hashFunction="sha512" hashValue="5" size="4"/>
+<patch type="partial" URL="http://a.com/g1-partial.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="4"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1494,9 +1663,11 @@ class TestSchema3Blob(unittest.TestCase):
 <update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/complete" hashFunction="sha512" hashValue="35" size="34"/>
+<patch type="complete" URL="http://a.com/complete" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcc" size="34"/>
 """, """
-<patch type="partial" URL="http://a.com/g1-partial" hashFunction="sha512" hashValue="5" size="4"/>
+<patch type="partial" URL="http://a.com/g1-partial" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="4"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1611,19 +1782,22 @@ class TestSchema4Blob(unittest.TestCase):
                         {
                             "filesize": 6,
                             "from": "h2",
-                            "hashValue": "7"
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabca"
                         },
                         {
                             "filesize": 8,
                             "from": "h1",
-                            "hashValue": "9"
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                         }
                     ],
                     "completes": [
                         {
                             "filesize": 40,
                             "from": "*",
-                            "hashValue": "41"
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb"
                         }
                     ]
                 }
@@ -1708,6 +1882,86 @@ class TestSchema4Blob(unittest.TestCase):
     }
 }
 """)
+
+    def testValidateHashLength(self):
+        blob = ReleaseBlobV4()
+        blob.loadJSON("""
+{
+    "name": "h3",
+    "schema_version": 4,
+    "hashFunction": "sha512",
+    "appVersion": "32.0",
+    "displayVersion": "32.0",
+    "platformVersion": "32.0",
+    "fileUrls": {
+        "c1": {
+            "partials": {
+                "h1": "http://a.com/h1-partial.mar",
+                "h2": "http://a.com/h2-partial.mar"
+            },
+            "completes": {
+                "*": "http://a.com/complete.mar"
+            }
+        },
+        "c2": {
+            "partials": {
+                "h1": "http://a.com/h1-%LOCALE%-partial",
+                "h2": "http://a.com/h2-%LOCALE%-partial"
+            },
+            "completes": {
+                "*": "http://a.com/%LOCALE%-complete"
+            }
+        },
+        "*": {
+            "partials": {
+                "h0": "http://a.com/h0-partial-catchall.mar",
+                "h1": "http://a.com/h1-partial-catchall",
+                "h2": "http://a.com/h2-partial-catchall"
+            },
+            "completes": {
+                "*": "http://a.com/complete-catchall"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 500,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 60,
+                            "from": "h2",
+                            "hashValue": "70"
+                        },
+                        {
+                            "filesize": 80,
+                            "from": "h1",
+                            "hashValue": "90"
+                        },
+                        {
+                            "filesize": 90,
+                            "from": "h0",
+                            "hashValue": "100"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 400,
+                            "from": "*",
+                            "hashValue": "410"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        self.assertRaisesRegexp(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+                                blob.validate, 'g', self.whitelistedDomains)
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         sample_release_blob_v4 = ReleaseBlobV4()
@@ -1894,9 +2148,11 @@ class TestSchema4Blob(unittest.TestCase):
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb" size="40"/>
 """, """
-<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
+<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="8"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1918,9 +2174,11 @@ class TestSchema4Blob(unittest.TestCase):
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="41" size="40"/>
+<patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb" size="40"/>
 """, """
-<patch type="partial" URL="http://a.com/h1-l-partial" hashFunction="sha512" hashValue="9" size="8"/>
+<patch type="partial" URL="http://a.com/h1-l-partial" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="8"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1942,9 +2200,11 @@ class TestSchema4Blob(unittest.TestCase):
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>
+<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb" size="40"/>
 """, """
-<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>
+<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd" size="8"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1967,7 +2227,8 @@ class TestSchema4Blob(unittest.TestCase):
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb" size="40"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -1989,7 +2250,8 @@ class TestSchema4Blob(unittest.TestCase):
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="41" size="40"/>
+<patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb" size="40"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -2011,7 +2273,8 @@ class TestSchema4Blob(unittest.TestCase):
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>
+<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb" size="40"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -2120,7 +2383,8 @@ class TestSchema4Blob(unittest.TestCase):
                         {
                             "filesize": 4,
                             "from": "g1",
-                            "hashValue": "5",
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+acdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                             "fileUrl": "http://a.com/g1-partial"
                         }
                     ],
@@ -2128,7 +2392,8 @@ class TestSchema4Blob(unittest.TestCase):
                         {
                             "filesize": 34,
                             "from": "*",
-                            "hashValue": "35",
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                             "fileUrl": "http://a.com/complete"
                         }
                     ]
@@ -2247,14 +2512,16 @@ class TestSchema5Blob(unittest.TestCase):
                         {
                             "filesize": 8,
                             "from": "h1",
-                            "hashValue": "9"
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdcbcdabcdabcdabcdabca"
                         }
                     ],
                     "completes": [
                         {
                             "filesize": 40,
                             "from": "*",
-                            "hashValue": "41"
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb"
                         }
                     ]
                 }
@@ -2263,6 +2530,74 @@ class TestSchema5Blob(unittest.TestCase):
     }
 }
 """)
+
+    def testValidateHashLength(self):
+        blob = ReleaseBlobV5()
+        blob.loadJSON("""
+{
+    "name": "h2",
+    "schema_version": 5,
+    "hashFunction": "sha512",
+    "appVersion": "31.0",
+    "displayVersion": "31.0",
+    "platformVersion": "31.0",
+    "detailsUrl": "http://example.org/details/%LOCALE%",
+    "licenseUrl": "http://example.org/license/%LOCALE%",
+    "actions": "silent",
+    "billboardURL": "http://example.org/billboard/%LOCALE%",
+    "openURL": "http://example.org/url/%LOCALE%",
+    "notificationURL": "http://example.org/notification/%LOCALE%",
+    "alertURL": "http://example.org/alert/%LOCALE%",
+    "showPrompt": false,
+    "showNeverForVersion": true,
+    "promptWaitTime": 12345,
+    "fileUrls": {
+        "c1": {
+            "partials": {
+                "h1": "http://a.com/h1-partial.mar"
+            },
+            "completes": {
+                "*": "http://a.com/complete.mar"
+            }
+        },
+        "*": {
+            "partials": {
+                "h1": "http://a.com/h1-partial-catchall"
+            },
+            "completes": {
+                "*": "http://a.com/complete-catchall"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 50,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "12"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "35"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        self.assertRaisesRegexp(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+                                blob.validate, 'h', self.whitelistedDomains)
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         sample_release_blob_v5 = ReleaseBlobV5()
@@ -2443,9 +2778,11 @@ class TestSchema5Blob(unittest.TestCase):
             'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
             'alertURL="http://example.org/alert/l" promptWaitTime="12345">'
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb" size="40"/>
 """, """
-<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
+<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdcbcdabcdabcdabcdabca" size="8"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -2523,14 +2860,16 @@ class TestSchema6Blob(unittest.TestCase):
                         {
                             "filesize": 8,
                             "from": "h1",
-                            "hashValue": "9"
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabca"
                         }
                     ],
                     "completes": [
                         {
                             "filesize": 40,
                             "from": "*",
-                            "hashValue": "41"
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb"
                         }
                     ]
                 }
@@ -2539,6 +2878,71 @@ class TestSchema6Blob(unittest.TestCase):
     }
 }
 """)
+
+    def testValidateHashLength(self):
+        blob = ReleaseBlobV6()
+        blob.loadJSON("""
+{
+    "name": "h2",
+    "schema_version": 6,
+    "hashFunction": "sha512",
+    "appVersion": "31.0",
+    "displayVersion": "31.0",
+    "detailsUrl": "http://example.org/details/%LOCALE%",
+    "actions": "silent",
+    "openURL": "http://example.org/url/%LOCALE%",
+    "notificationURL": "http://example.org/notification/%LOCALE%",
+    "alertURL": "http://example.org/alert/%LOCALE%",
+    "showPrompt": false,
+    "showNeverForVersion": true,
+    "promptWaitTime": 12345,
+    "fileUrls": {
+        "c1": {
+            "partials": {
+                "h1": "http://a.com/h1-partial.mar"
+            },
+            "completes": {
+                "*": "http://a.com/complete.mar"
+            }
+        },
+        "*": {
+            "partials": {
+                "h1": "http://a.com/h1-partial-catchall"
+            },
+            "completes": {
+                "*": "http://a.com/complete-catchall"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 50,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "26"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "21"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        self.assertRaisesRegexp(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+                                blob.validate, 'h', self.whitelistedDomains)
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         sample_release_blob_v6 = ReleaseBlobV6()
@@ -2644,9 +3048,11 @@ class TestSchema6Blob(unittest.TestCase):
             'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
             'alertURL="http://example.org/alert/l" promptWaitTime="12345">'
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb" size="40"/>
 """, """
-<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
+<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabca" size="8"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -2792,14 +3198,16 @@ class TestSchema7Blob(unittest.TestCase):
                         {
                             "filesize": 8,
                             "from": "h1",
-                            "hashValue": "9"
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabca"
                         }
                     ],
                     "completes": [
                         {
                             "filesize": 40,
                             "from": "*",
-                            "hashValue": "41"
+                            "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb"
                         }
                     ]
                 }
@@ -2808,6 +3216,72 @@ class TestSchema7Blob(unittest.TestCase):
     }
 }
 """)
+
+    def testValidateHashLength(self):
+        blob = ReleaseBlobV7()
+        blob.loadJSON("""
+{
+    "name": "h2",
+    "schema_version": 7,
+    "hashFunction": "sha512",
+    "appVersion": "31.0",
+    "displayVersion": "31.0",
+    "detailsUrl": "http://example.org/details/%LOCALE%",
+    "actions": "silent",
+    "openURL": "http://example.org/url/%LOCALE%",
+    "notificationURL": "http://example.org/notification/%LOCALE%",
+    "alertURL": "http://example.org/alert/%LOCALE%",
+    "showPrompt": false,
+    "showNeverForVersion": true,
+    "promptWaitTime": 12345,
+    "backgroundInterval": 123,
+    "fileUrls": {
+        "c1": {
+            "partials": {
+                "h1": "http://a.com/h1-partial.mar"
+            },
+            "completes": {
+                "*": "http://a.com/complete.mar"
+            }
+        },
+        "*": {
+            "partials": {
+                "h1": "http://a.com/h1-partial-catchall"
+            },
+            "completes": {
+                "*": "http://a.com/complete-catchall"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 50,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "32"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "8"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        self.assertRaisesRegexp(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+                                blob.validate, 'h', self.whitelistedDomains)
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         sample_release_blob_v7 = ReleaseBlobV7()
@@ -2896,9 +3370,11 @@ class TestSchema7Blob(unittest.TestCase):
             'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
             'alertURL="http://example.org/alert/l" promptWaitTime="12345" backgroundInterval="123">'
         expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcb" size="40"/>
 """, """
-<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
+<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabca" size="8"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"

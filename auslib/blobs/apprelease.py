@@ -1,5 +1,6 @@
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
+from auslib.util.hashes import getHashLen
 from auslib.blobs.base import Blob
 from auslib.errors import BadDataError
 from auslib.util.versions import MozillaVersion
@@ -9,6 +10,22 @@ class ReleaseBlobBase(Blob):
 
     def __init__(self, **kwargs):
         Blob.__init__(self, **kwargs)
+
+    def validate(self, product, whitelistedDomains):
+        Blob.validate(self, product, whitelistedDomains)
+        requiredLen = getHashLen(self["hashFunction"])
+        for platform in self.get("platforms", {}).values():
+            for locale in platform.get("locales", {}).values():
+                for partial in locale.get("partials", {}):
+                    actualLen = len(partial["hashValue"])
+                    if actualLen != requiredLen:
+                        raise ValueError("The hashValue length is different from the required length of {} for {}."
+                                         .format(getHashLen(self["hashFunction"]), self["hashFunction"].lower()))
+                for complete in locale.get("completes", {}):
+                    actualLen = len(complete["hashValue"])
+                    if actualLen != requiredLen:
+                        raise ValueError("The hashValue length is different from the required length of {} for {}."
+                                         .format(getHashLen(self["hashFunction"]), self["hashFunction"].lower()))
 
     def matchesUpdateQuery(self, updateQuery):
         self.log.debug("Trying to match update query to %s" % self["name"])
@@ -309,6 +326,22 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         if 'schema_version' not in self.keys():
             self['schema_version'] = 1
 
+    def validate(self, product, whitelistedDomains):
+        Blob.validate(self, product, whitelistedDomains)
+        requiredLen = getHashLen(self["hashFunction"])
+        for platform in self.get("platforms", {}).values():
+            for locale in platform.get("locales", {}).values():
+                if "partial" in locale:
+                    actualLen = len(locale["partial"]["hashValue"])
+                    if actualLen != requiredLen:
+                        raise ValueError("The hashValue length is different from the required length of {} for {}."
+                                         .format(getHashLen(self["hashFunction"]), self["hashFunction"].lower()))
+                if "complete" in locale:
+                    actualLen = len(locale["complete"]["hashValue"])
+                    if actualLen != requiredLen:
+                        raise ValueError("The hashValue length is different from the required length of {} for {}."
+                                         .format(getHashLen(self["hashFunction"]), self["hashFunction"].lower()))
+
     def getAppv(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'appv')
 
@@ -519,6 +552,22 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 2
+
+    def validate(self, product, whitelistedDomains):
+        Blob.validate(self, product, whitelistedDomains)
+        requiredLen = getHashLen(self["hashFunction"])
+        for platform in self.get("platforms", {}).values():
+            for locale in platform.get("locales", {}).values():
+                if "partial" in locale:
+                    actualLen = len(locale["partial"]["hashValue"])
+                    if actualLen != requiredLen:
+                        raise ValueError("The hashValue length is different from the required length of {} for {}."
+                                         .format(getHashLen(self["hashFunction"]), self["hashFunction"].lower()))
+                if "complete" in locale:
+                    actualLen = len(locale["complete"]["hashValue"])
+                    if actualLen != requiredLen:
+                        raise ValueError("The hashValue length is different from the required length of {} for {}."
+                                         .format(getHashLen(self["hashFunction"]), self["hashFunction"].lower()))
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
     # converted to unit tests.

@@ -85,6 +85,40 @@ class TestSchema1Blob(unittest.TestCase):
 }
 """)
 
+    def testValidateHashLength(self):
+        blob = SystemAddonsBlob()
+        blob.whitelistedDomains = {"a.com": ('gg',), 'boring.com': ('gg',)}
+        blob.loadJSON("""
+{
+    "name": "fake",
+    "schema_version": 5000,
+    "hashFunction": "SHA512",
+    "addons": {
+        "c": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                    "filesize": 2,
+                    "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                    "fileUrl": "http://a.com/blah"
+                },
+                "q": {
+                    "filesize": 4,
+                    "hashValue": "5",
+                    "fileUrl": "http://boring.com/blah"
+                },
+                "q2": {
+                    "alias": "q"
+                }
+            }
+        }
+    }
+}
+""")
+        self.assertRaisesRegexp(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+                                blob.validate, 'gg', self.whitelistedDomains)
+
     def testXML(self):
         updateQuery = {
             "product": "gg", "version": "3", "buildID": "1",
@@ -286,7 +320,8 @@ class TestSchema1Blob(unittest.TestCase):
                     },
                     "q": {
                         "filesize": 2,
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }
@@ -314,7 +349,8 @@ class TestSchema1Blob(unittest.TestCase):
                     },
                     "q": {
                         "filesize": 2,
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }
@@ -361,7 +397,8 @@ class TestSchema1Blob(unittest.TestCase):
                     "p": {},
                     "q": {
                         "filesize": 2,
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }
@@ -389,7 +426,8 @@ class TestSchema1Blob(unittest.TestCase):
                         "alias": "q"
                     },
                     "q": {
-                        "hashValue": "3",
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                         "fileUrl": "http://boring.com/blah"
                     }
                 }

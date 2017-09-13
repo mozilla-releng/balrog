@@ -40,7 +40,7 @@ class TestCreateBlob(unittest.TestCase):
             yaml_load.return_value = {
                 "title": "Test",
                 "type": "object",
-                "required": ["schema_version", "name"],
+                "required": ["schema_version", "name", "hashFunction"],
                 "additionalProperties": False,
                 "properties": {
                     "schema_version": {
@@ -48,17 +48,22 @@ class TestCreateBlob(unittest.TestCase):
                     },
                     "name": {
                         "type": "string"
+                    },
+                    "hashFunction": {
+                        "type": "string"
                     }
                 }
             }
             blob = createBlob(dict(
                 schema_version=1,
                 name="foo",
+                hashFunction="sha512",
             ))
             blob.validate('fake', [])
             blob = createBlob(dict(
                 schema_version=1,
                 name="foo",
+                hashFunction="sha512",
             ))
             blob.validate('fake', [])
 

@@ -70,7 +70,8 @@ class TestHistoryView(ViewTest):
                     "complete": {
                         "filesize": 1234,
                         "from": "*",
-                        "hashValue": "abc"
+                        "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                     }
                 }
             }
@@ -117,7 +118,8 @@ class TestHistoryView(ViewTest):
                             "complete": {
                                 "filesize": 1234,
                                 "from": "*",
-                                "hashValue": "abc"
+                                "hashValue": "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcda\
+bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
                             }
                         }
                     }
