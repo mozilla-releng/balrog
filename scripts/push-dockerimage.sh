@@ -40,20 +40,16 @@ branch_tag="${branch}"
 if [ "$branch" == "master" ]; then
     branch_tag="latest"
 fi
-date_tag="${branch}-${date}"
 commit_tag="${branch}-${commit}"
 
 echo "Building Docker image"
 docker build -t bhearsumtesttest/balrog:${branch_tag} .
-echo "Tagging Docker image with date tag"
-docker tag bhearsumtesttest/balrog:${branch_tag} "bhearsumtesttest/balrog:${date_tag}"
 echo "Tagging Docker image with git commit tag"
 docker tag bhearsumtesttest/balrog:${branch_tag} "bhearsumtesttest/balrog:${commit_tag}"
 echo "Logging into Dockerhub"
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
 echo "Pushing Docker image"
 docker push bhearsumtesttest/balrog:${branch_tag}
-docker push bhearsumtesttest/balrog:${date_tag}
 docker push bhearsumtesttest/balrog:${commit_tag}
 
 if [ ! -z $extra_tag ]; then
@@ -62,7 +58,7 @@ if [ ! -z $extra_tag ]; then
   docker push bhearsumtesttest/balrog:${extra_tag}
 fi
 
-sha256=$(docker images --no-trunc bhearsumtesttest/balrog | grep "${date_tag}" | awk '/^bhearsumtesttest/ {print $3}')
+sha256=$(docker images --no-trunc bhearsumtesttest/balrog | grep "${commit_tag}" | awk '/^bhearsumtesttest/ {print $3}')
 echo "SHA256 is ${sha256}, creating artifact for it"
 put_url=$(curl --retry 5 --retry-delay 5 --data "{\"storageType\": \"s3\", \"contentType\": \"text/plain\", \"expires\": \"${artifact_expiry}\"}" ${artifact_url} | python -c 'import json; import sys; print json.load(sys.stdin)["putUrl"]')
 curl --retry 5 --retry-delay 5 -X PUT -H "Content-Type: text/plain" --data "${sha256}" "${put_url}"
