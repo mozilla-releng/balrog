@@ -31,7 +31,7 @@ tasks:
           - pull_request.reopened
           - push
     routes:
-      - index.github.testbhearsum.balrog.test
+      - index.garbage.github.testbhearsum.balrog.test
     metadata:
       name: Balrog back-end tests
       description: Balrog Python tests
