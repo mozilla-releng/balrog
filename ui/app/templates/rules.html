@@ -107,7 +107,7 @@
         </a>
         <span ng-show="show_sc && rule.scheduled_change !== null" title="{{ humanizeDate(rule.scheduled_change.when) }}"
               class="label label-default">
-            Scheduled for Change <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span>
+            Scheduled for <span style="text-transform: capitalize">{{ rule.scheduled_change.change_type }}</span> <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span>
         </span>
       </div>
       <i title="Product" ng-show="!rule.product && !rule.scheduled_change.product">no product</i>
