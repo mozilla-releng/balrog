@@ -28,7 +28,11 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options) {
 
     CSRF.getToken()
     .then(function(csrf_token) {
-      Rules.updateRule($scope.rule.rule_id, $scope.rule, csrf_token)
+      var data = angular.copy($scope.rule);
+      if (data.scheduled_change) {
+        delete data.scheduled_change;
+      }
+      Rules.updateRule($scope.rule.rule_id, data, csrf_token)
       .success(function(response) {
         $scope.rule.data_version = response.new_data_version;
         angular.copy($scope.rule, $scope.original_rule);
