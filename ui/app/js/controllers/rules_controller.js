@@ -189,7 +189,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       if (rule.product === selected_product || !rule.product) {
         productMatches = true;
       }
-      if (rule.scheduled_change !== null && (rule.scheduled_change.product == selected_product || !rule.scheduled_change.product)) {
+      if (rule.scheduled_change !== null && (rule.scheduled_change.product === selected_product || !rule.scheduled_change.product)) {
         productMatches = true;
       }
       if ($scope.channelMatchesRule(selected_channel, rule)) {

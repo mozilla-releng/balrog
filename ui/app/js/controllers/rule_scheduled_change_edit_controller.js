@@ -92,6 +92,9 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
             "error"
           );
         }
+        else {
+          sweetAlert("Unknown error: " + response);
+        }
       })
       .finally(function() {
         $scope.saving = false;
