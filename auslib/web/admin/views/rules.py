@@ -1,7 +1,5 @@
-import json
 import connexion
 
-from sqlalchemy.sql.expression import null
 from jsonschema.compat import str_types
 from flask import Response, jsonify
 from auslib.web.admin.views.problem import problem
@@ -9,7 +7,6 @@ from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
     requirelogin, AdminView
 )
-from auslib.web.admin.views.csrf import get_csrf_headers
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
@@ -47,25 +44,6 @@ def process_rule_form(form_data):
 class RulesAPIView(AdminView):
     """/rules"""
 
-    def get(self, **kwargs):
-        # We can't use a form here because it will enforce "csrf_token" needing
-        # to exist, which doesn't make sense for GET requests.
-        where = {}
-        for field in ("product",):
-            if connexion.request.args.get(field):
-                where[field] = connexion.request.args[field]
-
-        rules = dbo.rules.getOrderedRules(where=where)
-        count = 0
-        _rules = []
-        for rule in rules:
-            _rules.append(dict(
-                (key, value)
-                for key, value in rule.items()
-            ))
-            count += 1
-        return jsonify(count=count, rules=_rules)
-
     # changed_by is available via the requirelogin decorator
     @requirelogin
     def _post(self, transaction, changed_by):
@@ -94,17 +72,6 @@ class RulesAPIView(AdminView):
 
 class SingleRuleView(AdminView):
     """ /rules/:id"""
-
-    def get(self, id_or_alias):
-        rule = dbo.rules.getRule(id_or_alias)
-        if not rule:
-            return problem(status=404, title="Not Found", detail="Requested rule wasn't found",
-                           ext={"exception": "Requested rule does not exist"})
-
-        headers = {'X-Data-Version': rule['data_version']}
-        headers.update(get_csrf_headers())
-
-        return Response(response=json.dumps(rule), mimetype="application/json", headers=headers)
 
     # changed_by is available via the requirelogin decorator
     @requirelogin
@@ -167,51 +134,6 @@ class RuleHistoryAPIView(HistoryView):
     def __init__(self):
         super(RuleHistoryAPIView, self).__init__(dbo.rules)
 
-    def _process_revisions(self, revisions):
-        _mapping = {
-            # return : db name
-            'rule_id': 'rule_id',
-            'mapping': 'mapping',
-            'fallbackMapping': 'fallbackMapping',
-            'priority': 'priority',
-            'alias': 'alias',
-            'product': 'product',
-            'version': 'version',
-            'backgroundRate': 'backgroundRate',
-            'buildID': 'buildID',
-            'channel': 'channel',
-            'locale': 'locale',
-            'distribution': 'distribution',
-            'buildTarget': 'buildTarget',
-            'osVersion': 'osVersion',
-            'instructionSet': 'instructionSet',
-            'memory': 'memory',
-            'mig64': 'mig64',
-            'distVersion': 'distVersion',
-            'comment': 'comment',
-            'update_type': 'update_type',
-            'headerArchitecture': 'headerArchitecture',
-            'data_version': 'data_version',
-            # specific to revisions
-            'change_id': 'change_id',
-            'timestamp': 'timestamp',
-            'changed_by': 'changed_by',
-        }
-
-        _rules = []
-
-        for rule in revisions:
-            _rules.append(dict(
-                (key, rule[db_key])
-                for key, db_key in _mapping.items()
-            ))
-
-        return _rules
-
-    def _get_filters(self, rule):
-        return [self.history_table.rule_id == rule['rule_id'],
-                self.history_table.data_version != null()]
-
     def _get_what(self, change):
         what = dict(
             backgroundRate=change['backgroundRate'],
@@ -235,23 +157,6 @@ class RuleHistoryAPIView(HistoryView):
             headerArchitecture=change['headerArchitecture'],
         )
         return what
-
-    def get(self, rule_id):
-        try:
-            return self.get_revisions(
-                get_object_callback=lambda: self.table.getRule(rule_id),
-                history_filters_callback=self._get_filters,
-                process_revisions_callback=self._process_revisions,
-                revisions_order_by=[self.history_table.timestamp.desc()],
-                obj_not_found_msg='Requested rule does not exist',
-                response_key='rules')
-        # Adding AttributeError to accommodate exception thrown when no rule
-        # is found when db.getRule method is invoked
-        except (ValueError, AttributeError) as msg:
-            self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", "Error occurred when trying to fetch"
-                                               " Rule's revisions having rule_id {0}".format(rule_id),
-                           ext={"exception": str(msg)})
 
     @requirelogin
     def _post(self, rule_id, transaction, changed_by):

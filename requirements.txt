@@ -118,9 +118,9 @@ dictdiffer==0.6.1 \
 raven==6.1.0 \
     --hash=sha256:56dc9062dd42bca97350e5048ff417c914376366caa3b1b5f788b27ddc0a34b7 \
     --hash=sha256:02cabffb173b99d860a95d4908e8b1864aad1b8452146e13fd7e212aa576a884
-connexion==1.1.11 \
-    --hash=sha256:995d9a9b15c35cc31f8c0b0c106285a491afe5eb7b330d715ac05e8efd720ebf \
-    --hash=sha256:873fab1e556f2be60486cea793de7ddec84fff79181af373c10f233231664c1a
+connexion==1.1.15 \
+    --hash=sha256:559c5ae35f02aeda85f1326d8d8406c4dfde104f66230c0593f0df74bebffa4a \
+    --hash=sha256:5dd022488438f4b75d8fa0435cd95b402f1bce1a6bb3599a0d568ba2c3e70afe
 clickclick==1.2.1 \
     --hash=sha256:22eedfce2499d7a8c5b8c868fc93a495eb74bf7b753a6cb9ed2aa6a32a3ddd05 --hash=sha256:a342b98af1335041b70236131719c909305c4ebff56c110ab964ba585ff133aa
 strict-rfc3339==0.7 \

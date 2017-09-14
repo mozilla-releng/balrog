@@ -23,6 +23,15 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
   $scope.calendar_is_open = false;
   $scope.sc_type = "time";
 
+  $scope.auto_time = false;
+  $scope.toggleAutoTime = function(){
+      if ($scope.auto_time){
+          $("#btn__auto-time").addClass('active');
+      }else{
+          $('#btn__auto-time').removeClass('active');
+      }
+  };
+
   $scope.toggleType = function(newType) {
     $scope.sc_type = newType;
     $("#btn_telemetry").toggleClass("active");
@@ -51,6 +60,9 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
 
   $scope.saveChanges = function () {
     $scope.saving = true;
+    asap = new Date();
+    asap.setMinutes(asap.getMinutes() + 5);
+    $scope.sc.when = ($scope.auto_time) ? asap : $scope.sc.when;
 
     CSRF.getToken()
     .then(function(csrf_token) {

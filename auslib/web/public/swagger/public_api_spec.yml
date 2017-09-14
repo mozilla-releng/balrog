@@ -1,0 +1,296 @@
+paths:
+  /api/v1/releases:
+    get:
+      summary: "Returns a JSON Object containing metadata about Releases in Balrog's database"
+      description: >
+        Returns a JSON object containing metadata about Releases in Balrog's database. Due to its size, the actual Release 'blob' is never returned from this endpoint. There are a few query arguments that affect its response. If no arguments are provided, it returns all information about all of the Releases in the database. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases)
+      tags:
+        - Releases
+      operationId: auslib.web.common.releases.get_releases
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases"
+        description: "Returns a JSON Object containing metadata about Releases in Balrog's database."
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - name: name_prefix
+          in: query
+          description: "If 'name_prefix' is passed, only Releases whose name starts with the given prefix will be returned."
+          type: string
+          x-nullable: true
+          required: false
+        - name: names_only
+          in: query
+          description: "If 'names_only' is set to true, the response changes format and provides a list of all of the Release names in the database"
+          type: string
+          x-nullable: true
+          required: false
+      responses:
+        '200':
+          description: Returns metadata about Releases
+          schema:
+            type: object
+            # since there are two exclusive and independent data formats i.e. releases and names and
+            # oneOf isn't supported in swagger 2.0 hence cannot have 'required'
+            # field in schema
+            properties:
+              releases:
+                description: list of release objects
+                type: array
+                minItems: 0
+                items:
+                  $ref: '#/definitions/ReleaseGET'
+              names:
+                description: List of release names
+                type: array
+                minItems: 0
+                uniqueItems: true
+                items:
+                  type: string
+                  maxLength: 100
+          examples:
+            application/json:
+              releases:
+                - data_version: 2
+                  name: XP-Vista-Desupport
+                  product: Firefox
+                  read_only: false
+                  rule_ids: [468, 498]
+
+  /api/v1/releases/{release}:
+    get:
+      summary: "Returns the 'data' portion of the named Release, which is a JSON Object."
+      description: >
+        Returns the 'data' portion of the named Release, which is a JSON Object. If 'pretty' is present in the query string and set to true, it will be pretty formatted. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release)
+      tags:
+        - Releases
+      operationId: auslib.web.common.releases.get_release
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release"
+        description: "Returns the 'data' portion of the named Release, which is a JSON Object."
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/pretty'
+      responses:
+        '200':
+          $ref: '#/responses/releaseDataResponse'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /api/v1/releases/{release}/revisions:
+    get:
+      summary: Returns previous versions of the named Release
+      description: >
+        Returns previous versions of the named Release in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-revisions)
+      tags:
+        - Releases
+      operationId: auslib.web.common.releases.get_release_history
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-revisions"
+        description: Returns previous versions of the named Release
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of release revisions plus total count
+          schema:
+            type: object
+            required:
+              - revisions
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  revisions:
+                    description: array where each element is a release revision object
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: "#/definitions/HistoryModel"
+                        - $ref: '#/definitions/DataVersionModel'
+                        - $ref: '#/definitions/ProductModel'
+                        - $ref: '#/definitions/ReleaseName'
+                        - type: object
+                          properties:
+                            read_only:
+                              description: Flag that indicates whether release is marked read_only or not.
+                              type: string
+                              enum: [ "True", "False"]
+                              example: "True"
+                            _different:
+                              description: list of columns that were modified in revision
+                              type: array
+                              uniqueItems: true
+                              minItems: 0
+                              items:
+                                type: string
+                              example: ["product", "data"]
+                            _time_ago:
+                              description: Time passed since the particular change
+                              type: string
+                              example: "1 day ago"
+                      required:
+                        - name
+                        - product
+                        - data_version
+                        - read_only
+                        - _different
+                        - _time_ago
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /api/v1/releases/{release}/builds/{platform}/{locale}:
+    get:
+      summary: "Returns the platform+locale specific data of the named Release"
+      description: >
+        Returns the platform+locale specific data of the named Release, which is a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-builds-platform-locale)
+      tags:
+        - Releases
+      operationId: auslib.web.common.releases.get_release_single_locale
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-builds-platform-locale"
+        description: Returns the platform+locale specific data of the named Release
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/platformParam'
+        - $ref: '#/parameters/localeParam'
+      responses:
+        '200':
+          $ref: '#/responses/releaseDataResponse'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /api/v1/rules:
+    get:
+      summary: Returns filtered list of Rules from Balrog's DB
+      description: >
+        Returns filtered list Rules in Balrog’s database inside of a JSON Object. Returns all rules if 'product' query parameter isn't passed. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id1)
+      tags:
+        - Rules
+      operationId: auslib.web.common.rules.get_rules
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id1"
+        description: "Returns filtered list of Rules from Balrog's DB."
+      parameters:
+        - $ref: '#/parameters/productParam'
+
+      responses:
+        '200':
+          description: Get json object of list all Rules with their count
+          schema:
+            $ref: '#/definitions/RulesListGET'
+
+  /api/v1/rules/{id_or_alias}:
+    get:
+      summary: Returns a rule identified by the id or alias
+      description: >
+        Returns the entire rule identified by the id or alias given in JSON format. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#rules-id-or-alias)
+      tags:
+        - Rules
+      operationId: auslib.web.common.rules.get_rule
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id2"
+        description: "Returns the entire rule identified by the id or alias given in JSON format."
+      parameters:
+        - $ref: '#/parameters/rule_id_or_alias_param'
+      responses:
+        '200':
+          description: Successfully fetched a rule
+          schema:
+            $ref: "#/definitions/RuleObject"
+          headers:
+            X-Data-Version:
+              description: data version of the rule
+              type: integer
+              format: int32
+              minimum: 1
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /api/v1/rules/{rule_id}/revisions:
+    get:
+      summary: Fetches all revisions of a Rule
+      description: Fetches list and count of all the revisions of the rule given by rule_id
+      tags:
+        - Rules
+      operationId: auslib.web.common.rules.get_rule_history
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#rules"
+        description: "Fetches list and count of all the revisions of the rule given by rule_id"
+      parameters:
+        - $ref: '#/parameters/rule_id_param'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of rules with their count
+          schema:
+            type: object
+            allOf:
+              - $ref: "#/definitions/RulesListGET"
+              - type: object
+                properties:
+                  rules:
+                    description: array where each element is a rule object plus timestamp, change_id and changed_by
+                    type: array
+                    items:
+                      $ref: '#/definitions/HistoryModel'
+          examples:
+            application/json:
+              count: 1
+              rules:
+                - alias: "esr45-localtest"
+                  backgroundRate: 100
+                  buildID: null
+                  buildTarget: null
+                  channel: "esr-localtest"
+                  comment: "esr45 esr-localtest rule"
+                  changed_by: "balrogadmin"
+                  change_id: 10
+                  timestamp: 149530544
+                  data_version: 22
+                  distVersion: null
+                  distribution: null
+                  fallbackMapping: null
+                  headerArchitecture: null
+                  instructionSet: null
+                  locale: null
+                  mapping: "Firefox-45.7.0esr-build1"
+                  memory: null
+                  mig64: null
+                  osVersion: null
+                  priority: 43
+                  product: "Firefox"
+                  rule_id: 308
+                  update_type: "minor"
+                  version: null
+                  whitelist: null
+        '404':
+          $ref: '#/responses/resourceNotFound'
+        '400':
+          $ref: '#/responses/invalidFormData'

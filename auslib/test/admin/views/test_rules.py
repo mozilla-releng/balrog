@@ -295,6 +295,7 @@ class TestSingleRuleView_JSON(ViewTest):
             mig64=None,
         )
         self.assertEquals(json.loads(ret.data), expected)
+        self.assertIn('X-CSRF-Token', ret.headers)
 
     def testGetRuleByAlias(self):
         ret = self._get("/rules/frodo")

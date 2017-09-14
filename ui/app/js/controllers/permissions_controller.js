@@ -5,7 +5,6 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
 
   $scope.loading = true;
   $scope.failed = false;
-
   $scope.username = $routeParams.username;
   if ($scope.username) {
     // history of a specific rule
@@ -77,49 +76,49 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
   /* End filtering */
 
   $scope.openUpdateModal = function(user) {
-
+    $scope.is_edit = true;
     var modalInstance = $modal.open({
       templateUrl: 'permissions_modal.html',
       controller: 'UserPermissionsCtrl',
       backdrop: 'static',
-      // size: size,  // can be lg or sm
+      size: 'md',  // can be lg or md, sm
       resolve: {
+        users: function () {
+          return $scope.users;
+        },
+        is_edit: function () {
+          return $scope.is_edit;
+        },
         user: function () {
           return user;
         },
-        users: function () {
-          return $scope.users;
-        }
       }
     });
-
-
   };
   /* End openUpdateModal */
 
   $scope.openNewModal = function() {
-
+    $scope.is_edit = false;
     var modalInstance = $modal.open({
-      templateUrl: 'user_modal.html',
-      controller: 'NewUserCtrl',
+      templateUrl: 'permissions_modal.html',
+      controller: 'UserPermissionsCtrl',
       backdrop: 'static',
-      // size: 'sm',
+      size: 'md',
       resolve: {
         users: function () {
           return $scope.users;
-        }
+        },
+        is_edit: function () {
+          return $scope.is_edit;
+        },
+        user: function () {
+          return $scope.user;
+        },
       }
     });
-
-    modalInstance.result.then(function (user) {
-      $scope.users.push(user);
-      $scope.openUpdateModal(user);
-    }, function () {
-      // modal closed
-    });
-
   };
-  /* End openNewModal */
+    /* End openNewModal */
+
 
 
   $scope.openNewScheduledPermissionChangeModal = function(user) {

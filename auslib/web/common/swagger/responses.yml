@@ -1,0 +1,38 @@
+responses:
+  invalidFormData:
+    description: Error in form data
+    schema:
+      $ref: '#/definitions/4xxClientErrorResponseModel'
+    examples:
+      application/json:
+        detail: "Invalid field value"
+        status: 400
+
+  unauthorizedUser:
+    description: Not authorized to access resource
+    schema:
+      $ref: "#/definitions/4xxClientErrorResponseModel"
+    examples:
+      application/json:
+        detail: "You are not authorized to access this resource"
+        status: 403
+
+  resourceNotFound:
+    description: Resource Not Found
+    schema:
+      $ref: "#/definitions/4xxClientErrorResponseModel"
+    examples:
+      application/json:
+        detail: "Requested resource was not found"
+        status: 404
+
+  releaseDataResponse:
+    description: Returns release object data
+    schema:
+      type: object
+    headers:
+      X-Data-Version:
+        description: data version of the release
+        type: integer
+        format: int32
+        minimum: 1

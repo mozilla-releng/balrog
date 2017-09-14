@@ -13,6 +13,7 @@ class TestReleasesAPI_JSON(ViewTest):
     def testGetRelease(self):
         ret = self._get("/releases/b")
         self.assertStatusCode(ret, 200)
+        self.assertIn('X-CSRF-Token', ret.headers)
         self.assertEqual(json.loads(ret.data), json.loads("""
 {
     "name": "b",

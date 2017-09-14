@@ -1,13 +1,11 @@
 /*global sweetAlert swal */
 angular.module('app').controller('UserPermissionsCtrl',
-function ($scope, $modalInstance, CSRF, Permissions, user, users) {
+function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
 
   $scope.loading = true;
   $scope.users = users;
   $scope.currentItemTab = 1;
-  $scope.is_edit = true;
-  $scope.original_user = user;
-  $scope.user = angular.copy(user);
+  $scope.is_edit = is_edit;
   $scope.permission = {
     permission: '',
     options_as_json: ''
@@ -15,43 +13,54 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
   $scope.errors = {
     permissions: {}
   };
-  $scope.user.permissions = [];
-  Permissions.getUserPermissions(user.username)
-  .then(function(permissions) {
-    _.forEach(permissions, function(p) {
-      if (p.options) {
-        p.options_as_json = JSON.stringify(p['options']);
-      }
+  if($scope.is_edit){
+    $scope.original_user = user;
+    $scope.user = angular.copy(user);
+    $scope.user.permissions = [];
+    Permissions.getUserPermissions($scope.user.username)
+    .then(function(permissions) {
+      _.forEach(permissions, function(p) {
+        if (p.options) {
+          p.options_as_json = JSON.stringify(p['options']);
+        }
+      });
+  
+      $scope.user.permissions = permissions;
     });
 
-    $scope.user.permissions = permissions;
-    // console.log('$scope.user.permissions');
-    // console.dbg($scope.user.permissions);
+    $scope.user.roles = [];
+    Permissions.getUserRoles($scope.user.username)
+    .success(function(response) {
+      $scope.user.roles = response.roles;
+    })
+    .error(function(response) {
+      if (typeof response === 'object') {
+        $scope.errors = response;
+        sweetAlert(
+          "Failed to load User Roles",
+          "error"
+        );
+      } else if (typeof response === 'string') {
+        sweetAlert(
+          "Failed to load User Roles" +
+          "(" + response+ ")",
+          "error"
+        );
+      }
+    })
+    .finally(function() {
+      $scope.loading = false;
+    });
+  }
+  else {
+    $scope.user = {
+      username: '',
+    };
     $scope.loading = false;
-  });
-
-  $scope.user.roles = [];
-  Permissions.getUserRoles(user.username)
-  .success(function(response) {
-    $scope.user.roles = response.roles;
-  })
-  .error(function(response) {
-    if (typeof response === 'object') {
-      $scope.errors = response;
-      sweetAlert(
-        "Form submission error",
-        "See fields highlighted in red.",
-        "error"
-      );
-    } else if (typeof response === 'string') {
-      sweetAlert(
-        "Form submission error",
-        "Unable to submit successfully.\n" +
-        "(" + response+ ")",
-        "error"
-      );
-    }
-  });
+    $scope.user.permissions = [];
+    $scope.user.roles = [];
+  }
+  
 
   $scope.roles_list = [];
   Permissions.getAllRoles()
@@ -77,7 +86,12 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
   });
 
   $scope.saving = false;
+  $scope.usersaved = false;
 
+  $scope.showRow = function () {
+    return $scope.usersaved || $scope.is_edit;
+  };
+    
   $scope.$watchCollection('permission', function(value) {
     value.options = value.options_as_json;
   });
@@ -130,20 +144,29 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
     $scope.saving = true;
     CSRF.getToken()
     .then(function(csrf_token) {
+      if (!$scope.user.username) {
+        $scope.errors.nullValue = 'The username field cannot be empty';
+        sweetAlert("failed", $scope.errors.nullValue, "error");
+        $scope.saving = false;
+        return false;
+      }
       Permissions.addPermission($scope.user.username, $scope.permission, csrf_token)
-
       .success(function(response) {
-        $scope.permission.data_version = response.new_data_version;
-        $scope.user.permissions.push($scope.permission);
-        // reset the add form
-        $scope.permission = {
-          permission: '',
-          options_as_json: ''
-        };
-        $scope.errors = {
-          permissions: {}
-        };
-        sweetAlert("Saved", "Permission added.", "success");
+        if ($scope.user.permissions){
+          $scope.users.push($scope.user);
+          $scope.permission.data_version = response.new_data_version;
+          $scope.user.permissions.push($scope.permission);
+          // reset the add form
+          $scope.permission = {
+            permission: '',
+            options_as_json: ''
+          };
+          $scope.errors = {
+            permissions: {}
+          };
+          $scope.usersaved = true;
+          sweetAlert("Saved", "Permission added.", "success");
+        }
       })
       .error(function(response) {
         if (typeof response === 'object') {
@@ -244,12 +267,18 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
 
   $scope.updatePermission = function(permission) {
     $scope.saving = true;
+    $scope.usersaved = true;
     CSRF.getToken()
     .then(function(csrf_token) {
       permission.options = permission.options_as_json;
       Permissions.updatePermission($scope.user.username, permission, csrf_token)
       .success(function(response) {
         permission.data_version = response.new_data_version;
+        $scope.user.permissions.push($scope.permission);
+        $scope.permission = {
+          permission: '',
+          options_as_json: ''
+        };
         $scope.errors = {
             permissions: {}
         };
@@ -258,11 +287,23 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
       .error(function(response) {
         if (typeof response === 'object') {
           $scope.errors.permissions[permission.permission] = response;
-          sweetAlert(
-            "Form submission error",
-            "See fields highlighted in red.",
-            "error"
-          );
+          var permission_found = $scope.user.permissions.filter(function(permission) {
+            return (permission.permission === $scope.permission.permission);
+          });
+          if(permission_found.length){
+            sweetAlert(
+              "Form submission error",
+              "This persmission has already been granted",
+              "error"
+            );
+          }
+          else{
+            sweetAlert(
+              "Form submission error",
+              "Persmissions must be selected",
+              "error"
+            );
+          }
         } else if (typeof response === 'string') {
           // quite possibly an error in the blob validation
           sweetAlert(
@@ -281,10 +322,6 @@ function ($scope, $modalInstance, CSRF, Permissions, user, users) {
 
 
   $scope.cancel = function () {
-      if (!$scope.user.permissions.length) {
-        $scope.users.pop($scope.user.username);
-      }
-      $modalInstance.dismiss('cancel');
-
+    $modalInstance.dismiss('cancel');
   };
 });
