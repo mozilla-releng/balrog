@@ -44,4 +44,5 @@ angular.module("app").config(['$httpProvider', function($httpProvider) {
 angular.module("app").controller('ParentController',
 function($scope, Page) {
   $scope.Page = Page;
+  $scope.isEmpty = isEmpty;
 });

@@ -9,10 +9,6 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
   $scope.current_user = null;
   $scope.user_roles = [];
 
-  $scope.isEmpty = function(obj) {
-    return Object.keys(obj).length === 0;
-  };
-
   Permissions.getCurrentUser()
   .success(function(response) {
     $scope.current_user = response["username"];

@@ -10,10 +10,6 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
 
   $scope.sc_id = $routeParams.sc_id;
 
-  $scope.isEmpty = function(obj) {
-    return Object.keys(obj).length === 0;
-  };
-
   Permissions.getCurrentUser()
   .success(function(response) {
     $scope.current_user = response["username"];

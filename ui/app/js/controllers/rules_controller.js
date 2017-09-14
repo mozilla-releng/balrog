@@ -127,13 +127,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     return !!(false || $scope.filters.search.length);
   };
 
-  $scope.isEmpty = function(obj) {
-    if (obj === null || obj === undefined) {
-      return true;
-    }
-    return Object.keys(obj).length === 0;
-  };
-
   $scope.humanizeDate = function(when) {
     date = moment(when);
     return date.format('dddd, MMMM D, YYYY HH:mm:ss ') + 'GMT' + date.format('ZZ');
