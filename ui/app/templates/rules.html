@@ -115,7 +115,7 @@
       :
       <i title="Channel" ng-show="!rule.channel && !rule.scheduled_change.channel">no channel</i>
       <b title="Channel">
-        <span ng-show="!rule_id || !show_sc || rule.scheduled_change === null || rule.channel === rule.scheduled_change.channel">{{ rule.channel }}</span>
+        <span ng-show="rule_id || !show_sc || rule.scheduled_change === null || rule.channel === rule.scheduled_change.channel">{{ rule.channel }}</span>
         <s style="color: red" ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.channel !== rule.scheduled_change.channel">{{ rule.channel }}</s>
         <span style="color: green" ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.channel !== rule.scheduled_change.channel">{{ rule.scheduled_change.channel }}</span>
       </b>
