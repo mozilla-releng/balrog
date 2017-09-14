@@ -93,8 +93,7 @@
                 class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">
             Update
         </button>
-        <button ng-show="rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert'"
-                class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">
+        <button ng-show="rule.scheduled_change === null" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">
             Delete
         </button>
         <button ng-show="rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert'"
