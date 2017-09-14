@@ -310,8 +310,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       if (action === "delete") {
         rule.scheduled_change = null;
       }
-      if (rule.rule_id === null) {
-        delete $scope.rules[rule];
+      if (!rule.rule_id) {
+        $scope.rules = $scope.rules.filter(function(element) {
+          if (!element.rule_id) {
+            return false;
+          }
+          return true;
+        });
       }
     });
   };
