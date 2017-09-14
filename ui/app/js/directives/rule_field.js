@@ -10,6 +10,8 @@ angular.module("app").directive("rulefield", function() {
       help: "@",
     },
     templateUrl: "rule_field.html",
-    controller: function() {}
+    controller: function($scope) {
+      $scope.fieldIsChanging = fieldIsChanging;
+    }
   };
 });

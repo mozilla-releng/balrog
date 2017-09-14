@@ -111,16 +111,16 @@
       </div>
       <i title="Product" ng-show="!rule.product && !rule.scheduled_change.product">no product</i>
       <b title="Product">
-        <span ng-show="rule_id || !show_sc || rule.scheduled_change === null || rule.product === rule.scheduled_change.product">{{ rule.product }}</span>
-        <s style="color: red" ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.product !== rule.scheduled_change.product">{{ rule.product }}</s>
-        <span style="color: green" ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.product !== rule.scheduled_change.product">{{ rule.scheduled_change.product }}</span>
+        <span ng-show="rule_id || !show_sc || !fieldIsChanging(rule, 'product')">{{ rule.product }}</span>
+        <s style="color: red" ng-show="!rule_id && show_sc && fieldIsChanging(rule, 'product')">{{ rule.product }}</s>
+        <span style="color: green" ng-show="!rule_id && show_sc && fieldIsChanging(rule, 'product')">{{ rule.scheduled_change.product }}</span>
       </b>
       :
       <i title="Channel" ng-show="!rule.channel && !rule.scheduled_change.channel">no channel</i>
       <b title="Channel">
-        <span ng-show="rule_id || !show_sc || rule.scheduled_change === null || rule.channel === rule.scheduled_change.channel">{{ rule.channel }}</span>
-        <s style="color: red" ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.channel !== rule.scheduled_change.channel">{{ rule.channel }}</s>
-        <span style="color: green" ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.channel !== rule.scheduled_change.channel">{{ rule.scheduled_change.channel }}</span>
+        <span ng-show="rule_id || !show_sc || !fieldIsChanging(rule, 'channel')">{{ rule.channel }}</span>
+        <s style="color: red" ng-show="!rule_id && show_sc && fieldIsChanging(rule, 'channel')">{{ rule.channel }}</s>
+        <span style="color: green" ng-show="!rule_id && show_sc && fieldIsChanging(rule, 'channel')">{{ rule.scheduled_change.channel }}</span>
       </b>
     </h3>
   </div>
@@ -143,7 +143,7 @@
         </ul>
       </span>
     </div>
-    <hr style="clear: both" ng-show="rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs)">
+    <hr style="clear: both" ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs)">
 
     <div class="left" style="float: left">
 

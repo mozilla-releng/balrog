@@ -16,6 +16,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.pr_ch_filter = "";
   $scope.show_sc = true;
 
+  $scope.fieldIsChanging = fieldIsChanging;
+
   function loadPage(newPage) {
     Rules.getHistory($scope.rule_id, $scope.pageSize, newPage)
     .success(function(response) {
