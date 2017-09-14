@@ -16,6 +16,18 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
     permissions: {}
   };
 
+  $scope.permission_list = {
+    default:'--Please Select--',
+    admin: 'Admin',
+    rule: 'Rule',
+    release: 'Release',
+    release_read_only: 'Release Read Only',
+    release_locale: 'Relaease Locale',
+    required_signedoff: 'Required Signedoff',
+    permission: 'Permission',
+    scheduled_change:'Scheduled Change'
+  };
+
   $scope.sc.permissions = [];
   Permissions.getUserPermissions(sc.username)
   .then(function(permissions) {

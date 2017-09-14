@@ -17,7 +17,17 @@
           </div>
           <div class="form-group" ng-class="{'has-error': errors.permission}">
             <label for="id_permission">Permission</label>
-            <input type="text" class="form-control" id="id_permission" ng-model="permission.permission">
+            <select name="singleSelect" class="form-control" id="id_permission" ng-model="permission.permission">
+              <option value="">{{ permission_list.default }}-</option>
+              <option value="admin">{{ permission_list.admin }}</option>
+              <option value="rule">{{ permission_list.rule }}</option>
+              <option value="release">{{ permission_list.release }}</option>
+              <option value="release_read_only">{{ permission_list.release_read_only }}</option>
+              <option value="release_locale">{{ permission_list.release_locale }}</option>
+              <option value="required_signoff">{{ permission_list.required_signedoff }}</option>
+              <option value="permission">{{ permission_list.permission }}</option>
+              <option value="scheduled_change">{{ permission_list.scheduled_change }}</option>
+            </select><br>  
             <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
           </div>
           <div class="form-group" ng-class="{'has-error': errors.options}">
