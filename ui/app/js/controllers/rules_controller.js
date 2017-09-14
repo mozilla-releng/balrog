@@ -160,6 +160,21 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     }
   };
 
+  $scope.channelMatchesRule = function(channel, rule) {
+    if (rule.channel) {
+      if (rule.channel === channel) {
+        return true;
+      }
+      if (rule.channel.indexOf("*") > -1 && channel.startsWith(rule.channel.split("*")[0])) {
+        return true;
+      }
+    }
+    else {
+      return true;
+    }
+    return false;
+  };
+
   $scope.filterBySelect = function(rule) {
     // Always return all entries if "all rules" is the filter
     // or if $scope.rule_id is set (meaning we're on the history page).
@@ -167,9 +182,23 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       return true;
     }
     else if ($scope.pr_ch_selected && $scope.pr_ch_selected.length > 1) {
-      product = rule.product === $scope.pr_ch_selected[0];
-      channel = rule.channel && rule.channel === $scope.pr_ch_selected[1];
-      return (product || !rule.product) && (channel || !rule.channel || (rule.channel && rule.channel.indexOf("*") > -1 && $scope.pr_ch_selected[1].startsWith(rule.channel.split("*")[0])));
+      selected_product = $scope.pr_ch_selected[0];
+      selected_channel = $scope.pr_ch_selected[1];
+      productMatches = false;
+      channelMatches = false;
+      if (rule.product === selected_product || !rule.product) {
+        productMatches = true;
+      }
+      if (rule.scheduled_change !== null && (rule.scheduled_change.product == selected_product || !rule.scheduled_change.product)) {
+        productMatches = true;
+      }
+      if ($scope.channelMatchesRule(selected_channel, rule)) {
+        channelMatches = true;
+      }
+      if (rule.scheduled_change !== null && $scope.channelMatchesRule(selected_channel, rule.scheduled_change)) {
+        channelMatches = true;
+      }
+      return productMatches && channelMatches;
     }
     else {
       product = rule.product === $scope.pr_ch_selected[0];
