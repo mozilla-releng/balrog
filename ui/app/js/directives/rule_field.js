@@ -1,9 +1,8 @@
-/*global: moment */
-
 angular.module("app").directive("rulefield", function() {
   return {
     restrict: "E",
     scope: {
+      showdiff: "=",
       showsc: "=",
       rule: "=",
       fieldname: "@",
