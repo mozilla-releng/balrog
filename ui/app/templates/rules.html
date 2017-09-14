@@ -70,16 +70,16 @@
             Revoke your Signoff
         </button>
         <button ng-show="show_sc && rule.scheduled_change.change_type === 'insert'" class="btn btn-info btn-xs"
-                ng-click="openEditScheduledRuleChangeModal(rule)" title="{{ humanizeDate(rule.scheduled_change.when) }}">
-            Pending Creation <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span>
+                ng-click="openEditScheduledRuleChangeModal(rule)">
+            Modify Pending Rule
         </button>
         <button ng-show="show_sc && rule.scheduled_change.change_type === 'update'" class="btn btn-warning btn-xs"
-                ng-click="openEditScheduledRuleChangeModal(rule)" title="{{ humanizeDate(rule.scheduled_change.when) }}">
-            Pending Update <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span>
+                ng-click="openEditScheduledRuleChangeModal(rule)">
+            Modify Pending Update
         </button>
         <button ng-show="show_sc && rule.scheduled_change.change_type === 'delete'" class="btn btn-danger btn-xs"
-                ng-click="openEditScheduledRuleChangeModal(rule)" title="{{ humanizeDate(rule.scheduled_change.when) }}">
-            Pending Delete <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span>
+                ng-click="openEditScheduledRuleChangeModal(rule)">
+            Modify Pending Delete
         </button>
         <button ng-show="rule.scheduled_change === null" class="btn btn-warning btn-xs"
                 ng-click="openNewScheduledRuleChangeModal(rule)">
@@ -105,6 +105,10 @@
            class="btn btn-default btn-xs" ng-href="/rules/{{ rule.rule_id }}">
             History
         </a>
+        <span ng-show="show_sc && rule.scheduled_change !== null" title="{{ humanizeDate(rule.scheduled_change.when) }}"
+              class="label label-default">
+            Scheduled for Change <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span>
+        </span>
       </div>
       <i title="Product" ng-show="!rule.product && !rule.scheduled_change.product">no product</i>
       <b title="Product">
@@ -122,7 +126,7 @@
     </h3>
   </div>
   <div class="panel-body">
-    <div ng-show="rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs)">
+    <div ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs)">
       <span style="float: left">
         <h4>Before this change can be enacted, it must be signed off on by:</h4>
         <ul>
