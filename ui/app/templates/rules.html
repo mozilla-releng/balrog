@@ -43,7 +43,7 @@
         ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
       </select>
     </div>
-    <div class="row" ng-if="!rule_id">
+    <div class="row" ng-show="!rule_id">
       <label for="include_sc">Include Scheduled Changes?</label>
       <input type="checkbox" id="include_sc" ng-model="show_sc" checked>
     </div>
