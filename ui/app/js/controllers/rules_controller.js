@@ -181,7 +181,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       selected_channel = $scope.pr_ch_selected[1];
       productMatches = false;
       channelMatches = false;
-      if (rule.product === selected_product || !rule.product) {
+      if (rule.product === selected_product || rule.product === null) {
         productMatches = true;
       }
       if (rule.scheduled_change !== null && (rule.scheduled_change.product === selected_product || !rule.scheduled_change.product)) {
