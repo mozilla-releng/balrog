@@ -141,19 +141,12 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   };
 
   $scope.channelMatchesRule = function(channel, rule) {
-    if (rule.channel) {
-      if (rule.channel === channel) {
-        return true;
-      }
-      if (rule.channel.indexOf("*") > -1 && channel.startsWith(rule.channel.split("*")[0])) {
-        return true;
-      }
-    }
-    // If channel isn't set at all, it always matches.
-    else {
+    if (rule.channel === channel) {
       return true;
     }
-    return false;
+    if (rule.channel.indexOf("*") > -1 && channel.startsWith(rule.channel.split("*")[0])) {
+      return true;
+    }
   };
 
   $scope.filterBySelect = function(rule) {
@@ -180,11 +173,14 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           productMatches = true;
         }
       }
-      if ($scope.channelMatchesRule(selected_channel, rule)) {
+      if (rule.channel === null || rule.channel === "" || (rule.channel && $scope.channelMatchesRule(selected_channel, rule))) {
         channelMatches = true;
       }
-      if ($scope.show_sc && rule.scheduled_change !== null && $scope.channelMatchesRule(selected_channel, rule.scheduled_change)) {
-        channelMatches = true;
+      if ($scope.show_sc && rule.scheduled_change !== null) {
+        if (rule.scheduled_change.channel && $scope.channelMatchesRule(selected_channel, rule.scheduled_change) ||
+            (rule.scheduled_change.change_type !== "delete" && !rule.scheduled_change.channel)) {
+          channelMatches = true;
+        }
       }
       return productMatches && channelMatches;
     }
