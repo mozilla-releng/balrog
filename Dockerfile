@@ -18,6 +18,10 @@ COPY requirements.txt /app/
 RUN apt-get install -q --yes gcc && \
     pip install -r requirements.txt && \
     apt-get -q --yes remove gcc && \
+    apt-get -q --yes install apt-transport-https curl && \
+    curl -sLf -o /dev/null 'https://deb.nodesource.com/node_4.x/dists/jessie/Release' && \
+    curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
+    echo 'deb https://deb.nodesource.com/node_4.x jessie main' > /etc/apt/sources.list.d/nodesource.list && \
     apt-get -q --yes autoremove && \
     apt-get clean && \
     rm -rf /root/.cache
@@ -33,10 +37,10 @@ COPY version.json /app/
 WORKDIR /app
 
 RUN cd ui && \
-    apt-get -q --yes install nodejs nodejs-legacy npm && \
+    apt-get -q --yes install nodejs && \
     npm install && \
     npm run build && \
-    apt-get -q --yes remove nodejs nodejs-legacy npm && \
+    apt-get -q --yes remove nodejs && \
     apt-get -q --yes autoremove && \
     apt-get clean && \
     rm -rf /root/.npm /tmp/phantomjs && \
