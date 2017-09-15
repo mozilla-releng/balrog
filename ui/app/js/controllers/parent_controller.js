@@ -45,4 +45,7 @@ angular.module("app").controller('ParentController',
 function($scope, Page) {
   $scope.Page = Page;
   $scope.isEmpty = isEmpty;
+  $scope.fieldIsChanging = fieldIsChanging;
+  $scope.humanizeDate = humanizeDate;
+  $scope.formatMoment = formatMoment;
 });

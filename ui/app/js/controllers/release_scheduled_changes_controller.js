@@ -138,14 +138,6 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
     return false;
   };
 
-  $scope.formatMoment = function(when) {
-    date = moment(when);
-    // This is copied from app/js/directives/moment_directive.js
-    // We can't use that for this page, because it doesn't re-render when
-    // values change.
-    return '<time title="' + date.format('dddd, MMMM D, YYYY HH:mm:ss ') + 'GMT' + date.format('ZZ') + '">' + date.fromNow() + '</time>';
-  };
-
   $scope.openNewScheduledReleaseChangeModal = function() {
 
     var modalInstance = $modal.open({

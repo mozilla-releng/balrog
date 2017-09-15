@@ -114,7 +114,7 @@
   <div class="panel-footer" ng-show="release_name">
     <p>
       Changed by <code>{{ release.changed_by }}</code>
-      <span moment="release.timestamp"></span>
+      <span ng-bind-html="formatMoment(release.timestamp)"></span>
     </p>
   </div>
 </div>

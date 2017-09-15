@@ -234,7 +234,7 @@
   </div>
   <div class="panel-footer" ng-show="rule_id">
     Changed by <code>{{ rule.changed_by }}</code>
-    <span moment="rule.timestamp"></span>
+    <span ng-bind-html="formatMoment(rule.timestamp)"></span>
   </div>
 
 </div>

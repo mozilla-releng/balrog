@@ -28,6 +28,8 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options) {
 
     CSRF.getToken()
     .then(function(csrf_token) {
+      // The data we need to submit is a tweaked version of just the Rule fields, so
+      // we need to remove the scheduled change object before submission.
       var data = angular.copy($scope.rule);
       if (data.scheduled_change) {
         delete data.scheduled_change;

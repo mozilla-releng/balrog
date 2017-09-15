@@ -187,7 +187,7 @@
   </div>
 <div class="panel-footer" ng-show="scheduled_changes_rules_count">
     Changed by <code>{{ sc.changed_by }}</code>
-    <span moment="sc.timestamp"></span>
+    <span ng-bind-html="formatMoment(sc.timestamp)"></span>
   </div>
 </div>
 
