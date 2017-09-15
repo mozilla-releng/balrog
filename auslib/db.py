@@ -28,19 +28,14 @@ from auslib.util.timestamp import getMillisecondTimestamp
 import logging
 
 
-def rowsToDicts(fn):
-    """Decorator that converts the result of any function returning a dict-like
-       object to an actual dict. Eg, converts read-only row objects to writable
-       dicts."""
-    def convertRows(*args, **kwargs):
-        ret = []
-        for row in fn(*args, **kwargs):
-            d = {}
-            for key in row.keys():
-                d[key] = row[key]
-            ret.append(d)
-        return ret
-    return convertRows
+def rows_to_dicts(rows):
+    """Converts SQL Alchemy result rows to dicts.
+
+    You might want this if you want to mutate objects (SQLAlchemy rows
+    are immutable), or if you want to serialize them to JSON
+    (SQLAlchemy rows get confused if you try to serialize them).
+    """
+    return map(dict, rows)
 
 
 class AlreadySetupError(Exception):
@@ -354,7 +349,6 @@ class AUSTable(object):
                 query = query.where(cond)
         return query
 
-    @rowsToDicts
     def select(self, where=None, transaction=None, **kwargs):
         """Perform a SELECT statement on this table.
            See AUSTable._selectStatement for possible arguments.
@@ -375,11 +369,14 @@ class AUSTable(object):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
         query = self._selectStatement(where=where, **kwargs)
+
         if transaction:
-            return transaction.execute(query).fetchall()
+            result = transaction.execute(query).fetchall()
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return trans.execute(query).fetchall()
+                result = trans.execute(query).fetchall()
+
+        return rows_to_dicts(result)
 
     def _insertStatement(self, **columns):
         """Create an INSERT statement for this table
