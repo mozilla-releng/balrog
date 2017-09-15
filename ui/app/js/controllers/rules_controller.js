@@ -149,6 +149,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         return true;
       }
     }
+    // If channel isn't set at all, it always matches.
     else {
       return true;
     }
@@ -490,14 +491,14 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         pk: function() {
           return {"rule_id": sc["rule_id"]};
         },
-        // todo: add more stuff here
+        // TODO: this should really show the diff.
         data: function() {
           return {
-            "product": sc["product"],
-            "channel": sc["channel"],
-            "priority": sc["priority"],
-            "backgroundRate": sc["backgroundRate"],
-            "version": sc["version"],
+            "Product": sc["product"],
+            "Channel": sc["channel"],
+            "Mapping": sc["mapping"],
+            "Priority": sc["priority"],
+            "Background Rate": sc["backgroundRate"],
           };
         },
       }
@@ -526,13 +527,14 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           // TODO: add alias here if it exists
           return {"rule_id": sc["rule_id"]};
         },
+        // TODO: this should really show the diff.
         data: function() {
           return {
-            "product": sc["product"],
-            "channel": sc["channel"],
-            "priority": sc["priority"],
-            "backgroundRate": sc["backgroundRate"],
-            "version": sc["version"],
+            "Product": sc["product"],
+            "Channel": sc["channel"],
+            "Mapping": sc["mapping"],
+            "Priority": sc["priority"],
+            "Background Rate": sc["backgroundRate"],
           };
         },
       }

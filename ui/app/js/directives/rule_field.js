@@ -11,6 +11,8 @@ angular.module("app").directive("rulefield", function() {
     },
     templateUrl: "rule_field.html",
     controller: function($scope) {
+      // For some reason directives don't inherit the Parent controller
+      // so we need to explicit set this here.
       $scope.fieldIsChanging = fieldIsChanging;
     }
   };

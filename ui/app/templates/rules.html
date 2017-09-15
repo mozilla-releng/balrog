@@ -148,7 +148,7 @@
     <div class="left" style="float: left">
 
       <h5 title="Mapping" ng-show="rule.mapping || (show_sc && rule.scheduled_change !== null && rule.scheduled_change.mapping)">
-        Mapping: 
+        Mapping:
           <span ng-show="rule.mapping">
             <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
               {{ rule.mapping }}
@@ -177,7 +177,7 @@
           </span>
       </h5>
       <h5 title="Fallback Mapping" ng-show="rule.fallbackMapping || (show_sc && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping)">
-        Fallback Mapping: 
+        Fallback Mapping:
           <span ng-show="rule.fallbackMapping">
             <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
               {{ rule.fallbackMapping }}
