@@ -5,6 +5,7 @@ function ($scope, $modalInstance, CSRF, Rules, sc, scheduled_changes) {
   $scope.scheduled_changes = scheduled_changes;
   $scope.saving = false;
   $scope.auto_time = false;
+  $scope.formatMoment = formatMoment;
 
   $scope.saveChanges = function () {
     $scope.saving = true;
