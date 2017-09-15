@@ -181,16 +181,23 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       selected_channel = $scope.pr_ch_selected[1];
       productMatches = false;
       channelMatches = false;
-      if (rule.product === selected_product || rule.product === null) {
+      if (rule.product === null || rule.product === "" || rule.product === selected_product) {
         productMatches = true;
       }
-      if (rule.scheduled_change !== null && (rule.scheduled_change.product === selected_product || !rule.scheduled_change.product)) {
-        productMatches = true;
+      if ($scope.show_sc && rule.scheduled_change !== null) {
+        // If product is null in the Scheduled Change it could be because it is
+        // changing to null, or because the Rule is scheduled to be deleted.
+        // In the latter case, we don't consider it a match, because that will
+        // cause it to show up on the views of _all_ products.
+        if (rule.scheduled_change.product === selected_product ||
+            (rule.scheduled_change.change_type !== "delete" && !rule.scheduled_change.product)) {
+          productMatches = true;
+        }
       }
       if ($scope.channelMatchesRule(selected_channel, rule)) {
         channelMatches = true;
       }
-      if (rule.scheduled_change !== null && $scope.channelMatchesRule(selected_channel, rule.scheduled_change)) {
+      if ($scope.show_sc && rule.scheduled_change !== null && $scope.channelMatchesRule(selected_channel, rule.scheduled_change)) {
         channelMatches = true;
       }
       return productMatches && channelMatches;
