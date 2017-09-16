@@ -19,12 +19,14 @@ version=$(cat version.txt)
 branch=$(git rev-parse --abbrev-ref HEAD)
 date=$(date --utc +%Y-%m-%d-%H-%M)
 
-echo "{
-    \"commit\": \"${commit}\",
-    \"version\": \"${version}\",
-    \"source\": \"https://github.com/mozilla/balrog\",
-    \"build\": \"https://tools.taskcluster.net/task-inspector/#${TASK_ID}\"
-}" > version.json
+cat > version.json <<EOF
+{
+    "commit": "${commit}",
+    "version": "${version}",
+    "source": "https://github.com/mozilla/balrog",
+    "build": "https://tools.taskcluster.net/task-inspector/#${TASK_ID}"
+}
+EOF
 
 # Initialize and update the UI submodule
 git submodule init
