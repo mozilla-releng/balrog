@@ -37,8 +37,19 @@
             <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
           </div>
           <div class="form-group" ng-class="{'has-error': errors.options_as_json}">
-            <label for="id_options">Options</label>
-            <textarea ng-model="permission.options_as_json" class="options-as-json"></textarea>
+              <!-- <label for="id_options">Options</label> -->
+            <!-- <textarea ng-model="permission.options_as_json" class="options-as-json"></textarea> -->
+             <div class="dropdown">
+                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+                    <span ng-if="selected_options.length < 1">Select Options</span>
+                    <span ng-if="selected_options.length > 0">
+                        {{ selected_options.join(' | ') }}
+                    </span>
+                <span class="caret"></span></button>
+                <ul class="dropdown-menu" ng-click="$event.stopPropagation();">
+                    <li ng-repeat="option in options"><Label class="col-sm-12"><input ng-click="toggleOption(option)" type="checkbox"> &nbsp;{{option}}</Label></li>
+                </ul>
+            </div>
             <p class="help-block" ng-show="errors.options">{{ errors.options.join(', ') }}</p>
           </div>
 

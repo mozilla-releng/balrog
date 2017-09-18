@@ -5,6 +5,17 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   $scope.loading = true;
   $scope.users = users;
   $scope.currentItemTab = 1;
+
+  //TODO: get options from API service
+  $scope.options = ["Role_1", "Role_2", "Role_3"];
+  $scope.selected_options = [];
+  $scope.toggleOption = function(option){
+      if($scope.selected_options.indexOf(option) != -1){
+          $scope.selected_options.splice($scope.selected_options.indexOf(option), 1);
+      }else{
+          $scope.selected_options.push(option);
+      }
+  }
   $scope.is_edit = is_edit;
   $scope.permission = {
     permission: '',
