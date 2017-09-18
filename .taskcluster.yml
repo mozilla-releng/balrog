@@ -224,8 +224,8 @@ tasks:
         events:
           - release
     routes:
-      - index.github.mozilla.balrog.releases.latest.app
-      - index.github.mozilla.balrog.releases.{{ event.version }}.app
+      - index.project.balrog.releases.latest.app
+      - index.project.balrog.releases.{{ event.version }}.app
     metadata:
       name: Balrog Docker Image Creation (release event)
       description: Balrog Docker Image Creation (release event)
@@ -252,8 +252,8 @@ tasks:
         events:
           - release
     routes:
-      - index.github.mozilla.balrog.releases.latest.agent
-      - index.github.mozilla.balrog.releases.{{ event.version }}.agent
+      - index.project.balrog.releases.latest.agent
+      - index.project.balrog.releases.{{ event.version }}.agent
     metadata:
       name: Balrog Agent Docker Image Creation (release event)
       description: Balrog Agent Docker Image Creation (release event)
