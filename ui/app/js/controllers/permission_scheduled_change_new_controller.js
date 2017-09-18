@@ -15,7 +15,18 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
   $scope.errors = {
     permissions: {}
   };
-  
+  $scope.permissions_list = [
+    {value : "", name : "---Please select---"},
+    {value : "admin", name : "Admin"},
+    {value : "rule", name : "Rule"},
+    {value : "release", name : "Release"},
+    {value : "release_read_only", name : "Release Read Only"},
+    {value : "release_locale", name : "Release Locale"},
+    {value : "required_signoff", name : "Required Signoff"},
+    {value : "permission", name : "Permission"},
+    {value : "scheduled_change", name : "Scheduled Change"},
+  ];
+
 
   $scope.sc.permissions = [];
   Permissions.getUserPermissions(sc.username)
