@@ -30,6 +30,9 @@ describe("controller: RuleEditCtrl", function() {
     "whitelist": null
   };
   var pr_ch_options = ['GMP'];
+  var signoffRequirements = [
+    {product: "Firefox", channel: "aurora", role: "releng", signoffs_required: 2}
+  ];
 
   beforeEach(inject(function($controller, $rootScope, $location, $modal, Rules, Releases, $httpBackend) {
     this.$location = $location;
@@ -47,6 +50,7 @@ describe("controller: RuleEditCtrl", function() {
       Releases: Releases,
       rule: rule,
       pr_ch_options: pr_ch_options,
+      signoffRequirements: signoffRequirements,
     });
   }));
 

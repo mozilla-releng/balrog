@@ -1,6 +1,6 @@
 /*global sweetAlert */
 angular.module('app').controller('RuleEditCtrl',
-function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options) {
+function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequirements, pr_ch_options) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
@@ -19,6 +19,13 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options) {
   $scope.is_edit = true;
   $scope.original_rule = rule;
   $scope.rule = angular.copy(rule);
+  $scope.signoffRequirements = signoffRequirements;
+  $scope.ruleSignoffsRequired = function() {
+    if ($scope.signoffRequirements) {
+      return Rules.ruleSignoffsRequired($scope.original_rule, $scope.rule, $scope.signoffRequirements);
+    }
+  };
+
 
   $scope.saving = false;
   $scope.pr_ch_options = pr_ch_options;

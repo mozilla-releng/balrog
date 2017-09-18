@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs) {
 
   Page.setTitle('Rules');
 
@@ -102,6 +102,16 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           }
         });
       });
+
+      ProductRequiredSignoffs.getRequiredSignoffs()
+        .then(function(payload) {
+        $scope.signoffRequirements = payload.data.required_signoffs;
+      });
+      $scope.ruleSignoffsRequired = function(rule) {
+        if ($scope.signoffRequirements) {
+          return Rules.ruleSignoffsRequired(rule, undefined, $scope.signoffRequirements);
+        }
+      };
     })
     .error(function() {
       console.error(arguments);
@@ -210,6 +220,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         // },
         rule: function () {
           return rule;
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
         },
         pr_ch_options: function() {
           return $scope.pr_ch_options;
