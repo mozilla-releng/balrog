@@ -88,6 +88,49 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers
       url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
       return $http.delete(url, data);
     },
+    ruleSignoffsRequired: function(oldRule, newRule, productSignoffRequirements) {
+      // Limited support for the only globs that we encounter in
+      // balrog, which are of the form "foo*".
+      function matchGlob(glob, target) {
+        if (glob[glob.length-1] === '*') {
+          return target.slice(0, glob.length-1) === glob.slice(0, glob.length-1);
+        }
+        return target === glob;
+      }
+
+      // Identify signoffs matching oldRule and newRule
+      function matchesRule(rule, signOffRequirement) {
+        if (rule.product && signOffRequirement.product !== rule.product) {
+          return false;
+        }
+        if (rule.channel && !matchGlob(rule.channel, signOffRequirement.channel)) {
+          return false;
+        }
+        return true;
+      }
+      function matchesRules(signOffRequirement) {
+        var rules = [];
+        // Don't check old rule if we're newly creating a rule.
+        if (oldRule) {
+          rules.push(oldRule);
+        }
+        // Don't check new rule if we're deleting a rule.
+        if (newRule) {
+          rules.push(newRule);
+        }
+        return rules.some(function(rule) { return matchesRule(rule, signOffRequirement); });
+      }
+
+      var relevantRequirements = productSignoffRequirements.filter(matchesRules);
+      // FIXME: Use a Map here instead of a simple object
+      var merged = {};
+      relevantRequirements.map(function(requirement) {
+        if (!merged[requirement.role] || merged[requirement.role] < requirement.signoffs_required) {
+          merged[requirement.role] = requirement.signoffs_required;
+        }
+      });
+      return {length: Object.keys(merged).length, roles: merged};
+    },
   };
   return service;
 
