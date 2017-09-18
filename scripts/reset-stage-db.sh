@@ -31,7 +31,7 @@ echo "Backing up existing permissions, roles, and required signoffs..."
 mysqldump --skip-add-drop-table --no-create-info -h "$host" -u "$username" --password="$password" "$database" permissions user_roles product_req_signoffs permissions_req_signoffs > backup.sql
 
 echo "Download prod dump..."
-python scripts/import-db.py
+python scripts/get-prod-db-dump.py
 
 echo "Overriding current database with production dump..."
 cat $LOCAL_DUMP | mysql -h "$host" -u "$username" --password="$password" "$database"
