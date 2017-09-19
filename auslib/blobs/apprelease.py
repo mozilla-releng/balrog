@@ -611,20 +611,20 @@ class PatchListConflictResolver(dictdiffer.resolve.Resolver):
     def __init__(self):
         self.unresolved_conflicts = []
 
-        def resolve_conflicts(self, first_patches, second_patches, conflicts):
-            print first_patches
-            print second_patches
-            for conflict in conflicts:
-                print conflict
-                conflict_path = self._find_conflicting_path(conflict)
-                print conflict_path
-                if self._auto_resolve(conflict):
-                    continue
+    def resolve_conflicts(self, first_patches, second_patches, conflicts):
+        print first_patches
+        print second_patches
+        for conflict in conflicts:
+            print conflict
+            conflict_path = self._find_conflicting_path(conflict)
+            print conflict_path
+            if self._auto_resolve(conflict):
+                continue
 
-                self.unresolved_conflicts.append(conflict)
+            self.unresolved_conflicts.append(conflict)
 
-            if self.unresolved_conflicts:
-                raise dictdiffer.resolve.UnresolvedConflictsException(self.unresolved_conflicts)
+        if self.unresolved_conflicts:
+            raise dictdiffer.resolve.UnresolvedConflictsException(self.unresolved_conflicts)
 
 
 class ReleaseBlobV3(MultipleUpdatesXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, SeparatedFileUrlsMixin):
@@ -735,7 +735,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
            still called "fileUrls". (See below for a more detailed description.)
     """
     jsonschema = "apprelease-v4.yml"
-    resolver = PatchListConflictResolver
+    conflict_resolver = PatchListConflictResolver()
 
     # for the benefit of get*XML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
