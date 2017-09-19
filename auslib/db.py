@@ -2064,16 +2064,8 @@ class Releases(AUSTable):
                     ancestor_blob = ancestor_change.get('data')
                     tip_release = self.getReleases(name=name, transaction=transaction)[0]
                     tip_blob = tip_release.get('data')
-                    m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
                     try:
-                        m.run()
-                        # Merger merges the patches into a single unified patch,
-                        # but we need dictdiffer.patch to actually apply the patch
-                        # to the original blob
-                        unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
-                        # converting the resultant dict into a blob and then
-                        # converting it to JSON
-                        what['data'] = unified_blob
+                        what['data'] = ancestor_blob.merge(tip_blob, blob)
                         # we want the data_version for the dictdiffer.merged blob to be one
                         # more than that of the latest blob
                         tip_data_version = tip_release['data_version']

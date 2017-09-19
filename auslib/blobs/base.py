@@ -7,6 +7,9 @@ import yaml
 
 import logging
 
+import dictdiffer
+import dictdiffer.merge
+
 from auslib.AUS import isSpecialURL
 from auslib.global_state import cache
 
@@ -83,6 +86,11 @@ class Blob(dict):
 
         if self.containsForbiddenDomain(product, whitelistedDomains):
             raise ValueError("Blob contains forbidden domain(s)")
+
+    def merge(self, left, right):
+        m = dictdiffer.merge.Merger(self, left, right, {})
+        m.run()
+        return dictdiffer.patch(m.unified_patches, self)
 
     def getResponseProducts(self):
         """
