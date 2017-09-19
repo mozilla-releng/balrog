@@ -7,9 +7,6 @@ import yaml
 
 import logging
 
-import dictdiffer
-import dictdiffer.merge
-
 from auslib.AUS import isSpecialURL
 from auslib.global_state import cache
 
@@ -58,6 +55,43 @@ def createBlob(data):
     return blob_map[schema_version](**data)
 
 
+def merge_blobs(ancestor, left, right):
+    result = {}
+    for key in ancestor.keys() + left.keys() + right.keys():
+        logging.debug("Comparing key '{}'".format(key))
+        # TODO: handle mismatched types
+        if isinstance(ancestor.get(key), dict) or isinstance(left.get(key), dict) or isinstance(right.get(key), dict):
+            logging.debug("'{}' is a dict".format(key))
+            result[key] = {}
+            result[key] = merge_blobs(ancestor.get(key, {}), left.get(key, {}), right.get(key, {}))
+        elif isinstance(ancestor.get(key), list) or isinstance(left.get(key), list) or isinstance(right.get(key), list):
+            logging.debug("'{}' is a list".format(key))
+            result[key] = []
+            for side in (ancestor, left, right):
+                for i in side.get(key, []):
+                    if i not in result[key]:
+                        result[key].append(i)
+        else:
+            if key in ancestor:
+                logging.debug("'{}' is in ancestor".format(key))
+                if key in left and key in right and ancestor[key] != left[key] and ancestor[key] != right[key]:
+                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key))
+                if key in left and ancestor[key] != left.get(key):
+                    result[key] = left[key]
+                else:
+                    result[key] = right[key]
+            else:
+                logging.debug("'{}' is not in ancestor".format(key))
+                if key in left and key in right and left[key] != right[key]:
+                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key))
+                if left.get(key) is not None:
+                    result[key] = left[key]
+                else:
+                    result[key] = right[key]
+
+    return result
+
+
 class Blob(dict):
     jsonschema = None
     conflict_resolver = None
@@ -87,13 +121,6 @@ class Blob(dict):
 
         if self.containsForbiddenDomain(product, whitelistedDomains):
             raise ValueError("Blob contains forbidden domain(s)")
-
-    def merge(self, left, right):
-        m = dictdiffer.merge.Merger(self, left, right, {})
-        if self.conflict_resolver:
-            m.resolver = self.conflict_resolver
-        m.run()
-        return dictdiffer.patch(m.unified_patches, self)
 
     def getResponseProducts(self):
         """

@@ -17,11 +17,8 @@ import sqlalchemy.types
 import migrate.versioning.schema
 import migrate.versioning.api
 
-import dictdiffer
-import dictdiffer.merge
-
 from auslib.global_state import cache
-from auslib.blobs.base import createBlob
+from auslib.blobs.base import createBlob, merge_blobs
 from auslib.util.comparison import string_compare, version_compare, int_compare
 from auslib.util.timestamp import getMillisecondTimestamp
 
@@ -2065,18 +2062,19 @@ class Releases(AUSTable):
                     tip_release = self.getReleases(name=name, transaction=transaction)[0]
                     tip_blob = tip_release.get('data')
                     try:
-                        what['data'] = ancestor_blob.merge(tip_blob, blob)
-                        # we want the data_version for the dictdiffer.merged blob to be one
-                        # more than that of the latest blob
-                        tip_data_version = tip_release['data_version']
-                        super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
-                                                     transaction=transaction, dryrun=dryrun)
-                        # cache will have a data_version of one plus the tip
-                        # data_version
-                        new_data_version = tip_data_version + 1
-                    except dictdiffer.merge.UnresolvedConflictsException:
-                        self.log.debug("latest version of release %s cannot be merged with new blob" % name)
+                        what['data'] = createBlob(merge_blobs(ancestor_blob, tip_blob, blob))
+                    except ValueError:
+                        self.log.exception("Couldn't merge blobs.")
                         raise e
+                    # we want the data_version for the dictdiffer.merged blob to be one
+                    # more than that of the latest blob
+                    tip_data_version = tip_release['data_version']
+                    super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
+                                                 transaction=transaction, dryrun=dryrun)
+                    # cache will have a data_version of one plus the tip
+                    # data_version
+                    new_data_version = tip_data_version + 1
+
             if not dryrun:
                 cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
                 cache.put("blob_version", name, new_data_version)
