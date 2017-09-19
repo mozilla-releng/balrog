@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob
@@ -604,8 +606,21 @@ class MultipleUpdatesXMLMixin(object):
 
         return patches
 
+    def _mergePartials(self, left, right):
+        platform_locale_partials = defaultdict(lambda: defaultdict(list))
+        for blob in (self, left, right):
+            for platform, platformData in blob.get("platforms", {}).items():
+                for locale, localeData in platformData.get("locales", {}).items():
+                    for partial in localeData.get("partials"):
+                        if partial not in platform_locale_partials[platform][locale]:
+                            platform_locale_partials[platform][locale].append(partial)
+        for blob in (self, left, right):
+            for platform in platform_locale_partials:
+                for locale, partials in platform_locale_partials[platform].items():
+                    blob["platforms"][platform]["locales"][locale]["partials"] = partials
 
-class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, SeparatedFileUrlsMixin):
+
+class ReleaseBlobV3(MultipleUpdatesXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, SeparatedFileUrlsMixin):
     """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
 
         This is an internal change to add functionality to Balrog.
@@ -725,6 +740,10 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 4
+
+    def merge(self, left, right):
+        self._mergePartials(left, right)
+        return super(ReleaseBlobV4, self).merge(left, right)
 
     @classmethod
     def fromV3(cls, v3Blob):
