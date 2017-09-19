@@ -92,6 +92,20 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     $scope.ordering = value.value.split(',');
   });
 
+  $scope.$on('$routeChangeSuccess', function() {
+    var filterString = '';
+    if (!$routeParams.product && !$routeParams.channel) {
+      filterString = 'All rules';
+    }
+    if ($routeParams.product && !$routeParams.channel) {
+      filterString = $routeParams.product;
+    }
+    if ($routeParams.product && $routeParams.channel) {
+      filterString = $routeParams.product + ',' + $routeParams.channel;
+    }
+    $scope.pr_ch_filter = filterString;
+  });
+
   $scope.$watch('pr_ch_filter', function(value) {
     if (value) {
       localStorage.setItem("pr_ch_filter", value);
@@ -104,9 +118,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     if (pr_ch_array[0].toLowerCase() === "all rules" || $scope.rule_id) {
       $location.path('/rules');
     } else if (pr_ch_array && pr_ch_array.length > 1) {
-      $location.path('/rules/' + pr_ch_array[0] + '/' + pr_ch_array[1]);
+      $location.path('/rules').search({product: pr_ch_array[0], channel: pr_ch_array[1]});
     } else {
-      $location.path('/rules/' + pr_ch_array[0]);
+      $location.path('/rules').search({product: pr_ch_array[0]});
     }
   };
 
