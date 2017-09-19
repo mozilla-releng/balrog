@@ -60,6 +60,7 @@ def createBlob(data):
 
 class Blob(dict):
     jsonschema = None
+    conflict_resolver = None
 
     def __init__(self, *args, **kwargs):
         super(Blob, self).__init__(self, *args, **kwargs)
@@ -89,6 +90,8 @@ class Blob(dict):
 
     def merge(self, left, right):
         m = dictdiffer.merge.Merger(self, left, right, {})
+        if self.conflict_resolver:
+            m.resolver = self.conflict_resolver
         m.run()
         return dictdiffer.patch(m.unified_patches, self)
 

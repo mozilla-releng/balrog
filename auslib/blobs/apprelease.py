@@ -1,4 +1,4 @@
-from collections import defaultdict
+import dictdiffer.resolve
 
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
@@ -606,19 +606,25 @@ class MultipleUpdatesXMLMixin(object):
 
         return patches
 
-    def _mergeUpdates(self, left, right):
-        for patchKey in ("completes", "partials"):
-            platform_locale_patches = defaultdict(lambda: defaultdict(list))
-            for blob in (self, left, right):
-                for platform, platformData in blob.get("platforms", {}).items():
-                    for locale, localeData in platformData.get("locales", {}).items():
-                        for patch in localeData.get(patchKey):
-                            if patch not in platform_locale_patches[platform][locale]:
-                                platform_locale_patches[platform][locale].append(patch)
-            for blob in (self, left, right):
-                for platform in platform_locale_patches:
-                    for locale, patches in platform_locale_patches[platform].items():
-                        blob["platforms"][platform]["locales"][locale][patchKey] = patches
+
+class PatchListConflictResolver(dictdiffer.resolve.Resolver):
+    def __init__(self):
+        self.unresolved_conflicts = []
+
+        def resolve_conflicts(self, first_patches, second_patches, conflicts):
+            print first_patches
+            print second_patches
+            for conflict in conflicts:
+                print conflict
+                conflict_path = self._find_conflicting_path(conflict)
+                print conflict_path
+                if self._auto_resolve(conflict):
+                    continue
+
+                self.unresolved_conflicts.append(conflict)
+
+            if self.unresolved_conflicts:
+                raise dictdiffer.resolve.UnresolvedConflictsException(self.unresolved_conflicts)
 
 
 class ReleaseBlobV3(MultipleUpdatesXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, SeparatedFileUrlsMixin):
@@ -650,10 +656,6 @@ class ReleaseBlobV3(MultipleUpdatesXMLMixin, ReleaseBlobBase, NewStyleVersionsMi
 
     def _getBouncerProduct(self, patchKey, from_):
         return self.get("bouncerProducts", {}).get(patchKey, {}).get(from_, "")
-
-    def merge(self, left, right):
-        self._mergeUpdates(left, right)
-        return super(ReleaseBlobV4, self).merge(left, right)
 
     def createSnippets(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         # We have no tests that require this, probably not worthwhile to implement.
@@ -733,6 +735,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
            still called "fileUrls". (See below for a more detailed description.)
     """
     jsonschema = "apprelease-v4.yml"
+    resolver = PatchListConflictResolver
 
     # for the benefit of get*XML
     optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
@@ -745,10 +748,6 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 4
-
-    def merge(self, left, right):
-        self._mergeUpdates(left, right)
-        return super(ReleaseBlobV4, self).merge(left, right)
 
     @classmethod
     def fromV3(cls, v3Blob):
@@ -834,10 +833,6 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         if 'schema_version' not in self.keys():
             self['schema_version'] = 5
 
-    def merge(self, left, right):
-        self._mergeUpdates(left, right)
-        return super(ReleaseBlobV4, self).merge(left, right)
-
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
@@ -882,10 +877,6 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         if 'schema_version' not in self.keys():
             self['schema_version'] = 6
 
-    def merge(self, left, right):
-        self._mergeUpdates(left, right)
-        return super(ReleaseBlobV4, self).merge(left, right)
-
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
@@ -929,10 +920,6 @@ class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 7
-
-    def merge(self, left, right):
-        self._mergeUpdates(left, right)
-        return super(ReleaseBlobV4, self).merge(left, right)
 
     def getReferencedReleases(self):
         """
@@ -989,10 +976,6 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 8
-
-    def merge(self, left, right):
-        self._mergeUpdates(left, right)
-        return super(ReleaseBlobV4, self).merge(left, right)
 
     def getReferencedReleases(self):
         """
