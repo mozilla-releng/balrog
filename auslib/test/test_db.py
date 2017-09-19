@@ -2864,7 +2864,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, expected)
 
-    def testtestGetRulesMatchingQueryChannelGlobbingAtEndPass(self):
+    def testGetRulesMatchingQueryChannelGlobbingAtEndPass(self):
         # To ensure globbing at end only -- Pass case
         expected = [dict(rule_id=6, priority=100, backgroundRate=100, channel='r*test*', update_type='z', data_version=1)]
         rules = self.rules.getRulesMatchingQuery(
@@ -2878,7 +2878,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         self.assertEquals(rules, expected)
 
-    def testtestGetRulesMatchingQueryChannelGlobbingAtEndFail(self):
+    def testGetRulesMatchingQueryChannelGlobbingAtEndFail(self):
         # To ensure globbing at end only -- Fail case
         expected = []
         rules = self.rules.getRulesMatchingQuery(
@@ -3766,6 +3766,149 @@ class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by='bill', old_data_version=1)
         self.releases.update({"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1)
         ret = select([self.releases.data]).where(self.releases.name == 'p').execute().fetchone()[0]
+        self.assertEqual(result_blob, ret)
+
+    def testAddMergeableWithChangesToList(self):
+        ancestor_blob = createBlob("""
+{
+    "name": "release4",
+    "schema_version": 4,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "completes": [
+                        {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
+                    ],
+                    "partials": [
+                        {
+                            "filesize": 1234,
+                            "from": "release1",
+                            "hashValue": "def"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        blob1 = createBlob("""
+{
+    "name": "release4",
+    "schema_version": 4,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "completes": [
+                        {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
+                    ],
+                    "partials": [
+                        {
+                            "filesize": 1234,
+                            "from": "release1",
+                            "hashValue": "def"
+                        },
+                        {
+                            "filesize": 5678,
+                            "from": "release2",
+                            "hashValue": "aaa"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        blob2 = createBlob("""
+{
+    "name": "release4",
+    "schema_version": 4,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "completes": [
+                        {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
+                    ],
+                    "partials": [
+                        {
+                            "filesize": 1234,
+                            "from": "release1",
+                            "hashValue": "def"
+                        },
+                        {
+                            "filesize": 9012,
+                            "from": "release3",
+                            "hashValue": "bbb"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        result_blob = createBlob("""
+{
+    "name": "release4",
+    "schema_version": 4,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "completes": [
+                        {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
+                    ],
+                    "partials": [
+                        {
+                            "filesize": 1234,
+                            "from": "release1",
+                            "hashValue": "def"
+                        },
+                        {
+                            "filesize": 5678,
+                            "from": "release2",
+                            "hashValue": "aaa"
+                        },
+                        {
+                            "filesize": 9012,
+                            "from": "release3",
+                            "hashValue": "bbb"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        self.releases.insert(changed_by="bill", name='release4', product='z', data=ancestor_blob)
+        self.releases.update({"name": "release4"}, {"product": "z", "data": blob1}, changed_by='bill', old_data_version=1)
+        self.releases.update({"name": "release4"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1)
+        ret = select([self.releases.data]).where(self.releases.name == 'release4').execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
 
     def testAddConflictingOutdatedData(self):
