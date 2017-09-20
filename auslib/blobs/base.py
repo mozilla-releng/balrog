@@ -59,6 +59,9 @@ def merge_blobs(ancestor, left, right):
     result = {}
     for key in ancestor.keys() + left.keys() + right.keys():
         # TODO: handle mismatched types
+        if len(set([type(ancestor.get(key)), type(left.get(key)), type(right.get(key)), type(None)])) > 2:
+            raise ValueError("Cannot merge blobs: type mismatch for '{}'".format(key.encode('ascii', 'replace')))
+
         if isinstance(ancestor.get(key), dict) or isinstance(left.get(key), dict) or isinstance(right.get(key), dict):
             result[key] = {}
             result[key] = merge_blobs(ancestor.get(key, {}), left.get(key, {}), right.get(key, {}))
@@ -71,14 +74,14 @@ def merge_blobs(ancestor, left, right):
         else:
             if key in ancestor:
                 if key in left and key in right and ancestor[key] != left[key] and ancestor[key] != right[key]:
-                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key))
+                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key.encode('ascii', 'replace')))
                 if key in left and ancestor[key] != left.get(key):
                     result[key] = left[key]
                 else:
                     result[key] = right[key]
             else:
                 if key in left and key in right and left[key] != right[key]:
-                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key))
+                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key.encode('ascii', 'replace')))
                 if left.get(key) is not None:
                     result[key] = left[key]
                 else:
