@@ -102,6 +102,9 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
       url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
       return $http.delete(url, data);
     },
+    getProducts: function(){
+      return $http.get('/api/releases/columns/product');
+    }
   };
   return service;
 

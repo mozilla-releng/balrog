@@ -21,8 +21,19 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
       $scope.available_options = allPermissions[$scope.permission.permission];
   }
   $scope.selected_options = [];
+
+  $scope.actions = ["create", "modify", "enact"];
+  $scope.action = null;
+
+  $scope.products = [];
+  $scope.product = null;
+
+  Permissions.getProducts().success(function(response) {
+    $scope.products = response.product;
+  });
+
   $scope.toggleOption = function(option){
-      if(!!~($scope.selected_options.indexOf(option))){
+      if(!!($scope.selected_options.indexOf(option)+1)){
           $scope.selected_options.splice($scope.selected_options.indexOf(option), 1);
       }else{
           $scope.selected_options.push(option);
