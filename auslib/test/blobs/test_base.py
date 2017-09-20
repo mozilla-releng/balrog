@@ -2,7 +2,7 @@ from copy import deepcopy
 import mock
 import unittest
 
-from hypothesis import given, assume
+from hypothesis import given, assume, settings, HealthCheck
 import hypothesis.strategies as st
 
 from auslib.blobs.base import createBlob, merge_blobs
@@ -81,6 +81,7 @@ json = st.dictionaries(st.text(),
                        max_size=10)
 
 
+@settings(suppress_health_check=[HealthCheck.too_slow])
 @given(json)
 def test_merge_blobs_join_lists(base):
     left = deepcopy(base)
@@ -99,6 +100,7 @@ def test_merge_blobs_join_lists(base):
     assert got == expected
 
 
+@settings(suppress_health_check=[HealthCheck.too_slow])
 @given(json)
 def test_merge_blobs_raise_when_both_adding_same_key(base):
     left = deepcopy(base)
@@ -113,6 +115,7 @@ def test_merge_blobs_raise_when_both_adding_same_key(base):
         assert False, "ValueError not raised"
 
 
+@settings(suppress_health_check=[HealthCheck.too_slow])
 @given(json)
 def test_merge_blobs_raise_when_both_modifying_same_key(base):
     left = deepcopy(base)
@@ -128,6 +131,7 @@ def test_merge_blobs_raise_when_both_modifying_same_key(base):
         assert False, "ValueError not raised"
 
 
+@settings(suppress_health_check=[HealthCheck.too_slow])
 @given(json)
 def test_merge_blobs_mismatched_types(base):
     left = deepcopy(base)
