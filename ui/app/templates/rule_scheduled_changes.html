@@ -75,7 +75,7 @@
     </h3>
   </div>
   <div class="panel-body">
-    <div ng-show="! isEmpty(sc.required_signoffs)">
+    <div ng-show="!scheduled_changes_rules_count && ! isEmpty(sc.required_signoffs)">
       <span style="float: left">
         <h4>Before it can be enacted, this change must be signed off on by:</h4>
         <ul>
@@ -92,8 +92,8 @@
           </li>
         </ul>
       </span>
+      <hr style="clear: both" ng-show="! isEmpty(sc.required_signoffs)">
     </div>
-    <hr style="clear: both" ng-show="! isEmpty(sc.required_signoffs)">
     <div class="left" style="float: left">
       <h5 title="Scheduled By">
         Scheduled By: <b>{{ sc.scheduled_by ? sc.scheduled_by : current_user }}</b>
