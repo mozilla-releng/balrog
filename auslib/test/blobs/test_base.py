@@ -69,7 +69,11 @@ class TestCreateBlob(unittest.TestCase):
             self.assertEquals(yaml_load.call_count, 1)
 
 
-# Explicitly not using bools here because they are extremely difficult to handle correctly, and we don't need to support them.
+# Generate potentially nested dictionaries/lists with various values.
+# The top level will also be a dict.
+# Booleans are explicitly not included in the list of values because
+# things like "1 in [True]" are True, which is very difficult to handle
+# and not something we encounter in the real world.
 json = st.dictionaries(st.text(),
                        st.recursive(st.none() | st.floats(allow_nan=False) | st.text(),
                                     lambda children: st.lists(children, max_size=10) | st.dictionaries(st.text(), children, max_size=10),
