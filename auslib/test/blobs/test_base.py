@@ -70,23 +70,37 @@ class TestCreateBlob(unittest.TestCase):
 
 
 # Explicitly not using bools here because they are extremely difficult to handle correctly, and we don't need to support them.
-json = st.dictionaries(st.text(), st.recursive(st.none() | st.floats(allow_nan=False) | st.text(), lambda children: st.lists(children) | st.dictionaries(st.text(), children)))
+json = st.dictionaries(st.text(), st.recursive(st.none() | st.floats(allow_nan=False) | st.text(),
+                       lambda children: st.lists(children, max_size=10) | st.dictionaries(st.text(), children, max_size=10)),
+                       max_size=10)
 
 
 @given(json)
-def test_merge_blobs(base):
+def test_merge_blobs_join_lists(base):
     left = deepcopy(base)
     right = deepcopy(base)
     expected = deepcopy(base)
     to_modify = None
-    if isinstance(base, dict):
-        for key in base:
-            if isinstance(base[key], list):
-                to_modify = key
-    if not to_modify:
-        return
-    left[to_modify].extend([1,2,3])
-    right[to_modify].extend([4,5,6])
-    expected[to_modify].extend([1,2,3,4,5,6])
+    for key in base:
+        if isinstance(base[key], list):
+            to_modify = key
+    if to_modify:
+        left[to_modify].extend(range(1, 4))
+        right[to_modify].extend(range(4, 7))
+        expected[to_modify].extend(range(1, 7))
     got = merge_blobs(base, left, right)
     assert got == expected
+
+
+@given(json)
+def test_merge_blobs_raise_when_both_adding_same_key(base):
+    left = deepcopy(base)
+    right = deepcopy(base)
+    left["foobar"] = "blah"
+    right["foobar"] = "crap"
+    try:
+        merge_blobs(base, left, right)
+    except ValueError as e:
+        assert "left and right are both changing 'foobar'" in e.message
+    else:
+        assert False, "ValueError not raised"
