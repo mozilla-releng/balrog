@@ -23,7 +23,7 @@
         <form role="form" ng-submit="is_edit ? updatePermission(permission) : addPermission()">
           <div class="form-group" ng-class="{'has-error': errors.permission}">
             <label for="id_permission">Permission</label><br>
-              <select name="singleSelect" class="form-control" id="id_permission" ng-model="permission.permission">
+              <select name="singleSelect" class="form-control" id="id_permission" ng-model="permission.permission" ng-change="onPermission()">
                   <option value="">---Please select---</option>
                   <option value="admin">Admin</option>
                   <option value="rule">Rule</option>
@@ -41,13 +41,13 @@
             <!-- <textarea ng-model="permission.options_as_json" class="options-as-json"></textarea> -->
              <div class="dropdown">
                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
-                    <span ng-if="selected_options.length < 1">Select Options</span>
-                    <span ng-if="selected_options.length > 0">
+                    <span ng-if="!selected_options.length">Select Options</span>
+                    <span ng-if="!!selected_options.length">
                         {{ selected_options.join(' | ') }}
                     </span>
                 <span class="caret"></span></button>
                 <ul class="dropdown-menu" ng-click="$event.stopPropagation();">
-                    <li ng-repeat="option in options"><Label class="col-sm-12"><input ng-click="toggleOption(option)" type="checkbox"> &nbsp;{{option}}</Label></li>
+                    <li ng-repeat="option in available_options"><Label class="col-sm-12"><input ng-click="toggleOption(option)" type="checkbox"> &nbsp;{{option}}</Label></li>
                 </ul>
             </div>
             <p class="help-block" ng-show="errors.options">{{ errors.options.join(', ') }}</p>

@@ -6,16 +6,28 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   $scope.users = users;
   $scope.currentItemTab = 1;
 
-  //TODO: get options from API service
-  $scope.options = ["Role_1", "Role_2", "Role_3"];
+  var allPermissions = {
+        "admin": ["products"],
+        "release": ["actions", "products"],
+        "release_locale": ["actions", "products"],
+        "release_read_only": ["actions", "products"],
+        "rule": ["actions", "products"],
+        "permission": ["actions"],
+        "required_signoff": ["products"],
+        "scheduled_change": ["actions"],
+    };
+
+  $scope.onPermission = function(){
+      $scope.available_options = allPermissions[$scope.permission.permission];
+  }
   $scope.selected_options = [];
   $scope.toggleOption = function(option){
-      if($scope.selected_options.indexOf(option) != -1){
+      if($scope.selected_options.indexOf(option) !== -1){
           $scope.selected_options.splice($scope.selected_options.indexOf(option), 1);
       }else{
           $scope.selected_options.push(option);
       }
-  }
+  };
   $scope.is_edit = is_edit;
   $scope.permission = {
     permission: '',
