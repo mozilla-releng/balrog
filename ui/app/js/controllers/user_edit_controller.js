@@ -23,23 +23,34 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   $scope.selected_options = [];
 
   $scope.actions = ["create", "modify", "enact"];
+  $scope.selected_actions = [];
   $scope.action = null;
 
   $scope.products = [];
   $scope.selected_products = [];
   $scope.product = null;
 
+  // Get products in releases
   Permissions.getProducts().success(function(response) {
     $scope.products = response.product;
   });
 
   $scope.$watch(function(){
+      // Add tag on action input
+      if (!!($scope.actions.indexOf($scope.action)+1) && !($scope.selected_actions.indexOf($scope.action)+1)){
+          $scope.selected_actions.push($scope.action);
+          $scope.action = null;
+      }
       // Add tag on product input
       if(!!($scope.products.indexOf($scope.product)+1) && !($scope.selected_products.indexOf($scope.product)+1)){
           $scope.selected_products.push($scope.product);
           $scope.product = null;
       }
   });
+
+  $scope.actionRemove = function(action){
+      $scope.selected_actions.splice($scope.selected_actions.indexOf(action), 1);
+  }
 
   $scope.productRemove = function(product){
       $scope.selected_products.splice($scope.selected_products.indexOf(product), 1);
