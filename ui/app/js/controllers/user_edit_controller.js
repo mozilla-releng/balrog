@@ -22,7 +22,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   }
   $scope.selected_options = [];
   $scope.toggleOption = function(option){
-      if($scope.selected_options.indexOf(option) !== -1){
+      if(!!~($scope.selected_options.indexOf(option))){
           $scope.selected_options.splice($scope.selected_options.indexOf(option), 1);
       }else{
           $scope.selected_options.push(option);

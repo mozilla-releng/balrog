@@ -39,6 +39,7 @@
           <div class="form-group" ng-class="{'has-error': errors.options_as_json}">
               <!-- <label for="id_options">Options</label> -->
             <!-- <textarea ng-model="permission.options_as_json" class="options-as-json"></textarea> -->
+            <label>Options</label>
              <div class="dropdown">
                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
                     <span ng-if="!selected_options.length">Select Options</span>
@@ -52,7 +53,14 @@
             </div>
             <p class="help-block" ng-show="errors.options">{{ errors.options.join(', ') }}</p>
           </div>
-
+          <div class="form-group" ng-show="!!~(selected_options.indexOf('actions'))">
+              <label><i>actions</i></label>
+              <textarea class="form-control" rows="1"></textarea>
+          </div>
+          <div class="form-group" ng-show="!!~(selected_options.indexOf('products'))">
+              <label><i>products</i></label>
+              <textarea class="form-control" rows="1"></textarea>
+          </div>
           <div style="text-align: right">
             <input type="hidden" name="data_version" ng-model="permission.data_version">
             <button type="submit" class="btn btn-primary">Save</button>
