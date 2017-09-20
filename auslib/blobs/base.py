@@ -58,22 +58,18 @@ def createBlob(data):
 def merge_blobs(ancestor, left, right):
     result = {}
     for key in ancestor.keys() + left.keys() + right.keys():
-        logging.debug("Comparing key '{}'".format(key))
         # TODO: handle mismatched types
         if isinstance(ancestor.get(key), dict) or isinstance(left.get(key), dict) or isinstance(right.get(key), dict):
-            logging.debug("'{}' is a dict".format(key))
             result[key] = {}
             result[key] = merge_blobs(ancestor.get(key, {}), left.get(key, {}), right.get(key, {}))
         elif isinstance(ancestor.get(key), list) or isinstance(left.get(key), list) or isinstance(right.get(key), list):
-            logging.debug("'{}' is a list".format(key))
-            result[key] = []
-            for side in (ancestor, left, right):
+            result[key] = ancestor.get(key, [])[:]
+            for side in (left, right):
                 for i in side.get(key, []):
-                    if i not in result[key]:
+                    if i not in result[key] or not isinstance(i, type(result[key][result[key].index(i)])):
                         result[key].append(i)
         else:
             if key in ancestor:
-                logging.debug("'{}' is in ancestor".format(key))
                 if key in left and key in right and ancestor[key] != left[key] and ancestor[key] != right[key]:
                     raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key))
                 if key in left and ancestor[key] != left.get(key):
@@ -81,7 +77,6 @@ def merge_blobs(ancestor, left, right):
                 else:
                     result[key] = right[key]
             else:
-                logging.debug("'{}' is not in ancestor".format(key))
                 if key in left and key in right and left[key] != right[key]:
                     raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key))
                 if left.get(key) is not None:
