@@ -94,7 +94,6 @@ def merge_blobs(ancestor, left, right):
 
 class Blob(dict):
     jsonschema = None
-    conflict_resolver = None
 
     def __init__(self, *args, **kwargs):
         super(Blob, self).__init__(self, *args, **kwargs)
