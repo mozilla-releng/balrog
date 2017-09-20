@@ -58,8 +58,9 @@ def createBlob(data):
 def merge_dicts(ancestor, left, right):
     result = {}
     for key in ancestor.keys() + left.keys() + right.keys():
-        # TODO: handle mismatched types
-        if len(set([type(ancestor.get(key)), type(left.get(key)), type(right.get(key)), type(None)])) > 2:
+        key_types = set([type(ancestor.get(key)), type(left.get(key)), type(right.get(key))])
+        key_types.discard(type(None))
+        if len(key_types) > 1 and not key_types.issubset([str, unicode]):
             raise ValueError("Cannot merge blobs: type mismatch for '{}'".format(key.encode('ascii', 'replace')))
 
         if isinstance(ancestor.get(key), dict) or isinstance(left.get(key), dict) or isinstance(right.get(key), dict):

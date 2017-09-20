@@ -146,3 +146,12 @@ def test_merge_dicts_mismatched_types(base):
         assert "type mismatch" in e.message
     else:
         assert False, "ValueError not raised"
+
+
+def test_merge_dicts_unicode_and_str_are_equal():
+    base = {"foo": "bar"}
+    left = {"foo": "bar", "blah": "crap", "abc": "def"}
+    right = {u"foo": u"bar", u"blah": u"crap", u"ghi": u"jkl"}
+    expected = {"foo": "bar", "blah": "crap", "abc": "def", "ghi": "jkl"}
+    got = merge_dicts(base, left, right)
+    assert got == expected
