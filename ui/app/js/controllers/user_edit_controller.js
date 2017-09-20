@@ -53,6 +53,13 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
           $scope.selected_products.push($scope.product);
           $scope.product = null;
       }
+
+      if(!($scope.selected_options.indexOf('actions')+1)){
+          $scope.selected_actions = [];
+      }
+      if(!($scope.selected_options.indexOf('products')+1)){
+          $scope.selected_products = [];
+      }
   });
 
   $scope.actionRemove = function(action){
