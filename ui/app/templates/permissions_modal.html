@@ -48,7 +48,7 @@
                     </span>
                 <span class="caret"></span></button>
                 <ul class="dropdown-menu" ng-click="$event.stopPropagation();">
-                    <li ng-repeat="option in available_options"><Label class="col-sm-12"><input ng-click="toggleOption(option)" type="checkbox"> &nbsp;{{option}}</Label></li>
+                    <li ng-repeat="option in available_options"><Label class="col-sm-12"><input ng-click="toggleOption(option)" type="checkbox" ng-checked="!!(selected_options.indexOf(option)+1)"> &nbsp;{{option}}</Label></li>
                 </ul>
             </div>
             <p class="help-block" ng-show="errors.options">{{ errors.options.join(', ') }}</p>

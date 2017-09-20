@@ -19,6 +19,13 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
 
   $scope.onPermission = function(){
       $scope.available_options = allPermissions[$scope.permission.permission];
+
+      // clear  all previous selections 
+      [
+          $scope.selected_options,
+          $scope.selected_actions,
+          $scope.selected_products
+      ] = [[], [], []];
   }
   $scope.selected_options = [];
 
