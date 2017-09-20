@@ -26,11 +26,24 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   $scope.action = null;
 
   $scope.products = [];
+  $scope.selected_products = [];
   $scope.product = null;
 
   Permissions.getProducts().success(function(response) {
     $scope.products = response.product;
   });
+
+  $scope.$watch(function(){
+      // Add tag on product input
+      if(!!($scope.products.indexOf($scope.product)+1) && !($scope.selected_products.indexOf($scope.product)+1)){
+          $scope.selected_products.push($scope.product);
+          $scope.product = null;
+      }
+  });
+
+  $scope.productRemove = function(product){
+      $scope.selected_products.splice($scope.selected_products.indexOf(product), 1);
+  };
 
   $scope.toggleOption = function(option){
       if(!!($scope.selected_options.indexOf(option)+1)){
