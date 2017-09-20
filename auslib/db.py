@@ -18,7 +18,7 @@ import migrate.versioning.schema
 import migrate.versioning.api
 
 from auslib.global_state import cache
-from auslib.blobs.base import createBlob, merge_blobs
+from auslib.blobs.base import createBlob, merge_dicts
 from auslib.util.comparison import string_compare, version_compare, int_compare
 from auslib.util.timestamp import getMillisecondTimestamp
 
@@ -2062,7 +2062,7 @@ class Releases(AUSTable):
                     tip_release = self.getReleases(name=name, transaction=transaction)[0]
                     tip_blob = tip_release.get('data')
                     try:
-                        what['data'] = createBlob(merge_blobs(ancestor_blob, tip_blob, blob))
+                        what['data'] = createBlob(merge_dicts(ancestor_blob, tip_blob, blob))
                     except ValueError:
                         self.log.exception("Couldn't merge blobs.")
                         raise e

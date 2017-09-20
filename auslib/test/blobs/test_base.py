@@ -5,7 +5,7 @@ import unittest
 from hypothesis import given, assume, settings, HealthCheck
 import hypothesis.strategies as st
 
-from auslib.blobs.base import createBlob, merge_blobs
+from auslib.blobs.base import createBlob, merge_dicts
 from auslib.global_state import cache
 
 
@@ -83,7 +83,7 @@ json = st.dictionaries(st.text(),
 
 @settings(suppress_health_check=[HealthCheck.too_slow])
 @given(json)
-def test_merge_blobs_join_lists(base):
+def test_merge_dicts_join_lists(base):
     left = deepcopy(base)
     right = deepcopy(base)
     expected = deepcopy(base)
@@ -96,19 +96,19 @@ def test_merge_blobs_join_lists(base):
     left[to_modify].extend(range(1, 4))
     right[to_modify].extend(range(4, 7))
     expected[to_modify].extend(range(1, 7))
-    got = merge_blobs(base, left, right)
+    got = merge_dicts(base, left, right)
     assert got == expected
 
 
 @settings(suppress_health_check=[HealthCheck.too_slow])
 @given(json)
-def test_merge_blobs_raise_when_both_adding_same_key(base):
+def test_merge_dicts_raise_when_both_adding_same_key(base):
     left = deepcopy(base)
     right = deepcopy(base)
     left["foobar"] = "blah"
     right["foobar"] = "crap"
     try:
-        merge_blobs(base, left, right)
+        merge_dicts(base, left, right)
     except ValueError as e:
         assert "left and right are both changing 'foobar'" in e.message
     else:
@@ -117,14 +117,14 @@ def test_merge_blobs_raise_when_both_adding_same_key(base):
 
 @settings(suppress_health_check=[HealthCheck.too_slow])
 @given(json)
-def test_merge_blobs_raise_when_both_modifying_same_key(base):
+def test_merge_dicts_raise_when_both_modifying_same_key(base):
     left = deepcopy(base)
     right = deepcopy(base)
     base["foobar"] = "foo"
     left["foobar"] = "blah"
     right["foobar"] = "crap"
     try:
-        merge_blobs(base, left, right)
+        merge_dicts(base, left, right)
     except ValueError as e:
         assert "left and right are both changing" in e.message
     else:
@@ -133,7 +133,7 @@ def test_merge_blobs_raise_when_both_modifying_same_key(base):
 
 @settings(suppress_health_check=[HealthCheck.too_slow])
 @given(json)
-def test_merge_blobs_mismatched_types(base):
+def test_merge_dicts_mismatched_types(base):
     left = deepcopy(base)
     right = deepcopy(base)
     assume(len(base) > 0)
@@ -141,7 +141,7 @@ def test_merge_blobs_mismatched_types(base):
     left[to_modify] = "foo"
     right[to_modify] = [1, 2, 3]
     try:
-        merge_blobs(base, left, right)
+        merge_dicts(base, left, right)
     except ValueError as e:
         assert "type mismatch" in e.message
     else:

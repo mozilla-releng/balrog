@@ -55,7 +55,7 @@ def createBlob(data):
     return blob_map[schema_version](**data)
 
 
-def merge_blobs(ancestor, left, right):
+def merge_dicts(ancestor, left, right):
     result = {}
     for key in ancestor.keys() + left.keys() + right.keys():
         # TODO: handle mismatched types
@@ -64,7 +64,7 @@ def merge_blobs(ancestor, left, right):
 
         if isinstance(ancestor.get(key), dict) or isinstance(left.get(key), dict) or isinstance(right.get(key), dict):
             result[key] = {}
-            result[key] = merge_blobs(ancestor.get(key, {}), left.get(key, {}), right.get(key, {}))
+            result[key] = merge_dicts(ancestor.get(key, {}), left.get(key, {}), right.get(key, {}))
         elif isinstance(ancestor.get(key), list) or isinstance(left.get(key), list) or isinstance(right.get(key), list):
             result[key] = ancestor.get(key, [])[:]
             for side in (left, right):
