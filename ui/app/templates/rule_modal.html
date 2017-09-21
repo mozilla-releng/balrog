@@ -187,11 +187,7 @@
     <input type="hidden" name="data_version" ng-model="rule.data_version">
   </form>
 
-  <div ng-show="ruleSignoffsRequired().length" class="has-error">
-    <p class="help-block">
-      Making this change requires signoffs and therefore must be a scheduled change.
-    </p>
-  </div>
+  <show-signoff-requirements requirements="ruleSignoffsRequired()"></show-signoff-requirements>
 
   <div class="form-group" ng-class="{'has-error': errors.detail}">
     <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
