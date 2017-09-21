@@ -26,7 +26,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
           $scope.selected_actions,
           $scope.selected_products
       ] = [[], [], []];
-  }
+  };
   $scope.selected_options = [];
 
   $scope.actions = ["create", "modify", "enact"];
@@ -44,40 +44,40 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
 
   $scope.$watch(function(){
       // add tag on action input
-      if (!!($scope.actions.indexOf($scope.action)+1) && !($scope.selected_actions.indexOf($scope.action)+1)){
+      if ($scope.actions.indexOf($scope.action) !== -1 && $scope.selected_actions.indexOf($scope.action) === -1){
           $scope.selected_actions.push($scope.action);
           $scope.action = null;
       }
       // add tag on product input
-      if(!!($scope.products.indexOf($scope.product)+1) && !($scope.selected_products.indexOf($scope.product)+1)){
+      if($scope.products.indexOf($scope.product) !== -1 && $scope.selected_products.indexOf($scope.product) === -1){
           $scope.selected_products.push($scope.product);
           $scope.product = null;
       }
 
-      if(!($scope.selected_options.indexOf('actions')+1)){
+      if($scope.selected_options.indexOf('actions') === -1){
           $scope.selected_actions = [];
       }
-      if(!($scope.selected_options.indexOf('products')+1)){
+      if($scope.selected_options.indexOf('products') === -1){
           $scope.selected_products = [];
       }
 
       // always update options_as_json according to selected tags
       let options = {};
-      ($scope.selected_products.length > 0) ? options["products"] = $scope.selected_products: false;
-      ($scope.selected_actions.length > 0) ? options["actions"] = $scope.selected_actions : false;
+      if ($scope.slected_products.length > 0 ) { options["products"] = $scope.selected_products; } 
+      if ($scope.selected_actions.length > 0) { options["actions"] = $scope.selected_actions; } 
       $scope.permission.options_as_json = JSON.stringify(options);
   });
 
   $scope.actionRemove = function(action){
       $scope.selected_actions.splice($scope.selected_actions.indexOf(action), 1);
-  }
+  };
 
   $scope.productRemove = function(product){
       $scope.selected_products.splice($scope.selected_products.indexOf(product), 1);
   };
 
   $scope.toggleOption = function(option){
-      if(!!($scope.selected_options.indexOf(option)+1)){
+      if($scope.selected_options.indexOf(option) !== -1){
           $scope.selected_options.splice($scope.selected_options.indexOf(option), 1);
       }else{
           $scope.selected_options.push(option);
