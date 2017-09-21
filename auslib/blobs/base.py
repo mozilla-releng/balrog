@@ -64,7 +64,6 @@ def merge_dicts(ancestor, left, right):
             raise ValueError("Cannot merge blobs: type mismatch for '{}'".format(key.encode('ascii', 'replace')))
 
         if isinstance(ancestor.get(key), dict) or isinstance(left.get(key), dict) or isinstance(right.get(key), dict):
-            result[key] = {}
             result[key] = merge_dicts(ancestor.get(key, {}), left.get(key, {}), right.get(key, {}))
         elif isinstance(ancestor.get(key), list) or isinstance(left.get(key), list) or isinstance(right.get(key), list):
             result[key] = ancestor.get(key, [])[:]

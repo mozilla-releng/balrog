@@ -81,7 +81,7 @@ json = st.dictionaries(st.text(),
                        max_size=10)
 
 
-@settings(suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
 @given(json)
 def test_merge_dicts_join_lists(base):
     left = deepcopy(base)
@@ -100,7 +100,7 @@ def test_merge_dicts_join_lists(base):
     assert got == expected
 
 
-@settings(suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
 @given(json)
 def test_merge_dicts_raise_when_both_adding_same_key(base):
     left = deepcopy(base)
@@ -115,7 +115,7 @@ def test_merge_dicts_raise_when_both_adding_same_key(base):
         assert False, "ValueError not raised"
 
 
-@settings(suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
 @given(json)
 def test_merge_dicts_raise_when_both_modifying_same_key(base):
     left = deepcopy(base)
@@ -131,7 +131,7 @@ def test_merge_dicts_raise_when_both_modifying_same_key(base):
         assert False, "ValueError not raised"
 
 
-@settings(suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
 @given(json)
 def test_merge_dicts_mismatched_types(base):
     left = deepcopy(base)
