@@ -20,11 +20,11 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequiremen
   $scope.original_rule = rule;
   $scope.rule = angular.copy(rule);
   $scope.signoffRequirements = signoffRequirements;
-  $scope.ruleSignoffsRequired = function() {
-    if ($scope.signoffRequirements) {
-      return Rules.ruleSignoffsRequired($scope.original_rule, $scope.rule, $scope.signoffRequirements);
+  $scope.$watch('rule', function() {
+    if (signoffRequirements) {
+      $scope.ruleSignoffsRequired = Rules.ruleSignoffsRequired($scope.original_rule, $scope.rule, $scope.signoffRequirements);
     }
-  };
+  }, true);
 
 
   $scope.saving = false;

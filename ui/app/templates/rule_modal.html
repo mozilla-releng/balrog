@@ -187,7 +187,7 @@
     <input type="hidden" name="data_version" ng-model="rule.data_version">
   </form>
 
-  <show-signoff-requirements requirements="ruleSignoffsRequired()"></show-signoff-requirements>
+  <show-signoff-requirements requirements="ruleSignoffsRequired"></show-signoff-requirements>
 
   <div class="form-group" ng-class="{'has-error': errors.detail}">
     <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
@@ -199,6 +199,6 @@
 </div>
 <div class="modal-footer">
   <div ng-show="saving" small-loader></div>
-  <button class="btn btn-primary" ng-class="{'disabled': ruleSignoffsRequired().length}" ng-show="!saving" ng-click="saveChanges()">Save Changes</button>
+  <button class="btn btn-primary" ng-class="{'disabled': ruleSignoffsRequired.length}" ng-show="!saving" ng-click="saveChanges()">Save Changes</button>
   <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
 </div>
