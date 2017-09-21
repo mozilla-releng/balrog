@@ -212,7 +212,13 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   };
 
   $scope.addPermission = function() {
-    // $scope.permission.options = $scope.permission.options_as_json;
+    let options = {};
+    ($scope.selected_products.length > 0) ? options["products"] = $scope.selected_products: false;
+    ($scope.selected_actions.length > 0) ? options["actions"] = $scope.selected_actions : false;
+    // we fainally create options_as_json object from selected tags
+    $scope.permission.options_as_json = JSON.stringify(options);
+
+    $scope.permission.options = $scope.permission.options_as_json;
     $scope.saving = true;
     CSRF.getToken()
     .then(function(csrf_token) {
