@@ -77,8 +77,9 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
       .success(function(response) {
         $scope.sc.sc_data_version = 1;
         $scope.sc.sc_id = response.sc_id;
+        $scope.sc.signoffs = response.signoffs;
         $scope.scheduled_changes.push($scope.sc);
-        $modalInstance.close($scope.sc.change_type);
+        $modalInstance.close($scope.sc);
       })
       .error(function(response, status) {
         if (typeof response === 'object') {

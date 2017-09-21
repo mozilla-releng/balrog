@@ -81,6 +81,8 @@ describe("controller: RulesController", function() {
     it("should return all rules empty", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, '{"rules": [], "count": 0}');
+      this.$httpBackend.expectGET('/api/users/current')
+      .respond(200, '{"permissions": {"admin": {"data_version": 1, "options": null}}, "roles": {}, "username": "balrogadmin"}');
       this.$httpBackend.expectGET('/api/scheduled_changes/rules')
       .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
@@ -94,6 +96,8 @@ describe("controller: RulesController", function() {
     it("should return all rules some", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, JSON.stringify(sample_rules));
+      this.$httpBackend.expectGET('/api/users/current')
+      .respond(200, '{"permissions": {"admin": {"data_version": 1, "options": null}}, "roles": {}, "username": "balrogadmin"}');
       this.$httpBackend.expectGET('/api/scheduled_changes/rules')
       .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
@@ -111,6 +115,8 @@ describe("controller: RulesController", function() {
     it("should be possible to change selected filter", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, JSON.stringify(sample_rules));
+      this.$httpBackend.expectGET('/api/users/current')
+      .respond(200, '{"permissions": {"admin": {"data_version": 1, "options": null}}, "roles": {}, "username": "balrogadmin"}');
       this.$httpBackend.expectGET('/api/scheduled_changes/rules')
       .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
@@ -120,7 +126,6 @@ describe("controller: RulesController", function() {
       this.$httpBackend.flush();
 
       var $scope = this.scope;
-      // the default ordering should be an array based on $scope.ordering_options
       var default_rules = $scope.pr_ch_options[0];
 
       expect($scope.pr_ch_filter).toEqual(default_rules);
@@ -130,29 +135,6 @@ describe("controller: RulesController", function() {
       expect($scope.pr_ch_selected).toEqual(['foo', 'bar']);
     });
 
-    it("should be possible to change ordering", function() {
-      this.$httpBackend.expectGET('/api/rules')
-      .respond(200, JSON.stringify(sample_rules));
-      this.$httpBackend.expectGET('/api/scheduled_changes/rules')
-      .respond(200, '{"scheduled_changes": [], "count": 0}');
-      this.$httpBackend.expectGET('/api/rules/columns/product')
-      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
-      this.$httpBackend.expectGET('/api/rules/columns/channel')
-      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
-      this.$httpBackend.flush();
-
-      var $scope = this.scope;
-      // the default ordering should be an array based on $scope.ordering_options
-      var default_ordering = $scope.ordering_options[0];
-
-      expect($scope.ordering).toEqual(default_ordering.value.split(','));
-      $scope.ordering_str = {
-        'text': 'Foo then Bar',
-        'value': 'foo,bar'
-      }
-      $scope.$apply();
-      expect($scope.ordering).toEqual(['foo', 'bar']);
-    });
   });
 
   describe('opening modals', function() {
@@ -309,13 +291,6 @@ describe("controller: RulesController By Id", function() {
         this.$httpBackend.flush();
         expect($scope.rules.length).toEqual(2);
         expect($scope.rules).toEqual(sample_revisions.rules);
-
-
-        var default_ordering = $scope.ordering_options[0];
-        expect($scope.ordering).toEqual(default_ordering.value.split(','));
-        // let's be explicit, it should be hardcoded to be -data_version
-        expect($scope.ordering).toEqual(['-data_version']);
-
       });
     });
   });

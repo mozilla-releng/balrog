@@ -16,10 +16,6 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
   $scope.current_user = null;
   $scope.user_roles = [];
 
-  $scope.isEmpty = function(obj) {
-    return Object.keys(obj).length === 0;
-  };
-
   // All of the initial loads happen asynchronously. We keep track of these so we can
   // set $scope.loading properly when they're all done.
   var loading_deferreds = {
