@@ -43,11 +43,15 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   });
 
   $scope.$watch(function(){
+      // set actions & products to [] when undefined, always happens when running tests
+      $scope.actions = (typeof $scope.actions === 'undefined')? []: $scope.actions;
+      $scope.products= (typeof $scope.products === 'undefined')? []: $scope.products;
       // add tag on action input
       if ($scope.actions.indexOf($scope.action) !== -1 && $scope.selected_actions.indexOf($scope.action) === -1){
           $scope.selected_actions.push($scope.action);
           $scope.action = null;
       }
+
       // add tag on product input
       if($scope.products.indexOf($scope.product) !== -1 && $scope.selected_products.indexOf($scope.product) === -1){
           $scope.selected_products.push($scope.product);
@@ -62,8 +66,8 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
       }
 
       // always update options_as_json according to selected tags
-      let options = {};
-      if ($scope.slected_products.length > 0 ) { options["products"] = $scope.selected_products; } 
+      var options = {};
+      if ($scope.selected_products.length > 0 ) { options["products"] = $scope.selected_products; } 
       if ($scope.selected_actions.length > 0) { options["actions"] = $scope.selected_actions; } 
       $scope.permission.options_as_json = JSON.stringify(options);
   });

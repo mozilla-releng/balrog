@@ -111,6 +111,7 @@ describe("controller: PermissionsController", function() {
     it("should be possible to open the add modal", function() {
       this.$httpBackend.expectGET('/api/users')
       .respond(200, JSON.stringify(sample_users));
+      this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.$httpBackend.expectGET('/api/users/roles')
       .respond(200, JSON.stringify(sample_all_roles));
       this.scope.openNewModal();
@@ -119,6 +120,7 @@ describe("controller: PermissionsController", function() {
     it("should be possible to open the edit modal", function() {
       this.$httpBackend.expectGET('/api/users')
       .respond(200, JSON.stringify(sample_users));
+      this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.expectGET('/api/users/peterbe/roles')
