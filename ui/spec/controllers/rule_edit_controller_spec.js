@@ -77,6 +77,23 @@ describe("controller: RuleEditCtrl", function() {
       expect(this.scope.rule).toEqual(rule);
       expect(this.scope.rule.product).toEqual('Firefox');
       expect(this.scope.is_edit).toEqual(true);
+      expect(this.scope.ruleSignoffsRequired.length).toEqual(0);
+    });
+
+    it("should update signoff requirements when rule changes", function() {
+      this.$httpBackend.expectGET('/api/releases?names_only=1')
+      .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
+      this.$httpBackend.flush();
+
+      this.scope.rule.channel = 'aurora';
+      this.scope.$digest();
+
+      expect(this.scope.ruleSignoffsRequired.length).toEqual(1);
+      expect(this.scope.ruleSignoffsRequired.roles['releng']).toEqual(2);
     });
 
     it("should be able to save changes", function() {
