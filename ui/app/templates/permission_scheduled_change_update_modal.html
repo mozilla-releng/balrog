@@ -16,7 +16,10 @@
       <div class="col-md-6" >
         <div class="form-group" ng-class="{'has-error': errors.permission}">
         <label for="id_permission">permission</label>
-        <input type="text" class="form-control" id="id_permission" ng-model="sc.permission">
+          <select name="singleSelect" class="form-control" id="id_permission" ng-model="sc.permission">
+            <option ng-selected= "{{permission.value == sc.permission}}" ng-repeat="permission in permissions_list" 
+            value="{{permission.value}}" >{{permission.name}}</option>
+          </select><br>
         <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
         </div>
       </div>
