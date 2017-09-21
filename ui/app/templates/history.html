@@ -1,0 +1,120 @@
+<div>
+  <h2>
+    <span>History/Logs</span>
+  </h2>
+
+  <div class="row">
+    <div class="col-sm-8">
+      <label>Filter By:</label>
+      <div>
+        <div class="row" ng-show="filtering_str.value == 'username_email'">
+          <div class="col-md-8 col-md-offset-1">
+            <label for="id_username">Username/ Email</label>
+            <div>
+              <input type="text" id="id_username" ng-model="filter.username">{{ username }}
+            </div>
+          </div>
+        </div>
+        <div class="row" ng-show="filtering_str.value == 'timestamp'">
+          <div class="col-md-5 col-md-offset-1">
+            <label for="id_startdate">Start Date</label>
+            <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': errors.when}">
+              <div class="input-group">
+                <span class="input-group-btn">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time">
+                        <i class="glyphicon glyphicon-calendar"></i>
+                    </button>
+                </span>
+                <input type="text" id="id_when" class="form-control" data-ng-model="sc.when" ng-blur="setWhen()" ng-disabled="auto_time">
+              </div>
+              <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                <datetimepicker data-ng-model="sc.when" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
+                />
+              </ul>
+              <p class="help-block" ng-show="errors.when">{{ errors.when.join(', ') }}</p>
+            </div>
+          </div>
+          <div class="col-md-5 col-md-offset-1">
+            <label for="id_startdate">End Date</label>
+            <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': errors.when}">
+              <div class="input-group">
+                <span class="input-group-btn">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time">
+                        <i class="glyphicon glyphicon-calendar"></i>
+                    </button>
+                </span>
+                <input type="text" id="id_when" class="form-control" data-ng-model="sc.when" ng-blur="setWhen()" ng-disabled="auto_time">
+              </div>
+              <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                <datetimepicker data-ng-model="sc.when" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
+                />
+              </ul>
+              <p class="help-block" ng-show="errors.when">{{ errors.when.join(', ') }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="row" ng-show="filtering_str.value == 'product_channel'">
+            <div class="col-md-8 col-md-offset-1">
+                <label for="id_pr-ch-filter">Product/Channel</label>
+                <select ng-model="pr_ch_filter" name="pr_ch_filter"
+                ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-md-offset-10">
+        <button class="btn btn-primary">Search</button>
+    </div>
+      
+    </div>
+    <div class="col-sm-4 text-right">
+      <label>Add Filter:</label>
+      <select ng-model="filtering_str" name="filtering_str" ng-selected="history_filter()" 
+      ng-options="hsy_filter.text for hsy_filter in filtering_options track by hsy_filter.value">
+      </select>
+    </div>
+    
+
+  </div>
+  <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+                <thead>
+                        <tr>
+                          <th>Id</th>
+                          <th>Object</th>
+                          <th>Email</th>
+                          <th>Start Time</th>
+                          <th>End Time</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                            <tr>
+                              <td>John</td>
+                              <td>Doe</td>
+                              <td>john@example.com</td>
+                            </tr>
+                            <tr>
+                              <td>Mary</td>
+                              <td>Moe</td>
+                              <td>mary@example.com</td>
+                            </tr>
+                            <tr>
+                              <td>July</td>
+                              <td>Dooley</td>
+                              <td>july@example.com</td>
+                            </tr>
+                          </tbody>
+        </table>
+        <div class="pagination-container">
+                <pagination
+                  class="pagination-sm"
+                  total-items="history_name ? history_count : filtered_items.length"
+                  ng-model="currentPage"
+                  items-per-page="pageSize"
+                  max-size="maxSize"
+                  boundary-links="true"
+                ></pagination>
+              </div>
+      </div>
+
+</div>
