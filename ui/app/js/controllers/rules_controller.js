@@ -387,6 +387,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             _duplicate: false,
           };
         },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
         pr_ch_options: function() {
           return $scope.pr_ch_options;
         }
@@ -411,6 +414,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           delete copy.rule_id;
           copy._duplicate = true;
           return copy;
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
         },
         pr_ch_options: function() {
           return $scope.pr_ch_options;

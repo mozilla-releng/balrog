@@ -128,6 +128,12 @@ describe("controller: NewRuleController", function() {
     _duplicate: false,
   };
   var pr_ch_options = ['GMP'];
+  var signoffRequirements = [{
+    product: "Firefox",
+    channel: "nightly",
+    role: "releng",
+    signoffs_required: 2,
+  }];
 
   beforeEach(inject(function($controller, $rootScope, $location, $modal, Rules, Releases, $httpBackend) {
     this.$location = $location;
@@ -146,6 +152,7 @@ describe("controller: NewRuleController", function() {
       rules: rules,
       rule: rule,
       pr_ch_options: pr_ch_options,
+      signoffRequirements: signoffRequirements,
     });
   }));
 
@@ -174,6 +181,9 @@ describe("controller: NewRuleController", function() {
       expect(this.scope.rules).toEqual(rules);
       expect(this.scope.is_edit).toEqual(false);
       expect(this.scope.is_duplicate).toEqual(false);
+      // An empty rule affects all products.
+      expect(this.scope.ruleSignoffsRequired.length).toEqual(1);
+      expect(this.scope.ruleSignoffsRequired.roles['releng']).toEqual(2);
     });
 
     it("should be able to save changes", function() {
@@ -221,6 +231,20 @@ describe("controller: NewRuleController", function() {
       expect(this.scope.saving).toEqual(false);
     });
 
+    it("should update signoff requirements when rule changes", function() {
+      this.$httpBackend.expectGET('/api/releases?names_only=1')
+      .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
+      this.$httpBackend.flush();
+
+      this.scope.rule.product = 'Fennec';
+
+      this.scope.$digest();
+      expect(this.scope.ruleSignoffsRequired.length).toEqual(0);
+    });
   });
 
 });
