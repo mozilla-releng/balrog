@@ -37,18 +37,18 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   $scope.selected_products = [];
   $scope.product = null;
 
-  // Get products in releases
+  // get products in releases
   Permissions.getProducts().success(function(response) {
     $scope.products = response.product;
   });
 
   $scope.$watch(function(){
-      // Add tag on action input
+      // add tag on action input
       if (!!($scope.actions.indexOf($scope.action)+1) && !($scope.selected_actions.indexOf($scope.action)+1)){
           $scope.selected_actions.push($scope.action);
           $scope.action = null;
       }
-      // Add tag on product input
+      // add tag on product input
       if(!!($scope.products.indexOf($scope.product)+1) && !($scope.selected_products.indexOf($scope.product)+1)){
           $scope.selected_products.push($scope.product);
           $scope.product = null;
@@ -60,6 +60,12 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
       if(!($scope.selected_options.indexOf('products')+1)){
           $scope.selected_products = [];
       }
+
+      // always update options_as_json according to selected tags
+      let options = {};
+      ($scope.selected_products.length > 0) ? options["products"] = $scope.selected_products: false;
+      ($scope.selected_actions.length > 0) ? options["actions"] = $scope.selected_actions : false;
+      $scope.permission.options_as_json = JSON.stringify(options);
   });
 
   $scope.actionRemove = function(action){
@@ -212,12 +218,6 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   };
 
   $scope.addPermission = function() {
-    let options = {};
-    ($scope.selected_products.length > 0) ? options["products"] = $scope.selected_products: false;
-    ($scope.selected_actions.length > 0) ? options["actions"] = $scope.selected_actions : false;
-    // we fainally create options_as_json object from selected tags
-    $scope.permission.options_as_json = JSON.stringify(options);
-
     $scope.permission.options = $scope.permission.options_as_json;
     $scope.saving = true;
     CSRF.getToken()
