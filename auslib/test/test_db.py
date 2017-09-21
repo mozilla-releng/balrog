@@ -3245,8 +3245,8 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
 
 
-class TestReleasesSchema1(unittest.TestCase, MemoryDatabaseMixin):
-    """Tests for the Releases class that depend on version 1 of the blob schema."""
+class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
+    """Tests for the Releases class that are interwoven with AppRelease blob schemas"""
 
     maxDiff = 2000
 
