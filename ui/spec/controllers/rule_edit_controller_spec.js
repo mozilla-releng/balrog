@@ -61,7 +61,7 @@ describe("controller: RuleEditCtrl", function() {
 
   describe("opening the edit rule modal", function() {
 
-    it("should should all defaults", function() {
+    it("should set all defaults", function() {
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
@@ -79,7 +79,7 @@ describe("controller: RuleEditCtrl", function() {
       expect(this.scope.is_edit).toEqual(true);
     });
 
-    it("should should be able to save changes", function() {
+    it("should be able to save changes", function() {
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
@@ -104,7 +104,7 @@ describe("controller: RuleEditCtrl", function() {
       expect(this.scope.errors).toEqual({});
     });
 
-    it("should should notice errors", function() {
+    it("should notice errors", function() {
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
