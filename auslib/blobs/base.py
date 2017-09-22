@@ -88,7 +88,7 @@ def merge_dicts(ancestor, left, right):
             else:
                 if key in left and key in right and left[key] != right[key]:
                     raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key.encode('ascii', 'replace')))
-                if left.get(key) is not None:
+                if key in left:
                     result[key] = left[key]
                 else:
                     result[key] = right[key]
