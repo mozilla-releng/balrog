@@ -2063,6 +2063,7 @@ class Releases(AUSTable):
                     tip_blob = tip_release.get('data')
                     try:
                         what['data'] = createBlob(merge_dicts(ancestor_blob, tip_blob, blob))
+                        self.log.debug("Successfully merged blobs.")
                     except ValueError:
                         self.log.exception("Couldn't merge blobs.")
                         raise e
