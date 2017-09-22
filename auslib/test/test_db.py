@@ -4006,6 +4006,85 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(OutdatedDataError, self.releases.update,
                           {"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1)
 
+    def testAddLocaleToReleaseDoesMerging(self):
+        ancestor_blob = createBlob("""
+{
+    "name": "release4",
+    "schema_version": 4,
+    "hashFunction": "sha512",
+    "product": "p",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "completes": [
+                        {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
+                    ],
+                    "partials": [
+                        {
+                            "filesize": 1234,
+                            "from": "release1",
+                            "hashValue": "def"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        result_blob = createBlob("""
+{
+    "name": "release4",
+    "schema_version": 4,
+    "hashFunction": "sha512",
+    "product": "p",
+    "platforms": {
+        "p": {
+            "locales": {
+                "l": {
+                    "completes": [
+                        {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
+                    ],
+                    "partials": [
+                        {
+                            "filesize": 1234,
+                            "from": "release1",
+                            "hashValue": "def"
+                        },
+                        {
+                            "filesize": 567,
+                            "from": "release2",
+                            "hashValue": "ghi"
+                        },
+                        {
+                            "filesize": 890,
+                            "from": "release3",
+                            "hashValue": "jkl"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        self.releases.insert(changed_by="bill", name="release4", product="z", data=ancestor_blob)
+        self.releases.addLocaleToRelease("release4", "p", "p", "l", {"partials": [{"filesize": 567, "from": "release2", "hashValue": "ghi"}]},
+                                         old_data_version=1, changed_by="bill")
+        self.releases.addLocaleToRelease("release4", "p", "p", "l", {"partials": [{"filesize": 890, "from": "release3", "hashValue": "jkl"}]},
+                                         old_data_version=1, changed_by="bill")
+        ret = select([self.releases.data]).where(self.releases.name == 'release4').execute().fetchone()[0]
+        self.assertEqual(result_blob, ret)
+
 
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 

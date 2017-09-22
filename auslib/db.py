@@ -2120,8 +2120,8 @@ class Releases(AUSTable):
         releaseBlob.validate(product, self.domainWhitelist)
         what = dict(data=releaseBlob)
 
-        super(Releases, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
-                                     transaction=transaction)
+        self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
+                    transaction=transaction)
         new_data_version = old_data_version + 1
         cache.put("blob", name, {"data_version": new_data_version, "blob": releaseBlob})
         cache.put("blob_version", name, new_data_version)
