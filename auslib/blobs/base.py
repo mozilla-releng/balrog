@@ -55,6 +55,15 @@ def createBlob(data):
     return blob_map[schema_version](**data)
 
 
+def merge_lists(base, left, right):
+    result = []
+    for side in (base, left, right):
+        for i in side:
+            if i not in result or not isinstance(i, type(result[result.index(i)])):
+                result.append(i)
+    return result
+
+
 def merge_dicts(ancestor, left, right):
     result = {}
     for key in ancestor.keys() + left.keys() + right.keys():
@@ -66,11 +75,7 @@ def merge_dicts(ancestor, left, right):
         if isinstance(ancestor.get(key), dict) or isinstance(left.get(key), dict) or isinstance(right.get(key), dict):
             result[key] = merge_dicts(ancestor.get(key, {}), left.get(key, {}), right.get(key, {}))
         elif isinstance(ancestor.get(key), list) or isinstance(left.get(key), list) or isinstance(right.get(key), list):
-            result[key] = ancestor.get(key, [])[:]
-            for side in (left, right):
-                for i in side.get(key, []):
-                    if i not in result[key] or not isinstance(i, type(result[key][result[key].index(i)])):
-                        result[key].append(i)
+            result[key] = merge_lists(ancestor.get(key, []), left.get(key, []), right.get(key, []))
         else:
             if key in ancestor:
                 if key in left and key in right and ancestor[key] != left[key] and ancestor[key] != right[key]:

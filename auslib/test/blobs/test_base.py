@@ -5,7 +5,7 @@ import unittest
 from hypothesis import given, assume, settings, HealthCheck
 import hypothesis.strategies as st
 
-from auslib.blobs.base import createBlob, merge_dicts
+from auslib.blobs.base import createBlob, merge_dicts, merge_lists
 from auslib.global_state import cache
 
 
@@ -69,14 +69,45 @@ class TestCreateBlob(unittest.TestCase):
             self.assertEquals(yaml_load.call_count, 1)
 
 
+useful_items = st.none() | st.floats(allow_nan=False) | st.text()
+
+
+@given(st.lists(useful_items), st.lists(useful_items), st.lists(useful_items))
+def test_merge_lists_unique_items_present(base, left_additional, right_additional):
+    left = deepcopy(base) + left_additional
+    right = deepcopy(base) + right_additional
+    expected = sorted(list(set(deepcopy(base) + left_additional + right_additional)))
+    got = sorted(merge_lists(base, left, right))
+    assert got == expected
+
+
+@given(st.lists(useful_items), st.lists(useful_items))
+def test_merge_lists_no_dupes(base, additional):
+    left = deepcopy(base) + additional
+    right = deepcopy(base) + additional
+    expected = sorted(list(set(deepcopy(base) + additional)))
+    got = sorted(merge_lists(base, left, right))
+    assert got == expected
+
+
 # Generate potentially nested dictionaries/lists with various values.
 # The top level will also be a dict.
 # Booleans are explicitly not included in the list of values because
 # things like "1 in [True]" are True, which is very difficult to handle
 # and not something we encounter in the real world.
+def unique_items_only(i):
+    if isinstance(i, dict):
+        return tuple(i.keys())
+    if isinstance(i, list):
+        return tuple(i)
+    return i
+
+
+useful_dict = st.dictionaries(st.text(), useful_items | st.lists(useful_items, max_size=10, unique_by=unique_items_only), max_size=10)
+useful_list = st.lists(useful_items | useful_dict, max_size=10, unique_by=unique_items_only)
 json = st.dictionaries(st.text(),
-                       st.recursive(st.none() | st.floats(allow_nan=False) | st.text(),
-                                    lambda children: st.lists(children, max_size=10) | st.dictionaries(st.text(), children, max_size=10),
+                       st.recursive(useful_items,
+                                    lambda x: useful_list | useful_dict,
                                     max_leaves=20),
                        max_size=10)
 
@@ -84,15 +115,16 @@ json = st.dictionaries(st.text(),
 @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
 @given(json)
 def test_merge_dicts_join_lists(base):
-    left = deepcopy(base)
-    right = deepcopy(base)
-    expected = deepcopy(base)
     to_modify = None
     for key in base:
         if isinstance(base[key], list):
             to_modify = key
             break
     assume(to_modify is not None)
+
+    left = deepcopy(base)
+    right = deepcopy(base)
+    expected = deepcopy(base)
     left[to_modify].extend(range(1, 4))
     right[to_modify].extend(range(4, 7))
     expected[to_modify].extend(range(1, 7))
@@ -134,9 +166,10 @@ def test_merge_dicts_raise_when_both_modifying_same_key(base):
 @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
 @given(json)
 def test_merge_dicts_mismatched_types(base):
+    assume(len(base) > 0)
+
     left = deepcopy(base)
     right = deepcopy(base)
-    assume(len(base) > 0)
     to_modify = base.keys()[0]
     left[to_modify] = "foo"
     right[to_modify] = [1, 2, 3]
