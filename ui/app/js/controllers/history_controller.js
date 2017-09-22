@@ -2,19 +2,19 @@ angular.module("app").controller('HistoryController',
 function($scope, Releases, Page) {
     Page.setTitle('History');
     
-    $scope.tab = 1;
+    $scope.columnTab = 1;
     $scope.rowtab = "#rulesHistory";
     $scope.filter = [];
     $scope.username = "";
     $scope.timestamp = "";
     $scope.product_channel = "";
 
-    $scope.setTab = function(newTab){
-        $scope.tab = newTab;
+    $scope.setColumnTab = function(newTab){
+        $scope.columnTab = newTab;
     };
 
-    $scope.isSet = function(tabNum){
-        return $scope.tab === tabNum;
+    $scope.columnTabSet = function(tabNum){
+        return $scope.columnTab === tabNum;
     };
 
     $scope.tabChange = function(e){
@@ -67,14 +67,20 @@ function($scope, Releases, Page) {
 
    
     
-
-    // Releases.getReleases().success(function(response) {
-    //     console.log(response.releases,"respon");
-    //     // $scope.release_response = response.releases;
-    //     // Releases.getHistory($scope.release_response)
-    //     // .success(function(response) {
-    //     // });
-    // });
+    $scope.histories = [];
+    Releases.getReleases()
+    .success(function(response) {
+        var releases = response.releases;
+        releases.forEach(function(release) { 
+            Releases.getHistory(release.name, 10, 1)
+            .success(function(response) {
+                console.log(response.revisions,"response");
+                // if (response.revisons > 1) {
+                //     console.log({ name: release.name, releases: response });
+                // }
+            }); 
+        });
+    });
 
     
 

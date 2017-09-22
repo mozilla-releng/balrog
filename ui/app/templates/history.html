@@ -5,14 +5,14 @@
   <div class="row">
     <div class="col-md-2">
       <ul class="nav nav-pills nav-stacked">
-        <li ng-class="{ active: isSet(1) }">
-          <a href ng-click="setTab(1)">Rules</a>
+        <li ng-class="{ active: columnTabSet(1) }">
+          <a href ng-click="setColumnTab(1)">Rules</a>
         </li>
-        <li ng-class="{ active: isSet(2) }">
-          <a href ng-click="setTab(2)">Releases</a>
+        <li ng-class="{ active: columnTabSet(2) }">
+          <a href ng-click="setColumnTab(2)">Releases</a>
         </li>
-        <li ng-class="{ active: isSet(3) }">
-          <a href ng-click="setTab(3)">Permissions</a>
+        <li ng-class="{ active: columnTabSet(3) }">
+          <a href ng-click="setColumnTab(3)">Permissions</a>
         </li>
       </ul>
     </div>
@@ -92,7 +92,7 @@
         </div>
       </div>
       <hr>
-      <div ng-show="isSet(1)">
+      <div ng-show="columnTabSet(1)">
         <h1>Rules</h1>
         <div class="rowtabwrap" ng-click="tabChange($event)">
           <a href="#rulesHistory" class="tab-control" ng-class="{'active':rowtab=='#rulesHistory'}">Rules History</a>
@@ -216,121 +216,253 @@
         </div>
       </div>
 
-      <div ng-show="isSet(2)">
+      <div ng-show="columnTabSet(2)">
         <h1>Releases</h1>
-        <div class="table-responsive">
-          <table class="table table-striped table-bordered">
-            <thead>
-              <tr>
-                <th>Id</th>
-                <th>Object</th>
-                <th>Email</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>John</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>john@example.com</td>
-              </tr>
-              <tr>
-                <td>Mary</td>
-                <td>Moe</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>mary@example.com</td>
-              </tr>
-              <tr>
-                <td>July</td>
-                <td>Dooley</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>july@example.com</td>
-              </tr>
-              <tr>
-                <td>July</td>
-                <td>Dooley</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>july@example.com</td>
-              </tr>
-              <tr>
-                <td>July</td>
-                <td>Dooley</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>july@example.com</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="pagination-container">
-            <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
-              items-per-page="pageSize" max-size="maxSize" boundary-links="true"></pagination>
+        <div class="rowtabwrap" ng-click="tabChange($event)">
+          <a href="#releaseHistory" class="tab-control" ng-class="{'active':rowtab=='#releaseHistory'}">Release History</a>
+          <a href="#sc_releaseHistory" class="tab-control" ng-class="{'active':rowtab=='#sc_releaseHistory'}">Scheduled Release History</a>
+        </div>
+        <div class="content-wrapper">
+          <div id="releaseHistory" class="ng-hide" ng-show="rowtab=='#releaseHistory'">
+            <h4>Rules History</h4>
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>Id</th>
+                    <th>Object</th>
+                    <th>Email</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>John</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>john@example.com</td>
+                  </tr>
+                  <tr>
+                    <td>Mary</td>
+                    <td>Moe</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>mary@example.com</td>
+                  </tr>
+                  <tr>
+                    <td>July</td>
+                    <td>Dooley</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>july@example.com</td>
+                  </tr>
+                  <tr>
+                    <td>July</td>
+                    <td>Dooley</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>july@example.com</td>
+                  </tr>
+                  <tr>
+                    <td>July</td>
+                    <td>Dooley</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>july@example.com</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="pagination-container">
+                <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
+                  items-per-page="pageSize" max-size="maxSize" boundary-links="true"></pagination>
+              </div>
+            </div>
+          </div>
+          <div id="sc_releaseHistory" class="ng-hide" ng-show="rowtab=='#sc_releaseHistory'">
+            <h4>Scheduled Release History</h4>
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>Id</th>
+                    <th>Object</th>
+                    <th>Email</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>John</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>john@example.com</td>
+                  </tr>
+                  <tr>
+                    <td>Mary</td>
+                    <td>Moe</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>mary@example.com</td>
+                  </tr>
+                  <tr>
+                    <td>July</td>
+                    <td>Dooley</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>july@example.com</td>
+                  </tr>
+                  <tr>
+                    <td>July</td>
+                    <td>Dooley</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>july@example.com</td>
+                  </tr>
+                  <tr>
+                    <td>July</td>
+                    <td>Dooley</td>
+                    <td>Doe</td>
+                    <td>Doe</td>
+                    <td>july@example.com</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="pagination-container">
+                <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
+                  items-per-page="pageSize" max-size="maxSize" boundary-links="true"></pagination>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div ng-show="isSet(3)">
-        <h1>Permissions</h1>
-        <div class="table-responsive">
-          <table class="table table-striped table-bordered">
-            <thead>
-              <tr>
-                <th>Id</th>
-                <th>Object</th>
-                <th>Email</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>John</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>john@example.com</td>
-              </tr>
-              <tr>
-                <td>Mary</td>
-                <td>Moe</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>mary@example.com</td>
-              </tr>
-              <tr>
-                <td>July</td>
-                <td>Dooley</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>july@example.com</td>
-              </tr>
-              <tr>
-                <td>July</td>
-                <td>Dooley</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>july@example.com</td>
-              </tr>
-              <tr>
-                <td>July</td>
-                <td>Dooley</td>
-                <td>Doe</td>
-                <td>Doe</td>
-                <td>july@example.com</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="pagination-container">
-            <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
-              items-per-page="pageSize" max-size="maxSize" boundary-links="true"></pagination>
+      <div ng-show="columnTabSet(3)">
+            <h1>Permissions</h1>
+            <div class="rowtabwrap" ng-click="tabChange($event)">
+              <a href="#permissionsHistory" class="tab-control" ng-class="{'active':rowtab=='#permissionsHistory'}">Permissions History</a>
+              <a href="#sc_permissionsHistory" class="tab-control" ng-class="{'active':rowtab=='#sc_permissionsHistory'}">Scheduled Permissions History</a>
+            </div>
+            <div class="content-wrapper">
+              <div id="permissionsHistory" class="ng-hide" ng-show="rowtab=='#permissionsHistory'">
+                <h4>Rules History</h4>
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Id</th>
+                        <th>Object</th>
+                        <th>Email</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>John</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>john@example.com</td>
+                      </tr>
+                      <tr>
+                        <td>Mary</td>
+                        <td>Moe</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>mary@example.com</td>
+                      </tr>
+                      <tr>
+                        <td>July</td>
+                        <td>Dooley</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>july@example.com</td>
+                      </tr>
+                      <tr>
+                        <td>July</td>
+                        <td>Dooley</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>july@example.com</td>
+                      </tr>
+                      <tr>
+                        <td>July</td>
+                        <td>Dooley</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>july@example.com</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="pagination-container">
+                    <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
+                      items-per-page="pageSize" max-size="maxSize" boundary-links="true"></pagination>
+                  </div>
+                </div>
+              </div>
+              <div id="sc_permissionsHistory" class="ng-hide" ng-show="rowtab=='#sc_permissionsHistory'">
+                <h4>Scheduled Permissions History</h4>
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Id</th>
+                        <th>Object</th>
+                        <th>Email</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>John</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>john@example.com</td>
+                      </tr>
+                      <tr>
+                        <td>Mary</td>
+                        <td>Moe</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>mary@example.com</td>
+                      </tr>
+                      <tr>
+                        <td>July</td>
+                        <td>Dooley</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>july@example.com</td>
+                      </tr>
+                      <tr>
+                        <td>July</td>
+                        <td>Dooley</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>july@example.com</td>
+                      </tr>
+                      <tr>
+                        <td>July</td>
+                        <td>Dooley</td>
+                        <td>Doe</td>
+                        <td>Doe</td>
+                        <td>july@example.com</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="pagination-container">
+                    <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
+                      items-per-page="pageSize" max-size="maxSize" boundary-links="true"></pagination>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
     </div>
   </div>
 
