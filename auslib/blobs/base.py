@@ -55,9 +55,9 @@ def createBlob(data):
     return blob_map[schema_version](**data)
 
 
-def merge_lists(base, left, right):
+def merge_lists(*lists):
     result = []
-    for side in (base, left, right):
+    for side in lists:
         for i in side:
             if i not in result or not isinstance(i, type(result[result.index(i)])):
                 result.append(i)
@@ -66,16 +66,17 @@ def merge_lists(base, left, right):
 
 def merge_dicts(ancestor, left, right):
     result = {}
-    for key in ancestor.keys() + left.keys() + right.keys():
-        key_types = set([type(ancestor.get(key)), type(left.get(key)), type(right.get(key))])
+    dicts = (ancestor, left, right)
+    for key in set(key for d in dicts for key in d.keys()):
+        key_types = set([type(d.get(key)) for d in dicts])
         key_types.discard(type(None))
         if len(key_types) > 1 and not key_types.issubset([str, unicode]):
             raise ValueError("Cannot merge blobs: type mismatch for '{}'".format(key.encode('ascii', 'replace')))
 
-        if isinstance(ancestor.get(key), dict) or isinstance(left.get(key), dict) or isinstance(right.get(key), dict):
-            result[key] = merge_dicts(ancestor.get(key, {}), left.get(key, {}), right.get(key, {}))
-        elif isinstance(ancestor.get(key), list) or isinstance(left.get(key), list) or isinstance(right.get(key), list):
-            result[key] = merge_lists(ancestor.get(key, []), left.get(key, []), right.get(key, []))
+        if any(isinstance(d.get(key), dict) for d in dicts):
+            result[key] = merge_dicts(*[d.get(key, {}) for d in dicts])
+        elif any(isinstance(d.get(key), list) for d in dicts):
+            result[key] = merge_lists(*[d.get(key, []) for d in dicts])
         else:
             if key in ancestor:
                 if key in left and key in right and ancestor[key] != left[key] and ancestor[key] != right[key]:
