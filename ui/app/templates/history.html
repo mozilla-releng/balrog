@@ -102,108 +102,81 @@
           <div id="rulesHistory" class="ng-hide" ng-show="rowtab=='#rulesHistory'">
             <h4>Rules History</h4>
             <div class="table-responsive">
-              <table class="table table-striped table-bordered">
+              <table class="table table-bordered table-hover table-striped">
                 <thead>
                   <tr>
-                    <th>Id</th>
-                    <th>Object</th>
-                    <th>Email</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
+                    <th class="historyId">ID
+                      <span class="{{Header[0]}}"></span>
+                    </th>
+                    <th class="object_name">Object
+                      <span class="{{Header[1]}}"></span>
+                    </th>
+                    <th class="email">Email
+                      <span class="{{Header[2]}}"></span>
+                    </th>
+                    <th class="start_date">Start Date
+                      <span class="{{Header[3]}}"></span>
+                    </th>
+                    <th class="end_date">End Date
+                      <span class="{{Header[4]}}"></span>
+                    </th>
+                    <th class="historyId"> ID
+                      <span class="{{Header[5]}}"></span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>John</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>john@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>Mary</td>
-                    <td>Moe</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>mary@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
+                  <tr ng-repeat="item in allHistory">
+                    <td>{{$index+1}}</td>
+                    <td>{{item.object_name}}</td>
+                    <td>{{item.email}}</td>
+                    <td>{{item.start_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.end_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.historyId}}</td>
                   </tr>
                 </tbody>
               </table>
               <div class="pagination-container">
                 <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
-                  items-per-page="pageSize" max-size="maxSize" boundary-links="true"></pagination>
+                  items-per-page="pageSize" max-size="maxSize" boundary-links="true">
+                </pagination>
               </div>
             </div>
           </div>
           <div id="sc_rulesHistory" class="ng-hide" ng-show="rowtab=='#sc_rulesHistory'">
             <h4>Scheduled Rules History</h4>
             <div class="table-responsive">
-              <table class="table table-striped table-bordered">
+              <table class="table table-bordered table-hover table-striped">
                 <thead>
                   <tr>
-                    <th>Id</th>
-                    <th>Object</th>
-                    <th>Email</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
+                    <th class="historyId">ID
+                      <span class="{{Header[0]}}"></span>
+                    </th>
+                    <th class="object_name">Object
+                      <span class="{{Header[1]}}"></span>
+                    </th>
+                    <th class="email">Email
+                      <span class="{{Header[2]}}"></span>
+                    </th>
+                    <th class="start_date">Start Date
+                      <span class="{{Header[3]}}"></span>
+                    </th>
+                    <th class="end_date">End Date
+                      <span class="{{Header[4]}}"></span>
+                    </th>
+                    <th class="historyId"> ID
+                      <span class="{{Header[5]}}"></span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>John</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>john@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>Mary</td>
-                    <td>Moe</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>mary@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
+                  <tr ng-repeat="item in allHistory">
+                    <td>{{$index+1}}</td>
+                    <td>{{item.object_name}}</td>
+                    <td>{{item.email}}</td>
+                    <td>{{item.start_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.end_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.historyId}}</td>
                   </tr>
                 </tbody>
               </table>
@@ -226,51 +199,37 @@
           <div id="releaseHistory" class="ng-hide" ng-show="rowtab=='#releaseHistory'">
             <h4>Rules History</h4>
             <div class="table-responsive">
-              <table class="table table-striped table-bordered">
+              <table class="table table-bordered table-hover table-striped">
                 <thead>
                   <tr>
-                    <th>Id</th>
-                    <th>Object</th>
-                    <th>Email</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
+                    <th class="historyId">ID
+                      <span class="{{Header[0]}}"></span>
+                    </th>
+                    <th class="object_name">Object
+                      <span class="{{Header[1]}}"></span>
+                    </th>
+                    <th class="email">Email
+                      <span class="{{Header[2]}}"></span>
+                    </th>
+                    <th class="start_date">Start Date
+                      <span class="{{Header[3]}}"></span>
+                    </th>
+                    <th class="end_date">End Date
+                      <span class="{{Header[4]}}"></span>
+                    </th>
+                    <th class="historyId"> ID
+                      <span class="{{Header[5]}}"></span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>John</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>john@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>Mary</td>
-                    <td>Moe</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>mary@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
+                  <tr ng-repeat="item in allHistory">
+                    <td>{{$index+1}}</td>
+                    <td>{{item.object_name}}</td>
+                    <td>{{item.email}}</td>
+                    <td>{{item.start_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.end_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.historyId}}</td>
                   </tr>
                 </tbody>
               </table>
@@ -283,51 +242,37 @@
           <div id="sc_releaseHistory" class="ng-hide" ng-show="rowtab=='#sc_releaseHistory'">
             <h4>Scheduled Release History</h4>
             <div class="table-responsive">
-              <table class="table table-striped table-bordered">
+              <table class="table table-bordered table-hover table-striped">
                 <thead>
                   <tr>
-                    <th>Id</th>
-                    <th>Object</th>
-                    <th>Email</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
+                    <th class="historyId">ID
+                      <span class="{{Header[0]}}"></span>
+                    </th>
+                    <th class="object_name">Object
+                      <span class="{{Header[1]}}"></span>
+                    </th>
+                    <th class="email">Email
+                      <span class="{{Header[2]}}"></span>
+                    </th>
+                    <th class="start_date">Start Date
+                      <span class="{{Header[3]}}"></span>
+                    </th>
+                    <th class="end_date">End Date
+                      <span class="{{Header[4]}}"></span>
+                    </th>
+                    <th class="historyId"> ID
+                      <span class="{{Header[5]}}"></span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>John</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>john@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>Mary</td>
-                    <td>Moe</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>mary@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
-                  </tr>
-                  <tr>
-                    <td>July</td>
-                    <td>Dooley</td>
-                    <td>Doe</td>
-                    <td>Doe</td>
-                    <td>july@example.com</td>
+                  <tr ng-repeat="item in allHistory">
+                    <td>{{$index+1}}</td>
+                    <td>{{item.object_name}}</td>
+                    <td>{{item.email}}</td>
+                    <td>{{item.start_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.end_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.historyId}}</td>
                   </tr>
                 </tbody>
               </table>
@@ -341,128 +286,100 @@
       </div>
 
       <div ng-show="columnTabSet(3)">
-            <h1>Permissions</h1>
-            <div class="rowtabwrap" ng-click="tabChange($event)">
-              <a href="#permissionsHistory" class="tab-control" ng-class="{'active':rowtab=='#permissionsHistory'}">Permissions History</a>
-              <a href="#sc_permissionsHistory" class="tab-control" ng-class="{'active':rowtab=='#sc_permissionsHistory'}">Scheduled Permissions History</a>
-            </div>
-            <div class="content-wrapper">
-              <div id="permissionsHistory" class="ng-hide" ng-show="rowtab=='#permissionsHistory'">
-                <h4>Rules History</h4>
-                <div class="table-responsive">
-                  <table class="table table-striped table-bordered">
-                    <thead>
-                      <tr>
-                        <th>Id</th>
-                        <th>Object</th>
-                        <th>Email</th>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>John</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>john@example.com</td>
-                      </tr>
-                      <tr>
-                        <td>Mary</td>
-                        <td>Moe</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>mary@example.com</td>
-                      </tr>
-                      <tr>
-                        <td>July</td>
-                        <td>Dooley</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>july@example.com</td>
-                      </tr>
-                      <tr>
-                        <td>July</td>
-                        <td>Dooley</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>july@example.com</td>
-                      </tr>
-                      <tr>
-                        <td>July</td>
-                        <td>Dooley</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>july@example.com</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div class="pagination-container">
-                    <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
-                      items-per-page="pageSize" max-size="maxSize" boundary-links="true"></pagination>
-                  </div>
-                </div>
-              </div>
-              <div id="sc_permissionsHistory" class="ng-hide" ng-show="rowtab=='#sc_permissionsHistory'">
-                <h4>Scheduled Permissions History</h4>
-                <div class="table-responsive">
-                  <table class="table table-striped table-bordered">
-                    <thead>
-                      <tr>
-                        <th>Id</th>
-                        <th>Object</th>
-                        <th>Email</th>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>John</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>john@example.com</td>
-                      </tr>
-                      <tr>
-                        <td>Mary</td>
-                        <td>Moe</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>mary@example.com</td>
-                      </tr>
-                      <tr>
-                        <td>July</td>
-                        <td>Dooley</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>july@example.com</td>
-                      </tr>
-                      <tr>
-                        <td>July</td>
-                        <td>Dooley</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>july@example.com</td>
-                      </tr>
-                      <tr>
-                        <td>July</td>
-                        <td>Dooley</td>
-                        <td>Doe</td>
-                        <td>Doe</td>
-                        <td>july@example.com</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div class="pagination-container">
-                    <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
-                      items-per-page="pageSize" max-size="maxSize" boundary-links="true"></pagination>
-                  </div>
-                </div>
+        <h1>Permissions</h1>
+        <div class="rowtabwrap" ng-click="tabChange($event)">
+          <a href="#permissionsHistory" class="tab-control" ng-class="{'active':rowtab=='#permissionsHistory'}">Permissions History</a>
+          <a href="#sc_permissionsHistory" class="tab-control" ng-class="{'active':rowtab=='#sc_permissionsHistory'}">Scheduled Permissions History</a>
+        </div>
+        <div class="content-wrapper">
+          <div id="permissionsHistory" class="ng-hide" ng-show="rowtab=='#permissionsHistory'">
+            <h4>Rules History</h4>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover table-striped">
+                <thead>
+                  <tr>
+                    <th class="historyId">ID
+                      <span class="{{Header[0]}}"></span>
+                    </th>
+                    <th class="object_name">Object
+                      <span class="{{Header[1]}}"></span>
+                    </th>
+                    <th class="email">Email
+                      <span class="{{Header[2]}}"></span>
+                    </th>
+                    <th class="start_date">Start Date
+                      <span class="{{Header[3]}}"></span>
+                    </th>
+                    <th class="end_date">End Date
+                      <span class="{{Header[4]}}"></span>
+                    </th>
+                    <th class="historyId"> ID
+                      <span class="{{Header[5]}}"></span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="item in allHistory">
+                    <td>{{$index+1}}</td>
+                    <td>{{item.object_name}}</td>
+                    <td>{{item.email}}</td>
+                    <td>{{item.start_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.end_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.historyId}}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="pagination-container">
+                <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
+                  items-per-page="pageSize" max-size="maxSize" boundary-links="true"></pagination>
               </div>
             </div>
           </div>
+          <div id="sc_permissionsHistory" class="ng-hide" ng-show="rowtab=='#sc_permissionsHistory'">
+            <h4>Scheduled Permissions History</h4>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover table-striped">
+                <thead>
+                  <tr>
+                    <th class="historyId">ID
+                      <span class="{{Header[0]}}"></span>
+                    </th>
+                    <th class="object_name">Object
+                      <span class="{{Header[1]}}"></span>
+                    </th>
+                    <th class="email">Email
+                      <span class="{{Header[2]}}"></span>
+                    </th>
+                    <th class="start_date">Start Date
+                      <span class="{{Header[3]}}"></span>
+                    </th>
+                    <th class="end_date">End Date
+                      <span class="{{Header[4]}}"></span>
+                    </th>
+                    <th class="historyId"> ID
+                      <span class="{{Header[5]}}"></span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="item in allHistory">
+                    <td>{{$index+1}}</td>
+                    <td>{{item.object_name}}</td>
+                    <td>{{item.email}}</td>
+                    <td>{{item.start_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.end_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.historyId}}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="pagination-container">
+                <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
+                  items-per-page="pageSize" max-size="maxSize" boundary-links="true"></pagination>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
