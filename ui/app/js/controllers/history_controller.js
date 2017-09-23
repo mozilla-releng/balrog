@@ -1,17 +1,25 @@
 angular.module("app").controller('HistoryController',
-function($scope, Releases, Page) {
+function($scope, Releases, Rules, Page) {
     Page.setTitle('History');
     
     $scope.columnTab = 1;
     $scope.rowtab = "#rulesHistory";
     $scope.filter = [];
-    $scope.username = "";
-    $scope.timestamp = "";
-    $scope.product_channel = "";
+    $scope.username_email = "";
+    $scope.hs_startdate = "";
+    $scope.hs_startdate = "";
+    $scope.hs_pr_ch_filter = "All Rules";
 
     $scope.loading = true;
     $scope.failed = false;
-    
+
+    $scope.pr_ch_options = [];
+    $scope.rules = [];
+    $scope.isShowUsername = true;
+    $scope.isShowTimestamp = true;
+    $scope.isShowPrCh = true;
+
+    //tabs
     $scope.setColumnTab = function(newTab){
         $scope.columnTab = newTab;
     };
@@ -27,6 +35,7 @@ function($scope, Releases, Page) {
         }
     };
 
+    //add filter options
     $scope.$watch('filtering_str', function(value) {
         $scope.filtering = value.value.split(',');
       });
@@ -50,48 +59,71 @@ function($scope, Releases, Page) {
     ];
     $scope.filtering_str = $scope.filtering_options[0];
 
-    $scope.isShowUsername = true;
-    $scope.isShowTimestamp = true;
-    $scope.isShowPrCh = true;
-
-    $scope.isField = function(value) {
-        if (value === "username_email"){
-            $scope.isShowUsername = $scope.isShowUsername ? false : true;
-        }
-        else if (value === "timestamp"){
-            $scope.isShowTimestamp = $scope.isShowTimestamp ? false : true;
-        }
-        else if (value === "product_channel"){
-            $scope.isShowPrCh = $scope.isShowPrCh ? false : true;
-        }
-    };
-
     $scope.filterSelected = function(value) {
         if (value === "username_email"){
             $scope.isShowUsername = true;
+            $scope.username_email = "";
         }
         else if (value === "timestamp"){
             $scope.isShowTimestamp = true;
         }
         else if (value === "product_channel"){
+            $scope.hs_pr_ch_filter = "All Rules";
             $scope.isShowPrCh =  true;
         }
     };
 
-    $scope.history = [];
-    $scope.isShowUsername = true;
-    $scope.isShowTimestamp = true;
-    $scope.isShowPrCh = true;
-    
+    //remove filter 
     $scope.hideUsername = function () {
         $scope.isShowUsername = $scope.isShowUsername ? false : true;
+        $scope.username_email = "";
     };
     $scope.hideTimestamp = function () {
         $scope.isShowTimestamp = $scope.isShowTimestamp ? false : true;
+
     };
     $scope.hidePrCh = function () {
         $scope.isShowPrCh = $scope.isShowPrCh ? false : true;
     };
+
+    //for product channel filter
+    Rules.getRules()
+    .success(function(response) {
+        $scope.rules = response.rules;
+      var pairExists = function(pr, ch) {
+        var _rules = $scope.rules.filter(function(rule) {
+          return rule.product === pr && rule.channel === ch;
+        });
+        return _rules.length !== 0;
+      };
+      Rules.getProducts().success(function(response_prs) {
+        Rules.getChannels().success(function(response_chs) {
+          response_prs.product.forEach(function(pr) {
+            $scope.pr_ch_options.push(pr);
+            response_chs.channel.forEach(function(ch) {
+              if (ch.indexOf("*") === -1 && pairExists(pr, ch)){
+                var pr_ch_pair = pr.concat(",").concat(ch);
+                $scope.pr_ch_options.push(pr_ch_pair);
+              }
+            });
+          });
+        })
+        .finally(function() {
+          $scope.pr_ch_options.sort().unshift("All rules");
+          $scope.hs_pr_ch_filter = "All rules";
+          if ($scope.pr_ch_options.includes(localStorage.getItem('hs_pr_ch_filter'))){
+            $scope.pr_ch_filter = localStorage.getItem('hs_pr_ch_filter');
+          }
+        });
+      });
+    })
+
+    $scope.$watch('hs_pr_ch_filter', function(value) {
+        if (value) {
+          localStorage.setItem("hs_pr_ch_filter", value);
+        }
+        $scope.pr_ch_selected = value.split(',');
+      });
 
 
 
@@ -123,7 +155,7 @@ function($scope, Releases, Page) {
     //     }); 
     // });
    
-        
+    //dummy data    
     function getDummyData() {
         return [
             {

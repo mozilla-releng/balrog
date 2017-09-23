@@ -25,7 +25,7 @@
               <div class="col-md-5">
                 <label for="id_username">Username/ Email</label>
                 <fieldset>
-                  <input type="text" id="id_username" ng-model="username">
+                  <input type="text" id="id_username" ng-model="username_email">
                   <button class="remove" ng-click="hideUsername()">-</button>
                 </fieldset>
               </div>
@@ -40,7 +40,7 @@
                                 <i class="glyphicon glyphicon-calendar"></i>
                             </button>
                         </span>
-                    <input type="text" id="id_when" class="form-control" data-ng-model="sc.when" ng-blur="setWhen()" ng-disabled="auto_time">
+                    <input type="text" id="id_when" class="form-control" data-ng-model="hs_startdate" ng-blur="setWhen()" ng-disabled="auto_time">
                   </div>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
                     <datetimepicker data-ng-model="sc.when" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
@@ -58,7 +58,7 @@
                                 <i class="glyphicon glyphicon-calendar"></i>
                             </button>
                         </span>
-                    <input type="text" id="id_when" class="form-control" data-ng-model="filter.when" ng-blur="setWhen()" ng-disabled="auto_time">
+                    <input type="text" id="id_when" class="form-control" data-ng-model="hs_enddate" ng-blur="setWhen()" ng-disabled="auto_time">
                   </div>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
                     <datetimepicker data-ng-model="sc.when" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
@@ -71,9 +71,9 @@
             </div>
             <div class="row">
               <div class="col-md-8" ng-show="isShowPrCh">
-                <label for="id_pr-ch-filter">Product/Channel</label>
+                <label for="hs_pr_ch_filter">Product/Channel</label>
                 <fieldset>
-                  <select ng-model="pr_ch_filter" name="pr_ch_filter" ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
+                  <select ng-model="hs_pr_ch_filter" name="hs_pr_ch_filter" ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
                         </select>
                   <button class="remove" ng-click="hidePrCh()">-</button>
                 </fieldset>
