@@ -1,6 +1,6 @@
 /*global sweetAlert swal */
 angular.module('app').controller('UserPermissionsCtrl',
-function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
+function ($scope, $modalInstance, CSRF, Permissions, Releases, users, is_edit, user) {
 
   $scope.loading = true;
   $scope.users = users;
@@ -28,14 +28,15 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   $scope.selected_options = [];
 
   $scope.actions = {
-      "admin": false,
+      "admin": [],
       "rule": ["create", "modify", "delete"],
       "release": ["create", "modify", "delete"],
       "release_read_only": ["set", "unset"],
       "release_locale": ["modify"],
       "required_signoff": ["create", "modify", "delete"],
       "permission": ["create", "modify", "delete"],
-      "scheduled_change": ["enact"]
+      "scheduled_change": ["enact"],
+      "":[]
   };
 
   $scope.selected_actions = [];
@@ -46,7 +47,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   $scope.product = null;
 
   // get products in releases
-  Permissions.getProducts().success(function(response) {
+  Releases.getProducts().success(function(response) {
     $scope.products = response.product;
   });
 
