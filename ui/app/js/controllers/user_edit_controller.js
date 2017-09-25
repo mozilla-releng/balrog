@@ -21,15 +21,23 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
       $scope.available_options = allPermissions[$scope.permission.permission];
 
       // clear  all previous selections 
-      [
-          $scope.selected_options,
-          $scope.selected_actions,
-          $scope.selected_products
-      ] = [[], [], []];
+      $scope.selected_options = [];
+      $scope.selected_actions = [];
+      $scope.selected_products = [];
   };
   $scope.selected_options = [];
 
-  $scope.actions = ["create", "modify", "enact"];
+  $scope.actions = {
+      "admin": false,
+      "rule": ["create", "modify", "delete"],
+      "release": ["create", "modify", "delete"],
+      "release_read_only": ["set", "unset"],
+      "release_locale": ["modify"],
+      "required_signoff": ["create", "modify", "delete"],
+      "permission": ["create", "modify", "delete"],
+      "scheduled_change": ["enact"]
+  };
+
   $scope.selected_actions = [];
   $scope.action = null;
 

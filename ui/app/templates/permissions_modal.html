@@ -56,7 +56,7 @@
               <label><i>actions</i></label>
               <div class="row-fluid m-tag__input">
                   <label ng-repeat="action in selected_actions" class="btn btn-sm btn-warning">{{ action }} <span class="badge" ng-click="actionRemove(action)">x</span></label>
-                  <input type="text" typeahead="action for action in actions | filter:$viewValue | limitTo:16" ng-model="action"></input>
+                  <input type="text" typeahead="action for action in actions[permission.permission] | filter:$viewValue | limitTo:16" ng-model="action"></input>
               </div>
           </div>
           <div class="form-group" ng-show="!!(selected_options.indexOf('products')+1)">
