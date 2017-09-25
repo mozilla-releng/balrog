@@ -16,16 +16,21 @@
             <p class="help-block" ng-show="errors.username">{{ errors.username.join(', ') }}</p>
           </div>
           <div class="form-group" ng-class="{'has-error': errors.permission}">
-            <label for="id_permission">Permission</label>
-            <input type="text" class="form-control" id="id_permission" ng-model="permission.permission">
+               <label for="id_permission">Permission</label><br>
+               <select name="singleSelect" class="form-control" id="id_permission" ng-model="permission.permission">
+                  <option value="">---Please select---</option>
+                  <option value="admin">Admin</option>
+                  <option value="rule">Rule</option>
+                  <option value="release">Release</option>
+                  <option value="release_read_only">Release Read Only</option>
+                  <option value="release_locale">Release Locale</option>
+                  <option value="required_signoff">Required Signoff</option>
+                  <option value="permission">Permission</option>
+                  <option value="scheduled_change">Scheduled Change</option>
+                </select><br>  
             <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
           </div>
-          <div class="form-group" ng-class="{'has-error': errors.options}">
-            <label for="id_options">Options</label>
-            <textarea ng-model="permission.options" class="options-as-json"></textarea>
-            <p class="help-block" ng-show="errors.options">{{ errors.options.join(', ') }}</p>
-          </div>
-
+          <permission-options permission="permission"></permission-options>
         <div class="form-group" ng-class="{'has-error': errors.detail}">
             <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
         </div>
