@@ -50,7 +50,6 @@ describe("controller: UserPermissionsCtrl", function() {
   describe("opening the edit user modal", function() {
 
     it("should should all defaults", function() {
-      this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.expectGET('/api/users/peterbe/roles')
@@ -85,7 +84,6 @@ describe("controller: UserPermissionsCtrl", function() {
     });
     //
     it("should should be able add a permission", function() {
-      this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.expectGET('/api/users/peterbe/roles')
@@ -109,7 +107,6 @@ describe("controller: UserPermissionsCtrl", function() {
     });
 
     it("should should be able update a permission", function() {
-      this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.expectGET('/api/users/peterbe/roles')
@@ -136,7 +133,6 @@ describe("controller: UserPermissionsCtrl", function() {
     });
 
     it("should should be able add a role", function() {
-      this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.expectGET('/api/users/peterbe/roles')
