@@ -69,10 +69,17 @@ class TestCreateBlob(unittest.TestCase):
             self.assertEquals(yaml_load.call_count, 1)
 
 
-useful_items = st.none() | st.floats(allow_nan=False) | st.text()
+# Things we consider to be useful values in testing blobs. Basically, these
+# are things would actually show up in real blobs. Nesting is handled
+# further down.
+# Ideally we'd include st.boolean() here, but without a way to exclude
+# booleans from list items (which doesn't happen in the real world), we end
+# up with test failures because things like "1 in [True]" are True, which
+# ends up failing tests.
+useful_values = st.none() | st.floats(allow_nan=False) | st.text()
 
 
-@given(st.lists(useful_items), st.lists(useful_items), st.lists(useful_items))
+@given(st.lists(useful_values), st.lists(useful_values), st.lists(useful_values))
 def test_merge_lists_unique_items_present(base, left_additional, right_additional):
     left = deepcopy(base) + left_additional
     right = deepcopy(base) + right_additional
@@ -81,7 +88,7 @@ def test_merge_lists_unique_items_present(base, left_additional, right_additiona
     assert got == expected
 
 
-@given(st.lists(useful_items), st.lists(useful_items))
+@given(st.lists(useful_values), st.lists(useful_values))
 def test_merge_lists_no_dupes(base, additional):
     left = deepcopy(base) + additional
     right = deepcopy(base) + additional
@@ -90,12 +97,9 @@ def test_merge_lists_no_dupes(base, additional):
     assert got == expected
 
 
-# Generate potentially nested dictionaries/lists with various values.
-# The top level will also be a dict.
-# Booleans are explicitly not included in the list of values because
-# things like "1 in [True]" are True, which is very difficult to handle
-# and not something we encounter in the real world.
 def unique_items_only(i):
+    """Returns a hashable value for various types to be used for testing
+    uniqueness when generating test data."""
     if isinstance(i, dict):
         return tuple(i.keys())
     if isinstance(i, list):
@@ -103,15 +107,19 @@ def unique_items_only(i):
     return i
 
 
-useful_dict = st.dictionaries(st.text(), useful_items | st.lists(useful_items, max_size=10, unique_by=unique_items_only), max_size=10)
-useful_list = st.lists(useful_items | useful_dict, max_size=10, unique_by=unique_items_only)
+# Inspired by http://hypothesis.readthedocs.io/en/latest/data.html#recursive-data,
+# but only generates JSON data with a dict as the top level object.
+useful_dict = st.dictionaries(st.text(), useful_values | st.lists(useful_values, max_size=10, unique_by=unique_items_only), max_size=10)
+useful_list = st.lists(useful_values | useful_dict, max_size=10, unique_by=unique_items_only)
 json = st.dictionaries(st.text(),
-                       st.recursive(useful_items,
+                       st.recursive(useful_values,
                                     lambda x: useful_list | useful_dict,
                                     max_leaves=20),
                        max_size=10)
 
 
+# too_slow health checks are repressed because tests can be slow in CI, and we
+# don't want CI failures due to this.
 @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
 @given(json)
 def test_merge_dicts_join_lists(base):

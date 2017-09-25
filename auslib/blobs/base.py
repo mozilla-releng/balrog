@@ -57,8 +57,8 @@ def createBlob(data):
 
 def merge_lists(*lists):
     result = []
-    for side in lists:
-        for i in side:
+    for l in lists:
+        for i in l:
             if i not in result or not isinstance(i, type(result[result.index(i)])):
                 result.append(i)
     return result
