@@ -23,7 +23,7 @@
         <form role="form" ng-submit="is_edit ? updatePermission(permission) : addPermission()">
           <div class="form-group" ng-class="{'has-error': errors.permission}">
             <label for="id_permission">Permission</label><br>
-              <select name="singleSelect" class="form-control" id="id_permission" ng-model="permission.permission" ng-change="onPermission()">
+              <select name="singleSelect" class="form-control" id="id_permission" ng-model="permission.permission">
                   <option value="">---Please select---</option>
                   <option value="admin">Admin</option>
                   <option value="rule">Rule</option>

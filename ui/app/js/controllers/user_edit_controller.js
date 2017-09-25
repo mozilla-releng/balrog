@@ -17,14 +17,14 @@ function ($scope, $modalInstance, CSRF, Permissions, Releases, users, is_edit, u
         "scheduled_change": ["actions"],
     };
 
-  $scope.onPermission = function(){
+  $scope.$watch('permission.permission',function(){
       $scope.available_options = allPermissions[$scope.permission.permission];
 
       // clear  all previous selections 
       $scope.selected_options = [];
       $scope.selected_actions = [];
       $scope.selected_products = [];
-  };
+  });
   $scope.selected_options = [];
 
   $scope.actions = {
