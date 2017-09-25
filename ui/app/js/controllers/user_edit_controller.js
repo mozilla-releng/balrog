@@ -50,12 +50,9 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
     $scope.products = response.product;
   });
 
-  $scope.$watch(function(){
-      // set actions & products to [] when undefined, always happens when running tests
-      $scope.actions = (typeof $scope.actions === 'undefined')? []: $scope.actions;
-      $scope.products= (typeof $scope.products === 'undefined')? []: $scope.products;
+  $scope.$watch('[ action, product ] | json',function(){
       // add tag on action input
-      if ($scope.actions.indexOf($scope.action) !== -1 && $scope.selected_actions.indexOf($scope.action) === -1){
+      if ($scope.actions[$scope.permission.permission].indexOf($scope.action) !== -1 && $scope.selected_actions.indexOf($scope.action) === -1){
           $scope.selected_actions.push($scope.action);
           $scope.action = null;
       }
