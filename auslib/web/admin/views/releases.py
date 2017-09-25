@@ -9,7 +9,7 @@ from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
 from auslib.db import OutdatedDataError, ReadOnlyError
 from auslib.web.admin.views.base import (
-    requirelogin, AdminView
+    requirelogin, AdminView, serialize_signoff_requirements
 )
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \

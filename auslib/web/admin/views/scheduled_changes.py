@@ -3,7 +3,7 @@ from sqlalchemy.sql.expression import null
 
 from flask import jsonify, Response
 
-from auslib.web.admin.views.base import AdminView, requirelogin
+from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signoff_requirements
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
@@ -58,9 +58,8 @@ class ScheduledChangesView(AdminView):
                 # enacted.
                 if row["change_type"] != "delete":
                     affected_rows.append(base_row)
-                for rs in self.table.getPotentialRequiredSignoffs(affected_rows):
-                    signoffs_required = max(scheduled_change["required_signoffs"].get(rs["role"], 0), rs["signoffs_required"])
-                    scheduled_change["required_signoffs"][rs["role"]] = signoffs_required
+                signoff_requirements = self.table.getPotentialRequiredSignoffs(affected_rows)
+                scheduled_change["required_signoffs"] = serialize_signoff_requirements(signoff_requirements)
 
             ret["scheduled_changes"].append(scheduled_change)
         return jsonify(ret)
