@@ -409,7 +409,7 @@ paths:
         Returns a JSON object containing metadata about Releases in Balrog's database. Due to its size, the actual Release 'blob' is never returned from this endpoint. There are a few query arguments that affect its response. If no arguments are provided, it returns all information about all of the Releases in the database. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases)
       tags:
         - Releases
-      operationId: auslib.web.common.releases.get_releases
+      operationId: auslib.web.admin.views.mapper.release_get
       consumes: []
       produces:
         - application/json

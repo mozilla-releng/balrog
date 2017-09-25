@@ -123,6 +123,11 @@ def release_view_history_get(change_id, field):
     return ReleaseFieldView().get(change_id, field)
 
 
+def release_get():
+    """GET /releases"""
+    return ReleasesAPIView().get()
+
+
 def release_post():
     """POST /releases"""
     return ReleasesAPIView().post()
