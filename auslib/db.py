@@ -2049,29 +2049,26 @@ class Releases(AUSTable):
                 super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version,
                                              transaction=transaction, dryrun=dryrun)
             except OutdatedDataError as e:
-                self.log.debug("trying to update older data_version %s for release %s" % (old_data_version, name))
+                self.log.warning("Trying to merge update to release %s at data_version %s with the latest version.", name, old_data_version)
                 if blob is not None:
                     ancestor_change = self.history.getChange(data_version=old_data_version,
                                                              column_values={'name': name},
                                                              transaction=transaction)
                     # if we have no historical information about the ancestor blob
                     if ancestor_change is None:
-                        self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
+                        self.log.exception("Couldn't find history for release %s at data_version %s", name, old_data_version)
                         raise
                     ancestor_blob = ancestor_change.get('data')
                     tip_release = self.getReleases(name=name, transaction=transaction)[0]
                     tip_blob = tip_release.get('data')
                     try:
                         what['data'] = createBlob(merge_dicts(ancestor_blob, tip_blob, blob))
-                        self.log.debug("Successfully merged blobs.")
+                        self.log.warning("Successfully merged release %s at data_version %s with the latest version.", name, old_data_version)
                     except ValueError:
-                        self.log.exception("Couldn't merge blobs.")
-                        self.log.warning("old_data_version provided is %s", old_data_version)
-                        if ancestor_change:
-                            self.log.warning("ancestor_change is change_id %s, data_version %s",
-                                            ancestor_change.get("change_id"), ancestor_change.get("data_version"))
-                        else:
-                            self.log.warning("ancestor_change is None")
+                        self.log.exception("Couldn't merge release %s at data_version %s with the latest version.", name, old_data_version)
+                        # ancestor_change is checked for None a few lines up
+                        self.log.warning("ancestor_change is change_id %s, data_version %s",
+                                         ancestor_change.get("change_id"), ancestor_change.get("data_version"))
                         self.log.warning("tip release is data_version %s", tip_release.get("data_version"))
                         raise e
                     # we want the data_version for the dictdiffer.merged blob to be one
