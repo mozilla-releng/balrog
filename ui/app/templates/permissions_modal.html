@@ -36,9 +36,7 @@
                 </select><br>  
             <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
           </div>
-          <div>
-              <permission-options permission="permission"></permission-options>
-          </div>
+           <permission-options permission="permission"></permission-options>
           
           <div style="text-align: right">
             <input type="hidden" name="data_version" ng-model="permission.data_version">
