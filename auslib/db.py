@@ -2066,6 +2066,13 @@ class Releases(AUSTable):
                         self.log.debug("Successfully merged blobs.")
                     except ValueError:
                         self.log.exception("Couldn't merge blobs.")
+                        self.log.warning("old_data_version provided is %s", old_data_version)
+                        if ancestor_change:
+                            self.log.warning("ancestor_change is change_id %s, data_version %s",
+                                            ancestor_change.get("change_id"), ancestor_change.get("data_version"))
+                        else:
+                            self.log.warning("ancestor_change is None")
+                        self.log.warning("tip release is data_version %s", tip_release.get("data_version"))
                         raise e
                     # we want the data_version for the dictdiffer.merged blob to be one
                     # more than that of the latest blob
