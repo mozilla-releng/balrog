@@ -256,6 +256,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         sc: function() {
           // blank new default rule
           return {
+            base_row: undefined,
             product: product,
             channel: channel,
             backgroundRate: 0,
@@ -264,7 +265,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             when: null,
             change_type: 'insert',
           };
-        }
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
     modalInstance.result.then(function(sc) {
@@ -286,9 +290,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         sc: function() {
           sc = angular.copy(rule);
+          sc.base_row = rule;
           sc["change_type"] = "update";
           return sc;
-        }
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
     modalInstance.result.then(function(sc) {
@@ -308,11 +316,15 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         sc: function() {
           return {
+            "base_row": rule,
             "rule_id": rule.rule_id,
             "data_version": rule.data_version,
             "change_type": "delete"
           };
-        }
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
     modalInstance.result.then(function(sc) {
@@ -328,8 +340,16 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       backdrop: 'static',
       resolve: {
         sc: function() {
-          return rule.scheduled_change;
-        }
+          var sc = angular.copy(rule.scheduled_change);
+          sc.base_row = rule;
+          return sc;
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
+        rule: function() {
+          return rule;
+        },
       }
     });
     modalInstance.result.then(function(action) {
