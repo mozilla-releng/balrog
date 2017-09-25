@@ -8,22 +8,14 @@
   <div ng-show="!loading">
     <div class="tabbable tabs-below">
 
-
         <form role="form">
-            <div class="form-group" ng-class="{'has-error': errors.permission}">
-                <label for="id_permission">Permission</label><br>
-                    <select name="singleSelect" class="form-control" id="id_permission" ng-model="permission.permission">
-                        <option value="">---Please select---</option>
-                        <option value="admin">Admin</option>
-                        <option value="rule">Rule</option>
-                        <option value="release">Release</option>
-                        <option value="release_read_only">Release Read Only</option>
-                        <option value="release_locale">Release Locale</option>
-                        <option value="required_signoff">Required Signoff</option>
-                        <option value="permission">Permission</option>
-                        <option value="scheduled_change">Scheduled Change</option>
-                    </select><br>
-                <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
+          <div class="form-group" ng-class="{'has-error': errors.permission}">
+            <label for="id_permission">Permission</label>
+            <select name="singleSelect" class="form-control" id="id_permission" ng-model="permission.permission">
+              <option ng-repeat="permission in permissions_list" value="{{permission.value}}">{{permission.name}}</option>
+            </select><br>  
+            <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
+          </div>
           </div>
            <permission-options permission="permission"></permission-options>
         <div class="form-group" ng-class="{'has-error': errors.detail}">
