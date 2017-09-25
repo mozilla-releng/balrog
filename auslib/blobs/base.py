@@ -83,15 +83,19 @@ def merge_dicts(ancestor, left, right):
                     raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key.encode('ascii', 'replace')))
                 if key in left and ancestor[key] != left.get(key):
                     result[key] = left[key]
-                else:
+                elif key in right and ancestor[key] != right.get(key):
                     result[key] = right[key]
+                else:
+                    result[key] = ancestor[key]
             else:
                 if key in left and key in right and left[key] != right[key]:
                     raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key.encode('ascii', 'replace')))
                 if key in left:
                     result[key] = left[key]
-                else:
+                elif key in right:
                     result[key] = right[key]
+                else:
+                    raise KeyError("Couldn't find value for key '{}'".format(key))
 
     return result
 
