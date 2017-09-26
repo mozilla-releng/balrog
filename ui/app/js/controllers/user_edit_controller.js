@@ -293,14 +293,14 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
           if(permission_found.length){
             sweetAlert(
               "Form submission error",
-              "This persmission has already been granted",
+              "This permission has already been granted",
               "error"
             );
           }
           else{
             sweetAlert(
               "Form submission error",
-              "Persmissions must be selected",
+              "Permissions must be selected",
               "error"
             );
           }
