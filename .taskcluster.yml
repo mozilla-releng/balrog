@@ -42,7 +42,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh backend"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh backend"
       features:
         dind: true
         taskclusterProxy: true
@@ -72,7 +72,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh frontend"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh frontend"
       features:
         dind: true
     extra:
@@ -101,7 +101,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd agent && bash run-tests.sh"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd agent && bash run-tests.sh"
       features:
         dind: true
     extra:
@@ -130,7 +130,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd client && bash run-tests.sh"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd client && bash run-tests.sh"
       features:
         dind: true
     extra:
@@ -162,7 +162,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh"
     extra:
       github:
         env: true
@@ -190,7 +190,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL && cd balrog/agent && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/agent && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh"
     extra:
       github:
         env: true
@@ -217,7 +217,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog && scripts/push-dockerimage.sh {{ event.version }}"
+        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog && scripts/push-dockerimage.sh {{ event.version }}"
     extra:
       github:
         env: true
@@ -245,7 +245,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} && cd balrog/agent && scripts/push-dockerimage.sh {{ event.version }}"
+        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog/agent && scripts/push-dockerimage.sh {{ event.version }}"
     extra:
       github:
         env: true
