@@ -6,8 +6,6 @@ function($scope, Releases, Rules, Page) {
     $scope.rowtab = "#rulesHistory";
     $scope.filter = [];
     $scope.username_email = "";
-    $scope.hs_startdate = "";
-    $scope.hs_startdate = "";
     $scope.hs_pr_ch_filter = "All Rules";
 
     $scope.loading = true;
@@ -18,6 +16,22 @@ function($scope, Releases, Rules, Page) {
     $scope.isShowUsername = true;
     $scope.isShowTimestamp = true;
     $scope.isShowPrCh = true;
+    $scope.calendar_is_open = false;
+    $scope.hs_startDate = "";
+    $scope.hs_endDate = "";
+
+    $scope.setWhen = function(newDate) {
+        $scope.calendar_is_open = false;
+        if (newDate >= new Date()) {
+          $scope.date_error = ["Date cannot be ahead of the present date"];
+          $scope.hs_startDate = null;
+          $scope.hs_endDate = null;
+        }
+        else {
+          $scope.date_error = null;
+        }
+      };
+
 
     //tabs
     $scope.setColumnTab = function(newTab){
@@ -116,7 +130,7 @@ function($scope, Releases, Rules, Page) {
           }
         });
       });
-    })
+    });
 
     $scope.$watch('hs_pr_ch_filter', function(value) {
         if (value) {
@@ -216,7 +230,7 @@ function($scope, Releases, Rules, Page) {
             }
 
         ];
-    };
+    }
     $scope.allHistory = getDummyData();
     
 

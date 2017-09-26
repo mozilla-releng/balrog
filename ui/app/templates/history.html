@@ -30,41 +30,42 @@
                 </fieldset>
               </div>
             </div>
-            <div class="row" ng-show="isShowTimestamp">
+            <div class="row">
               <div class="col-md-5">
                 <label for="id_startdate">Start Date</label>
-                <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': errors.when}">
-                  <div class="input-group">
-                    <span class="input-group-btn">
-                            <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time">
-                                <i class="glyphicon glyphicon-calendar"></i>
-                            </button>
-                        </span>
-                    <input type="text" id="id_when" class="form-control" data-ng-model="hs_startdate" ng-blur="setWhen()" ng-disabled="auto_time">
-                  </div>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                    <datetimepicker data-ng-model="sc.when" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
-                    />
-                  </ul>
-                  <p class="help-block" ng-show="errors.when">{{ errors.when.join(', ') }}</p>
+                <div class="form-group dropdown">
+                    <div class="input-group"  is-open="calendar_is_open" ng-class="{'has-error': date_error}">
+                        <span class="input-group-btn">
+                                <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time">
+                                    <i class="glyphicon glyphicon-calendar"></i>
+                                </button>
+                            </span>
+                        <input type="text" id="id_when" class="form-control" data-ng-model="hs_startDate" ng-blur="setWhen()">
+                      </div>
+                      <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                          <datetimepicker data-ng-model="hs_startDate" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
+                          />
+                        </ul>
+                        <p class="help-block" ng-show="date_error">{{ date_error.join(', ') }}</p>
+                 
                 </div>
               </div>
               <div class="col-md-5">
                 <label for="id_startdate">End Date</label>
-                <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': errors.when}">
+                <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': enddate_error}">
                   <div class="input-group">
                     <span class="input-group-btn">
                             <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time">
                                 <i class="glyphicon glyphicon-calendar"></i>
                             </button>
                         </span>
-                    <input type="text" id="id_when" class="form-control" data-ng-model="hs_enddate" ng-blur="setWhen()" ng-disabled="auto_time">
+                    <input type="text" id="id_when" class="form-control" data-ng-model="hs_endDate" ng-blur="setWhen()">
                   </div>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                    <datetimepicker data-ng-model="sc.when" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
+                    <datetimepicker data-ng-model="hs_endDate" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
                     />
                   </ul>
-                  <p class="help-block" ng-show="errors.when">{{ errors.when.join(', ') }}</p>
+                  <p class="help-block" ng-show="date_error">{{ date_error.join(', ') }}</p>
                 </div>
               </div>
               <button class="remove remove-button" ng-click="hideTimestamp()">-</button>
