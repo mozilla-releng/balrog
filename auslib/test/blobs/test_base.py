@@ -92,7 +92,7 @@ def test_merge_lists_unique_items_present(base, left_additional, right_additiona
 def test_merge_lists_no_dupes(base, additional):
     left = deepcopy(base) + additional
     right = deepcopy(base) + additional
-    expected = sorted(list(set(deepcopy(base) + additional)))
+    expected = sorted(list(set(left)))
     got = sorted(merge_lists(base, left, right))
     assert got == expected
 
