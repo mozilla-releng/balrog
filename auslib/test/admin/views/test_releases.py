@@ -1573,35 +1573,29 @@ class TestReleaseHistoryView(ViewTest):
         )
         self.assertStatusCode(ret, 200)
 
-        table = dbo.releases
-        row, = table.select(where=[table.name == 'd'])
+        rows = dbo.releases.t.select().where(dbo.releases.name == "d").execute().fetchall()
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
         self.assertEqual(row['data_version'], 3)
         data = row['data']
         self.assertEqual(data['fakePartials'], False)
         self.assertEqual(data['detailsUrl'], 'boop')
 
-        query = table.history.t.count()
-        count, = query.execute().first()
-        self.assertEqual(count, 2)
-
-        row, = table.history.select(
-            where=[(table.history.product == 'd') & (table.history.data_version == 2)],
-            limit=1
-        )
-        change_id = row['change_id']
-        assert row['name'] == 'd'  # one of the fixtures
+        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "d")\
+                                                      .where(dbo.releases.history.data_version == 2).execute().fetchall()
+        self.assertEqual(len(history_rows), 1)
+        history_row = history_rows[0]
 
         url = '/releases/d/revisions'
-        ret = self._post(url, {'change_id': change_id})
+        ret = self._post(url, {'change_id': history_row["change_id"]})
         self.assertEquals(ret.status_code, 200, ret.data)
 
-        query = table.history.t.count()
-        count, = query.execute().first()
-        self.assertEqual(count, 3)
+        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "d").execute().fetchall()
+        self.assertEqual(len(history_rows), 3)
+        history_row = history_rows[-1]
 
-        row, = table.select(where=[table.name == 'd'])
-        self.assertEqual(row['data_version'], 4)
-        data = row['data']
+        self.assertEqual(history_row['data_version'], 4)
+        data = history_row['data']
         self.assertEqual(data['fakePartials'], True)
         self.assertEqual(data['detailsUrl'], 'beep')
 

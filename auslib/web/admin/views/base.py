@@ -75,8 +75,17 @@ class AdminView(MethodView):
     @handleGeneralExceptions("PUT")
     def put(self, *args, **kwargs):
         self.log.debug("processing PUT request to %s" % request.path)
-        with dbo.begin() as trans:
-            return self._put(*args, transaction=trans, **kwargs)
+        trans = dbo.begin()
+        try:
+            ret = self._put(*args, transaction=trans, **kwargs)
+            if ret.status_code >= 400:
+                trans.rollback()
+            else:
+                trans.commit()
+            return ret
+        except:
+            trans.rollback()
+            raise
 
     @handleGeneralExceptions("DELETE")
     def delete(self, *args, **kwargs):

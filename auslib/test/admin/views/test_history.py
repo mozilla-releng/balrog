@@ -24,15 +24,10 @@ class TestHistoryView(ViewTest):
         )
         self.assertStatusCode(ret, 200)
 
-        table = dbo.releases.history
-        query = table.t.count()
-        count, = query.execute().first()
-        self.assertEqual(count, 1)
+        rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "d").execute().fetchall()
+        self.assertEqual(len(rows), 1)
 
-        row, = table.select()
-        change_id = row['change_id']
-
-        url = '/history/view/release/%d/data_version' % change_id
+        url = '/history/view/release/%d/data_version' % rows[0]["change_id"]
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
 
@@ -45,15 +40,10 @@ class TestHistoryView(ViewTest):
         )
         self.assertStatusCode(ret, 200)
 
-        table = dbo.releases.history
-        query = table.t.count()
-        count, = query.execute().first()
-        self.assertEqual(count, 1)
+        rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "d").execute().fetchall()
+        self.assertEqual(len(rows), 1)
 
-        row, = table.select()
-        change_id = row['change_id']
-
-        url = '/history/view/release/%d/data' % change_id
+        url = '/history/view/release/%d/data' % rows[0]["change_id"]
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
         self.assertEqual(json.loads(ret.data), json.loads("""
@@ -86,11 +76,9 @@ class TestHistoryView(ViewTest):
         )
         self.assertStatusCode(ret, 200)
 
-        table = dbo.releases.history
-        row, = table.select(order_by=[table.change_id.desc()], limit=1)
-        change_id = row['change_id']
+        row = dbo.releases.history.t.select().where(dbo.releases.history.name == "d").execute().fetchall()[-1]
 
-        url = '/history/diff/release/%d/data' % change_id
+        url = '/history/diff/release/%d/data' % row["change_id"]
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
         self.assertTrue('"fakePartials": true' in ret.data)
