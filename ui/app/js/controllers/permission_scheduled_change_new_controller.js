@@ -1,6 +1,6 @@
 /*global sweetAlert swal */
 angular.module('app').controller('NewPermissionScheduledChangeCtrl',
-function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
+function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc, permissionSignoffRequirements) {
 
   $scope.loading = true;
   $scope.scheduled_changes = scheduled_changes;
@@ -28,6 +28,26 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
   ];
 
 
+  function fromFormData(permission) {
+    permission = angular.copy(permission);
+    try {
+      permission.options = permission.options && JSON.parse(permission.options);
+    } catch(e) {
+      // No options, I guess
+    }
+    return permission;
+  }
+
+  $scope.permissionSignoffsRequired = function(currentPermission, newPermission) {
+    if (currentPermission) {
+      currentPermission = fromFormData(currentPermission);
+    }
+    if (newPermission) {
+      newPermission = fromFormData(newPermission);
+    }
+    return Permissions.permissionSignoffsRequired(currentPermission, newPermission, permissionSignoffRequirements);
+  };
+
   $scope.sc.permissions = [];
   Permissions.getUserPermissions(sc.username)
   .then(function(permissions) {
@@ -35,6 +55,7 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
       if (p.options) {
         p.options = JSON.stringify(p['options']);
       }
+      p.originalPermission = p;
     });
     $scope.sc.permissions = permissions;
     $scope.loading = false;
