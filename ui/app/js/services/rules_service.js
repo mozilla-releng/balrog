@@ -1,4 +1,4 @@
-angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers) {
+angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers, ProductRequiredSignoffs) {
   // these routes map to stubbed API endpoints in config/server.js
   var service = {
     getRules: function() {
@@ -122,14 +122,7 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers
       }
 
       var relevantRequirements = productSignoffRequirements.filter(matchesRules);
-      // FIXME: Use a Map here instead of a simple object
-      var merged = {};
-      relevantRequirements.map(function(requirement) {
-        if (!merged[requirement.role] || merged[requirement.role] < requirement.signoffs_required) {
-          merged[requirement.role] = requirement.signoffs_required;
-        }
-      });
-      return {length: Object.keys(merged).length, roles: merged};
+      return ProductRequiredSignoffs.convertToMap(relevantRequirements);
     },
   };
   return service;
