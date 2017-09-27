@@ -104,55 +104,14 @@ angular.module("app").controller('RulesController',
       $scope.ordering = value.value.split(',');
     });
 
-    $scope.$on('$routeChangeSuccess', function() {
-      var options = [];
-      var rules = [];
-      var pairExists = function(pr, ch) {
-        var _rules = rules.filter(function(rule) {
-          return rule.product === pr && rule.channel === ch;
-        });
-        return _rules.length !== 0;
-      };
-      Rules.getProducts().success(function(response_prs) {
-        Rules.getRules().success(function(response) {
-          rules = response.rules;
-        })
-          .finally(function() {
-            Rules.getChannels().success(function(response_chs) {
-              response_prs.product.forEach(function(pr) {
-                options.push(pr);
-                response_chs.channel.forEach(function(ch) {
-                  if (ch.indexOf("*") === -1 && pairExists(pr, ch)){
-                    var pr_ch_pair = pr.concat(",").concat(ch);
-                    options.push(pr_ch_pair);
-                  }
-                });
-              });
-            })
-              .finally(function() {
-                var filterString = '';
-                if (!$routeParams.product && !$routeParams.channel) {
-                  filterString = $rootScope.pr_ch_filter || 'All rules';
-                  if ($rootScope.pr_ch_filter) {
-                    changeLocationWithFilterParams($rootScope.pr_ch_filter);
-                  }
-                }
-                if ($routeParams.product && !$routeParams.channel && options.includes($routeParams.product)) {
-                  filterString = $routeParams.product;
-                } else if ($routeParams.product && !$routeParams.channel && !options.includes($routeParams.product)) {
-                  filterString = 'All rules';
-                }
-                if ($routeParams.product && $routeParams.channel && options.includes($routeParams.product + ',' + $routeParams.channel)) {
-                  filterString = $routeParams.product + ',' + $routeParams.channel;
-                } else if ($routeParams.product && $routeParams.channel && !options.includes($routeParams.product + ',' + $routeParams.channel)) {
-                  filterString = 'All rules';
-                }
-                $scope.pr_ch_filter = filterString;
-                $rootScope.pr_ch_filter = $scope.pr_ch_filter;
-              });
-          });
-      });
-    });
+    function populateRulesProductsChannels() {
+      $timeout(function() {
+        return {
+          rules: $scope.rules,
+          products: $scope.pr_ch_options,
+        };
+      }, 2000);
+    }
 
     $scope.$watch('pr_ch_filter', function(value) {
       if (value) {
@@ -160,6 +119,31 @@ angular.module("app").controller('RulesController',
         $rootScope.pr_ch_filter = value;
       }
       $scope.pr_ch_selected = value.split(',');
+    });
+
+    $scope.$on('$routeChangeSuccess', function() {
+      $timeout(function() {
+        populateRulesProductsChannels();
+        var filterString = '';
+        if (!$routeParams.product && !$routeParams.channel) {
+          filterString = $rootScope.pr_ch_filter || 'All rules';
+          if ($rootScope.pr_ch_filter) {
+            changeLocationWithFilterParams($rootScope.pr_ch_filter);
+          }
+        }
+        if ($routeParams.product && !$routeParams.channel && $scope.pr_ch_options.includes($routeParams.product)) {
+          filterString = $routeParams.product;
+        } else if ($routeParams.product && !$routeParams.channel && !$scope.pr_ch_options.includes($routeParams.product)) {
+          filterString = 'All rules';
+        }
+        if ($routeParams.product && $routeParams.channel && $scope.pr_ch_options.includes($routeParams.product + ',' + $routeParams.channel)) {
+          filterString = $routeParams.product + ',' + $routeParams.channel;
+        } else if ($routeParams.product && $routeParams.channel && !$scope.pr_ch_options.includes($routeParams.product + ',' + $routeParams.channel)) {
+          filterString = 'All rules';
+        }
+        $scope.pr_ch_filter = filterString;
+        $rootScope.pr_ch_filter = $scope.pr_ch_filter;
+      }, 2000);
     });
 
     $scope.locationChanger = function() {
