@@ -55,6 +55,51 @@ def createBlob(data):
     return blob_map[schema_version](**data)
 
 
+def merge_lists(*lists):
+    result = []
+    for l in lists:
+        for i in l:
+            if i not in result or not isinstance(i, type(result[result.index(i)])):
+                result.append(i)
+    return result
+
+
+def merge_dicts(ancestor, left, right):
+    result = {}
+    dicts = (ancestor, left, right)
+    for key in set(key for d in dicts for key in d.keys()):
+        key_types = set([type(d.get(key)) for d in dicts])
+        key_types.discard(type(None))
+        if len(key_types) > 1 and not key_types.issubset([str, unicode]):
+            raise ValueError("Cannot merge blobs: type mismatch for '{}'".format(key.encode('ascii', 'replace')))
+
+        if any(isinstance(d.get(key), dict) for d in dicts):
+            result[key] = merge_dicts(*[d.get(key, {}) for d in dicts])
+        elif any(isinstance(d.get(key), list) for d in dicts):
+            result[key] = merge_lists(*[d.get(key, []) for d in dicts])
+        else:
+            if key in ancestor:
+                if key in left and key in right and ancestor[key] != left[key] and ancestor[key] != right[key]:
+                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key.encode('ascii', 'replace')))
+                if key in left and ancestor[key] != left.get(key):
+                    result[key] = left[key]
+                elif key in right and ancestor[key] != right.get(key):
+                    result[key] = right[key]
+                else:
+                    result[key] = ancestor[key]
+            else:
+                if key in left and key in right and left[key] != right[key]:
+                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key.encode('ascii', 'replace')))
+                if key in left:
+                    result[key] = left[key]
+                elif key in right:
+                    result[key] = right[key]
+                else:
+                    raise KeyError("Couldn't find value for key '{}'".format(key))
+
+    return result
+
+
 class Blob(dict):
     jsonschema = None
 
