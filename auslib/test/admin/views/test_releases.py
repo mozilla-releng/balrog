@@ -476,6 +476,35 @@ class TestReleasesAPI_JSON(ViewTest):
 }
 """))
 
+    def testLocalePutOutdatedDataError(self):
+        data = json.dumps({
+            "complete": {
+                "filesize": 435,
+                "from": "*",
+                "hashValue": "abc",
+            }
+        })
+        ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 201)
+
+        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
+        self.assertEquals(len(history_rows), 3)
+
+        data = json.dumps({
+            "complete": {
+                "filesize": 435,
+                "from": "*",
+                "hashValue": "def",
+            }
+        })
+        ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 400)
+
+        # Ensure that history wasn't created for second request.
+        # See https://bugzilla.mozilla.org/show_bug.cgi?id=1246993 for background.
+        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
+        self.assertEquals(len(history_rows), 3)
+
     def testLocalePutSpecificPermission(self):
         data = json.dumps({
             "complete": {
