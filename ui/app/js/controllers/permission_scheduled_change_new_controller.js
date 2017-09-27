@@ -38,7 +38,7 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc, perm
     return permission;
   }
 
-  $scope.permissionSignoffsRequired = function(currentPermission, newPermission) {
+  function permissionSignoffsRequired(currentPermission, newPermission) {
     if (currentPermission) {
       currentPermission = fromFormData(currentPermission);
     }
@@ -46,7 +46,17 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc, perm
       newPermission = fromFormData(newPermission);
     }
     return Permissions.permissionSignoffsRequired(currentPermission, newPermission, permissionSignoffRequirements);
-  };
+  }
+
+  $scope.$watch("permission", function(permission) {
+    $scope.permissionSignoffsRequired = permissionSignoffsRequired(permission);
+  }, true);
+  $scope.scPermissionsSignoffRequirements = [];
+  $scope.$watch("sc.permissions", function(permissions) {
+    $scope.scPermissionsSignoffRequirements = permissions.map(function(permission, i) {
+      return permissionSignoffsRequired($scope.originalPermissions[i], permission);
+    });
+  }, true);
 
   $scope.sc.permissions = [];
   Permissions.getUserPermissions(sc.username)
@@ -55,8 +65,8 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc, perm
       if (p.options) {
         p.options = JSON.stringify(p['options']);
       }
-      p.originalPermission = p;
     });
+    $scope.originalPermissions = angular.copy(permissions);
     $scope.sc.permissions = permissions;
     $scope.loading = false;
   });
