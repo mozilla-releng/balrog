@@ -28,6 +28,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
     });
   }
 
+  $scope.signoffRequirements = [];
   PermissionsRequiredSignoffs.getRequiredSignoffs()
     .then(function(payload) {
       $scope.signoffRequirements = payload.data.required_signoffs;

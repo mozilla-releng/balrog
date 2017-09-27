@@ -23,9 +23,8 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
         if (p.options) {
           p.options_as_json = JSON.stringify(p['options']);
         }
-        p.originalPermission = p;
       });
-
+      $scope.originalPermissions = angular.copy(permissions);
       $scope.user.permissions = permissions;
     });
 
@@ -74,7 +73,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
     return permission;
   }
 
-  $scope.permissionSignoffsRequired = function(currentPermission, newPermission) {
+  function permissionSignoffsRequired(currentPermission, newPermission) {
     if (currentPermission) {
       currentPermission = fromFormData(currentPermission);
     }
@@ -82,7 +81,20 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
       newPermission = fromFormData(newPermission);
     }
     return Permissions.permissionSignoffsRequired(currentPermission, newPermission, permissionSignoffRequirements);
-  };
+  }
+  $scope.$watch("permission", function(permission) {
+    $scope.permissionSignoffsRequired = permissionSignoffsRequired(permission);
+  }, true);
+  $scope.userPermissionsSignoffRequirements = [];
+  $scope.$watch("user.permissions", function(permissions) {
+    $scope.userPermissionsSignoffRequirements = permissions.map(function(permission, i) {
+      return {
+        signoffRequirements: permissionSignoffsRequired($scope.originalPermissions[i], permission),
+        deleteSignoffRequirements: permissionSignoffsRequired($scope.originalPermissions[i])
+      };
+    });
+  }, true);
+
   Permissions.getAllRoles()
   .success(function(response) {
     $scope.roles_list = response.roles;
@@ -175,7 +187,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
         if ($scope.user.permissions){
           $scope.users.push($scope.user);
           $scope.permission.data_version = response.new_data_version;
-          $scope.permission.originalPermission = $scope.permission;
+          $scope.originalPermissions.push(angular.copy($scope.permission));
           $scope.user.permissions.push($scope.permission);
           // reset the add form
           $scope.permission = {
@@ -295,7 +307,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
       Permissions.updatePermission($scope.user.username, permission, csrf_token)
       .success(function(response) {
         permission.data_version = response.new_data_version;
-        $scope.permission.originalPermission = $scope.permission;
+        $scope.originalPermissions.push(angular.copy($scope.permission));
         $scope.user.permissions.push($scope.permission);
         $scope.permission = {
           permission: '',
