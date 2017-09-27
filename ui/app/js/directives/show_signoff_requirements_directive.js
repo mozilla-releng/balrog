@@ -7,7 +7,8 @@ angular.module("app").directive('showSignoffRequirements', function() {
     },
     template: '<div ng-show="requirements.length" class="has-error">' +
       '<p class="help-block">' +
-      'Making this change requires signoffs and therefore must be a scheduled change.' +
+      'This change requires signoffs: ' +
+      "<span ng-repeat=\"(key, value) in requirements.roles\">{{ value }} from {{ key }}{{$last ? '.' : ', '}}</span>" +
       '</p>' +
       '</div>',
   };
