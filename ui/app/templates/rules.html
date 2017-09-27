@@ -35,6 +35,9 @@
         boundary-links="true"
       ></pagination>
     </div>
+    <p>Page Size: 
+      <input type="number" min="1" ng-model="page_size" placeholder="Enter page size here" ng-change="selectPageSize()">
+    </p>
   </div>
   <div class="col-sm-5 text-right">
     <div class="row" ng-show="!rule_id">
