@@ -25,12 +25,12 @@
               <div class="col-md-5">
                 <label for="id_username">Username/ Email</label>
                 <fieldset>
-                  <input type="text" id="id_username" ng-model="username_email">
+                  <input type="text" id="id_username" ng-model="userInput.username_email">
                   <button class="remove" ng-click="hideUsername()">-</button>
                 </fieldset>
               </div>
             </div>
-            <div class="row">
+            <div class="row" ng-show="isShowTimestamp">
               <div class="col-md-5">
                 <label for="id_startdate">Start Date</label>
                 <div class="form-group dropdown">
@@ -40,10 +40,10 @@
                                     <i class="glyphicon glyphicon-calendar"></i>
                                 </button>
                             </span>
-                        <input type="text" id="id_when" class="form-control" data-ng-model="hs_startDate" ng-blur="setWhen()">
+                        <input type="text" id="id_when" class="form-control" data-ng-model="userInput.hs_startDate" ng-blur="setWhen()">
                       </div>
                       <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                          <datetimepicker data-ng-model="hs_startDate" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
+                          <datetimepicker data-ng-model="userInput.hs_startDate" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
                           />
                         </ul>
                         <p class="help-block" ng-show="date_error">{{ date_error.join(', ') }}</p>
@@ -52,7 +52,7 @@
               </div>
               <div class="col-md-5">
                 <label for="id_startdate">End Date</label>
-                <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': enddate_error}">
+                <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': date_error}">
                   <div class="input-group">
                     <span class="input-group-btn">
                             <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time">
@@ -74,13 +74,13 @@
               <div class="col-md-8" ng-show="isShowPrCh">
                 <label for="hs_pr_ch_filter">Product/Channel</label>
                 <fieldset>
-                  <select ng-model="hs_pr_ch_filter" name="hs_pr_ch_filter" ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
+                  <select ng-model="userInput.hs_pr_ch_filter" name="hs_pr_ch_filter" ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
                         </select>
                   <button class="remove" ng-click="hidePrCh()">-</button>
                 </fieldset>
               </div>
               <div class="col-md-2">
-                <button class="btn btn-primary">Search</button>
+                <button class="btn btn-primary" ng-click="searchItem()">Search</button>
               </div>
             </div>
           </div>
@@ -127,7 +127,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr ng-repeat="item in allHistory">
+                  <tr ng-repeat="item in allHistory | filter:search">
                     <td>{{$index+1}}</td>
                     <td>{{item.object_name}}</td>
                     <td>{{item.email}}</td>
