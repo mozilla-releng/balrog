@@ -25,6 +25,10 @@
 
 <div class="row">
   <div class="col-sm-7">
+    <div class="row page-size">
+      <label>Page Size: </label>
+      <input type="number" min="1" ng-model="page_size" placeholder="Enter page size here" ng-change="selectPageSize()">
+    </div>
     <div class="pagination-container" ng-show="rules_count > pageSize">
       <pagination
         class="pagination-sm"
@@ -35,9 +39,6 @@
         boundary-links="true"
       ></pagination>
     </div>
-    <p>Page Size: 
-      <input type="number" min="1" ng-model="page_size" placeholder="Enter page size here" ng-change="selectPageSize()">
-    </p>
   </div>
   <div class="col-sm-5 text-right">
     <div class="row" ng-show="!rule_id">
@@ -52,7 +53,6 @@
     </div>
   </div>
 </div>
-
 <div class="panel panel-default" style="clear:right"
      ng-repeat="rule in filtered_items = (rules | filter: filterScheduledChanges | filter: filterBySelect) | orderBy:orderRules | startFrom:(disableFilter || !rule_id) && ((currentPage - 1)*pageSize) | limitTo:pageSize">
   <div class="panel-heading">
