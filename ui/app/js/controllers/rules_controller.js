@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions) {
+function($scope, $routeParams, $location, $timeout, Helpers, Rules, Search, $modal, $route, Releases, Page, Permissions) {
 
   Page.setTitle('Rules');
 
@@ -119,11 +119,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     $scope.pr_ch_selected = value.split(',');
   });
 
-  $scope.selectPageSize = function(){
-    if(+$scope.page_size && +$scope.page_size > 0){
-      $scope.pageSize = +$scope.page_size
-    }
-  }
+  $scope.selectPageSize = function() {
+    Helpers.selectPageSize($scope);
+  };
 
   $scope.filters = {
     search: $location.hash(),

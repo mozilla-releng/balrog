@@ -10,6 +10,11 @@ angular.module("app").factory('Helpers', function() {
       }
       return object;
     },
+    selectPageSize: function($scope){
+      if(+$scope.page_size && +$scope.page_size > 0){
+        $scope.pageSize = +$scope.page_size;
+      }
+    },
   };
   return service;
 });
