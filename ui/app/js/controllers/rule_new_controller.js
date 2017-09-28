@@ -25,35 +25,32 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
   $scope.saveChanges = function () {
     $scope.saving = true;
     $scope.errors = {};
+    $scope.rate_error = {};
     CSRF.getToken()
     .then(function(csrf_token) {
       rule = angular.copy($scope.rule);
-      if(isNaN(parseInt(rule.priority, 10))|| isNaN(parseInt(rule.backgroundRate, 10))) {
-        var error_source = [];
-        if(isNaN(parseInt(rule.priority, 10))) {
-          error_source.push('Priority');
+      $scope.digit_validation_errors = {'priority': '', 'rate': ''};
+      
+      var evaluate = function (value, max) {
+          if(isNaN(value)) {
+          return 'Value must be a number';
         }
-        if(isNaN(parseInt(rule.backgroundRate, 10))) {
-          error_source.push('Rate');
+        if (value < 0 ) {
+          return 'Value must be a positive number';
+        } else if (max !== 'undefined' && value > max){
+          return 'Value should not be more than ' + max;
+        } else {
+          return false;
         }
-        sweetAlert(
-          "Type Error",
-          "Value for " + error_source.join(', ') + " should be a positive number.",
-          "error"
-        );
+      };
+      $scope.digit_validation_errors.priority = evaluate(rule.priority);
+      $scope.digit_validation_errors.rate = evaluate(rule.backgroundRate, 100);
+
+      if($scope.digit_validation_errors.priority || $scope.digit_validation_errors.rate) {
         $scope.saving = false;
         return;
       }
-      if (!( 0 < rule.backgroundRate > 100)) {
-        sweetAlert(
-          "Value Error",
-          "Value for Rate should be between 0 and 100",
-          "error"
-        );
-        $scope.saving = false;
-        return;
-      }
-      // rule.priority = '' + rule.priority;
+
       Rules.addRule(rule, csrf_token)
       .success(function(response) {
         $scope.rule.data_version = 1;
@@ -94,6 +91,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
       });
     });
   };
+  
 
   $scope.cancel = function () {
     $modalInstance.dismiss('cancel');
