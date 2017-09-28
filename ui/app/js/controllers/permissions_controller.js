@@ -1,5 +1,5 @@
 angular.module("app").controller('PermissionsController',
-function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal, Page) {
+function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal, Page, Helpers) {
 
   Page.setTitle('Permissions');
 
@@ -139,6 +139,10 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
         }
       }
     });
+  };
+
+  $scope.selectPageSize = function() {
+    Helpers.selectPageSize($scope);
   };
 
 

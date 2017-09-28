@@ -30,7 +30,10 @@
 
 </h2>
 
-
+<div class="row permissions-page-size">
+  <label>Page Size: </label>
+  <input type="number" min="1" ng-model="page_size" placeholder="Enter page size here" ng-change="selectPageSize()">
+</div>
 <div class="pagination-container" ng-show="filtered_items.length > pageSize">
   <pagination
     class="pagination-sm"
