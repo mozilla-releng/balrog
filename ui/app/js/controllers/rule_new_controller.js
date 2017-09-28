@@ -49,6 +49,15 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
         $scope.saving = false;
         return;
       }
+      if(rule.backgroundRate > 100) {
+        sweetAlert(
+          "Value Error",
+          "Value for Rate should be between 0 and 100",
+          "error"
+        );
+        $scope.saving = false;
+        return;
+      }
       // rule.priority = '' + rule.priority;
       Rules.addRule(rule, csrf_token)
       .success(function(response) {
