@@ -28,6 +28,22 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
     CSRF.getToken()
     .then(function(csrf_token) {
       rule = angular.copy($scope.rule);
+      if(isNaN(parseInt(rule.priority, 10)) || isNaN(parseInt(rule.backgroundRate, 10))) {
+        var error_source = [];
+        if(isNaN(parseInt(rule.priority, 10))) {
+          error_source.push('Priority');
+        }
+        if(isNaN(parseInt(rule.backgroundRate, 10))) {
+          error_source.push('Rate');
+        }
+        sweetAlert(
+          "Type Error",
+          "Value for " + error_source.join(', ') + " should be a number.",
+          "error"
+        );
+        $scope.saving = false;
+        return;
+      }
       // rule.priority = '' + rule.priority;
       Rules.addRule(rule, csrf_token)
       .success(function(response) {
@@ -56,6 +72,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
       .error(function(response, status) {
         if (typeof response === 'object') {
           $scope.errors = response;
+          console.log('ERRORS: ', $scope.errors);
           sweetAlert(
             "Form submission error",
             "See fields highlighted in red.",
