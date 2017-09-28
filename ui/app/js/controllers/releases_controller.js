@@ -1,5 +1,5 @@
 angular.module("app").controller('ReleasesController',
-function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Page) {
+function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Page, Helpers) {
 
   Page.setTitle('Releases');
 
@@ -77,6 +77,10 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
 
   $scope.filters = {
     search: $location.hash(),
+  };
+
+  $scope.selectPageSize = function() {
+    Helpers.selectPageSize($scope);
   };
 
   $scope.hasFilter = function() {

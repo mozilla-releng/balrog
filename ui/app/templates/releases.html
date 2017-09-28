@@ -35,8 +35,10 @@
     <i class="glyphicon glyphicon-arrow-left"></i>
   </a>
 </h2>
-
-
+<div class="row page-size">
+    <label>Page Size: </label>
+    <input type="number" min="1" ng-model="page_size" placeholder="Enter page size here" ng-change="selectPageSize()">
+</div>
 <div class="pagination-container" ng-show="releases_count > pageSize">
   <pagination
     class="pagination-sm"
