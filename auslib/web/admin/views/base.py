@@ -86,6 +86,8 @@ class AdminView(MethodView):
         except:
             trans.rollback()
             raise
+        finally:
+            trans.close()
 
     @handleGeneralExceptions("DELETE")
     def delete(self, *args, **kwargs):
