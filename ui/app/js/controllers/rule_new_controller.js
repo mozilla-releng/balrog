@@ -33,7 +33,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
     CSRF.getToken()
     .then(function(csrf_token) {
       rule = angular.copy($scope.rule);
-      if(isNaN(parseInt(rule.priority, 10)) || isNaN(parseInt(rule.backgroundRate, 10))) {
+      if(isNaN(parseInt(rule.priority, 10))|| isNaN(parseInt(rule.backgroundRate, 10))) {
         var error_source = [];
         if(isNaN(parseInt(rule.priority, 10))) {
           error_source.push('Priority');
@@ -43,13 +43,13 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
         }
         sweetAlert(
           "Type Error",
-          "Value for " + error_source.join(', ') + " should be a number.",
+          "Value for " + error_source.join(', ') + " should be a positive number.",
           "error"
         );
         $scope.saving = false;
         return;
       }
-      if(rule.backgroundRate > 100) {
+      if (!( 0 < rule.backgroundRate > 100)) {
         sweetAlert(
           "Value Error",
           "Value for Rate should be between 0 and 100",
