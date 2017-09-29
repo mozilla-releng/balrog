@@ -86,7 +86,6 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
       .error(function(response, status) {
         if (typeof response === 'object') {
           $scope.errors = response;
-          console.log('ERRORS: ', $scope.errors);
           sweetAlert(
             "Form submission error",
             "See fields highlighted in red.",
