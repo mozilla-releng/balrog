@@ -38,7 +38,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
       
       // Function to evaluate for valid numbers.
       var evaluate = function (value, max) {
-          if(isNaN(value)) {
+        if(isNaN(value)) {
           return 'Value must be a number';
         }
         // Filter negative numbers and maximum, if specified.
