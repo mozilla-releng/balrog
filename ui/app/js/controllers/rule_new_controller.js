@@ -31,10 +31,12 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
       rule = angular.copy($scope.rule);
       $scope.digit_validation_errors = {'priority': '', 'rate': ''};
       
+      // Function to evaluate for valid numbers.
       var evaluate = function (value, max) {
           if(isNaN(value)) {
           return 'Value must be a number';
         }
+        // Filter negative numbers and maximum, if specified.
         if (value < 0 ) {
           return 'Value must be a positive number';
         } else if (max !== 'undefined' && value > max){
@@ -45,7 +47,8 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
       };
       $scope.digit_validation_errors.priority = evaluate(rule.priority);
       $scope.digit_validation_errors.rate = evaluate(rule.backgroundRate, 100);
-
+      
+      // Stop sending the request if any number validation errors.
       if($scope.digit_validation_errors.priority || $scope.digit_validation_errors.rate) {
         $scope.saving = false;
         return;
