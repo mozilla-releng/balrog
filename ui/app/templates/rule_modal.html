@@ -47,7 +47,13 @@
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.backgroundRate}">
           <label for="id_rate">Rate</label>
-          <input type="text" class="form-control" name="rate" id="id_rate" ng-model="rule.backgroundRate" required>
+          <input type="text"
+                 class="form-control"
+                 ng-class="{'digit_evaluator': digit_validation_errors.rate}"
+                 name="rate"
+                 id="id_rate"
+                 ng-model="rule.backgroundRate"
+                 required>
           <div class="form-group" ng-class="{'has-error': digit_validation_errors.rate}" ng-show="digit_validation_errors.rate">
             <p class="help-block" ng-show="digit_validation_errors.rate">{{ digit_validation_errors.rate }}</p>
           </div>
@@ -56,8 +62,14 @@
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.priority}">
           <label for="id_priority">Priority</label>
-          <input type="text" class="form-control" id="id_priority" ng-model="rule.priority">
-          <div class="form-group" ng-class="{'has-error': digit_validation_errors.priority}" ng-show="digit_validation_errors.priority">
+          <input type="text"
+                 class="form-control"
+                 id="id_priority"
+                 ng-model="rule.priority"
+                 ng-class="{'digit_evaluator': digit_validation_errors.priority}">
+          <div class="form-group"
+               ng-class="{'has-error': digit_validation_errors.priority}"
+               ng-show="digit_validation_errors.priority">
             <p class="help-block" ng-show="digit_validation_errors.priority">{{ digit_validation_errors.priority }}</p>
           </div>
         </div>
