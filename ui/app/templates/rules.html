@@ -25,7 +25,7 @@
 
 <div class="row">
   <div class="col-sm-7">
-    <div class="row page-size">
+    <div class="row page-size" ng-show="filtered_items.length > 1">
       <label>Page Size: </label>
       <input type="number" min="1" ng-model="page_size" placeholder="Enter page size here" ng-change="selectPageSize()">
     </div>
