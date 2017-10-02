@@ -56,6 +56,10 @@ def createBlob(data):
 
 
 def merge_lists(*lists):
+    """Merge an arbitrary number of lists together, keeping only the unique
+    items, and not worrying about order. This is essentially a hack to treat
+    lists in blobs as sets. In an ideal world, that's what they'd be, but
+    because we use jsonschema for validation, we cannot use proper sets."""
     result = []
     for l in lists:
         for i in l:
@@ -65,6 +69,13 @@ def merge_lists(*lists):
 
 
 def merge_dicts(ancestor, left, right):
+    """Perform a 3-way merge on dictonaries. We used to use an external library
+    for this, but we replaced it with this because our merge can be a bit more
+    liberal than the general case. Specifically:
+     * Lists are treated as sets (see above for details)
+     * A type mismatch of unicode vs string is OK as long as the text is the same
+       (Any other type mismatches result in a failure to merge.)
+    """
     result = {}
     dicts = (ancestor, left, right)
     for key in set(key for d in dicts for key in d.keys()):
