@@ -49,6 +49,7 @@ angular.module('app').directive("permissionOptions", [function(){
                 $scope.products = response.product;
             });
 
+            // monitor for changes in action or product value
             $scope.$watch('[ action, product ] | json',function(){
                 // add tag on action input
                 if ($scope.actions[$scope.permission.permission].indexOf($scope.action) !== -1 && $scope.selected_actions.indexOf($scope.action) === -1){
