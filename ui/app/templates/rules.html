@@ -47,7 +47,7 @@
       <label for="include_sc">Include Scheduled Changes?</label>
       <input type="checkbox" id="include_sc" ng-model="show_sc" checked>
     </div>
-    <div class="row page-size" ng-show="rules_count > 1">
+    <div class="row page-size" ng-show="rules_count > 20">
       <label>Page Size: </label>
       <select ng-model="page_size" ng-name="page_size"
         ng-options="page_size.name for page_size in page_size_pair track by page_size.id"

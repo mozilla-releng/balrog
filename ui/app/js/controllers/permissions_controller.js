@@ -18,6 +18,10 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
       $scope.users = _.map(response.users, function (each) {
         return {username: each};
       });
+      $scope.permissions_count = $scope.users.length;
+      $scope.page_size_pair = [{id: 20, name: '20'},
+        {id: 50, name: '50'}, 
+        {id: $scope.permissions_count, name: 'All'}];
     })
     .error(function() {
       console.error(arguments);
@@ -32,6 +36,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
 
   $scope.currentPage = 1;
   $scope.pageSize = 10;  // default
+  $scope.page_size = {id: 20, name: '20'};
 
   $scope.filters = {
     search: $location.hash(),

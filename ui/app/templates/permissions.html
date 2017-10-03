@@ -10,6 +10,13 @@
            class="glyphicon glyphicon-remove-circle clear-search"></span>
   </div>
 
+  <div class="page-size" ng-show="filtered_items.length > 20">
+    <label>Page Size: </label>
+    <select ng-model="page_size" ng-name="page_size"
+      ng-options="page_size.name for page_size in page_size_pair track by page_size.id"
+      ng-change="selectPageSize()"></select>
+  </div>
+
 </form>
 
 
@@ -30,10 +37,6 @@
 
 </h2>
 
-<div class="row permissions-page-size" ng-show="filtered_items.length > 1">
-  <label>Page Size: </label>
-  <input type="number" min="1" ng-model="page_size" placeholder="Enter page size here" ng-change="selectPageSize()">
-</div>
 <div class="pagination-container" ng-show="filtered_items.length > pageSize">
   <pagination
     class="pagination-sm"
