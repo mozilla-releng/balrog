@@ -146,6 +146,20 @@ def rule_id_validator(field_value):
     return integer_and_range_validator("rule_id", field_value, 0)
 
 
+@draft4_format_checker.checks(format="data_version", raises=JsonSchemaValidationError)
+def data_version_validator(field_value):
+    if field_value is not None and field_value != '':
+        logger.debug('starting in data_version_validator: data_version is %s' % field_value)
+    return integer_and_range_validator("data_version", field_value, 1)
+
+
+@draft4_format_checker.checks(format="rule_id", raises=JsonSchemaValidationError)
+def rule_id_validator(field_value):
+    if field_value is not None and field_value != '':
+        logger.debug('starting in rule_id_validator: rule_id is %s' % field_value)
+    return integer_and_range_validator("rule_id", field_value, 0)
+
+
 @draft4_format_checker.checks(format="signoffs_required", raises=JsonSchemaValidationError)
 def signoffs_required_validator(field_value):
     if field_value is not None and field_value != '':
