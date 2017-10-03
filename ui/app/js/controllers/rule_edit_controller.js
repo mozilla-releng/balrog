@@ -1,6 +1,6 @@
 /*global sweetAlert */
 angular.module('app').controller('RuleEditCtrl',
-function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options) {
+function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options, Helpers) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
@@ -26,6 +26,13 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options) {
   $scope.saveChanges = function () {
     $scope.saving = true;
 
+    // Evaluate the values entered for priority and background rate.
+    $scope.digit_validation_errors = Helpers.numberValidator({'priority': $scope.rule.priority, 'rate': $scope.rule.backgroundRate});
+    // Stop sending the request if any number validation errors.
+    if($scope.digit_validation_errors.priority || $scope.digit_validation_errors.rate) {
+      $scope.saving = false;
+      return;
+    }
     CSRF.getToken()
     .then(function(csrf_token) {
       // The data we need to submit is a tweaked version of just the Rule fields, so
@@ -38,7 +45,6 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options) {
       .success(function(response) {
         $scope.rule.data_version = response.new_data_version;
         angular.copy($scope.rule, $scope.original_rule);
-
         if(rule.product) {
           // The first entry is special, and we want to avoid it getting sorted later.
           first_entry = $scope.pr_ch_options.shift();
