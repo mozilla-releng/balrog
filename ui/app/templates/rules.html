@@ -205,6 +205,11 @@
             </a>
           </span>
       </h5>
+      <span ng-show="(rule.fallbackMapping || (!rule_id && show_sc && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping !== null )) && (rule.backgroundRate === 100 || rule.scheduled_change.backgroundRate === 100)" >
+        <span class="alert-danger">
+          <strong>Note!</strong> Fallback Mapping is unused when Background Rate is 100
+        </span>        
+     </span>
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="data_version" fieldtitle="Data Version"></rulefield>
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="rule_id" fieldtitle="Rule ID"></rulefield>
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="comment" fieldtitle="Comment"></rulefield>
@@ -229,11 +234,6 @@
                  help='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'></rulefield>
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="update_type" fieldtitle="Update type"></rulefield>
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="headerArchitecture" fieldtitle="Header Architecture"></rulefield>
-      <span ng-show="rule.fallbackMapping || (!rule_id && show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping && rule.scheduled_change.fallbackMapping !== null) && rule.backgroundRate === 100" > 
-       <span class="alert-danger">
-         <strong>Note!</strong> Fallback Mapping is unused when Background Rate is 100             
-       </span>
-      </span>
     </div>
 
   </div>
