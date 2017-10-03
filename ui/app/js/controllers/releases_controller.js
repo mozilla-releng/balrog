@@ -5,9 +5,8 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
 
   $scope.loading = true;
   $scope.failed = false;
-
   $scope.release_name = $routeParams.name;
-
+  $scope.page_size = {id: 20, name: '20'};
   $scope.currentPage = 1;
   $scope.pageSize = 10;
   $scope.maxSize = 10;
@@ -37,6 +36,9 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
     .success(function(response) {
       $scope.releases = response.releases;
       $scope.releases_count = response.releases.length;
+      $scope.page_size_pair = [{id: 20, name: '20'},
+        {id: 50, name: '50'}, 
+        {id: $scope.releases_count, name: 'All'}];
     })
     .error(function() {
       console.error(arguments);
