@@ -29,7 +29,7 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc, signoffRequirements
       if ($scope.sc.change_type === "delete") {
         target = undefined;
       }
-      $scope.scheduledChangeSignoffsRequired = Rules.ruleSignoffsRequired(sc.base_row, target, signoffRequirements);
+      $scope.scheduledChangeSignoffsRequired = Rules.ruleSignoffsRequired(sc.original_row, target, signoffRequirements);
     }
   }, true);
 

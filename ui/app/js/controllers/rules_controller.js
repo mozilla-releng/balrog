@@ -290,7 +290,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         sc: function() {
           sc = angular.copy(rule);
-          sc.base_row = rule;
+          sc.original_row = rule;
           sc["change_type"] = "update";
           return sc;
         },
@@ -341,7 +341,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       resolve: {
         sc: function() {
           var sc = angular.copy(rule.scheduled_change);
-          sc.base_row = rule;
+          sc.original_row = rule;
           return sc;
         },
         signoffRequirements: function() {
