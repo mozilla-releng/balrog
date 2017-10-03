@@ -105,15 +105,23 @@
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.backgroundRate}">
         <label for="id_rate">Rate</label>
-        <input type="number" class="form-control" id="id_rate" ng-model="sc.backgroundRate">
-        <p class="help-block" ng-show="errors.backgroundRate">{{ errors.backgroundRate.join(', ') }}</p>
+        <input type="number"
+               class="form-control"
+               id="id_rate"
+               ng-model="sc.backgroundRate"
+               ng-class="{'validation_errors': digit_validation_errors.rate}">
+        <p class="help-block" ng-show="digit_validation_errors.rate">{{ digit_validation_errors.rate }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.priority}">
         <label for="id_priority">Priority</label>
-        <input type="number" class="form-control" id="id_priority" ng-model="sc.priority">
-        <p class="help-block" ng-show="errors.priority">{{ errors.priority.join(', ') }}</p>
+        <input type="number"
+               class="form-control"
+               id="id_priority"
+               ng-model="sc.priority"
+               ng-class="{'validation_errors': digit_validation_errors.priority}">
+        <p class="help-block" ng-show="digit_validation_errors.priority">{{ digit_validation_errors.priority }}</p>
         </div>
       </div>
     </div>
