@@ -132,18 +132,18 @@ def sc_when_validator(field_value):
     return integer_and_range_validator("when", field_value, 0)
 
 
-@draft4_format_checker.checks(format="data_version", raises=JsonSchemaValidationError)
-def data_version_validator(field_value):
+@draft4_format_checker.checks(format="priority", raises=JsonSchemaValidationError)
+def priority_validator(field_value):
     if field_value is not None and field_value != '':
-        logger.debug('starting in data_version_validator: data_version is %s' % field_value)
-    return integer_and_range_validator("data_version", field_value, 1)
+        logger.debug('starting in priority_validator: priority is %s' % field_value)
+    return integer_and_range_validator("priority", field_value, 0)
 
 
-@draft4_format_checker.checks(format="rule_id", raises=JsonSchemaValidationError)
-def rule_id_validator(field_value):
+@draft4_format_checker.checks(format="backgroundRate", raises=JsonSchemaValidationError)
+def background_rate_validator(field_value):
     if field_value is not None and field_value != '':
-        logger.debug('starting in rule_id_validator: rule_id is %s' % field_value)
-    return integer_and_range_validator("rule_id", field_value, 0)
+        logger.debug('starting in backgroundRate_validator: backgroundRate is %s' % field_value)
+    return integer_and_range_validator("backgroundRate", field_value, 0, 100)
 
 
 @draft4_format_checker.checks(format="data_version", raises=JsonSchemaValidationError)
