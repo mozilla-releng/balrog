@@ -31,6 +31,10 @@ def process_rule_form(form_data):
         else:
             rule_form_dict[key] = form_data[key]
 
+    for i in ["priority", "backgroundRate", "data_version"]:
+        if rule_form_dict.get(i, None):
+            rule_form_dict[i] = int(rule_form_dict[i])
+
     mapping_values = [y for x, y in mapping_choices if x == rule_form_dict.get("mapping")]
     fallback_mapping_values = [y for x, y in mapping_choices if x == rule_form_dict.get("fallbackMapping")]
 
