@@ -1,5 +1,5 @@
 angular.module("app").controller("NewRuleScheduledChangeCtrl",
-function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes, sc) {
+function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes, sc, Helpers) {
   $scope.names = [];
   Releases.getNames().then(function(names) {
     $scope.names = names;
@@ -62,6 +62,13 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
     asap.setMinutes(asap.getMinutes() + 5);
     $scope.sc.when = ($scope.auto_time) ? asap : $scope.sc.when;
 
+    // Evaluate the values entered for priority and background rate.
+    $scope.integer_validation_errors = Helpers.integerValidator({'priority': $scope.sc.priority, 'rate': $scope.sc.backgroundRate});
+    // Stop sending the request if any number validation errors.
+    if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.rate) {
+      $scope.saving = false;
+      return;
+    }
     CSRF.getToken()
     .then(function(csrf_token) {
       sc = angular.copy($scope.sc);
