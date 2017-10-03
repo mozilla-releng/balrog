@@ -25,10 +25,6 @@
 
 <div class="row">
   <div class="col-sm-7">
-    <div class="row page-size" ng-show="filtered_items.length > 1">
-      <label>Page Size: </label>
-      <input type="number" min="1" ng-model="page_size" placeholder="Enter page size here" ng-change="selectPageSize()">
-    </div>
     <div class="pagination-container" ng-show="rules_count > pageSize">
       <pagination
         class="pagination-sm"
@@ -50,6 +46,12 @@
     <div class="row" ng-show="!rule_id">
       <label for="include_sc">Include Scheduled Changes?</label>
       <input type="checkbox" id="include_sc" ng-model="show_sc" checked>
+    </div>
+    <div class="row page-size" ng-show="rules_count > 1">
+      <label>Page Size: </label>
+      <select ng-model="page_size" ng-name="page_size"
+        ng-options="page_size.name for page_size in page_size_pair track by page_size.id"
+        ng-change="selectPageSize()"></select>
     </div>
   </div>
 </div>

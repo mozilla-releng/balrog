@@ -8,9 +8,9 @@ function($scope, $routeParams, $location, $timeout, Helpers, Rules, Search, $mod
 
   $scope.rule_id = parseInt($routeParams.id, 10);
   $scope.pr_ch_options = [];
-
   $scope.currentPage = 1;
   $scope.pageSize = 20;
+  $scope.page_size = {id: 20, name: '20'};
   $scope.maxSize = 10;
   $scope.rules = [];
   $scope.pr_ch_filter = "";
@@ -40,6 +40,9 @@ function($scope, $routeParams, $location, $timeout, Helpers, Rules, Search, $mod
     Rules.getRules()
     .success(function(response) {
       $scope.rules_count = response.count;
+      $scope.page_size_pair = [{id: 20, name: '20'},
+        {id: 50, name: '50'}, 
+        {id: $scope.rules_count, name: 'All'}];
 
       Permissions.getCurrentUser()
       .success(function(response) {
