@@ -1,3 +1,4 @@
+from copy import deepcopy
 import logging
 import mock
 import os
@@ -3769,6 +3770,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         ret = select([self.releases.data]).where(self.releases.name == 'p').execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
         history_rows = self.releases.history.t.select().where(self.releases.history.name == "p").execute().fetchall()
+        self.assertEqual(len(history_rows), 4)
         self.assertEqual(history_rows[0]["data"], None)
         self.assertEqual(history_rows[1]["data"], ancestor_blob)
         self.assertEqual(history_rows[2]["data"], blob1)
@@ -3918,6 +3920,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         ret = select([self.releases.data]).where(self.releases.name == 'release4').execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
         history_rows = self.releases.history.t.select().where(self.releases.history.name == "release4").execute().fetchall()
+        self.assertEqual(len(history_rows), 4)
         self.assertEqual(history_rows[0]["data"], None)
         self.assertEqual(history_rows[1]["data"], ancestor_blob)
         self.assertEqual(history_rows[2]["data"], blob1)
@@ -4013,10 +4016,16 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        self.releases.insert(changed_by="bill", name="p", product="z", data=ancestor_blob)
-        self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by="bill", old_data_version=1)
-        self.assertRaises(OutdatedDataError, self.releases.update,
-                          {"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1)
+        with self.db.begin() as trans:
+            self.releases.insert(changed_by="bill", name="p", product="z", data=ancestor_blob, transaction=trans)
+            self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by="bill", old_data_version=1, transaction=trans)
+            self.assertRaises(OutdatedDataError, self.releases.update,
+                              {"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1, transaction=trans)
+        history_rows = self.releases.history.t.select().where(self.releases.history.name == "p").execute().fetchall()
+        self.assertEqual(len(history_rows), 3)
+        self.assertEqual(history_rows[0]["data"], None)
+        self.assertEqual(history_rows[1]["data"], ancestor_blob)
+        self.assertEqual(history_rows[2]["data"], blob1)
 
     def testAddLocaleToReleaseDoesMerging(self):
         ancestor_blob = createBlob("""
@@ -4089,13 +4098,28 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        self.releases.insert(changed_by="bill", name="release4", product="z", data=ancestor_blob)
-        self.releases.addLocaleToRelease("release4", "p", "p", "l", {"partials": [{"filesize": 567, "from": "release2", "hashValue": "ghi"}]},
-                                         old_data_version=1, changed_by="bill")
-        self.releases.addLocaleToRelease("release4", "p", "p", "l", {"partials": [{"filesize": 890, "from": "release3", "hashValue": "jkl"}]},
-                                         old_data_version=1, changed_by="bill")
+        with self.db.begin() as trans:
+            self.releases.insert(changed_by="bill", name="release4", product="z", data=ancestor_blob, transaction=trans)
+            self.releases.addLocaleToRelease("release4", "p", "p", "l", {"partials": [{"filesize": 567, "from": "release2", "hashValue": "ghi"}]},
+                                             old_data_version=1, changed_by="bill", transaction=trans)
+            self.releases.addLocaleToRelease("release4", "p", "p", "l", {"partials": [{"filesize": 890, "from": "release3", "hashValue": "jkl"}]},
+                                             old_data_version=1, changed_by="bill", transaction=trans)
         ret = select([self.releases.data]).where(self.releases.name == 'release4').execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
+        history_rows = self.releases.history.t.select().where(self.releases.history.name == "release4").execute().fetchall()
+        self.assertEqual(len(history_rows), 4)
+        interim_blob = deepcopy(ancestor_blob)
+        interim_blob["platforms"]["p"]["locales"]["l"] = {
+            "partials": [
+                {
+                    "filesize": 567, "from": "release2", "hashValue": "ghi"
+                }
+            ]
+        }
+        self.assertEqual(history_rows[0]["data"], None)
+        self.assertEqual(history_rows[1]["data"], ancestor_blob)
+        self.assertEqual(history_rows[2]["data"], interim_blob)
+        self.assertEqual(history_rows[3]["data"], result_blob)
 
 
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):

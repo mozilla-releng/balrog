@@ -573,6 +573,12 @@ class AUSTable(object):
             self.onUpdate(self, "UPDATE", changed_by, query, trans)
 
         ret = trans.execute(query)
+        # It's important that OutdatedDataError is raised as early as possible
+        # because callers may be able to handle it gracefully (and continue
+        # with their update). If we raise this _after_ adding history or merging
+        # with Scheduled Changes, we may end up altering the history or
+        # scheduled changes more than once if the caller ends up re-calling
+        # AUSTable.update() after handling the OutdatedDataError.
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         if self.history:

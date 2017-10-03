@@ -25,7 +25,7 @@ class TestHistoryView(ViewTest):
         self.assertStatusCode(ret, 200)
 
         rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "d").execute().fetchall()
-        self.assertEqual(len(rows), 1)
+        self.assertEqual(len(rows), 3)
 
         url = '/history/view/release/%d/data_version' % rows[0]["change_id"]
         ret = self.client.get(url)
@@ -41,9 +41,9 @@ class TestHistoryView(ViewTest):
         self.assertStatusCode(ret, 200)
 
         rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "d").execute().fetchall()
-        self.assertEqual(len(rows), 1)
+        self.assertEqual(len(rows), 3)
 
-        url = '/history/view/release/%d/data' % rows[0]["change_id"]
+        url = '/history/view/release/%d/data' % rows[2]["change_id"]
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
         self.assertEqual(json.loads(ret.data), json.loads("""
@@ -76,9 +76,10 @@ class TestHistoryView(ViewTest):
         )
         self.assertStatusCode(ret, 200)
 
-        row = dbo.releases.history.t.select().where(dbo.releases.history.name == "d").execute().fetchall()[-1]
+        rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "d").execute().fetchall()
+        self.assertEqual(len(rows), 4)
 
-        url = '/history/diff/release/%d/data' % row["change_id"]
+        url = '/history/diff/release/%d/data' % rows[3]["change_id"]
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
         self.assertTrue('"fakePartials": true' in ret.data)
