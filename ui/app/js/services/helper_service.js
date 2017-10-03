@@ -10,7 +10,7 @@ angular.module("app").factory('Helpers', function() {
       }
       return object;
     },
-    numberValidator: function (validation_fields) {
+    integerValidator: function (validation_fields) {
       var validation_results = {};
       for (var key in validation_fields) {
         var value = validation_fields[key];
