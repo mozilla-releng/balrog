@@ -573,12 +573,12 @@ class AUSTable(object):
             self.onUpdate(self, "UPDATE", changed_by, query, trans)
 
         ret = trans.execute(query)
+        if ret.rowcount != 1:
+            raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         if self.history:
             trans.execute(self.history.forUpdate(new_row, changed_by))
         if self.scheduled_changes:
             self.scheduled_changes.mergeUpdate(orig_row, what, changed_by, trans)
-        if ret.rowcount != 1:
-            raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
 
     def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):

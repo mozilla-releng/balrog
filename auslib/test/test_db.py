@@ -3762,11 +3762,17 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        self.releases.insert(changed_by="bill", name='p', product='z', data=ancestor_blob)
-        self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by='bill', old_data_version=1)
-        self.releases.update({"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1)
+        with self.db.begin() as trans:
+            self.releases.insert(changed_by="bill", name='p', product='z', data=ancestor_blob, transaction=trans)
+            self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by='bill', old_data_version=1, transaction=trans)
+            self.releases.update({"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1, transaction=trans)
         ret = select([self.releases.data]).where(self.releases.name == 'p').execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
+        history_rows = self.releases.history.t.select().where(self.releases.history.name == "p").execute().fetchall()
+        self.assertEqual(history_rows[0]["data"], None)
+        self.assertEqual(history_rows[1]["data"], ancestor_blob)
+        self.assertEqual(history_rows[2]["data"], blob1)
+        self.assertEqual(history_rows[3]["data"], result_blob)
 
     def testAddMergeableWithChangesToList(self):
         ancestor_blob = createBlob("""
@@ -3905,11 +3911,17 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        self.releases.insert(changed_by="bill", name='release4', product='z', data=ancestor_blob)
-        self.releases.update({"name": "release4"}, {"product": "z", "data": blob1}, changed_by='bill', old_data_version=1)
-        self.releases.update({"name": "release4"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1)
+        with self.db.begin() as trans:
+            self.releases.insert(changed_by="bill", name='release4', product='z', data=ancestor_blob, transaction=trans)
+            self.releases.update({"name": "release4"}, {"product": "z", "data": blob1}, changed_by='bill', old_data_version=1, transaction=trans)
+            self.releases.update({"name": "release4"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1, transaction=trans)
         ret = select([self.releases.data]).where(self.releases.name == 'release4').execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
+        history_rows = self.releases.history.t.select().where(self.releases.history.name == "release4").execute().fetchall()
+        self.assertEqual(history_rows[0]["data"], None)
+        self.assertEqual(history_rows[1]["data"], ancestor_blob)
+        self.assertEqual(history_rows[2]["data"], blob1)
+        self.assertEqual(history_rows[3]["data"], result_blob)
 
     def testAddConflictingOutdatedData(self):
         ancestor_blob = createBlob("""
