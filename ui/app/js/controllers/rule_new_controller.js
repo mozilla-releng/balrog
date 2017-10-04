@@ -36,6 +36,9 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
       if($scope.errors.priority || $scope.errors.rate) {
         $scope.saving = false;
         return;
+      } else {
+        // Re-initialise the 'error' variable if no validation errors found in UI validation.
+        $scope.errors = {};
       }
 
       Rules.addRule(rule, csrf_token)

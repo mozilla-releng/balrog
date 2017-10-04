@@ -70,6 +70,9 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc, Helpers) {
     if($scope.errors.priority || $scope.errors.rate) {
       $scope.saving = false;
       return;
+    } else {
+      // Re-initialise the 'error' variable if no validation errors found in UI validation.
+      $scope.errors = {};
     }
     CSRF.getToken()
     .then(function(csrf_token) {
