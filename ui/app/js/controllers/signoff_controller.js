@@ -14,6 +14,9 @@ function ($scope, $modalInstance, CSRF, Permissions, object_name, service, curre
     if (role in required_signoffs) {
       $scope.possible_roles.push(role);
     }
+    if ($scope.possible_roles.length > 0) {
+      $scope.signoff_role = $scope.possible_roles[0];
+    }
   });
 
   $scope.saveChanges = function () {
