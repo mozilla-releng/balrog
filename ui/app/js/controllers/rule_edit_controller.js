@@ -34,9 +34,9 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequiremen
     $scope.saving = true;
 
     // Evaluate the values entered for priority and background rate.
-    $scope.integer_validation_errors = Helpers.integerValidator({'priority': $scope.rule.priority, 'rate': $scope.rule.backgroundRate});
+    $scope.errors = Helpers.integerValidator({'priority': $scope.rule.priority, 'rate': $scope.rule.backgroundRate});
     // Stop sending the request if any number validation errors.
-    if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.rate) {
+    if($scope.errors.priority || $scope.errors.rate) {
       $scope.saving = false;
       return;
     }
