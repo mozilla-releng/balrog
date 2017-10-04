@@ -70,6 +70,9 @@ class AdminView(MethodView):
     def post(self, *args, **kwargs):
         self.log.debug("processing POST request to %s" % request.path)
         trans = dbo.begin()
+        # Transactions are automatically rolled back by the context manager if
+        # _post raises an Exception, but we need to make sure they are also
+        # rolled back if the View returns any sort of error.
         try:
             ret = self._post(*args, transaction=trans, **kwargs)
             if ret.status_code >= 400:
