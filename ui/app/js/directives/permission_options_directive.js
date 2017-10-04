@@ -51,15 +51,23 @@ angular.module('app').directive("permissionOptions", [function(){
 
             // monitor for changes in action or product value
             $scope.$watch('[ action, product ] | json',function(){
-                // add tag on action input
-                if ($scope.actions[$scope.permission.permission].indexOf($scope.action) !== -1 && $scope.selected_actions.indexOf($scope.action) === -1){
-                    $scope.selected_actions.push($scope.action);
+                // add tag for action when terminated with comma
+                if ($scope.action && $scope.action.indexOf(",") !== -1 && $scope.action.trim().length > 1){
+                    var action = $scope.action.slice(0, -1).trim();
+                    // do not add duplicates to the selected
+                    if($scope.selected_actions.indexOf(action) === -1){
+                        $scope.selected_actions.push(action);
+                    }
                     $scope.action = null;
                 }
 
-                // add tag on product input
-                if($scope.products.indexOf($scope.product) !== -1 && $scope.selected_products.indexOf($scope.product) === -1){
-                    $scope.selected_products.push($scope.product);
+                // add tag for product when terminated with comma
+                if ($scope.product && $scope.product.indexOf(",") !== -1 && $scope.product.trim().length > 1){
+                    var product = $scope.product.slice(0, -1).trim();
+                    // do not add duplicates to the selected
+                    if($scope.selected_products.indexOf(product) === -1){
+                        $scope.selected_products.push(product);
+                    }
                     $scope.product = null;
                 }
 
