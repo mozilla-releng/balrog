@@ -1129,11 +1129,13 @@ class TestReleasesScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "name": "a", "product": "a", "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
                     "read_only": False, "data_version": 1, "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.releases.select({'name': 'a'})[0],
                 },
                 {
                     "sc_id": 4, "when": 230000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "name": "ab", "product": None, "data": None, "read_only": False, "data_version": 1, "signoffs": {"ben": "releng", "bill": "releng"},
                     "required_signoffs": {},
+                    "original_row": dbo.releases.select({'name': 'ab'})[0],
                 },
             ]
         }
@@ -1153,16 +1155,19 @@ class TestReleasesScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "name": "a", "product": "a", "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
                     "read_only": False, "data_version": 1, "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.releases.select({'name': 'a'})[0],
                 },
                 {
                     "sc_id": 3, "when": 10000000, "scheduled_by": "bill", "change_type": "update", "complete": True, "sc_data_version": 2,
                     "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
                     "data_version": 1, "signoffs": {}, "required_signoffs": {},
+                    # No original_row for complete changes.
                 },
                 {
                     "sc_id": 4, "when": 230000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "name": "ab", "product": None, "data": None, "read_only": False, "data_version": 1, "signoffs": {"ben": "releng", "bill": "releng"},
                     "required_signoffs": {},
+                    "original_row": dbo.releases.select({'name': 'ab'})[0],
                 },
             ]
         }
