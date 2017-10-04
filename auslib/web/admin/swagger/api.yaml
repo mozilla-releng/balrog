@@ -364,6 +364,20 @@ paths:
         '200':
           description: Successfully fetched rules histories
 
+  /history/releases:
+    get:
+      summary: Returns a list of all releases histories.
+      description: >
+        Returns a list of all releases histories.
+      tags:
+        - "History Releases"
+      operationId: auslib.web.common.history_all.get_releases_histories
+      consumes: []
+      produces: [application/json]
+      responses:
+        '200':
+          description: Successfully fetched releases histories
+
   /history/diff/release/{change_id}/{field}:
     get:
       summary: Returns a diff of the value of the named field
