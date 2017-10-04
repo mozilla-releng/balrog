@@ -350,6 +350,20 @@ paths:
           examples:
             text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
 
+  /history/rules:
+    get:
+      summary: Returns a list of all rules histories.
+      description: >
+        Returns a list of all rules histories.
+      tags:
+        - "History Rules"
+      operationId: auslib.web.common.history_all.get_rules_histories
+      consumes: []
+      produces: [application/json]
+      responses:
+        '200':
+          description: Successfully fetched rules histories
+
   /history/diff/release/{change_id}/{field}:
     get:
       summary: Returns a diff of the value of the named field
