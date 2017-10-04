@@ -35,8 +35,9 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
   $scope.ordering = ['username'];
 
   $scope.currentPage = 1;
-  $scope.pageSize = 10;  // default
-  $scope.page_size = {id: 20, name: '20'};
+  $scope.storedPageSize = JSON.parse(localStorage.getItem('permissions_page_size'));
+  $scope.pageSize = $scope.storedPageSize? $scope.storedPageSize.id : 20;
+  $scope.page_size = {id: $scope.pageSize, name: `${$scope.pageSize}`};
 
   $scope.filters = {
     search: $location.hash(),
@@ -147,7 +148,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
   };
 
   $scope.selectPageSize = function() {
-    Helpers.selectPageSize($scope);
+    Helpers.selectPageSize($scope, 'permissions_page_size');
   };
 
 

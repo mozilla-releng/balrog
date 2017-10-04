@@ -9,8 +9,9 @@ function($scope, $routeParams, $location, $timeout, Helpers, Rules, Search, $mod
   $scope.rule_id = parseInt($routeParams.id, 10);
   $scope.pr_ch_options = [];
   $scope.currentPage = 1;
-  $scope.pageSize = 20;
-  $scope.page_size = {id: 20, name: '20'};
+  $scope.storedPageSize = JSON.parse(localStorage.getItem('rules_page_size'));
+  $scope.pageSize = $scope.storedPageSize? $scope.storedPageSize.id : 20;
+  $scope.page_size = {id: $scope.pageSize, name: `${$scope.pageSize}`};
   $scope.maxSize = 10;
   $scope.rules = [];
   $scope.pr_ch_filter = "";
@@ -123,7 +124,7 @@ function($scope, $routeParams, $location, $timeout, Helpers, Rules, Search, $mod
   });
 
   $scope.selectPageSize = function() {
-    Helpers.selectPageSize($scope);
+    Helpers.selectPageSize($scope, 'rules_page_size');
   };
 
   $scope.filters = {

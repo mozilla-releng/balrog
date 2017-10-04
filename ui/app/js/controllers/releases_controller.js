@@ -6,9 +6,10 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
   $scope.loading = true;
   $scope.failed = false;
   $scope.release_name = $routeParams.name;
-  $scope.page_size = {id: 20, name: '20'};
+  $scope.storedPageSize = JSON.parse(localStorage.getItem('releases_page_size'));
+  $scope.pageSize = $scope.storedPageSize? $scope.storedPageSize.id : 20;
+  $scope.page_size = {id: $scope.pageSize, name: `${$scope.pageSize}`};
   $scope.currentPage = 1;
-  $scope.pageSize = 10;
   $scope.maxSize = 10;
 
   function loadPage(newPage) {
@@ -82,7 +83,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
   };
 
   $scope.selectPageSize = function() {
-    Helpers.selectPageSize($scope);
+    Helpers.selectPageSize($scope, 'releases_page_size');
   };
 
   $scope.hasFilter = function() {
