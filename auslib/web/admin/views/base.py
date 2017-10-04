@@ -69,8 +69,19 @@ class AdminView(MethodView):
     @handleGeneralExceptions("POST")
     def post(self, *args, **kwargs):
         self.log.debug("processing POST request to %s" % request.path)
-        with dbo.begin() as trans:
-            return self._post(*args, transaction=trans, **kwargs)
+        trans = dbo.begin()
+        try:
+            ret = self._post(*args, transaction=trans, **kwargs)
+            if ret.status_code >= 400:
+                trans.rollback()
+            else:
+                trans.commit()
+            return ret
+        except:
+            trans.rollback()
+            raise
+        finally:
+            trans.close()
 
     @handleGeneralExceptions("PUT")
     def put(self, *args, **kwargs):
@@ -92,5 +103,16 @@ class AdminView(MethodView):
     @handleGeneralExceptions("DELETE")
     def delete(self, *args, **kwargs):
         self.log.debug("processing DELETE request to %s" % request.path)
-        with dbo.begin() as trans:
-            return self._delete(*args, transaction=trans, **kwargs)
+        trans = dbo.begin()
+        try:
+            ret = self._delete(*args, transaction=trans, **kwargs)
+            if ret.status_code >= 400:
+                trans.rollback()
+            else:
+                trans.commit()
+            return ret
+        except:
+            trans.rollback()
+            raise
+        finally:
+            trans.close()
