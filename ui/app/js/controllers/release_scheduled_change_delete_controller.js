@@ -4,6 +4,7 @@ function ($scope, $modalInstance, CSRF, Releases, sc, scheduled_changes) {
   $scope.sc = sc;
   $scope.scheduled_changes = scheduled_changes;
   $scope.saving = false;
+  $scope.formatMoment = formatMoment;
 
   $scope.saveChanges = function () {
     $scope.saving = true;

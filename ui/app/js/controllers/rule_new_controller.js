@@ -33,6 +33,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
       .success(function(response) {
         $scope.rule.data_version = 1;
         $scope.rule.rule_id = parseInt(response, 10);
+        $scope.rule.scheduled_change = null;
         $scope.rules.push($scope.rule);
 
         if(rule.product) {

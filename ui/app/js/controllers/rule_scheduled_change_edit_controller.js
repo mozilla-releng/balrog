@@ -78,9 +78,10 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
       Rules.updateScheduledChange(sc.sc_id, sc, csrf_token)
       .success(function(response) {
         sc.sc_data_version = response.new_data_version;
+        sc.signoffs = response.signoffs;
         angular.copy(sc, $scope.original_sc);
         $scope.saving = false;
-        $modalInstance.close();
+        $modalInstance.close("update");
       })
       .error(function(response) {
         if (typeof response === 'object') {
@@ -91,12 +92,42 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
             "error"
           );
         }
+        else {
+          sweetAlert("Unknown error: " + response);
+        }
       })
       .finally(function() {
         $scope.saving = false;
       });
     });
+  };
 
+  $scope.delete = function() {
+    $scope.saving = true;
+    CSRF.getToken()
+    .then(function(csrf_token) {
+      Rules.deleteScheduledChange($scope.sc.sc_id, $scope.sc, csrf_token)
+      .success(function(response) {
+        $modalInstance.close("delete");
+      })
+      .error(function(response) {
+        if (typeof response === 'object') {
+          sweetAlert(
+            {
+              title: "Form submission error",
+              text: response.exception
+            },
+            function() { $scope.cancel(); }
+          );
+        }
+        else {
+          sweetAlert("Unknown error: " + response);
+        }
+      })
+      .finally(function() {
+        $scope.saving = false;
+      });
+    });
   };
 
   $scope.cancel = function () {
