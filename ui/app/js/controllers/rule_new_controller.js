@@ -25,16 +25,15 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
   $scope.saveChanges = function () {
     $scope.saving = true;
     $scope.errors = {};
-    $scope.rate_error = {};
     CSRF.getToken()
     .then(function(csrf_token) {
       rule = angular.copy($scope.rule);
       
       // Evaluate the values entered for priority and background rate.
-      $scope.integer_validation_errors = Helpers.integerValidator({'priority': rule.priority, 'rate': rule.backgroundRate});
-      
+      $scope.errors = Helpers.integerValidator({'priority': rule.priority, 'rate': rule.backgroundRate});
+
       // Stop sending the request if any number validation errors.
-      if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.rate) {
+      if($scope.errors.priority || $scope.errors.rate) {
         $scope.saving = false;
         return;
       }
