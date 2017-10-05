@@ -109,7 +109,7 @@
                class="form-control"
                id="id_rate"
                ng-model="sc.backgroundRate"
-               ng-class="{'validation_errors': errors.backgroundRate}">
+               ng-class="{'has-error': errors.backgroundRate}">
         <p class="help-block" ng-show="errors.backgroundRate">{{ errors.backgroundRate }}</p>
         </div>
       </div>
@@ -120,7 +120,7 @@
                class="form-control"
                id="id_priority"
                ng-model="sc.priority"
-               ng-class="{'validation_errors': errors.priority}">
+               ng-class="{'has-error': errors.priority}">
         <p class="help-block" ng-show="errors.priority">{{ errors.priority }}</p>
         </div>
       </div>
