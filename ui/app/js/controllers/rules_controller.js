@@ -11,7 +11,7 @@ function($scope, $routeParams, $location, $timeout, Helpers, Rules, Search, $mod
   $scope.currentPage = 1;
   $scope.storedPageSize = JSON.parse(localStorage.getItem('rules_page_size'));
   $scope.pageSize = $scope.storedPageSize? $scope.storedPageSize.id : 20;
-  $scope.page_size = {id: $scope.pageSize, name: `${$scope.pageSize}`};
+  $scope.page_size = {id: $scope.pageSize, name: $scope.storedPageSize? $scope.storedPageSize.name : $scope.pageSize};
   $scope.maxSize = 10;
   $scope.rules = [];
   $scope.pr_ch_filter = "";

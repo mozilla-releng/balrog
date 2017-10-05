@@ -8,7 +8,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
   $scope.release_name = $routeParams.name;
   $scope.storedPageSize = JSON.parse(localStorage.getItem('releases_page_size'));
   $scope.pageSize = $scope.storedPageSize? $scope.storedPageSize.id : 20;
-  $scope.page_size = {id: $scope.pageSize, name: `${$scope.pageSize}`};
+  $scope.page_size = {id: $scope.pageSize, name: $scope.storedPageSize? $scope.storedPageSize.name : $scope.pageSize};
   $scope.currentPage = 1;
   $scope.maxSize = 10;
 
