@@ -31,6 +31,11 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options, He
     // Stop sending the request if any number validation errors.
     if($scope.errors.priority || $scope.errors.backgroundRate) {
       $scope.saving = false;
+      sweetAlert(
+        "Form submission error",
+        "See fields highlighted in red.",
+        "error"
+      );
       return;
     } else {
       // Re-initialise the 'error' variable if no validation errors found in UI validation.
