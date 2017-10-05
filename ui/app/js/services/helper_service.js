@@ -29,6 +29,21 @@ angular.module("app").factory('Helpers', function() {
       }
       return validation_results;
     },
+    addErrorFields: function (error_object) {
+      // method to add to the $scope.errors object with {field: field error} if the fields are present in the error details.
+      var error_details = error_object.detail;
+      var fields = ['priority', 'backgroundRate', 'mapping', 'channel', 'product', 'fallbackMapping', 'alias',
+        'product', 'version', 'buildID', 'locale', 'distribution', 'buildTarget', 'osVersion', 'instructionSet',
+        'memory', 'distVersion', 'comment', 'update_type', 'headerArchitecture', 'telemetry_product',
+        'telemetry_channel', 'telemetry_uptake'];
+      if (error_details) {
+        for (var x = 0; x < fields.length; x++) {
+          if (error_details.indexOf(fields[x]) >= 0) {
+            error_object[fields[x]] = error_details;
+          }
+        }
+      }
+    },
   };
   return service;
 });
