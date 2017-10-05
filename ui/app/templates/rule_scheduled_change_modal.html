@@ -43,7 +43,7 @@
         <div class="form-group" ng-class="{'has-error': errors.telemetry_product}">
           <label for="id_telemetry_product">Telemetry Product</label>
           <input type="text" class="form-control" id="id_telemetry_product" ng-model="sc.telemetry_product">
-          <p class="help-block" ng-show="errors.telemetry_product">{{ errors.telemetry_product.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.telemetry_product">{{ errors.telemetry_product }}</p>
         </div>
       </div>
     </div>
@@ -52,14 +52,14 @@
         <div class="form-group" ng-class="{'has-error': errors.telemetry_channel}">
           <label for="id_telemetry_channel">Telemetry Channel</label>
           <input type="text" class="form-control" id="id_telemetry_channel" ng-model="sc.telemetry_channel">
-          <p class="help-block" ng-show="errors.telemetry_channel">{{ errors.telemetry_channel.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.telemetry_channel">{{ errors.telemetry_channel }}</p>
         </div>
       </div>
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.telemetry_uptake}">
           <label for="id_telemetry_uptake">Telemetry Uptake</label>
           <input type="text" class="form-control" id="id_telemetry_uptake" ng-model="sc.telemetry_uptake">
-          <p class="help-block" ng-show="errors.telemetry_uptake">{{ errors.telemetry_uptake.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.telemetry_uptake">{{ errors.telemetry_uptake }}</p>
         </div>
       </div>
     </div>
@@ -71,7 +71,7 @@
         <label for="id_product">Product</label>
         <input type="text" class="form-control" id="id_product" ng-model="sc.product" autocomplete="off"
         typeahead="product for product in products | filter:$viewValue | limitTo:16">
-        <p class="help-block" ng-show="errors.product">{{ errors.product.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.product">{{ errors.product }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
@@ -79,7 +79,7 @@
         <label for="id_channel">Channel</label>
         <input type="text" class="form-control" id="id_channel" ng-model="sc.channel" autocomplete="off"
         typeahead="channel for channel in channels | filter:$viewValue | limitTo:16">
-        <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.channel">{{ errors.channel }}</p>
         </div>
         </div>
     </div>
@@ -89,7 +89,7 @@
         <label for="id_mapping">Mapping</label>
         <input type="text" class="form-control" id="id_mapping" ng-model="sc.mapping" autocomplete="off"
         typeahead="name for name in names | filter:$viewValue | limitTo:16">
-        <p class="help-block" ng-show="errors.mapping">{{ errors.mapping.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.mapping">{{ errors.mapping }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
@@ -97,20 +97,20 @@
         <label for="id_fallbackMapping">Fallback Mapping</label>
         <input type="text" class="form-control" id="id_fallbackMapping" ng-model="sc.fallbackMapping" autocomplete="off"
         typeahead="name for name in names | filter:$viewValue | limitTo:16">
-        <p class="help-block" ng-show="errors.fallbackMapping">{{ errors.fallbackMapping.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.fallbackMapping">{{ errors.fallbackMapping }}</p>
         </div>
       </div>
     </div>
     <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
-        <div class="form-group" ng-class="{'has-error': errors.rate}">
+        <div class="form-group" ng-class="{'has-error': errors.backgroundRate}">
         <label for="id_rate">Rate</label>
         <input type="number"
                class="form-control"
                id="id_rate"
                ng-model="sc.backgroundRate"
-               ng-class="{'validation_errors': errors.rate}">
-        <p class="help-block" ng-show="errors.rate">{{ errors.rate }}</p>
+               ng-class="{'validation_errors': errors.backgroundRate}">
+        <p class="help-block" ng-show="errors.backgroundRate">{{ errors.backgroundRate }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
@@ -130,14 +130,14 @@
         <div class="form-group" ng-class="{'has-error': errors.version}">
         <label for="id_version">Version</label>
         <input type="text" class="form-control" id="id_version" ng-model="sc.version">
-        <p class="help-block" ng-show="errors.version">{{ errors.version.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.version">{{ errors.version }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.buildID}">
         <label for="id_buildID">Build ID</label>
         <input type="text" class="form-control" id="id_buildID" ng-model="sc.buildID">
-        <p class="help-block" ng-show="errors.buildID">{{ errors.buildID.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.buildID">{{ errors.buildID }}</p>
         </div>
       </div>
     </div>
@@ -146,14 +146,14 @@
         <div class="form-group" ng-class="{'has-error': errors.locale}">
         <label for="id_locale">Locale</label>
         <input type="text" class="form-control" id="id_locale" ng-model="sc.locale">
-        <p class="help-block" ng-show="errors.locale">{{ errors.locale.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.locale">{{ errors.locale }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.distribution}">
         <label for="id_distribution">Distribution</label>
         <input type="text" class="form-control" id="id_distribution" ng-model="sc.distribution">
-        <p class="help-block" ng-show="errors.distribution">{{ errors.distribution.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.distribution">{{ errors.distribution }}</p>
         </div>
       </div>
     </div>
@@ -162,14 +162,14 @@
         <div class="form-group" ng-class="{'has-error': errors.buildTarget}">
         <label for="id_buildTarget">Build Target</label>
         <input type="text" class="form-control" id="id_buildTarget" ng-model="sc.buildTarget">
-        <p class="help-block" ng-show="errors.buildTarget">{{ errors.buildTarget.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.buildTarget">{{ errors.buildTarget }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.osVersion}">
         <label for="id_osVersion">OS Version</label>
         <input type="text" class="form-control" id="id_osVersion" ng-model="sc.osVersion">
-        <p class="help-block" ng-show="errors.osVersion">{{ errors.osVersion.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.osVersion">{{ errors.osVersion }}</p>
         </div>
       </div>
     </div>
@@ -178,14 +178,14 @@
         <div class="form-group" ng-class="{'has-error': errors.instructionSet}">
         <label for="id_instructionSet">Instruction Set</label>
         <input type="text" class="form-control" id="id_instructionSet" ng-model="sc.instructionSet">
-        <p class="help-block" ng-show="errors.instructionSet">{{ errors.instructionSet.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.instructionSet">{{ errors.instructionSet }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.memory}">
         <label for="id_memory">Memory</label>
         <input type="text" class="form-control" id="id_memory" ng-model="sc.memory">
-        <p class="help-block" ng-show="errors.memory">{{ errors.memory.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.memory">{{ errors.memory }}</p>
         </div>
       </div>
     </div>
@@ -194,14 +194,14 @@
         <div class="form-group" ng-class="{'has-error': errors.distVersion}">
         <label for="id_distribution">Dist version</label>
         <input type="text" class="form-control" id="id_distribution" ng-model="sc.distVersion">
-        <p class="help-block" ng-show="errors.distVersion">{{ errors.distVersion.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.distVersion">{{ errors.distVersion }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.update_type}">
         <label for="id_update_type">Update Type</label>
         <input type="text" class="form-control" id="id_update_type" ng-model="sc.update_type">
-        <p class="help-block" ng-show="errors.update_type">{{ errors.update_type.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.update_type">{{ errors.update_type }}</p>
         </div>
       </div>
     </div>
@@ -210,7 +210,7 @@
         <div class="form-group" ng-class="{'has-error': errors.headerArchitecture}">
         <label for="id_headerArchitecture">Header Architecture</label>
         <input type="text" class="form-control" id="id_headerArchitecture" ng-model="sc.headerArchitecture">
-        <p class="help-block" ng-show="errors.headerArchitecture">{{ errors.headerArchitecture.join(', ') }}</p>
+        <p class="help-block" ng-show="errors.headerArchitecture">{{ errors.headerArchitecture }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
@@ -227,7 +227,7 @@
                  From https://stackoverflow.com/a/24321497 -->
             <option value="" ng-if="false"></option>
           </select>
-          <p class="help-block" ng-show="errors.mig64">{{ errors.mig64.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.mig64">{{ errors.mig64 }}</p>
         </div>
       </div>
     </div>
@@ -236,7 +236,7 @@
         <div class="form-group" ng-class="{'has-error': errors.alias}">
           <label for="id_distribution">Alias</label>
           <input type="text" class="form-control" id="id_distribution" ng-model="sc.alias">
-          <p class="help-block" ng-show="errors.alias">{{ errors.alias.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.alias">{{ errors.alias }}</p>
         </div>
       </div>
     </div>
@@ -245,7 +245,7 @@
         <div class="form-group" ng-class="{'has-error': errors.comment}">
           <label for="id_comment">Comment</label>
           <input type="text" class="form-control" id="id_comment" ng-model="sc.comment">
-          <p class="help-block" ng-show="errors.comment">{{ errors.comment.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.comment">{{ errors.comment }}</p>
         </div>
       </div>
     </div>

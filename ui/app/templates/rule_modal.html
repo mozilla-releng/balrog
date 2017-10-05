@@ -12,7 +12,7 @@
           <label for="id_product">Product</label>
           <input type="text" class="form-control" id="id_product" ng-model="rule.product" autocomplete="off"
            typeahead="product for product in products | filter:$viewValue | limitTo:16">
-          <p class="help-block" ng-show="errors.product">{{ errors.product.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.product">{{ errors.product }}</p>
         </div>
       </div>
       <div class="col-md-6">
@@ -20,7 +20,7 @@
           <label for="id_channel">Channel</label>
           <input type="text" class="form-control" id="id_product" ng-model="rule.channel" autocomplete="off"
            typeahead="channel for channel in channels | filter:$viewValue | limitTo:16">
-          <p class="help-block" ng-show="errors.channel">{{ errors.channel.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.channel">{{ errors.channel }}</p>
         </div>
       </div>
     </div>
@@ -31,7 +31,7 @@
           <label for="id_mapping">Mapping</label>
           <input type="text" class="form-control" id="id_mapping" ng-model="rule.mapping" autocomplete="off"
            typeahead="name for name in names | filter:$viewValue | limitTo:16">
-          <p class="help-block" ng-show="errors.mapping">{{ errors.mapping.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.mapping">{{ errors.mapping }}</p>
         </div>
       </div>
       <div class="col-md-6">
@@ -39,7 +39,7 @@
           <label for="id_fallbackMapping">Fallback Mapping</label>
           <input type="text" class="form-control" id="id_mapping" ng-model="rule.fallbackMapping" autocomplete="off"
            typeahead="name for name in names | filter:$viewValue | limitTo:16">
-          <p class="help-block" ng-show="errors.fallbackMapping">{{ errors.fallbackMapping.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.fallbackMapping">{{ errors.fallbackMapping }}</p>
         </div>
       </div>
     </div>
@@ -49,13 +49,13 @@
           <label for="id_rate">Rate</label>
           <input type="text"
                  class="form-control"
-                 ng-class="{'validation_errors': errors.rate}"
+                 ng-class="{'validation_errors': errors.backgroundRate}"
                  name="rate"
                  id="id_rate"
                  ng-model="rule.backgroundRate"
                  required>
-            <p class="help-block has-error" ng-show="errors.rate">
-                {{ errors.rate }}
+            <p class="help-block has-error" ng-show="errors.backgroundRate">
+                {{ errors.backgroundRate }}
             </p>
         </div>
       </div>
@@ -78,14 +78,14 @@
         <div class="form-group" ng-class="{'has-error': errors.version}">
           <label for="id_version">Version</label>
           <input type="text" class="form-control" id="id_version" ng-model="rule.version">
-          <p class="help-block" ng-show="errors.version">{{ errors.version.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.version">{{ errors.version }}</p>
         </div>
       </div>
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.buildId}">
           <label for="id_buildID">Build ID</label>
           <input type="text" class="form-control" id="id_buildID" ng-model="rule.buildID">
-          <p class="help-block" ng-show="errors.buildID">{{ errors.buildID.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.buildID">{{ errors.buildID }}</p>
         </div>
       </div>
     </div>
@@ -94,14 +94,14 @@
         <div class="form-group" ng-class="{'has-error': errors.locale}">
           <label for="id_locale">Locale</label>
           <input type="text" class="form-control" id="id_locale" ng-model="rule.locale">
-          <p class="help-block" ng-show="errors.locale">{{ errors.locale.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.locale">{{ errors.locale }}</p>
         </div>
       </div>
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.distribution}">
           <label for="id_distribution">Distribution</label>
           <input type="text" class="form-control" id="id_distribution" ng-model="rule.distribution">
-          <p class="help-block" ng-show="errors.distribution">{{ errors.distribution.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.distribution">{{ errors.distribution }}</p>
         </div>
       </div>
     </div>
@@ -110,14 +110,14 @@
         <div class="form-group" ng-class="{'has-error': errors.buildTarget}">
           <label for="id_buildTarget">Build Target</label>
           <input type="text" class="form-control" id="id_buildTarget" ng-model="rule.buildTarget">
-          <p class="help-block" ng-show="errors.buildTarget">{{ errors.buildTarget.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.buildTarget">{{ errors.buildTarget }}</p>
         </div>
       </div>
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.osVersion}">
           <label for="id_osVersion">OS Version</label>
           <input type="text" class="form-control" id="id_osVersion" ng-model="rule.osVersion">
-          <p class="help-block" ng-show="errors.osVersion">{{ errors.osVersion.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.osVersion">{{ errors.osVersion }}</p>
         </div>
       </div>
     </div>
@@ -126,14 +126,14 @@
         <div class="form-group" ng-class="{'has-error': errors.instructionSet}">
           <label for="id_instructionSet">Instruction Set</label>
           <input type="text" class="form-control" id="id_instructionSet" ng-model="rule.instructionSet">
-          <p class="help-block" ng-show="errors.instructionSet">{{ errors.instructionSet.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.instructionSet">{{ errors.instructionSet }}</p>
         </div>
       </div>
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.memory}">
           <label for="id_memory">Memory</label>
           <input type="text" class="form-control" id="id_memory" ng-model="rule.memory">
-          <p class="help-block" ng-show="errors.memory">{{ errors.memory.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.memory">{{ errors.memory }}</p>
         </div>
       </div>
     </div>
@@ -142,14 +142,14 @@
         <div class="form-group" ng-class="{'has-error': errors.distVersion}">
           <label for="id_distVersion">Dist version</label>
           <input type="text" class="form-control" id="id_distribution" ng-model="rule.distVersion">
-          <p class="help-block" ng-show="errors.distVersion">{{ errors.distVersion.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.distVersion">{{ errors.distVersion }}</p>
         </div>
       </div>
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.update_type}">
           <label for="id_update_type">Update Type</label>
           <input type="text" class="form-control" id="id_update_type" ng-model="rule.update_type">
-          <p class="help-block" ng-show="errors.update_type">{{ errors.update_type.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.update_type">{{ errors.update_type }}</p>
         </div>
       </div>
     </div>
@@ -158,7 +158,7 @@
         <div class="form-group" ng-class="{'has-error': errors.headerArchitecture}">
           <label for="id_headerArchitecture">Header Architecture</label>
           <input type="text" class="form-control" id="id_headerArchitecture" ng-model="rule.headerArchitecture">
-          <p class="help-block" ng-show="errors.headerArchitecture">{{ errors.headerArchitecture.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.headerArchitecture">{{ errors.headerArchitecture }}</p>
         </div>
       </div>
       <div class="col-md-6">
@@ -184,7 +184,7 @@
         <div class="form-group" ng-class="{'has-error': errors.alias}">
           <label for="id_distribution">Alias</label>
           <input type="text" class="form-control" id="id_distribution" ng-model="rule.alias">
-          <p class="help-block" ng-show="errors.alias">{{ errors.alias.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.alias">{{ errors.alias }}</p>
         </div>
       </div>
     </div>
@@ -193,7 +193,7 @@
         <div class="form-group" ng-class="{'has-error': errors.comment}">
           <label for="id_comment">Comment</label>
           <input type="text" class="form-control" id="id_comment" ng-model="rule.comment">
-          <p class="help-block" ng-show="errors.comment">{{ errors.comment.join(', ') }}</p>
+          <p class="help-block" ng-show="errors.comment">{{ errors.comment }}</p>
         </div>
       </div>
     </div>
