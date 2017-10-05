@@ -1,6 +1,6 @@
 angular
   .module("app")
-  .controller("HistoryController", function($scope, Releases, Rules, Page) {
+  .controller("HistoryController", function($scope, Releases, Rules, History, Page) {
     Page.setTitle("History");
 
     $scope.columnTab = 1;
@@ -170,7 +170,24 @@ angular
       $scope.pr_ch_selected = value.split(",");
     });
 
-    // $scope.histories = [];
+    $scope.histories = [];
+    $scope.allHistory = [];
+
+    History.getRulesHistory()
+      .success(function(response){
+        console.log("response", response);
+        $scope.response = {};
+        $scope.response.revisions = [];
+        $scope.response = response;
+        $scope.response.revisions.forEach(function(value, key) {
+          if (value.product) {
+            $scope.allHistory.push(value);
+            console.log($scope.allHistory,"sfgjhkaldj");
+          }
+          // console.log(value.product,"value");
+        });  
+
+      });
     // Releases.getReleases()
     // .success(function(response) {
     //     var releases = response.releases;
@@ -199,65 +216,65 @@ angular
     // });
 
     //dummy data
-    function getDummyData() {
-      return [
-        {
-          historyId: 184949,
-          object_name: "Tiger Nixon",
-          email: "Edinburgh@gmail.com",
-          start_date: "2011\/04\/25",
-          end_date: "2011\/04\/25"
-        },
-        {
-          historyId: 184949,
-          object_name: "Tiger Nixon",
-          email: "Edinburgh@gmail.com",
-          start_date: "2011\/04\/25",
-          end_date: "2011\/04\/25"
-        },
-        {
-          historyId: 184949,
-          object_name: "Tiger Nixon",
-          email: "Edinburgh@gmail.com",
-          start_date: "2011\/04\/25",
-          end_date: "2011\/04\/25"
-        },
-        {
-          historyId: 184949,
-          object_name: "Tiger Nixon",
-          email: "Edinburgh@gmail.com",
-          start_date: "2011\/04\/25",
-          end_date: "2011\/04\/25"
-        },
-        {
-          historyId: 184945549,
-          object_name: "Hope Niefxon",
-          email: "hope@gmail.com",
-          start_date: "2011\/04\/25",
-          end_date: "2011\/05\/25"
-        },
-        {
-          historyId: 18494549,
-          object_name: "Tiger Nggdggixon",
-          email: "Edinbsffurgh@gmail.com",
-          start_date: "2011\/04\/25",
-          end_date: "2011\/05\/25"
-        },
-        {
-          historyId: 1234949,
-          object_name: "Tigesffr Nixon",
-          email: "Edinburdfsfsgh@gmail.com",
-          start_date: "2011\/04\/25",
-          end_date: "2011\/04\/25"
-        },
-        {
-          historyId: 244,
-          object_name: "Tigerssfs Nixon",
-          email: "Edinburgsfssh@gmail.com",
-          start_date: "2011\/04\/25",
-          end_date: "2011\/05\/25"
-        }
-      ];
-    }
-    $scope.allHistory = getDummyData();
+    // function getDummyData() {
+    //   return [
+    //     {
+    //       historyId: 184949,
+    //       object_name: "Tiger Nixon",
+    //       email: "Edinburgh@gmail.com",
+    //       start_date: "2011\/04\/25",
+    //       end_date: "2011\/04\/25"
+    //     },
+    //     {
+    //       historyId: 184949,
+    //       object_name: "Tiger Nixon",
+    //       email: "Edinburgh@gmail.com",
+    //       start_date: "2011\/04\/25",
+    //       end_date: "2011\/04\/25"
+    //     },
+    //     {
+    //       historyId: 184949,
+    //       object_name: "Tiger Nixon",
+    //       email: "Edinburgh@gmail.com",
+    //       start_date: "2011\/04\/25",
+    //       end_date: "2011\/04\/25"
+    //     },
+    //     {
+    //       historyId: 184949,
+    //       object_name: "Tiger Nixon",
+    //       email: "Edinburgh@gmail.com",
+    //       start_date: "2011\/04\/25",
+    //       end_date: "2011\/04\/25"
+    //     },
+    //     {
+    //       historyId: 184945549,
+    //       object_name: "Hope Niefxon",
+    //       email: "hope@gmail.com",
+    //       start_date: "2011\/04\/25",
+    //       end_date: "2011\/05\/25"
+    //     },
+    //     {
+    //       historyId: 18494549,
+    //       object_name: "Tiger Nggdggixon",
+    //       email: "Edinbsffurgh@gmail.com",
+    //       start_date: "2011\/04\/25",
+    //       end_date: "2011\/05\/25"
+    //     },
+    //     {
+    //       historyId: 1234949,
+    //       object_name: "Tigesffr Nixon",
+    //       email: "Edinburdfsfsgh@gmail.com",
+    //       start_date: "2011\/04\/25",
+    //       end_date: "2011\/04\/25"
+    //     },
+    //     {
+    //       historyId: 244,
+    //       object_name: "Tigerssfs Nixon",
+    //       email: "Edinburgsfssh@gmail.com",
+    //       start_date: "2011\/04\/25",
+    //       end_date: "2011\/05\/25"
+    //     }
+    //   ];
+    // }
+    // $scope.allHistory = getDummyData();
   });

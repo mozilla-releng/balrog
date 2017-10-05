@@ -112,7 +112,7 @@
                     <th class="object_name">Object
                       <span class="{{Header[1]}}"></span>
                     </th>
-                    <th class="email">Email
+                    <th class="email">Changed By
                       <span class="{{Header[2]}}"></span>
                     </th>
                     <th class="start_date">Start Date
@@ -129,11 +129,11 @@
                 <tbody>
                   <tr ng-repeat="item in allHistory | filter:search">
                     <td>{{$index+1}}</td>
-                    <td>{{item.object_name}}</td>
-                    <td>{{item.email}}</td>
+                    <td>{{item.product}}</td>
+                    <td>{{item.changed_by}}</td>
                     <td>{{item.start_date | date:'dd/MM/yyyy'}}</td>
                     <td>{{item.end_date | date:'dd/MM/yyyy'}}</td>
-                    <td>{{item.historyId}}</td>
+                    <td>{{item.change_id}}</td>
                   </tr>
                 </tbody>
               </table>
