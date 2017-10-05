@@ -35,17 +35,17 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequiremen
     .then(function(csrf_token) {
       rule = angular.copy($scope.rule);
       
-      // Evaluate the values entered for priority and background rate.
-      $scope.errors = Helpers.integerValidator({'priority': rule.priority, 'rate': rule.backgroundRate});
-
-      // Stop sending the request if any number validation errors.
-      if($scope.errors.priority || $scope.errors.rate) {
-        $scope.saving = false;
-        return;
-      } else {
-        // Re-initialise the 'error' variable if no validation errors found in UI validation.
-        $scope.errors = {};
-      }
+//      // Evaluate the values entered for priority and background rate.
+//      $scope.errors = Helpers.integerValidator({'priority': rule.priority, 'rate': rule.backgroundRate});
+//
+//      // Stop sending the request if any number validation errors.
+//      if($scope.errors.priority || $scope.errors.rate) {
+//        $scope.saving = false;
+//        return;
+//      } else {
+//        // Re-initialise the 'error' variable if no validation errors found in UI validation.
+//        $scope.errors = {};
+//      }
 
       Rules.addRule(rule, csrf_token)
       .success(function(response) {
@@ -74,6 +74,7 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequiremen
       .error(function(response, status) {
         if (typeof response === 'object') {
           $scope.errors = response;
+          Helpers.addErrorFields($scope.errors);
           sweetAlert(
             "Form submission error",
             "See fields highlighted in red.",
