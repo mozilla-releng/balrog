@@ -20,9 +20,9 @@ angular.module("app").factory('Helpers', function() {
         }
         // Filter negative numbers and maximum, if specified.
         if (value < 0) {
-          validation_results[key] = 'Value must be a positive number';
-        } else if (key === 'rate' && value > 100) {
-          validation_results[key] = 'Value should not be more than 100';
+          validation_results[key] = key + ' field value should be an integer >= 0 '+ key +': '+ value +' is not a "'+ key +'"';
+        } else if (key === 'backgroundRate' && value > 100) {
+          validation_results[key] = 'backgroundRate field value should be an integer <= 100 backgroundRate: '+ value + ' is not a "backgroundRate"';
         } else {
           validation_results[key] = false;
         }
