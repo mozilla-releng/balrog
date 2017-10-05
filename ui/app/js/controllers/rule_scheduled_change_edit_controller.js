@@ -65,9 +65,9 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc, Helpers) {
     $scope.sc.when = ($scope.auto_time) ? asap : $scope.sc.when;
     
     // Evaluate the values entered for priority and background rate.
-    $scope.errors = Helpers.integerValidator({'priority': $scope.sc.priority, 'rate': $scope.sc.backgroundRate});
+    $scope.errors = Helpers.integerValidator({'priority': $scope.sc.priority, 'backgroundRate': $scope.sc.backgroundRate});
     // Stop sending the request if any number validation errors.
-    if($scope.errors.priority || $scope.errors.rate) {
+    if($scope.errors.priority || $scope.errors.backgroundRate) {
       $scope.saving = false;
       return;
     } else {

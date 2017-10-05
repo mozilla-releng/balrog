@@ -29,17 +29,17 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
     .then(function(csrf_token) {
       rule = angular.copy($scope.rule);
       
-      // Evaluate the values entered for priority and background rate.
-      $scope.errors = Helpers.integerValidator({'priority': rule.priority, 'rate': rule.backgroundRate});
-
-      // Stop sending the request if any number validation errors.
-      if($scope.errors.priority || $scope.errors.rate) {
-        $scope.saving = false;
-        return;
-      } else {
-        // Re-initialise the 'error' variable if no validation errors found in UI validation.
-        $scope.errors = {};
-      }
+//      // Evaluate the values entered for priority and background rate.
+//      $scope.errors = Helpers.integerValidator({'priority': rule.priority, 'backgroundRate': rule.backgroundRate});
+//
+//      // Stop sending the request if any number validation errors.
+//      if($scope.errors.priority || $scope.errors.backgroundRate) {
+//        $scope.saving = false;
+//        return;
+//      } else {
+//        // Re-initialise the 'error' variable if no validation errors found in UI validation.
+//        $scope.errors = {};
+//      }
 
       Rules.addRule(rule, csrf_token)
       .success(function(response) {
