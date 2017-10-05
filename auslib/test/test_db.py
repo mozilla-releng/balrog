@@ -460,6 +460,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertTrue('foo' in columns)
         self.assertTrue('changed_by' in columns)
         self.assertTrue('timestamp' in columns)
+        self.assertTrue('data_version' in columns)
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponInsert(self):
@@ -600,6 +601,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
         self.assertTrue('foo' in columns)
         self.assertTrue('changed_by' in columns)
         self.assertTrue('timestamp' in columns)
+        self.assertTrue('data_version' in columns)
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryHistoryUponInsert(self):

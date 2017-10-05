@@ -743,13 +743,22 @@ class History(AUSTable):
             where = [self.data_version == data_version]
             for col in column_names.keys():
                 where.append(column_names[col] == column_values[col])
-            changes = self.select(where=where,
-                                  transaction=transaction)
-        else:
-            changes = self.select(where=[self.change_id == change_id], transaction=transaction)
-        found = len(changes)
-        if found > 1 or found == 0:
-            self.log.debug("Found %s changes, should have been 1", found)
+
+            # To improve query efficiency we first get the change_id,
+            # and _then_ get the entire row. Most notably, this is much faster
+            # when querying releases_history by name and data_version, which
+            # often has hundreds or even thousands of rows to scan. Selecting
+            # just the change_id for these cases makes this big scan faster.
+            change_ids = self.select(columns=[self.change_id], where=where,
+                                     transaction=transaction)
+            if len(change_ids) != 1:
+                self.log.debug("Found %s changes, should have been 1", len(change_ids))
+                return None
+            change_id = change_ids[0]["change_id"]
+
+        changes = self.select(where=[self.change_id == change_id], transaction=transaction)
+        if len(changes) != 1:
+            self.log.debug("Found %s changes, should have been 1", len(changes))
             return None
         return changes[0]
 
