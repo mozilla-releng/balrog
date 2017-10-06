@@ -50,7 +50,7 @@ angular.module('app').directive("permissionOptions", [function(){
             });
 
             // monitor for changes in action or product value
-            $scope.$watch('[ action, product ] | json',function(){
+            $scope.$watch('[ action, product ]',function(){
                 // add tag for action when terminated with comma
                 if ($scope.action && $scope.action.indexOf(",") !== -1 && $scope.action.trim().length > 1){
                     var action = $scope.action.slice(0, -1).trim();
