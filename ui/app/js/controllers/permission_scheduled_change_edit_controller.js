@@ -24,7 +24,6 @@ function ($scope, $modalInstance, CSRF, Permissions, sc) {
   $scope.is_edit = true;
   $scope.saving = false;
 
-
   $scope.updateScheduledPermission = function() {
 
     $scope.date = new Date();

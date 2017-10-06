@@ -197,4 +197,64 @@ describe("Service: Rules", function() {
   }));
 
   // todo: add sc history methods
+
+  it("should respect both old and new rule", inject(function(Rules) {
+    var signoffRequirements = [
+      {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
+      {product: "Firefox", channel: "release", role: "relman", signoffs_required: 4},
+    ];
+    var oldRule = {product: "Firefox", channel: "nightly", mapping: "Firefox"};
+    var newRule = {product: "Firefox", channel: "release", mapping: "Firefox"};
+    var signoffsRequired = Rules.ruleSignoffsRequired(oldRule, newRule, signoffRequirements);
+    expect(signoffsRequired.length).toBe(2);
+    expect(signoffsRequired.roles['releng']).toBe(2);
+    expect(signoffsRequired.roles['relman']).toBe(4);
+  }));
+
+  it("should take maximum of required signoffs", inject(function(Rules) {
+    var signoffRequirements = [
+      {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
+      {product: "Firefox", channel: "nightly", role: "relman", signoffs_required: 4},
+      {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 3},
+      {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
+    ];
+    var rule = {product: "Firefox", channel: "nightly", mapping: "Firefox"};
+    var signoffsRequired = Rules.ruleSignoffsRequired(rule, undefined, signoffRequirements);
+    expect(signoffsRequired.length).toBe(2);
+    expect(signoffsRequired.roles['releng']).toBe(3);
+    expect(signoffsRequired.roles['relman']).toBe(4);
+  }));
+
+  it("should match globs", inject(function(Rules) {
+    var signoffRequirements = [
+      {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
+    ];
+    var rule = {product: "Firefox", channel: "night*", mapping: "Firefox"};
+    var signoffsRequired = Rules.ruleSignoffsRequired(rule, undefined, signoffRequirements);
+    expect(signoffsRequired.length).toBe(1);
+    expect(signoffsRequired.roles['releng']).toBe(2);
+  }));
+
+  it("should match missing channels against all channels", inject(function(Rules) {
+    var signoffRequirements = [
+      {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
+      {product: "Firefox", channel: "release", role: "relman", signoffs_required: 2},
+      {product: "Firefox", channel: "esr", role: "admin", signoffs_required: 2},
+    ];
+    var rule = {product: "Firefox", mapping: "Firefox"};
+    var signoffsRequired = Rules.ruleSignoffsRequired(rule, undefined, signoffRequirements);
+    expect(signoffsRequired.length).toBe(3);
+    expect(signoffsRequired.roles['releng']).toBe(2);
+    expect(signoffsRequired.roles['relman']).toBe(2);
+    expect(signoffsRequired.roles['admin']).toBe(2);
+  }));
+
+  it("should match only if both product and channel match", inject(function(Rules) {
+    var signoffRequirements = [
+      {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
+    ];
+    var rule = {product: "Firefox", channel: "aurora", mapping: "Firefox"};
+    var signoffsRequired = Rules.ruleSignoffsRequired(rule, undefined, signoffRequirements);
+    expect(signoffsRequired.length).toBe(0);
+  }));
 });
