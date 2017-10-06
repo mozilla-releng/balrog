@@ -83,7 +83,7 @@ angular.module('app').directive("permissionOptions", [function(){
                 if ($scope.selected_products.length > 0 ) { options["products"] = $scope.selected_products; } 
                 if ($scope.selected_actions.length > 0) { options["actions"] = $scope.selected_actions; } 
                 $scope.permission.options_as_json = JSON.stringify(options);
-            });
+            }, true);
 
             $scope.actionRemove = function(action){
                 $scope.selected_actions.splice($scope.selected_actions.indexOf(action), 1);
