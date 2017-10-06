@@ -22,6 +22,7 @@ describe("controller: UserPermissionsCtrl", function() {
       {'role':'releng', 'data_version':1}
     ]};
   var sample_all_roles = {'roles': ['qa', 'releng']};
+  var signoffRequirements = [];
 
   beforeEach(inject(function($controller, $rootScope, $location, $modal, Permissions, $httpBackend) {
     this.$location = $location;
@@ -39,6 +40,7 @@ describe("controller: UserPermissionsCtrl", function() {
       user: user,
       is_edit: true,
       users: [user],
+      permissionSignoffRequirements: signoffRequirements,
     });
   }));
 

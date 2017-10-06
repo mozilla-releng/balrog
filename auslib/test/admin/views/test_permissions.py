@@ -396,11 +396,13 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.permissions.select({"permission": "release_locale", "username": "ashanti"})[0],
                 },
                 {
                     "sc_id": 4, "when": 76000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.permissions.select({"permission": "scheduled_change", "username": "mary"})[0],
                 },
                 {
                     "sc_id": 5, "when": 98000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
@@ -411,6 +413,7 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "sc_id": 6, "when": 38000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release", "username": "bob", "options": {"products": ["a", "b"]}, "data_version": 1,
                     "signoffs": {}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissions.select({"permission": "release", "username": "bob"})[0],
                 },
             ],
         }
@@ -430,16 +433,19 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.permissions.select({"permission": "release_locale", "username": "ashanti"})[0],
                 },
                 {
                     "sc_id": 3, "when": 30000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
                     "permission": "permission", "username": "bob", "options": None, "data_version": None, "signoffs": {},
                     "required_signoffs": {},
+                    # No original_row on completed changes.
                 },
                 {
                     "sc_id": 4, "when": 76000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.permissions.select({"permission": "scheduled_change", "username": "mary"})[0],
                 },
                 {
                     "sc_id": 5, "when": 98000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
@@ -450,6 +456,7 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "sc_id": 6, "when": 38000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release", "username": "bob", "options": {"products": ["a", "b"]}, "data_version": 1,
                     "signoffs": {}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissions.select({"permission": "release", "username": "bob"})[0],
                 },
             ],
         }

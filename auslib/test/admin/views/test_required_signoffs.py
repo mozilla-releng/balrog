@@ -190,11 +190,13 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "a", "role": "releng", "signoffs_required": 2, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.productRequiredSignoffs.select({'product': 'fake', 'channel': 'a', 'role': 'releng'})[0],
                 },
                 {
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "j", "role": "releng", "signoffs_required": None, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.productRequiredSignoffs.select({'product': 'fake', 'channel': 'j', 'role': 'releng'})[0],
                 },
             ],
         }
@@ -214,16 +216,19 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "a", "role": "releng", "signoffs_required": 2, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.productRequiredSignoffs.select({'product': 'fake', 'channel': 'a', 'role': 'releng'})[0],
                 },
                 {
                     "sc_id": 3, "when": 300000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
                     "product": "fake", "channel": "e", "role": "releng", "signoffs_required": 1, "data_version": None,
                     "signoffs": {}, "required_signoffs": {},
+                    # No original_row for completed changes.
                 },
                 {
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "j", "role": "releng", "signoffs_required": None, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.productRequiredSignoffs.select({'product': 'fake', 'channel': 'j', 'role': 'releng'})[0],
                 },
             ],
         }
@@ -656,11 +661,13 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "role": "releng", "signoffs_required": 2, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissionsRequiredSignoffs.select({'product': 'fake', 'role': 'releng'})[0],
                 },
                 {
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "blah", "role": "releng", "signoffs_required": None, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissionsRequiredSignoffs.select({'product': 'blah', 'role': 'releng'})[0],
                 },
             ],
         }
@@ -680,6 +687,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "role": "releng", "signoffs_required": 2, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissionsRequiredSignoffs.select({'product': 'fake', 'role': 'releng'})[0],
                 },
                 {
                     "sc_id": 3, "when": 300000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
@@ -690,6 +698,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "blah", "role": "releng", "signoffs_required": None, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissionsRequiredSignoffs.select({'product': 'blah', 'role': 'releng'})[0],
                 },
             ],
         }

@@ -1,5 +1,5 @@
 angular.module('app').controller('NewRuleCtrl',
-function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_ch_options) {
+function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_ch_options, signoffRequirements) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
@@ -21,6 +21,11 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
   $scope.errors = {};
   $scope.saving = false;
   $scope.pr_ch_options = pr_ch_options;
+  $scope.$watch('rule', function() {
+    if (signoffRequirements) {
+      $scope.ruleSignoffsRequired = Rules.ruleSignoffsRequired($scope.original_rule, $scope.rule, signoffRequirements);
+    }
+  }, true);
 
   $scope.saveChanges = function () {
     $scope.saving = true;
