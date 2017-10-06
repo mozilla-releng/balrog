@@ -745,10 +745,13 @@ class History(AUSTable):
                 where.append(column_names[col] == column_values[col])
 
             # To improve query efficiency we first get the change_id,
-            # and _then_ get the entire row. Most notably, this is much faster
-            # when querying releases_history by name and data_version, which
-            # often has hundreds or even thousands of rows to scan. Selecting
-            # just the change_id for these cases makes this big scan faster.
+            # and _then_ get the entire row. This is because we may not be able
+            # to query by an index depending which column_values we were given.
+            # If we end up querying by column_values that don't have an index,
+            # mysql will read many more rows than will be returned. This is
+            # particularly bad on the releases_history table, where the "data"
+            # column is often hundreds of kilobytes per row.
+            # Additional details in https://github.com/mozilla/balrog/pull/419#issuecomment-334851038
             change_ids = self.select(columns=[self.change_id], where=where,
                                      transaction=transaction)
             if len(change_ids) != 1:
