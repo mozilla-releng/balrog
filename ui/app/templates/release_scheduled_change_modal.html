@@ -55,6 +55,8 @@
       <p class="help-block" ng-show="errors.product">{{ errors.product.join(', ') }}</p>
     </div>
 
+    <show-signoff-requirements requirements="sc.required_signoffs"></show-signoff-requirements>
+
     <div class="form-group" ng-class="{'has-error': errors.detail}">
       <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
     </div>

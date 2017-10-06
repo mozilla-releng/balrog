@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs) {
 
   Page.setTitle('Rules');
 
@@ -102,6 +102,16 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           }
         });
       });
+
+      ProductRequiredSignoffs.getRequiredSignoffs()
+        .then(function(payload) {
+        $scope.signoffRequirements = payload.data.required_signoffs;
+      });
+      $scope.ruleSignoffsRequired = function(rule) {
+        if ($scope.signoffRequirements) {
+          return Rules.ruleSignoffsRequired(rule, undefined, $scope.signoffRequirements);
+        }
+      };
     })
     .error(function() {
       console.error(arguments);
@@ -211,6 +221,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         rule: function () {
           return rule;
         },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
         pr_ch_options: function() {
           return $scope.pr_ch_options;
         }
@@ -243,6 +256,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         sc: function() {
           // blank new default rule
           return {
+            base_row: undefined,
             product: product,
             channel: channel,
             backgroundRate: 0,
@@ -251,7 +265,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             when: null,
             change_type: 'insert',
           };
-        }
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
     modalInstance.result.then(function(sc) {
@@ -273,9 +290,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         sc: function() {
           sc = angular.copy(rule);
+          sc.original_row = rule;
           sc["change_type"] = "update";
           return sc;
-        }
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
     modalInstance.result.then(function(sc) {
@@ -295,11 +316,15 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         sc: function() {
           return {
+            "base_row": rule,
             "rule_id": rule.rule_id,
             "data_version": rule.data_version,
             "change_type": "delete"
           };
-        }
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
     modalInstance.result.then(function(sc) {
@@ -315,8 +340,16 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       backdrop: 'static',
       resolve: {
         sc: function() {
-          return rule.scheduled_change;
-        }
+          var sc = angular.copy(rule.scheduled_change);
+          sc.original_row = rule;
+          return sc;
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
+        rule: function() {
+          return rule;
+        },
       }
     });
     modalInstance.result.then(function(action) {
@@ -374,6 +407,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             _duplicate: false,
           };
         },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
         pr_ch_options: function() {
           return $scope.pr_ch_options;
         }
@@ -398,6 +434,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           delete copy.rule_id;
           copy._duplicate = true;
           return copy;
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
         },
         pr_ch_options: function() {
           return $scope.pr_ch_options;
