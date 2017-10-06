@@ -1041,6 +1041,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {},
+                    "original_row": dbo.rules.getRule(1),
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
@@ -1065,6 +1066,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": 1, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "delete", "signoffs": {}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.rules.getRule(4),
                 },
                 {
                     "sc_id": 6, "when": 5500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 100,
@@ -1081,6 +1083,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.rules.getRule(6),
                 },
             ],
         }
@@ -1098,6 +1101,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {},
+                    "original_row": dbo.rules.getRule(1),
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
@@ -1122,6 +1126,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {},
+                    # No original row on "complete"
                 },
                 {
                     "sc_id": 5, "when": 600000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 4, "priority": None,
@@ -1130,6 +1135,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": 1, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "delete", "signoffs": {}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.rules.getRule(4),
                 },
                 {
                     "sc_id": 6, "when": 5500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 100,
@@ -1146,6 +1152,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.rules.getRule(6),
                 },
             ],
         }

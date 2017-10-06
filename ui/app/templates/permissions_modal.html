@@ -48,6 +48,7 @@
           </div>
         </form>
           <!-- connexion catches and throws exception without invoking API method-->
+          <show-signoff-requirements requirements="permissionSignoffsRequired"></show-signoff-requirements>
           <div class="form-group" ng-class="{'has-error': errors.detail}">
             <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
           </div>
@@ -60,8 +61,8 @@
              ng-repeat="permission in user.permissions">
           <div class="panel-heading">
               <div style="float: right">
-                <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="updatePermission(permission)">Save changes</button>
-                <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="deletePermission(permission)">Delete</button>
+                <button class="btn btn-primary btn-xs" ng-show="!saving && !userPermissionsSignoffRequirements[$index].signoffRequirements.length" ng-click="updatePermission(permission)">Save changes</button>
+                <button class="btn btn-primary btn-xs" ng-show="!saving && !userPermissionsSignoffRequirements[$index].deleteSignoffRequirements.length" ng-click="deletePermission(permission)">Delete</button>
               </div>
             <h3 class="panel-title">
               {{ permission.permission }}
