@@ -15,6 +15,12 @@
     <i class="glyphicon glyphicon-plus"></i>
   </button>
 
+  <button class="btn btn-info btn-xs"
+          ng-show="!rule_id" ng-click="openNewScheduledRuleModal()">
+    Schedule a new Rule
+    <i class="glyphicon glyphicon-plus"></i>
+  </button>
+
 </h2>
 
 <div class="row">
@@ -37,57 +43,116 @@
         ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
       </select>
     </div>
-    <div class="row">
-      <label>Order by:</label>
-      <select ng-model="ordering_str" name="ordering_str"
-        ng-options="o.text for o in ordering_options track by o.value">
-      </select>
+    <div class="row" ng-show="!rule_id">
+      <label for="include_sc">Include Scheduled Changes?</label>
+      <input type="checkbox" id="include_sc" ng-model="show_sc" checked>
     </div>
   </div>
 </div>
-<div class="undofilters" ng-show="!filtered_items.length" ng-cloak>
-  <p ng-if="filters.search">
-    Filtered too much?<br>
-    Remove
-    <ul>
-      <li ng-repeat="word_regex in getWordRegexes()">
-        <a href="#" ng-click="filters.search = removeFilterSearchWord(word_regex[2], filters.search)">{{ word_regex[2] }}</a>
-      </li>
-    </ul>
-  </p>
-</div>
 
 <div class="panel panel-default" style="clear:right"
-     ng-repeat="rule in filtered_items = (rules | filter: filterBySelect) | orderBy:ordering | startFrom:(disableFilter || !rule_id) && ((currentPage - 1)*pageSize) | limitTo:pageSize">
+     ng-repeat="rule in filtered_items = (rules | filter: filterScheduledChanges | filter: filterBySelect) | orderBy:orderRules | startFrom:(disableFilter || !rule_id) && ((currentPage - 1)*pageSize) | limitTo:pageSize">
   <div class="panel-heading">
 
     <h3 class="panel-title">
-      <div style="float: right">
-        <i ng-if="rule_id && $first && (currentPage == 1)">Current</i>
-        <button ng-if="rule_id && ((currentPage != 1) || !$first )" class="btn btn-default btn-xs" ng-click="openRevertModal(rule)">Revert to this</button>
-        <span ng-show="!rule_id && rule.scheduled_change === 'update'" class="label label-warning">Pending Update</span>
-        <span ng-show="!rule_id && rule.scheduled_change === 'delete'" class="label label-danger">Pending Delete</span>
-        <button ng-show="!rule_id && rule.scheduled_change === null" class="btn btn-warning btn-xs" ng-click="openNewScheduledRuleChangeModal(rule)">Schedule an Update</button>
-        <button ng-show="!rule_id && rule.scheduled_change === null" class="btn btn-danger btn-xs" ng-click="openNewScheduledDeleteModal(rule)">Schedule for Deletion</button>
-        <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">Update</button>
-        <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">Delete</button>
-        <button ng-show="!rule_id" class="btn btn-default btn-xs" ng-click="openDuplicateModal(rule)">Duplicate</button>
-        <a ng-show="!rule_id" class="btn btn-default btn-xs" ng-href="/rules/{{ rule.rule_id }}">History</a>
+      <div style="float: right" ng-if="rule_id">
+        <i ng-if="$first && (currentPage == 1)">Current</i>
+        <button ng-if="((currentPage != 1) || !$first )" class="btn btn-default btn-xs" ng-click="openRevertModal(rule)">Revert to this</button>
       </div>
 
-      <i title="Product" ng-show="!rule.product">no product</i>
-      <b title="Product" ng-show="rule.product" ng-bind-html="highlightSearch(rule.product, 'product')"></b>
+      <div style="float: right" ng-if="!rule_id">
+        <button class="btn btn-xs btn-primary" ng-click="signoff(rule.scheduled_change)"
+                ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs) && ! rule.scheduled_change.signoffs.hasOwnProperty(current_user)">
+            Signoff as...
+        </button>
+        <button class="btn btn-xs btn-danger" ng-click="revokeSignoff(rule.scheduled_change)"
+                ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs) && rule.scheduled_change.signoffs.hasOwnProperty(current_user)">
+            Revoke your Signoff
+        </button>
+        <button ng-show="show_sc && rule.scheduled_change.change_type === 'insert'" class="btn btn-info btn-xs"
+                ng-click="openEditScheduledRuleChangeModal(rule)">
+            Modify Pending Rule
+        </button>
+        <button ng-show="show_sc && rule.scheduled_change.change_type === 'update'" class="btn btn-warning btn-xs"
+                ng-click="openEditScheduledRuleChangeModal(rule)">
+            Modify Pending Update
+        </button>
+        <button ng-show="show_sc && rule.scheduled_change.change_type === 'delete'" class="btn btn-danger btn-xs"
+                ng-click="openEditScheduledRuleChangeModal(rule)">
+            Modify Pending Delete
+        </button>
+        <button ng-show="rule.scheduled_change === null" class="btn btn-warning btn-xs"
+                ng-click="openNewScheduledRuleChangeModal(rule)">
+            Schedule an Update
+        </button>
+        <button ng-show="rule.scheduled_change === null" class="btn btn-danger btn-xs"
+                ng-click="openNewScheduledDeleteModal(rule)">
+            Schedule for Deletion
+        </button>
+        <button ng-show="ruleSignoffsRequired(rule).length === 0 && (rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert')"
+                class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">
+            Update
+        </button>
+        <button ng-show="ruleSignoffsRequired(rule).length === 0 && rule.scheduled_change === null" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">
+            Delete
+        </button>
+        <button ng-show="rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert'"
+                class="btn btn-default btn-xs" ng-click="openDuplicateModal(rule)">
+            Duplicate
+        </button>
+        <a ng-show="rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert'"
+           class="btn btn-default btn-xs" ng-href="/rules/{{ rule.rule_id }}">
+            History
+        </a>
+        <span ng-show="show_sc && rule.scheduled_change !== null" title="{{ humanizeDate(rule.scheduled_change.when) }}"
+              class="label label-default">
+            Scheduled for <span style="text-transform: capitalize">{{ rule.scheduled_change.change_type }}</span> <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span>
+        </span>
+      </div>
+      <i title="Product" ng-show="!rule.product && !rule.scheduled_change.product">no product</i>
+      <b title="Product">
+        <span ng-show="rule_id || !show_sc || !fieldIsChanging(rule, 'product')">{{ rule.product }}</span>
+        <s style="color: red" ng-show="!rule_id && show_sc && fieldIsChanging(rule, 'product')">{{ rule.product }}</s>
+        <span style="color: green" ng-show="!rule_id && show_sc && fieldIsChanging(rule, 'product')">{{ rule.scheduled_change.product }}</span>
+      </b>
       :
-      <i title="Channel" ng-show="!rule.channel">no channel</i>
-      <b title="Channel" ng-show="rule.channel" ng-bind-html="highlightSearch(rule.channel, 'channel')"></b>
+      <i title="Channel" ng-show="!rule.channel && !rule.scheduled_change.channel">no channel</i>
+      <b title="Channel">
+        <span ng-show="rule_id || !show_sc || !fieldIsChanging(rule, 'channel')">{{ rule.channel }}</span>
+        <s style="color: red" ng-show="!rule_id && show_sc && fieldIsChanging(rule, 'channel')">{{ rule.channel }}</s>
+        <span style="color: green" ng-show="!rule_id && show_sc && fieldIsChanging(rule, 'channel')">{{ rule.scheduled_change.channel }}</span>
+      </b>
     </h3>
   </div>
   <div class="panel-body">
+    <div ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs)">
+      <span style="float: left">
+        <h4>Before this change can be enacted, it must be signed off on by:</h4>
+        <ul>
+          <li ng-repeat="(rs_role, signoffs_required) in rule.scheduled_change.required_signoffs">
+            {{ signoffs_required }} member(s) of {{ rs_role }}
+          </li>
+        </ul>
+      </span>
+      <span style="float: right" ng-show="rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.signoffs)">
+        <h4>This change has already been signed off by:</h4>
+        <ul>
+          <li ng-repeat="(username, signoff_role) in rule.scheduled_change.signoffs">
+            {{ username }} ({{ signoff_role }})
+          </li>
+        </ul>
+      </span>
+    </div>
+    <hr style="clear: both" ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs)">
+
     <div class="left" style="float: left">
 
-      <h5 title="Mapping">
-        Mapping: <span ng-show="rule.mapping">
-            <b ng-bind-html="highlightSearch(rule.mapping, 'mapping')"></b>
+      <h5 title="Mapping" ng-show="rule.mapping || (show_sc && rule.scheduled_change !== null && rule.scheduled_change.mapping)">
+        Mapping:
+          <span ng-show="rule.mapping">
+            <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
+              {{ rule.mapping }}
+            </b>
             <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.mapping)">
                 <i class="glyphicon glyphicon-eye-open"></i>
                 View
@@ -96,11 +161,27 @@
                 <i class="glyphicon glyphicon-pencil"></i>
                 Edit
             </a>
-        </span>
+          </span>
+          <span ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping && rule.scheduled_change.mapping">
+            <b style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping">
+              {{ rule.scheduled_change.mapping }}
+            </b>
+            <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.scheduled_change.mapping)">
+                <i class="glyphicon glyphicon-eye-open"></i>
+                View
+            </a>
+            <a class="btn btn-default btn-xs" href="/releases/#{{ rule.scheduled_change.mapping }}">
+                <i class="glyphicon glyphicon-pencil"></i>
+                Edit
+            </a>
+          </span>
       </h5>
-      <h5 title="FallBack Mapping">
-       Fallback Mapping: <span ng-show="rule.fallbackMapping">
-            <b ng-bind-html="highlightSearch(rule.fallbackMapping, 'fallbackMapping')"></b>
+      <h5 title="Fallback Mapping" ng-show="rule.fallbackMapping || (show_sc && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping)">
+        Fallback Mapping:
+          <span ng-show="rule.fallbackMapping">
+            <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
+              {{ rule.fallbackMapping }}
+            </b>
             <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.fallbackMapping)">
                 <i class="glyphicon glyphicon-eye-open"></i>
                 View
@@ -109,66 +190,51 @@
                 <i class="glyphicon glyphicon-pencil"></i>
                 Edit
             </a>
-        </span>
+          </span>
+          <span ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping && rule.scheduled_change.fallbackMapping">
+            <b style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping">
+              {{ rule.scheduled_change.fallbackMapping }}
+            </b>
+            <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.scheduled_change.fallbackMapping)">
+                <i class="glyphicon glyphicon-eye-open"></i>
+                View
+            </a>
+            <a class="btn btn-default btn-xs" href="/releases/#{{ rule.scheduled_change.fallbackMapping }}">
+                <i class="glyphicon glyphicon-pencil"></i>
+                Edit
+            </a>
+          </span>
       </h5>
-      <h5 title="Data version">
-        Data version: <b>{{ rule.data_version }}</b>
-      </h5>
-      <h5 title="Rule ID">
-        Rule ID: <b>{{ rule.rule_id }}</b>
-      </h5>
-
-      <p ng-if="rule.comment">
-        <b>Comment:</b>
-        <span ng-bind-html="highlightSearch(rule.comment, 'comment')"></span>
-      </p>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="data_version" fieldtitle="Data Version"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="rule_id" fieldtitle="Rule ID"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="comment" fieldtitle="Comment"></rulefield>
 
     </div>
 
-    <dl class="dl-horizontal" style="float:right">
-      <dt ng-show="rule.alias" title="Can be used in place of rule_id in REST operations">Alias:</dt>
-      <dd>{{ rule.alias }}</dd>
-      <dt ng-show="rule.backgroundRate !== null">Rate:</dt>
-      <dd>{{ rule.backgroundRate }}</dd>
-      <dt ng-show="rule.priority !== null">Priority:</dt>
-      <dd>{{ rule.priority }}</dd>
-      <dt ng-show="rule.version">Version:</dt>
-      <dd>{{ rule.version }}</dd>
-      <dt ng-show="rule.buildID">Build ID:</dt>
-      <dd>{{ rule.buildID }}</dd>
-      <dt ng-show="rule.locale">Locale:</dt>
-      <dd>{{ rule.locale }}</dd>
-      <dt ng-show="rule.distribution">Distribution:</dt>
-      <dd>{{ rule.distribution }}</dd>
-      <dt ng-show="rule.buildTarget">Build Target:</dt>
-      <dd>{{ rule.buildTarget }}</dd>
-      <dt ng-show="rule.osVersion">OS Version:</dt>
-      <dd>{{ rule.osVersion }}</dd>
-      <dt ng-show="rule.instructionSet">Instruction Set:</dt>
-      <dd>{{ rule.instructionSet }}</dd>
-      <dt ng-show="rule.memory">Memory:</dt>
-      <dd>{{ rule.memory }}</dd>
-      <dt ng-show="rule.mig64 !== null && rule.mig64 !== undefined">
-        64-Bit Migration Opt-in
-        <span class="glyphicon glyphicon-question-sign"
-           title='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'>
-        </span>
-        :
-      </dt>
-      <dd ng-if="rule.mig64 === true">Yes</dd>
-      <dd ng-if="rule.mig64 === false">No</dd>
-      <dt ng-show="rule.distVersion">Dist Version:</dt>
-      <dd>{{ rule.distVersion }}</dd>
-      <dt ng-show="rule.update_type">Update type:</dt>
-      <dd>{{ rule.update_type }}</dd>
-      <dt ng-show="rule.headerArchitecture">Header Architecture:</dt>
-      <dd>{{ rule.headerArchitecture }}</dd>
-    </dl>
+    <div style="float: right">
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="alias" fieldtitle="Alias"
+                 help="Can be used in place of rule_id in REST operations"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="backgroundRate" fieldtitle="Background Rate"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="priority" fieldtitle="Priority"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="version" fieldtitle="Version"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="buildID" fieldtitle="Build ID"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="buildTarget" fieldtitle="Build Target"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="locale" fieldtitle="Locale(s)"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="distribution" fieldtitle="Distribution"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="distVersion" fieldtitle="Distribution Version"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="osVersion" fieldtitle="OS Version"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="instructionSet" fieldtitle="Instruction Set"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="memory" fieldtitle="Memory"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="mig64" fieldtitle="64-bit Migration Opt-in"
+                 help='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="update_type" fieldtitle="Update type"></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="headerArchitecture" fieldtitle="Header Architecture"></rulefield>
+    </div>
 
   </div>
   <div class="panel-footer" ng-show="rule_id">
     Changed by <code>{{ rule.changed_by }}</code>
-    <span moment="rule.timestamp"></span>
+    <span ng-bind-html="formatMoment(rule.timestamp)"></span>
   </div>
 
 </div>

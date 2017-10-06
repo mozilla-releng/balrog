@@ -1,6 +1,6 @@
 /*global sweetAlert */
 angular.module('app').controller('EditRuleScheduledChangeCtrl',
-function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
+function ($scope, $modalInstance, CSRF, Rules, Releases, sc, signoffRequirements) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
@@ -22,6 +22,16 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
   $scope.saving = false;
   $scope.calendar_is_open = false;
   $scope.sc_type = "time";
+
+  $scope.$watch('sc', function() {
+    if (signoffRequirements) {
+      var target = $scope.sc;
+      if ($scope.sc.change_type === "delete") {
+        target = undefined;
+      }
+      $scope.scheduledChangeSignoffsRequired = Rules.ruleSignoffsRequired(sc.original_row, target, signoffRequirements);
+    }
+  }, true);
 
   $scope.auto_time = false;
   $scope.toggleAutoTime = function(){
@@ -78,9 +88,10 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
       Rules.updateScheduledChange(sc.sc_id, sc, csrf_token)
       .success(function(response) {
         sc.sc_data_version = response.new_data_version;
+        sc.signoffs = response.signoffs;
         angular.copy(sc, $scope.original_sc);
         $scope.saving = false;
-        $modalInstance.close();
+        $modalInstance.close("update");
       })
       .error(function(response) {
         if (typeof response === 'object') {
@@ -91,12 +102,42 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
             "error"
           );
         }
+        else {
+          sweetAlert("Unknown error: " + response);
+        }
       })
       .finally(function() {
         $scope.saving = false;
       });
     });
+  };
 
+  $scope.delete = function() {
+    $scope.saving = true;
+    CSRF.getToken()
+    .then(function(csrf_token) {
+      Rules.deleteScheduledChange($scope.sc.sc_id, $scope.sc, csrf_token)
+      .success(function(response) {
+        $modalInstance.close("delete");
+      })
+      .error(function(response) {
+        if (typeof response === 'object') {
+          sweetAlert(
+            {
+              title: "Form submission error",
+              text: response.exception
+            },
+            function() { $scope.cancel(); }
+          );
+        }
+        else {
+          sweetAlert("Unknown error: " + response);
+        }
+      })
+      .finally(function() {
+        $scope.saving = false;
+      });
+    });
   };
 
   $scope.cancel = function () {

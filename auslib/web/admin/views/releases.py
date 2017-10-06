@@ -9,13 +9,14 @@ from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
 from auslib.db import OutdatedDataError, ReadOnlyError
 from auslib.web.admin.views.base import (
-    requirelogin, AdminView
+    requirelogin, AdminView, serialize_signoff_requirements
 )
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
     SignoffsView
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
+from auslib.web.common.releases import release_list, serialize_releases
 
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
@@ -358,6 +359,15 @@ class ReleaseHistoryView(HistoryView):
 
 
 class ReleasesAPIView(AdminView):
+    """/releases"""
+
+    def get(self, **kwargs):
+        releases = release_list(connexion.request)
+        for release in releases:
+            requirements = dbo.releases.getPotentialRequiredSignoffs([release])
+            release['required_signoffs'] = serialize_signoff_requirements(requirements)
+        return serialize_releases(connexion.request, releases)
+
     @requirelogin
     def _post(self, changed_by, transaction):
         if dbo.releases.getReleaseInfo(name=connexion.request.get_json().get("name"), transaction=transaction, nameOnly=True,

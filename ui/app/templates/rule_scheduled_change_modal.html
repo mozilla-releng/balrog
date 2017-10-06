@@ -224,6 +224,15 @@
       </div>
     </div>
     <div class="row">
+      <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
+        <div class="form-group" ng-class="{'has-error': errors.alias}">
+          <label for="id_distribution">Alias</label>
+          <input type="text" class="form-control" id="id_distribution" ng-model="sc.alias">
+          <p class="help-block" ng-show="errors.alias">{{ errors.alias.join(', ') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="row">
       <div class="col-md-12" ng-show="sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.comment}">
           <label for="id_comment">Comment</label>
@@ -232,6 +241,8 @@
         </div>
       </div>
     </div>
+
+    <show-signoff-requirements requirements="scheduledChangeSignoffsRequired"></show-signoff-requirements>
 
         <div class="form-group" ng-class="{'has-error': errors.exception}">
             <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>
@@ -247,6 +258,7 @@
     </form>
 </div>
 <div class="modal-footer">
+  <button class="btn btn-danger pull-left" ng-show="is_edit && !saving" ng-click="delete()">Delete Scheduled Change</button>
   <div ng-show="saving" small-loader></div>
   <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Schedule Changes</button>
   <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>

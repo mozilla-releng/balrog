@@ -1041,6 +1041,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {},
+                    "original_row": dbo.rules.getRule(1),
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
@@ -1065,6 +1066,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": 1, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "delete", "signoffs": {}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.rules.getRule(4),
                 },
                 {
                     "sc_id": 6, "when": 5500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 100,
@@ -1081,6 +1083,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.rules.getRule(6),
                 },
             ],
         }
@@ -1098,6 +1101,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {},
+                    "original_row": dbo.rules.getRule(1),
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
@@ -1122,6 +1126,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {},
+                    # No original row on "complete"
                 },
                 {
                     "sc_id": 5, "when": 600000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 4, "priority": None,
@@ -1130,6 +1135,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": 1, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "delete", "signoffs": {}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.rules.getRule(4),
                 },
                 {
                     "sc_id": 6, "when": 5500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 100,
@@ -1146,6 +1152,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.rules.getRule(6),
                 },
             ],
         }
@@ -1159,7 +1166,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 8})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "signoffs": {}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1184,7 +1191,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 8})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "signoffs": {}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1210,7 +1217,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 8})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "signoffs": {}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1322,6 +1329,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/rules/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1350,6 +1358,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/rules/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
 
         ret = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(ret), 1)
@@ -1373,6 +1382,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/rules/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
 
         ret = dbo.rules.scheduled_changes.history.t.select().where(dbo.rules.scheduled_changes.history.sc_id == 1).execute().fetchall()
         self.assertEquals(len(ret), 1)
@@ -1392,6 +1402,7 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(len(rows), 2)
         ret = self._post("/scheduled_changes/rules/3", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 3, "signoffs": {}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 3).execute().fetchall()
         self.assertEquals(len(r), 1)

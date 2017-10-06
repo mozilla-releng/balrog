@@ -1,5 +1,5 @@
 angular.module("app").controller("NewRuleScheduledChangeCtrl",
-function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes, sc) {
+function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes, sc, signoffRequirements) {
   $scope.names = [];
   Releases.getNames().then(function(names) {
     $scope.names = names;
@@ -29,6 +29,16 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
           $('#btn__auto-time').removeClass('active');
       }
   };
+
+  $scope.$watch('sc', function() {
+    if (signoffRequirements) {
+      var target = $scope.sc;
+      if ($scope.sc.change_type === "delete") {
+        target = undefined;
+      }
+      $scope.scheduledChangeSignoffsRequired = Rules.ruleSignoffsRequired($scope.sc.original_row, target, signoffRequirements);
+    }
+  }, true);
 
   $scope.toggleType = function(newType) {
     $scope.sc_type = newType;
@@ -77,8 +87,9 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
       .success(function(response) {
         $scope.sc.sc_data_version = 1;
         $scope.sc.sc_id = response.sc_id;
+        $scope.sc.signoffs = response.signoffs;
         $scope.scheduled_changes.push($scope.sc);
-        $modalInstance.close($scope.sc.change_type);
+        $modalInstance.close($scope.sc);
       })
       .error(function(response, status) {
         if (typeof response === 'object') {

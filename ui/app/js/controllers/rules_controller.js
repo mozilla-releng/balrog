@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs) {
 
   Page.setTitle('Rules');
 
@@ -14,6 +14,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.maxSize = 10;
   $scope.rules = [];
   $scope.pr_ch_filter = "";
+  $scope.show_sc = true;
 
   function loadPage(newPage) {
     Rules.getHistory($scope.rule_id, $scope.pageSize, newPage)
@@ -40,6 +41,18 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     .success(function(response) {
       $scope.rules_count = response.count;
 
+      Permissions.getCurrentUser()
+      .success(function(response) {
+        $scope.current_user = response["username"];
+        $scope.user_roles = Object.keys(response["roles"]);
+      })
+      .error(function(response) {
+        sweetAlert(
+          "Failed to load current user Roles:",
+          response
+        );
+      });
+
       Rules.getScheduledChanges(false)
       .success(function(sc_response) {
         response.rules.forEach(function(rule) {
@@ -48,10 +61,18 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             if (rule.rule_id === sc.rule_id) {
               // Note the big honking assumption that there's only one scheduled change.
               // At the time this code was written, this was enforced by the backend.
-              rule.scheduled_change = sc.change_type;
+              rule.scheduled_change = sc;
+              rule.scheduled_change.when = new Date(rule.scheduled_change.when);
             }
           });
           $scope.rules.push(rule);
+        });
+        sc_response.scheduled_changes.forEach(function(sc) {
+          if (sc.change_type === "insert") {
+            var rule = {"scheduled_change": sc};
+            rule.scheduled_change.when = new Date(rule.scheduled_change.when);
+            $scope.rules.push(rule);
+          }
         });
       });
 
@@ -81,6 +102,16 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           }
         });
       });
+
+      ProductRequiredSignoffs.getRequiredSignoffs()
+        .then(function(payload) {
+        $scope.signoffRequirements = payload.data.required_signoffs;
+      });
+      $scope.ruleSignoffsRequired = function(rule) {
+        if ($scope.signoffRequirements) {
+          return Rules.ruleSignoffsRequired(rule, undefined, $scope.signoffRequirements);
+        }
+      };
     })
     .error(function() {
       console.error(arguments);
@@ -91,41 +122,12 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   }
 
-  $scope.$watch('ordering_str', function(value) {
-    $scope.ordering = value.value.split(',');
-  });
-
   $scope.$watch('pr_ch_filter', function(value) {
     if (value) {
       localStorage.setItem("pr_ch_filter", value);
     }
     $scope.pr_ch_selected = value.split(',');
   });
-
-  if ($scope.rule_id) {
-    $scope.ordering_options = [
-      {
-        text: "Data Version",
-        value: "-data_version"
-      },
-    ];
-  } else {
-    $scope.ordering_options = [
-      {
-        text: "Priority, Version, Mapping",
-        value: "-priority,version,mapping"
-      },
-      {
-        text: "Product, Channel",
-        value: "product,channel"
-      },
-      {
-        text: "Mapping",
-        value: "mapping"
-      },
-    ];
-  }
-  $scope.ordering_str = $scope.ordering_options[0];
 
   $scope.filters = {
     search: $location.hash(),
@@ -135,22 +137,27 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     return !!(false || $scope.filters.search.length);
   };
 
-  function escapeRegExp(string){
-    return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-  }
+  $scope.orderRules = function(rule) {
+    // Rules are sorted by priority. Rules that are pending (ie: still just a Scheduled Change)
+    // will be inserted based on the priority in the Scheduled Change.
+    // Rules that have Scheduled updates or deletes will remain sorted on their current priority
+    // because it's more important to make it easy to assess current state than future state.
+    if (rule.priority === null || rule.priority === undefined) {
+        return rule.scheduled_change.priority * -1;
+    }
+    else {
+        return rule.priority * -1;
+    }
+  };
 
-  $scope.$watchCollection('filters.search', function(value) {
-    $location.hash(value);
-    Search.noticeSearchChange(
-      value,
-      ['product', 'channel', 'mapping', 'comment']
-    );
-  });
-
-  // I don't know how else to expose this to the templates
-  $scope.getWordRegexes = Search.getWordRegexes;
-  $scope.highlightSearch = Search.highlightSearch;
-  $scope.removeFilterSearchWord = Search.removeFilterSearchWord;
+  $scope.channelMatchesRule = function(channel, rule) {
+    if (rule.channel === channel) {
+      return true;
+    }
+    if (rule.channel.indexOf("*") > -1 && channel.startsWith(rule.channel.split("*")[0])) {
+      return true;
+    }
+  };
 
   $scope.filterBySelect = function(rule) {
     // Always return all entries if "all rules" is the filter
@@ -159,14 +166,45 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       return true;
     }
     else if ($scope.pr_ch_selected && $scope.pr_ch_selected.length > 1) {
-      product = rule.product === $scope.pr_ch_selected[0];
-      channel = rule.channel && rule.channel === $scope.pr_ch_selected[1];
-      return (product || !rule.product) && (channel || !rule.channel || (rule.channel && rule.channel.indexOf("*") > -1 && $scope.pr_ch_selected[1].startsWith(rule.channel.split("*")[0])));
+      selected_product = $scope.pr_ch_selected[0];
+      selected_channel = $scope.pr_ch_selected[1];
+      productMatches = false;
+      channelMatches = false;
+      if (rule.product === null || rule.product === "" || rule.product === selected_product) {
+        productMatches = true;
+      }
+      if ($scope.show_sc && rule.scheduled_change !== null) {
+        // If product is null in the Scheduled Change it could be because it is
+        // changing to null, or because the Rule is scheduled to be deleted.
+        // In the latter case, we don't consider it a match, because that will
+        // cause it to show up on the views of _all_ products.
+        if (rule.scheduled_change.product === selected_product ||
+            (rule.scheduled_change.change_type !== "delete" && !rule.scheduled_change.product)) {
+          productMatches = true;
+        }
+      }
+      if (rule.channel === null || rule.channel === "" || (rule.channel && $scope.channelMatchesRule(selected_channel, rule))) {
+        channelMatches = true;
+      }
+      if ($scope.show_sc && rule.scheduled_change !== null) {
+        if (rule.scheduled_change.channel && $scope.channelMatchesRule(selected_channel, rule.scheduled_change) ||
+            (rule.scheduled_change.change_type !== "delete" && !rule.scheduled_change.channel)) {
+          channelMatches = true;
+        }
+      }
+      return productMatches && channelMatches;
     }
     else {
       product = rule.product === $scope.pr_ch_selected[0];
       return (product || !rule.product);
     }
+  };
+
+  $scope.filterScheduledChanges = function(rule) {
+    if (! $scope.show_sc && rule.scheduled_change !== null && rule.scheduled_change.change_type === "insert") {
+      return false;
+    }
+    return true;
   };
 
   $scope.openUpdateModal = function(rule) {
@@ -183,6 +221,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         rule: function () {
           return rule;
         },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
         pr_ch_options: function() {
           return $scope.pr_ch_options;
         }
@@ -190,25 +231,49 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
   /* End openUpdateModal */
-  $scope.openNewScheduledDeleteModal = function(rule) {
+
+  $scope.openNewScheduledRuleModal = function() {
+
+    // prepopulate the product and channel if the Rules have already been filtered by one.
+    var product = "";
+    var channel = "";
+    if ($scope.pr_ch_selected[0].toLowerCase() !== "all rules") {
+      product = $scope.pr_ch_selected[0];
+      if ($scope.pr_ch_selected.length > 1) {
+        channel = $scope.pr_ch_selected[1];
+      }
+    }
 
     var modalInstance = $modal.open({
-      templateUrl: 'rule_scheduled_delete_modal.html',
+      templateUrl: 'rule_scheduled_change_modal.html',
       controller: 'NewRuleScheduledChangeCtrl',
       size: 'lg',
+      backdrop: 'static',
       resolve: {
         scheduled_changes: function() {
           return [];
         },
         sc: function() {
-          sc = angular.copy(rule);
-          sc["change_type"] = "delete";
-          return sc;
-        }
+          // blank new default rule
+          return {
+            base_row: undefined,
+            product: product,
+            channel: channel,
+            backgroundRate: 0,
+            priority: 0,
+            update_type: 'minor',
+            when: null,
+            change_type: 'insert',
+          };
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
-    modalInstance.result.then(function(change_type) {
-      rule.scheduled_change = change_type;
+    modalInstance.result.then(function(sc) {
+      var rule = {"scheduled_change": sc};
+      $scope.rules.push(rule);
     });
   };
 
@@ -225,13 +290,80 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         sc: function() {
           sc = angular.copy(rule);
+          sc.original_row = rule;
           sc["change_type"] = "update";
           return sc;
-        }
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
-    modalInstance.result.then(function(change_type) {
-      rule.scheduled_change = change_type;
+    modalInstance.result.then(function(sc) {
+      rule.scheduled_change = sc;
+    });
+  };
+
+  $scope.openNewScheduledDeleteModal = function(rule) {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'rule_scheduled_delete_modal.html',
+      controller: 'NewRuleScheduledChangeCtrl',
+      size: 'lg',
+      resolve: {
+        scheduled_changes: function() {
+          return [];
+        },
+        sc: function() {
+          return {
+            "base_row": rule,
+            "rule_id": rule.rule_id,
+            "data_version": rule.data_version,
+            "change_type": "delete"
+          };
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
+      }
+    });
+    modalInstance.result.then(function(sc) {
+      rule.scheduled_change = sc;
+    });
+  };
+
+  $scope.openEditScheduledRuleChangeModal = function(rule) {
+    var modalInstance = $modal.open({
+      templateUrl: 'rule_scheduled_change_modal.html',
+      controller: "EditRuleScheduledChangeCtrl",
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        sc: function() {
+          var sc = angular.copy(rule.scheduled_change);
+          sc.original_row = rule;
+          return sc;
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
+        rule: function() {
+          return rule;
+        },
+      }
+    });
+    modalInstance.result.then(function(action) {
+      if (action === "delete") {
+        rule.scheduled_change = null;
+        if (!rule.rule_id) {
+          $scope.rules = $scope.rules.filter(function(element) {
+            if (!element.rule_id) {
+              return false;
+            }
+            return true;
+          });
+        }
+      }
     });
   };
 
@@ -275,6 +407,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             _duplicate: false,
           };
         },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
         pr_ch_options: function() {
           return $scope.pr_ch_options;
         }
@@ -299,6 +434,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           delete copy.rule_id;
           copy._duplicate = true;
           return copy;
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
         },
         pr_ch_options: function() {
           return $scope.pr_ch_options;
@@ -360,6 +498,83 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
   /* End openDataModal */
+
+  $scope.signoff = function(sc) {
+    var modalInstance = $modal.open({
+      templateUrl: "signoff_modal.html",
+      controller: "SignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Rule";
+        },
+        service: function() {
+          return Rules;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        user_roles: function() {
+          return $scope.user_roles;
+        },
+        required_signoffs: function () {
+          return sc["required_signoffs"];
+        },
+        sc: function() {
+          return sc;
+        },
+        pk: function() {
+          return {"rule_id": sc["rule_id"]};
+        },
+        // TODO: this should really show the diff.
+        data: function() {
+          return {
+            "Product": sc["product"],
+            "Channel": sc["channel"],
+            "Mapping": sc["mapping"],
+            "Priority": sc["priority"],
+            "Background Rate": sc["backgroundRate"],
+          };
+        },
+      }
+    });
+  };
+
+  $scope.revokeSignoff = function(sc) {
+    $modal.open({
+      templateUrl: "revoke_signoff_modal.html",
+      controller: "RevokeSignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Rule";
+        },
+        service: function() {
+          return Rules;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        sc: function() {
+          return sc;
+        },
+        pk: function() {
+          // TODO: add alias here if it exists
+          return {"rule_id": sc["rule_id"]};
+        },
+        // TODO: this should really show the diff.
+        data: function() {
+          return {
+            "Product": sc["product"],
+            "Channel": sc["channel"],
+            "Mapping": sc["mapping"],
+            "Priority": sc["priority"],
+            "Background Rate": sc["backgroundRate"],
+          };
+        },
+      }
+    });
+  };
 
 
 });
