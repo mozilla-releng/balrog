@@ -87,6 +87,8 @@ describe("controller: RulesController", function() {
       .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
       .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
+      this.$httpBackend.expectGET('/api/required_signoffs/product')
+      .respond(200, '{"required_signoffs": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/channel')
       .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
       this.$httpBackend.flush();
@@ -102,6 +104,8 @@ describe("controller: RulesController", function() {
       .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
       .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
+      this.$httpBackend.expectGET('/api/required_signoffs/product')
+      .respond(200, '{"required_signoffs": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/channel')
       .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
       this.$httpBackend.flush();
@@ -121,6 +125,8 @@ describe("controller: RulesController", function() {
       .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
       .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
+      this.$httpBackend.expectGET('/api/required_signoffs/product')
+      .respond(200, '{"required_signoffs": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/channel')
       .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
       this.$httpBackend.flush();

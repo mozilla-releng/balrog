@@ -1,4 +1,4 @@
-angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers) {
+angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers, ProductRequiredSignoffs) {
   // these routes map to stubbed API endpoints in config/server.js
   var service = {
     getRules: function() {
@@ -87,6 +87,42 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers
       var url = ScheduledChanges.signoffsUrl("rules", sc_id);
       url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
       return $http.delete(url, data);
+    },
+    ruleSignoffsRequired: function(oldRule, newRule, productSignoffRequirements) {
+      // Limited support for the only globs that we encounter in
+      // balrog, which are of the form "foo*".
+      function matchGlob(glob, target) {
+        if (glob[glob.length-1] === '*') {
+          return target.slice(0, glob.length-1) === glob.slice(0, glob.length-1);
+        }
+        return target === glob;
+      }
+
+      // Identify signoffs matching oldRule and newRule
+      function matchesRule(rule, signOffRequirement) {
+        if (rule.product && signOffRequirement.product !== rule.product) {
+          return false;
+        }
+        if (rule.channel && !matchGlob(rule.channel, signOffRequirement.channel)) {
+          return false;
+        }
+        return true;
+      }
+      function matchesRules(signOffRequirement) {
+        var rules = [];
+        // Don't check old rule if we're newly creating a rule.
+        if (oldRule) {
+          rules.push(oldRule);
+        }
+        // Don't check new rule if we're deleting a rule.
+        if (newRule) {
+          rules.push(newRule);
+        }
+        return rules.some(function(rule) { return matchesRule(rule, signOffRequirement); });
+      }
+
+      var relevantRequirements = productSignoffRequirements.filter(matchesRules);
+      return ProductRequiredSignoffs.convertToMap(relevantRequirements);
     },
   };
   return service;

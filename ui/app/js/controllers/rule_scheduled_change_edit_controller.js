@@ -1,6 +1,6 @@
 /*global sweetAlert */
 angular.module('app').controller('EditRuleScheduledChangeCtrl',
-function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
+function ($scope, $modalInstance, CSRF, Rules, Releases, sc, signoffRequirements) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
@@ -22,6 +22,16 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
   $scope.saving = false;
   $scope.calendar_is_open = false;
   $scope.sc_type = "time";
+
+  $scope.$watch('sc', function() {
+    if (signoffRequirements) {
+      var target = $scope.sc;
+      if ($scope.sc.change_type === "delete") {
+        target = undefined;
+      }
+      $scope.scheduledChangeSignoffsRequired = Rules.ruleSignoffsRequired(sc.original_row, target, signoffRequirements);
+    }
+  }, true);
 
   $scope.auto_time = false;
   $scope.toggleAutoTime = function(){
