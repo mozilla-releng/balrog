@@ -15,7 +15,7 @@ angular.module("app").factory('Helpers', function() {
       for (var key in validation_fields) {
         var value = validation_fields[key];
         if (isNaN(value)) {
-          validation_results[key] = 'Invalid input for '+ key +'. Not an integer. '+ key +': "'+ value + '" is not a "'+ key + '"';
+          validation_results[key] = key + ' field value must be an integer. "' + value + '" is not an integer.';
           continue;
         }
         // Filter negative numbers and maximum, if specified.
