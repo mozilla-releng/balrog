@@ -1,6 +1,6 @@
 angular.module("app").controller("NewRuleScheduledChangeCtrl",
 function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes, sc, signoffRequirements, Helpers) {
-  
+
   $scope.names = [];
   Releases.getNames().then(function(names) {
     $scope.names = names;

@@ -1,6 +1,5 @@
 angular.module('app').controller('NewRuleCtrl',
-function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequirements, pr_ch_options, Helpers) {
-
+function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_ch_options, signoffRequirements, Helpers) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
