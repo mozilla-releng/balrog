@@ -45,6 +45,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
           "See fields highlighted in red.",
           "error"
         );
+        return;
       }
 
       Rules.addRule(rule, csrf_token)
