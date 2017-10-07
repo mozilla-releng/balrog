@@ -1,22 +1,29 @@
 angular
   .module("app")
-  .controller("HistoryController", function($scope, Releases, Rules, History, Page) {
+  .controller("HistoryController", function(
+    $scope,
+    Releases,
+    Rules,
+    History,
+    Page
+  ) {
     Page.setTitle("History");
 
     $scope.columnTab = 1;
+    $scope.currentPage = 1;
+    $scope.pageSize = 20;
+    $scope.maxSize = 10;
     $scope.rowtab = "#rulesHistory";
     $scope.filter = [];
     $scope.hs_startDate = "";
     $scope.hs_endDate = "";
-    $scope.hs_date = $scope.hs_startDate + $scope.hs_endDate;
     $scope.userInput = {
       username_email: "",
       hs_startDate: "",
-    //   hs_date: "",
+      //   hs_date: "",
       hs_pr_ch_filter: "All Rules"
     };
     $scope.search = {};
-
     $scope.loading = true;
     $scope.failed = false;
     // $scope.rules = [];
@@ -29,6 +36,9 @@ angular
 
     $scope.calendar_is_open = false;
 
+    $scope.allHistory = [];
+    $scope.rules_revisions = [];
+
     $scope.setWhen = function(newDate) {
       $scope.calendar_is_open = false;
       if (newDate >= new Date()) {
@@ -40,28 +50,18 @@ angular
       }
     };
 
-    $scope.searchItem = function() {
-      console.log($scope.userInput,"getting here");
-      var username_email = $scope.userInput.username_email;
-    //   var hs_date = $scope.userInput.hs_date;
-    //   var hs_pr_ch_filter = $scope.userInput.hs_pr_ch_filter;
-    //   if (username_email === "") {
-    //     sweetAlert(
-    //         "Form submission error",
-    //         "Please enter username or  in at least one of the fields ",
-    //         "error"
-    //       );
-    //   }
-    //   else {
-        
-          $scope.search = moment($scope.userInput.hs_startDate).format("YYYY/MM/DD");
-          console.log($scope.search,"jhgfjkl");
-    //   }
-    //   for (prop in $scope.userInput) {
-    //     console.log($scope.userInput.username_email, "prop");
-    //     $scope.search[prop] = $scope.userInput[prop];
-    //   }
-    };
+    // $scope.allHistory = [
+    //   {
+    //     changed_by: "Hope",
+
+    //   },
+    //   {
+    //     changed_by: "Ken",
+    //   },
+    //   {
+    //     changed_by: "Hope",
+    //   },
+    // ]
 
     //tabs
     $scope.setColumnTab = function(newTab) {
@@ -157,124 +157,81 @@ angular
                 localStorage.getItem("userInput.hs_pr_ch_filter")
               )
             ) {
-              $scope.pr_ch_filter = localStorage.getItem("userInput.hs_pr_ch_filter");
+              $scope.pr_ch_filter = localStorage.getItem(
+                "userInput.hs_pr_ch_filter"
+              );
             }
           });
       });
     });
-
+    $scope.pr_ch_selected = [];
     $scope.$watch("userInput.hs_pr_ch_filter", function(value) {
       if (value) {
         localStorage.setItem("userInput.hs_pr_ch_filter", value);
       }
       $scope.pr_ch_selected = value.split(",");
+      if ($scope.pr_ch_selected[0].toLowerCase() === "all rules") {
+        return true;
+      } else {
+        $scope.searchItem();
+      }
     });
+    $scope.searchItem = function() {
+      var username_email = $scope.userInput.username_email;
+      // var hs_pr_ch_filter = $scope.pr_ch_selected ;
+      if (
+        $scope.isShowUsername || $scope.isShowTimestamp || $scope.isShowPrCh
+      ) {
+        if (username_email != "") {
+          // $scope.search = moment($scope.userInput.hs_startDate).format("DD/MM/YYYY h:mm:ss a");
+          $scope.search = username_email;
+          console.log($scope.search);
+        } else if ($scope.hs_startDate || $scope.hs_endDate != "") {
+          $scope.search = moment($scope.userInput.hs_startDate).format(
+            "DD/MM/YYYY h:mm:ss a"
+          );
+          console.log($scope.search);
+        } else if ($scope.pr_ch_selected[0].toLowerCase() != "all rules") {
+          console.log("search product channel");
+        } else {
+          sweetAlert(
+            "Form submission error",
+            "Please enter value in all field/s or remove unused fields",
+            "error"
+          );
+        }
+      } else {
+        sweetAlert(
+          "Form submission error",
+          "There are no search filter fields",
+          "error"
+        );
+      }
 
-    $scope.histories = [];
-    $scope.allHistory = [];
+      // for (prop in $scope.userInput) {
+      //   console.log($scope.userInput.username_email, "prop");
+      //   $scope.search[prop] = $scope.userInput[prop];
+      // }
+    };
 
     History.getRulesHistory()
-      .success(function(response){
+      .success(function(response) {
         console.log("response", response);
-        $scope.response = {};
-        $scope.response.revisions = [];
-        $scope.response = response;
-        $scope.response.revisions.forEach(function(value, key) {
+        $scope.rules_history_count = response.count;
+
+        $scope.rules_revisions = response.revisions;
+        $scope.rules_revisions.forEach(function(value, key) {
           if (value.product) {
             $scope.allHistory.push(value);
-            console.log($scope.allHistory,"sfgjhkaldj");
+            // console.log($scope.allHistory,"sfgjhkaldj");
           }
-          // console.log(value.product,"value");
-        });  
-
+        });
+      })
+      .error(function() {
+        console.error(arguments);
+        $scope.failed = true;
+      })
+      .finally(function() {
+        $scope.loading = false;
       });
-    // Releases.getReleases()
-    // .success(function(response) {
-    //     var releases = response.releases;
-    //     releases.forEach(function(release) {
-    //         Releases.getHistory(release.name, $scope.pageSize, 1)
-    //         .success(function(response) {
-    //    $scope.release_revisions = response.revisions;
-    //     $scope.release_history_count = response.count;
-    //             // console.log(response.revisions,"response");
-    //             // if (response.revisons > 1) {
-    //             //     console.log({ name: release.name, releases: response });
-    //             // }
-    //         })
-    //         .error(function() {
-    //       console.error(arguments);
-    //       $scope.failed = true;
-    //     });
-    //     })
-    //         .error(function() {
-    //       console.error(arguments);
-    //       $scope.failed = true;
-    //     })
-    //     .finally(function() {
-    //       $scope.loading = false;
-    //     });
-    // });
-
-    //dummy data
-    // function getDummyData() {
-    //   return [
-    //     {
-    //       historyId: 184949,
-    //       object_name: "Tiger Nixon",
-    //       email: "Edinburgh@gmail.com",
-    //       start_date: "2011\/04\/25",
-    //       end_date: "2011\/04\/25"
-    //     },
-    //     {
-    //       historyId: 184949,
-    //       object_name: "Tiger Nixon",
-    //       email: "Edinburgh@gmail.com",
-    //       start_date: "2011\/04\/25",
-    //       end_date: "2011\/04\/25"
-    //     },
-    //     {
-    //       historyId: 184949,
-    //       object_name: "Tiger Nixon",
-    //       email: "Edinburgh@gmail.com",
-    //       start_date: "2011\/04\/25",
-    //       end_date: "2011\/04\/25"
-    //     },
-    //     {
-    //       historyId: 184949,
-    //       object_name: "Tiger Nixon",
-    //       email: "Edinburgh@gmail.com",
-    //       start_date: "2011\/04\/25",
-    //       end_date: "2011\/04\/25"
-    //     },
-    //     {
-    //       historyId: 184945549,
-    //       object_name: "Hope Niefxon",
-    //       email: "hope@gmail.com",
-    //       start_date: "2011\/04\/25",
-    //       end_date: "2011\/05\/25"
-    //     },
-    //     {
-    //       historyId: 18494549,
-    //       object_name: "Tiger Nggdggixon",
-    //       email: "Edinbsffurgh@gmail.com",
-    //       start_date: "2011\/04\/25",
-    //       end_date: "2011\/05\/25"
-    //     },
-    //     {
-    //       historyId: 1234949,
-    //       object_name: "Tigesffr Nixon",
-    //       email: "Edinburdfsfsgh@gmail.com",
-    //       start_date: "2011\/04\/25",
-    //       end_date: "2011\/04\/25"
-    //     },
-    //     {
-    //       historyId: 244,
-    //       object_name: "Tigerssfs Nixon",
-    //       email: "Edinburgsfssh@gmail.com",
-    //       start_date: "2011\/04\/25",
-    //       end_date: "2011\/05\/25"
-    //     }
-    //   ];
-    // }
-    // $scope.allHistory = getDummyData();
   });

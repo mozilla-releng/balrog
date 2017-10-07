@@ -94,7 +94,12 @@
       </div>
       <hr>
       <div ng-show="columnTabSet(1)">
-        <h1>Rules</h1>
+        <h1>Rules
+          <span class="count">
+            ({{ rules_history_count }} 
+            <span>total</span>)
+          </span>
+        </h1>
         <div class="rowtabwrap" ng-click="tabChange($event)">
           <a href="#rulesHistory" class="tab-control" ng-class="{'active':rowtab=='#rulesHistory'}">Rules History</a>
           <a href="#sc_rulesHistory" class="tab-control" ng-class="{'active':rowtab=='#sc_rulesHistory'}">Scheduled Rules History</a>
@@ -115,11 +120,8 @@
                     <th class="email">Changed By
                       <span class="{{Header[2]}}"></span>
                     </th>
-                    <th class="start_date">Start Date
+                    <th class="start_date">Date
                       <span class="{{Header[3]}}"></span>
-                    </th>
-                    <th class="end_date">End Date
-                      <span class="{{Header[4]}}"></span>
                     </th>
                     <th class="historyId"> ID
                       <span class="{{Header[5]}}"></span>
@@ -129,17 +131,21 @@
                 <tbody>
                   <tr ng-repeat="item in allHistory | filter:search">
                     <td>{{$index+1}}</td>
-                    <td>{{item.product}}</td>
+                    <td>{{item.product}},{{item.channel}}</td>
                     <td>{{item.changed_by}}</td>
-                    <td>{{item.start_date | date:'dd/MM/yyyy'}}</td>
-                    <td>{{item.end_date | date:'dd/MM/yyyy'}}</td>
+                    <td>{{item.timestamp | date:'dd/MM/yyyy h:mm:ss a'}}</td>
                     <td>{{item.change_id}}</td>
                   </tr>
                 </tbody>
               </table>
               <div class="pagination-container">
-                <pagination class="pagination-sm" total-items="history_name ? history_count : filtered_items.length" ng-model="currentPage"
-                  items-per-page="pageSize" max-size="maxSize" boundary-links="true">
+                <pagination 
+                  class="pagination-sm" 
+                  total-items="rules_history_count" 
+                  ng-model="currentPage"
+                  items-per-page="pageSize" 
+                  max-size="maxSize" 
+                  boundary-links="true">
                 </pagination>
               </div>
             </div>
