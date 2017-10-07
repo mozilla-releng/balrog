@@ -1,7 +1,7 @@
 /*global sweetAlert */
 angular.module('app').controller('EditRuleScheduledChangeCtrl',
 function ($scope, $modalInstance, CSRF, Rules, Releases, sc, signoffRequirements, Helpers) {
-  
+
   $scope.names = [];
   Releases.getNames().then(function(names) {
     $scope.names = names;
