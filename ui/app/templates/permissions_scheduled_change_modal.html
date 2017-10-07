@@ -22,6 +22,7 @@
             <textarea id="id_options" ng-model="permission.options" class="options-as-json"></textarea>
             <p class="help-block" ng-show="errors.options">{{ errors.options.join(', ') }}</p>
           </div>
+        <show-signoff-requirements requirements="permissionSignoffsRequired"></show-signoff-requirements>
         <div class="form-group" ng-class="{'has-error': errors.detail}">
             <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
         </div>
@@ -51,6 +52,7 @@
           <div class="panel-body">
             <textarea ng-model="permission.options" class="options-as-json"></textarea>
             <p class="help-block" ng-show="errors.permissions[permission.permission]">{{ errors.permissions[permission.permission].options.join(', ') }}</p>
+            <show-signoff-requirements requirements="scPermissionsSignoffRequirements[$index]"></show-signoff-requirements>
           </div>
       </div>
 

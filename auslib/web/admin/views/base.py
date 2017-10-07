@@ -83,3 +83,12 @@ class AdminView(MethodView):
         self.log.debug("processing DELETE request to %s" % request.path)
         with dbo.begin() as trans:
             return self._delete(*args, transaction=trans, **kwargs)
+
+
+def serialize_signoff_requirements(requirements):
+    dct = {}
+    for rs in requirements:
+        signoffs_required = max(dct.get(rs["role"], 0), rs["signoffs_required"])
+        dct[rs["role"]] = signoffs_required
+
+    return dct

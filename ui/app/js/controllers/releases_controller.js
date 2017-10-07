@@ -36,6 +36,13 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
     Releases.getReleases()
     .success(function(response) {
       $scope.releases = response.releases;
+      $scope.releases.forEach(function(release) {
+        // Ideally we'd convert this field to a Map, but we can't use
+        // Maps, so let's match the structure returned by
+        // RulesService#ruleSignoffsRequired.
+        var oldSignoffs = release.required_signoffs;
+        release.required_signoffs = {length: Object.keys(oldSignoffs).length, roles: oldSignoffs};
+      });
       $scope.releases_count = response.releases.length;
       $scope.page_size_pair = [{id: 20, name: '20'},
         {id: 50, name: '50'}, 
