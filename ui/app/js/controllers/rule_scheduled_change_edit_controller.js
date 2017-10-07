@@ -65,9 +65,9 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc, Helpers) {
     $scope.sc.when = ($scope.auto_time) ? asap : $scope.sc.when;
     
     // Evaluate the values entered for priority and background rate.
-    $scope.errors = Helpers.integerValidator({'priority': $scope.sc.priority, 'backgroundRate': $scope.sc.backgroundRate});
+    $scope.integer_validation_errors = Helpers.integerValidator({'priority': $scope.sc.priority, 'backgroundRate': $scope.sc.backgroundRate});
     // Stop sending the request if any number validation errors.
-    if($scope.errors.priority || $scope.errors.backgroundRate) {
+    if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.backgroundRate) {
       $scope.saving = false;
       sweetAlert(
         "Form submission error",
@@ -75,10 +75,8 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc, Helpers) {
         "error"
       );
       return;
-    } else {
-      // Re-initialise the 'error' variable if no validation errors found in UI validation.
-      $scope.errors = {};
     }
+    
     CSRF.getToken()
     .then(function(csrf_token) {
       sc = angular.copy($scope.sc);

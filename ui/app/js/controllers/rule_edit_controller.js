@@ -27,9 +27,9 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options, He
     $scope.saving = true;
 
     // Evaluate the values entered for priority and background rate.
-    $scope.errors = Helpers.integerValidator({'priority': $scope.rule.priority, 'backgroundRate': $scope.rule.backgroundRate});
+    $scope.integer_validation_errors = Helpers.integerValidator({'priority': $scope.rule.priority, 'backgroundRate': $scope.rule.backgroundRate});
     // Stop sending the request if any number validation errors.
-    if($scope.errors.priority || $scope.errors.backgroundRate) {
+    if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.backgroundRate) {
       $scope.saving = false;
       sweetAlert(
         "Form submission error",
@@ -37,10 +37,8 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options, He
         "error"
       );
       return;
-    } else {
-      // Re-initialise the 'error' variable if no validation errors found in UI validation.
-      $scope.errors = {};
     }
+    
     CSRF.getToken()
     .then(function(csrf_token) {
       // The data we need to submit is a tweaked version of just the Rule fields, so
