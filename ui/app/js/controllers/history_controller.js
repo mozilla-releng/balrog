@@ -2,31 +2,28 @@ angular
   .module("app")
   .controller("HistoryController", function(
     $scope,
+    $filter,
     Releases,
     Rules,
     History,
     Page
   ) {
     Page.setTitle("History");
+    $scope.rulesCheckbox = false;
 
     $scope.columnTab = 1;
     $scope.currentPage = 1;
     $scope.pageSize = 20;
     $scope.maxSize = 10;
-    $scope.rowtab = "#rulesHistory";
-    $scope.filter = [];
     $scope.hs_startDate = "";
     $scope.hs_endDate = "";
-    $scope.userInput = {
-      username_email: "",
-      hs_startDate: "",
-      //   hs_date: "",
-      hs_pr_ch_filter: "All Rules"
-    };
-    $scope.search = {};
+    $scope.filter = [];
+    $scope.username_email = "";
+    $scope.hs_pr_ch_filter = "All Rules";
+
+    $scope.search = [];
     $scope.loading = true;
     $scope.failed = false;
-    // $scope.rules = [];
 
     $scope.pr_ch_options = [];
 
@@ -34,9 +31,12 @@ angular
     $scope.isShowTimestamp = true;
     $scope.isShowPrCh = true;
 
+    $scope.tableResult = true;
+
     $scope.calendar_is_open = false;
 
     $scope.allHistory = [];
+    
     $scope.rules_revisions = [];
 
     $scope.setWhen = function(newDate) {
@@ -50,34 +50,20 @@ angular
       }
     };
 
-    // $scope.allHistory = [
-    //   {
-    //     changed_by: "Hope",
-
-    //   },
-    //   {
-    //     changed_by: "Ken",
-    //   },
-    //   {
-    //     changed_by: "Hope",
-    //   },
-    // ]
-
-    //tabs
-    $scope.setColumnTab = function(newTab) {
-      $scope.columnTab = newTab;
-    };
-
-    $scope.columnTabSet = function(tabNum) {
-      return $scope.columnTab === tabNum;
-    };
-
-    $scope.tabChange = function(e) {
-      if (e.target.nodeName === "A") {
-        $scope.rowtab = e.target.getAttribute("href");
-        e.preventDefault();
-      }
-    };
+    $scope.allHistorys = [
+      {
+        changed_by: "Hope",
+           timestamp: "20/09/2017"
+      },
+      {
+        changed_by: "Ken",
+    timestamp: "20/09/2017"
+      },
+      {
+        changed_by: "Hope",
+    timestamp: "20/06/2017"
+      },
+    ]
 
     //add filter options
     $scope.$watch("filtering_str", function(value) {
@@ -106,11 +92,11 @@ angular
     $scope.filterSelected = function(value) {
       if (value === "username_email") {
         $scope.isShowUsername = true;
-        $scope.userInput.username_email = "";
+        $scope.username_email = "";
       } else if (value === "timestamp") {
         $scope.isShowTimestamp = true;
       } else if (value === "product_channel") {
-        $scope.userInput.hs_pr_ch_filter = "All Rules";
+        $scope.hs_pr_ch_filter = "All Rules";
         $scope.isShowPrCh = true;
       }
     };
@@ -118,7 +104,7 @@ angular
     //remove filter
     $scope.hideUsername = function() {
       $scope.isShowUsername = $scope.isShowUsername ? false : true;
-      $scope.userInput.username_email = "";
+      $scope.username_email = "";
     };
     $scope.hideTimestamp = function() {
       $scope.isShowTimestamp = $scope.isShowTimestamp ? false : true;
@@ -128,15 +114,18 @@ angular
     };
 
     //for product channel filter
-    Rules.getRules().success(function(response) {
+    Rules.getRules()
+    .success(function(response) {
       $scope.rules = response.rules;
+      // console.log($scope.rules);
       var pairExists = function(pr, ch) {
         var _rules = $scope.rules.filter(function(rule) {
           return rule.product === pr && rule.channel === ch;
         });
         return _rules.length !== 0;
       };
-      Rules.getProducts().success(function(response_prs) {
+      Rules.getProducts()
+      .success(function(response_prs) {
         Rules.getChannels()
           .success(function(response_chs) {
             response_prs.product.forEach(function(pr) {
@@ -151,23 +140,23 @@ angular
           })
           .finally(function() {
             $scope.pr_ch_options.sort().unshift("All rules");
-            $scope.userInput.hs_pr_ch_filter = "All rules";
+            $scope.hs_pr_ch_filter = "All rules";
             if (
               $scope.pr_ch_options.includes(
-                localStorage.getItem("userInput.hs_pr_ch_filter")
+                localStorage.getItem("hs_pr_ch_filter")
               )
             ) {
               $scope.pr_ch_filter = localStorage.getItem(
-                "userInput.hs_pr_ch_filter"
+                "hs_pr_ch_filter"
               );
             }
           });
       });
     });
     $scope.pr_ch_selected = [];
-    $scope.$watch("userInput.hs_pr_ch_filter", function(value) {
+    $scope.$watch("hs_pr_ch_filter", function(value) {
       if (value) {
-        localStorage.setItem("userInput.hs_pr_ch_filter", value);
+        localStorage.setItem("hs_pr_ch_filter", value);
       }
       $scope.pr_ch_selected = value.split(",");
       if ($scope.pr_ch_selected[0].toLowerCase() === "all rules") {
@@ -176,23 +165,23 @@ angular
         $scope.searchItem();
       }
     });
+    
     $scope.searchItem = function() {
-      var username_email = $scope.userInput.username_email;
-      // var hs_pr_ch_filter = $scope.pr_ch_selected ;
-      if (
-        $scope.isShowUsername || $scope.isShowTimestamp || $scope.isShowPrCh
-      ) {
-        if (username_email != "") {
-          // $scope.search = moment($scope.userInput.hs_startDate).format("DD/MM/YYYY h:mm:ss a");
-          $scope.search = username_email;
+      // if($scope.rulesCheckbox){
+      //   console.log($scope.rulesCheckbox,"test");
+      //   return $scope.tableResult;
+      // }
+      
+      if ($scope.isShowUsername || $scope.isShowTimestamp || $scope.isShowPrCh) {
+        if ($scope.username_email !== "") {
+          $scope.search = $scope.username_email;
           console.log($scope.search);
-        } else if ($scope.hs_startDate || $scope.hs_endDate != "") {
-          $scope.search = moment($scope.userInput.hs_startDate).format(
-            "DD/MM/YYYY h:mm:ss a"
-          );
+        } else if ($scope.hs_startDate || $scope.hs_endDate !== "") {
+          $scope.search = $filter("dateRangefilter")($scope.allHistory, $scope.hs_startDate , $scope.hs_endDate);
           console.log($scope.search);
-        } else if ($scope.pr_ch_selected[0].toLowerCase() != "all rules") {
-          console.log("search product channel");
+        } else if ($scope.pr_ch_selected[0].toLowerCase() !== "all rules") {
+          $scope.search = $scope.hs_pr_ch_filter;
+          console.log($scope.search);
         } else {
           sweetAlert(
             "Form submission error",
@@ -207,23 +196,15 @@ angular
           "error"
         );
       }
-
-      // for (prop in $scope.userInput) {
-      //   console.log($scope.userInput.username_email, "prop");
-      //   $scope.search[prop] = $scope.userInput[prop];
-      // }
     };
 
     History.getRulesHistory()
       .success(function(response) {
-        console.log("response", response);
         $scope.rules_history_count = response.count;
-
         $scope.rules_revisions = response.revisions;
-        $scope.rules_revisions.forEach(function(value, key) {
-          if (value.product) {
-            $scope.allHistory.push(value);
-            // console.log($scope.allHistory,"sfgjhkaldj");
+        $scope.rules_revisions.forEach(function(revision) {
+          if (revision.product) {
+            $scope.allHistory.push(revision);
           }
         });
       })
