@@ -205,7 +205,7 @@
             </a>
           </span>
       </h5>
-      <span ng-show="(rule.fallbackMapping || (!rule_id && show_sc && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping !== null )) && (rule.backgroundRate === 100 || rule.scheduled_change.backgroundRate === 100)" >
+      <span ng-show="(rule.fallbackMapping || (!rule_id && show_sc && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping !== null )) && (rule.backgroundRate !== 100 || rule.scheduled_change.backgroundRate !== 100)" >
         <span class="alert-danger">
           <strong>Note!</strong> Fallback Mapping is unused when Background Rate is 100
         </span>        
