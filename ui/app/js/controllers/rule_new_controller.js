@@ -30,20 +30,16 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
       rule = angular.copy($scope.rule);
       
       // Evaluate the values entered for priority and background rate.
-      $scope.errors = Helpers.integerValidator({'priority': rule.priority, 'backgroundRate': rule.backgroundRate});
+      $scope.integer_validation_errors = Helpers.integerValidator({'priority': rule.priority, 'backgroundRate': rule.backgroundRate});
 
       // Stop sending the request if any number validation errors.
-      if($scope.errors.priority || $scope.errors.backgroundRate) {
+      if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.backgroundRate) {
         $scope.saving = false;
         sweetAlert(
           "Form submission error",
           "See fields highlighted in red.",
           "error"
         );
-        return;
-      } else {
-        // Re-initialise the 'error' variable if no validation errors found in UI validation.
-        $scope.errors = {};
       }
 
       Rules.addRule(rule, csrf_token)
