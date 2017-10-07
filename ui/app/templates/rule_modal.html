@@ -200,6 +200,14 @@
 
     <input type="hidden" name="data_version" ng-model="rule.data_version">
   </form>
+  <show-signoff-requirements requirements="ruleSignoffsRequired"></show-signoff-requirements>
+
+  <div class="form-group" ng-class="{'has-error': errors.detail}">
+    <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
+  </div>
+  <div class="form-group" ng-class="{'has-error': errors.exception}">
+    <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>
+  </div>
 
   <show-signoff-requirements requirements="ruleSignoffsRequired"></show-signoff-requirements>
 
