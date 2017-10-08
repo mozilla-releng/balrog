@@ -5,97 +5,96 @@
   <div class="row">
     <div class="col-md-12">
       <div class="row">
-        <div class="col-sm-12">
-          <label class="col-sm-2">Filter By:</label>
-          <div class="col-sm-8" ng-model="filter">
-            <div class="col-sm-6">
-                <ul class="main-filters">
-                  <li><label><input type="checkbox">Rules</label></li>
-                  <li><label><input type="checkbox">Releases</label></li>
-                  <li><label><input type="checkbox">Permissions</label></li>
-                </ul>
-            </div>
-            <fieldset><legend>Scheduled Change</legend>
-              <div class="col-sm-6">
-                    <ul class="main-filters">
-                      <li><label><input type="checkbox" ng-model="rulesCheckbox">Rules</label></li>
-                      <li><label><input type="checkbox">Releases</label></li>
-                      <li><label><input type="checkbox">Permissions</label></li>
+        <form>
+          <div class="col-sm-12">
+            <label class="col-sm-1">Filter By:</label>
+            <div class="col-sm-9" ng-model="filter">
+              <div class="row">
+                <div class="col-sm-4" ng-repeat="item in itemDisplayed">
+                  <fieldset>
+                    <legend>{{item.name}}</legend>
+                    <ul>
+                      <li ng-repeat="sub in item.subs">
+                        <input type="checkbox" ng-model="sub.selected" ng-change="optionToggled(item,item.subs)"><span>{{sub.sub}}</span>
+                      </li>
                     </ul>
+                  </fieldset>
+                </div>
               </div>
-            </fieldset>
-            
-            <div class="row" ng-show="isShowUsername">
-              <div class="col-md-5">
-                <label for="id_username">Username/ Email</label>
-                <fieldset>
-                  <input type="text" id="id_username" ng-model="username_email">
-                  <button class="remove" ng-click="hideUsername()">-</button>
-                </fieldset>
+              <div ng-show="optionToggled()">I'm ON when band choosed</div>
+
+
+              <div class="row" ng-show="isShowUsername">
+                <div class="col-md-5">
+                  <label for="id_username">Username/ Email</label>
+                  <fieldset>
+                    <input type="text" id="id_username" ng-model="username_email">
+                    <button class="remove" ng-click="hideUsername()">-</button>
+                  </fieldset>
+                </div>
               </div>
-            </div>
-            <div class="row" ng-show="isShowTimestamp">
-              <div class="col-md-5">
-                <label for="id_startdate">Start Date</label>
-                <div class="form-group dropdown">
-                  <div class="input-group" is-open="calendar_is_open" ng-class="{'has-error': date_error}">
-                    <span class="input-group-btn">
+              <div class="row" ng-show="isShowTimestamp">
+                <div class="col-md-5">
+                  <label for="id_startdate">Start Date</label>
+                  <div class="form-group dropdown">
+                    <div class="input-group" is-open="calendar_is_open" ng-class="{'has-error': date_error}">
+                      <span class="input-group-btn">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time">
                                     <i class="glyphicon glyphicon-calendar"></i>
                                 </button>
                             </span>
-                    <input type="text" id="id_when" class="form-control" data-ng-model="hs_startDate" ng-blur="setWhen()">
-                  </div>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                    <datetimepicker data-ng-model="hs_startDate" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
-                    />
-                  </ul>
-                  <p class="help-block" ng-show="date_error">{{ date_error.join(', ') }}</p>
+                      <input type="text" id="id_when" class="form-control" data-ng-model="hs_startDate" ng-blur="setWhen()">
+                    </div>
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                      <datetimepicker data-ng-model="hs_startDate" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
+                      />
+                    </ul>
+                    <p class="help-block" ng-show="date_error">{{ date_error.join(', ') }}</p>
 
+                  </div>
                 </div>
-              </div>
-              <div class="col-md-5">
-                <label for="id_startdate">End Date</label>
-                <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': date_error}">
-                  <div class="input-group">
-                    <span class="input-group-btn">
+                <div class="col-md-5">
+                  <label for="id_startdate">End Date</label>
+                  <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': date_error}">
+                    <div class="input-group">
+                      <span class="input-group-btn">
                             <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time">
                                 <i class="glyphicon glyphicon-calendar"></i>
                             </button>
                         </span>
-                    <input type="text" id="id_when" class="form-control" data-ng-model="hs_endDate" ng-blur="setWhen()">
+                      <input type="text" id="id_when" class="form-control" data-ng-model="hs_endDate" ng-blur="setWhen()">
+                    </div>
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                      <datetimepicker data-ng-model="hs_endDate" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
+                      />
+                    </ul>
+                    <p class="help-block" ng-show="date_error">{{ date_error.join(', ') }}</p>
                   </div>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                    <datetimepicker data-ng-model="hs_endDate" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
-                    />
-                  </ul>
-                  <p class="help-block" ng-show="date_error">{{ date_error.join(', ') }}</p>
+                </div>
+                <button class="remove remove-button" ng-click="hideTimestamp()">-</button>
+              </div>
+              <div class="row">
+                <div class="col-md-8" ng-show="isShowPrCh">
+                  <label for="hs_pr_ch_filter">Product/Channel</label>
+                  <fieldset>
+                    <select ng-model="hs_pr_ch_filter" name="hs_pr_ch_filter" ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
+                        </select>
+                    <button class="remove" ng-click="hidePrCh()">-</button>
+                  </fieldset>
                 </div>
               </div>
-              <button class="remove remove-button" ng-click="hideTimestamp()">-</button>
             </div>
-            <div class="row">
-              <div class="col-md-8" ng-show="isShowPrCh">
-                <label for="hs_pr_ch_filter">Product/Channel</label>
-                <fieldset>
-                  <select ng-model="hs_pr_ch_filter" name="hs_pr_ch_filter" ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
-                        </select>
-                  <button class="remove" ng-click="hidePrCh()">-</button>
-                </fieldset>
-              </div>
-              <div class="col-md-2">
-                <button class="btn btn-primary" ng-click="searchItem()">Search</button>
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-2
-             text-right">
-            <label>Add Filter:</label>
-            <select ng-model="filtering_str" name="filtering_str" ng-selected="filterSelected(filtering_str.value)" ng-options="hsy_filter.text for hsy_filter in filtering_options track by hsy_filter.value">
+            <div class="col-sm-2 text-right">
+              <label>Add Filter:</label>
+              <select ng-model="filtering_str" name="filtering_str" ng-selected="filterSelected(filtering_str.value)" ng-options="hsy_filter.text for hsy_filter in filtering_options track by hsy_filter.value">
             </select>
+            </div>
           </div>
-        </div>
+          <div class="col-md-2 col-md-offset-11">
+            <button class="btn btn-primary" ng-click="searchItem()">Search</button>
+          </div>
       </div>
+      </form>
       <hr>
       <div>
         <div class="content-wrapper">
@@ -123,7 +122,7 @@
                   </tr>
                 </thead>
                 <tbody ng-show="tableResult">
-                  <tr ng-repeat="item in allHistory | filter:search">
+                  <tr ng-repeat="item in search">
                     <td>{{$index+1}}</td>
                     <td>{{ item.product + ',' + item.channel }}</td>
                     <td>{{item.changed_by}}</td>
@@ -132,7 +131,7 @@
                   </tr>
                 </tbody>
               </table>
-              <div class="pagination-container">
+              <div class="pagination-container" ng-show="rules_history_count > pageSize">
                 <pagination class="pagination-sm" total-items="rules_history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
                   boundary-links="true">
                 </pagination>

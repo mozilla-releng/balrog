@@ -21,7 +21,6 @@ angular
     $scope.username_email = "";
     $scope.hs_pr_ch_filter = "All Rules";
 
-    $scope.search = [];
     $scope.loading = true;
     $scope.failed = false;
 
@@ -39,6 +38,56 @@ angular
     
     $scope.rules_revisions = [];
 
+    var newArr = [];
+    var list1 = {
+      name: "Rules",
+      subs: [{
+        sub: "Rules",
+        id: 1,
+        selected: false
+      }, {
+        sub: "Scheduled Changes",
+        id: 2,
+        selected: false
+      }],
+    };
+    var list2 = {
+      name: "Releases",
+      subs: [{
+        sub: "Releases",
+        id: 1,
+        selected: false
+      }, {
+        sub: "Scheduled Changes",
+        id: 2,
+        selected: false
+      }],
+    };
+    var list3 = {
+      name: "Permissions",
+      subs: [{
+        sub: "Permissions",
+        id: 1,
+        selected: false
+      }, {
+        sub: "Scheduled Changes",
+        id: 2,
+        selected: false
+      }],
+    };
+    newArr.push(list1);
+    newArr.push(list2);
+    newArr.push(list3);
+  
+    $scope.itemDisplayed = newArr;
+  
+  
+    $scope.optionToggled = function(item, subs) {
+      var trues = $filter("filter")($scope.itemDisplayed, {
+          value: true
+      });
+      return trues.length;
+  }
     $scope.setWhen = function(newDate) {
       $scope.calendar_is_open = false;
       if (newDate >= new Date()) {
@@ -50,20 +99,20 @@ angular
       }
     };
 
-    $scope.allHistorys = [
-      {
-        changed_by: "Hope",
-           timestamp: "20/09/2017"
-      },
-      {
-        changed_by: "Ken",
-    timestamp: "20/09/2017"
-      },
-      {
-        changed_by: "Hope",
-    timestamp: "20/06/2017"
-      },
-    ]
+    // $scope.search = [
+    //   {
+    //     changed_by: "Hope",
+    //        timestamp: "20/09/2017"
+    //   },
+    //   {
+    //     changed_by: "Ken",
+    // timestamp: "20/09/2017"
+    //   },
+    //   {
+    //     changed_by: "Hope",
+    // timestamp: "20/06/2017"
+    //   },
+    // ]
 
     //add filter options
     $scope.$watch("filtering_str", function(value) {
@@ -166,29 +215,60 @@ angular
       }
     });
     
-    $scope.searchItem = function() {
-      // if($scope.rulesCheckbox){
-      //   console.log($scope.rulesCheckbox,"test");
-      //   return $scope.tableResult;
-      // }
+    var newPage;
+    function loadHistory(newPage) {
+      return new Promise(function(resolve, reject){
+        History.getRulesHistory($scope.pageSize, newPage)
+        .success(function(response) {
+          console.log(response,"response");
+          $scope.rules_history_count = response.count;
+          $scope.rules_revisions = response.revisions;
+          var test= [];
+          $scope.rules_revisions.forEach(function(revision) {
+            console.log(revision,"revision");
+            if (revision.product) {
+             test.push(revision);
+              // resolve(revision);
+              // $scope.allHistory.push(revision);
+            }
+          });
+          resolve(test);
+        })
+        .error(function() {
+          console.error(arguments);
+          $scope.failed = true;
+        })
+        .finally(function() {
+          $scope.loading = false;
+        });
+      })
       
-      if ($scope.isShowUsername || $scope.isShowTimestamp || $scope.isShowPrCh) {
-        if ($scope.username_email !== "") {
-          $scope.search = $scope.username_email;
-          console.log($scope.search);
-        } else if ($scope.hs_startDate || $scope.hs_endDate !== "") {
-          $scope.search = $filter("dateRangefilter")($scope.allHistory, $scope.hs_startDate , $scope.hs_endDate);
-          console.log($scope.search);
-        } else if ($scope.pr_ch_selected[0].toLowerCase() !== "all rules") {
-          $scope.search = $scope.hs_pr_ch_filter;
-          console.log($scope.search);
-        } else {
-          sweetAlert(
-            "Form submission error",
-            "Please enter value in all field/s or remove unused fields",
-            "error"
-          );
-        }
+    }
+
+    $scope.searchItem = function() {
+      console.log($scope.allHistory,"historyif")
+      if ($scope.isShowUsername  || $scope.isShowTimestamp || $scope.isShowPrCh) {
+        $scope.$watch("currentPage", function(newPage) {
+          loadHistory(newPage).then(function(revision){
+            $scope.allHistory = revision;
+            if ($scope.username_email !== "") {
+              $scope.search = $scope.username_email;
+            } else if ($scope.hs_startDate !== "" || $scope.hs_endDate !== "") {
+              $scope.search = $filter("dateRangefilter")($scope.allHistory, $scope.hs_startDate , $scope.hs_endDate);
+              console.log($scope.search,"search")
+            } else if ($scope.pr_ch_selected[0].toLowerCase() !== "all rules") {
+              $scope.search = $scope.hs_pr_ch_filter;
+            } else {
+              sweetAlert(
+                "Form submission error",
+                "Please enter value in all field/s or remove unused fields",
+                "error"
+              );
+            }
+            $scope.$apply();
+          })
+        });
+        
       } else {
         sweetAlert(
           "Form submission error",
@@ -196,23 +276,9 @@ angular
           "error"
         );
       }
+      // $scope.$watch("currentPage", function(newPage) {
+      //       loadHistory(newPage);
+      //     });    
     };
-
-    History.getRulesHistory()
-      .success(function(response) {
-        $scope.rules_history_count = response.count;
-        $scope.rules_revisions = response.revisions;
-        $scope.rules_revisions.forEach(function(revision) {
-          if (revision.product) {
-            $scope.allHistory.push(revision);
-          }
-        });
-      })
-      .error(function() {
-        console.error(arguments);
-        $scope.failed = true;
-      })
-      .finally(function() {
-        $scope.loading = false;
-      });
+    
   });

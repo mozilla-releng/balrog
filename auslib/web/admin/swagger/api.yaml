@@ -360,6 +360,9 @@ paths:
       operationId: auslib.web.common.history_all.get_rules_histories
       consumes: []
       produces: [application/json]
+      parameters:
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/limitParam'
       responses:
         '200':
           description: Successfully fetched rules histories
