@@ -33,7 +33,7 @@ function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $
         rules: $scope.rules,
         products: $scope.pr_ch_options,
       };
-    }, 2000);
+    }, 400);
   }
 
   function loadPage(newPage) {
@@ -250,7 +250,7 @@ function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $
       }
       $scope.pr_ch_filter = filterString;
       $rootScope.pr_ch_filter = $scope.pr_ch_filter;
-    }, 2000);
+    }, 400);
   });
 
   $scope.locationChanger = function () {
