@@ -1,3 +1,4 @@
+<div loader ng-show="loading"></div>
 <div>
   <h2>
     <span>History/Logs</span>
@@ -10,19 +11,18 @@
             <label class="col-sm-1">Filter By:</label>
             <div class="col-sm-9" ng-model="filter">
               <div class="row">
-                <div class="col-sm-4" ng-repeat="item in itemDisplayed">
+                <div class="col-sm-4" ng-repeat="item in checkBoxes">
                   <fieldset>
                     <legend>{{item.name}}</legend>
                     <ul>
-                      <li ng-repeat="sub in item.subs">
-                        <input type="checkbox" ng-model="sub.selected" ng-change="optionToggled(item,item.subs)"><span>{{sub.sub}}</span>
+                      <li ng-repeat="subItem in item.subs">
+                        <input type="checkbox" ng-model="subItem.selected"><span>{{subItem.subname}}</span>
                       </li>
                     </ul>
                   </fieldset>
                 </div>
               </div>
-              <div ng-show="optionToggled()">I'm ON when band choosed</div>
-
+              <span style="color:green">{{msg}}</span>
 
               <div class="row" ng-show="isShowUsername">
                 <div class="col-md-5">
@@ -86,7 +86,7 @@
             </div>
             <div class="col-sm-2 text-right">
               <label>Add Filter:</label>
-              <select ng-model="filtering_str" name="filtering_str" ng-selected="filterSelected(filtering_str.value)" ng-options="hsy_filter.text for hsy_filter in filtering_options track by hsy_filter.value">
+              <select ng-model="add_filter" name="add_filter" ng-selected="filterSelected(add_filter.value)" ng-options="hsy_filter.text for hsy_filter in add_filtering_options track by hsy_filter.value">
             </select>
             </div>
           </div>
