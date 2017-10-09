@@ -240,6 +240,18 @@ class ScheduledChangeHistoryView(HistoryView):
             self.log.warning("Bad input: %s", msg)
             return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
 
+    def get_all(self):
+        try:
+            return self.get_revisions(
+                get_object_callback=lambda: ScheduledChangesView.get,
+                history_filters_callback=lambda sc_id: [True, True],
+                process_revisions_callback=self._process_revisions,
+                revisions_order_by=[self.history_table.timestamp.desc()],
+                obj_not_found_msg='Scheduled change does not exist')
+        except (ValueError, AssertionError) as msg:
+            self.log.warning("Bad input: %s", msg)
+            return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
+
     def _post(self, sc_id, transaction, changed_by):
         return self.revert_to_revision(
             get_object_callback=lambda: self._get_sc(sc_id),
