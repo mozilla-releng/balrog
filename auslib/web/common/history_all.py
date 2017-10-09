@@ -8,6 +8,7 @@ from auslib.web.common.history import HistoryHelper
 from sqlalchemy.sql.expression import null
 from auslib.web.common.rules import get_rules
 from auslib.web.common.releases import get_releases, process_release_revisions
+from auslib.web.admin.views.permissions import PermissionScheduledChangeHistoryView
 
 
 log = logging.getLogger(__name__)
@@ -41,3 +42,6 @@ def get_releases_histories():
     history_table = dbo.releases.history
     return _get_histories(history_table, get_releases, process_release_revisions)
 
+def get_scheduled_change_permissions_histories():
+    """GET /history/scheduled_changes/permissions"""
+    return PermissionScheduledChangeHistoryView().get_all()

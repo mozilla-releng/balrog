@@ -417,10 +417,6 @@ def scheduled_change_product_rs_history_get(sc_id):
     """GET /scheduled_changes/required_signoffs/product/<int:sc_id>/revisions"""
     return ProductRequiredSignoffScheduledChangeHistoryView().get(sc_id)
 
-def scheduled_change_permissions_histories():
-    """GET /history/scheduled_changes/permissions"""
-    return PermissionScheduledChangeHistoryView().get_all()
-
 
 def scheduled_change_product_rs_history_post(sc_id):
     """POST /scheduled_changes/required_signoffs/product/<int:sc_id>/revisions"""
