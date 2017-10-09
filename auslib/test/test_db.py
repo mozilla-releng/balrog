@@ -6,6 +6,7 @@ import sys
 from tempfile import mkstemp
 import unittest
 import re
+import pytest
 
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
@@ -156,6 +157,21 @@ def create_db():
         theSelf.engine = create_engine(theSelf.dburi)
         return theSelf.engine
     return the_db
+
+
+@pytest.fixture(scope='class')
+def create_db(request):
+    class CreateDB(MemoryDatabaseMixin):
+        def get_engine(self):
+            MemoryDatabaseMixin.setUp(self)
+            self.engine = create_engine(self.dburi)
+            return self.engine
+    get_db = CreateDB()
+    request.cls.engine = get_db.get_engine()
+    request.cls.metadata = MetaData(request.cls.engine)
+    request.cls.table = Table('test', request.cls.metadata, Column('id', Integer, primary_key=True),
+                              Column('foo', Integer))
+    request.cls.metadata.create_all()
 
 
 @pytest.mark.usefixtures('create_db')
