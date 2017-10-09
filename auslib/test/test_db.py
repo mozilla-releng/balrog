@@ -167,18 +167,19 @@ def create_db(request):
             self.engine = create_engine(self.dburi)
             return self.engine
     get_db = CreateDB()
-    request.cls.engine = get_db.get_engine()
-    request.cls.metadata = MetaData(request.cls.engine)
-    request.cls.table = Table('test', request.cls.metadata, Column('id', Integer, primary_key=True),
-                              Column('foo', Integer))
-    request.cls.metadata.create_all()
+    request.engine = get_db.get_engine()
+    # request.cls.metadata = MetaData(request.cls.engine)
+    # request.cls.table = Table('test', request.cls.metadata, Column('id', Integer, primary_key=True),
+    #                           Column('foo', Integer))
+    # request.cls.metadata.create_all()
 
 
 @pytest.mark.usefixtures('create_db')
 class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
-        self.metadata = MetaData(create_db()(self))
+        create_db(TestAUSTransaction)
+        self.metadata = MetaData(TestAUSTransaction.engine)
         self.table = Table('test', self.metadata, Column('id', Integer, primary_key=True),
                            Column('foo', Integer))
         self.metadata.create_all()
