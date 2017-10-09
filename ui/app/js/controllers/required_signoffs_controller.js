@@ -1,5 +1,5 @@
 angular.module("app").controller('RequiredSignoffsController',
-function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions, Page) {
+function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions, Page) {
 
   Page.setTitle('Signoffs');
 
@@ -42,6 +42,33 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
       }
     }
   }, true);
+
+  $scope.undoRemoveRole = function(role, rs, csrf_token) {
+    var roleName = role.$key;
+    var product = Object.keys(rs)[0];
+    var chans = rs[product].channels;
+    var channel = Object.keys(chans)[0];
+
+    $scope.required_signoffs[product].channels[channel][roleName].sc.signoffs_required = 1;
+    $scope.required_signoffs[product].channels[channel][roleName].sc.change_type = "update";
+    var update_sc_id = $scope.required_signoffs[product].channels[channel][roleName].sc.sc_id;
+    var data = {
+      "product": $scope.product, 
+      "role": roleName,
+      "data_version": $scope.required_signoffs[product].channels[channel][roleName].data_version};
+    data["when"] = new Date().getTime() + 5000;
+    data["sc_data_version"] = $scope.required_signoffs[product].channels[channel][roleName].sc.sc_data_version;
+    data["signoffs_required"] = $scope.required_signoffs[product].channels[channel][roleName].sc.signoffs_required;
+
+    CSRF.getToken()
+    .then(function(csrf_token) {
+      data["csrf_token"] = csrf_token;
+      ProductRequiredSignoffs.deleteScheduledChange(update_sc_id, data)
+      .success(function(response) {
+      });
+    });
+
+  };
 
   ProductRequiredSignoffs.getRequiredSignoffs()
   .success(function(response) {
