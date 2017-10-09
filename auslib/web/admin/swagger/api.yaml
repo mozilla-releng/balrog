@@ -378,6 +378,20 @@ paths:
         '200':
           description: Successfully fetched releases histories
 
+  /history/permissions:
+    get:
+      summary: Returns a list of all permissions histories.
+      description: >
+        Returns a list of all permissions histories.
+      tags:
+        - "History permissions"
+      operationId: auslib.web.common.history_all.get_permissions_histories
+      consumes: []
+      produces: [application/json]
+      responses:
+        '200':
+          description: Successfully fetched permissions histories
+
   /history/scheduled_changes/permissions:
     get:
       summary: Returns a list of all permissions scheduled_changes histories.
