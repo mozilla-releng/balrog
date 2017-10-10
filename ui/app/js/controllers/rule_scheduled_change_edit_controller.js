@@ -1,6 +1,6 @@
 /*global sweetAlert */
 angular.module('app').controller('EditRuleScheduledChangeCtrl',
-function ($scope, $modalInstance, CSRF, Rules, Releases, sc, signoffRequirements) {
+function ($scope, $modalInstance, CSRF, Rules, Releases, sc, signoffRequirements, Helpers) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
@@ -74,6 +74,19 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc, signoffRequirements
     asap.setMinutes(asap.getMinutes() + 5);
     $scope.sc.when = ($scope.auto_time) ? asap : $scope.sc.when;
 
+    // Evaluate the values entered for priority and background rate.
+    $scope.integer_validation_errors = Helpers.integerValidator({'priority': $scope.sc.priority, 'backgroundRate': $scope.sc.backgroundRate});
+    // Stop sending the request if any number validation errors.
+    if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.backgroundRate) {
+      $scope.saving = false;
+      sweetAlert(
+        "Form submission error",
+        "See fields highlighted in red.",
+        "error"
+      );
+      return;
+    }
+    
     CSRF.getToken()
     .then(function(csrf_token) {
       sc = angular.copy($scope.sc);
