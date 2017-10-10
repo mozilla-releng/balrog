@@ -99,7 +99,7 @@
           <span class="label label-danger" ng-show="role['sc'] !== null && role['sc']['change_type'] === 'delete'">Pending Delete</span>
           <button class="btn btn-xs btn-primary" ng-show="role['sc'] !== null && role['sc']['change_type'] === 'delete'"
                   ng-click="undoRemoveRole(role, required_signoffs)">
-            Undo delete
+            Cancel delete
           </button>
 
           <div style="float: right" ng-show="role['sc'] !== null">
