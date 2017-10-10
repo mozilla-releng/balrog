@@ -5,6 +5,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
   $scope.loading = true;
   $scope.users = users;
   $scope.currentItemTab = 1;
+
   $scope.is_edit = is_edit;
   $scope.permission = {
     permission: '',
@@ -172,7 +173,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
   };
 
   $scope.addPermission = function() {
-    // $scope.permission.options = $scope.permission.options_as_json;
+    $scope.permission.options = $scope.permission.options_as_json;
     $scope.saving = true;
     CSRF.getToken()
     .then(function(csrf_token) {

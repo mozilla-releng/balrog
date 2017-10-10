@@ -73,6 +73,7 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc, perm
 
 
   $scope.addScheduledPermission = function() {
+    $scope.permission.options = $scope.permission.options_as_json;
     date = new Date();
     permission_sc = angular.copy($scope.permission);
     permission_sc.when = date.getTime() + 5000;
