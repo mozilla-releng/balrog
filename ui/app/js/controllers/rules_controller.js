@@ -33,7 +33,7 @@ function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $
         rules: $scope.rules,
         products: $scope.pr_ch_options,
       };
-    }, 400);
+    }, 2000);
   }
 
   function loadPage(newPage) {
@@ -250,10 +250,11 @@ function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $
       }
       $scope.pr_ch_filter = filterString;
       $rootScope.pr_ch_filter = $scope.pr_ch_filter;
-    }, 400);
+    }, 2000);
   });
 
   $scope.locationChanger = function () {
+    $rootScope.pr_ch_filter = $scope.pr_ch_filter;
     changeLocationWithFilterParams($scope.pr_ch_filter);
   };
 
