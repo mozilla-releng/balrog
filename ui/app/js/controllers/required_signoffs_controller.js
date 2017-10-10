@@ -43,8 +43,7 @@ function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredS
     }
   }, true);
 
-  $scope.undoRemoveRole = function(role, rs) {
-    var roleName = role.$key;
+  $scope.undoRemoveRole = function(roleName, rs) {
     var product = Object.keys(rs)[0];
     var channel = Object.keys(rs[product].channels)[0];
 
