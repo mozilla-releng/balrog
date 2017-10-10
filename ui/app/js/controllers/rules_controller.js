@@ -1,6 +1,5 @@
 angular.module("app").controller('RulesController',
-
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers) {
+function($scope,$rootScope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers) {
 
   Page.setTitle('Rules');
 
