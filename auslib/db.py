@@ -741,7 +741,10 @@ class History(AUSTable):
                 raise ValueError("data_version queried for non-versioned table")
 
             where = [self.data_version == data_version]
+            self.log.debug("Querying for change_id by:")
+            self.log.debug("data_version: %s", data_version)
             for col in column_names.keys():
+                self.log.debug("%s: %s", column_names[col], column_values[col])
                 where.append(column_names[col] == column_values[col])
 
             # To improve query efficiency we first get the change_id,
@@ -755,13 +758,14 @@ class History(AUSTable):
             change_ids = self.select(columns=[self.change_id], where=where,
                                      transaction=transaction)
             if len(change_ids) != 1:
-                self.log.debug("Found %s changes, should have been 1", len(change_ids))
+                self.log.debug("Found %s changes when not querying by change_id, should have been 1", len(change_ids))
                 return None
             change_id = change_ids[0]["change_id"]
 
+        self.log.debug("Querying for full change by change_id %s", change_id)
         changes = self.select(where=[self.change_id == change_id], transaction=transaction)
         if len(changes) != 1:
-            self.log.debug("Found %s changes, should have been 1", len(changes))
+            self.log.debug("Found %s changes when querying by change_id, should have been 1", len(changes))
             return None
         return changes[0]
 
