@@ -1,15 +1,15 @@
 angular.module("app").controller('ReleasesController',
-function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Page) {
+function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Page, Helpers) {
 
   Page.setTitle('Releases');
 
   $scope.loading = true;
   $scope.failed = false;
-
   $scope.release_name = $routeParams.name;
-
+  $scope.storedPageSize = JSON.parse(localStorage.getItem('releases_page_size'));
+  $scope.pageSize = $scope.storedPageSize? $scope.storedPageSize.id : 20;
+  $scope.page_size = {id: $scope.pageSize, name: $scope.storedPageSize? $scope.storedPageSize.name : $scope.pageSize};
   $scope.currentPage = 1;
-  $scope.pageSize = 10;
   $scope.maxSize = 10;
 
   function loadPage(newPage) {
@@ -44,6 +44,9 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
         release.required_signoffs = {length: Object.keys(oldSignoffs).length, roles: oldSignoffs};
       });
       $scope.releases_count = response.releases.length;
+      $scope.page_size_pair = [{id: 20, name: '20'},
+        {id: 50, name: '50'}, 
+        {id: $scope.releases_count, name: 'All'}];
     })
     .error(function() {
       console.error(arguments);
@@ -84,6 +87,10 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
 
   $scope.filters = {
     search: $location.hash(),
+  };
+
+  $scope.selectPageSize = function() {
+    Helpers.selectPageSize($scope, 'releases_page_size');
   };
 
   $scope.hasFilter = function() {
