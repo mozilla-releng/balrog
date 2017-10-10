@@ -419,6 +419,20 @@ paths:
       responses:
         '200':
           description: Successfully fetched permissions histories
+  
+  /history/scheduled_changes/releases:
+    get:
+      summary: Returns a list of all releases scheduled_changes histories.
+      description: >
+        Returns a list of all releases scheduled_changes histories.
+      tags:
+        - "History releases scheduled_changes"
+      operationId: auslib.web.common.history_all.get_releases_scheduled_change_histories
+      consumes: []
+      produces: [application/json]
+      responses:
+        '200':
+          description: Successfully fetched releases histories
 
   /history/diff/release/{change_id}/{field}:
     get:
