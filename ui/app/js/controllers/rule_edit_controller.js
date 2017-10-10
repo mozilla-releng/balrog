@@ -1,6 +1,6 @@
 /*global sweetAlert */
 angular.module('app').controller('RuleEditCtrl',
-function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequirements, pr_ch_options) {
+function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequirements, pr_ch_options, Helpers) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
@@ -32,6 +32,19 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequiremen
 
   $scope.saveChanges = function () {
     $scope.saving = true;
+
+    // Evaluate the values entered for priority and background rate.
+    $scope.integer_validation_errors = Helpers.integerValidator({'priority': $scope.rule.priority, 'backgroundRate': $scope.rule.backgroundRate});
+    // Stop sending the request if any number validation errors.
+    if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.backgroundRate) {
+      $scope.saving = false;
+      sweetAlert(
+        "Form submission error",
+        "See fields highlighted in red.",
+        "error"
+      );
+      return;
+    }
 
     CSRF.getToken()
     .then(function(csrf_token) {
