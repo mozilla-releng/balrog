@@ -47,9 +47,14 @@
       <label for="include_sc">Include Scheduled Changes?</label>
       <input type="checkbox" id="include_sc" ng-model="show_sc" checked>
     </div>
+    <div class="row page-size" ng-show="rules_count > 20">
+      <label>Page Size: </label>
+      <select ng-model="page_size" ng-name="page_size"
+        ng-options="page_size.name for page_size in page_size_pair track by page_size.id"
+        ng-change="selectPageSize()"></select>
+    </div>
   </div>
 </div>
-
 <div class="panel panel-default" style="clear:right"
      ng-repeat="rule in filtered_items = (rules | filter: filterScheduledChanges | filter: filterBySelect) | orderBy:orderRules | startFrom:(disableFilter || !rule_id) && ((currentPage - 1)*pageSize) | limitTo:pageSize">
   <div class="panel-heading">

@@ -1,5 +1,6 @@
 angular.module("app").controller('RulesController',
-function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs) {
+
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers) {
 
   Page.setTitle('Rules');
 
@@ -8,9 +9,10 @@ function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $
 
   $scope.rule_id = parseInt($routeParams.id, 10);
   $scope.pr_ch_options = [];
-
   $scope.currentPage = 1;
-  $scope.pageSize = 20;
+  $scope.storedPageSize = JSON.parse(localStorage.getItem('rules_page_size'));
+  $scope.pageSize = $scope.storedPageSize? $scope.storedPageSize.id : 20;
+  $scope.page_size = {id: $scope.pageSize, name: $scope.storedPageSize? $scope.storedPageSize.name : $scope.pageSize};
   $scope.maxSize = 10;
   $scope.rules = [];
   $scope.pr_ch_filter = $rootScope.pr_ch_filter || "";
@@ -60,6 +62,9 @@ function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $
     Rules.getRules()
     .success(function(response) {
       $scope.rules_count = response.count;
+      $scope.page_size_pair = [{id: 20, name: '20'},
+        {id: 50, name: '50'}, 
+        {id: $scope.rules_count, name: 'All'}];
 
       Permissions.getCurrentUser()
       .success(function(response) {
@@ -149,6 +154,10 @@ function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $
     }
     $scope.pr_ch_selected = value.split(',');
   });
+
+  $scope.selectPageSize = function() {
+    Helpers.selectPageSize($scope, 'rules_page_size');
+  };
 
   $scope.filters = {
     search: $location.hash(),
