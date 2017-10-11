@@ -1450,7 +1450,7 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(len(rows), 2)
         ret = self._post("/scheduled_changes/rules/3", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 3, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 3, "signoffs": {'bill': 'releng'}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 3).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1468,7 +1468,7 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(db_data, expected)
         rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
             dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(rows), 0)
+        self.assertEquals(len(rows), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeCantRemoveProductWithoutPermission(self):

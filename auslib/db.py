@@ -1108,6 +1108,20 @@ class ScheduledChangeTable(AUSTable):
         self.conditions.validate(condition_columns)
         self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
 
+    def auto_signoff(self, changed_by, transaction, sc_id, dryrun, columns):
+        # - If the User scheduling a change only holds one Role, record a signoff with it.
+        # - If the User scheduling a change holds more than one Role, we cannot a Signoff, because
+        #   we don't know which Role we'd want to signoff with. The user will need to signoff
+        #   manually in these cases.
+        user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
+        required_roles = set()
+        required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
+        if required_signoffs:
+            required_roles.update([rs["role"] for rs in required_signoffs])
+        if len(user_roles) == 1 and user_roles[0]["role"] in required_roles:
+            self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
+                                 sc_id=sc_id, role=user_roles[0].get("role"))
+
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
         # We'll be retrieving condition information for each Scheduled Change,
@@ -1140,19 +1154,8 @@ class ScheduledChangeTable(AUSTable):
             if not self._dataVersionsAreSynced(sc_id, transaction):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s",
                                                  sc_id)
+            self.auto_signoff(changed_by, transaction, sc_id, dryrun, columns)
 
-            # - If the User scheduling a change only holds one Role, record a signoff with it.
-            # - If the User scheduling a change holds more than one Role, we cannot a Signoff, because
-            #   we don't know which Role we'd want to signoff with. The user will need to signoff
-            #   manually in these cases.
-            user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
-            required_roles = set()
-            required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
-            if required_signoffs:
-                required_roles.update([rs["role"] for rs in required_signoffs])
-            if len(user_roles) == 1 and user_roles[0]["role"] in required_roles:
-                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
-                                     sc_id=sc_id, role=user_roles[0].get("role"))
             return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
@@ -1200,18 +1203,21 @@ class ScheduledChangeTable(AUSTable):
 
         base_what = self._prefixColumns(base_what)
         base_what["scheduled_by"] = changed_by
-        super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
+        ret = super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
+        sc_id = ret.last_updated_params()["sc_id"]
 
         for sc_id in affected_ids:
             if not self._dataVersionsAreSynced(sc_id, transaction):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s" % sc_id)
+        self.auto_signoff(changed_by, transaction, sc_id, dryrun, base_columns)
 
         for sc_id in affected_ids:
             where_signOff = {"sc_id": sc_id}
             signOffs = self.signoffs.select(where=where_signOff, transaction=transaction, columns=["sc_id", "username"])
             for signOff in signOffs:
-                where_signOff.update({"username": signOff["username"]})
-                self.signoffs.delete(where=where_signOff, changed_by=changed_by, transaction=transaction)
+                if signOff["username"] != changed_by:
+                    where_signOff.update({"username": signOff["username"]})
+                    self.signoffs.delete(where=where_signOff, changed_by=changed_by, transaction=transaction)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         conditions_where = []

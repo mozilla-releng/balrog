@@ -1430,7 +1430,7 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/releases/2", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {'bill': 'releng'}})
 
         r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1456,7 +1456,7 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(len(rows), 2)
         ret = self._post("/scheduled_changes/releases/4", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {'bill': 'releng'}})
 
         r = dbo.releases.scheduled_changes.t.select().where(
             dbo.releases.scheduled_changes.sc_id == 4).execute().fetchall()
@@ -1472,7 +1472,7 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(db_data, expected)
         rows = dbo.releases.scheduled_changes.signoffs.t.select(). \
             where(dbo.releases.scheduled_changes.signoffs.sc_id == 4).execute().fetchall()
-        self.assertEquals(len(rows), 0)
+        self.assertEquals(len(rows), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingDeleteRelease(self):
