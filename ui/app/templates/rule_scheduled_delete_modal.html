@@ -9,7 +9,7 @@
       <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': errors.when}">
         <div class="input-group">
           <span class="input-group-btn">
-            <label class="btn btn-default" ng-click="toggleAutoTime()" id="btn__auto-time"><input type="checkbox" ng-show="false" ng-model="auto_time" auto-complete="off">ASAP</label>
+            <label class="btn btn-default btn-asap" ng-click="toggleAutoTime()" id="btn__auto-time"><input type="checkbox" ng-show="false" ng-model="auto_time" auto-complete="off">ASAP</label>
             <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time"><i class="glyphicon glyphicon-calendar"></i></button>
           </span>
           <!-- Manual edits of this field throw deprecation warnings, but no errors. This is because the
