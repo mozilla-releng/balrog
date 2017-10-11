@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers) {
 
   Page.setTitle('Rules');
 
@@ -14,10 +14,11 @@ function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $
   $scope.page_size = {id: $scope.pageSize, name: $scope.storedPageSize? $scope.storedPageSize.name : $scope.pageSize};
   $scope.maxSize = 10;
   $scope.rules = [];
-  $scope.pr_ch_filter = $rootScope.pr_ch_filter || "";
+  $scope.pr_ch_filter = "";
   $scope.show_sc = true;
 
   function changeLocationWithFilterParams(filterParamsString) {
+    localStorage.setItem("pr_ch_filter", filterParamsString);
     var pr_ch_array = filterParamsString.split(',');
     if (pr_ch_array[0].toLowerCase() === "all rules" || $scope.rule_id) {
       $location.path('/rules').search({});
@@ -28,14 +29,18 @@ function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $
     }
   }
 
-  function populateRulesProductsChannels() {
-    $timeout(function () {
-      return {
-        rules: $scope.rules,
-        products: $scope.pr_ch_options,
-      };
-    }, 2000);
-  }
+  if($location.url().split('=')[1]) {
+    var urlParams = "";
+   $location.url().split('?')[1].split('&').map((str)=> {     
+    if(urlParams.length > 1) {
+      urlParams += ',';
+      urlParams += str.split('=')[1];
+    } else {
+      urlParams += str.split('=')[1];
+    }
+  });
+  changeLocationWithFilterParams(urlParams);
+} 
 
   function loadPage(newPage) {
     Rules.getHistory($scope.rule_id, $scope.pageSize, newPage)
@@ -122,8 +127,7 @@ function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $
           $scope.pr_ch_options.sort().unshift("All rules");
           $scope.pr_ch_filter = "All rules";
           if ($scope.pr_ch_options.includes(localStorage.getItem('pr_ch_filter'))){
-            $scope.pr_ch_filter = $rootScope.pr_ch_filter || localStorage.getItem('pr_ch_filter') || "All rules";
-            $rootScope.pr_ch_filter = $scope.pr_ch_filter;
+            $scope.pr_ch_filter = localStorage.getItem('pr_ch_filter') || "All rules";
           }
         });
       });
@@ -236,33 +240,7 @@ function($scope, $rootScope, $routeParams, $location, $timeout, Rules, Search, $
     return true;
   };
 
-  $scope.$on('$routeChangeSuccess', function () {
-    $timeout(function () {
-      populateRulesProductsChannels();
-      var filterString = '';
-      if (!$routeParams.product && !$routeParams.channel) {
-        filterString = $rootScope.pr_ch_filter || 'All rules';
-        if ($rootScope.pr_ch_filter) {
-          changeLocationWithFilterParams($rootScope.pr_ch_filter);
-        }
-      }
-      if ($routeParams.product && !$routeParams.channel && $scope.pr_ch_options.includes($routeParams.product)) {
-        filterString = $routeParams.product;
-      } else if ($routeParams.product && !$routeParams.channel && !$scope.pr_ch_options.includes($routeParams.product)) {
-        filterString = 'All rules';
-      }
-      if ($routeParams.product && $routeParams.channel && $scope.pr_ch_options.includes($routeParams.product + ',' + $routeParams.channel)) {
-        filterString = $routeParams.product + ',' + $routeParams.channel;
-      } else if ($routeParams.product && $routeParams.channel && !$scope.pr_ch_options.includes($routeParams.product + ',' + $routeParams.channel)) {
-        filterString = 'All rules';
-      }
-      $scope.pr_ch_filter = filterString;
-      $rootScope.pr_ch_filter = $scope.pr_ch_filter;
-    }, 2000);
-  });
-
   $scope.locationChanger = function () {
-    $rootScope.pr_ch_filter = $scope.pr_ch_filter;
     changeLocationWithFilterParams($scope.pr_ch_filter);
   };
 
