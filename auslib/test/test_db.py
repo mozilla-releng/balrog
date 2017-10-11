@@ -4577,6 +4577,7 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': 'bar'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'rule_id':"))
 
     def testOnUpdate(self):
         def doit():

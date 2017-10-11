@@ -397,14 +397,13 @@ class AUSTable(object):
         if self.versioned:
             data['data_version'] = 1
         query = self._insertStatement(**data)
-
-        if self.onInsert:
-            self.onInsert(self, "INSERT", changed_by, query, trans)
-
         ret = trans.execute(query)
         if self.history:
             for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
                 trans.execute(q)
+        if self.onInsert:
+            pk_column = self.t.primary_key.columns.keys()[0]
+            self.onInsert(self, "INSERT", changed_by, query, trans, pk_column, ret.inserted_primary_key)
         return ret
 
     def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
@@ -2533,7 +2532,7 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
 
 
 def make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls):
-    def bleet(table, type_, changed_by, query, transaction):
+    def bleet(table, type_, changed_by, query, transaction, *table_args):
         body = ["Changed by: %s" % changed_by]
         if type_ == "UPDATE":
             body.append("Row(s) to be updated as follows:")
@@ -2558,6 +2557,7 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
                 body.append(UTF8PrettyPrinter().pformat(row))
         elif type_ == "INSERT":
             body.append("Row to be inserted:")
+            query.parameters[table_args[0]] = table_args[1]
             body.append(UTF8PrettyPrinter().pformat(query.parameters))
 
         subj = "%s to %s detected %s" % (type_, table.t.name, generate_random_string(6))
