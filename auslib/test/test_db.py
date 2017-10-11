@@ -150,13 +150,13 @@ class TestVerifySignoffs(unittest.TestCase):
         verify_signoffs(required, signoffs)
 
 
-# @pytest.fixture(scope='session')
-# def create_db():
-#     def the_db(theSelf):
-#         MemoryDatabaseMixin.setUp(theSelf)
-#         theSelf.engine = create_engine(theSelf.dburi)
-#         return theSelf.engine
-#     return the_db
+@pytest.fixture(scope='session')
+def create_db():
+    def the_db(theSelf):
+        MemoryDatabaseMixin.setUp(theSelf)
+        theSelf.engine = create_engine(theSelf.dburi)
+        return theSelf.engine
+    return the_db
 
 
 @pytest.fixture(scope='class')
@@ -167,11 +167,11 @@ def create_db(request):
             self.engine = create_engine(self.dburi)
             return self.engine
     get_db = CreateDB()
-    request.cls.engine = get_db.get_engine()
-    request.cls.metadata = MetaData(request.cls.engine)
-    request.cls.table = Table('test', request.cls.metadata, Column('id', Integer, primary_key=True),
-                              Column('foo', Integer))
-    request.cls.metadata.create_all()
+    request.engine = get_db.get_engine()
+    # request.cls.metadata = MetaData(request.cls.engine)
+    # request.cls.table = Table('test', request.cls.metadata, Column('id', Integer, primary_key=True),
+    #                           Column('foo', Integer))
+    # request.cls.metadata.create_all()
 
 
 @pytest.mark.usefixtures('create_db')
@@ -289,6 +289,20 @@ class TestTableMixin(object):
         self.test.t.insert().execute(id=2, foo=22, data_version=1)
         self.test.t.insert().execute(id=3, foo=11, data_version=2)
 
+
+@pytest.fixture(scope='class')
+def test_austable(request):
+    class CreateDB(TestTableMixin, MemoryDatabaseMixin):
+        def get_engine(self):
+            MemoryDatabaseMixin.setUp(self)
+            TestTableMixin.setUp(self)
+            return self
+    get_db = CreateDB()
+    sef = get_db.get_engine()
+    request.cls.engine = sef.engine
+    request.cls.metadata = sef.metadata
+    request.cls.test = sef.test
+    request.cls.testAutoincrement = sef.testAutoincrement
 
 class TestMultiplePrimaryTableMixin(object):
 
