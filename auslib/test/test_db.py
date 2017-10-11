@@ -326,7 +326,7 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
     def testInsertWithChangeCallback(self):
         shared = []
-        self.test.onInsert = lambda *x: shared.extend(x)
+        self.test.onInsert = lambda *x, **y: shared.extend(x)
         what = {'id': 4, 'foo': 1}
         self.test.insert(changed_by='bob', **what)
         # insert adds data_version to the query, so we need to add that before comparing
