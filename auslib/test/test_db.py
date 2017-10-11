@@ -150,13 +150,13 @@ class TestVerifySignoffs(unittest.TestCase):
         verify_signoffs(required, signoffs)
 
 
-@pytest.fixture(scope='session')
-def create_db():
-    def the_db(theSelf):
-        MemoryDatabaseMixin.setUp(theSelf)
-        theSelf.engine = create_engine(theSelf.dburi)
-        return theSelf.engine
-    return the_db
+# @pytest.fixture(scope='session')
+# def create_db():
+#     def the_db(theSelf):
+#         MemoryDatabaseMixin.setUp(theSelf)
+#         theSelf.engine = create_engine(theSelf.dburi)
+#         return theSelf.engine
+#     return the_db
 
 
 @pytest.fixture(scope='class')
@@ -167,11 +167,11 @@ def create_db(request):
             self.engine = create_engine(self.dburi)
             return self.engine
     get_db = CreateDB()
-    request.engine = get_db.get_engine()
-    # request.cls.metadata = MetaData(request.cls.engine)
-    # request.cls.table = Table('test', request.cls.metadata, Column('id', Integer, primary_key=True),
-    #                           Column('foo', Integer))
-    # request.cls.metadata.create_all()
+    request.cls.engine = get_db.get_engine()
+    request.cls.metadata = MetaData(request.cls.engine)
+    request.cls.table = Table('test', request.cls.metadata, Column('id', Integer, primary_key=True),
+                              Column('foo', Integer))
+    request.cls.metadata.create_all()
 
 
 @pytest.mark.usefixtures('create_db')
@@ -218,18 +218,36 @@ class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(trans.conn.closed, True, "Connection not closed after __exit__ is called")
 
 
+@pytest.fixture(scope='class')
+def test_austransaction_require_real_file(request):
+    class CreateDB(NamedFileDatabaseMixin):
+        def get_engine(self):
+            NamedFileDatabaseMixin.setUp(self)
+            self.engine = create_engine(self.dburi)
+            return self.engine
+    get_db = CreateDB()
+    request.cls.engine = get_db.get_engine()
+    request.cls.metadata = MetaData(request.cls.engine)
+    request.cls.table = Table('test', request.cls.metadata, Column('id', Integer, primary_key=True),
+                              Column('foo', Integer))
+    request.cls.metadata.create_all()
+
+@pytest.mark.usefixtures('test_austransaction_require_real_file')
 class TestAUSTransactionRequiresRealFile(unittest.TestCase, NamedFileDatabaseMixin):
 
     def setUp(self):
-        NamedFileDatabaseMixin.setUp(self)
-        self.engine = create_engine(self.dburi)
-        self.metadata = MetaData(self.engine)
-        self.table = Table('test', self.metadata, Column('id', Integer, primary_key=True),
-                           Column('foo', Integer))
+        # NamedFileDatabaseMixin.setUp(self)
+        # self.engine = create_engine(self.dburi)
+        # self.metadata = MetaData(self.engine)
+        # self.table = Table('test', self.metadata, Column('id', Integer, primary_key=True),
+        #                    Column('foo', Integer))
         self.metadata.create_all()
         self.table.insert().execute(id=1, foo=33)
         self.table.insert().execute(id=2, foo=22)
         self.table.insert().execute(id=3, foo=11)
+
+    def tearDown(self):
+        self.table.delete().execute()
 
     def testTransactionNotChangedUntilCommit(self):
         trans = AUSTransaction(self.metadata.bind.connect())
@@ -294,11 +312,15 @@ class TestMultiplePrimaryTableMixin(object):
         self.test.t.insert().execute(id1=2, id2=2, foo=44, data_version=1)
 
 
+@pytest.mark.usefixtures('test_austable')
 class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         TestTableMixin.setUp(self)
+
+    def tearDown(self):
+        self.test.t.delete().execute()
 
     def testColumnMirroring(self):
         self.assertTrue(self.test.id in self.test.table.get_children())
@@ -425,6 +447,18 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         # to the id condition above.
         self.assertEquals(len(shared[3]._whereclause.get_children()), 2)
 
+@pytest.fixture(scope='class')
+def test_austable_require_real_file(request):
+    class CreateDB(TestTableMixin, NamedFileDatabaseMixin, MemoryDatabaseMixin):
+        def get_engine(self):
+            NamedFileDatabaseMixin.setUp(self)
+            TestTableMixin.setUp(self)
+            return self
+    get_db = CreateDB()
+    sef = get_db.get_engine()
+    request.cls.engine = sef.engine
+    request.cls.metadata = sef.metadata
+    request.cls.test = sef.test
 
 class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileDatabaseMixin):
 
