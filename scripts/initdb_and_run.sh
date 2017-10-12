@@ -4,17 +4,11 @@ export LOCAL_DUMP="/app/scripts/prod_db_dump.sql"
 
 if [ ! -e /app/.cache/mysql/db.done ]; then
     echo "Initializing DB..."
-    python scripts/manage-db.py -d mysql://balrogadmin:balrogadmin@balrogdb/balrog create
-    python scripts/import-db.py
+    python scripts/get-prod-db-dump.py
 
-    if [ -e "$LOCAL_DUMP" ]; then
-      db_source="cat $LOCAL_DUMP"
-    else
-      db_source="bunzip2 -c /app/scripts/sample-data.sql.bz2"
-    fi
-
-    eval "$db_source" | mysql -h balrogdb -u balrogadmin --password=balrogadmin balrog
+    cat $LOCAL_DUMP | mysql -h balrogdb -u balrogadmin --password=balrogadmin balrog
     mysql -h balrogdb -u balrogadmin --password=balrogadmin -e "insert into permissions (username, permission, data_version) values (\"balrogadmin\", \"admin\", 1)" balrog
+    mysql -h balrogdb -u balrogadmin --password=balrogadmin -e "insert into user_roles (username, role, data_version) values (\"balrogadmin\", \"releng\", 1)" balrog
     touch /app/.cache/mysql/db.done
     echo "Done"
 
