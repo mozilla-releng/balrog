@@ -447,6 +447,20 @@ paths:
       responses:
         '200':
           description: Successfully fetched required_signoffs histories
+  
+  /history/permissions_required_signoffs:
+    get:
+      summary: Returns a list of all permissions_required_signoffs histories.
+      description: >
+        Returns a list of all permissions_required_signoffs histories.
+      tags:
+        - "History"
+      operationId: auslib.web.common.history_all.get_permissions_required_signoffs_histories
+      consumes: []
+      produces: [application/json]
+      responses:
+        '200':
+          description: Successfully fetched permissions_required_signoffs histories
 
   /history/diff/release/{change_id}/{field}:
     get:
