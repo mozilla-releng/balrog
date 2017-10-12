@@ -10,6 +10,10 @@ angular.module("app").factory('Helpers', function() {
       }
       return object;
     },
+    selectPageSize: function($scope, controller_name){
+      $scope.pageSize = $scope.page_size.id;
+      localStorage.setItem(controller_name, JSON.stringify($scope.page_size));
+    },
   };
   return service;
 });

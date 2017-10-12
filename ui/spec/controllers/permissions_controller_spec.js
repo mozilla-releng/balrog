@@ -125,6 +125,7 @@ describe("controller: PermissionsController", function() {
       .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.expectGET('/api/users/roles')
       .respond(200, JSON.stringify(sample_all_roles));
+      this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.scope.openNewModal();
     });
 
@@ -139,6 +140,7 @@ describe("controller: PermissionsController", function() {
       .respond(200, JSON.stringify(sample_roles));
       this.$httpBackend.expectGET('/api/users/roles')
       .respond(200, JSON.stringify(sample_all_roles));
+      this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.scope.openUpdateModal({username: "peterbe"});
     });
   });
