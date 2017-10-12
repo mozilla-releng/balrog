@@ -15,7 +15,7 @@ if [ -z $dockerhub_password ]; then
     echo "Dockerhub password not set, can't continue!"
     exit 1
 fi
-if [ ${#errors[@]} -eq 0 ]; then
+if [ ${#tags[@]} -eq 0 ]; then
     echo "Must pass at least one tag"
     exit 2
 fi
