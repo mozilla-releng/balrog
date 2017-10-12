@@ -12,6 +12,7 @@ from auslib.web.admin.views.permissions import UsersView, PermissionScheduledCha
 from auslib.web.admin.views.rules import RuleScheduledChangeHistoryView
 from auslib.web.admin.views.releases import ReleaseScheduledChangeHistoryView
 from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsHistoryAPIView
+from auslib.web.admin.views.required_signoffs import PermissionsRequiredSignoffsHistoryAPIView
 
 
 log = logging.getLogger(__name__)
@@ -65,3 +66,6 @@ def get_releases_scheduled_change_histories():
 
 def get_product_required_signoffs_histories():
     return ProductRequiredSignoffsHistoryAPIView().get_all()
+
+def get_permissions_required_signoffs_histories():
+    return PermissionsRequiredSignoffsHistoryAPIView().get_all()
