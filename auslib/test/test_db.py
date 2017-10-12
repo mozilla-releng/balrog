@@ -474,11 +474,17 @@ def test_austable_require_real_file(request):
     request.cls.metadata = sef.metadata
     request.cls.test = sef.test
 
+@pytest.mark.usefixtures('test_austable_require_real_file')
+# @pytest.mark.skip()
 class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileDatabaseMixin):
 
     def setUp(self):
         NamedFileDatabaseMixin.setUp(self)
         TestTableMixin.setUp(self)
+
+    def tearDown(self):
+        self.test.t.delete().execute()
+        self.test.delete().execute()
 
     def testDeleteWithTransaction(self):
         trans = AUSTransaction(self.metadata.bind.connect())
@@ -523,11 +529,16 @@ class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileD
 #        self.assertRaises(TransactionError, trans2.commit)
 
 
+@pytest.mark.usefixtures('test_austable')
 class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         TestTableMixin.setUp(self)
+
+    def tearDown(self):
+        self.test.t.delete().execute()
+        self.test.history.t.delete().execute()
 
     def testHasHistoryTable(self):
         self.assertTrue(self.test.history)
