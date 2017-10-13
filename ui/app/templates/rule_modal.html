@@ -45,17 +45,23 @@
     </div>
     <div class="row">
       <div class="col-md-6">
-        <div class="form-group" ng-class="{'has-error': errors.backgroundRate}">
+        <div class="form-group" ng-class="{'has-error': errors.backgroundRate || integer_validation_errors.backgroundRate }">
           <label for="id_rate">Rate</label>
           <input type="text" class="form-control" id="id_rate" ng-model="rule.backgroundRate">
           <p class="help-block" ng-show="errors.backgroundRate">{{ errors.backgroundRate.join(', ') }}</p>
+          <p class="help-block" ng-show="integer_validation_errors.backgroundRate">
+            {{ integer_validation_errors.backgroundRate }}
+          </p>
         </div>
       </div>
       <div class="col-md-6">
-        <div class="form-group" ng-class="{'has-error': errors.priority}">
+        <div class="form-group" ng-class="{'has-error': errors.priority || integer_validation_errors.priority }">
           <label for="id_priority">Priority</label>
           <input type="text" class="form-control" id="id_priority" ng-model="rule.priority">
           <p class="help-block" ng-show="errors.priority">{{ errors.priority.join(', ') }}</p>
+          <p class="help-block" ng-show="integer_validation_errors.priority">
+            {{ integer_validation_errors.priority }}
+          </p>
         </div>
       </div>
     </div>
