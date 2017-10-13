@@ -31,16 +31,16 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
 
   if($location.url().split('=')[1]) {
     var urlParams = "";
-   $location.url().split('?')[1].split('&').map(function(str){     
-    if(urlParams.length > 1) {
-      urlParams += ',';
-      urlParams += str.split('=')[1];
-    } else {
-      urlParams += str.split('=')[1];
-    }
-  });
-  changeLocationWithFilterParams(urlParams);
-} 
+    $location.url().split('?')[1].split('&').map(function(str) { 
+      if(urlParams.length > 1) {
+        urlParams += ',';
+        urlParams += str.split('=')[1];
+      } else {
+        urlParams += str.split('=')[1];
+      }
+    });
+    changeLocationWithFilterParams(urlParams);
+  } 
 
   function loadPage(newPage) {
     Rules.getHistory($scope.rule_id, $scope.pageSize, newPage)
