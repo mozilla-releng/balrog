@@ -47,8 +47,6 @@ function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredS
     var product = Object.keys(rs)[0];
     var channel = Object.keys(rs[product].channels)[0];
 
-    $scope.required_signoffs[product].channels[channel][roleName].sc.signoffs_required = 1;
-
     CSRF.getToken()
     .then(function(csrf_token) {
       var sc_id = $scope.required_signoffs[product].channels[channel][roleName].sc.sc_id;
