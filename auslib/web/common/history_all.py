@@ -1,4 +1,5 @@
 import json
+import connexion
 import logging
 from auslib.global_state import dbo
 from connexion import problem, request
@@ -18,15 +19,17 @@ from auslib.web.admin.views.required_signoffs import PermissionsRequiredSignoffs
 log = logging.getLogger(__name__)
 
 def _get_filters(obj, history_table):
-    if history_table and obj:
-        return [True, True]
+    input_dict = _get_input_dict()
+    #use try to handle exceptions for cases where supplied parameter is not a key in histoyr_table
+    where = [getattr(history_table, f) == input_dict.get(f) for f in input_dict]
+    return where
 
 def _get_histories(table, obj, process_revisions_callback=None):
     history_table = table
     order_by = [history_table.timestamp.desc()]
     history_helper = HistoryHelper(hist_table=history_table,
                                    order_by=order_by,
-                                   get_object_callback=lambda: get_rules,
+                                   get_object_callback=lambda: obj,
                                    history_filters_callback=_get_filters,
                                    obj_not_found_msg='No history found',
                                    process_revisions_callback=process_revisions_callback)
@@ -39,6 +42,8 @@ def _get_histories(table, obj, process_revisions_callback=None):
 
 def get_rules_histories():
     history_table = dbo.rules.history
+    result = _get_histories(history_table, get_rules)
+    # print ('NSGSHSNSNSHSHS', len(json.loads(result.data)['revisions']))
     return _get_histories(history_table, get_rules)
 
 
@@ -69,3 +74,20 @@ def get_product_required_signoffs_histories():
 
 def get_permissions_required_signoffs_histories():
     return PermissionsRequiredSignoffsHistoryAPIView().get_all()
+
+def _get_input_dict():
+    args = dict(connexion.request.args)
+    input_dict = {}
+
+    for key in args:
+        input_dict[key] = connexion.request.args.get(key)
+    return input_dict
+
+def filter_helper(obj):
+    req = _get_input_dict()
+    keys = req['keys']
+    keys_values = req['values']
+    for key in keys:
+        if obj[key] != keys_values[key]:
+            return False
+    return True
