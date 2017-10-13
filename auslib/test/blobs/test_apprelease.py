@@ -2762,7 +2762,6 @@ class TestSchema7Blob(unittest.TestCase):
     "showPrompt": false,
     "showNeverForVersion": true,
     "promptWaitTime": 12345,
-    "backgroundInterval": 123,
     "fileUrls": {
         "c1": {
             "partials": {
@@ -2826,7 +2825,6 @@ class TestSchema7Blob(unittest.TestCase):
             "showPrompt": false,
             "showNeverForVersion": true,
             "promptWaitTime": 12345,
-            "backgroundInterval": 123,
             "fileUrls": {
                 "c1": {
                     "partials": {
@@ -2894,7 +2892,7 @@ class TestSchema7Blob(unittest.TestCase):
         expected_header = '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="None" ' \
             'buildID="50" detailsURL="http://example.org/details/l" showPrompt="false" showNeverForVersion="true" ' \
             'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
-            'alertURL="http://example.org/alert/l" promptWaitTime="12345" backgroundInterval="123">'
+            'alertURL="http://example.org/alert/l" promptWaitTime="12345">'
         expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
 """, """
@@ -2947,7 +2945,6 @@ class TestSchema8Blob(unittest.TestCase):
     "showPrompt": false,
     "showNeverForVersion": true,
     "promptWaitTime": 12345,
-    "backgroundInterval": 123,
     "binTransMerkleRoot": "merkle_root",
     "binTransCertificate": "cert",
     "binTransSCTList": "sct_list",
@@ -3017,7 +3014,7 @@ class TestSchema8Blob(unittest.TestCase):
         expected_header = '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="None" ' \
             'buildID="50" detailsURL="http://example.org/details/l" showPrompt="false" showNeverForVersion="true" ' \
             'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
-            'alertURL="http://example.org/alert/l" promptWaitTime="12345" backgroundInterval="123" ' \
+            'alertURL="http://example.org/alert/l" promptWaitTime="12345" ' \
             'binTransMerkleRoot="merkle_root" binTransCertificate="cert" binTransSCTList="sct_list">'
         expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" """ +

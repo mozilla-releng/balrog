@@ -877,7 +877,6 @@ class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     """  Compatible with Gecko 50.0 and above, ie Firefox/Thunderbird 50.0 and above.
 
     Changes from ReleaseBlobV6:
-        * Adds support for backgroundInterval
 
     For further information:
         * https://bugzilla.mozilla.org/show_bug.cgi?id=1309660
@@ -888,7 +887,7 @@ class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     # for the benefit of get*XML
     optional_ = ('showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL',
-                 'promptWaitTime', 'backgroundInterval')
+                 'promptWaitTime')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('openURL', 'notificationURL', 'alertURL')
 
@@ -943,7 +942,7 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
     # for the benefit of get*XML
     optional_ = ('showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL',
-                 'promptWaitTime', 'backgroundInterval', 'binTransMerkleRoot',
+                 'promptWaitTime', 'binTransMerkleRoot',
                  'binTransCertificate', 'binTransSCTList')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('openURL', 'notificationURL', 'alertURL')
