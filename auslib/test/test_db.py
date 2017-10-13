@@ -482,10 +482,6 @@ class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileD
         NamedFileDatabaseMixin.setUp(self)
         TestTableMixin.setUp(self)
 
-    def tearDown(self):
-        self.test.t.delete().execute()
-        self.test.delete().execute()
-
     def testDeleteWithTransaction(self):
         trans = AUSTransaction(self.metadata.bind.connect())
         self.test.delete(changed_by='bill', transaction=trans, where=[
