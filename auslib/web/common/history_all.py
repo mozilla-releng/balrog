@@ -20,8 +20,8 @@ log = logging.getLogger(__name__)
 
 def _get_filters(obj, history_table):
     input_dict = _get_input_dict()
-    #use try to handle exceptions for cases where supplied parameter is not a key in histoyr_table
-    where = [getattr(history_table, f) == input_dict.get(f) for f in input_dict]
+    query = json.loads(input_dict.data)['query']
+    where = [getattr(history_table, f) == query.get(f) for f in query]
     return where
 
 def _get_histories(table, obj, process_revisions_callback=None):
@@ -76,12 +76,20 @@ def get_permissions_required_signoffs_histories():
     return PermissionsRequiredSignoffsHistoryAPIView().get_all()
 
 def _get_input_dict():
-    args = dict(connexion.request.args)
-    input_dict = {}
-
+    args = connexion.request.args
+    obj_keys = []
+    query_keys = []
+    query = {}
+    #use try to handle exceptions for cases where supplied parameter is not a key in histoyr_table
     for key in args:
-        input_dict[key] = connexion.request.args.get(key)
-    return input_dict
+        if args.get(key) == 'TRUE':
+            obj_keys.append(key)
+        else:
+            query_keys.append(key)
+
+    for key in query_keys:
+        query[key] = connexion.request.args.get(key)
+    return jsonify(query_keys=query_keys, obj_keys=obj_keys, query=query)
 
 def filter_helper(obj):
     req = _get_input_dict()
@@ -91,3 +99,20 @@ def filter_helper(obj):
         if obj[key] != keys_values[key]:
             return False
     return True
+
+def method_constants():
+    return {
+        'rules': get_rules_histories(),
+        'releases': get_releases_histories(),
+        'permissions': get_permissions_histories(),
+    }
+
+def get_filtered_history():
+    requested_histories = json.loads(_get_input_dict().data)['obj_keys']
+    methods = method_constants()
+    histories = {}
+    for requested_history in requested_histories:
+        if methods.get(requested_history):
+            history = methods.get(requested_history)
+            histories[requested_history] = json.loads(history.data)
+    return histories
