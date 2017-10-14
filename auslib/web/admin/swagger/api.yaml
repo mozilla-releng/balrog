@@ -3401,6 +3401,207 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
+# EMERGENCY SHUTOFF
+# TODO Mover parametros, body, responses apos finalizar
+  /emergency_shutoff:
+    get:
+      summary: TODO
+      description: >
+        TODO
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.get
+      produces:
+        - application/json
+      parameters:
+        - name: product
+          in: query
+          description: TODO
+          required: false
+          type: string
+        - name: channel
+          in: query
+          description: TODO
+          required: false
+          type: string
+      responses:
+        '200':
+          description: TODO
+
+    post:
+      summary: TODO
+      description: >
+        TODO
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.post
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: emergency_shutoff
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              product:
+                description: TODO
+                type: string
+              channel:
+                description: TODO
+                type: string
+              additional_notification_list:
+                description: TODO
+                type: string
+            required:
+              - product
+              - channel
+      responses:
+        '200':
+          description: TODO
+        '400':
+          description: TODO
+
+  /emergency_shutoff/{shutoff_id}:
+    get:
+      summary: TODO
+      description: >
+        TODO
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.get_by_id
+      produces:
+        - application/json
+      parameters:
+        - name: shutoff_id
+          in: path
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: TODO
+          
+    put:
+      summary: TODO
+      description: >
+        TODO
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.put
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: shutoff_id
+          in: path
+          required: true
+          type: integer
+        - name: emergency_shutoff
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              product:
+                description: TODO
+                type: string
+              channel:
+                description: TODO
+                type: string
+              additional_notification_list:
+                description: TODO
+                type: string
+            required:
+              - product
+              - channel
+      responses:
+        '200':
+          description: TODO
+        '400':
+          description: TODO
+
+    delete:
+      summary: TODO
+      description: >
+        TODO
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.delete
+      produces:
+        - application/json
+      parameters:
+        - name: shutoff_id
+          in: path
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: TODO
+        '400':
+          description: TODO
+
+  /emergency_shutoff/{shutoff_id}/disable_updates:
+    put:
+      summary: TODO
+      description: >
+        TODO
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.disable_updates
+      produces:
+        - application/json
+      parameters:
+        - name: shutoff_id
+          in: path
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: TODO
+        '400':
+          description: TODO
+
+  /scheduled_changes/emergency_shutoff:
+    get:
+      summary: TODO
+      description: >
+        TODO
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.emergency_shutoff.scheduled_changes
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/allSCParam'
+      responses:
+        '200':
+          description: TODO
+        '400':
+          description: TODO
+
+  /scheduled_changes/emergency_shutoff/{sc_id}/enact:
+    post:
+      summary: TODO
+      description: >
+        TODO
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.enact_updates_scheduled_for_reactivation
+      produces:
+        - application/json
+      parameters:
+        - name: sc_id
+          in: path
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: TODO
+# EMERGENCY SHUTOFF
+
 definitions:
   CSRFModel:
     title: CSRF Token

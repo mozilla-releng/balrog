@@ -11,7 +11,8 @@ emergency_shutoff = Table(
     Column('shutoff_id', Integer, primary_key=True, autoincrement=True),
     Column('product', String(15), nullable=False),
     Column('channel', String(75), nullable=False),
-    Column('updates_disabled', CompatibleBooleanColumn, default=False, nullable=False))
+    Column('updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
+    Column('additional_notification_list', String(500)))
 
 
 emergency_shutoff_history = Table(
@@ -21,7 +22,8 @@ emergency_shutoff_history = Table(
     Column('shutoff_id', Integer, nullable=False),
     Column('product', String(15), nullable=False),
     Column('channel', String(75), nullable=False),
-    Column('updates_disabled', CompatibleBooleanColumn, nullable=False))
+    Column('updates_disabled', CompatibleBooleanColumn, nullable=False),
+    Column('additional_notification_list', String(500)))
 
 
 emergency_shutoff_scheduled_changes = Table(

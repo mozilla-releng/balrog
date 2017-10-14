@@ -60,6 +60,28 @@ def handleGeneralExceptions(messages):
     return wrap
 
 
+def transactionHandler(request_handler):
+    def decorated(*args, **kwargs):
+        trans = dbo.begin()
+        # Transactions are automatically rolled back by the context manager if
+        # _post raises an Exception, but we need to make sure they are also
+        # rolled back if the View returns any sort of error.
+        try:
+            ret = request_handler(*args, transaction=trans, **kwargs)
+            if ret.status_code >= 400:
+                trans.rollback()
+            else:
+                trans.commit()
+            return ret
+        except:
+            trans.rollback()
+            raise
+        finally:
+            trans.close()
+
+    return decorated
+
+
 class AdminView(MethodView):
 
     def __init__(self, *args, **kwargs):
