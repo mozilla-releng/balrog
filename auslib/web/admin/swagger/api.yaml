@@ -349,6 +349,20 @@ paths:
               type: string
           examples:
             text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
+  
+  /histories:
+    get:
+      summary: Returns a list of all histories.
+      description: >
+        Returns a list of all histories.
+      tags:
+        - "History Histories"
+      operationId: auslib.web.common.history_all.get_filtered_history
+      consumes: []
+      produces: [application/json]
+      responses:
+        '200':
+          description: Successfully fetched histories
 
   /history/rules:
     get:
