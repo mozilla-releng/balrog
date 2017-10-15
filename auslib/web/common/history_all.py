@@ -34,7 +34,7 @@ def _get_histories(table, obj, process_revisions_callback=None):
                                    obj_not_found_msg='No history found',
                                    process_revisions_callback=process_revisions_callback)
     try:
-        return history_helper.get_history()
+        return history_helper.get_unlimted_histories()
     except (ValueError, AssertionError) as msg:
         log.warning("Bad input: %s", msg)
         return problem(400, "Bad Request", "Error occurred when trying to fetch histories",
@@ -82,14 +82,17 @@ def _get_input_dict():
     query = {}
     #use try to handle exceptions for cases where supplied parameter is not a key in histoyr_table
     for key in args:
+        print('MY KEYSSSS', key)
         if args.get(key) == 'TRUE':
             obj_keys.append(key)
         else:
-            query_keys.append(key)
+            if key != 'limit' and key != 'page':
+                query_keys.append(key)
 
     for key in query_keys:
         query[key] = connexion.request.args.get(key)
     return jsonify(query_keys=query_keys, obj_keys=obj_keys, query=query)
+
 
 def filter_helper(obj):
     req = _get_input_dict()
