@@ -413,7 +413,7 @@ paths:
         Returns a list of all permissions scheduled_changes histories.
       tags:
         - "History permissions scheduled_changes"
-      operationId: auslib.web.common.history_all.get_scheduled_change_permissions_histories
+      operationId: auslib.web.common.history_all.get_permissions_scheduled_change_histories
       consumes: []
       produces: [application/json]
       responses:
