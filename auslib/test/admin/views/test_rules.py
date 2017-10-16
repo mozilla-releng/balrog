@@ -441,7 +441,7 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
-        r = dbo.rules.t.select().where(dbo.rules.rule_id == 8).execute().fetchall()
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 9).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['jaws'], None)
         self.assertEquals(r[0]['data_version'], 2)
@@ -958,8 +958,8 @@ class TestRuleHistoryView(ViewTest):
 class TestSingleColumn_JSON(ViewTest):
 
     def testGetRules(self):
-        expected_product = ["fake", "fake2", "a"]
-        expected = dict(count=3, product=expected_product)
+        expected_product = ["fake", "fake2", "fake3", "a"]
+        expected = dict(count=4, product=expected_product)
         ret = self._get("/rules/columns/product")
         returned_data = json.loads(ret.data)
         self.assertEquals(returned_data['count'], expected['count'])

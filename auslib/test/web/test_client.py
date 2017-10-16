@@ -28,25 +28,31 @@ class TestGetSystemCapabilities(unittest.TestCase):
     def testUnprefixedInstructionSetOnly(self):
         self.assertEquals(
             client_api.getSystemCapabilities("SSE3"),
-            {"instructionSet": "SSE3", "memory": None}
+            {"instructionSet": "SSE3", "memory": None, "jaws": None}
         )
 
     def testUnprefixedInstructionSetAndMemory(self):
         self.assertEquals(
             client_api.getSystemCapabilities("SSE3,8095"),
-            {"instructionSet": "SSE3", "memory": 8095}
+            {"instructionSet": "SSE3", "memory": 8095, "jaws": None}
         )
 
     def testPrefixedInstructionSetAndMemory(self):
         self.assertEquals(
             client_api.getSystemCapabilities("ISET:SSE2,MEM:6321"),
-            {"instructionSet": "SSE2", "memory": 6321}
+            {"instructionSet": "SSE2", "memory": 6321, "jaws": None}
+        )
+
+    def testPrefixedInstructionSetMemoryAndJaws(self):
+        self.assertEquals(
+            client_api.getSystemCapabilities("ISET:SSE2,MEM:6321,JAWS:1"),
+            {"instructionSet": "SSE2", "memory": 6321, "jaws": True}
         )
 
     def testNothingProvided(self):
         self.assertEquals(
             client_api.getSystemCapabilities("NA"),
-            {"instructionSet": "NA", "memory": None}
+            {"instructionSet": "NA", "memory": None, "jaws": None}
         )
 
     def testNonIntegerMemory(self):
@@ -55,7 +61,7 @@ class TestGetSystemCapabilities(unittest.TestCase):
     def testUnknownField(self):
         self.assertEquals(
             client_api.getSystemCapabilities("ISET:SSE3,MEM:6721,PROC:Intel"),
-            {"instructionSet": "SSE3", "memory": 6721}
+            {"instructionSet": "SSE3", "memory": 6721, "jaws": None}
         )
 
 
@@ -1223,7 +1229,7 @@ class ClientTestJaws(ClientTestCommon):
         self.assertUpdatesAreEmpty(ret)
 
     def testRuleFalseQueryFalse(self):
-        ret = self.client.get("/update/6/c/1.0/2/p/l/a/a/JAWS:0/a/a/update.xml")
+        ret = self.client.get("/update/6/c/1.0/2/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:0/a/a/update.xml")
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="3.0" extensionVersion="3.0" buildID="22">
@@ -1237,7 +1243,7 @@ class ClientTestJaws(ClientTestCommon):
         self.assertUpdatesAreEmpty(ret)
 
     def testRuleTrueQueryTrue(self):
-        ret = self.client.get("/update/6/b/1.0/2/p/l/a/a/JAWS:1/a/a/update.xml")
+        ret = self.client.get("/update/6/b/1.0/2/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:1/a/a/update.xml")
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="2.0" extensionVersion="2.0" buildID="12">
@@ -1247,7 +1253,7 @@ class ClientTestJaws(ClientTestCommon):
 """)
 
     def testRuleTrueQueryFalse(self):
-        ret = self.client.get("/update/6/b/1.0/2/p/l/a/a/a/JAWS:0/a/a/update.xml")
+        ret = self.client.get("/update/6/b/1.0/2/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:0/a/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
     def testRuleNullQueryNull(self):
@@ -1261,7 +1267,7 @@ class ClientTestJaws(ClientTestCommon):
 """)
 
     def testRuleNullQueryTrue(self):
-        ret = self.client.get("/update/6/a/1.0/1/p/l/a/a/JAWS:1/a/a/update.xml")
+        ret = self.client.get("/update/6/a/1.0/1/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:1/a/a/update.xml")
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
@@ -1271,7 +1277,7 @@ class ClientTestJaws(ClientTestCommon):
 """)
 
     def testRuleNullQueryFalse(self):
-        ret = self.client.get("/update/6/a/1.0/1/p/l/a/a/JAWS:0/a/a/update.xml")
+        ret = self.client.get("/update/6/a/1.0/1/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:0/a/a/update.xml")
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
