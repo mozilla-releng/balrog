@@ -3,8 +3,9 @@
   <h2>
     <span>History/Logs</span>
   </h2>
-  <div class="row">
-    <div class="col-md-2">
+  <hr>
+  <div class="col-md-4 gutter-top">
+    <div class="filter-group">
       <ul class="nav nav-pills nav-stacked">
         <li ng-class="{ active: isSet(1) }">
           <a href ng-click="setTab(1)">RPR</a>
@@ -17,96 +18,110 @@
         </li>
       </ul>
     </div>
-    <form class="col-sm-10">
-      <div class="row"><label class="col-sm-2">Filter By:</label></div>
-      <div class="col-sm-10" ng-model="filter">
-        <div class="row">
-          <fieldset>
-            <legend>Change Type</legend>
-            <div class="col-sm-4" ng-repeat="item in checkBoxes">
-              <input type="checkbox" ng-model="item.selected">
-              <span>{{item.name}}</span>      
-            </div>
-          </fieldset>
-        </div>
+    <form>
+      <div>
+        <label>Filter By:</label>
+      </div>
+      <div ng-model="filter">
+        <fieldset class="filter-group">
+          <h5 class="h-underlined">Change Type
+            <span style="color:red">*</span>
+          </h5>
+          <div class="col-sm-3" ng-repeat="item in checkBoxes">
+            <input type="checkbox" ng-model="item.selected">
+            <span>{{item.name}}</span>
+          </div>
+        </fieldset>
         <span style="color:green">{{msg}}</span>
 
-        <div class="row" ng-show="isShowUsername">
-          <div class="col-md-5">
-            <label for="id_username">Username/ Email</label>
-            <fieldset>
-              <input type="text" id="id_username" ng-model="username_email">
-              <button class="remove" ng-click="hideUsername()">-</button>
-            </fieldset>
+        <div ng-show="isShowUsername" class="filter-group">
+            <h5 class="h-underlined">Username / Email
+                <span tooltip="Remove filter option" tooltip-placement="right">
+                  <button class="remove" ng-click="hideUsername()">&times;</button>
+                </span>
+              </h5>
+          <div class="user-input-ctn">
+            <div data-ng-repeat="(key, user) in userInput.username_email" class="input-user">
+                {{ user.name }}
+                <div class="delete-user" data-ng-click="deleteUsernameEmail(key)">&times;</div>
+            </div>
+            <input type="text" data-tag-input="" data-ng-model="usernameEmailText" placeholder='add username/email' data-new-tag="addUsernameEmail()"
+                  data-delete-tag="deleteUsernameEmail()"/>
           </div>
+          
         </div>
-        <div class="row" ng-show="isShowTimestamp">
-          <div class="col-md-5">
-            <label for="id_startdate">Start Date</label>
-            <div class="form-group dropdown">
-              <div class="input-group" is-open="calendar_is_open" ng-class="{'has-error': date_error}">
-                <span class="input-group-btn">
-                                  <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time">
-                                      <i class="glyphicon glyphicon-calendar"></i>
-                                  </button>
-                              </span>
-                <input type="text" id="id_when" class="form-control" data-ng-model="hs_startDate" ng-blur="setWhen()">
-              </div>
-              <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                <datetimepicker data-ng-model="hs_startDate" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
-                />
-              </ul>
-              <p class="help-block" ng-show="date_error">{{ date_error.join(', ') }}</p>
 
-            </div>
-          </div>
-          <div class="col-md-5">
-            <label for="id_startdate">End Date</label>
-            <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': date_error}">
-              <div class="input-group">
-                <span class="input-group-btn">
-                              <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time">
-                                  <i class="glyphicon glyphicon-calendar"></i>
-                              </button>
-                          </span>
-                <input type="text" id="id_when" class="form-control" data-ng-model="hs_endDate" ng-blur="setWhen()">
+        <div ng-show="isShowDaterange" class="filter-group">
+          <h5 class="h-underlined">Date range
+            <span tooltip="Remove filter option" tooltip-placement="right">
+              <button class="remove" ng-click="hideDaterange()">&times;</button>
+            </span>
+          </h5>
+          <div class="dropdown form-group">
+            <a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#">
+              <div class="input-group date">
+                <input type="text" class="form-control" data-ng-model="userInput.dateRangeStart">
+                <span class="input-group-addon">
+                  <i class="glyphicon glyphicon-calendar"></i>
+                </span>
               </div>
-              <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                <datetimepicker data-ng-model="hs_endDate" data-datetimepicker-config="{ minuteStep: 5 }" data-on-set-time="setWhen(newDate)"
-                />
-              </ul>
-              <p class="help-block" ng-show="date_error">{{ date_error.join(', ') }}</p>
-            </div>
+            </a>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+              <datetimepicker data-ng-model="userInput.dateRangeStart" data-datetimepicker-config="{ renderOn: 'end-date-changed' }" data-on-set-time="startDateOnSetTime()"
+                data-before-render="startDateBeforeRender($dates)"></datetimepicker>
+            </ul>
           </div>
-          <button class="remove remove-button" ng-click="hideTimestamp()">-</button>
+          <label>to</label>
+          <div class="dropdown form-group">
+            <a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#">
+              <div class="input-group date">
+                <input type="text" class="form-control" data-ng-model="userInput.dateRangeEnd">
+                <span class="input-group-addon">
+                  <i class="glyphicon glyphicon-calendar"></i>
+                </span>
+              </div>
+            </a>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+              <datetimepicker data-ng-model="userInput.dateRangeEnd" data-datetimepicker-config="{ renderOn: 'start-date-changed' }" data-on-set-time="endDateOnSetTime()"
+                data-before-render="endDateBeforeRender($view, $dates)"></datetimepicker>
+            </ul>
+          </div>
         </div>
-        <div class="row">
-          <div class="col-md-8" ng-show="isShowPrCh">
-            <label for="hs_pr_ch_filter">Product/Channel</label>
-            <fieldset>
-              <select ng-model="hs_pr_ch_filter" name="hs_pr_ch_filter" ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
-                          </select>
-              <button class="remove" ng-click="hidePrCh()">-</button>
-            </fieldset>
+
+        <div>
+          <div ng-show="isShowPrCh" class="filter-group">
+            <h5 class="h-underlined">Product / Channel
+              <span tooltip="Remove filter option" tooltip-placement="right">
+                <button class="remove" ng-click="hidePrCh()">&times;</button>
+              </span>
+            </h5>
+            <select ng-model="userInput.hs_pr_ch_filter" name="hs_pr_ch_filter" ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
+            </select>
           </div>
         </div>
       </div>
-      <div class="col-sm-2 text-right">
-        <label>Add Filter:</label>
-        <select ng-model="add_filter" name="add_filter" ng-selected="filterSelected(add_filter.value)" ng-options="hsy_filter.text for hsy_filter in add_filtering_options track by hsy_filter.value">
-              </select>
-      </div>
-      <div class="col-md-2 col-md-offset-11">
+      <div>
+        <h5 class="h-underlined">Add filter</h5>
+        <select ng-model="selected" ng-change="getOption()">
+            <option value=""> </option>
+            <option ng-hide="isShowUsername" value="username_email">Username / Email</option>
+            <option ng-hide="isShowDaterange" value="daterange">Date Range</option>
+            <option ng-hide="isShowPrCh" value="product_channel">Product / Channel</option>
+          </select>
         <button class="btn btn-primary" ng-click="searchItem()">Search</button>
       </div>
     </form>
   </div>
-  <hr>
 
-  <div class="content-wrapper" ng-show="isSet(1)">
-    <div>
+  <div class="col-md-8">
+    <div class="content-wrapper" ng-show="isSet(1)">
       <h4>History</h4>
       <div class="table-responsive">
+        <div class="pagination-container" ng-show="rules_history_count > pageSize">
+          <pagination class="pagination-sm" total-items="rules_history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
+            boundary-links="true">
+          </pagination>
+        </div>
         <table class="table table-bordered table-hover table-striped">
           <thead>
             <tr>
@@ -129,18 +144,16 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+    <div class="content-wrapper" ng-show="isSet(2)">
+      <h4>History</h4>
+      <div class="table-responsive">
         <div class="pagination-container" ng-show="rules_history_count > pageSize">
           <pagination class="pagination-sm" total-items="rules_history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
             boundary-links="true">
           </pagination>
         </div>
-      </div>
-    </div>
-  </div>
-  <div class="content-wrapper" ng-show="isSet(2)">
-    <div>
-      <h4>History</h4>
-      <div class="table-responsive">
         <table class="table table-bordered table-hover table-striped">
           <thead>
             <tr>
@@ -163,18 +176,16 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+    <div class="content-wrapper" ng-show="isSet(3)">
+      <h4>History</h4>
+      <div class="table-responsive">
         <div class="pagination-container" ng-show="rules_history_count > pageSize">
           <pagination class="pagination-sm" total-items="rules_history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
             boundary-links="true">
           </pagination>
         </div>
-      </div>
-    </div>
-  </div>
-  <div class="content-wrapper" ng-show="isSet(3)">
-    <div>
-      <h4>History</h4>
-      <div class="table-responsive">
         <table class="table table-bordered table-hover table-striped">
           <thead>
             <tr>
@@ -197,13 +208,7 @@
             </tr>
           </tbody>
         </table>
-        <div class="pagination-container" ng-show="rules_history_count > pageSize">
-          <pagination class="pagination-sm" total-items="rules_history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
-            boundary-links="true">
-          </pagination>
-        </div>
       </div>
     </div>
   </div>
-
 </div>

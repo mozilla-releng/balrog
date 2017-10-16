@@ -11,17 +11,17 @@ angular.module("app").directive("tagInput", function() {
       });
 
       element.bind("keydown", function(event) {
-        if (event.which == 9) {
+        if (event.which === 9) {
           event.preventDefault();
         }
-        if (event.which == 8) {
+        if (event.which === 8) {
           scope.$apply(attrs.deleteTag);
         }
       });
 
       element.bind("keyup", function(event) {
         var key = event.which;
-        if (key == 9 || key == 13) {
+        if (key === 9 || key === 13) {
           event.preventDefault();
           scope.$apply(attrs.newTag);
         }
