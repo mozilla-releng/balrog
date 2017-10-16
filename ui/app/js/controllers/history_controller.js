@@ -17,13 +17,13 @@ angular
 
     $scope.userInput = {
       username_email: [],
-      hs_startDate: "",
-      hs_endDate: "",
+      dateRangeStart: "",
+      dateRangeEnd: "",
       hs_pr_ch_filter: "All Rules"
     };
 
     $scope.isShowUsername = true;
-    $scope.isShowTimestamp = true;
+    $scope.isShowDaterange = true;
     $scope.isShowPrCh = true;
 
     $scope.allHistory = [];
@@ -65,7 +65,6 @@ angular
 
     $scope.addUsernameEmail = function() {
       $scope.userInput.username_email.push({ name: $scope.usernameEmailText });
-      console.log($scope.userInput.username_email, "usericvvnput");
       $scope.usernameEmailText = "";
     };
 
@@ -80,62 +79,69 @@ angular
         $scope.userInput.username_email.splice(key, 1);
       }
     };
-
-    $scope.setWhen = function(newDate) {
-      $scope.calendar_is_open = false;
-      if (newDate >= new Date()) {
-        $scope.date_error = ["Date cannot be ahead of the present date"];
-        $scope.hs_startDate = null;
-        $scope.hs_endDate = null;
-      } else {
-        $scope.date_error = null;
+    
+    $scope.endDateBeforeRender = endDateBeforeRender
+    $scope.endDateOnSetTime = endDateOnSetTime
+    $scope.startDateBeforeRender = startDateBeforeRender
+    $scope.startDateOnSetTime = startDateOnSetTime
+    
+    function startDateOnSetTime () {
+      $scope.$broadcast('start-date-changed');
+    }
+    function endDateOnSetTime () {
+      $scope.$broadcast('end-date-changed');
+    }
+    
+    function startDateBeforeRender ($dates) {
+      if ($scope.userInput.dateRangeEnd) {
+        var activeDate = moment($scope.userInput.dateRangeEnd);
+    
+        $dates.filter(function (date) {
+          return date.localDateValue() >= activeDate.valueOf();
+        }).forEach(function (date) {
+          date.selectable = false;
+        })
       }
-    };
-
-    $scope.$watch("add_filter", function(value) {
-      $scope.filtering = value.value.split(",");
-    });
-    $scope.add_filtering_options = [
-      {
-        text: "",
-        value: "default"
-      },
-      {
-        text: "Username / Email",
-        value: "username_email"
-      },
-      {
-        text: "Timestamp",
-        value: "timestamp"
-      },
-      {
-        text: "Product/Channel",
-        value: "product_channel"
+    }
+    
+    function endDateBeforeRender ($view, $dates) {
+      if ($scope.userInput.dateRangeStart) {
+        var activeDate = moment($scope.userInput.dateRangeStart).subtract(1, $view).add(1, 'minute');
+    
+        $dates.filter(function (date) {
+          return date.localDateValue() <= activeDate.valueOf()
+        }).forEach(function (date) {
+          date.selectable = false;
+        })
       }
-    ];
-    $scope.add_filter = $scope.add_filtering_options[0];
-
-    $scope.filterSelected = function(value) {
-      if (value === "username_email") {
-        $scope.isShowUsername = true;
-        $scope.username_email = "";
-      } else if (value === "timestamp") {
-        $scope.isShowTimestamp = true;
-      } else if (value === "product_channel") {
-        $scope.hs_pr_ch_filter = "All Rules";
-        $scope.isShowPrCh = true;
+    }
+    
+    $scope.getOption = function() {
+      var selected = $scope.selected;
+      switch(selected) {
+        case "username_email":
+          $scope.isShowUsername = true;
+          break;
+        case "daterange":
+          $scope.isShowDaterange = true;          
+          break;
+        case "product_channel":
+          $scope.hs_pr_ch_filter = "All Rules";
+          $scope.isShowPrCh = true;        
+          break;
       }
-    };
+      $scope.selected = "";
+    }
+
 
     $scope.hideUsername = function() {
-      $scope.isShowUsername = $scope.isShowUsername ? false : true;
-      $scope.userInput.username_email = "";
+      $scope.isShowUsername = false;
     };
-    $scope.hideTimestamp = function() {
-      $scope.isShowTimestamp = $scope.isShowTimestamp ? false : true;
+    $scope.hideDaterange = function() {
+      $scope.isShowDaterange = false;
     };
     $scope.hidePrCh = function() {
-      $scope.isShowPrCh = $scope.isShowPrCh ? false : true;
+      $scope.isShowPrCh = false;
     };
 
     Rules.getRules().success(function(response) {
@@ -291,13 +297,13 @@ angular
                   });
                 }
                 if (
-                  $scope.userInput.hs_startDate !== "" ||
-                  $scope.userInput.hs_endDate !== ""
+                  $scope.userInput.dateRangeStart !== "" ||
+                  $scope.userInput.dateRangeEnd !== ""
                 ) {
                   $scope.search = $filter("dateRangefilter")(
                     $scope.allHistory,
-                    $scope.userInput.hs_startDate,
-                    $scope.userInput.hs_endDate
+                    $scope.userInput.dateRangeStart,
+                    $scope.userInput.dateRangeEnd
                   );
                   console.log($scope.search, "search right");
                 }
