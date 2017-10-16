@@ -21,8 +21,12 @@ log = logging.getLogger(__name__)
 def _get_filters(obj, history_table):
     input_dict = _get_input_dict()
     query = json.loads(input_dict.data)['query']
-    where = [getattr(history_table, f) == query.get(f) for f in query]
-    return where
+    where = [False, False]
+    try:
+        where = [getattr(history_table, f) == query.get(f) for f in query]
+        return where
+    except AttributeError:
+        return where
 
 def _get_histories(table, obj, process_revisions_callback=None):
     history_table = table
@@ -43,7 +47,6 @@ def _get_histories(table, obj, process_revisions_callback=None):
 def get_rules_histories():
     history_table = dbo.rules.history
     result = _get_histories(history_table, get_rules)
-    # print ('NSGSHSNSNSHSHS', len(json.loads(result.data)['revisions']))
     return _get_histories(history_table, get_rules)
 
 
@@ -80,9 +83,7 @@ def _get_input_dict():
     obj_keys = []
     query_keys = []
     query = {}
-    #use try to handle exceptions for cases where supplied parameter is not a key in histoyr_table
     for key in args:
-        print('MY KEYSSSS', key)
         if args.get(key) == 'TRUE':
             obj_keys.append(key)
         else:
@@ -108,6 +109,8 @@ def method_constants():
         'rules': get_rules_histories(),
         'releases': get_releases_histories(),
         'permissions': get_permissions_histories(),
+        'permissions_required_signoffs_histories': get_permissions_required_signoffs_histories(),
+        'product_required_signoffs_histories': get_product_required_signoffs_histories(),
     }
 
 def get_filtered_history():
