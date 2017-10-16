@@ -79,60 +79,61 @@ angular
         $scope.userInput.username_email.splice(key, 1);
       }
     };
-    
-    $scope.endDateBeforeRender = endDateBeforeRender
-    $scope.endDateOnSetTime = endDateOnSetTime
-    $scope.startDateBeforeRender = startDateBeforeRender
-    $scope.startDateOnSetTime = startDateOnSetTime
-    
-    function startDateOnSetTime () {
-      $scope.$broadcast('start-date-changed');
+
+    $scope.endDateBeforeRender = endDateBeforeRender;
+    $scope.endDateOnSetTime = endDateOnSetTime;
+    $scope.startDateBeforeRender = startDateBeforeRender;
+    $scope.startDateOnSetTime = startDateOnSetTime;
+
+    function startDateOnSetTime() {
+      $scope.$broadcast("start-date-changed");
     }
-    function endDateOnSetTime () {
-      $scope.$broadcast('end-date-changed');
+    function endDateOnSetTime() {
+      $scope.$broadcast("end-date-changed");
     }
-    
-    function startDateBeforeRender ($dates) {
+
+    function startDateBeforeRender($dates) {
       if ($scope.userInput.dateRangeEnd) {
         var activeDate = moment($scope.userInput.dateRangeEnd);
-    
-        $dates.filter(function (date) {
-          return date.localDateValue() >= activeDate.valueOf();
-        }).forEach(function (date) {
-          date.selectable = false;
-        })
+
+        $dates.filter(function(date) {
+            return date.localDateValue() >= activeDate.valueOf();
+          }).forEach(function(date) {
+            date.selectable = false;
+          });
       }
     }
-    
-    function endDateBeforeRender ($view, $dates) {
+
+    function endDateBeforeRender($view, $dates) {
       if ($scope.userInput.dateRangeStart) {
-        var activeDate = moment($scope.userInput.dateRangeStart).subtract(1, $view).add(1, 'minute');
-    
-        $dates.filter(function (date) {
-          return date.localDateValue() <= activeDate.valueOf()
-        }).forEach(function (date) {
-          date.selectable = false;
-        })
+        var activeDate = moment($scope.userInput.dateRangeStart)
+          .subtract(1, $view)
+          .add(1, "minute");
+
+        $dates.filter(function(date) {
+            return date.localDateValue() <= activeDate.valueOf();
+          }).forEach(function(date) {
+            date.selectable = false;
+          });
       }
     }
-    
+
     $scope.getOption = function() {
       var selected = $scope.selected;
-      switch(selected) {
+      switch (selected) {
         case "username_email":
           $scope.isShowUsername = true;
           break;
         case "daterange":
-          $scope.isShowDaterange = true;          
+          $scope.isShowDaterange = true;
           break;
         case "product_channel":
           $scope.hs_pr_ch_filter = "All Rules";
-          $scope.isShowPrCh = true;        
+          $scope.isShowPrCh = true;
           break;
       }
       $scope.selected = "";
-    }
-
+    };
 
     $scope.hideUsername = function() {
       $scope.isShowUsername = false;
@@ -194,22 +195,22 @@ angular
     });
 
     $scope.optionChecked = function(choice) {
-      $scope.details = [];
+      $scope.checkedBoxesArr = [];
       angular.forEach(choice, function(value, key) {
         if (choice[key].selected) {
-          $scope.details.push(choice[key].name);
+          $scope.checkedBoxesArr.push(choice[key].name);
         }
       });
-      if ($scope.details.length > 0) {
-        $scope.msg = "Filtering will be done in: " + $scope.details.toString();
+      if ($scope.checkedBoxesArr.length > 0) {
+        $scope.msg = "Filtering will be done in: " + $scope.checkedBoxesArr.toString();
       } else {
         sweetAlert("Form submission error", "Please check a box", "error");
       }
     };
 
-    function isInArray(name, details) {
-      for (var i = 0; i < details.length; i++) {
-        if (details[i].toLowerCase() === name.toLowerCase()) {
+    function isInArray(name, checkedBoxesArr) {
+      for (var i = 0; i < checkedBoxesArr.length; i++) {
+        if (checkedBoxesArr[i].toLowerCase() === name.toLowerCase()) {
           return true;
         }
       }
@@ -225,34 +226,63 @@ angular
       });
     };
 
-    var newPage;
-    function loadHistory(newPage) {
-      var promises = [];
+    var promises = [];
+    function rulesHistory() {
+      switch ($scope.tab) {
+        case 1:
+          console.log("calling rulesendpoint");
+          promises.push(
+            History.getRulesHistory($scope.pageSize)
+              .success(function(response) {
+                $scope.processResponse(response);
+              })
+              .error(function() {
+                $scope.failed = true;
+                return $q.reject();
+              })
+          );
+          break;
+        case 2:
+          console.log("calling rules scheduled changes endpoint");
+          break;
+        case 3:
+          console.log("calling rules required signoff endpoint");
+          break;
+      }
+    }
+
+    function releasesHistory() {
+      switch ($scope.tab) {
+        case 1:
+          console.log("calling release endpoint");
+          promises.push(
+            History.getReleaseHistory($scope.pageSize)
+              .success(function(response) {
+                $scope.processResponse(response);
+              })
+              .error(function() {
+                $scope.failed = true;
+                return $q.reject();
+              })
+          );
+          break;
+        case 2:
+          console.log("calling release scheduled changes endpoint");
+          break;
+        case 3:
+          console.log("calling releases required signoff endpoint");
+          break;
+      }
+    }
+
+    function loadHistory() {
       $scope.loading = true;
       return new Promise(function(resolve, reject) {
-        if (isInArray("Rules", $scope.details)) {
-          promises.push(
-            History.getRulesHistory($scope.pageSize, newPage)
-              .success(function(response) {
-                $scope.processResponse(response);
-              })
-              .error(function() {
-                $scope.failed = true;
-                return $q.reject();
-              })
-          );
+        if (isInArray("Rules", $scope.checkedBoxesArr)) {
+          rulesHistory();
         }
-        if (isInArray("Releases", $scope.details)) {
-          promises.push(
-            History.getReleaseHistory($scope.pageSize, newPage)
-              .success(function(response) {
-                $scope.processResponse(response);
-              })
-              .error(function() {
-                $scope.failed = true;
-                return $q.reject();
-              })
-          );
+        if (isInArray("Releases", $scope.checkedBoxesArr)) {
+          releasesHistory();
         }
 
         $q.all(promises).then(function(response) {
@@ -272,49 +302,34 @@ angular
 
     $scope.searchItem = function() {
       $scope.optionChecked($scope.checkBoxes);
-      if ($scope.details.length > 0 && $scope.details[0] !== null) {
-        if (
-          $scope.isShowUsername || $scope.isShowTimestamp || $scope.isShowPrCh
-        ) {
-          $scope.$watch("currentPage", function(newPage) {
-            loadHistory(newPage).then(function(data) {
-              $scope.allHistory = data;
-              $scope.$apply(function() {
-                if ($scope.userInput.username_email !== "") {
-                  var changedByArr = [];
-                  var searchResult = [];
-                  $scope.userInput.username_email.forEach(function(changedBy) {
-                    if (changedByArr.indexOf(changedBy.name) == -1) {
-                      changedByArr.push(changedBy.name);
-                      console.log(changedByArr, "changedByaaArr");
-                      changedByArr.forEach(function(name) {
-                        if (searchResult.indexOf(name) == -1) {
-                          $scope.search = $filter("filter")(
-                            $scope.allHistory,name);
-                        }
-                      });
-                    }
-                  });
-                }
-                if (
-                  $scope.userInput.dateRangeStart !== "" ||
-                  $scope.userInput.dateRangeEnd !== ""
-                ) {
-                  $scope.search = $filter("dateRangefilter")(
-                    $scope.allHistory,
-                    $scope.userInput.dateRangeStart,
-                    $scope.userInput.dateRangeEnd
-                  );
-                  console.log($scope.search, "search right");
-                }
-                if ($scope.pr_ch_selected[0].toLowerCase() !== "all rules") {
-                  $scope.search = $filter("filter")(
-                    $scope.allHistory,
-                    $scope.userInput.hs_pr_ch_filter
-                  );
-                  console.log($scope.search, "search");
-                }
-              });
+      if ($scope.checkedBoxesArr.length > 0 && $scope.checkedBoxesArr[0] !== null) {
+        if ($scope.isShowUsername || $scope.isShowTimestamp || $scope.isShowPrCh) {
+          loadHistory().then(function(data) {
+            $scope.allHistory = data;
+            $scope.$apply(function() {
+              if ($scope.userInput.username_email !== "") {
+                var changedByArr = [];
+                var searchResult = [];
+                $scope.userInput.username_email.forEach(function(changedBy) {
+                  if (changedByArr.indexOf(changedBy.name) == -1) {
+                    changedByArr.push(changedBy.name);
+                    changedByArr.forEach(function(name) {
+                      if (searchResult.indexOf(name) == -1) {
+                        $scope.search = $filter("filter")(
+                          $scope.allHistory,
+                          name
+                        );
+                      }
+                    });
+                  }
+                });
+              } 
+              if ($scope.userInput.dateRangeStart !== "" ||$scope.userInput.dateRangeEnd !== "") {
+                $scope.search = $filter("dateRangefilter")($scope.allHistory,$scope.userInput.dateRangeStart,$scope.userInput.dateRangeEnd);
+              } 
+              if ($scope.pr_ch_selected[0].toLowerCase() !== "all rules") {
+                $scope.search = $filter("filter")($scope.allHistory,$scope.userInput.hs_pr_ch_filter);
+              } 
             });
           });
         } else {
