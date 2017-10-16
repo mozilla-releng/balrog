@@ -60,7 +60,7 @@ def get_permissions_histories():
     return _get_histories(history_table, get_permissions)
 
 
-def get_scheduled_change_permissions_histories():
+def get_permissions_scheduled_change_histories():
     """GET /history/scheduled_changes/permissions"""
     return PermissionScheduledChangeHistoryView().get_all()
 
@@ -111,6 +111,9 @@ def method_constants():
         'permissions': get_permissions_histories(),
         'permissions_required_signoffs_histories': get_permissions_required_signoffs_histories(),
         'product_required_signoffs_histories': get_product_required_signoffs_histories(),
+        'releases_scheduled_change_histories': get_releases_scheduled_change_histories(),
+        'rules_scheduled_change_histories': get_rules_scheduled_change_histories(),
+        'permissions_scheduled_change_histories': get_permissions_scheduled_change_histories(),
     }
 
 def get_filtered_history():
