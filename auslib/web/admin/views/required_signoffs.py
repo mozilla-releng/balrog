@@ -82,7 +82,6 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
         return jsonify(count=total_count, required_signoffs=revisions)
 
     def get_all(self):
-        print'WHWWWWWnanfnafnafaAJKFJAKFJKAFJ.........', self._get_input_dict()
         try:
             page = int(connexion.request.args.get('page', 1))
             limit = int(connexion.request.args.get('limit', 100))
