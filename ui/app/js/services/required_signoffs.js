@@ -42,6 +42,27 @@ var RequiredSignoffBase = (function() {
       url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
       return this.http.delete(url, data);
     },
+    /**
+     * Convert a list of {role, signoffs_required} objects into a
+     * Map-like object that is easy to deal with in templates even
+     * though we can't actually use Map.
+     *
+     * Returns {length, roles}, where roles is an object with keys
+     * being role names and values being the number of signoffs
+     * required, and length is the number of keys in roles.
+     *
+     * FIXME: Not actually a Map
+     */
+    convertToMap: function(signoffRequirements) {
+      var merged = {};
+      signoffRequirements.map(function(requirement) {
+        if (!merged[requirement.role] || merged[requirement.role] < requirement.signoffs_required) {
+          merged[requirement.role] = requirement.signoffs_required;
+        }
+      });
+      return {length: Object.keys(merged).length, roles: merged};
+
+    }
   };
   return service;
 }());

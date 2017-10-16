@@ -169,14 +169,19 @@ legend {
         }
     }
 }
-  
-  
-  
 
-  
-  
-  
-  
+.page-size{
+    margin-bottom: 10px
+}
+
+form.search-form>.page-size {
+    text-align: right;
+}
+
+.permissions-page-size {
+    margin: 11px 0 6px
+}
+
 /* This class is used in the primary Rule, Release, and Permissions UI. Some of our field
    names don't fit into the default size, so we needed to make it wider */
 @media (min-width: 768px) {
@@ -187,6 +192,21 @@ legend {
   .dl-horizontal dd {
       margin-left: 220px;
   }
+}
+
+// Tag Input styles
+
+.m-tag__input{
+    border: 1px solid black;
+    display: flex;
+    overflow: scroll
+}
+.m-tag__input label{
+    margin: 2px;
+}
+.m-tag__input > input{
+    border:0px transparent;
+    width:100%
 }
 
 @import 'loader';

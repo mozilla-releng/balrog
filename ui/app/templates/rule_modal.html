@@ -45,17 +45,23 @@
     </div>
     <div class="row">
       <div class="col-md-6">
-        <div class="form-group" ng-class="{'has-error': errors.backgroundRate}">
+        <div class="form-group" ng-class="{'has-error': errors.backgroundRate || integer_validation_errors.backgroundRate }">
           <label for="id_rate">Rate</label>
           <input type="text" class="form-control" id="id_rate" ng-model="rule.backgroundRate">
           <p class="help-block" ng-show="errors.backgroundRate">{{ errors.backgroundRate.join(', ') }}</p>
+          <p class="help-block" ng-show="integer_validation_errors.backgroundRate">
+            {{ integer_validation_errors.backgroundRate }}
+          </p>
         </div>
       </div>
       <div class="col-md-6">
-        <div class="form-group" ng-class="{'has-error': errors.priority}">
+        <div class="form-group" ng-class="{'has-error': errors.priority || integer_validation_errors.priority }">
           <label for="id_priority">Priority</label>
           <input type="text" class="form-control" id="id_priority" ng-model="rule.priority">
           <p class="help-block" ng-show="errors.priority">{{ errors.priority.join(', ') }}</p>
+          <p class="help-block" ng-show="integer_validation_errors.priority">
+            {{ integer_validation_errors.priority }}
+          </p>
         </div>
       </div>
     </div>
@@ -187,6 +193,8 @@
     <input type="hidden" name="data_version" ng-model="rule.data_version">
   </form>
 
+  <show-signoff-requirements requirements="ruleSignoffsRequired"></show-signoff-requirements>
+
   <div class="form-group" ng-class="{'has-error': errors.detail}">
     <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
   </div>
@@ -197,6 +205,6 @@
 </div>
 <div class="modal-footer">
   <div ng-show="saving" small-loader></div>
-  <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Save Changes</button>
+  <button class="btn btn-primary" ng-class="{'disabled': ruleSignoffsRequired.length}" ng-show="!saving" ng-click="saveChanges()">Save Changes</button>
   <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
 </div>

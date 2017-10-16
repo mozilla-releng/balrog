@@ -49,6 +49,8 @@ describe("controller: PermissionsController", function() {
     it("should return all rules empty", function() {
       this.$httpBackend.expectGET('/api/users')
       .respond(200, '{"users": []}');
+      this.$httpBackend.expectGET('/api/required_signoffs/permissions')
+      .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.flush();
       expect(this.scope.users).toEqual([]);
     });
@@ -56,6 +58,8 @@ describe("controller: PermissionsController", function() {
     it("should return all rules some", function() {
       this.$httpBackend.expectGET('/api/users')
       .respond(200, JSON.stringify(sample_users));
+      this.$httpBackend.expectGET('/api/required_signoffs/permissions')
+      .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.flush();
       expect(this.scope.users.length).toEqual(2);
       expect(this.scope.users).toEqual([
@@ -70,6 +74,8 @@ describe("controller: PermissionsController", function() {
     it("should return true always if no filters active", function() {
       this.$httpBackend.expectGET('/api/users')
       .respond(200, '{"users": []}');
+      this.$httpBackend.expectGET('/api/required_signoffs/permissions')
+      .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.flush();
 
       var item = {
@@ -81,6 +87,8 @@ describe("controller: PermissionsController", function() {
     it("should filter when only one search word name", function() {
       this.$httpBackend.expectGET('/api/users')
       .respond(200, '{"users": []}');
+      this.$httpBackend.expectGET('/api/required_signoffs/permissions')
+      .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.flush();
 
       var $scope = this.scope;
@@ -97,6 +105,8 @@ describe("controller: PermissionsController", function() {
     it("should notice if filters are on", function() {
       this.$httpBackend.expectGET('/api/users')
       .respond(200, JSON.stringify(sample_users));
+      this.$httpBackend.expectGET('/api/required_signoffs/permissions')
+      .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.flush();
 
       var $scope = this.scope;
@@ -111,20 +121,26 @@ describe("controller: PermissionsController", function() {
     it("should be possible to open the add modal", function() {
       this.$httpBackend.expectGET('/api/users')
       .respond(200, JSON.stringify(sample_users));
+      this.$httpBackend.expectGET('/api/required_signoffs/permissions')
+      .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.expectGET('/api/users/roles')
       .respond(200, JSON.stringify(sample_all_roles));
+      this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.scope.openNewModal();
     });
 
     it("should be possible to open the edit modal", function() {
       this.$httpBackend.expectGET('/api/users')
       .respond(200, JSON.stringify(sample_users));
+      this.$httpBackend.expectGET('/api/required_signoffs/permissions')
+      .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.expectGET('/api/users/peterbe/roles')
       .respond(200, JSON.stringify(sample_roles));
       this.$httpBackend.expectGET('/api/users/roles')
       .respond(200, JSON.stringify(sample_all_roles));
+      this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.scope.openUpdateModal({username: "peterbe"});
     });
   });
@@ -175,6 +191,8 @@ describe("controller: PermissionsController by username", function() {
         expect($route.current).toBeUndefined();
         this.$httpBackend.expectGET('/api/users/peterbe/permissions')
         .respond(200, JSON.stringify(sample_permissions));
+        this.$httpBackend.expectGET('/api/required_signoffs/permissions')
+        .respond(200, '{"required_signoffs": []}');
 
         $location.path('/permissions/peterbe');
         $rootScope.$digest();

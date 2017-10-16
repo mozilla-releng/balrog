@@ -24,7 +24,7 @@ def strip_data(release):
     )
 
 
-def get_releases():
+def release_list(request):
     kwargs = {}
     if request.args.get('product'):
         kwargs['product'] = request.args.get('product')
@@ -32,7 +32,10 @@ def get_releases():
         kwargs['name_prefix'] = request.args.get('name_prefix')
     if request.args.get('names_only'):
         kwargs['nameOnly'] = True
-    releases = dbo.releases.getReleaseInfo(**kwargs)
+    return dbo.releases.getReleaseInfo(**kwargs)
+
+
+def serialize_releases(request, releases):
     if request.args.get('names_only'):
         names = []
         for release in releases:
@@ -43,6 +46,11 @@ def get_releases():
             'releases': map(strip_data, releases),
         }
     return jsonify(data)
+
+
+def get_releases():
+    releases = release_list(request)
+    return serialize_releases(request, releases)
 
 
 def _get_release(release):
