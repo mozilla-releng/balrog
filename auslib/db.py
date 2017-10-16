@@ -1603,9 +1603,10 @@ class Rules(AUSTable):
 
     def _booleanMatchesRule(self, ruleValue, queryValue):
         """As with all other columns, if the value isn't present in the Rule, the Rule matches.
-        Unlike other columns, some boolean fields may optional in the update query, so we must handle
-        False, True, and None values explicitly. Note that None in the updateQuery is treated as "unknown",
-        i.e.: False and None are not the same thing.
+        Unlike other columns, the non-existence of a boolean field in the updateQuery evaluates
+        to False, so we need to handle True, False, and None explicitly. Note that None in the
+        updateQuery is treated as "unknown", and will cause any Rule without an explicit value
+        for the field to match.
         The full truth table is:
         rule | query | matches?
           F      0        Y
@@ -1767,8 +1768,10 @@ class Rules(AUSTable):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
                 continue
             if not self._booleanMatchesRule(rule["mig64"], updateQuery.get("mig64")):
+                self.log.debug("%s doesn't match %s", rule['mig64'], updateQuery['mig64'])
                 continue
             if not self._booleanMatchesRule(rule["jaws"], updateQuery.get("jaws")):
+                self.log.debug("%s doesn't match %s", rule['jaws'], updateQuery['jaws'])
                 continue
 
             matchingRules.append(rule)
