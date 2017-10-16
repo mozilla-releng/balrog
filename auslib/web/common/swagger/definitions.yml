@@ -325,7 +325,7 @@ definitions:
         example: true
 
       jaws:
-        description: Whether or not the Rule should apply to queries that specify their JAWS screen reader incompatibility status. If set to false or true, the query and the rule must match precisely. If set to null, the jaws value in the updateQuery is ignored.
+        description: Whether or not the Rule should apply to queries that are incompatible with the JAWS screen reader. If set to false or true, the query and the rule must match precisely. If set to null, the jaws value in the updateQuery is ignored.
         type: ["boolean", "null"]
         example: true
 

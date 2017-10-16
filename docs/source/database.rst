@@ -105,6 +105,11 @@ Following tables show columns according to different Categories:
   |                        |                    | requesting the update has                        | memory to compare the incoming  | ">=8096"                   |
   |                        |                    |                                                  | one against                     |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
+  |                        | jaws               | Whether or not the the Rule should apply to      | Exact match only                | True, False, or NULL       |
+  |                        |                    | queries that are incompatible with the JAWS      |                                 |                            |
+  |                        |                    | screen reader. If set to True or False the Rule  |                                 |                            |
+  |                        |                    | and the query must match precisely.              |                                 |                            |
+  |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | mig64              | Whether or not the Rule should apply to queries  | Exact match only                | True, False, or NULL       |
   |                        |                    | that have opted into 32 -> 64-bit migration.     |                                 |                            |
   |                        |                    | If set to True or False the Rule and the query   |                                 |                            |
