@@ -3,7 +3,7 @@ angular.module("app").directive("tagInput", function() {
     restrict: "A",
     link: function(scope, element, attrs) {
       scope.$watch(attrs.ngModel, function(value) {
-        if (value != undefined) {
+        if (value !== undefined) {
           var tempEl = $("<span>" + value + "</span>").appendTo("body");
           scope.inputWidth = tempEl.width() + 5;
           tempEl.remove();

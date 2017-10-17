@@ -20,10 +20,6 @@ angular
     $scope.loading = false;
     $scope.failed = false;
     $scope.tab = 1;
-    $scope.endDateBeforeRender = endDateBeforeRender;
-    $scope.endDateOnSetTime = endDateOnSetTime;
-    $scope.startDateBeforeRender = startDateBeforeRender;
-    $scope.startDateOnSetTime = startDateOnSetTime;
     $scope.rprfilter = true;
 
     // Setting tabs
@@ -108,10 +104,10 @@ angular
 
     //Delete username or email tag from the username/email input field 
     $scope.deleteUsernameEmail = function(key) {
-      if ($scope.userInput.username_email.length > 0 && $scope.usernameEmailText.length == 0 &&
+      if ($scope.userInput.username_email.length > 0 && $scope.usernameEmailText.length === 0 &&
         key === undefined) {
         $scope.userInput.username_email.pop();
-      } else if (key != undefined) {
+      } else if (key !== undefined) {
         $scope.userInput.username_email.splice(key, 1);
       }
     };
@@ -146,6 +142,10 @@ angular
           });
       }
     }
+    $scope.endDateBeforeRender = endDateBeforeRender;
+    $scope.endDateOnSetTime = endDateOnSetTime;
+    $scope.startDateBeforeRender = startDateBeforeRender;
+    $scope.startDateOnSetTime = startDateOnSetTime;
     //-- Date range ends
 
     //Product/ Channel  filter
@@ -393,10 +393,10 @@ angular
                   var changedByArr = [];
                   var searchResult = [];
                   $scope.userInput.username_email.forEach(function(changedBy) {
-                    if (changedByArr.indexOf(changedBy.name) == -1) {
+                    if (changedByArr.indexOf(changedBy.name) === -1) {
                       changedByArr.push(changedBy.name);
                       changedByArr.forEach(function(name) {
-                        if (searchResult.indexOf(name) == -1) {
+                        if (searchResult.indexOf(name) === -1) {
                           $scope.search = $filter("filter")(
                             $scope.allHistory,
                             name
@@ -428,7 +428,7 @@ angular
       $scope.optionChecked($scope.so_checkBoxes);
       if ($scope.checkedBoxesArr.length > 0 && $scope.checkedBoxesArr[0] !== null) {
         if ($scope.isShowUsername || $scope.isShowDaterange || $scope.isShowPrCh) {
-          console.log("in signoffs")
+          console.log("in signoffs");
          } else {
           sweetAlert(
             "Form submission error",
@@ -446,5 +446,5 @@ angular
       } else {
         signoffsHistory();   
       }
-    }
+    };
   });

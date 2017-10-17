@@ -7,5 +7,5 @@ angular.module("app").filter('dateRangefilter', function($filter) {
             var date = new Date(item.timestamp);
             return date >= hs_startDate && date <= hs_endDate;
          });
-    }
+    };
 });
