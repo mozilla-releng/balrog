@@ -46,7 +46,6 @@ def _get_histories(table, obj, process_revisions_callback=None):
 
 def get_rules_histories():
     history_table = dbo.rules.history
-    result = _get_histories(history_table, get_rules)
     return _get_histories(history_table, get_rules)
 
 
