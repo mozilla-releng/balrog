@@ -141,17 +141,15 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
 
     # Because Releases are so massive, we only want the actively used ones,
     # and very little Release history. Specifically:
-    #   - All releases referenced by a Rule or a Scheduled Rule Change
+    #   - All releases referenced by a Rule or a Active Scheduled Rule Change
     #   - All releases referenced by a Release from the above query
     #   - 50 rows of history for the "Firefox-mozilla-central-nightly-latest" Release
     #   - Full history for the Release currently referenced by the "firefox-release" Rule.
     query_release_mapping = """SELECT DISTINCT releases.* \
         FROM releases, rules, rules_scheduled_changes \
-        WHERE rules_scheduled_changes.complete = 0 AND releases.name IN ( \
-            rules.mapping, \
-            rules.fallbackMapping, \
-            rules_scheduled_changes.base_mapping, \
-            rules_scheduled_changes.base_fallbackMapping \
+        WHERE (releases.name IN (rules.mapping, rules.fallbackMapping))
+          OR (rules_scheduled_changes.complete = 0 AND
+              releases.name IN (rules_scheduled_changes.base_mapping, rules_scheduled_changes.base_fallbackMapping))
         )"""
 
     result = trans.execute(query_release_mapping).fetchall()
