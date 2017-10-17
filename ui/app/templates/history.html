@@ -22,12 +22,12 @@
       <div>
         <label>Filter By:</label>
       </div>
-      <div ng-model="filter">
+      <div ng-model="rprfilter">
         <fieldset class="filter-group">
           <h5 class="h-underlined">Change Type
             <span style="color:red">*</span>
           </h5>
-          <div class="col-sm-3" ng-repeat="item in checkBoxes">
+          <div class="col-sm-4" ng-repeat="item in checkBoxes">
             <input type="checkbox" ng-model="item.selected">
             <span>{{item.name}}</span>
           </div>
@@ -35,11 +35,13 @@
         <span style="color:green">{{msg}}</span>
 
         <div ng-show="isShowUsername" class="filter-group">
-            <h5 class="h-underlined">Username / Email
+            <div>
+              <h5 class="h-underlined">Username / Email
                 <span tooltip="Remove filter option" tooltip-placement="right">
                   <button class="remove" ng-click="hideUsername()">&times;</button>
                 </span>
               </h5>
+            </div>
           <div class="user-input-ctn">
             <div data-ng-repeat="(key, user) in userInput.username_email" class="input-user">
                 {{ user.name }}
@@ -47,8 +49,7 @@
             </div>
             <input type="text" data-tag-input="" data-ng-model="usernameEmailText" placeholder='add username/email' data-new-tag="addUsernameEmail()"
                   data-delete-tag="deleteUsernameEmail()"/>
-          </div>
-          
+          </div>       
         </div>
 
         <div ng-show="isShowDaterange" class="filter-group">
@@ -108,7 +109,7 @@
             <option ng-hide="isShowDaterange" value="daterange">Date Range</option>
             <option ng-hide="isShowPrCh" value="product_channel">Product / Channel</option>
           </select>
-        <button class="btn btn-primary" ng-click="searchItem()">Search</button>
+        <button class="btn btn-primary" ng-click="searchHistory()">Search</button>
       </div>
     </form>
   </div>
