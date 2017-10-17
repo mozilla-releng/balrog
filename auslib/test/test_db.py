@@ -232,6 +232,7 @@ def test_austransaction_require_real_file(request):
                               Column('foo', Integer))
     request.cls.metadata.create_all()
 
+
 @pytest.mark.usefixtures('test_austransaction_require_real_file')
 class TestAUSTransactionRequiresRealFile(unittest.TestCase, NamedFileDatabaseMixin):
 
@@ -303,6 +304,7 @@ def test_austable(request):
     request.cls.metadata = sef.metadata
     request.cls.test = sef.test
     request.cls.testAutoincrement = sef.testAutoincrement
+
 
 class TestMultiplePrimaryTableMixin(object):
 
@@ -460,6 +462,7 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
         # to the id condition above.
         self.assertEquals(len(shared[3]._whereclause.get_children()), 2)
+
 
 @pytest.fixture(scope='class')
 def test_austable_require_real_file(request):
