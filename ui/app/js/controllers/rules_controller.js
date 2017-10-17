@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers) {
 
   Page.setTitle('Rules');
 
@@ -8,13 +8,39 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
 
   $scope.rule_id = parseInt($routeParams.id, 10);
   $scope.pr_ch_options = [];
-
   $scope.currentPage = 1;
-  $scope.pageSize = 20;
+  $scope.storedPageSize = JSON.parse(localStorage.getItem('rules_page_size'));
+  $scope.pageSize = $scope.storedPageSize? $scope.storedPageSize.id : 20;
+  $scope.page_size = {id: $scope.pageSize, name: $scope.storedPageSize? $scope.storedPageSize.name : $scope.pageSize};
   $scope.maxSize = 10;
   $scope.rules = [];
   $scope.pr_ch_filter = "";
   $scope.show_sc = true;
+
+  function changeLocationWithFilterParams(filterParamsString) {
+    localStorage.setItem("pr_ch_filter", filterParamsString);
+    var pr_ch_array = filterParamsString.split(',');
+    if (pr_ch_array[0].toLowerCase() === "all rules" || $scope.rule_id) {
+      $location.path('/rules').search({});
+    } else if (pr_ch_array && pr_ch_array.length > 1) {
+      $location.path('/rules').search({ product: pr_ch_array[0], channel: pr_ch_array[1] });
+    } else {
+      $location.path('/rules').search({ product: pr_ch_array[0] });
+    }
+  }
+
+  if($location.url().split('=')[1]) {
+    var urlParams = "";
+    $location.url().split('?')[1].split('&').map(function(str) { 
+      if(urlParams.length > 1) {
+        urlParams += ',';
+        urlParams += str.split('=')[1];
+      } else {
+        urlParams += str.split('=')[1];
+      }
+    });
+    changeLocationWithFilterParams(urlParams);
+  } 
 
   function loadPage(newPage) {
     Rules.getHistory($scope.rule_id, $scope.pageSize, newPage)
@@ -40,6 +66,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     Rules.getRules()
     .success(function(response) {
       $scope.rules_count = response.count;
+      $scope.page_size_pair = [{id: 20, name: '20'},
+        {id: 50, name: '50'}, 
+        {id: $scope.rules_count, name: 'All'}];
 
       Permissions.getCurrentUser()
       .success(function(response) {
@@ -98,7 +127,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           $scope.pr_ch_options.sort().unshift("All rules");
           $scope.pr_ch_filter = "All rules";
           if ($scope.pr_ch_options.includes(localStorage.getItem('pr_ch_filter'))){
-            $scope.pr_ch_filter = localStorage.getItem('pr_ch_filter');
+            $scope.pr_ch_filter = localStorage.getItem('pr_ch_filter') || "All rules";
           }
         });
       });
@@ -128,6 +157,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     }
     $scope.pr_ch_selected = value.split(',');
   });
+
+  $scope.selectPageSize = function() {
+    Helpers.selectPageSize($scope, 'rules_page_size');
+  };
 
   $scope.filters = {
     search: $location.hash(),
@@ -206,6 +239,11 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     }
     return true;
   };
+
+  $scope.locationChanger = function () {
+    changeLocationWithFilterParams($scope.pr_ch_filter);
+  };
+
 
   $scope.openUpdateModal = function(rule) {
 

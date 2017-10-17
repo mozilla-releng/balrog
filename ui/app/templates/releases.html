@@ -12,6 +12,12 @@
       ng-options="o.text for o in ordering_options track by o.value">
     </select>
   </div>
+  <div class="page-size" ng-show="releases_count > 20">
+    <label>Page Size: </label>
+    <select ng-model="page_size" ng-name="page_size"
+      ng-options="page_size.name for page_size in page_size_pair track by page_size.id"
+      ng-change="selectPageSize()"></select>
+  </div>
 </form>
 
 
@@ -35,8 +41,6 @@
     <i class="glyphicon glyphicon-arrow-left"></i>
   </a>
 </h2>
-
-
 <div class="pagination-container" ng-show="releases_count > pageSize">
   <pagination
     class="pagination-sm"

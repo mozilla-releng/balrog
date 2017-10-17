@@ -741,15 +741,31 @@ class History(AUSTable):
                 raise ValueError("data_version queried for non-versioned table")
 
             where = [self.data_version == data_version]
+            self.log.debug("Querying for change_id by:")
+            self.log.debug("data_version: %s", data_version)
             for col in column_names.keys():
+                self.log.debug("%s: %s", column_names[col], column_values[col])
                 where.append(column_names[col] == column_values[col])
-            changes = self.select(where=where,
-                                  transaction=transaction)
-        else:
-            changes = self.select(where=[self.change_id == change_id], transaction=transaction)
-        found = len(changes)
-        if found > 1 or found == 0:
-            self.log.debug("Found %s changes, should have been 1", found)
+
+            # To improve query efficiency we first get the change_id,
+            # and _then_ get the entire row. This is because we may not be able
+            # to query by an index depending which column_values we were given.
+            # If we end up querying by column_values that don't have an index,
+            # mysql will read many more rows than will be returned. This is
+            # particularly bad on the releases_history table, where the "data"
+            # column is often hundreds of kilobytes per row.
+            # Additional details in https://github.com/mozilla/balrog/pull/419#issuecomment-334851038
+            change_ids = self.select(columns=[self.change_id], where=where,
+                                     transaction=transaction)
+            if len(change_ids) != 1:
+                self.log.debug("Found %s changes when not querying by change_id, should have been 1", len(change_ids))
+                return None
+            change_id = change_ids[0]["change_id"]
+
+        self.log.debug("Querying for full change by change_id %s", change_id)
+        changes = self.select(where=[self.change_id == change_id], transaction=transaction)
+        if len(changes) != 1:
+            self.log.debug("Found %s changes when querying by change_id, should have been 1", len(changes))
             return None
         return changes[0]
 
