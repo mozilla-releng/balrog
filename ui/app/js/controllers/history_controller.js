@@ -10,7 +10,6 @@ angular
       dateRangeEnd: "",
       hs_pr_ch_filter: "All Rules"
     };
-
     $scope.isShowUsername = true;
     $scope.isShowDaterange = true;
     $scope.isShowPrCh = true;
@@ -25,10 +24,18 @@ angular
     $scope.endDateOnSetTime = endDateOnSetTime;
     $scope.startDateBeforeRender = startDateBeforeRender;
     $scope.startDateOnSetTime = startDateOnSetTime;
+    $scope.rprfilter = true;
 
     // Setting tabs
     $scope.setTab = function(newTab) {
       $scope.tab = newTab;
+      if ($scope.tab === 1 || $scope.tab === 2) {
+        $scope.rprfilter = true;
+        $scope.so_filter = false;
+      } else if ($scope.tab === 3){
+        $scope.rprfilter = false;
+        $scope.so_filter = true;
+      }
     };
 
     $scope.isSet = function(tabNum) {
@@ -50,6 +57,19 @@ angular
       {
         id: 3,
         name: "Permissions",
+        selected: false
+      }
+    ];
+
+    $scope.so_checkBoxes = [
+      {
+        id: 1,
+        name: "Product Signoffs",
+        selected: false
+      },
+      {
+        id: 2,
+        name: "Permissions Signoffs",
         selected: false
       }
     ];
@@ -207,8 +227,7 @@ angular
       $scope.isShowPrCh = false;
     };
     //End add and remove filter fields
-
-
+    
     $scope.processResponse = function(response) {
       $scope.history_count = response.count;
       $scope.revisions = response.revisions;
@@ -224,7 +243,6 @@ angular
     function rulesHistory() {
       switch ($scope.tab) {
         case 1:
-        console.log("geting here rpr");
           promises.push(
             History.getRulesHistory()
               .success(function(response) {
@@ -237,7 +255,6 @@ angular
           );
           break;
         case 2:
-        console.log("geting here sc");
         sc_promises.push(
             History.getScRulesHistory()
               .success(function(response) {
@@ -312,16 +329,6 @@ angular
       }
     }
 
-    // var promiseResultArr = [];
-    // function allResponse(response) {
-    //   $scope.promiseResult = response;
-    //   $scope.promiseResult.forEach(function(arrList) {
-    //     var history_arr_list_data = arrList.data;
-    //     history_arr_list_data.revisions.forEach(function(data) {
-    //       promiseResultArr.push(data);
-    //     });
-    //   });
-    // }
     //To  fetch all History based on selected values and return all in one array
     function fetchHistory() {
       $scope.loading = true;
@@ -335,10 +342,15 @@ angular
         if (isInArray("Permissions", $scope.checkedBoxesArr)) {
           permissionsHistory();
         }
+        if (isInArray("Product Signoffs", $scope.checkedBoxesArr)) {
+          productSignoffsHistory();
+        }
+        if (isInArray("Permissions Signoffs", $scope.checkedBoxesArr)) {
+          permissionsSignoffsHistory();
+        }
         switch($scope.tab) {
           case 1:
             $q.all(promises).then(function(response) {
-              // allResponse(response);
               $scope.promiseResult = response;
               var promiseResultArr = [];
               $scope.promiseResult.forEach(function(arrList) {
@@ -353,7 +365,6 @@ angular
             break;
           case 2:
             $q.all(sc_promises).then(function(response) {
-              // allResponse(response);
               $scope.promiseResult = response;
               var promiseResultArr = [];
               $scope.promiseResult.forEach(function(arrList) {
@@ -370,39 +381,39 @@ angular
       });
     }
 
-    //To search histories array based on the result gotten from fetchHistory()
-    $scope.searchHistory = function() {
+    function rprscHistory() {
       $scope.optionChecked($scope.checkBoxes);
       if ($scope.checkedBoxesArr.length > 0 && $scope.checkedBoxesArr[0] !== null) {
         if ($scope.isShowUsername || $scope.isShowDaterange || $scope.isShowPrCh) {
-          fetchHistory().then(function(data) {
-            $scope.allHistory = data;
-            $scope.$apply(function() {
-              if ($scope.userInput.username_email !== "") {
-                var changedByArr = [];
-                var searchResult = [];
-                $scope.userInput.username_email.forEach(function(changedBy) {
-                  if (changedByArr.indexOf(changedBy.name) == -1) {
-                    changedByArr.push(changedBy.name);
-                    changedByArr.forEach(function(name) {
-                      if (searchResult.indexOf(name) == -1) {
-                        $scope.search = $filter("filter")(
-                          $scope.allHistory,
-                          name
-                        );
-                      }
-                    });
-                  }
-                });
-              } 
-              if ($scope.userInput.dateRangeStart !== "" ||$scope.userInput.dateRangeEnd !== "") {
-                $scope.search = $filter("dateRangefilter")($scope.allHistory,$scope.userInput.dateRangeStart,$scope.userInput.dateRangeEnd);
-              } 
-              if ($scope.pr_ch_selected[0].toLowerCase() !== "all rules") {
-                $scope.search = $filter("filter")($scope.allHistory,$scope.userInput.hs_pr_ch_filter);
-              } 
+          fetchHistory()
+           .then(function(data) {
+              $scope.allHistory = data;
+              $scope.$apply(function() {
+                if ($scope.userInput.username_email !== "") {
+                  var changedByArr = [];
+                  var searchResult = [];
+                  $scope.userInput.username_email.forEach(function(changedBy) {
+                    if (changedByArr.indexOf(changedBy.name) == -1) {
+                      changedByArr.push(changedBy.name);
+                      changedByArr.forEach(function(name) {
+                        if (searchResult.indexOf(name) == -1) {
+                          $scope.search = $filter("filter")(
+                            $scope.allHistory,
+                            name
+                          );
+                        }
+                      });
+                    }
+                  });
+                } 
+                if ($scope.userInput.dateRangeStart !== "" ||$scope.userInput.dateRangeEnd !== "") {
+                  $scope.search = $filter("dateRangefilter")($scope.allHistory,$scope.userInput.dateRangeStart,$scope.userInput.dateRangeEnd);
+                } 
+                if ($scope.pr_ch_selected[0].toLowerCase() !== "all rules") {
+                  $scope.search = $filter("filter")($scope.allHistory,$scope.userInput.hs_pr_ch_filter);
+                } 
+              });
             });
-          });
         } else {
           sweetAlert(
             "Form submission error",
@@ -411,5 +422,29 @@ angular
           );
         }
       }
-    };
+    }
+
+    function signoffsHistory() {
+      $scope.optionChecked($scope.so_checkBoxes);
+      if ($scope.checkedBoxesArr.length > 0 && $scope.checkedBoxesArr[0] !== null) {
+        if ($scope.isShowUsername || $scope.isShowDaterange || $scope.isShowPrCh) {
+          console.log("in signoffs")
+         } else {
+          sweetAlert(
+            "Form submission error",
+            "There are no search filter fields",
+            "error"
+          );
+        }
+      }
+    }
+
+    //To search histories array based on the result gotten from fetchHistory()
+    $scope.searchHistory = function() {
+      if ($scope.tab === 1 || $scope.tab === 2) {
+        rprscHistory(); 
+      } else {
+        signoffsHistory();   
+      }
+    }
   });
