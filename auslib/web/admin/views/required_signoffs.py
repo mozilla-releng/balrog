@@ -48,6 +48,13 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
         self.decisionFields = decisionFields
         super(RequiredSignoffsHistoryAPIView, self).__init__(table=table)
 
+    def _get_input_dict(self):
+        args = dict(connexion.request.args)
+        input_dict = {}
+        for key in args:
+            input_dict[key] = connexion.request.args.get(key)
+        return input_dict
+
     def get(self, input_dict):
         if not self.table.select({f: input_dict.get(f) for f in self.decisionFields}):
             return problem(404, "Not Found", "Requested Required Signoff does not exist")
@@ -67,6 +74,26 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
 
         where = [getattr(self.table.history, f) == input_dict.get(f) for f in self.decisionFields]
         where.append(self.table.history.data_version != null())
+        revisions = self.table.history.select(
+            where=where, limit=limit, offset=offset,
+            order_by=[self.table.history.timestamp.desc()]
+        )
+
+        return jsonify(count=total_count, required_signoffs=revisions)
+
+    def get_all(self):
+        try:
+            page = int(connexion.request.args.get('page', 1))
+            limit = int(connexion.request.args.get('limit', 100))
+        except ValueError as msg:
+            self.log.warning("Bad input: %s", msg)
+            return problem(400, "Bad Request", str(msg))
+        offset = limit * (page - 1)
+
+        query = self.table.history.t.count().where(self.table.history.data_version != null())
+        total_count = query.execute().fetchone()[0]
+
+        where = [self.table.history.data_version != null()]
         revisions = self.table.history.select(
             where=where, limit=limit, offset=offset,
             order_by=[self.table.history.timestamp.desc()]
