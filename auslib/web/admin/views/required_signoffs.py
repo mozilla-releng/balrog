@@ -104,7 +104,7 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
             if self._is_digit(connexion.request.args.get('page')):
                 page = int(connexion.request.args.get('page', 1))
             else:
-                page=1
+                page = 1
         else:
             page = 1
 

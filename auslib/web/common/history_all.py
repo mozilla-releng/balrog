@@ -1,12 +1,9 @@
 import json
-import connexion
 import logging
 from auslib.global_state import dbo
 from connexion import problem, request
-from flask import jsonify, Response
-from auslib.web.common.csrf import get_csrf_headers
+from flask import jsonify
 from auslib.web.common.history import HistoryHelper
-from sqlalchemy.sql.expression import null
 from auslib.web.common.rules import get_rules
 from auslib.web.common.releases import get_releases, process_release_revisions
 from auslib.web.admin.views.permissions import UsersView, PermissionScheduledChangeHistoryView
@@ -18,6 +15,7 @@ from auslib.web.admin.views.required_signoffs import PermissionsRequiredSignoffs
 
 log = logging.getLogger(__name__)
 
+
 def _get_filters(obj, history_table):
     input_dict = _get_input_dict()
     query = json.loads(input_dict.data)['query']
@@ -27,6 +25,7 @@ def _get_filters(obj, history_table):
         return where
     except AttributeError:
         return where
+
 
 def _get_histories(table, obj, process_revisions_callback=None):
     history_table = table
@@ -44,6 +43,7 @@ def _get_histories(table, obj, process_revisions_callback=None):
         return problem(400, "Bad Request", "Error occurred when trying to fetch histories",
                        ext={"exception": str(msg)})
 
+
 def get_rules_histories():
     history_table = dbo.rules.history
     result = _get_histories(history_table, get_rules)
@@ -53,6 +53,7 @@ def get_rules_histories():
 def get_releases_histories():
     history_table = dbo.releases.history
     return _get_histories(history_table, get_releases, process_release_revisions)
+
 
 def get_permissions_histories():
     history_table = dbo.permissions.history
@@ -64,22 +65,27 @@ def get_permissions_scheduled_change_histories():
     """GET /history/scheduled_changes/permissions"""
     return PermissionScheduledChangeHistoryView().get_all()
 
+
 def get_rules_scheduled_change_histories():
     """GET /history/scheduled_changes/permissions"""
     return RuleScheduledChangeHistoryView().get_all()
+
 
 def get_releases_scheduled_change_histories():
     """GET /history/scheduled_changes/permissions"""
     return ReleaseScheduledChangeHistoryView().get_all()
 
+
 def get_product_required_signoffs_histories():
     return ProductRequiredSignoffsHistoryAPIView().get_all()
+
 
 def get_permissions_required_signoffs_histories():
     return PermissionsRequiredSignoffsHistoryAPIView().get_all()
 
+
 def _get_input_dict():
-    args = connexion.request.args
+    args = request.args
     obj_keys = []
     query_keys = []
     query = {}
@@ -91,7 +97,7 @@ def _get_input_dict():
                 query_keys.append(key)
 
     for key in query_keys:
-        query[key] = connexion.request.args.get(key)
+        query[key] = request.args.get(key)
     return jsonify(query_keys=query_keys, obj_keys=obj_keys, query=query)
 
 
@@ -104,6 +110,7 @@ def filter_helper(obj):
             return False
     return True
 
+
 def method_constants():
     return {
         'rules': get_rules_histories(),
@@ -115,6 +122,7 @@ def method_constants():
         'rules_scheduled_change_histories': get_rules_scheduled_change_histories(),
         'permissions_scheduled_change_histories': get_permissions_scheduled_change_histories(),
     }
+
 
 def get_filtered_history():
     requested_histories = json.loads(_get_input_dict().data)['obj_keys']

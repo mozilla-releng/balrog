@@ -75,7 +75,7 @@ class HistoryHelper():
             if self._is_digit(request.args.get('page')):
                 page = int(request.args.get('page', 1))
             else:
-                page=1
+                page = 1
         else:
             page = 1
 

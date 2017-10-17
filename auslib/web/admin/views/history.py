@@ -17,7 +17,7 @@ class HistoryView(AdminView):
         self.table = table
         self.history_table = table.history
         super(HistoryView, self).__init__(*args, **kwargs)
-    
+
     def _is_digit(self, text):
         try:
             int(text)
@@ -86,12 +86,12 @@ class HistoryView(AdminView):
         return jsonify(ret)
 
     def get_all_revisions(self,
-                      get_object_callback,
-                      history_filters_callback,
-                      revisions_order_by,
-                      process_revisions_callback=None,
-                      obj_not_found_msg='Requested object does not exist',
-                      response_key='revisions'):
+                          get_object_callback,
+                          history_filters_callback,
+                          revisions_order_by,
+                          process_revisions_callback=None,
+                          obj_not_found_msg='Requested object does not exist',
+                          response_key='revisions'):
         """Get revisions for Releases, Rules or ScheduledChanges.
         Uses callable parameters to handle specific AUS object data.
 
@@ -128,7 +128,7 @@ class HistoryView(AdminView):
             if self._is_digit(connexion.request.args.get('page')):
                 page = int(connexion.request.args.get('page', 1))
             else:
-                page=1
+                page = 1
         else:
             page = 1
 
@@ -152,7 +152,6 @@ class HistoryView(AdminView):
             revisions = self.history_table.select(
                 where=filters,
                 order_by=revisions_order_by)
-
 
         if process_revisions_callback:
             revisions = process_revisions_callback(revisions)
