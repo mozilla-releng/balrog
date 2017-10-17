@@ -1120,7 +1120,7 @@ class ClientTestMig64(ClientTestCommon):
 
 class ClientTestJaws(ClientTestCommon):
     """Tests the expected real world scenarios for the JAWS parameter in
-    SYSTEM_REQUIREMENTS."""
+    SYSTEM_CAPABILITIES."""
 
     @classmethod
     def setUpClass(cls):
