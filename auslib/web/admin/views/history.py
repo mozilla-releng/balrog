@@ -17,6 +17,15 @@ class HistoryView(AdminView):
         self.table = table
         self.history_table = table.history
         super(HistoryView, self).__init__(*args, **kwargs)
+    
+    def _is_digit(self, text):
+        try:
+            int(text)
+            if text >= 0:
+                return True
+            return False
+        except ValueError:
+            return False
 
     def get_revisions(self,
                       get_object_callback,
@@ -67,6 +76,83 @@ class HistoryView(AdminView):
             limit=limit,
             offset=offset,
             order_by=revisions_order_by)
+
+        if process_revisions_callback:
+            revisions = process_revisions_callback(revisions)
+
+        ret = dict()
+        ret[response_key] = revisions
+        ret['count'] = total_count
+        return jsonify(ret)
+
+    def get_all_revisions(self,
+                      get_object_callback,
+                      history_filters_callback,
+                      revisions_order_by,
+                      process_revisions_callback=None,
+                      obj_not_found_msg='Requested object does not exist',
+                      response_key='revisions'):
+        """Get revisions for Releases, Rules or ScheduledChanges.
+        Uses callable parameters to handle specific AUS object data.
+
+        @param get_object_callback: A callback to get requested AUS object.
+        @type get_object_callback: callable
+
+        @param history_filters_callback: A callback that get the filters list
+        to query the history.
+        @type history_filters_callback: callable
+
+        @param process_revisions_callback: A callback that process revisions
+        according to the requested AUS object.
+        @type process_revisions_callback: callable
+
+        @param revisions_order_by: Fields list to sort history.
+        @type revisions_order_by: list
+
+        @param obj_not_found_msg: Error message for not found AUS object.
+        @type obj_not_found_msg: string
+
+        @param response_key: Dictionary key to wrap returned revisions.
+        @type response_key: string
+        """
+        limit = 0
+        page = 1
+
+        if connexion.request.args.get('limit'):
+            if self._is_digit(connexion.request.args.get('limit')):
+                limit = int(connexion.request.args.get('limit', 10))
+        else:
+            limit = -1
+
+        if connexion.request.args.get('page'):
+            if self._is_digit(connexion.request.args.get('page')):
+                page = int(connexion.request.args.get('page', 1))
+            else:
+                page=1
+        else:
+            page = 1
+
+        obj = get_object_callback()
+        if not obj:
+            return problem(status=404, title="Not Found", detail=obj_not_found_msg)
+
+        filters = history_filters_callback(obj)
+        total_count = self.history_table.t.count()\
+                                          .where(and_(*filters))\
+                                          .execute().fetchone()[0]
+
+        if limit >= 0 and page >= 1:
+            offset = limit * (page - 1)
+            revisions = self.history_table.select(
+                where=filters,
+                limit=limit,
+                offset=offset,
+                order_by=revisions_order_by)
+        else:
+            revisions = self.history_table.select(
+                where=filters,
+                order_by=revisions_order_by)
+
 
         if process_revisions_callback:
             revisions = process_revisions_callback(revisions)
