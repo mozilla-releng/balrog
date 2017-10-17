@@ -52,6 +52,62 @@ class HistoryHelper():
         ret['count'] = total_count
         return jsonify(ret)
 
+    def _is_digit(self, text):
+        try:
+            int(text)
+            if text >= 0:
+                return True
+            return False
+        except ValueError:
+            return False
+
+    def get_unlimted_histories(self, response_key='revisions'):
+        limit = 0
+        page = 0
+
+        if request.args.get('limit'):
+            if self._is_digit(request.args.get('limit')):
+                limit = int(request.args.get('limit', 10))
+        else:
+            limit = -1
+
+        if request.args.get('page'):
+            if self._is_digit(request.args.get('page')):
+                page = int(request.args.get('page', 1))
+            else:
+                page=1
+        else:
+            page = 1
+
+        obj = self.fn_get_object()
+        if not obj:
+            return Response(status=404,
+                            response=self.obj_not_found_msg)
+
+        filters = self.fn_history_filters(obj, self.hist_table)
+        total_count = self.hist_table.t.count()\
+                                       .where(and_(*filters))\
+                                       .execute().fetchone()[0]
+        if limit >= 0 and page >= 1:
+            offset = limit * (page - 1)
+            revisions = self.hist_table.select(
+                where=filters,
+                limit=limit,
+                offset=offset,
+                order_by=self.order_by)
+        else:
+            revisions = self.hist_table.select(
+                where=filters,
+                order_by=self.order_by)
+
+        if self.fn_process_revisions:
+            revisions = self.fn_process_revisions(revisions)
+
+        ret = {}
+        ret[response_key] = revisions
+        ret['count'] = total_count
+        return jsonify(ret)
+
 
 history_keys = ('timestamp', 'change_id', 'data_version', 'changed_by')
 
