@@ -9,8 +9,13 @@ Download
 Clone from git using
 
 ::
-
+    $ cd ~
+    $ mkdir workspace # if you haven't done yet
+    $ cd workspace # or any other location you may desire to save the code in
+    $ pwd && ls -l
     $ git clone https://github.com/mozilla/balrog
+    $ cd balrog && pwd && ls -l && ls
+    $ clear
 
 Installation
 ------------
