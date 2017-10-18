@@ -17,6 +17,7 @@ Clone from git using
     $ git clone https://github.com/mozilla/balrog
     $ cd balrog && pwd && ls -l && ls
     $ clear
+::
 
 Installation
 ------------
