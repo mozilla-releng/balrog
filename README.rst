@@ -12,7 +12,8 @@ Clone from git using
     $ cd ~
     $ mkdir workspace # if you don't have a workspace yet
     $ cd workspace # or any other location you may desire to save the code in
-    $ pwd && ls -l
+    $ pwd && ls -l && ls
+    $ clear
     $ git clone https://github.com/mozilla/balrog
     $ cd balrog && pwd && ls -l && ls
     $ clear
