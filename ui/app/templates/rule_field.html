@@ -1,0 +1,20 @@
+<h5 ng-show="(rule[fieldname] !== null && rule[fieldname] !== undefined) || (showsc && rule.scheduled_change[fieldname] !== null && rule.scheduled_change[fieldname] !== undefined)">
+    {{ fieldtitle }}
+    <span ng-show="help && (rule[fieldname] !== null || (showsc && rule.scheduled_change[fieldname] !== null))"
+          class="glyphicon glyphicon-question-sign" title="{{ help }}"></span>
+    :
+<b>
+<!-- we have two display modes: with and without scheduled changes.
+     if scheduled changes are being shown, we show any fields that are
+     changing as a "diff", where the current value is struck out, and
+     the scheduled change version is in green. if scheduled changes aren't
+     being shown, we just show the current value plainly -->
+<span ng-style="showdiff && showsc && (fieldIsChanging(rule, fieldname) || rule.scheduled_change.change_type === 'delete')
+                ? {'text-decoration': 'line-through', 'color': 'red'} : {};">
+    {{ rule[fieldname] === true ? "Yes" : (rule[fieldname] === false ? "No" : rule[fieldname]) }}
+</span>
+<span style="color: green" ng-show="showdiff && showsc && fieldIsChanging(rule, fieldname)">
+    {{ rule.scheduled_change[fieldname] === true ? "Yes" : (rule.scheduled_change[fieldname] === false ? "No" : rule.scheduled_change[fieldname]) }}
+</span>
+</b>
+</h5>

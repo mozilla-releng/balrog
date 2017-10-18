@@ -12,7 +12,7 @@ class HistoryHelper():
                  order_by,
                  get_object_callback,
                  history_filters_callback,
-                 process_revisions_callback,
+                 process_revisions_callback=None,
                  obj_not_found_msg='Requested object does not exist'):
         self.hist_table = hist_table
         self.order_by = order_by
@@ -44,10 +44,11 @@ class HistoryHelper():
             offset=offset,
             order_by=self.order_by)
 
-        _revisions = self.fn_process_revisions(revisions)
+        if self.fn_process_revisions:
+            revisions = self.fn_process_revisions(revisions)
 
         ret = {}
-        ret[response_key] = _revisions
+        ret[response_key] = revisions
         ret['count'] = total_count
         return jsonify(ret)
 

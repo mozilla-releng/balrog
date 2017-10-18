@@ -1,5 +1,5 @@
 angular.module("app").controller("RuleScheduledChangesController",
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Permissions, Page) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Permissions, Page, ProductRequiredSignoffs) {
 
   Page.setTitle('Scheduled Rule Changes');
 
@@ -9,10 +9,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.user_roles = [];
 
   $scope.sc_id = parseInt($routeParams.sc_id, 10);
-
-  $scope.isEmpty = function(obj) {
-    return Object.keys(obj).length === 0;
-  };
 
   Permissions.getCurrentUser()
   .success(function(response) {
@@ -25,6 +21,11 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       response
     );
   });
+
+  ProductRequiredSignoffs.getRequiredSignoffs()
+    .then(function(payload) {
+      $scope.signoffRequirements = payload.data.required_signoffs;
+    });
 
   function loadPage(newPage) {
     Rules.getScheduledChangeHistory($scope.sc_id, $scope.pageSize, newPage)
@@ -122,14 +123,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     return false;
   };
 
-  $scope.formatMoment = function(when) {
-    date = moment(when);
-    // This is copied from app/js/directives/moment_directive.js
-    // We can't use that for this page, because it doesn't re-render when
-    // values change.
-    return '<time title="' + date.format('dddd, MMMM D, YYYY HH:mm:ss ') + 'GMT' + date.format('ZZ') + '">' + date.fromNow() + '</time>';
-  };
-
   $scope.openNewScheduledRuleChangeModal = function() {
 
     var modalInstance = $modal.open({
@@ -151,7 +144,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             when: null,
             change_type: 'insert',
           };
-        }
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
   };
@@ -242,7 +238,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         sc: function() {
           sc.when = new Date(sc.when);
           return sc;
-        }
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
   };

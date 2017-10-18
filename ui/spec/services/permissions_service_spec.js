@@ -77,7 +77,7 @@ describe("Service: Permissions", function() {
   }));
 
   it('should be able to update a user permission', inject(function(Permissions) {
-    this.$httpBackend.expectPOST('/api/users/peterbe/permissions/admin')
+    this.$httpBackend.expectPUT('/api/users/peterbe/permissions/admin')
     .respond(200, JSON.stringify({new_data_version: 2}));
     Permissions.updatePermission('peterbe', {permission: 'admin'}, 'mytoken')
     .success(function(response) {
@@ -102,4 +102,47 @@ describe("Service: Permissions", function() {
     this.$httpBackend.flush();
   }));
 
+  it("should respect both old and new permissions", inject(function(Permissions) {
+    var signoffRequirements = [
+      {product: "Firefox", role: "releng", signoffs_required: 2},
+      {product: "Fennec", role: "relman", signoffs_required: 4},
+    ];
+    var oldPerm = {options: {products: ["Firefox"]}, permission: "release_locale"};
+    var newPerm = {options: {products: ["Fennec"]}, permission: "release_locale"};
+    var signoffsRequired = Permissions.permissionSignoffsRequired(oldPerm, newPerm, signoffRequirements);
+    expect(signoffsRequired.length).toBe(2);
+    expect(signoffsRequired.roles['releng']).toBe(2);
+    expect(signoffsRequired.roles['relman']).toBe(4);
+  }));
+
+  it("should not require signoffs for unrelated product", inject(function(Permissions) {
+    var signoffRequirements = [
+      {product: "Firefox", role: "releng", signoffs_required: 2},
+    ];
+    var oldPerm = {options: {products: ["Thunderbird"]}, permission: "release_locale"};
+    var newPerm = {options: {products: ["Thunderbird", "Fennec"]}, permission: "release_locale"};
+    var signoffsRequired = Permissions.permissionSignoffsRequired(oldPerm, newPerm, signoffRequirements);
+    expect(signoffsRequired.length).toBe(0);
+  }));
+
+  it("should require signoffs for adding unrelated product", inject(function(Permissions) {
+    var signoffRequirements = [
+      {product: "Firefox", role: "releng", signoffs_required: 2},
+    ];
+    var oldPerm = {options: {products: ["Firefox"]}, permission: "release_locale"};
+    var newPerm = {options: {products: ["Firefox", "Fennec"]}, permission: "release_locale"};
+    var signoffsRequired = Permissions.permissionSignoffsRequired(oldPerm, newPerm, signoffRequirements);
+    expect(signoffsRequired.length).toBe(1);
+    expect(signoffsRequired.roles['releng']).toBe(2);
+  }));
+
+  it("should match if no product is present in perm", inject(function(Permissions) {
+    var signoffRequirements = [
+      {product: "Firefox", role: "releng", signoffs_required: 2},
+    ];
+    var perm = {permission: "release_locale"};
+    var signoffsRequired = Permissions.permissionSignoffsRequired(undefined, perm, signoffRequirements);
+    expect(signoffsRequired.length).toBe(1);
+    expect(signoffsRequired.roles['releng']).toBe(2);
+  }));
 });

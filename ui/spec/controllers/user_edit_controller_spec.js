@@ -22,6 +22,7 @@ describe("controller: UserPermissionsCtrl", function() {
       {'role':'releng', 'data_version':1}
     ]};
   var sample_all_roles = {'roles': ['qa', 'releng']};
+  var signoffRequirements = [];
 
   beforeEach(inject(function($controller, $rootScope, $location, $modal, Permissions, $httpBackend) {
     this.$location = $location;
@@ -37,7 +38,9 @@ describe("controller: UserPermissionsCtrl", function() {
       $location: $location,
       Permissions: Permissions,
       user: user,
+      is_edit: true,
       users: [user],
+      permissionSignoffRequirements: signoffRequirements,
     });
   }));
 
@@ -115,7 +118,7 @@ describe("controller: UserPermissionsCtrl", function() {
       this.$httpBackend.flush();
       this.$httpBackend.expectGET('/api/csrf_token')
       .respond(200, 'token');
-      this.$httpBackend.expectPOST('/api/users/peterbe/permissions/admin')
+      this.$httpBackend.expectPUT('/api/users/peterbe/permissions/admin')
       .respond(201, JSON.stringify({new_data_version: 1}));
 
       this.scope.permission = {
@@ -126,7 +129,7 @@ describe("controller: UserPermissionsCtrl", function() {
       expect(this.scope.saving).toEqual(true);
       this.$httpBackend.flush();
       expect(this.scope.saving).toEqual(false);
-      expect(this.scope.user.permissions.length).toEqual(1);
+      expect(this.scope.user.permissions.length).toEqual(2);
       expect(this.scope.saving).toEqual(false);
       expect(this.scope.errors).toEqual({permissions:{}});
     });

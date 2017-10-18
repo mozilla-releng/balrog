@@ -1,5 +1,5 @@
 angular.module('app').controller('NewRuleCtrl',
-function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_ch_options) {
+function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_ch_options, signoffRequirements, Helpers) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
@@ -21,6 +21,11 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
   $scope.errors = {};
   $scope.saving = false;
   $scope.pr_ch_options = pr_ch_options;
+  $scope.$watch('rule', function() {
+    if (signoffRequirements) {
+      $scope.ruleSignoffsRequired = Rules.ruleSignoffsRequired($scope.original_rule, $scope.rule, signoffRequirements);
+    }
+  }, true);
 
   $scope.saveChanges = function () {
     $scope.saving = true;
@@ -28,11 +33,26 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
     CSRF.getToken()
     .then(function(csrf_token) {
       rule = angular.copy($scope.rule);
-      // rule.priority = '' + rule.priority;
+      
+      // Evaluate the values entered for priority and background rate.
+      $scope.integer_validation_errors = Helpers.integerValidator({'priority': rule.priority, 'backgroundRate': rule.backgroundRate});
+
+      // Stop sending the request if any number validation errors.
+      if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.backgroundRate) {
+        $scope.saving = false;
+        sweetAlert(
+          "Form submission error",
+          "See fields highlighted in red.",
+          "error"
+        );
+        return;
+      }
+      
       Rules.addRule(rule, csrf_token)
       .success(function(response) {
         $scope.rule.data_version = 1;
         $scope.rule.rule_id = parseInt(response, 10);
+        $scope.rule.scheduled_change = null;
         $scope.rules.push($scope.rule);
 
         if(rule.product) {

@@ -3,7 +3,7 @@ from sqlalchemy.sql.expression import null
 
 from flask import jsonify, Response
 
-from auslib.web.admin.views.base import AdminView, requirelogin
+from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signoff_requirements
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
@@ -50,15 +50,16 @@ class ScheduledChangesView(AdminView):
                 # We don't need to consider the existing version of a row for
                 # inserts, because it doesn't exist yet!
                 if row["change_type"] != "insert":
-                    affected_rows.append(self.table.select(where=base_pk)[0])
+                    original_row = self.table.select(where=base_pk)[0]
+                    scheduled_change["original_row"] = original_row
+                    affected_rows.append(original_row)
                 # We don't need to consider the future version of the row when
                 # looking for required signoffs, because it won't exist when
                 # enacted.
                 if row["change_type"] != "delete":
                     affected_rows.append(base_row)
-                for rs in self.table.getPotentialRequiredSignoffs(affected_rows):
-                    signoffs_required = max(scheduled_change["required_signoffs"].get(rs["role"], 0), rs["signoffs_required"])
-                    scheduled_change["required_signoffs"][rs["role"]] = signoffs_required
+                signoff_requirements = self.table.getPotentialRequiredSignoffs(affected_rows)
+                scheduled_change["required_signoffs"] = serialize_signoff_requirements(signoff_requirements)
 
             ret["scheduled_changes"].append(scheduled_change)
         return jsonify(ret)
@@ -71,7 +72,10 @@ class ScheduledChangesView(AdminView):
             return problem(400, "Bad Request", "Changes may not be scheduled in the past")
 
         sc_id = self.sc_table.insert(changed_by, transaction, **what)
-        return jsonify(sc_id=sc_id)
+        signoffs = {}
+        for signoff in self.sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
+            signoffs[signoff["username"]] = signoff["role"]
+        return jsonify(sc_id=sc_id, signoffs=signoffs)
 
 
 class ScheduledChangeView(AdminView):
@@ -94,7 +98,10 @@ class ScheduledChangeView(AdminView):
         where = {"sc_id": sc_id}
         self.sc_table.update(where, what, changed_by, int(old_sc_data_version), transaction)
         sc = self.sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
-        return jsonify(new_data_version=sc["data_version"])
+        signoffs = {}
+        for signoff in self.sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
+            signoffs[signoff["username"]] = signoff["role"]
+        return jsonify(new_data_version=sc["data_version"], signoffs=signoffs)
 
     def _delete(self, sc_id, transaction, changed_by):
         where = {"sc_id": sc_id}

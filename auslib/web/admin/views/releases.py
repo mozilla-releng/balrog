@@ -9,14 +9,14 @@ from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
 from auslib.db import OutdatedDataError, ReadOnlyError
 from auslib.web.admin.views.base import (
-    requirelogin, AdminView
+    requirelogin, AdminView, serialize_signoff_requirements
 )
-from auslib.web.admin.views.csrf import get_csrf_headers
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
     SignoffsView
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
+from auslib.web.common.releases import release_list, serialize_releases
 
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
@@ -185,16 +185,6 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
 class SingleLocaleView(AdminView):
     """/releases/[release]/builds/[platform]/[locale]"""
 
-    def get(self, release, platform, locale):
-        try:
-            locale = dbo.releases.getLocale(release, platform, locale)
-        except KeyError as e:
-            return problem(404, "Not Found", json.dumps(e.args))
-        data_version = dbo.releases.getReleases(name=release)[0]['data_version']
-        headers = {'X-Data-Version': data_version}
-        headers.update(get_csrf_headers())
-        return Response(response=json.dumps(locale), mimetype='application/json', headers=headers)
-
     @requirelogin
     def _put(self, release, platform, locale, changed_by, transaction):
         """Something important to note about this method is that using the
@@ -220,21 +210,6 @@ class SingleLocaleView(AdminView):
 
 
 class SingleReleaseView(AdminView):
-    """ /releases/:release"""
-
-    def get(self, release):
-        release = dbo.releases.getReleases(name=release, limit=1)
-        if not release:
-            return problem(404, "Not Found", "Release name: %s not found" % release)
-        headers = {'X-Data-Version': release[0]['data_version']}
-        headers.update(get_csrf_headers())
-        if connexion.request.args.get("pretty"):
-            indent = 4
-        else:
-            indent = None
-        return Response(response=json.dumps(release[0]['data'], indent=indent, sort_keys=True),
-                        mimetype='application/json', headers=headers)
-
     @requirelogin
     def _put(self, release, changed_by, transaction):
         if dbo.releases.getReleases(name=release, limit=1):
@@ -355,33 +330,6 @@ class ReleaseHistoryView(HistoryView):
     def __init__(self):
         super(ReleaseHistoryView, self).__init__(dbo.releases)
 
-    def _process_revisions(self, revisions):
-        self.annotateRevisionDifferences(revisions)
-
-        _mapping = [
-            'data_version',
-            'name',
-            'product',
-            'read_only',
-            '_different',
-            '_time_ago',
-            'change_id',
-            'changed_by',
-            "timestamp"]
-
-        _revisions = []
-        for r in revisions:
-            _revisions.append(dict(
-                (item, r[item])
-                for item in _mapping
-            ))
-
-        return _revisions
-
-    def _get_filters(self, release):
-        return [self.history_table.name == release['name'],
-                self.history_table.data_version != null()]
-
     def _get_what(self, change):
         return dict(
             data=createBlob(change['data']),
@@ -390,18 +338,6 @@ class ReleaseHistoryView(HistoryView):
     def _get_release(self, release):
         releases = self.table.getReleases(name=release, limit=1)
         return releases[0] if releases else None
-
-    def get(self, release):
-        try:
-            return self.get_revisions(
-                get_object_callback=lambda: self._get_release(release),
-                history_filters_callback=self._get_filters,
-                process_revisions_callback=self._process_revisions,
-                revisions_order_by=[self.history_table.timestamp.desc()],
-                obj_not_found_msg='Requested release does not exist')
-        except (ValueError, AssertionError) as e:
-            self.log.warning("Bad input: %s", json.dumps(e.args))
-            return problem(400, "Bad Request", "Invalid input", ext={"data": e.args})
 
     @requirelogin
     def _post(self, release, transaction, changed_by):
@@ -426,39 +362,12 @@ class ReleasesAPIView(AdminView):
     """/releases"""
 
     def get(self, **kwargs):
-        kwargs = {}
-        if connexion.request.args.get('product'):
-            kwargs['product'] = connexion.request.args.get('product')
-        if connexion.request.args.get('name_prefix'):
-            kwargs['name_prefix'] = connexion.request.args.get('name_prefix')
-        if connexion.request.args.get('names_only'):
-            kwargs['nameOnly'] = True
-        releases = dbo.releases.getReleaseInfo(**kwargs)
-        if connexion.request.args.get('names_only'):
-            names = []
+        releases = release_list(connexion.request)
+        if not connexion.request.args.get('names_only'):
             for release in releases:
-                names.append(release['name'])
-            data = {'names': names}
-        else:
-            _releases = []
-            _mapping = {
-                # return : db name
-                'name': 'name',
-                'product': 'product',
-                'data_version': 'data_version',
-                'read_only': 'read_only',
-                'rule_ids': 'rule_ids',
-            }
-            for release in releases:
-                _releases.append(dict(
-                    (key, release[db_key])
-                    for key, db_key in _mapping.items()
-                ))
-            data = {
-                'releases': _releases,
-            }
-
-        return jsonify(data)
+                requirements = dbo.releases.getPotentialRequiredSignoffs([release])
+                release['required_signoffs'] = serialize_signoff_requirements(requirements)
+        return serialize_releases(connexion.request, releases)
 
     @requirelogin
     def _post(self, changed_by, transaction):

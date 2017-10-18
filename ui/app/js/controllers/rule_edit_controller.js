@@ -1,6 +1,6 @@
 /*global sweetAlert */
 angular.module('app').controller('RuleEditCtrl',
-function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options) {
+function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequirements, pr_ch_options, Helpers) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
@@ -19,6 +19,13 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options) {
   $scope.is_edit = true;
   $scope.original_rule = rule;
   $scope.rule = angular.copy(rule);
+  $scope.signoffRequirements = signoffRequirements;
+  $scope.$watch('rule', function() {
+    if (signoffRequirements) {
+      $scope.ruleSignoffsRequired = Rules.ruleSignoffsRequired($scope.original_rule, $scope.rule, $scope.signoffRequirements);
+    }
+  }, true);
+
 
   $scope.saving = false;
   $scope.pr_ch_options = pr_ch_options;
@@ -26,9 +33,28 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, pr_ch_options) {
   $scope.saveChanges = function () {
     $scope.saving = true;
 
+    // Evaluate the values entered for priority and background rate.
+    $scope.integer_validation_errors = Helpers.integerValidator({'priority': $scope.rule.priority, 'backgroundRate': $scope.rule.backgroundRate});
+    // Stop sending the request if any number validation errors.
+    if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.backgroundRate) {
+      $scope.saving = false;
+      sweetAlert(
+        "Form submission error",
+        "See fields highlighted in red.",
+        "error"
+      );
+      return;
+    }
+
     CSRF.getToken()
     .then(function(csrf_token) {
-      Rules.updateRule($scope.rule.rule_id, $scope.rule, csrf_token)
+      // The data we need to submit is a tweaked version of just the Rule fields, so
+      // we need to remove the scheduled change object before submission.
+      var data = angular.copy($scope.rule);
+      if (data.scheduled_change) {
+        delete data.scheduled_change;
+      }
+      Rules.updateRule($scope.rule.rule_id, data, csrf_token)
       .success(function(response) {
         $scope.rule.data_version = response.new_data_version;
         angular.copy($scope.rule, $scope.original_rule);

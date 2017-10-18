@@ -35,19 +35,22 @@ var sample_releases = {
       "data_version": 2,
       "product": "B2G",
       "version": "34.0a2",
-      "name": "B2G-mozilla-aurora-kitkat-nightly-20140923151000"
+      "name": "B2G-mozilla-aurora-kitkat-nightly-20140923151000",
+      "required_signoffs": {},
     },
     {
       "data_version": 2,
       "product": "B2G",
       "version": "34.0a2",
-      "name": "B2G-mozilla-aurora-kitkat-nightly-20140923160203"
+      "name": "B2G-mozilla-aurora-kitkat-nightly-20140923160203",
+      "required_signoffs": {},
     },
     {
       "data_version": 4,
       "product": "Fennec",
       "version": "30.0a2",
-      "name": "Fennec-mozilla-aurora-nightly-20140410004003"
+      "name": "Fennec-mozilla-aurora-nightly-20140410004003",
+      "required_signoffs": {},
     }
   ],
   "count": 3
@@ -91,7 +94,11 @@ describe("controller: ReleasesController", function() {
       .respond(200, JSON.stringify(sample_releases));
       this.$httpBackend.flush();
       expect(this.scope.releases.length).toEqual(3);
-      expect(this.scope.releases).toEqual(sample_releases.releases);
+      var transformedReleases = angular.copy(sample_releases.releases);
+      transformedReleases.forEach(function(release) {
+        release.required_signoffs = {length: 0, roles: {}};
+      });
+      expect(this.scope.releases).toEqual(transformedReleases);
     });
 
   });
@@ -241,7 +248,6 @@ describe("controller: ReleasesController", function() {
       .respond(200, JSON.stringify(sample_releases));
       this.scope.openRevertModal(sample_revisions.revisions[0]);
     });
-
   });
 
 });
@@ -278,7 +284,7 @@ describe("controller: ReleasesController By Id", function() {
         expect($route.current).toBeUndefined();
         this.$httpBackend.expectGET(
           '/api/releases/' + sample_releases.releases[0].name +
-          '/revisions?limit=10&page=1')
+          '/revisions?limit=20&page=1')
         .respond(200, JSON.stringify(sample_revisions));
 
         $location.path('/releases/firefox-11-build1');

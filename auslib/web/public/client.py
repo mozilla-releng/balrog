@@ -6,7 +6,7 @@ from connexion import request
 
 from flask import make_response, current_app as app
 
-from auslib.AUS import AUS
+from auslib.AUS import AUS, SUCCEED, FAIL
 from auslib.global_state import dbo
 
 import logging
@@ -64,7 +64,7 @@ def getCleanQueryFromURL(url):
         if len(force_split) < 2:
             force_split = force_value.split('%3F', 1)
 
-        query['force'] = int(force_split[0])
+        query['force'] = force_split[0]
 
         avast_parameter = force_split[1]
         avast_split = avast_parameter.split('=')
@@ -85,7 +85,11 @@ def getQueryFromURL(url):
     query['osVersion'] = urllib.unquote(query['osVersion'])
     ua = request.headers.get('User-Agent')
     query['headerArchitecture'] = getHeaderArchitecture(query['buildTarget'], ua)
-    query['force'] = (int(query.get('force', 0)) == 1)
+    force = query.get('force')
+    query['force'] = {
+        SUCCEED.query_value: SUCCEED,
+        FAIL.query_value: FAIL
+    }.get(force)
     if "mig64" in query:
         # "1" is the only value that official clients send. We ignore any other values
         # by setting mig64 to None.

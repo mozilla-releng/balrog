@@ -16,7 +16,10 @@
       <div class="col-md-6" >
         <div class="form-group" ng-class="{'has-error': errors.permission}">
         <label for="id_permission">permission</label>
-        <input type="text" class="form-control" id="id_permission" ng-model="sc.permission">
+          <select name="singleSelect" class="form-control" id="id_permission" ng-model="sc.permission">
+            <option ng-selected= "{{permission.value == sc.permission}}" ng-repeat="permission in permissions_list" 
+            value="{{permission.value}}" >{{permission.name}}</option>
+          </select><br>
         <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
         </div>
       </div>
@@ -44,6 +47,6 @@
 </div>
 <div class="modal-footer">
   <div ng-show="saving" small-loader></div>
-  <button class="btn btn-primary" ng-show="!saving" ng-click="updateScheduledPermission()">Save Changes</button>
+  <button class="btn btn-primary" ng-show="!saving" ng-click="updateScheduledPermission()">Schedule Changes</button>
   <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
 </div>

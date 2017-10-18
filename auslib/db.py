@@ -17,30 +17,22 @@ import sqlalchemy.types
 import migrate.versioning.schema
 import migrate.versioning.api
 
-import dictdiffer
-import dictdiffer.merge
-
 from auslib.global_state import cache
-from auslib.blobs.base import createBlob
+from auslib.blobs.base import createBlob, merge_dicts
 from auslib.util.comparison import string_compare, version_compare, int_compare
 from auslib.util.timestamp import getMillisecondTimestamp
 
 import logging
 
 
-def rowsToDicts(fn):
-    """Decorator that converts the result of any function returning a dict-like
-       object to an actual dict. Eg, converts read-only row objects to writable
-       dicts."""
-    def convertRows(*args, **kwargs):
-        ret = []
-        for row in fn(*args, **kwargs):
-            d = {}
-            for key in row.keys():
-                d[key] = row[key]
-            ret.append(d)
-        return ret
-    return convertRows
+def rows_to_dicts(rows):
+    """Converts SQL Alchemy result rows to dicts.
+
+    You might want this if you want to mutate objects (SQLAlchemy rows
+    are immutable), or if you want to serialize them to JSON
+    (SQLAlchemy rows get confused if you try to serialize them).
+    """
+    return map(dict, rows)
 
 
 class AlreadySetupError(Exception):
@@ -354,7 +346,6 @@ class AUSTable(object):
                 query = query.where(cond)
         return query
 
-    @rowsToDicts
     def select(self, where=None, transaction=None, **kwargs):
         """Perform a SELECT statement on this table.
            See AUSTable._selectStatement for possible arguments.
@@ -375,11 +366,14 @@ class AUSTable(object):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
         query = self._selectStatement(where=where, **kwargs)
+
         if transaction:
-            return transaction.execute(query).fetchall()
+            result = transaction.execute(query).fetchall()
         else:
             with AUSTransaction(self.getEngine()) as trans:
-                return trans.execute(query).fetchall()
+                result = trans.execute(query).fetchall()
+
+        return rows_to_dicts(result)
 
     def _insertStatement(self, **columns):
         """Create an INSERT statement for this table
@@ -747,15 +741,31 @@ class History(AUSTable):
                 raise ValueError("data_version queried for non-versioned table")
 
             where = [self.data_version == data_version]
+            self.log.debug("Querying for change_id by:")
+            self.log.debug("data_version: %s", data_version)
             for col in column_names.keys():
+                self.log.debug("%s: %s", column_names[col], column_values[col])
                 where.append(column_names[col] == column_values[col])
-            changes = self.select(where=where,
-                                  transaction=transaction)
-        else:
-            changes = self.select(where=[self.change_id == change_id], transaction=transaction)
-        found = len(changes)
-        if found > 1 or found == 0:
-            self.log.debug("Found %s changes, should have been 1", found)
+
+            # To improve query efficiency we first get the change_id,
+            # and _then_ get the entire row. This is because we may not be able
+            # to query by an index depending which column_values we were given.
+            # If we end up querying by column_values that don't have an index,
+            # mysql will read many more rows than will be returned. This is
+            # particularly bad on the releases_history table, where the "data"
+            # column is often hundreds of kilobytes per row.
+            # Additional details in https://github.com/mozilla/balrog/pull/419#issuecomment-334851038
+            change_ids = self.select(columns=[self.change_id], where=where,
+                                     transaction=transaction)
+            if len(change_ids) != 1:
+                self.log.debug("Found %s changes when not querying by change_id, should have been 1", len(change_ids))
+                return None
+            change_id = change_ids[0]["change_id"]
+
+        self.log.debug("Querying for full change by change_id %s", change_id)
+        changes = self.select(where=[self.change_id == change_id], transaction=transaction)
+        if len(changes) != 1:
+            self.log.debug("Found %s changes when querying by change_id, should have been 1", len(changes))
             return None
         return changes[0]
 
@@ -2055,39 +2065,37 @@ class Releases(AUSTable):
                 super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=old_data_version,
                                              transaction=transaction, dryrun=dryrun)
             except OutdatedDataError as e:
-                self.log.debug("trying to update older data_version %s for release %s" % (old_data_version, name))
+                self.log.warning("Trying to merge update to release %s at data_version %s with the latest version.", name, old_data_version)
                 if blob is not None:
                     ancestor_change = self.history.getChange(data_version=old_data_version,
                                                              column_values={'name': name},
                                                              transaction=transaction)
                     # if we have no historical information about the ancestor blob
                     if ancestor_change is None:
-                        self.log.debug("history for data_version %s for release %s absent" % (old_data_version, name))
+                        self.log.exception("Couldn't find history for release %s at data_version %s", name, old_data_version)
                         raise
                     ancestor_blob = ancestor_change.get('data')
                     tip_release = self.getReleases(name=name, transaction=transaction)[0]
                     tip_blob = tip_release.get('data')
-                    m = dictdiffer.merge.Merger(ancestor_blob, tip_blob, blob, {})
                     try:
-                        m.run()
-                        # Merger merges the patches into a single unified patch,
-                        # but we need dictdiffer.patch to actually apply the patch
-                        # to the original blob
-                        unified_blob = dictdiffer.patch(m.unified_patches, ancestor_blob)
-                        # converting the resultant dict into a blob and then
-                        # converting it to JSON
-                        what['data'] = unified_blob
-                        # we want the data_version for the dictdiffer.merged blob to be one
-                        # more than that of the latest blob
-                        tip_data_version = tip_release['data_version']
-                        super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
-                                                     transaction=transaction, dryrun=dryrun)
-                        # cache will have a data_version of one plus the tip
-                        # data_version
-                        new_data_version = tip_data_version + 1
-                    except dictdiffer.merge.UnresolvedConflictsException:
-                        self.log.debug("latest version of release %s cannot be merged with new blob" % name)
+                        what['data'] = createBlob(merge_dicts(ancestor_blob, tip_blob, blob))
+                        self.log.warning("Successfully merged release %s at data_version %s with the latest version.", name, old_data_version)
+                    except ValueError:
+                        self.log.exception("Couldn't merge release %s at data_version %s with the latest version.", name, old_data_version)
+                        # ancestor_change is checked for None a few lines up
+                        self.log.warning("ancestor_change is change_id %s, data_version %s",
+                                         ancestor_change.get("change_id"), ancestor_change.get("data_version"))
+                        self.log.warning("tip release is data_version %s", tip_release.get("data_version"))
                         raise e
+                    # we want the data_version for the dictdiffer.merged blob to be one
+                    # more than that of the latest blob
+                    tip_data_version = tip_release['data_version']
+                    super(Releases, self).update(where={"name": name}, what=what, changed_by=changed_by, old_data_version=tip_data_version,
+                                                 transaction=transaction, dryrun=dryrun)
+                    # cache will have a data_version of one plus the tip
+                    # data_version
+                    new_data_version = tip_data_version + 1
+
             if not dryrun:
                 cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
                 cache.put("blob_version", name, new_data_version)
@@ -2132,8 +2140,8 @@ class Releases(AUSTable):
         releaseBlob.validate(product, self.domainWhitelist)
         what = dict(data=releaseBlob)
 
-        super(Releases, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
-                                     transaction=transaction)
+        self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
+                    transaction=transaction)
         new_data_version = old_data_version + 1
         cache.put("blob", name, {"data_version": new_data_version, "blob": releaseBlob})
         cache.put("blob_version", name, new_data_version)

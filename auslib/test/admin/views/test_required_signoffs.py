@@ -190,11 +190,13 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "a", "role": "releng", "signoffs_required": 2, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.productRequiredSignoffs.select({'product': 'fake', 'channel': 'a', 'role': 'releng'})[0],
                 },
                 {
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "j", "role": "releng", "signoffs_required": None, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.productRequiredSignoffs.select({'product': 'fake', 'channel': 'j', 'role': 'releng'})[0],
                 },
             ],
         }
@@ -214,16 +216,19 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "a", "role": "releng", "signoffs_required": 2, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.productRequiredSignoffs.select({'product': 'fake', 'channel': 'a', 'role': 'releng'})[0],
                 },
                 {
                     "sc_id": 3, "when": 300000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
                     "product": "fake", "channel": "e", "role": "releng", "signoffs_required": 1, "data_version": None,
                     "signoffs": {}, "required_signoffs": {},
+                    # No original_row for completed changes.
                 },
                 {
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "fake", "channel": "j", "role": "releng", "signoffs_required": None, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.productRequiredSignoffs.select({'product': 'fake', 'channel': 'j', 'role': 'releng'})[0],
                 },
             ],
         }
@@ -236,7 +241,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -258,7 +263,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -280,7 +285,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -313,7 +318,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/product/2", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
 
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -336,7 +341,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/product/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
 
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -656,11 +661,13 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "role": "releng", "signoffs_required": 2, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissionsRequiredSignoffs.select({'product': 'fake', 'role': 'releng'})[0],
                 },
                 {
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "blah", "role": "releng", "signoffs_required": None, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissionsRequiredSignoffs.select({'product': 'blah', 'role': 'releng'})[0],
                 },
             ],
         }
@@ -680,6 +687,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 200000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "product": "fake", "role": "releng", "signoffs_required": 2, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissionsRequiredSignoffs.select({'product': 'fake', 'role': 'releng'})[0],
                 },
                 {
                     "sc_id": 3, "when": 300000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
@@ -690,6 +698,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                     "sc_id": 4, "when": 400000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "product": "blah", "role": "releng", "signoffs_required": None, "data_version": 1,
                     "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissionsRequiredSignoffs.select({'product': 'blah', 'role': 'releng'})[0],
                 },
             ],
         }
@@ -702,7 +711,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)\
                                                                         .execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -725,7 +734,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)\
                                                                         .execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -748,7 +757,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)\
                                                                         .execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -771,7 +780,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions/2", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
 
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 2)\
                                                                         .execute().fetchall()
@@ -795,7 +804,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
 
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 1)\
                                                                         .execute().fetchall()

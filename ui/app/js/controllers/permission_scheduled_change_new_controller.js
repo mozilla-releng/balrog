@@ -1,6 +1,6 @@
 /*global sweetAlert swal */
 angular.module('app').controller('NewPermissionScheduledChangeCtrl',
-function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
+function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc, permissionSignoffRequirements) {
 
   $scope.loading = true;
   $scope.scheduled_changes = scheduled_changes;
@@ -15,6 +15,48 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
   $scope.errors = {
     permissions: {}
   };
+  $scope.permissions_list = [
+    {value : "", name : "---Please select---"},
+    {value : "admin", name : "Admin"},
+    {value : "rule", name : "Rule"},
+    {value : "release", name : "Release"},
+    {value : "release_read_only", name : "Release Read Only"},
+    {value : "release_locale", name : "Release Locale"},
+    {value : "required_signoff", name : "Required Signoff"},
+    {value : "permission", name : "Permission"},
+    {value : "scheduled_change", name : "Scheduled Change"},
+  ];
+
+
+  function fromFormData(permission) {
+    permission = angular.copy(permission);
+    try {
+      permission.options = permission.options && JSON.parse(permission.options);
+    } catch(e) {
+      // No options, I guess
+    }
+    return permission;
+  }
+
+  function permissionSignoffsRequired(currentPermission, newPermission) {
+    if (currentPermission) {
+      currentPermission = fromFormData(currentPermission);
+    }
+    if (newPermission) {
+      newPermission = fromFormData(newPermission);
+    }
+    return Permissions.permissionSignoffsRequired(currentPermission, newPermission, permissionSignoffRequirements);
+  }
+
+  $scope.$watch("permission", function(permission) {
+    $scope.permissionSignoffsRequired = permissionSignoffsRequired(permission);
+  }, true);
+  $scope.scPermissionsSignoffRequirements = [];
+  $scope.$watch("sc.permissions", function(permissions) {
+    $scope.scPermissionsSignoffRequirements = permissions.map(function(permission, i) {
+      return permissionSignoffsRequired($scope.originalPermissions[i], permission);
+    });
+  }, true);
 
   $scope.sc.permissions = [];
   Permissions.getUserPermissions(sc.username)
@@ -24,12 +66,14 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
         p.options = JSON.stringify(p['options']);
       }
     });
+    $scope.originalPermissions = angular.copy(permissions);
     $scope.sc.permissions = permissions;
     $scope.loading = false;
   });
 
 
   $scope.addScheduledPermission = function() {
+    $scope.permission.options = $scope.permission.options_as_json;
     date = new Date();
     permission_sc = angular.copy($scope.permission);
     permission_sc.when = date.getTime() + 5000;
@@ -44,6 +88,7 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
       .success(function(response) {
         permission_sc.sc_data_version = 1;
         permission_sc.sc_id = response.sc_id;
+        sweetAlert("Saved", "Permission Scheduled", "success");
         if(permission_sc.options){
           permission_sc.options = JSON.parse(permission_sc.options);
         }

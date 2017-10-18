@@ -8,6 +8,14 @@ function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
   $scope.errors = {};
   $scope.saving = false;
   $scope.calendar_is_open = false;
+  $scope.auto_time = false;
+  $scope.toggleAutoTime = function(){
+      if ($scope.auto_time){
+          $("#btn__auto-time").addClass('active');
+      }else{
+          $('#btn__auto-time').removeClass('active');
+      }
+  };
 
 
 
@@ -41,6 +49,9 @@ function($scope, $http, $modalInstance, CSRF, Releases, scheduled_changes, sc) {
 
     $scope.saving = true;
     $scope.errors = {};
+    asap = new Date();
+    asap.setMinutes(asap.getMinutes() + 5);
+    $scope.sc.when = ($scope.auto_time) ? asap : $scope.sc.when;
 
 
       CSRF.getToken()

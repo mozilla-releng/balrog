@@ -49,11 +49,19 @@ For executing test only for frontend, run
 
     $ ./run-tests.sh frontend
 
-Tests can also run by using tox
-::
+The ``run-tests.sh`` script runs tests inside a Docker container,
+which is convenient but can be slow. You can also set up a virtualenv
+yourself and run tests "locally" using tox::
 
     $ tox
 
+or py.test::
+
+    $ py.test -n2 --cov=. --doctest-modules auslib
+
+Note that Docker may have set files to be owned by root, so you may
+need to ``chmod -R $(whoami) .`` to make them writable by tox and
+hypothesis.
 
 Documentation
 -------------

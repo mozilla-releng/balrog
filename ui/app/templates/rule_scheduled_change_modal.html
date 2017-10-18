@@ -14,17 +14,18 @@
     </div>
       <div class="row" ng-show="sc_type === 'time'">
       <div class="col-md-8 col-md-offset-2">
-        <label for="id_when">When</label>
+        <label for="id_when">When (local time)</label>
         <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': errors.when}">
           <div class="input-group">
             <span class="input-group-btn">
-              <button class="btn btn-secondary dropdown-toggle" type="button"><i class="glyphicon glyphicon-calendar"></i></button>
+               <label class="btn btn-default" ng-click="toggleAutoTime()" id="btn__auto-time"><input type="checkbox" ng-show="false" ng-model="auto_time" auto-complete="off">ASAP</label>
+               <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time"><i class="glyphicon glyphicon-calendar"></i></button>
             </span>
             <!-- Manual edits of this field throw deprecation warnings, but no errors. This is because the
                  way we display dates is not an ISO format, and Moment.js will be removing support for parsing
                  those directly in the near future. We will probably have to handle ng-change when we upgrade moment
                  to have this continue to work. https://github.com/moment/moment/issues/1407 has more details. -->
-            <input type="text" id="id_when" class="form-control" data-ng-model="sc.when" ng-blur="setWhen()">
+            <input type="text" id="id_when" class="form-control" data-ng-model="sc.when" ng-blur="setWhen()" ng-disabled="auto_time">
             <span class="input-group-btn">
               <button class="btn btn-secondary" type="button" ng-click="clearWhen()">Clear</button>
             </span>
@@ -102,17 +103,19 @@
     </div>
     <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
-        <div class="form-group" ng-class="{'has-error': errors.backgroundRate}">
-        <label for="id_rate">Rate</label>
-        <input type="number" class="form-control" id="id_rate" ng-model="sc.backgroundRate">
-        <p class="help-block" ng-show="errors.backgroundRate">{{ errors.backgroundRate.join(', ') }}</p>
+        <div class="form-group" ng-class="{'has-error': errors.backgroundRate || integer_validation_errors.backgroundRate}">
+            <label for="id_rate">Rate</label>
+            <input type="number" class="form-control" id="id_rate" ng-model="sc.backgroundRate">
+            <p class="help-block" ng-show="errors.backgroundRate">{{ errors.backgroundRate.join(', ') }}</p>
+            <p class="help-block" ng-show="integer_validation_errors.backgroundRate">{{ integer_validation_errors.backgroundRate }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
-        <div class="form-group" ng-class="{'has-error': errors.priority}">
+        <div class="form-group" ng-class="{'has-error': errors.priority || integer_validation_errors.priority }">
         <label for="id_priority">Priority</label>
         <input type="number" class="form-control" id="id_priority" ng-model="sc.priority">
         <p class="help-block" ng-show="errors.priority">{{ errors.priority.join(', ') }}</p>
+        <p class="help-block" ng-show="integer_validation_errors.priority">{{ integer_validation_errors.priority }}</p>
         </div>
       </div>
     </div>
@@ -223,6 +226,15 @@
       </div>
     </div>
     <div class="row">
+      <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
+        <div class="form-group" ng-class="{'has-error': errors.alias}">
+          <label for="id_distribution">Alias</label>
+          <input type="text" class="form-control" id="id_distribution" ng-model="sc.alias">
+          <p class="help-block" ng-show="errors.alias">{{ errors.alias.join(', ') }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="row">
       <div class="col-md-12" ng-show="sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.comment}">
           <label for="id_comment">Comment</label>
@@ -232,21 +244,24 @@
       </div>
     </div>
 
-    <div class="form-group" ng-class="{'has-error': errors.exception}">
-      <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>
-    </div>
-    <div class="form-group" ng-class="{'has-error': errors.detail}">
-      <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
-    </div>
+    <show-signoff-requirements requirements="scheduledChangeSignoffsRequired"></show-signoff-requirements>
 
-    <input type="hidden" class="form-control" id="id_rule_id" ng-model="sc.rule_id">
-    <input type="hidden" name="sc_data_version" ng-model="sc.sc_data_version">
-    <input type="hidden" name="data_version" ng-model="sc.data_version">
-    <input type="hidden" name="rule_id" ng-model="sc.rule_id">
-  </form>
+        <div class="form-group" ng-class="{'has-error': errors.exception}">
+            <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>
+        </div>
+        <div class="form-group" ng-class="{'has-error': errors.detail}">
+            <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
+        </div>
+
+        <input type="hidden" class="form-control" id="id_rule_id" ng-model="sc.rule_id">
+        <input type="hidden" name="sc_data_version" ng-model="sc.sc_data_version">
+        <input type="hidden" name="data_version" ng-model="sc.data_version">
+        <input type="hidden" name="rule_id" ng-model="sc.rule_id">
+    </form>
 </div>
 <div class="modal-footer">
+  <button class="btn btn-danger pull-left" ng-show="is_edit && !saving" ng-click="delete()">Delete Scheduled Change</button>
   <div ng-show="saving" small-loader></div>
-  <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Save Changes</button>
+  <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Schedule Changes</button>
   <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
 </div>

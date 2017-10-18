@@ -12,6 +12,12 @@
       ng-options="o.text for o in ordering_options track by o.value">
     </select>
   </div>
+  <div class="page-size" ng-show="releases_count > 20">
+    <label>Page Size: </label>
+    <select ng-model="page_size" ng-name="page_size"
+      ng-options="page_size.name for page_size in page_size_pair track by page_size.id"
+      ng-change="selectPageSize()"></select>
+  </div>
 </form>
 
 
@@ -35,8 +41,6 @@
     <i class="glyphicon glyphicon-arrow-left"></i>
   </a>
 </h2>
-
-
 <div class="pagination-container" ng-show="releases_count > pageSize">
   <pagination
     class="pagination-sm"
@@ -72,12 +76,12 @@
       <div style="float:right">
         <i ng-if="release_name && $first && (currentPage == 1)">Current</i>
         <button ng-if="release_name && ((currentPage != 1) || !$first )" class="btn btn-default btn-xs" ng-click="openRevertModal(release)">Revert to this</button>
-        <button ng-show="!rule_id" class="btn btn-warning btn-xs" ng-click="openNewScheduledReleaseChangeModal(release)">Schedule an Update</button>
-        <button ng-show="!rule_id" class="btn btn-danger btn-xs" ng-click="openNewScheduledDeleteModal(release)">Schedule for Deletion</button>
+        <button ng-show="!release_name" class="btn btn-warning btn-xs" ng-click="openNewScheduledReleaseChangeModal(release)">Schedule an Update</button>
+        <button ng-show="!release_name" class="btn btn-danger btn-xs" ng-click="openNewScheduledDeleteModal(release)">Schedule for Deletion</button>
         <button class="btn btn-default btn-xs" ng-click="openDataModal(release)">View Data</button>
         <a ng-show="!release_name" class="btn btn-default btn-xs" download="{{ release.name | uriencode }}.json" target="_self" ng-href="/api/releases/{{ release.name | uriencode }}?pretty=1">Download</a>
-        <button ng-show="!release_name" class="btn btn-default btn-xs" ng-click="openUpdateModal(release)">Update</button>
-        <button ng-show="!release_name" class="btn btn-default btn-xs" ng-click="openDeleteModal(release)">Delete</button>
+        <button ng-show="!release_name && !release.required_signoffs.length" class="btn btn-default btn-xs" ng-click="openUpdateModal(release)">Update</button>
+        <button ng-show="!release_name && !release.required_signoffs.length" class="btn btn-default btn-xs" ng-click="openDeleteModal(release)">Delete</button>
         <a ng-show="!release_name" class="btn btn-default btn-xs" ng-href="/releases/{{ release.name }}">History</a>
         <button ng-show="!release_name && !release.read_only" class="btn btn-xs btn-success" ng-click="openReadOnlyModal(release)">Modifiable</button>
         <button ng-show="!release_name && release.read_only" class="btn btn-xs btn-danger" ng-click="openReadOnlyModal(release)">Read Only</button>
@@ -95,7 +99,7 @@
         Data version: <b>{{ release.data_version }}</b>
       </h5>
 
-      <h5 title="Rules referencing it" ng-switch="release.rule_ids">
+      <h5 title="Rules referencing it" ng-switch="release.rule_ids" ng-show="!release_name">
         <b ng-show="!release.rule_ids.length">
             Not mapped to.
         </b>
@@ -114,7 +118,7 @@
   <div class="panel-footer" ng-show="release_name">
     <p>
       Changed by <code>{{ release.changed_by }}</code>
-      <span moment="release.timestamp"></span>
+      <span ng-bind-html="formatMoment(release.timestamp)"></span>
     </p>
   </div>
 </div>
