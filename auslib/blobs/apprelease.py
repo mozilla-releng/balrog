@@ -872,6 +872,7 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
         return referencedReleases
 
+
 class ProofXMLMixin(object):
 
     def _getAdditionalPatchAttributes(self, patch):

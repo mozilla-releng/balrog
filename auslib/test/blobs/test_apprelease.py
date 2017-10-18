@@ -2721,6 +2721,7 @@ class TestSchema6Blob(unittest.TestCase):
 """)
         self.assertRaises(BlobValidationError, self.blobH3.validate, 'h', self.whitelistedDomains)
 
+
 class TestSchema8Blob(unittest.TestCase):
 
     def setUp(self):
