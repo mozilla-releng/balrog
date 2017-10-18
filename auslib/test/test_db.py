@@ -150,15 +150,6 @@ class TestVerifySignoffs(unittest.TestCase):
         verify_signoffs(required, signoffs)
 
 
-@pytest.fixture(scope='session')
-def create_db():
-    def the_db(theSelf):
-        MemoryDatabaseMixin.setUp(theSelf)
-        theSelf.engine = create_engine(theSelf.dburi)
-        return theSelf.engine
-    return the_db
-
-
 @pytest.fixture(scope='class')
 def create_db(request):
     class CreateDB(MemoryDatabaseMixin):
@@ -477,8 +468,8 @@ def test_austable_require_real_file(request):
     request.cls.metadata = sef.metadata
     request.cls.test = sef.test
 
+
 @pytest.mark.usefixtures('test_austable_require_real_file')
-# @pytest.mark.skip()
 class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileDatabaseMixin):
 
     def setUp(self):
