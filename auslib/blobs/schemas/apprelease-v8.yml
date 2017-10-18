@@ -55,9 +55,6 @@
     promptWaitTime:
       type: number
       description: The number of seconds to wait before showing the dialog which prompts users to restart, overrides the in-app preference
-    backgroundInterval:
-      type: number
-      description: This decides how quickly or slowly Firefox downloads an MAR.
     binTransMerkleRoot:
       type: string
       description: Merkle root from tree computed over SHA256SUMS used to construct domain name.
