@@ -319,7 +319,7 @@ class TestReleasesAPI_JSON(ViewTest):
                 }
             }
         }"""
-        ret = self._post('/releases/ee', data=dict(data=blob, hashFunction="sha512", name='ee', product='ee', data_version=1))
+        ret = self._post('/releases/ee', data=dict(data=blob, hashFunction="sha512", name='ee', product='ee'))
         self.assertStatusCode(ret, 201)
 
         # Updating same release
@@ -340,12 +340,16 @@ class TestReleasesAPI_JSON(ViewTest):
         history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ee").execute().fetchall()
         self.assertEqual(len(history_rows), 4)
         self.assertEqual(history_rows[0]["data"], None)
+        self.assertEqual(history_rows[0]["data_version"], None)
         self.assertEqual(history_rows[0]["read_only"], False)
         self.assertEqual(history_rows[1]["data"], {"name": "ee", "schema_version": 1, "hashFunction": "sha512"})
+        self.assertEqual(history_rows[1]["data_version"], 1)
         self.assertEqual(history_rows[1]["read_only"], False)
         self.assertEqual(history_rows[2]["data"], blob)
+        self.assertEqual(history_rows[2]["data_version"], 2)
         self.assertEqual(history_rows[2]["read_only"], False)
         self.assertEqual(history_rows[3]["data"], blob)
+        self.assertEqual(history_rows[3]["data_version"], 3)
         self.assertEqual(history_rows[3]["read_only"], False)
 
     def testReleasePostMismatchedName(self):

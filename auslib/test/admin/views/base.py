@@ -87,7 +87,7 @@ class ViewTest(unittest.TestCase):
         dbo.releases.history.t.insert().execute(change_id=5, timestamp=15, changed_by="bill", name='b')
         dbo.releases.history.t.insert().execute(
             change_id=6, timestamp=16, changed_by="bill",
-            name='b', product='a', data=createBlob(dict(name='b', hashFunction="sha512", schema_version=1)), data_version=1)
+            name='b', product='b', data=createBlob(dict(name='b', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
             name='c', product='c', data=createBlob(dict(name='c', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(name='d', product='d', data_version=1, data=createBlob("""
