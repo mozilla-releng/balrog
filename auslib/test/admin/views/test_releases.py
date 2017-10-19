@@ -1179,7 +1179,7 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
         self.assertEquals(ret_data, json.loads("""
 {
     "releases": [
-        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4, 6, 7, 8], "required_signoffs": {"releng": 1}},
+        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4, 6, 7, 8, 9], "required_signoffs": {"releng": 1}},
         {"data_version": 1, "name": "ab", "product": "a", "read_only": false, "rule_ids": [], "required_signoffs": {}}
     ]
 }
@@ -1863,7 +1863,7 @@ class TestRuleIdsReturned(ViewTest):
 
     def testMappingIncluded(self):
         rel_name = 'ab'
-        rule_id = 9
+        rule_id = 10
 
         releases = self._get("/releases")
         releases_data = json.loads(releases.data)
