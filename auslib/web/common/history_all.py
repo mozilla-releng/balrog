@@ -84,30 +84,21 @@ def get_permissions_required_signoffs_histories():
 
 
 def _get_input_dict():
+    table_constants = [
+        'rules',
+        'releases',
+        'permissions'
+        ]
     args = request.args
-    obj_keys = []
     query_keys = []
     query = {}
     for key in args:
-        if args.get(key) == 'TRUE':
-            obj_keys.append(key)
-        else:
-            if key != 'limit' and key != 'page':
-                query_keys.append(key)
+        if not key in table_constants and key != 'limit' and key != 'page':
+            query_keys.append(key)
 
     for key in query_keys:
         query[key] = request.args.get(key)
-    return jsonify(query_keys=query_keys, obj_keys=obj_keys, query=query)
-
-
-def filter_helper(obj):
-    req = _get_input_dict()
-    keys = req['keys']
-    keys_values = req['values']
-    for key in keys:
-        if obj[key] != keys_values[key]:
-            return False
-    return True
+    return jsonify(query_keys=query_keys, query=query)
 
 
 def method_constants():
@@ -124,11 +115,13 @@ def method_constants():
 
 
 def get_filtered_history():
-    requested_histories = json.loads(_get_input_dict().data)['obj_keys']
+    rrp_constants = ['rules', 'releases', 'permissions']
     methods = method_constants()
     histories = {}
-    for requested_history in requested_histories:
-        if methods.get(requested_history):
-            history = methods.get(requested_history)
-            histories[requested_history] = json.loads(history.data)
+    print('request', request.args)
+    for constant in rrp_constants:
+        if (request.args.get(constant)) == '1':
+            history = methods.get(constant)
+            histories[constant] = json.loads(history.data)
+    
     return histories
