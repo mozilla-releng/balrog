@@ -78,11 +78,41 @@ class ViewTest(unittest.TestCase):
             name='a', product='a', data=createBlob(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
             name='ab', product='a', data=createBlob(dict(name='ab', hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.releases.history.t.insert().execute(change_id=1, timestamp=5, changed_by="bill", name='ab')
+        dbo.releases.history.t.insert().execute(
+            change_id=2, timestamp=6, changed_by="bill",
+            name='ab', product='a', data=createBlob(dict(name='ab', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
+            name='b', product='b', data=createBlob(dict(name='b', hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.releases.history.t.insert().execute(change_id=5, timestamp=15, changed_by="bill", name='b')
+        dbo.releases.history.t.insert().execute(
+            change_id=6, timestamp=16, changed_by="bill",
             name='b', product='b', data=createBlob(dict(name='b', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
             name='c', product='c', data=createBlob(dict(name='c', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(name='d', product='d', data_version=1, data=createBlob("""
+{
+    "name": "d",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "d": {
+                    "complete": {
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+        dbo.releases.history.t.insert().execute(change_id=3, timestamp=9, changed_by="bill", name='d')
+        dbo.releases.history.t.insert().execute(change_id=4, timestamp=10, changed_by="bill",
+                                                name='d', product='d', data_version=1, data=createBlob("""
 {
     "name": "d",
     "schema_version": 1,
