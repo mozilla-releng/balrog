@@ -168,8 +168,12 @@ def create_db(request):
 @pytest.mark.usefixtures('create_db')
 class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         create_db(TestAUSTransaction)
+          
+    def setUp(self):
+        # create_db(TestAUSTransaction)
         self.metadata = MetaData(TestAUSTransaction.engine)
         self.table = Table('test', self.metadata, Column('id', Integer, primary_key=True),
                            Column('foo', Integer))
@@ -178,8 +182,8 @@ class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
         self.table.insert().execute(id=2, foo=22)
         self.table.insert().execute(id=3, foo=11)
 
-    # def tearDown(self):
-    #     self.metadata.drop_all()
+    def tearDown(self):
+        self.metadata.drop_all()
 
     def testTransaction(self):
         trans = AUSTransaction(self.metadata.bind.connect())
