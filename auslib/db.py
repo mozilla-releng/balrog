@@ -2468,6 +2468,24 @@ class Dockerflow(AUSTable):
             super(Dockerflow, self).update(where=where, what=value, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
 
+class EmergencyShutoff(AUSTable):
+    def __init__(self, db, metadata, dialect):
+        self.table = Table('emergency_shutoff', metadata,
+            Column('shutoff_id', Integer, primary_key=True, autoincrement=True),
+            Column('product', String(15), nullable=False),
+            Column('channel', String(75), nullable=False),
+            Column('updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
+            Column('additional_notification_list', String(500)))
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, versioned=False)
+
+    def getEmergencyShutoff(self, shutoff_id):
+        emergency_shutoff = self.select(where=[self.shutoff_id == shutoff_id])
+        return emergency_shutoff[0] if emergency_shutoff else None
+
+    def getEmergencyShutoffs(self, where=None):
+        return self.select(where=where)
+
+
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
@@ -2623,6 +2641,7 @@ class AUSDatabase(object):
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
         self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
+        self.emergencyShutoffTable = EmergencyShutoff(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -2726,3 +2745,7 @@ class AUSDatabase(object):
     @property
     def dockerflow(self):
         return self.dockerflowTable
+
+    @property
+    def emergencyShutoff(self):
+        return self.emergencyShutoffTable
