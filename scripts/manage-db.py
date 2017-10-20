@@ -150,7 +150,7 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
         WHERE (releases.name IN (rules.mapping, rules.fallbackMapping))
           OR (rules_scheduled_changes.complete = 0 AND
               releases.name IN (rules_scheduled_changes.base_mapping, rules_scheduled_changes.base_fallbackMapping))
-        )"""
+        """
 
     result = trans.execute(query_release_mapping).fetchall()
     release_names = set()
