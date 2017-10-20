@@ -1114,13 +1114,14 @@ class ScheduledChangeTable(AUSTable):
         #   we don't know which Role we'd want to signoff with. The user will need to signoff
         #   manually in these cases.
         user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
-        required_roles = set()
-        required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
-        if required_signoffs:
-            required_roles.update([rs["role"] for rs in required_signoffs])
-        if len(user_roles) == 1 and user_roles[0]["role"] in required_roles:
-            self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
-                                 sc_id=sc_id, role=user_roles[0].get("role"))
+        if len(user_roles) == 1:
+            required_roles = set()
+            required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            if required_signoffs:
+                required_roles.update([rs["role"] for rs in required_signoffs])
+                if user_roles[0]["role"] in required_roles:
+                    self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
+                                         sc_id=sc_id, role=user_roles[0].get("role"))
 
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
@@ -1209,6 +1210,7 @@ class ScheduledChangeTable(AUSTable):
         for sc_id in affected_ids:
             if not self._dataVersionsAreSynced(sc_id, transaction):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s" % sc_id)
+
         self.auto_signoff(changed_by, transaction, sc_id, dryrun, base_columns)
 
         for sc_id in affected_ids:
@@ -1217,7 +1219,7 @@ class ScheduledChangeTable(AUSTable):
             for signOff in signOffs:
                 if signOff["username"] != changed_by:
                     where_signOff.update({"username": signOff["username"]})
-                    self.signoffs.delete(where=where_signOff, changed_by=changed_by, transaction=transaction)
+                    self.signoffs.delete(where=where_signOff, changed_by=changed_by, transaction=transaction, reset_signoff=True)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         conditions_where = []
@@ -1476,10 +1478,11 @@ class SignoffsTable(AUSTable):
     def update(self, where, what, changed_by=None, transaction=None, dryrun=False):
         raise AttributeError("Signoffs cannot be modified (only granted and revoked)")
 
-    def delete(self, where, changed_by=None, transaction=None, dryrun=False):
-        for row in self.select(where, transaction):
-            if not self.db.hasRole(changed_by, row["role"], transaction=transaction) and not self.db.isAdmin(changed_by, transaction=transaction):
-                raise PermissionDeniedError("Cannot revoke a signoff made by someone in a group you do not belong to")
+    def delete(self, where, changed_by=None, transaction=None, dryrun=False, reset_signoff=False):
+        if not reset_signoff:
+            for row in self.select(where, transaction):
+                if not self.db.hasRole(changed_by, row["role"], transaction=transaction) and not self.db.isAdmin(changed_by, transaction=transaction):
+                    raise PermissionDeniedError("Cannot revoke a signoff made by someone in a group you do not belong to")
 
         super(SignoffsTable, self).delete(where, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
