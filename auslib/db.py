@@ -2485,6 +2485,10 @@ class EmergencyShutoff(AUSTable):
     def getEmergencyShutoffs(self, where=None):
         return self.select(where=where)
 
+    def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
+        ret = super(EmergencyShutoff, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        return ret.inserted_primary_key[0]
+
 
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
