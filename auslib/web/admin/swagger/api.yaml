@@ -382,7 +382,7 @@ paths:
           examples:
             text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
   
-  /histories:
+  /rrp/histories:
     get:
       summary: Returns a list of all histories.
       description: >
