@@ -251,6 +251,38 @@ parameters:
       # No need to validate the duplicate values again.
       additionalProperties: true
 
+  changedByParam:
+    name: changed_by
+    in: query
+    description: The username who made the requested changes.
+    type: string
+    x-nullable: true
+    required: false
+
+  changeIdParam:
+    name: change_id
+    in: query
+    description: The change_id value to filter hsitory by.
+    type: integer
+    x-nullable: true
+    required: false
+
+  dataVersionParam:
+    name: data_version
+    in: query
+    description: data_version field value to filter history by.
+    type: integer
+    x-nullable: true
+    required: false
+
+  timestampParam:
+    name: timestamp
+    in: query
+    description: timestamp at which the requested change was made.
+    type: integer
+    x-nullable: true
+    required: false
+
 responses:
   updateExistingObject:
     description: "successfully updated the existing object and incremented its data_version"
@@ -360,9 +392,40 @@ paths:
       operationId: auslib.web.common.history_all.get_filtered_history
       consumes: []
       produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of rules, releases and permissions histories"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/timestampParam'
+        - name: rules
+          in: query
+          description: Indicates whether rules history should be included
+          type: integer
+          x-nullable: true
+          required: false
+        - name: releases
+          in: query
+          description: Indicates whether releases history should be included
+          type: integer
+          x-nullable: true
+          required: false
+        - name: permissions
+          in: query
+          description: Indicates whether permissions history should be included
+          type: integer
+          x-nullable: true
+          required: false
       responses:
         '200':
           description: Successfully fetched histories
+        '400':
+          $ref: '#/responses/invalidFormData'
 
   /history/rules:
     get:
