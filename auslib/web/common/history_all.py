@@ -22,6 +22,7 @@ def _get_filters(obj, history_table):
     where = [False, False]
     try:
         where = [getattr(history_table, f) == query.get(f) for f in query]
+        where.append(getattr(history_table, 'product') != 'null' )
         return where
     except AttributeError:
         return where
