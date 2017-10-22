@@ -382,14 +382,14 @@ paths:
           examples:
             text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
   
-  /rrp/histories:
+  /rrp/history:
     get:
       summary: Returns a list of all histories.
       description: >
         Returns a list of all histories.
       tags:
         - "History Histories"
-      operationId: auslib.web.common.history_all.get_filtered_history
+      operationId: auslib.web.common.history_all.get_rrp_history
       consumes: []
       produces: [application/json]
       externalDocs:
@@ -418,6 +418,51 @@ paths:
         - name: permissions
           in: query
           description: Indicates whether permissions history should be included
+          type: integer
+          x-nullable: true
+          required: false
+      responses:
+        '200':
+          description: Successfully fetched histories
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /sc/history:
+    get:
+      summary: Returns a list of scheduled changes histories.
+      description: >
+        Returns scheduled changes histories.
+      tags:
+        - "History SC"
+      operationId: auslib.web.common.history_all.get_sc_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of scheduled changes histories"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/timestampParam'
+        - name: permissions_scheduled_change
+          in: query
+          description: Indicates whether permissions_scheduled_change history should be included
+          type: integer
+          x-nullable: true
+          required: false
+        - name: rules_scheduled_change
+          in: query
+          description: Indicates whether rules_scheduled_change history should be included
+          type: integer
+          x-nullable: true
+          required: false
+        - name: releases_scheduled_change
+          in: query
+          description: Indicates whether releases_scheduled_change history should be included
           type: integer
           x-nullable: true
           required: false

@@ -108,14 +108,14 @@ def method_constants():
         'releases': get_releases_histories(),
         'permissions': get_permissions_histories(),
         'permissions_required_signoffs_histories': get_permissions_required_signoffs_histories(),
-        'product_required_signoffs_histories': get_product_required_signoffs_histories(),
-        'releases_scheduled_change_histories': get_releases_scheduled_change_histories(),
-        'rules_scheduled_change_histories': get_rules_scheduled_change_histories(),
-        'permissions_scheduled_change_histories': get_permissions_scheduled_change_histories(),
+        'product_required_signoffs': get_product_required_signoffs_histories(),
+        'releases_scheduled_change': get_releases_scheduled_change_histories(),
+        'rules_scheduled_change': get_rules_scheduled_change_histories(),
+        'permissions_scheduled_change': get_permissions_scheduled_change_histories(),
     }
 
 
-def get_filtered_history():
+def get_rrp_history():
     rrp_constants = ['rules', 'releases', 'permissions']
     methods = method_constants()
     histories = {}
@@ -124,5 +124,28 @@ def get_filtered_history():
         if (request.args.get(constant)) == '1':
             history = methods.get(constant)
             histories[constant] = json.loads(history.data)
-    
+    return histories
+
+
+def get_sc_history():
+    sc_constants = ['rules_scheduled_change', 'releases_scheduled_change', 'permissions_scheduled_change']
+    methods = method_constants()
+    histories = {}
+    print('request', request.args)
+    for constant in sc_constants:
+        if (request.args.get(constant)) == '1':
+            history = methods.get(constant)
+            histories[constant] = json.loads(history.data)
+    return histories
+
+
+def get_required_signoff_history():
+    rrp_constants = ['rules', 'releases', 'permissions']
+    methods = method_constants()
+    histories = {}
+    print('request', request.args)
+    for constant in rrp_constants:
+        if (request.args.get(constant)) == '1':
+            history = methods.get(constant)
+            histories[constant] = json.loads(history.data)
     return histories
