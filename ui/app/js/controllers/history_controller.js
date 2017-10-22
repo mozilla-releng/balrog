@@ -42,17 +42,20 @@ angular
     $scope.checkBoxes = [
       {
         id: 1,
-        name: "Rules",
+        name: "rules",
+        value: "Rules",
         selected: false
       },
       {
         id: 2,
-        name: "Releases",
+        name: "releases",
+        value: "Releases",
         selected: false
       },
       {
         id: 3,
-        name: "Permissions",
+        name: "permissions",
+        value: "Permissions",
         selected: false
       }
     ];
@@ -60,39 +63,42 @@ angular
     $scope.so_checkBoxes = [
       {
         id: 1,
-        name: "Product Signoffs",
+        name: "product_signoffs",
+        value: "Product Signoffs",
         selected: false
       },
       {
         id: 2,
-        name: "Permissions Signoffs",
+        name: "permissions_signoffs",
+        value: "Permissions Signoffs",
         selected: false
       }
     ];
 
-    $scope.optionChecked = function(choice) {
-      $scope.checkedBoxesArr = [];
+    function optionChecked (choice) {
+      $scope.checkedBoxesArr = {rules: 0, releases:0, permissions:0 };
       angular.forEach(choice, function(value, key) {
         if (choice[key].selected) {
-          $scope.checkedBoxesArr.push(choice[key].name);
+          $scope.checkedBoxesArr[choice[key].name] = 1;   
+          $scope.msg = "Filtering will be done in: " + $scope.checkedBoxesArr[choice[key].name];  
         }
+        else{
+          $scope.checkedBoxesArr[choice[key].name] = 0;
+          // sweetAlert("Form submission error", "Please check a box", "error");
+        }   
       });
-      if ($scope.checkedBoxesArr.length > 0) {
-        $scope.msg = "Filtering will be done in: " + $scope.checkedBoxesArr.toString();
-      } else {
-        sweetAlert("Form submission error", "Please check a box", "error");
-      }
+      return $scope.checkedBoxesArr;
     };
 
     // Check if the value checked is in the checkbox array
-    function isInArray(name, checkedBoxesArr) {
-      for (var i = 0; i < checkedBoxesArr.length; i++) {
-        if (checkedBoxesArr[i].toLowerCase() === name.toLowerCase()) {
-          return true;
-        }
-      }
-      return false;
-    }
+    // function isInArray(name, checkedBoxesArr) {
+    //   for (var i = 0; i < checkedBoxesArr.length; i++) {
+    //     if (checkedBoxesArr[i].toLowerCase() === name.toLowerCase()) {
+    //       return true;
+    //     }
+    //   }
+    //   return false;
+    // }
     //---checkbox ends
 
 
@@ -381,6 +387,8 @@ angular
       });
     }
 
+  
+
     function rprscHistory() {
       $scope.optionChecked($scope.checkBoxes);
       if ($scope.checkedBoxesArr.length > 0 && $scope.checkedBoxesArr[0] !== null) {
@@ -440,11 +448,51 @@ angular
     }
 
     //To search histories array based on the result gotten from fetchHistory()
+    // $scope.searchHistory = function() {
+    //   if ($scope.tab === 1 || $scope.tab === 2) {
+    //     rprscHistory(); 
+    //   } else {
+    //     signoffsHistory();   
+    //   }
+    // };
+
+    function checkUsernameEmail() {
+      var changedByArr = [];
+      $scope.userInput.username_email.forEach(function(changedBy) {
+        if (changedByArr.indexOf(changedBy.name) === -1) {
+          changedByArr.push(changedBy.name);
+        }
+      });
+      return changedByArr;
+    }
+    
+
+    function rprHistory () {
+      $scope.search = [];
+      var checkboxValues = optionChecked($scope.checkBoxes);
+      if ($scope.userInput.username_email !== "") {
+        var usernameValue = checkUsernameEmail();
+      }
+      History.getrprHistory(checkboxValues, usernameValue)
+      .success(function(response) {
+        angular.forEach(response, function(value, key){
+          $scope.changeType = key;
+          angular.forEach(value.revisions, function(revision){
+            $scope.search.push(revision);
+          })
+        })  
+      })
+      .error(function() {
+        console.log("error");
+      })     
+  }
     $scope.searchHistory = function() {
-      if ($scope.tab === 1 || $scope.tab === 2) {
-        rprscHistory(); 
+      if ($scope.tab === 1) {
+        rprHistory(); 
+      } else if ($scope.tab === 2) {
+        soHistory();   
       } else {
-        signoffsHistory();   
+        signoffHistory();
       }
     };
   });

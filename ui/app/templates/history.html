@@ -30,7 +30,7 @@
             </h5>
             <div class="col-sm-4" ng-repeat="item in checkBoxes">
               <input type="checkbox" ng-model="item.selected">
-              <span>{{item.name}}</span>
+              <span>{{item.value}}</span>
             </div>
           </fieldset>
           
@@ -40,7 +40,7 @@
               </h5>
               <div class="col-sm-6" ng-repeat="item in so_checkBoxes">
                 <input type="checkbox" ng-model="item.selected">
-                <span>{{item.name}}</span>
+                <span>{{item.value}}</span>
               </div>
           </fieldset>
           
@@ -151,7 +151,7 @@
             <tr ng-repeat="item in search">
               <td>{{ $index+1 }}</td>
               <td>{{ item.product + ',' + item.channel }}</td>
-              <td>{{ item.name }}</td>
+              <td>{{ item.changeType}}</td>
               <td>{{ item.changed_by }}</td>
               <td>{{ item.timestamp | date:'dd/MM/yyyy hh:mm a' }}</td>
               <td>{{ item.change_id }}</td>
