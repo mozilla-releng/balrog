@@ -1,21 +1,38 @@
 from flask import jsonify, Response
 from connexion import problem
+from jsonschema.compat import str_types
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
     requirelogin, handleGeneralExceptions, transactionHandler)
 
 
-json_mimetype = 'application/json'
+def shutoff_already_exists(emergency_shutoff):
+    shutoffs = query_shutoffs(product=emergency_shutoff['product'], channel=emergency_shutoff['channel'])
+    return bool(shutoffs)
 
 
-def get_filter(**columns):
-    where = {column: value for column, value in columns.iteritems() if value}
+def can_updating_product_or_channel(emergency_shutoff, emergency_shutoff_db):
+    if emergency_shutoff['product'] != emergency_shutoff_db['product'] or emergency_shutoff['channel'] != emergency_shutoff_db['channel']:
+        return not shutoff_already_exists(emergency_shutoff)
+    return True
+
+
+def get_columns_dict(**columns):
+    where = {}
+    for column, value in columns.iteritems():
+        if isinstance(value, str_types) and not value:
+            continue
+        where[column] = value
     return where
 
 
+def query_shutoffs(**columns):
+    where = get_columns_dict(**columns)
+    return dbo.emergencyShutoff.getEmergencyShutoffs(where)
+
+
 def get(product=None, channel=None):
-    where = get_filter(product=product, channel=channel)
-    shutoffs = dbo.emergencyShutoff.getEmergencyShutoffs(where)
+    shutoffs = query_shutoffs(product=product, channel=channel)
     shutoffs_count = len(shutoffs)
     return jsonify(count=shutoffs_count, shutoffs=shutoffs)
 
@@ -26,44 +43,42 @@ def get_by_id(shutoff_id):
         return problem(status=404,
                        title="Not Found",
                        detail="Requested emergency shutoff wasn't found",
-                       ext={"exception": "Requested rule does not exist"})
+                       ext={"exception": "Requested shutoff does not exist"})
     return jsonify(shutoff)
-
-
-def validate_shutoff(emergency_shutoff):
-    validation_messages = []
-    required_fields = ['product', 'channel']
-    for required_field in required_fields:
-        if required_field not in emergency_shutoff or not emergency_shutoff[required_field]:
-            validation_messages.append('{} is required.'.format(required_field.capitalize()))
-    return len(validation_messages) == 0, validation_messages
 
 
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions('POST')
 def post(emergency_shutoff, changed_by, transaction):
-    is_valid, validation_messages = validate_shutoff(emergency_shutoff)
-    if not is_valid:
+    if shutoff_already_exists(emergency_shutoff):
         return problem(
-            400, 'Bad Request', 'Invalid Emergency shutoff data', ext={'data': validation_messages})
-
-    where = get_filter(product=emergency_shutoff['product'], channel=emergency_shutoff['channel'])
-    shutoffs = dbo.emergencyShutoff.getEmergencyShutoffs(where)
-    if shutoffs:
-        return problem(400, 'Bad Request',
-                       'Emergency shutoff for product/channel already exists.',
-                       ext={'data': validation_messages})
+            400, 'Bad Request', 'Invalid Emergency shutoff data',
+            ext={'data': 'Emergency shutoff for product/channel already exists.'})
     shutoff = dbo.emergencyShutoff.insert(
         changed_by=changed_by, transaction=transaction, **emergency_shutoff)
-    return Response(status=200, response=str(shutoff))
+    return Response(status=201, response=str(shutoff))
 
 
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions('PUT')
 def put(shutoff_id, emergency_shutoff, changed_by, transaction):
-    return Response(response='OK {} {} {} {}'.format(shutoff_id, changed_by, emergency_shutoff['product'], emergency_shutoff['channel']))
+    shutoff = dbo.emergencyShutoff.getEmergencyShutoff(shutoff_id)
+    if not shutoff:
+        return problem(status=404,
+                       title="Not Found",
+                       detail="Shutoff wasn't found",
+                       ext={"exception": "Shutoff does not exist"})
+    if not can_updating_product_or_channel(emergency_shutoff, shutoff):
+        return problem(
+            400, 'Bad Request', 'Invalid Emergency shutoff data',
+            ext={'data': 'Emergency shutoff for product/channel already exists.'})
+    where = get_columns_dict(shutoff_id=shutoff_id)
+    what = get_columns_dict(**emergency_shutoff)
+    dbo.emergencyShutoff.update(
+        where=where, what=what, changed_by=changed_by, transaction=transaction)
+    return Response(status=200)
 
 
 @requirelogin

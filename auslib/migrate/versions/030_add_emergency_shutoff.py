@@ -32,10 +32,12 @@ emergency_shutoff_scheduled_changes = Table(
         Column("scheduled_by", String(100), nullable=False),
         Column("complete", CompatibleBooleanColumn, default=False),
         Column("change_type", String(50), nullable=False),
+        Column("data_version", Integer),
         Column('base_shutoff_id', Integer, primary_key=True, autoincrement=True),
         Column('base_product', String(15), nullable=False),
         Column('base_channel', String(75), nullable=False),
-        Column('base_updates_disabled', CompatibleBooleanColumn, default=False, nullable=False))
+        Column('base_updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
+        Column('base_additional_notification_list', String(500)))
 
 
 emergency_shutoff_scheduled_changes_history = Table(
@@ -46,10 +48,12 @@ emergency_shutoff_scheduled_changes_history = Table(
     Column("scheduled_by", String(100), nullable=False),
     Column("complete", CompatibleBooleanColumn, default=False),
     Column("change_type", String(50), nullable=False),
+    Column("data_version", Integer),
     Column('base_shutoff_id', Integer, primary_key=True, autoincrement=True),
     Column('base_product', String(15), nullable=False),
     Column('base_channel', String(75), nullable=False),
-    Column('base_updates_disabled', CompatibleBooleanColumn, default=False, nullable=False))
+    Column('base_updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
+    Column('base_additional_notification_list', String(500)))
 
 
 emergency_shutoff_scheduled_changes_signoffs = Table(
