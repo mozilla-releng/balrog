@@ -52,32 +52,9 @@ class HistoryHelper():
         ret['count'] = total_count
         return jsonify(ret)
 
-    def _is_digit(self, text):
-        try:
-            int(text)
-            if text >= 0:
-                return True
-            return False
-        except ValueError:
-            return False
-
     def get_unlimted_histories(self, response_key='revisions'):
-        limit = 0
-        page = 0
-
-        if request.args.get('limit'):
-            if self._is_digit(request.args.get('limit')):
-                limit = int(request.args.get('limit', 10))
-        else:
-            limit = -1
-
-        if request.args.get('page'):
-            if self._is_digit(request.args.get('page')):
-                page = int(request.args.get('page', 1))
-            else:
-                page = 1
-        else:
-            page = 1
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', -1))
 
         obj = self.fn_get_object()
         if not obj:
