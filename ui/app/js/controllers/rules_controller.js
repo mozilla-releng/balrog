@@ -132,7 +132,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     // will be inserted based on the priority in the Scheduled Change.
     // Rules that have Scheduled updates or deletes will remain sorted on their current priority
     // because it's more important to make it easy to assess current state than future state.
-    if (rule.priority === null || rule.priority === undefined) {
+    if(rule.timestamp){
+      return rule.data_version * -1;
+    }
+    else if (rule.priority === null || rule.priority === undefined) {
         return rule.scheduled_change.priority * -1;
     }
     else {
