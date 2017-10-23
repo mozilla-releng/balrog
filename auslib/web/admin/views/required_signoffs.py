@@ -49,20 +49,40 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
         super(RequiredSignoffsHistoryAPIView, self).__init__(table=table)
 
     def _get_input_dict(self):
-        args = dict(connexion.request.args)
-        input_dict = {}
+        request = connexion.request
+        table_constants = [
+            'rules',
+            'releases',
+            'permissions',
+            'permissions_required_signoffs',
+            'product_required_signoffs',
+            'releases_scheduled_change',
+            'rules_scheduled_change',
+            'permissions_scheduled_change',
+            'permissions_required_signoff_scheduled_change',
+            'product_required_signoff_scheduled_change'
+            ]
+        args = request.args
+        query_keys = []
+        query = {}
         for key in args:
-            input_dict[key] = connexion.request.args.get(key)
-        return input_dict
+            if not key in table_constants and key != 'limit' and key != 'page':
+                query_keys.append(key)
 
-    def _is_digit(self, text):
+        for key in query_keys:
+            query[key] = request.args.get(key)
+        return jsonify(query_keys=query_keys, query=query)
+
+    def _get_filters(self):
+        input_dict = self._get_input_dict()
+        query = json.loads(input_dict.data)['query']
+        where = [False, False]
         try:
-            int(text)
-            if text >= 0:
-                return True
-            return False
-        except ValueError:
-            return False
+            where = [getattr(self.table.history, f) == query.get(f) for f in query]
+            where.append(self.table.history.data_version != null())
+            return where
+        except AttributeError:
+            return where
 
     def get(self, input_dict):
         if not self.table.select({f: input_dict.get(f) for f in self.decisionFields}):
@@ -91,27 +111,14 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
         return jsonify(count=total_count, required_signoffs=revisions)
 
     def get_all(self):
-        limit = 0
-        page = 1
-
-        if connexion.request.args.get('limit'):
-            if self._is_digit(connexion.request.args.get('limit')):
-                limit = int(connexion.request.args.get('limit', 10))
-        else:
-            limit = -1
-
-        if connexion.request.args.get('page'):
-            if self._is_digit(connexion.request.args.get('page')):
-                page = int(connexion.request.args.get('page', 1))
-            else:
-                page = 1
-        else:
-            page = 1
+        request = connexion.request
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', -1))
 
         query = self.table.history.t.count().where(self.table.history.data_version != null())
         total_count = query.execute().fetchone()[0]
 
-        where = [self.table.history.data_version != null()]
+        where = self._get_filters()
 
         if limit >= 0 and page >= 1:
             offset = limit * (page - 1)

@@ -466,12 +466,62 @@ paths:
           type: integer
           x-nullable: true
           required: false
+        - name: permissions_required_signoff_scheduled_change
+          in: query
+          description: Indicates whether permissions_required_signoff_scheduled_change history should be included
+          type: integer
+          x-nullable: true
+          required: false
+        - name: product_required_signoff_scheduled_change
+          in: query
+          description: Indicates whether product_required_signoff_scheduled_change history should be included
+          type: integer
+          x-nullable: true
+          required: false
       responses:
         '200':
           description: Successfully fetched histories
         '400':
           $ref: '#/responses/invalidFormData'
 
+  /required_signoff/history:
+    get:
+      summary: Returns a list of scheduled changes histories.
+      description: >
+        Returns scheduled changes histories.
+      tags:
+        - "History SC"
+      operationId: auslib.web.common.history_all.get_required_signoff_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of scheduled changes histories"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/timestampParam'
+        - name: permissions_required_signoffs
+          in: query
+          description: Indicates whether permissions_required_signoffs history should be included
+          type: integer
+          x-nullable: true
+          required: false
+        - name: product_required_signoffs
+          in: query
+          description: Indicates whether product_required_signoffs history should be included
+          type: integer
+          x-nullable: true
+          required: false
+      responses:
+        '200':
+          description: Successfully fetched histories
+        '400':
+          $ref: '#/responses/invalidFormData'
   /history/rules:
     get:
       summary: Returns a list of all rules histories.
