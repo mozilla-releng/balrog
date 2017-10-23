@@ -267,7 +267,7 @@ parameters:
     x-nullable: true
     required: false
 
-  dataVersionParam:
+  historyDataVersionParam:
     name: data_version
     in: query
     description: data_version field value to filter history by.
@@ -401,7 +401,7 @@ paths:
         - $ref: '#/parameters/pageParam'
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
-        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/historyDataVersionParam'
         - $ref: '#/parameters/timestampParam'
         - name: rules
           in: query
@@ -446,7 +446,7 @@ paths:
         - $ref: '#/parameters/pageParam'
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
-        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/historyDataVersionParam'
         - $ref: '#/parameters/timestampParam'
         - name: permissions_scheduled_change
           in: query
@@ -503,8 +503,14 @@ paths:
         - $ref: '#/parameters/pageParam'
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
-        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/historyDataVersionParam'
         - $ref: '#/parameters/timestampParam'
+        - name: role
+          in: query
+          description: The role(s) required for product or permission signoff
+          type: string
+          x-nullable: true
+          required: false
         - name: permissions_required_signoffs
           in: query
           description: Indicates whether permissions_required_signoffs history should be included
