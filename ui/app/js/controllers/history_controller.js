@@ -94,7 +94,7 @@ angular
         }   
       });
       return $scope.checkedBoxesArr;
-    };
+    }
 
     //Add username or email tag into the username/email input field 
     $scope.addUsernameEmail = function() {
@@ -278,7 +278,7 @@ angular
           $scope.rrp_revisions.forEach(function(revision){
             result.push(revision);
             $scope.search = result;
-          })
+          });
         }
         else{
           sweetAlert(
@@ -287,7 +287,7 @@ angular
             "error"   
           );
         }
-      }) 
+      }); 
     }
 
     
@@ -300,7 +300,7 @@ angular
       })
       .error(function() {
         console.log("error");
-      })   
+      });
     }
 
     function scHistory() {
@@ -311,7 +311,7 @@ angular
       })
       .error(function() {
         console.log("error");
-      })   
+      });   
     }
 
     function signoffHistory() {
@@ -322,7 +322,7 @@ angular
       })
       .error(function() {
         console.log("error");
-      })   
+      });   
     }
 
     $scope.searchHistory = function() {
@@ -366,7 +366,7 @@ angular
             }
           });
         } 
-      })
+      });
           
     };
     
