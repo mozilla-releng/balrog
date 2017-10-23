@@ -479,7 +479,7 @@ paths:
         Returns a list of all rules histories.
       tags:
         - "History Rules"
-      operationId: auslib.web.common.history_all.get_rules_histories
+      operationId: auslib.web.common.history_all.get_rules_history
       consumes: []
       produces: [application/json]
       responses:
@@ -493,7 +493,7 @@ paths:
         Returns a list of all releases histories.
       tags:
         - "History Releases"
-      operationId: auslib.web.common.history_all.get_releases_histories
+      operationId: auslib.web.common.history_all.get_releases_history
       consumes: []
       produces: [application/json]
       responses:
@@ -507,7 +507,7 @@ paths:
         Returns a list of all permissions histories.
       tags:
         - "History permissions"
-      operationId: auslib.web.common.history_all.get_permissions_histories
+      operationId: auslib.web.common.history_all.get_permissions_history
       consumes: []
       produces: [application/json]
       responses:
@@ -521,7 +521,7 @@ paths:
         Returns a list of all permissions scheduled_changes histories.
       tags:
         - "History permissions scheduled_changes"
-      operationId: auslib.web.common.history_all.get_permissions_scheduled_change_histories
+      operationId: auslib.web.common.history_all.get_permissions_scheduled_change_history
       consumes: []
       produces: [application/json]
       responses:
@@ -535,7 +535,7 @@ paths:
         Returns a list of all rules scheduled_changes histories.
       tags:
         - "History rules scheduled_changes"
-      operationId: auslib.web.common.history_all.get_rules_scheduled_change_histories
+      operationId: auslib.web.common.history_all.get_rules_scheduled_change_history
       consumes: []
       produces: [application/json]
       responses:
@@ -549,7 +549,7 @@ paths:
         Returns a list of all releases scheduled_changes histories.
       tags:
         - "History releases scheduled_changes"
-      operationId: auslib.web.common.history_all.get_releases_scheduled_change_histories
+      operationId: auslib.web.common.history_all.get_releases_scheduled_change_history
       consumes: []
       produces: [application/json]
       responses:
@@ -563,7 +563,7 @@ paths:
         Returns a list of all required_signoffs histories.
       tags:
         - "History required_signoffs"
-      operationId: auslib.web.common.history_all.get_product_required_signoffs_histories
+      operationId: auslib.web.common.history_all.get_product_required_signoffs_history
       consumes: []
       produces: [application/json]
       responses:
@@ -577,7 +577,7 @@ paths:
         Returns a list of all permissions_required_signoffs histories.
       tags:
         - "History"
-      operationId: auslib.web.common.history_all.get_permissions_required_signoffs_histories
+      operationId: auslib.web.common.history_all.get_permissions_required_signoffs_history
       consumes: []
       produces: [application/json]
       responses:
