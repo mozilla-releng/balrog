@@ -18,15 +18,6 @@ class HistoryView(AdminView):
         self.history_table = table.history
         super(HistoryView, self).__init__(*args, **kwargs)
 
-    def _is_digit(self, text):
-        try:
-            int(text)
-            if text >= 0:
-                return True
-            return False
-        except ValueError:
-            return False
-
     def get_revisions(self,
                       get_object_callback,
                       history_filters_callback,
@@ -115,22 +106,8 @@ class HistoryView(AdminView):
         @param response_key: Dictionary key to wrap returned revisions.
         @type response_key: string
         """
-        limit = 0
-        page = 1
-
-        if connexion.request.args.get('limit'):
-            if self._is_digit(connexion.request.args.get('limit')):
-                limit = int(connexion.request.args.get('limit', 10))
-        else:
-            limit = -1
-
-        if connexion.request.args.get('page'):
-            if self._is_digit(connexion.request.args.get('page')):
-                page = int(connexion.request.args.get('page', 1))
-            else:
-                page = 1
-        else:
-            page = 1
+        page = int(connexion.request.args.get('page', 1))
+        limit = int(connexion.request.args.get('limit', -1))
 
         obj = get_object_callback()
         if not obj:

@@ -13,6 +13,7 @@ from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeHistoryView
 from auslib.db import SignoffRequiredError
 from auslib.global_state import dbo
+from auslib.web.common.history import get_input_dict
 
 
 class RequiredSignoffsView(AdminView):
@@ -48,38 +49,14 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
         self.decisionFields = decisionFields
         super(RequiredSignoffsHistoryAPIView, self).__init__(table=table)
 
-    def _get_input_dict(self):
-        request = connexion.request
-        table_constants = [
-            'rules',
-            'releases',
-            'permissions',
-            'permissions_required_signoffs',
-            'product_required_signoffs',
-            'releases_scheduled_change',
-            'rules_scheduled_change',
-            'permissions_scheduled_change',
-            'permissions_required_signoff_scheduled_change',
-            'product_required_signoff_scheduled_change'
-            ]
-        args = request.args
-        query_keys = []
-        query = {}
-        for key in args:
-            if not key in table_constants and key != 'limit' and key != 'page':
-                query_keys.append(key)
-
-        for key in query_keys:
-            query[key] = request.args.get(key)
-        return jsonify(query_keys=query_keys, query=query)
-
     def _get_filters(self):
-        input_dict = self._get_input_dict()
+        input_dict = get_input_dict()
         query = json.loads(input_dict.data)['query']
         where = [False, False]
         try:
             where = [getattr(self.table.history, f) == query.get(f) for f in query]
             where.append(self.table.history.data_version != null())
+            where.append(self.history_table.product != null())
             return where
         except AttributeError:
             return where

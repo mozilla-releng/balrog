@@ -2,8 +2,9 @@ import json
 import logging
 from auslib.global_state import dbo
 from connexion import problem, request
+from sqlalchemy.sql.expression import null
 from flask import jsonify
-from auslib.web.common.history import HistoryHelper
+from auslib.web.common.history import HistoryHelper, get_input_dict
 from auslib.web.common.rules import get_rules
 from auslib.web.common.releases import get_releases, process_release_revisions
 from auslib.web.admin.views.permissions import UsersView, PermissionScheduledChangeHistoryView
@@ -18,12 +19,13 @@ log = logging.getLogger(__name__)
 
 
 def _get_filters(obj, history_table):
-    input_dict = _get_input_dict()
+    input_dict = get_input_dict()
     query = json.loads(input_dict.data)['query']
     where = [False, False]
     try:
         where = [getattr(history_table, f) == query.get(f) for f in query]
-        where.append(getattr(history_table, 'product') != 'null' )
+        where.append(history_table.product != null())
+        where.append(history_table.data_version != null())
         return where
     except AttributeError:
         return where
@@ -93,32 +95,8 @@ def get_permissions_required_signoffs_history():
     return PermissionsRequiredSignoffsHistoryAPIView().get_all()
 
 
-def _get_input_dict():
-    table_constants = [
-        'rules',
-        'releases',
-        'permissions',
-        'permissions_required_signoffs',
-        'product_required_signoffs',
-        'releases_scheduled_change',
-        'rules_scheduled_change',
-        'permissions_scheduled_change',
-        'permissions_required_signoff_scheduled_change',
-        'product_required_signoff_scheduled_change'
-        ]
-    args = request.args
-    query_keys = []
-    query = {}
-    for key in args:
-        if not key in table_constants and key != 'limit' and key != 'page':
-            query_keys.append(key)
 
-    for key in query_keys:
-        query[key] = request.args.get(key)
-    return jsonify(query_keys=query_keys, query=query)
-
-
-def method_constants():
+def history_methods():
     return {
         'rules': get_rules_history(),
         'releases': get_releases_history(),
@@ -135,7 +113,7 @@ def method_constants():
 
 def get_rrp_history():
     rrp_constants = ['rules', 'releases', 'permissions']
-    methods = method_constants()
+    methods = history_methods()
     histories = {}
     for constant in rrp_constants:
         if (request.args.get(constant)) == '1':
@@ -152,7 +130,7 @@ def get_sc_history():
         'permissions_required_signoff_scheduled_change',
         'product_required_signoff_scheduled_change',
         ]
-    methods = method_constants()
+    methods = history_methods()
     histories = {}
     for constant in sc_constants:
         if (request.args.get(constant)) == '1':
@@ -166,7 +144,7 @@ def get_required_signoff_history():
         'permissions_required_signoffs',
         'product_required_signoffs',
         ]
-    methods = method_constants()
+    methods = history_methods()
     histories = {}
     print('request', request.args)
     for constant in rrp_constants:
