@@ -1,6 +1,6 @@
 angular
   .module("app")
-  .controller("HistoryController", function($scope, $q, $filter, Releases, Rules, History, Page ){
+  .controller("HistoryController", function($scope, $q, $modal, $filter, Releases, Rules, History, Page ){
     
     Page.setTitle("History");
 
@@ -21,6 +21,8 @@ angular
     $scope.failed = false;
     $scope.tab = 1;
     $scope.rrpfilter = true;
+    $scope.search = [];
+    
 
     $scope.currentPage = 1;
     $scope.pageSize = 20;
@@ -93,19 +95,6 @@ angular
       });
       return $scope.checkedBoxesArr;
     };
-
-
-    // Check if the value checked is in the checkbox array
-    // function isInArray(name, checkedBoxesArr) {
-    //   for (var i = 0; i < checkedBoxesArr.length; i++) {
-    //     if (checkedBoxesArr[i].toLowerCase() === name.toLowerCase()) {
-    //       return true;
-    //     }
-    //   }
-    //   return false;
-    // }
-    //---checkbox ends
-
 
     //Add username or email tag into the username/email input field 
     $scope.addUsernameEmail = function() {
@@ -230,213 +219,19 @@ angular
 
     $scope.hideUsername = function() {
       $scope.isShowUsername = false;
+      $scope.userInput.username_email = "";
     };
     $scope.hideDaterange = function() {
       $scope.isShowDaterange = false;
+      $scope.userInput.dateRangeStart = "";
+      $scope.userInput.dateRangeEnd = "";
     };
     $scope.hidePrCh = function() {
       $scope.isShowPrCh = false;
     };
     //End add and remove filter fields
     
-    $scope.processResponse = function(response) {
-      $scope.history_count = response.count;
-      $scope.revisions = response.revisions;
-      var revisions_arr = [];
-      $scope.revisions.forEach(function(revision) {
-        revisions_arr.push(revision);
-      });
-    };
-
-    var promises = [];
-    var sc_promises = [];
-    //To call all rules history and sc_rules history endpoints depending on the tab selected
-    function rulesHistory() {
-      switch ($scope.tab) {
-        case 1:
-          promises.push(
-            History.getRulesHistory()
-              .success(function(response) {
-                $scope.processResponse(response);
-              })
-              .error(function() {
-                $scope.failed = true;
-                return $q.reject();
-              })
-          );
-          break;
-        case 2:
-        sc_promises.push(
-            History.getScRulesHistory()
-              .success(function(response) {
-                $scope.processResponse(response);
-              })
-              .error(function() {
-                $scope.failed = true;
-                return $q.reject();
-              })
-          );
-          break;
-      }
-    }
     
-    //To call all releases history and sc_releases history endpoints depending on the tab selected
-    function releasesHistory() {
-      switch ($scope.tab) {
-        case 1:
-          promises.push(
-            History.getReleaseHistory()
-              .success(function(response) {
-                $scope.processResponse(response);
-              })
-              .error(function() {
-                $scope.failed = true;
-                return $q.reject();
-              })
-          );
-          break;
-        case 2:
-        sc_promises.push(
-            History.getScReleasesHistory()
-              .success(function(response) {
-                $scope.processResponse(response);
-              })
-              .error(function() {
-                $scope.failed = true;
-                return $q.reject();
-              })
-          );
-          break;
-      }
-    }
-
-    //To call all permissions history and sc_permissions history endpoints depending on the tab selected
-    function permissionsHistory() {
-      switch ($scope.tab) {
-        case 1:
-          promises.push(
-            History.getPermissionsHistory()
-              .success(function(response) {
-                $scope.processResponse(response);
-              })
-              .error(function() {
-                $scope.failed = true;
-                return $q.reject();
-              })
-          );
-          break;
-        case 2:
-        sc_promises.push(
-            History.getScPermissionsHistory()
-              .success(function(response) {
-                $scope.processResponse(response);
-              })
-              .error(function() {
-                $scope.failed = true;
-                return $q.reject();
-              })
-          );
-          break;
-      }
-    }
-
-    // //To  fetch all History based on selected values and return all in one array
-    // function fetchHistory() {
-    //   $scope.loading = true;
-    //   return new Promise(function(resolve, reject) {
-    //     if (isInArray("Rules", $scope.checkedBoxesArr)) {
-    //       rulesHistory();
-    //     }
-    //     if (isInArray("Releases", $scope.checkedBoxesArr)) {
-    //       releasesHistory();
-    //     }
-    //     if (isInArray("Permissions", $scope.checkedBoxesArr)) {
-    //       permissionsHistory();
-    //     }
-    //     if (isInArray("Product Signoffs", $scope.checkedBoxesArr)) {
-    //       productSignoffsHistory();
-    //     }
-    //     if (isInArray("Permissions Signoffs", $scope.checkedBoxesArr)) {
-    //       permissionsSignoffsHistory();
-    //     }
-    //     switch($scope.tab) {
-    //       case 1:
-    //         $q.all(promises).then(function(response) {
-    //           $scope.promiseResult = response;
-    //           var promiseResultArr = [];
-    //           $scope.promiseResult.forEach(function(arrList) {
-    //             var history_arr_list_data = arrList.data;
-    //             history_arr_list_data.revisions.forEach(function(data) {
-    //               promiseResultArr.push(data);
-    //             });
-    //           });
-    //           resolve(promiseResultArr);
-    //           $scope.loading = false;
-    //         });
-    //         break;
-    //       case 2:
-    //         $q.all(sc_promises).then(function(response) {
-    //           $scope.promiseResult = response;
-    //           var promiseResultArr = [];
-    //           $scope.promiseResult.forEach(function(arrList) {
-    //             var history_arr_list_data = arrList.data;
-    //             history_arr_list_data.revisions.forEach(function(data) {
-    //               promiseResultArr.push(data);
-    //             });
-    //           });
-    //           resolve(promiseResultArr);
-    //           $scope.loading = false;
-    //         });
-    //         break;
-    //     }
-    //   });
-    // }
-
-  
-
-    // function rprscHistory() {
-    //   $scope.optionChecked($scope.checkBoxes);
-    //   if ($scope.checkedBoxesArr.length > 0 && $scope.checkedBoxesArr[0] !== null) {
-    //     if ($scope.isShowUsername || $scope.isShowDaterange || $scope.isShowPrCh) {
-    //       fetchHistory()
-    //        .then(function(data) {
-    //           $scope.allHistory = data;
-    //           $scope.$apply(function() {
-    //             if ($scope.userInput.username_email !== "") {
-    //               var changedByArr = [];
-    //               var searchResult = [];
-    //               $scope.userInput.username_email.forEach(function(changedBy) {
-    //                 if (changedByArr.indexOf(changedBy.name) === -1) {
-    //                   changedByArr.push(changedBy.name);
-    //                   changedByArr.forEach(function(name) {
-    //                     if (searchResult.indexOf(name) === -1) {
-    //                       $scope.search = $filter("filter")(
-    //                         $scope.allHistory,
-    //                         name
-    //                       );
-    //                     }
-    //                   });
-    //                 }
-    //               });
-    //             } 
-    //             if ($scope.userInput.dateRangeStart !== "" ||$scope.userInput.dateRangeEnd !== "") {
-    //               $scope.search = $filter("dateRangefilter")($scope.allHistory,$scope.userInput.dateRangeStart,$scope.userInput.dateRangeEnd);
-    //             } 
-    //             if ($scope.pr_ch_selected[0].toLowerCase() !== "all rules") {
-    //               $scope.search = $filter("filter")($scope.allHistory,$scope.userInput.hs_pr_ch_filter);
-    //             } 
-    //           });
-    //         });
-    //     } else {
-    //       sweetAlert(
-    //         "Form submission error",
-    //         "There are no search filter fields",
-    //         "error"
-    //       );
-    //     }
-    //   }
-    // }
-
     function signoffsHistory() {
       $scope.optionChecked($scope.so_checkBoxes);
       if ($scope.checkedBoxesArr.length > 0 && $scope.checkedBoxesArr[0] !== null) {
@@ -461,36 +256,69 @@ angular
       });
       return changedByArr;
     }
-    
-    function rrpHistory () {
-      $scope.search = [];
-      var result = [];
-      var checkboxValues = optionChecked($scope.checkBoxes);
+
+
+    function checkParameters() {
+      $scope.checkboxValues = optionChecked($scope.checkBoxes);
       if ($scope.userInput.username_email !== "") {
-        var usernameValue = checkUsernameEmail();
+        $scope.usernameValue = checkUsernameEmail();
       }
-      History.getrrpHistory(checkboxValues, usernameValue)
+    }
+
+
+    var result = [];
+    function processResponse(response) {
+      $scope.tableResult = true;
+      angular.forEach(response, function(value, key){
+        // console.log(response,"response");
+        $scope.changeType = key;
+        $scope.rrp_count = value.count;
+        $scope.rrp_revisions = value.revisions;
+        if($scope.rrp_count !== 0){
+          $scope.rrp_revisions.forEach(function(revision){
+            result.push(revision);
+            $scope.search = result;
+          })
+        }
+        else{
+          sweetAlert(
+            "error",
+            "No results matching the filter",
+            "error"   
+          );
+        }
+      }) 
+    }
+
+    
+    
+    function rrpHistory () {    
+      checkParameters();
+      History.getrrpHistory($scope.checkboxValues, $scope.usernameValue)
       .success(function(response) {
-        $scope.tableResult =true;
-        angular.forEach(response, function(value, key){
-          console.log(response,"response");
-          $scope.changeType = key;
-          $scope.rrp_count = value.count;
-          $scope.rrp_revisions = value.revisions;
-          if($scope.rrp_count !== 0){
-            $scope.rrp_revisions.forEach(function(revision){
-              result.push(revision);
-              $scope.search = result;
-            })
-          }
-          else{
-            sweetAlert(
-              "error",
-              "No results matching the filter",
-              "error"   
-            );
-          }
-        })     
+        processResponse(response);  
+      })
+      .error(function() {
+        console.log("error");
+      })   
+    }
+
+    function scHistory() {
+      checkParameters();
+      History.getscHistory($scope.checkboxValues, $scope.usernameValue)
+      .success(function(response) {
+        processResponse(response);  
+      })
+      .error(function() {
+        console.log("error");
+      })   
+    }
+
+    function signoffHistory() {
+      checkParameters();
+      History.getscHistory($scope.checkboxValues, $scope.usernameValue)
+      .success(function(response) {
+        processResponse(response);  
       })
       .error(function() {
         console.log("error");
@@ -510,5 +338,37 @@ angular
           break;
       }
     };
+
+    function isInArray(id, result) {
+      for (var i = 0; i < result.length; i++) {
+        if (result[i] === id) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    $scope.openDataModal = function(change_id) {
+      angular.forEach($scope.search, function(revision){
+        if(revision.change_id === change_id ){
+          console.log(revision.change_id,"found");
+          var modalInstance = $modal.open({
+            templateUrl: 'history_data_modal.html',
+            controller: 'HistoryDataCtrl',
+            size: 'lg',
+            backdrop: 'static',
+            resolve: {
+              hs: function() {
+                var hs = angular.copy($scope.search);
+                hs.original_row = hs;
+                return hs;
+              },
+            }
+          });
+        } 
+      })
+          
+    };
+    
   
   });

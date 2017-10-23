@@ -50,7 +50,7 @@
               <div>
                 <h5 class="h-underlined">Username / Email
                   <span tooltip="Remove filter option" tooltip-placement="right">
-                    <button class="remove" ng-click="hideUsename()">&times;</button>
+                    <button class="remove" ng-click="hideUsername()">&times;</button>
                   </span>
                 </h5>
               </div>
@@ -159,7 +159,11 @@
           <tbody ng-show="tableResult">
             <tr ng-repeat="item in search = rrp_revisions | startFrom: ((currentPage - 1)*pageSize) | limitTo:pageSize">
               <td>{{ $index+1 }}</td>
-              <td>{{ item.product + ',' + item.channel }}</td>
+              <td>{{ item.product + ',' + item.channel }}
+                <a class="btn btn-default btn-xs" href="" ng-click="openDataModal(item.change_id)">
+                  <i class="glyphicon glyphicon-eye-open"></i>
+              </a>
+              </td>
               <td>{{ item.changeType}}</td>
               <td>{{ item.changed_by }}</td>
               <td>{{ item.timestamp | date:'dd/MM/yyyy hh:mm a' }}</td>
