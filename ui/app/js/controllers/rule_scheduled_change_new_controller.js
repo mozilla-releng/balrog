@@ -1,5 +1,5 @@
 angular.module("app").controller("NewRuleScheduledChangeCtrl",
-function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes, sc, signoffRequirements, Helpers) {
+function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes, sc, original_row, signoffRequirements, Helpers) {
   $scope.names = [];
   Releases.getNames().then(function(names) {
     $scope.names = names;
@@ -36,7 +36,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
       if ($scope.sc.change_type === "delete") {
         target = undefined;
       }
-      $scope.scheduledChangeSignoffsRequired = Rules.ruleSignoffsRequired($scope.sc.original_row, target, signoffRequirements);
+      $scope.scheduledChangeSignoffsRequired = Rules.ruleSignoffsRequired(original_row, target, signoffRequirements);
     }
   }, true);
 
