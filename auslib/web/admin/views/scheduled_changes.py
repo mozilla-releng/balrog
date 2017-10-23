@@ -1,4 +1,5 @@
 import connexion
+import json
 from sqlalchemy.sql.expression import null
 
 from flask import jsonify, Response
@@ -7,7 +8,6 @@ from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signo
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
-
 
 class ScheduledChangesView(AdminView):
     """/scheduled_changes/:namespace"""
@@ -200,6 +200,42 @@ class ScheduledChangeHistoryView(HistoryView):
         return [self.history_table.sc_id == sc['sc_id'],
                 self.history_table.data_version != null()]
 
+    def _get_input_dict(self):
+        request = connexion.request
+        table_constants = [
+            'rules',
+            'releases',
+            'permissions',
+            'permissions_required_signoffs',
+            'product_required_signoffs',
+            'releases_scheduled_change',
+            'rules_scheduled_change',
+            'permissions_scheduled_change',
+            'permissions_required_signoff_scheduled_change',
+            'product_required_signoff_scheduled_change'
+            ]
+        args = request.args
+        query_keys = []
+        query = {}
+        for key in args:
+            if not key in table_constants and key != 'limit' and key != 'page':
+                query_keys.append(key)
+
+        for key in query_keys:
+            query[key] = request.args.get(key)
+        return jsonify(query_keys=query_keys, query=query)
+
+    def _get_filters_all(self, obj):
+        input_dict = self._get_input_dict()
+        query = json.loads(input_dict.data)['query']
+        where = [False, False]
+        try:
+            where = [getattr(self.history_table, f) == query.get(f) for f in query]
+            where.append(getattr(self.history_table, 'product') != 'null' )
+            return where
+        except AttributeError:
+            return where
+    
     def _get_what(self, change, changed_by, transaction):
         # There's a big 'ol assumption here that the primary Scheduled Changes
         # table and the conditions table always keep their data version in sync.
@@ -245,7 +281,7 @@ class ScheduledChangeHistoryView(HistoryView):
         try:
             return self.get_all_revisions(
                 get_object_callback=lambda: ScheduledChangesView.get,
-                history_filters_callback=lambda sc_id: [True, True],
+                history_filters_callback=self._get_filters_all,
                 process_revisions_callback=self._process_revisions,
                 revisions_order_by=[self.history_table.timestamp.desc()],
                 obj_not_found_msg='Scheduled change does not exist')
