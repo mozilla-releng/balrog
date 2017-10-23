@@ -76,8 +76,8 @@
       <div style="float:right">
         <i ng-if="release_name && $first && (currentPage == 1)">Current</i>
         <button ng-if="release_name && ((currentPage != 1) || !$first )" class="btn btn-default btn-xs" ng-click="openRevertModal(release)">Revert to this</button>
-        <button ng-show="!rule_id" class="btn btn-warning btn-xs" ng-click="openNewScheduledReleaseChangeModal(release)">Schedule an Update</button>
-        <button ng-show="!rule_id" class="btn btn-danger btn-xs" ng-click="openNewScheduledDeleteModal(release)">Schedule for Deletion</button>
+        <button ng-show="!release_name" class="btn btn-warning btn-xs" ng-click="openNewScheduledReleaseChangeModal(release)">Schedule an Update</button>
+        <button ng-show="!release_name" class="btn btn-danger btn-xs" ng-click="openNewScheduledDeleteModal(release)">Schedule for Deletion</button>
         <button class="btn btn-default btn-xs" ng-click="openDataModal(release)">View Data</button>
         <a ng-show="!release_name" class="btn btn-default btn-xs" download="{{ release.name | uriencode }}.json" target="_self" ng-href="/api/releases/{{ release.name | uriencode }}?pretty=1">Download</a>
         <button ng-show="!release_name && !release.required_signoffs.length" class="btn btn-default btn-xs" ng-click="openUpdateModal(release)">Update</button>

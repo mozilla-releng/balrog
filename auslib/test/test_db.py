@@ -1,3 +1,4 @@
+from copy import deepcopy
 import logging
 import mock
 import os
@@ -2123,7 +2124,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         expected = ["rule_id", "alias", "priority", "mapping", "fallbackMapping", "backgroundRate", "update_type",
                     "product", "version", "channel", "buildTarget", "buildID", "locale", "osVersion",
                     "instructionSet", "distribution", "distVersion", "headerArchitecture", "comment",
-                    "data_version", "memory", "mig64"]
+                    "data_version", "memory", "mig64", "jaws"]
         sc_expected = ["base_{}".format(c) for c in expected]
         self.assertEquals(set(columns), set(expected))
         # No need to test the non-base parts of history nor scheduled changes table
@@ -2512,6 +2513,146 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def testGetNumberOfRules(self):
         self.assertEquals(self.paths.countRules(), 10)
+
+
+class TestJawsRules(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
+
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.db.create()
+        self.rules = self.db.rules
+        self.rules.t.insert().execute(rule_id=1, priority=90, mapping="myes", backgroundRate=100, jaws=True,
+                                      update_type="z", product="mm", channel="mm", data_version=1)
+        self.rules.t.insert().execute(rule_id=2, priority=100, mapping="mno", backgroundRate=100, jaws=False,
+                                      update_type="z", product="nn", channel="nn", data_version=1)
+
+        self.rules.t.insert().execute(rule_id=3, priority=110, mapping="anything", backgroundRate=100,
+                                      update_type="z", product="oo", channel="oo", data_version=1)
+
+    def testRuleFalseQueryFalse(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="nn", version='53.0', channel="nn",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, jaws=False, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=2, priority=100, mapping="mno", backgroundRate=100, jaws=False, update_type="z",
+                 product="nn", channel="nn", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleFalseQueryTrue(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="nn", version='53.0', channel="nn",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, jaws=True, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleFalseQueryNull(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="nn", version='53.0', channel="nn",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, jaws=None, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleTrueQueryFalse(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="mm", version='53.0', channel="mm",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, jaws=False, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleTrueQueryTrue(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="mm", version='53.0', channel="mm",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, jaws=True, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=1, priority=90, mapping="myes", backgroundRate=100, jaws=True, update_type="z",
+                 product="mm", channel="mm", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleTrueQueryNull(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="mm", version='53.0', channel="mm",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, jaws=None, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        self.assertEquals(rules, [])
+
+    def testRuleNullQueryFalse(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="oo", version='53.0', channel="oo",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, jaws=False, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=3, priority=110, mapping="anything", backgroundRate=100, update_type="z",
+                 product="oo", channel="oo", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleNullQueryTrue(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="oo", version='53.0', channel="oo",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, jaws=True, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=3, priority=110, mapping="anything", backgroundRate=100, update_type="z",
+                 product="oo", channel="oo", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
+
+    def testRuleNullQueryNull(self):
+        rules = self.rules.getRulesMatchingQuery(
+            dict(product="oo", version='53.0', channel="oo",
+                 buildTarget='d', buildID='', locale='', osVersion='',
+                 distribution='', distVersion='', headerArchitecture='',
+                 queryVersion=3, jaws=None, force=False,
+                 ),
+            fallbackChannel=''
+        )
+        rules = self._stripNullColumns(rules)
+        expected = [
+            dict(rule_id=3, priority=110, mapping="anything", backgroundRate=100, update_type="z",
+                 product="oo", channel="oo", data_version=1),
+        ]
+        self.assertEquals(rules, expected)
 
 
 class TestMig64Rules(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
@@ -4034,13 +4175,18 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        self.releases.insert(changed_by="bill", name='p', product='z', data=ancestor_blob)
-        self.releases.update({"name": "p"}, {"product": "z", "data": blob1},
-                             changed_by='bill', old_data_version=1)
-        self.releases.update({"name": "p"}, {"product": "z", "data": blob2},
-                             changed_by='bill', old_data_version=1)
+        with self.db.begin() as trans:
+            self.releases.insert(changed_by="bill", name='p', product='z', data=ancestor_blob, transaction=trans)
+            self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by='bill', old_data_version=1, transaction=trans)
+            self.releases.update({"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1, transaction=trans)
         ret = select([self.releases.data]).where(self.releases.name == 'p').execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
+        history_rows = self.releases.history.t.select().where(self.releases.history.name == "p").execute().fetchall()
+        self.assertEqual(len(history_rows), 4)
+        self.assertEqual(history_rows[0]["data"], None)
+        self.assertEqual(history_rows[1]["data"], ancestor_blob)
+        self.assertEqual(history_rows[2]["data"], blob1)
+        self.assertEqual(history_rows[3]["data"], result_blob)
 
     def testAddMergeableWithChangesToList(self):
         ancestor_blob = createBlob("""
@@ -4179,11 +4325,18 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        self.releases.insert(changed_by="bill", name='release4', product='z', data=ancestor_blob)
-        self.releases.update({"name": "release4"}, {"product": "z", "data": blob1}, changed_by='bill', old_data_version=1)
-        self.releases.update({"name": "release4"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1)
+        with self.db.begin() as trans:
+            self.releases.insert(changed_by="bill", name='release4', product='z', data=ancestor_blob, transaction=trans)
+            self.releases.update({"name": "release4"}, {"product": "z", "data": blob1}, changed_by='bill', old_data_version=1, transaction=trans)
+            self.releases.update({"name": "release4"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1, transaction=trans)
         ret = select([self.releases.data]).where(self.releases.name == 'release4').execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
+        history_rows = self.releases.history.t.select().where(self.releases.history.name == "release4").execute().fetchall()
+        self.assertEqual(len(history_rows), 4)
+        self.assertEqual(history_rows[0]["data"], None)
+        self.assertEqual(history_rows[1]["data"], ancestor_blob)
+        self.assertEqual(history_rows[2]["data"], blob1)
+        self.assertEqual(history_rows[3]["data"], result_blob)
 
     def testAddConflictingOutdatedData(self):
         ancestor_blob = createBlob("""
@@ -4275,11 +4428,16 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        self.releases.insert(changed_by="bill", name="p", product="z", data=ancestor_blob)
-        self.releases.update({"name": "p"}, {"product": "z", "data": blob1},
-                             changed_by="bill", old_data_version=1)
-        self.assertRaises(OutdatedDataError, self.releases.update,
-                          {"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1)
+        with self.db.begin() as trans:
+            self.releases.insert(changed_by="bill", name="p", product="z", data=ancestor_blob, transaction=trans)
+            self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by="bill", old_data_version=1, transaction=trans)
+            self.assertRaises(OutdatedDataError, self.releases.update,
+                              {"name": "p"}, {"product": "z", "data": blob2}, changed_by='bill', old_data_version=1, transaction=trans)
+        history_rows = self.releases.history.t.select().where(self.releases.history.name == "p").execute().fetchall()
+        self.assertEqual(len(history_rows), 3)
+        self.assertEqual(history_rows[0]["data"], None)
+        self.assertEqual(history_rows[1]["data"], ancestor_blob)
+        self.assertEqual(history_rows[2]["data"], blob1)
 
     def testAddLocaleToReleaseDoesMerging(self):
         ancestor_blob = createBlob("""
@@ -4352,13 +4510,28 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     }
 }
 """)
-        self.releases.insert(changed_by="bill", name="release4", product="z", data=ancestor_blob)
-        self.releases.addLocaleToRelease("release4", "p", "p", "l", {"partials": [{"filesize": 567, "from": "release2", "hashValue": "ghi"}]},
-                                         old_data_version=1, changed_by="bill")
-        self.releases.addLocaleToRelease("release4", "p", "p", "l", {"partials": [{"filesize": 890, "from": "release3", "hashValue": "jkl"}]},
-                                         old_data_version=1, changed_by="bill")
+        with self.db.begin() as trans:
+            self.releases.insert(changed_by="bill", name="release4", product="z", data=ancestor_blob, transaction=trans)
+            self.releases.addLocaleToRelease("release4", "p", "p", "l", {"partials": [{"filesize": 567, "from": "release2", "hashValue": "ghi"}]},
+                                             old_data_version=1, changed_by="bill", transaction=trans)
+            self.releases.addLocaleToRelease("release4", "p", "p", "l", {"partials": [{"filesize": 890, "from": "release3", "hashValue": "jkl"}]},
+                                             old_data_version=1, changed_by="bill", transaction=trans)
         ret = select([self.releases.data]).where(self.releases.name == 'release4').execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
+        history_rows = self.releases.history.t.select().where(self.releases.history.name == "release4").execute().fetchall()
+        self.assertEqual(len(history_rows), 4)
+        interim_blob = deepcopy(ancestor_blob)
+        interim_blob["platforms"]["p"]["locales"]["l"] = {
+            "partials": [
+                {
+                    "filesize": 567, "from": "release2", "hashValue": "ghi"
+                }
+            ]
+        }
+        self.assertEqual(history_rows[0]["data"], None)
+        self.assertEqual(history_rows[1]["data"], ancestor_blob)
+        self.assertEqual(history_rows[2]["data"], interim_blob)
+        self.assertEqual(history_rows[3]["data"], result_blob)
 
 
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
@@ -5089,6 +5262,22 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table_name in base_mig64_tables:
                 self.assertNotIn("base_mig64", metadata.tables[table_name].c)
 
+    def _add_jaws_test(self, db, upgrade=True):
+        metadata = self._get_reflected_metadata(db)
+        jaws_tables = ["rules", "rules_history"]
+        base_jaws_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
+
+        if upgrade:
+            for table_name in jaws_tables:
+                self.assertIn("jaws", metadata.tables[table_name].c)
+            for table_name in base_jaws_tables:
+                self.assertIn("base_jaws", metadata.tables[table_name].c)
+        else:
+            for table_name in jaws_tables:
+                self.assertNotIn("jaws", metadata.tables[table_name].c)
+            for table_name in base_jaws_tables:
+                self.assertNotIn("base_jaws", metadata.tables[table_name].c)
+
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
         """
         Tests the upgrades and downgrades for version 22 work properly.
@@ -5142,6 +5331,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            29: self._add_jaws_test,
             28: self._add_mig64_test,
             27: self._remove_systemCapabilities_test,
             26: self._add_instructionSet_test,

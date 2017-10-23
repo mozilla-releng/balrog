@@ -170,6 +170,15 @@
       </dt>
       <dd ng-if="sc.mig64 === true">Yes</dd>
       <dd ng-if="sc.mig64 === false">No</dd>
+      <dt ng-show="sc.jaws !== null && sc.jaws !== undefined">
+        JAWS Screen Reader Compatibility
+        <span class="glyphicon glyphicon-question-sign"
+           title='Whether or not to match incoming queries that indicate a client that has an incompatible version of the JAWS screen reader installed. "Ignore" is usually what you want.'>
+        </span>
+        :
+      </dt>
+      <dd ng-if="sc.jaws === true">Yes</dd>
+      <dd ng-if="sc.jaws === false">No</dd>
       <dt ng-show="sc.distVersion">Dist Version:</dt>
       <dd>{{ sc.distVersion }}</dd>
       <dt ng-show="sc.update_type">Update type:</dt>
