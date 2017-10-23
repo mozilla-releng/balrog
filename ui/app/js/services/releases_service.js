@@ -89,8 +89,8 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
     addScheduledChange: function(data, csrf_token) {
       data = jQuery.extend({}, data);
       data = Helpers.replaceEmptyStrings(data);
-      if (data.when === null) {
-        data.when = "";
+      if (!data.when) {
+        data.when = null;
       }
       else {
         data.when = data.when.getTime();
@@ -102,7 +102,7 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
     updateScheduledChange: function(sc_id, data, csrf_token) {
       data = jQuery.extend({}, data);
       data = Helpers.replaceEmptyStrings(data);
-      if (data.when !== null) {
+      if (!!data.when) {
         data.when = data.when.getTime();
       }
       data.csrf_token = csrf_token;
