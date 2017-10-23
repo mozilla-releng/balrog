@@ -168,17 +168,6 @@ class TestVerifySignoffs(unittest.TestCase):
 
 
 @pytest.fixture(scope='class')
-def create_db(request):
-    class CreateDB(MemoryDatabaseMixin):
-        def get_engine(self):
-            MemoryDatabaseMixin.setUp(self)
-            self.engine = create_engine(self.dburi)
-            return self.engine
-    get_db = CreateDB()
-    request.engine = get_db.get_engine()  
-
-
-@pytest.mark.usefixtures('create_db')
 class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
 
     @classmethod
@@ -186,7 +175,6 @@ class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
         create_db(TestAUSTransaction)
 
     def setUp(self):
-        # create_db(TestAUSTransaction)
         self.metadata = MetaData(TestAUSTransaction.engine)
         self.table = Table(
             'test', self.metadata, Column(
