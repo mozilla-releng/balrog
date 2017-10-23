@@ -21,7 +21,7 @@ angular.module("app").factory('History', function($http, $q, ScheduledChanges, H
       getPermissionRsHistory: function() {
         return $http.get('/api/history/permissions_required_signoffs');
       },
-      getrprHistory: function(checkboxValues, changed_by) {
+      getrrpHistory: function(checkboxValues, changed_by) {
         console.log(checkboxValues,"checkboxValues");
         var url = '/api/rrp/histories';
         url += '?rules=' +checkboxValues.rules + '&releases=' +checkboxValues.releases + '&permissions=' +checkboxValues.permissions;

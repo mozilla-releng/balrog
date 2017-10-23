@@ -7,10 +7,10 @@
   <div class="col-md-4 gutter-top">
     <div class="filter-group">
       <ul class="nav nav-pills nav-stacked">
-        <li ng-class="{ active: isSet(1) }" ng-model="rprfilter">
-          <a href ng-click="setTab(1)">RPR</a>
+        <li ng-class="{ active: isSet(1) }" ng-model="rrpfilter">
+          <a href ng-click="setTab(1)">RRP</a>
         </li>
-        <li ng-class="{ active: isSet(2) }" ng-model="rprfilter">
+        <li ng-class="{ active: isSet(2) }" ng-model="rrpfilter">
           <a href ng-click="setTab(2)">Scheduled Changes</a>
         </li>
         <li ng-class="{ active: isSet(3) }">
@@ -24,7 +24,7 @@
       </div>
       <div>
         <div>
-          <fieldset class="filter-group" ng-show="rprfilter">
+          <fieldset class="filter-group" ng-show="rrpfilter">
             <h5 class="h-underlined">Change Type
               <span style="color:red">*</span>
             </h5>
@@ -129,13 +129,22 @@
 
   <div class="col-md-8">
     <div class="content-wrapper" ng-show="isSet(1)">
-      <h4>History</h4>
+      <h4>History
+      <span class="count">
+        ({{ tableResult ? rrp_count : 0 }}) items found
+      </span></h4>
       <div class="table-responsive">
-        <div class="pagination-container" ng-show="rules_history_count > pageSize">
-          <pagination class="pagination-sm" total-items="rules_history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
+        <div class="row pagination-container" ng-show="rrp_count > pageSize">
+          <pagination 
+            class="pagination-sm"
+            total-items="rrp_count"
+            ng-model="currentPage"
+            items-per-page="pageSize"
+            max-size="maxSize"
             boundary-links="true">
           </pagination>
         </div>
+      
         <table class="table table-bordered table-hover table-striped">
           <thead>
             <tr>
@@ -148,7 +157,7 @@
             </tr>
           </thead>
           <tbody ng-show="tableResult">
-            <tr ng-repeat="item in search">
+            <tr ng-repeat="item in search = rrp_revisions | startFrom: ((currentPage - 1)*pageSize) | limitTo:pageSize">
               <td>{{ $index+1 }}</td>
               <td>{{ item.product + ',' + item.channel }}</td>
               <td>{{ item.changeType}}</td>
