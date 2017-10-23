@@ -9,8 +9,9 @@ from auslib.web.common.releases import get_releases, process_release_revisions
 from auslib.web.admin.views.permissions import UsersView, PermissionScheduledChangeHistoryView
 from auslib.web.admin.views.rules import RuleScheduledChangeHistoryView
 from auslib.web.admin.views.releases import ReleaseScheduledChangeHistoryView
-from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsHistoryAPIView
-from auslib.web.admin.views.required_signoffs import PermissionsRequiredSignoffsHistoryAPIView
+from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsHistoryAPIView, \
+    PermissionsRequiredSignoffsHistoryAPIView, ProductRequiredSignoffScheduledChangeHistoryView, \
+    PermissionsRequiredSignoffScheduledChangeHistoryView
 
 
 log = logging.getLogger(__name__)
@@ -45,42 +46,50 @@ def _get_histories(table, obj, process_revisions_callback=None):
                        ext={"exception": str(msg)})
 
 
-def get_rules_histories():
+def get_rules_history():
     history_table = dbo.rules.history
     return _get_histories(history_table, get_rules)
 
 
-def get_releases_histories():
+def get_releases_history():
     history_table = dbo.releases.history
     return _get_histories(history_table, get_releases, process_release_revisions)
 
 
-def get_permissions_histories():
+def get_permissions_history():
     history_table = dbo.permissions.history
     get_permissions = UsersView().get()
     return _get_histories(history_table, get_permissions)
 
 
-def get_permissions_scheduled_change_histories():
+def get_permissions_scheduled_change_history():
     """GET /history/scheduled_changes/permissions"""
     return PermissionScheduledChangeHistoryView().get_all()
 
 
-def get_rules_scheduled_change_histories():
+def get_rules_scheduled_change_history():
     """GET /history/scheduled_changes/permissions"""
     return RuleScheduledChangeHistoryView().get_all()
 
 
-def get_releases_scheduled_change_histories():
+def get_releases_scheduled_change_history():
     """GET /history/scheduled_changes/permissions"""
     return ReleaseScheduledChangeHistoryView().get_all()
 
 
-def get_product_required_signoffs_histories():
+def get_product_required_signoff_scheduled_change_history():
+    return ProductRequiredSignoffScheduledChangeHistoryView().get_all()
+
+
+def get_permission_required_signoff_scheduled_change_history():
+    return PermissionsRequiredSignoffScheduledChangeHistoryView().get_all()
+
+
+def get_product_required_signoffs_history():
     return ProductRequiredSignoffsHistoryAPIView().get_all()
 
 
-def get_permissions_required_signoffs_histories():
+def get_permissions_required_signoffs_history():
     return PermissionsRequiredSignoffsHistoryAPIView().get_all()
 
 
@@ -88,7 +97,14 @@ def _get_input_dict():
     table_constants = [
         'rules',
         'releases',
-        'permissions'
+        'permissions',
+        'permissions_required_signoffs',
+        'product_required_signoffs',
+        'releases_scheduled_change',
+        'rules_scheduled_change',
+        'permissions_scheduled_change',
+        'permissions_required_signoff_scheduled_change',
+        'product_required_signoff_scheduled_change'
         ]
     args = request.args
     query_keys = []
@@ -104,14 +120,16 @@ def _get_input_dict():
 
 def method_constants():
     return {
-        'rules': get_rules_histories(),
-        'releases': get_releases_histories(),
-        'permissions': get_permissions_histories(),
-        'permissions_required_signoffs_histories': get_permissions_required_signoffs_histories(),
-        'product_required_signoffs': get_product_required_signoffs_histories(),
-        'releases_scheduled_change': get_releases_scheduled_change_histories(),
-        'rules_scheduled_change': get_rules_scheduled_change_histories(),
-        'permissions_scheduled_change': get_permissions_scheduled_change_histories(),
+        'rules': get_rules_history(),
+        'releases': get_releases_history(),
+        'permissions': get_permissions_history(),
+        'permissions_required_signoffs': get_permissions_required_signoffs_history(),
+        'product_required_signoffs': get_product_required_signoffs_history(),
+        'releases_scheduled_change': get_releases_scheduled_change_history(),
+        'rules_scheduled_change': get_rules_scheduled_change_history(),
+        'permissions_scheduled_change': get_permissions_scheduled_change_history(),
+        'permissions_required_signoff_scheduled_change': get_permission_required_signoff_scheduled_change_history(),
+        'product_required_signoff_scheduled_change': get_product_required_signoff_scheduled_change_history(),
     }
 
 
@@ -119,7 +137,6 @@ def get_rrp_history():
     rrp_constants = ['rules', 'releases', 'permissions']
     methods = method_constants()
     histories = {}
-    print('request', request.args)
     for constant in rrp_constants:
         if (request.args.get(constant)) == '1':
             history = methods.get(constant)
@@ -128,10 +145,15 @@ def get_rrp_history():
 
 
 def get_sc_history():
-    sc_constants = ['rules_scheduled_change', 'releases_scheduled_change', 'permissions_scheduled_change']
+    sc_constants = [
+        'rules_scheduled_change',
+        'releases_scheduled_change',
+        'permissions_scheduled_change',
+        'permissions_required_signoff_scheduled_change',
+        'product_required_signoff_scheduled_change',
+        ]
     methods = method_constants()
     histories = {}
-    print('request', request.args)
     for constant in sc_constants:
         if (request.args.get(constant)) == '1':
             history = methods.get(constant)
@@ -140,7 +162,10 @@ def get_sc_history():
 
 
 def get_required_signoff_history():
-    rrp_constants = ['rules', 'releases', 'permissions']
+    rrp_constants = [
+        'permissions_required_signoffs',
+        'product_required_signoffs',
+        ]
     methods = method_constants()
     histories = {}
     print('request', request.args)
