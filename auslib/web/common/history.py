@@ -20,7 +20,7 @@ class HistoryHelper():
         self.fn_process_revisions = process_revisions_callback
         self.fn_get_object = get_object_callback
         self.obj_not_found_msg = obj_not_found_msg
-    
+
     def get_history(self, response_key='revisions'):
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
@@ -98,13 +98,13 @@ def get_input_dict():
         'permissions_scheduled_change',
         'permissions_required_signoff_scheduled_change',
         'product_required_signoff_scheduled_change'
-        ]
+    ]
     reserved_filter_params = ['limit', 'page', 'timestamp_from', 'timestamp_to']
     args = request.args
     query_keys = []
     query = {}
     for key in args:
-        if not key in table_constants and not key in reserved_filter_params:
+        if key not in table_constants and key not in reserved_filter_params:
             query_keys.append(key)
 
     for key in query_keys:

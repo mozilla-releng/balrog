@@ -3,7 +3,6 @@ import logging
 from auslib.global_state import dbo
 from connexion import problem, request
 from sqlalchemy.sql.expression import null
-from flask import jsonify
 from auslib.web.common.history import HistoryHelper, get_input_dict
 from auslib.web.common.rules import get_rules
 from auslib.web.common.releases import get_releases, process_release_revisions
@@ -99,7 +98,6 @@ def get_permissions_required_signoffs_history():
     return PermissionsRequiredSignoffsHistoryAPIView().get_all()
 
 
-
 def history_methods():
     return {
         'rules': get_rules_history(),
@@ -133,7 +131,7 @@ def get_sc_history():
         'permissions_scheduled_change',
         'permissions_required_signoff_scheduled_change',
         'product_required_signoff_scheduled_change',
-        ]
+    ]
     methods = history_methods()
     histories = {}
     for constant in sc_constants:
@@ -147,7 +145,7 @@ def get_required_signoff_history():
     rrp_constants = [
         'permissions_required_signoffs',
         'product_required_signoffs',
-        ]
+    ]
     methods = history_methods()
     histories = {}
     print('request', request.args)

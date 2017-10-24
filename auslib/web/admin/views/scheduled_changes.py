@@ -10,6 +10,7 @@ from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
 from auslib.web.common.history import get_input_dict
 
+
 class ScheduledChangesView(AdminView):
     """/scheduled_changes/:namespace"""
 
@@ -216,7 +217,7 @@ class ScheduledChangeHistoryView(HistoryView):
             return where
         except AttributeError:
             return where
-    
+
     def _get_what(self, change, changed_by, transaction):
         # There's a big 'ol assumption here that the primary Scheduled Changes
         # table and the conditions table always keep their data version in sync.
