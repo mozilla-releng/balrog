@@ -615,6 +615,9 @@ class TestAUSTableRequiresRealFile(
         ret = self.test.t.select(self.test.id == 1).execute().fetchone()
         self.assertEquals(ret, (1, 222, 2))
 
+        def tearDown(self):
+            self.table.delete().execute()
+
 # TODO: Find some way of testing this with SQLite, or testing it with some other backend.
 # Because it's impossible to have multiple simultaneous transaction with sqlite, you
 # can't test the behaviour of concurrent transactions with it.
@@ -849,6 +852,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
                           data_version=1, column_values={'foo': 4})
 
 
+@pytest.mark.usefixtures('test_austable')
 class TestMultiplePrimaryHistoryTable(
         unittest.TestCase,
         TestMultiplePrimaryTableMixin,
@@ -857,6 +861,10 @@ class TestMultiplePrimaryHistoryTable(
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         TestMultiplePrimaryTableMixin.setUp(self)
+
+    def tearDown(self):
+        self.test.t.delete().execute()
+        self.test.history.t.delete().execute()
 
     def testHasHistoryTable(self):
         self.assertTrue(self.test.history)
