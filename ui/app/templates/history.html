@@ -33,12 +33,22 @@
               <span>{{item.value}}</span>
             </div>
           </fieldset>
+
+          <fieldset class="filter-group" ng-show="sc_filter">
+            <h5 class="h-underlined">Change Type product
+              <span style="color:red">*</span>
+            </h5>
+            <div class="col-sm-6" ng-repeat="item in sc_checkBoxes">
+              <input type="checkbox" ng-model="item.selected">
+              <span>{{item.value}}</span>
+            </div>
+        </fieldset>
           
-          <fieldset class="filter-group" ng-show="so_filter">
+          <fieldset class="filter-group" ng-show="signoff_filter">
               <h5 class="h-underlined">Change Type product
                 <span style="color:red">*</span>
               </h5>
-              <div class="col-sm-6" ng-repeat="item in so_checkBoxes">
+              <div class="col-sm-6" ng-repeat="item in signoff_checkBoxes">
                 <input type="checkbox" ng-model="item.selected">
                 <span>{{item.value}}</span>
               </div>

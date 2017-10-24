@@ -31,12 +31,16 @@ angular
     // Setting tabs
     $scope.setTab = function(newTab) {
       $scope.tab = newTab;
-      if ($scope.tab === 1 || $scope.tab === 2) {
+      if ($scope.tab === 1) {
         $scope.rrpfilter = true;
         $scope.so_filter = false;
-      } else if ($scope.tab === 3){
+      } else if ($scope.tab === 2){
         $scope.rrpfilter = false;
-        $scope.so_filter = true;
+        $scope.sc_filter = true;
+      } else {
+        $scope.rrpfilter = false;
+        $scope.sc_filter = true;
+        $scope.signoff_filter = true;
       }
     };
 
@@ -66,7 +70,41 @@ angular
       }
     ];
 
-    $scope.so_checkBoxes = [
+    $scope.sc_checkBoxes = [
+      {
+        id: 1,
+        name: "rules",
+        value: "Rules",
+        selected: false
+      },
+      {
+        id: 2,
+        name: "releases",
+        value: "Releases",
+        selected: false
+      },
+      {
+        id: 3,
+        name: "permissions",
+        value: "Permissions",
+        selected: false
+      },
+      {
+        id: 4,
+        name: "product_signoffs",
+        value: "Product Signoffs",
+        selected: false
+      },
+      {
+        id: 5,
+        name: "permissions_signoffs",
+        value: "Permissions Signoffs",
+        selected: false
+      }
+    ];
+
+
+    $scope.signoff_checkBoxes = [
       {
         id: 1,
         name: "product_signoffs",
