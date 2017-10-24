@@ -141,7 +141,7 @@
     <div class="content-wrapper" ng-show="isSet(1)">
       <h4>History
       <span class="count">
-        ({{ tableResult ? rrp_count : 0 }}) items found
+        ({{ tableResult1 ? history_count : 0 }}) items found
       </span></h4>
       <div class="table-responsive">
         <div class="row pagination-container" ng-show="history_count > pageSize">
@@ -166,7 +166,7 @@
               <th>History ID</th>
             </tr>
           </thead>
-          <tbody ng-show="tableResult">
+          <tbody ng-show="tableResult1">
             <tr ng-repeat="item in search = history_revisions | startFrom: ((currentPage - 1)*pageSize) | limitTo:pageSize">
               <td>{{ $index+1 }}</td>
               <td>{{ item.product + ',' + item.channel }}
@@ -184,45 +184,22 @@
       </div>
     </div>
     <div class="content-wrapper" ng-show="isSet(2)">
-      <h4>History</h4>
+      <h4>History
+      <span class="count">
+        ({{ tableResult2 ? history_count : 0 }}) items found
+      </span></h4>
       <div class="table-responsive">
-        <div class="pagination-container" ng-show="rules_history_count > pageSize">
-          <pagination class="pagination-sm" total-items="rules_history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
+        <div class="row pagination-container" ng-show="history_count > pageSize">
+          <pagination 
+            class="pagination-sm"
+            total-items="history_count"
+            ng-model="currentPage"
+            items-per-page="pageSize"
+            max-size="maxSize"
             boundary-links="true">
           </pagination>
         </div>
-        <table class="table table-bordered table-hover table-striped">
-          <thead>
-            <tr>
-              <th>S/No</th>
-              <th>Object</th>
-              <th>Change Type</th>
-              <th>Changed By</th>
-              <th>Date</th>
-              <th>Scheduled Change ID</th>
-            </tr>
-          </thead>
-          <tbody ng-show="tableResult">
-            <tr ng-repeat="item in search">
-              <td>{{$index+1}}</td>
-              <td>{{ item.product + ',' + item.channel }}</td>
-              <td></td>
-              <td>{{item.changed_by}}</td>
-              <td>{{item.timestamp | date:'dd/MM/yyyy hh:mm a'}}</td>
-              <td>{{item.change_id}}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="content-wrapper" ng-show="isSet(3)">
-      <h4>History</h4>
-      <div class="table-responsive">
-        <div class="pagination-container" ng-show="rules_history_count > pageSize">
-          <pagination class="pagination-sm" total-items="rules_history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
-            boundary-links="true">
-          </pagination>
-        </div>
+      
         <table class="table table-bordered table-hover table-striped">
           <thead>
             <tr>
@@ -234,14 +211,63 @@
               <th>History ID</th>
             </tr>
           </thead>
-          <tbody ng-show="tableResult">
-            <tr ng-repeat="item in search">
-              <td>{{$index+1}}</td>
-              <td>{{ item.product + ',' + item.channel }}</td>
-              <td></td>
-              <td>{{item.changed_by}}</td>
-              <td>{{item.timestamp | date:'dd/MM/yyyy hh:mm a'}}</td>
-              <td>{{item.change_id}}</td>
+          <tbody ng-show="tableResult2">
+            <tr ng-repeat="item in search = history_revisions | startFrom: ((currentPage - 1)*pageSize) | limitTo:pageSize">
+              <td>{{ $index+1 }}</td>
+              <td>{{ item.product + ',' + item.channel }}
+                <a class="btn btn-default btn-xs" href="" ng-click="openDataModal(item.change_id)">
+                  <i class="glyphicon glyphicon-eye-open"></i>
+              </a>
+              </td>
+              <td>{{ item.changeType}}</td>
+              <td>{{ item.changed_by }}</td>
+              <td>{{ item.timestamp | date:'dd/MM/yyyy hh:mm a' }}</td>
+              <td>{{ item.change_id }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="content-wrapper" ng-show="isSet(3)">
+      <h4>History
+      <span class="count">
+        ({{ tableResult3 ? history_count : 0 }}) items found
+      </span></h4>
+      <div class="table-responsive">
+        <div class="row pagination-container" ng-show="history_count > pageSize">
+          <pagination 
+            class="pagination-sm"
+            total-items="history_count"
+            ng-model="currentPage"
+            items-per-page="pageSize"
+            max-size="maxSize"
+            boundary-links="true">
+          </pagination>
+        </div>
+      
+        <table class="table table-bordered table-hover table-striped">
+          <thead>
+            <tr>
+              <th>S/No</th>
+              <th>Object</th>
+              <th>Change Type</th>
+              <th>Changed By</th>
+              <th>Date</th>
+              <th>History ID</th>
+            </tr>
+          </thead>
+          <tbody ng-show="tableResult3">
+            <tr ng-repeat="item in search = history_revisions | startFrom: ((currentPage - 1)*pageSize) | limitTo:pageSize">
+              <td>{{ $index+1 }}</td>
+              <td>{{ item.product + ',' + item.channel }}
+                <a class="btn btn-default btn-xs" href="" ng-click="openDataModal(item.change_id)">
+                  <i class="glyphicon glyphicon-eye-open"></i>
+              </a>
+              </td>
+              <td>{{ item.changeType}}</td>
+              <td>{{ item.changed_by }}</td>
+              <td>{{ item.timestamp | date:'dd/MM/yyyy hh:mm a' }}</td>
+              <td>{{ item.change_id }}</td>
             </tr>
           </tbody>
         </table>

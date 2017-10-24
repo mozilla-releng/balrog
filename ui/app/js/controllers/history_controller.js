@@ -15,7 +15,9 @@ angular
     $scope.isShowPrCh = true;
     $scope.allHistory = [];
     $scope.pr_ch_options = [];
-    $scope.tableResult = false;
+    $scope.tableResult1 = false;
+    $scope.tableResult2 = false;
+    $scope.tableResult3 = false;
     $scope.calendar_is_open = false;
     $scope.loading = false;
     $scope.failed = false;
@@ -309,24 +311,6 @@ angular
     };
     //End add and remove filter fields
     
-    
-    // function signoffsHistory() {
-    //   $scope.optionChecked($scope.so_checkBoxes);
-    //   if ($scope.rrpConstants.length > 0 && $scope.rrpConstants[0] !== null) {
-    //     if ($scope.isShowUsername || $scope.isShowDaterange || $scope.isShowPrCh) {
-    //       console.log("in signoffs");
-    //      } else {
-    //       sweetAlert(
-    //         "Form submission error",
-    //         "There are no search filter fields",
-    //         "error"
-    //       );
-    //     }
-    //   }
-    // }
-
-    
-
 
     function checkParameters() {
       switch($scope.tab){
@@ -345,11 +329,30 @@ angular
       }
     }
 
+    function isInArray(id, result) {
+      for (var i = 0; i < result.length; i++) {
+        if (result[i] === id) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     //Request response
     var result = [];
     function processResponse(response) {
-      console.log(response,"response");
-      $scope.tableResult = true;
+      switch($scope.tab){
+        case 1:
+          $scope.tableResult1 = true;
+          break;
+        case 2:
+          $scope.tableResult2 = true;
+          break;
+        case 3:
+          $scope.tableResult3 = true;
+          break;
+
+     }
       angular.forEach(response, function(value, key){
         $scope.changeType = key;
         $scope.history_count = value.count;
@@ -359,7 +362,6 @@ angular
             result.push(revision);
             $scope.search = result;
           });
-          console.log($scope.search,"result");
         }
         else{
           sweetAlert(
@@ -420,15 +422,6 @@ angular
           break;
       }
     };
-
-    function isInArray(id, result) {
-      for (var i = 0; i < result.length; i++) {
-        if (result[i] === id) {
-          return true;
-        }
-      }
-      return false;
-    }
 
     $scope.openDataModal = function(change_id) {
       angular.forEach($scope.search, function(revision){
