@@ -5,12 +5,12 @@ angular
     Page.setTitle("History");
 
     $scope.userInput = {
-      username_email: [],
+      changedBy: [],
       dateRangeStart: "",
       dateRangeEnd: "",
       hs_pr_ch_filter: "All Rules"
     };
-    $scope.isShowUsername = true;
+    $scope.isShowChangedBy = true;
     $scope.isShowDaterange = true;
     $scope.isShowPrCh = true;
     $scope.allHistory = [];
@@ -20,7 +20,7 @@ angular
     $scope.loading = false;
     $scope.failed = false;
     $scope.tab = 1;
-    $scope.rrpfilter = true;
+    $scope.rrp_filter = true;
     $scope.search = [];
     
 
@@ -32,15 +32,17 @@ angular
     $scope.setTab = function(newTab) {
       $scope.tab = newTab;
       if ($scope.tab === 1) {
-        $scope.rrpfilter = true;
-        $scope.so_filter = false;
+        $scope.rrp_filter = true;
+        $scope.sc_filter = false;
+        $scope.signoff_filter = false;
       } else if ($scope.tab === 2){
-        $scope.rrpfilter = false;
         $scope.sc_filter = true;
+        $scope.signoff = false;
+        $scope.rrp_filter = false;
       } else {
-        $scope.rrpfilter = false;
-        $scope.sc_filter = true;
         $scope.signoff_filter = true;
+        $scope.rrp_filter = false;
+        $scope.sc_filter = false;
       }
     };
 
@@ -73,31 +75,31 @@ angular
     $scope.sc_checkBoxes = [
       {
         id: 1,
-        name: "rules",
+        name: "rules_scheduled_change",
         value: "Rules",
         selected: false
       },
       {
         id: 2,
-        name: "releases",
+        name: "releases_scheduled_change",
         value: "Releases",
         selected: false
       },
       {
         id: 3,
-        name: "permissions",
+        name: "permissions_scheduled_change",
         value: "Permissions",
         selected: false
       },
       {
         id: 4,
-        name: "product_signoffs",
+        name: "product_required_signoff_scheduled_change",
         value: "Product Signoffs",
         selected: false
       },
       {
         id: 5,
-        name: "permissions_signoffs",
+        name: "permissions_required_signoff_scheduled_change",
         value: "Permissions Signoffs",
         selected: false
       }
@@ -107,48 +109,86 @@ angular
     $scope.signoff_checkBoxes = [
       {
         id: 1,
-        name: "product_signoffs",
+        name: "product_required_signoffs",
         value: "Product Signoffs",
         selected: false
       },
       {
         id: 2,
-        name: "permissions_signoffs",
+        name: "permissions_required_signoffs",
         value: "Permissions Signoffs",
         selected: false
       }
     ];
 
-    function optionChecked (choice) {
-      $scope.checkedBoxesArr = {rules: 0, releases:0, permissions:0 };
-      angular.forEach(choice, function(value, key) {
-        if (choice[key].selected) {
-          $scope.checkedBoxesArr[choice[key].name] = 1;   
-          $scope.msg = "Filtering will be done in: " +$scope.checkedBoxesArr[choice[key].name];  
-        }
-        else{
-          $scope.checkedBoxesArr[choice[key].name] = 0;
-          // sweetAlert("Form submission error", "Please check a box", "error");
-        }   
-      });
-      return $scope.checkedBoxesArr;
+    function optionChecked(choice) {
+      switch($scope.tab){
+        case 1:
+          var rrp_constants = {rules: 0, releases:0, permissions:0 };
+          angular.forEach(choice, function(value, key) {
+            (choice[key].selected) ?
+            rrp_constants[choice[key].name] = 1 :
+            rrp_constants[choice[key].name] = 0
+          });
+          return rrp_constants;
+          break;
+        case 2:
+          var sc_constants = {
+            rules_scheduled_change: 0,
+            releases_scheduled_change:0,
+            permissions_scheduled_change:0,
+            permissions_required_signoff_scheduled_change:0,
+            product_required_signoff_scheduled_change:0
+          };
+          angular.forEach(choice, function(value, key) {
+            (choice[key].selected) ?
+            sc_constants[choice[key].name] = 1 :
+            sc_constants[choice[key].name] = 0
+          });
+          return sc_constants;
+          break;
+        case 3:
+          var signoff_constants = {
+            permissions_required_signoffs: 0,
+            product_required_signoffs:0
+          };
+          angular.forEach(choice, function(value, key) {
+            (choice[key].selected) ?
+            signoff_constants[choice[key].name] = 1 :
+            signoff_constants[choice[key].name] = 0 
+          });
+          return signoff_constants;
+          break;
+      }
     }
+      
 
-    //Add username or email tag into the username/email input field 
-    $scope.addUsernameEmail = function() {
-      $scope.userInput.username_email.push({ name: $scope.usernameEmailText });
-      $scope.usernameEmailText = "";
+    //Add and remove username or email tags
+    $scope.addChangedBy = function() {
+      $scope.userInput.changedBy.push({ name: $scope.changedBy });
+      $scope.changedBy = "";
     };
 
-    //Delete username or email tag from the username/email input field 
-    $scope.deleteUsernameEmail = function(key) {
-      if ($scope.userInput.username_email.length > 0 && $scope.usernameEmailText.length === 0 &&
+    $scope.deleteChangedBy= function(key) {
+      if ($scope.userInput.changedBy.length > 0 && $scope.changedBy.length === 0 &&
         key === undefined) {
-        $scope.userInput.username_email.pop();
+        $scope.userInput.changedBy.pop();
       } else if (key !== undefined) {
-        $scope.userInput.username_email.splice(key, 1);
+        $scope.userInput.changedBy.splice(key, 1);
       }
     };
+    // User/email tag ends
+
+    //Check for repeated names 
+    function checkChangedBy() {
+      var changedByArr = [];
+      $scope.userInput.changedBy.forEach(function(item) {
+        if (changedByArr.indexOf(item.name) === -1) {
+          changedByArr.push(item.name);
+        }
+      });
+      return changedByArr;
+    }
 
     //Date range functions- To disable dates before start date
     function startDateOnSetTime() {
@@ -241,8 +281,8 @@ angular
     $scope.getOption = function() {
       var selected = $scope.selected;
       switch (selected) {
-        case "username_email":
-          $scope.isShowUsername = true;
+        case "changedBy":
+          $scope.isShowChangedBy = true;
           break;
         case "daterange":
           $scope.isShowDaterange = true;
@@ -255,9 +295,9 @@ angular
       $scope.selected = "";
     };
 
-    $scope.hideUsername = function() {
-      $scope.isShowUsername = false;
-      $scope.userInput.username_email = "";
+    $scope.hideChangedBy = function() {
+      $scope.isShowChangedBy = false;
+      $scope.userInput.changedBy = "";
     };
     $scope.hideDaterange = function() {
       $scope.isShowDaterange = false;
@@ -270,53 +310,56 @@ angular
     //End add and remove filter fields
     
     
-    function signoffsHistory() {
-      $scope.optionChecked($scope.so_checkBoxes);
-      if ($scope.checkedBoxesArr.length > 0 && $scope.checkedBoxesArr[0] !== null) {
-        if ($scope.isShowUsername || $scope.isShowDaterange || $scope.isShowPrCh) {
-          console.log("in signoffs");
-         } else {
-          sweetAlert(
-            "Form submission error",
-            "There are no search filter fields",
-            "error"
-          );
-        }
-      }
-    }
+    // function signoffsHistory() {
+    //   $scope.optionChecked($scope.so_checkBoxes);
+    //   if ($scope.rrpConstants.length > 0 && $scope.rrpConstants[0] !== null) {
+    //     if ($scope.isShowUsername || $scope.isShowDaterange || $scope.isShowPrCh) {
+    //       console.log("in signoffs");
+    //      } else {
+    //       sweetAlert(
+    //         "Form submission error",
+    //         "There are no search filter fields",
+    //         "error"
+    //       );
+    //     }
+    //   }
+    // }
 
-    function checkUsernameEmail() {
-      var changedByArr = [];
-      $scope.userInput.username_email.forEach(function(changedBy) {
-        if (changedByArr.indexOf(changedBy.name) === -1) {
-          changedByArr.push(changedBy.name);
-        }
-      });
-      return changedByArr;
-    }
+    
 
 
     function checkParameters() {
-      $scope.checkboxValues = optionChecked($scope.checkBoxes);
-      if ($scope.userInput.username_email !== "") {
-        $scope.usernameValue = checkUsernameEmail();
+      switch($scope.tab){
+        case 1:
+          $scope.checkboxValues = optionChecked($scope.checkBoxes);
+          break;
+        case 2:
+          $scope.checkboxValues = optionChecked($scope.sc_checkBoxes);
+          break;
+        case 3:
+          $scope.checkboxValues = optionChecked($scope.signoff_checkBoxes);
+          break;
+      }
+      if ($scope.userInput.changedBy !== "") {
+        $scope.changedByValue = checkChangedBy();
       }
     }
 
-
+    //Request response
     var result = [];
     function processResponse(response) {
+      console.log(response,"response");
       $scope.tableResult = true;
       angular.forEach(response, function(value, key){
-        // console.log(response,"response");
         $scope.changeType = key;
-        $scope.rrp_count = value.count;
-        $scope.rrp_revisions = value.revisions;
-        if($scope.rrp_count !== 0){
-          $scope.rrp_revisions.forEach(function(revision){
+        $scope.history_count = value.count;
+        $scope.history_revisions = value.revisions;
+        if($scope.history_count !== 0){
+          $scope.history_revisions.forEach(function(revision){
             result.push(revision);
             $scope.search = result;
           });
+          console.log($scope.search,"result");
         }
         else{
           sweetAlert(
@@ -327,12 +370,13 @@ angular
         }
       }); 
     }
+    //Request response ends
 
     
     
     function rrpHistory () {    
       checkParameters();
-      History.getrrpHistory($scope.checkboxValues, $scope.usernameValue)
+      History.getrrpHistory($scope.checkboxValues, $scope.changedByValue)
       .success(function(response) {
         processResponse(response);  
       })
@@ -343,7 +387,7 @@ angular
 
     function scHistory() {
       checkParameters();
-      History.getscHistory($scope.checkboxValues, $scope.usernameValue)
+      History.getscHistory($scope.checkboxValues, $scope.changedByValue)
       .success(function(response) {
         processResponse(response);  
       })
@@ -354,7 +398,7 @@ angular
 
     function signoffHistory() {
       checkParameters();
-      History.getscHistory($scope.checkboxValues, $scope.usernameValue)
+      History.getsignoffHistory($scope.checkboxValues, $scope.changedByValue)
       .success(function(response) {
         processResponse(response);  
       })

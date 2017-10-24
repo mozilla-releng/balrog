@@ -7,10 +7,10 @@
   <div class="col-md-4 gutter-top">
     <div class="filter-group">
       <ul class="nav nav-pills nav-stacked">
-        <li ng-class="{ active: isSet(1) }" ng-model="rrpfilter">
+        <li ng-class="{ active: isSet(1) }" ng-model="rrp_filter">
           <a href ng-click="setTab(1)">RRP</a>
         </li>
-        <li ng-class="{ active: isSet(2) }" ng-model="rrpfilter">
+        <li ng-class="{ active: isSet(2) }" ng-model="rrp_filter">
           <a href ng-click="setTab(2)">Scheduled Changes</a>
         </li>
         <li ng-class="{ active: isSet(3) }">
@@ -24,7 +24,7 @@
       </div>
       <div>
         <div>
-          <fieldset class="filter-group" ng-show="rrpfilter">
+          <fieldset class="filter-group" ng-show="rrp_filter">
             <h5 class="h-underlined">Change Type
               <span style="color:red">*</span>
             </h5>
@@ -56,21 +56,21 @@
           
           <span style="color:green">{{msg}}</span>
 
-          <div ng-show="isShowUsername" class="filter-group">
+          <div ng-show="isShowChangedBy" class="filter-group">
               <div>
-                <h5 class="h-underlined">Username / Email
+                <h5 class="h-underlined">Changed By
                   <span tooltip="Remove filter option" tooltip-placement="right">
-                    <button class="remove" ng-click="hideUsername()">&times;</button>
+                    <button class="remove" ng-click="hideChangedBy()">&times;</button>
                   </span>
                 </h5>
               </div>
             <div class="user-input-ctn">
-              <div data-ng-repeat="(key, user) in userInput.username_email" class="input-user">
+              <div data-ng-repeat="(key, user) in userInput.changedBy" class="input-user">
                   {{ user.name }}
-                  <div class="delete-user" data-ng-click="deleteUsernameEmail(key)">&times;</div>
+                  <div class="delete-user" data-ng-click="deleteChangedBy(key)">&times;</div>
               </div>
-              <input type="text" data-tag-input="" data-ng-model="usernameEmailText" placeholder='add username/email' data-new-tag="addUsernameEmail()"
-                    data-delete-tag="deleteUsernameEmail()"/>
+              <input type="text" data-tag-input="" data-ng-model="changedBy" placeholder='Add name' data-new-tag="addChangedBy()"
+                    data-delete-tag="deleteChangedBy()"/>
             </div>       
           </div>
 
@@ -128,7 +128,7 @@
         <h5 class="h-underlined">Add filter</h5>
         <select ng-model="selected" ng-change="getOption()">
             <option value=""> </option>
-            <option ng-hide="isShowUsername" value="username_email">Username / Email</option>
+            <option ng-hide="isShowChangedBy" value="changedBy">Changed By</option>
             <option ng-hide="isShowDaterange" value="daterange">Date Range</option>
             <option ng-hide="isShowPrCh" value="product_channel">Product / Channel</option>
           </select>
@@ -144,10 +144,10 @@
         ({{ tableResult ? rrp_count : 0 }}) items found
       </span></h4>
       <div class="table-responsive">
-        <div class="row pagination-container" ng-show="rrp_count > pageSize">
+        <div class="row pagination-container" ng-show="history_count > pageSize">
           <pagination 
             class="pagination-sm"
-            total-items="rrp_count"
+            total-items="history_count"
             ng-model="currentPage"
             items-per-page="pageSize"
             max-size="maxSize"
@@ -167,7 +167,7 @@
             </tr>
           </thead>
           <tbody ng-show="tableResult">
-            <tr ng-repeat="item in search = rrp_revisions | startFrom: ((currentPage - 1)*pageSize) | limitTo:pageSize">
+            <tr ng-repeat="item in search = history_revisions | startFrom: ((currentPage - 1)*pageSize) | limitTo:pageSize">
               <td>{{ $index+1 }}</td>
               <td>{{ item.product + ',' + item.channel }}
                 <a class="btn btn-default btn-xs" href="" ng-click="openDataModal(item.change_id)">
