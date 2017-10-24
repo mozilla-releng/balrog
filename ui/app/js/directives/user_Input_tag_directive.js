@@ -17,6 +17,9 @@ angular.module("app").directive("tagInput", function() {
         if (event.which === 8) {
           scope.$apply(attrs.deleteTag);
         }
+        if (event.which === 13){
+          event.preventDefault();
+        }
       });
 
       element.bind("keyup", function(event) {
