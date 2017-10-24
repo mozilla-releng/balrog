@@ -57,6 +57,11 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
             where = [getattr(self.table.history, f) == query.get(f) for f in query]
             where.append(self.table.history.data_version != null())
             where.append(self.history_table.product != null())
+            request = connexion.request
+            if request.args.get('timestamp_from'):
+                where.append(self.history_table.timestamp >= int(request.args.get('timestamp_from')))
+            if request.args.get('timestamp_to'):
+                where.append(self.history_table.timestamp <= int(request.args.get('timestamp_to')))
             return where
         except AttributeError:
             return where

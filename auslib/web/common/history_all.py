@@ -26,6 +26,10 @@ def _get_filters(obj, history_table):
         where = [getattr(history_table, f) == query.get(f) for f in query]
         where.append(history_table.product != null())
         where.append(history_table.data_version != null())
+        if request.args.get('timestamp_from'):
+            where.append(history_table.timestamp >= int(request.args.get('timestamp_from')))
+        if request.args.get('timestamp_to'):
+            where.append(history_table.timestamp <= int(request.args.get('timestamp_to')))
         return where
     except AttributeError:
         return where

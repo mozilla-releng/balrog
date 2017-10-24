@@ -99,11 +99,12 @@ def get_input_dict():
         'permissions_required_signoff_scheduled_change',
         'product_required_signoff_scheduled_change'
         ]
+    reserved_filter_params = ['limit', 'page', 'timestamp_from', 'timestamp_to']
     args = request.args
     query_keys = []
     query = {}
     for key in args:
-        if not key in table_constants and key != 'limit' and key != 'page':
+        if not key in table_constants and not key in reserved_filter_params:
             query_keys.append(key)
 
     for key in query_keys:

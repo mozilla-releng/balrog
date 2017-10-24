@@ -283,6 +283,22 @@ parameters:
     x-nullable: true
     required: false
 
+  timestampFromParam:
+    name: timestamp_from
+    in: query
+    description: timestamp from/above which to filter history.
+    type: integer
+    x-nullable: true
+    required: false
+
+  timestampToParam:
+    name: timestamp_to
+    in: query
+    description: timestamp to/below which history is filtered.
+    type: integer
+    x-nullable: true
+    required: false
+
 responses:
   updateExistingObject:
     description: "successfully updated the existing object and incremented its data_version"
@@ -403,6 +419,8 @@ paths:
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
         - $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
         - name: rules
           in: query
           description: Indicates whether rules history should be included
@@ -448,6 +466,8 @@ paths:
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
         - $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
         - name: permissions_scheduled_change
           in: query
           description: Indicates whether permissions_scheduled_change history should be included
@@ -505,6 +525,8 @@ paths:
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
         - $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
         - name: role
           in: query
           description: The role(s) required for product or permission signoff
