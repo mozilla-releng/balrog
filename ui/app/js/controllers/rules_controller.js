@@ -304,6 +304,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             change_type: 'insert',
           };
         },
+        original_row: function() {
+          return {};
+        },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
         },
