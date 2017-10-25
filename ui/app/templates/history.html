@@ -118,7 +118,7 @@
                   <button class="remove" ng-click="hidePrCh()">&times;</button>
                 </span>
               </h5>
-              <select ng-model="userInput.hs_pr_ch_filter" name="hs_pr_ch_filter" ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
+              <select ng-model="userInput.hs_pr_ch_filter" ng-change=productChannelValue(userInput.hs_pr_ch_filter) name="hs_pr_ch_filter" ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
               </select>
             </div>
           </div>
@@ -160,7 +160,6 @@
             <tr>
               <th>S/No</th>
               <th>Object</th>
-              <th>Change Type</th>
               <th>Changed By</th>
               <th>Date</th>
               <th>History ID</th>
@@ -174,7 +173,6 @@
                   <i class="glyphicon glyphicon-eye-open"></i>
               </a>
               </td>
-              <td>{{ item.changeType}}</td>
               <td>{{ item.changed_by }}</td>
               <td>{{ item.timestamp | date:'dd/MM/yyyy hh:mm a' }}</td>
               <td>{{ item.change_id }}</td>
@@ -205,7 +203,6 @@
             <tr>
               <th>S/No</th>
               <th>Object</th>
-              <th>Change Type</th>
               <th>Changed By</th>
               <th>Date</th>
               <th>History ID</th>
@@ -219,7 +216,6 @@
                   <i class="glyphicon glyphicon-eye-open"></i>
               </a>
               </td>
-              <td>{{ item.changeType}}</td>
               <td>{{ item.changed_by }}</td>
               <td>{{ item.timestamp | date:'dd/MM/yyyy hh:mm a' }}</td>
               <td>{{ item.change_id }}</td>
@@ -250,7 +246,6 @@
             <tr>
               <th>S/No</th>
               <th>Object</th>
-              <th>Change Type</th>
               <th>Changed By</th>
               <th>Date</th>
               <th>History ID</th>
@@ -264,7 +259,6 @@
                   <i class="glyphicon glyphicon-eye-open"></i>
               </a>
               </td>
-              <td>{{ item.changeType}}</td>
               <td>{{ item.changed_by }}</td>
               <td>{{ item.timestamp | date:'dd/MM/yyyy hh:mm a' }}</td>
               <td>{{ item.change_id }}</td>

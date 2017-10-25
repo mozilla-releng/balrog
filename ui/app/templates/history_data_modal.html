@@ -1,9 +1,23 @@
-<div class="modal-header">
-    <h3 class="modal-title" ng-show="hs.change_id">History Details for {{ hs.change_id }}</h3>
-</div>
-<div class="modal-body">
- 
-</div>
-<div class="modal-footer">
-  <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Close</button>
+<div>
+  <div class="modal-header">
+    <h3 class="modal-title">History Type: {{ hs_ct }}</h3>
+    <h4 class="modal-title">Product/Channel: {{hs.product}}/{{hs.channel}}</h4>
+  </div>
+  <div>
+    <div class="modal-body hs_modal_body">
+        <div><label>Rule Id:</label> {{hs.rule_id}}</div>
+        <div><label>Change Id:</label> {{hs.change_id}}</div>
+        <div><label>Changed By:</label> {{hs.changed_by}}</div>
+        <div><label>Product: </label> {{hs.product}}</div>
+        <div><label>Date Changed: </label> {{hs.timestamp}}</div>
+        <div><label>Update Type: </label> {{hs.update_type}}</div>
+        <div><label>Mapping: </label> {{hs.mapping}}</div>
+        <div><label>Data Version: </label> {{hs.data_version}}</div>
+        <div><label>Comment: </label> {{hs.comment}}</div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-default pull-right" ng-show="!saving" ng-click="cancel()">Close</button>
+  </div>
+
 </div>

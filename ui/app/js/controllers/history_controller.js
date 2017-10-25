@@ -1,6 +1,6 @@
 angular
   .module("app")
-  .controller("HistoryController", function($scope, $q, $modal, $filter, Releases, Rules, History, Page ){
+  .controller("HistoryController", function($scope, $modal, $filter, Releases, Rules, History, Page ){
     
     Page.setTitle("History");
 
@@ -8,7 +8,7 @@ angular
       changedBy: [],
       dateRangeStart: "",
       dateRangeEnd: "",
-      hs_pr_ch_filter: "All Rules"
+      hs_pr_ch_filter: ""
     };
     $scope.isShowChangedBy = true;
     $scope.isShowDaterange = true;
@@ -25,7 +25,6 @@ angular
     $scope.rrp_filter = true;
     $scope.search = [];
     
-
     $scope.currentPage = 1;
     $scope.pageSize = 20;
     $scope.maxSize = 10;
@@ -122,47 +121,6 @@ angular
         selected: false
       }
     ];
-
-    function optionChecked(choice) {
-      switch($scope.tab){
-        case 1:
-          var rrp_constants = {rules: 0, releases:0, permissions:0 };
-          angular.forEach(choice, function(value, key) {
-            (choice[key].selected) ?
-            rrp_constants[choice[key].name] = 1 :
-            rrp_constants[choice[key].name] = 0
-          });
-          return rrp_constants;
-          break;
-        case 2:
-          var sc_constants = {
-            rules_scheduled_change: 0,
-            releases_scheduled_change:0,
-            permissions_scheduled_change:0,
-            permissions_required_signoff_scheduled_change:0,
-            product_required_signoff_scheduled_change:0
-          };
-          angular.forEach(choice, function(value, key) {
-            (choice[key].selected) ?
-            sc_constants[choice[key].name] = 1 :
-            sc_constants[choice[key].name] = 0
-          });
-          return sc_constants;
-          break;
-        case 3:
-          var signoff_constants = {
-            permissions_required_signoffs: 0,
-            product_required_signoffs:0
-          };
-          angular.forEach(choice, function(value, key) {
-            (choice[key].selected) ?
-            signoff_constants[choice[key].name] = 1 :
-            signoff_constants[choice[key].name] = 0 
-          });
-          return signoff_constants;
-          break;
-      }
-    }
       
 
     //Add and remove username or email tags
@@ -180,17 +138,6 @@ angular
       }
     };
     // User/email tag ends
-
-    //Check for repeated names 
-    function checkChangedBy() {
-      var changedByArr = [];
-      $scope.userInput.changedBy.forEach(function(item) {
-        if (changedByArr.indexOf(item.name) === -1) {
-          changedByArr.push(item.name);
-        }
-      });
-      return changedByArr;
-    }
 
     //Date range functions- To disable dates before start date
     function startDateOnSetTime() {
@@ -226,8 +173,8 @@ angular
     $scope.endDateOnSetTime = endDateOnSetTime;
     $scope.startDateBeforeRender = startDateBeforeRender;
     $scope.startDateOnSetTime = startDateOnSetTime;
-    //-- Date range ends
-
+    //-- Date range ends 
+   
     //Product/ Channel  filter
     Rules.getRules().success(function(response) {
       $scope.rules = response.rules;
@@ -251,8 +198,8 @@ angular
             });
           })
           .finally(function() {
-            $scope.pr_ch_options.sort().unshift("All rules");
-            $scope.userInput.hs_pr_ch_filter = "All rules";
+            $scope.pr_ch_options.sort().unshift("");
+            $scope.userInput.hs_pr_ch_filter = "";
             if (
               $scope.pr_ch_options.includes(
                 localStorage.getItem("userInput.hs_pr_ch_filter")
@@ -265,18 +212,9 @@ angular
           });
       });
     });
-    $scope.pr_ch_selected = [];
-    $scope.$watch("userInput.hs_pr_ch_filter", function(value) {
-      if (value) {
-        localStorage.setItem("userInput.hs_pr_ch_filter", value);
-      }
-      $scope.pr_ch_selected = value.split(",");
-      if ($scope.pr_ch_selected[0].toLowerCase() === "all rules") {
-        return true;
-      } else {
-        $scope.searchHistory();
-      }
-    });
+    $scope.productChannelValue = function(pr_ch) {
+      return $scope.pr_ch_selected = pr_ch.split(",");
+    };
     //Product/channel filter ends
 
     //To add and remove filter fields
@@ -290,7 +228,7 @@ angular
           $scope.isShowDaterange = true;
           break;
         case "product_channel":
-          $scope.hs_pr_ch_filter = "All Rules";
+          $scope.hs_pr_ch_filter = "";
           $scope.isShowPrCh = true;
           break;
       }
@@ -313,74 +251,72 @@ angular
     
 
     function checkParameters() {
-      switch($scope.tab){
-        case 1:
-          $scope.checkboxValues = optionChecked($scope.checkBoxes);
-          break;
-        case 2:
-          $scope.checkboxValues = optionChecked($scope.sc_checkBoxes);
-          break;
-        case 3:
-          $scope.checkboxValues = optionChecked($scope.signoff_checkBoxes);
-          break;
-      }
       if ($scope.userInput.changedBy !== "") {
-        $scope.changedByValue = checkChangedBy();
+        var changedByArr = [];
+        $scope.userInput.changedBy.forEach(function(item) {
+          if (changedByArr.indexOf(item.name) === -1) {
+            changedByArr.push(item.name);
+          }
+          $scope.changedByValue = changedByArr;
+        });
       }
-    }
-
-    function isInArray(id, result) {
-      for (var i = 0; i < result.length; i++) {
-        if (result[i] === id) {
-          return true;
-        }
+      if ($scope.userInput.dateRangeStart ||$scope.userInput.dateRangeEnd) { 
+        $scope.hs_startDate = new Date($scope.userInput.dateRangeStart).getTime();
+        $scope.hs_endDate = new Date($scope.userInput.dateRangeEnd).getTime();
       }
-      return false;
+      if ($scope.userInput.hs_pr_ch_filter && $scope.pr_ch_selected !== undefined) {
+        $scope.product = $scope.pr_ch_selected[0];
+        $scope.channel = $scope.pr_ch_selected[1];   
+      } else {
+        return false;
+      }
     }
 
     //Request response
     var result = [];
     function processResponse(response) {
-      switch($scope.tab){
-        case 1:
-          $scope.tableResult1 = true;
-          break;
-        case 2:
-          $scope.tableResult2 = true;
-          break;
-        case 3:
-          $scope.tableResult3 = true;
-          break;
-
-     }
+      $scope.history_count = 0 ;
       angular.forEach(response, function(value, key){
         $scope.changeType = key;
-        $scope.history_count = value.count;
         $scope.history_revisions = value.revisions;
-        if($scope.history_count !== 0){
+        $scope.history_count += value.count;
+        if ($scope.history_count > 0){
           $scope.history_revisions.forEach(function(revision){
             result.push(revision);
-            $scope.search = result;
-          });
-        }
-        else{
-          sweetAlert(
-            "error",
-            "No results matching the filter",
-            "error"   
-          );
-        }
-      }); 
+              $scope.search = result;
+              return $scope.search;
+            });
+        }else {
+            sweetAlert(
+              "error",
+              "No results matching the filter",
+              "error"   
+            );
+          }
+      });    
+       
     }
     //Request response ends
 
-    
-    
     function rrpHistory () {    
       checkParameters();
-      History.getrrpHistory($scope.checkboxValues, $scope.changedByValue)
+      var filterParams = {
+        changedByValue: $scope.changedByValue,
+        startDate: $scope.hs_startDate,
+        endDate: $scope.hs_endDate,
+        product: $scope.product,
+        channel: $scope.channel
+      };
+      History.getrrpHistory($scope.checkboxValues, filterParams)
       .success(function(response) {
-        processResponse(response);  
+        if(Object.keys(response).length > 0){
+          $scope.tableResult1 = true;
+          processResponse(response); 
+        } else {
+          $scope.search = [];
+          $scope.tableResult1 = false;
+          return $scope.search;
+        }   
       })
       .error(function() {
         console.log("error");
@@ -389,9 +325,23 @@ angular
 
     function scHistory() {
       checkParameters();
-      History.getscHistory($scope.checkboxValues, $scope.changedByValue)
+      var filterParams = {
+        changedByValue: $scope.changedByValue,
+        startDate: $scope.hs_startDate,
+        endDate: $scope.hs_endDate,
+        product: $scope.product,
+        channel: $scope.channel
+      };
+      History.getscHistory($scope.checkboxValues, filterParams)
       .success(function(response) {
-        processResponse(response);  
+        if(Object.keys(response).length > 0){
+          $scope.tableResult2 = true;
+          processResponse(response); 
+        } else {
+          $scope.search = [];
+          $scope.tableResult2 = false;
+          return $scope.search;
+        }   
       })
       .error(function() {
         console.log("error");
@@ -400,24 +350,68 @@ angular
 
     function signoffHistory() {
       checkParameters();
-      History.getsignoffHistory($scope.checkboxValues, $scope.changedByValue)
+      var filterParams = {
+        changedByValue: $scope.changedByValue,
+        startDate: $scope.hs_startDate,
+        endDate: $scope.hs_endDate,
+        product: $scope.product,
+        channel: $scope.channel
+      };
+      History.getsignoffHistory($scope.checkboxValues, filterParams)
       .success(function(response) {
-        processResponse(response);  
+        if(Object.keys(response).length > 0){
+          $scope.tableResult3 = true;
+          processResponse(response); 
+        } else {
+          $scope.search = [];
+          $scope.tableResult3 = false;
+          return $scope.search;
+        }   
       })
       .error(function() {
         console.log("error");
       });   
     }
 
+    function optionChecked(choice) {
+      angular.forEach(choice, function(value, key) {
+        if (choice[key].selected) {
+          $scope.constants[choice[key].name] = 1;
+        }else{
+          $scope.constants[choice[key].name] = 0;
+        }
+      });
+      return $scope.constants;
+    }
+
     $scope.searchHistory = function() {
+      
       switch ($scope.tab) {
         case 1:
+          var rrp_constants = {rules: 0, releases:0, permissions:0 };
+          $scope.constants = rrp_constants;
+          $scope.checkboxValues = optionChecked($scope.checkBoxes);
           rrpHistory(); 
           break;
         case 2:
+          var sc_constants = {
+            rules_scheduled_change: 0,
+            releases_scheduled_change:0,
+            permissions_scheduled_change:0,
+            permissions_required_signoff_scheduled_change:0,
+            product_required_signoff_scheduled_change:0
+          };
+          $scope.constants = sc_constants;
+          $scope.checkboxValues = optionChecked($scope.sc_checkBoxes);
           scHistory(); 
           break;
         case 3:
+          var signoff_constants = {
+            permissions_required_signoffs: 0,
+            product_required_signoffs:0
+          };
+          $scope.constants = signoff_constants;
+          $scope.checkboxValues = optionChecked($scope.signoff_checkBoxes);
           signoffHistory();
           break;
       }
@@ -426,7 +420,6 @@ angular
     $scope.openDataModal = function(change_id) {
       angular.forEach($scope.search, function(revision){
         if(revision.change_id === change_id ){
-          console.log(revision.change_id,"found");
           var modalInstance = $modal.open({
             templateUrl: 'history_data_modal.html',
             controller: 'HistoryDataCtrl',
@@ -434,9 +427,12 @@ angular
             backdrop: 'static',
             resolve: {
               hs: function() {
-                var hs = angular.copy($scope.search);
-                hs.original_row = hs;
+                var hs = revision;
                 return hs;
+              },
+              hs_ct: function() {
+                var hs_ct = $scope.changeType;
+                return hs_ct;
               },
             }
           });
