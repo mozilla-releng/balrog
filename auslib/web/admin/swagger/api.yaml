@@ -299,6 +299,14 @@ parameters:
     x-nullable: true
     required: false
 
+  channelParam:
+    name: channel
+    in: query
+    description: channel stirng for filtering history.
+    type: string
+    x-nullable: true
+    required: false
+
 responses:
   updateExistingObject:
     description: "successfully updated the existing object and incremented its data_version"
@@ -421,6 +429,7 @@ paths:
         - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
+        - $ref: '#/parameters/channelParam'
         - name: rules
           in: query
           description: Indicates whether rules history should be included
