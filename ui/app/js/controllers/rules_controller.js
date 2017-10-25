@@ -127,12 +127,20 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     return !!(false || $scope.filters.search.length);
   };
 
+  $scope.returnRuleType = function() {
+    var firstRuleId = $scope.rules[0].rule_id
+    return $scope.rules.every(function(rule) {
+      return rule.rule_id === firstRuleId
+    }) ? "Revision" : "All Rules";
+  }
+
   $scope.orderRules = function(rule) {
     // Rules are sorted by priority. Rules that are pending (ie: still just a Scheduled Change)
     // will be inserted based on the priority in the Scheduled Change.
     // Rules that have Scheduled updates or deletes will remain sorted on their current priority
     // because it's more important to make it easy to assess current state than future state.
-    if(rule.timestamp){
+
+    if($scope.returnRuleType() === "Revision"){
       return rule.data_version * -1;
     }
     else if (rule.priority === null || rule.priority === undefined) {
