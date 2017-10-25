@@ -8,7 +8,6 @@
   <div ng-show="!loading">
     <div class="tabbable tabs-below">
 
-
         <form role="form">
           <div class="form-group" ng-class="{'has-error': errors.permission}">
             <label for="id_permission">Permission</label>
@@ -17,11 +16,9 @@
             </select><br>  
             <p class="help-block" ng-show="errors.permission">{{ errors.permission.join(', ') }}</p>
           </div>
-          <div class="form-group" ng-class="{'has-error': errors.options}">
-            <label for="id_options">Options</label>
-            <textarea id="id_options" ng-model="permission.options" class="options-as-json"></textarea>
-            <p class="help-block" ng-show="errors.options">{{ errors.options.join(', ') }}</p>
           </div>
+           <permission-options permission="permission"></permission-options>
+        <show-signoff-requirements requirements="permissionSignoffsRequired"></show-signoff-requirements>
         <div class="form-group" ng-class="{'has-error': errors.detail}">
             <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
         </div>
@@ -32,7 +29,6 @@
             <input type="hidden" name="data_version" ng-model="permission.data_version">
             <button type="submit" class="btn btn-primary" ng-click="addScheduledPermission()">Schedule Creation</button>
           </div>
-
         </form>
 
         <hr>
@@ -51,6 +47,7 @@
           <div class="panel-body">
             <textarea ng-model="permission.options" class="options-as-json"></textarea>
             <p class="help-block" ng-show="errors.permissions[permission.permission]">{{ errors.permissions[permission.permission].options.join(', ') }}</p>
+            <show-signoff-requirements requirements="scPermissionsSignoffRequirements[$index]"></show-signoff-requirements>
           </div>
       </div>
 

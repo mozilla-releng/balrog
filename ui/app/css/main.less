@@ -13,6 +13,10 @@ h2 .count {
 
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 
+.navbar-inverse {
+  background-color: #290f50;
+}
+
 // Because I like a little bit more contrast on the sweetalert pop-up
 div.sweet-alert {
     border: 1px solid #ccc;
@@ -92,6 +96,18 @@ div.xor-group > div {
     margin: 10px 0px 10px;
 }
 
+.page-size{
+    margin-bottom: 10px
+}
+
+form.search-form>.page-size {
+    text-align: right;
+}
+
+.permissions-page-size {
+    margin: 11px 0 6px
+}
+
 /* This class is used in the primary Rule, Release, and Permissions UI. Some of our field
    names don't fit into the default size, so we needed to make it wider */
 @media (min-width: 768px) {
@@ -102,6 +118,21 @@ div.xor-group > div {
   .dl-horizontal dd {
       margin-left: 220px;
   }
+}
+
+// Tag Input styles
+
+.m-tag__input{
+    border: 1px solid black;
+    display: flex;
+    overflow: scroll
+}
+.m-tag__input label{
+    margin: 2px;
+}
+.m-tag__input > input{
+    border:0px transparent;
+    width:100%
 }
 
 @import 'loader';

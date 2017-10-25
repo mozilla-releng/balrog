@@ -1,5 +1,5 @@
 angular.module("app").controller("RuleScheduledChangesController",
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Permissions, Page) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Permissions, Page, ProductRequiredSignoffs) {
 
   Page.setTitle('Scheduled Rule Changes');
 
@@ -21,6 +21,11 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       response
     );
   });
+
+  ProductRequiredSignoffs.getRequiredSignoffs()
+    .then(function(payload) {
+      $scope.signoffRequirements = payload.data.required_signoffs;
+    });
 
   function loadPage(newPage) {
     Rules.getScheduledChangeHistory($scope.sc_id, $scope.pageSize, newPage)
@@ -129,6 +134,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         scheduled_changes: function() {
           return $scope.scheduled_changes;
         },
+        original_row: function() {
+          return {};
+        },
         sc: function() {
           // blank new default rule
           return {
@@ -139,7 +147,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             when: null,
             change_type: 'insert',
           };
-        }
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
   };
@@ -230,7 +241,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         sc: function() {
           sc.when = new Date(sc.when);
           return sc;
-        }
+        },
+        original_row: function() {
+          return {};
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
   };

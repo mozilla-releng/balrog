@@ -162,7 +162,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh"
+        - "git clone $GITHUB_BASE_REPO_URL balrog && cd balrog && git checkout $GITHUB_BASE_BRANCH && scripts/push-dockerimage.sh latest ${GITHUB_BASE_BRANCH}-${GITHUB_BASE_SHA}"
     extra:
       github:
         env: true
@@ -190,7 +190,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/agent && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh"
+        - "git clone $GITHUB_BASE_REPO_URL balrog && cd balrog/agent && git checkout $GITHUB_BASE_BRANCH && scripts/push-dockerimage.sh latest ${GITHUB_BASE_BRANCH}-${GITHUB_BASE_SHA}"
     extra:
       github:
         env: true

@@ -1,6 +1,6 @@
 /*global sweetAlert swal */
 angular.module('app').controller('NewPermissionScheduledChangeCtrl',
-function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
+function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc, permissionSignoffRequirements) {
 
   $scope.loading = true;
   $scope.scheduled_changes = scheduled_changes;
@@ -28,6 +28,36 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
   ];
 
 
+  function fromFormData(permission) {
+    permission = angular.copy(permission);
+    try {
+      permission.options = permission.options && JSON.parse(permission.options);
+    } catch(e) {
+      // No options, I guess
+    }
+    return permission;
+  }
+
+  function permissionSignoffsRequired(currentPermission, newPermission) {
+    if (currentPermission) {
+      currentPermission = fromFormData(currentPermission);
+    }
+    if (newPermission) {
+      newPermission = fromFormData(newPermission);
+    }
+    return Permissions.permissionSignoffsRequired(currentPermission, newPermission, permissionSignoffRequirements);
+  }
+
+  $scope.$watch("permission", function(permission) {
+    $scope.permissionSignoffsRequired = permissionSignoffsRequired(permission);
+  }, true);
+  $scope.scPermissionsSignoffRequirements = [];
+  $scope.$watch("sc.permissions", function(permissions) {
+    $scope.scPermissionsSignoffRequirements = permissions.map(function(permission, i) {
+      return permissionSignoffsRequired($scope.originalPermissions[i], permission);
+    });
+  }, true);
+
   $scope.sc.permissions = [];
   Permissions.getUserPermissions(sc.username)
   .then(function(permissions) {
@@ -36,12 +66,14 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc) {
         p.options = JSON.stringify(p['options']);
       }
     });
+    $scope.originalPermissions = angular.copy(permissions);
     $scope.sc.permissions = permissions;
     $scope.loading = false;
   });
 
 
   $scope.addScheduledPermission = function() {
+    $scope.permission.options = $scope.permission.options_as_json;
     date = new Date();
     permission_sc = angular.copy($scope.permission);
     permission_sc.when = date.getTime() + 5000;

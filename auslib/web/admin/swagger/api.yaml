@@ -409,7 +409,7 @@ paths:
         Returns a JSON object containing metadata about Releases in Balrog's database. Due to its size, the actual Release 'blob' is never returned from this endpoint. There are a few query arguments that affect its response. If no arguments are provided, it returns all information about all of the Releases in the database. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases)
       tags:
         - Releases
-      operationId: auslib.web.common.releases.get_releases
+      operationId: auslib.web.admin.views.mapper.release_get
       consumes: []
       produces:
         - application/json
@@ -444,7 +444,13 @@ paths:
                 type: array
                 minItems: 0
                 items:
-                  $ref: '#/definitions/ReleaseGET'
+                  allOf:
+                    - $ref: '#/definitions/ReleaseGET'
+                    - properties:
+                        required_signoffs:
+                          description: Object mapping roles to the number of signoffs required to change the release
+                          type: object
+
               names:
                 description: List of release names
                 type: array
@@ -1748,6 +1754,7 @@ paths:
                   fallbackMapping: null
                   headerArchitecture: null
                   instructionSet: null
+                  jaws: null
                   locale: null
                   mapping: "Firefox-45.7.0esr-build1"
                   memory: null
@@ -1848,6 +1855,9 @@ paths:
                       allOf:
                         - $ref: '#/definitions/SCSignoffsModel'
                         - $ref: '#/definitions/SCRulesItemBase'
+                        - properties:
+                            original_row:
+                              $ref: '#/definitions/RuleObject'
     post:
       summary: create scheduled change for rules.
       description: >
@@ -2074,6 +2084,12 @@ paths:
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/OptionsModel'
                         - $ref: '#/definitions/PermissionsModel'
+                        - properties:
+                            original_row:
+                              allOf:
+                                - $ref: '#/definitions/DataVersionNullable'
+                                - $ref: '#/definitions/PermissionsModel'
+                                - $ref: '#/definitions/OptionsModel'
                       required:
                         - change_type
                         - data_version
@@ -2314,6 +2330,14 @@ paths:
                         - $ref: '#/definitions/ReleaseReadOnly'
                         - $ref: '#/definitions/ReleaseDataObject'
                         - $ref: '#/definitions/ReleaseName'
+                        - properties:
+                            original_row:
+                              allOf:
+                                - $ref: '#/definitions/ReleaseDataObject'
+                                - $ref: '#/definitions/ReleaseName'
+                                - $ref: '#/definitions/DataVersionNullable'
+                                - $ref: '#/definitions/ProductNullable'
+                                - $ref: '#/definitions/ReleaseReadOnly'
                       required:
                         - change_type
                         - data_version
@@ -2561,6 +2585,14 @@ paths:
                         - $ref: '#/definitions/ProductModel'
                         - $ref: '#/definitions/RoleModel'
                         - $ref: '#/definitions/ChannelModel'
+                        - properties:
+                            original_row:
+                              allOf:
+                                - $ref: '#/definitions/DataVersionNullable'
+                                - $ref: '#/definitions/SignoffsRequiredNullable'
+                                - $ref: '#/definitions/ProductModel'
+                                - $ref: '#/definitions/RoleModel'
+                                - $ref: '#/definitions/ChannelModel'
                       required:
                         - change_type
                         - data_version
@@ -2812,6 +2844,13 @@ paths:
                         - $ref: '#/definitions/SignoffsRequiredNullable'
                         - $ref: '#/definitions/ProductModel'
                         - $ref: '#/definitions/RoleModel'
+                        - properties:
+                            original_row:
+                              allOf:
+                                - $ref: '#/definitions/DataVersionNullable'
+                                - $ref: '#/definitions/SignoffsRequiredNullable'
+                                - $ref: '#/definitions/ProductModel'
+                                - $ref: '#/definitions/RoleModel'
                       required:
                         - change_type
                         - data_version
@@ -3823,6 +3862,7 @@ definitions:
       - fallbackMapping
       - headerArchitecture
       - instructionSet
+      - jaws
       - locale
       - mapping
       - memory

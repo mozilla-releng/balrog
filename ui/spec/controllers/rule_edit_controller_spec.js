@@ -30,6 +30,9 @@ describe("controller: RuleEditCtrl", function() {
     "whitelist": null
   };
   var pr_ch_options = ['GMP'];
+  var signoffRequirements = [
+    {product: "Firefox", channel: "aurora", role: "releng", signoffs_required: 2}
+  ];
 
   beforeEach(inject(function($controller, $rootScope, $location, $modal, Rules, Releases, $httpBackend) {
     this.$location = $location;
@@ -47,6 +50,7 @@ describe("controller: RuleEditCtrl", function() {
       Releases: Releases,
       rule: rule,
       pr_ch_options: pr_ch_options,
+      signoffRequirements: signoffRequirements,
     });
   }));
 
@@ -57,7 +61,7 @@ describe("controller: RuleEditCtrl", function() {
 
   describe("opening the edit rule modal", function() {
 
-    it("should should all defaults", function() {
+    it("should set all defaults", function() {
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
@@ -73,9 +77,26 @@ describe("controller: RuleEditCtrl", function() {
       expect(this.scope.rule).toEqual(rule);
       expect(this.scope.rule.product).toEqual('Firefox');
       expect(this.scope.is_edit).toEqual(true);
+      expect(this.scope.ruleSignoffsRequired.length).toEqual(0);
     });
 
-    it("should should be able to save changes", function() {
+    it("should update signoff requirements when rule changes", function() {
+      this.$httpBackend.expectGET('/api/releases?names_only=1')
+      .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
+      this.$httpBackend.expectGET('/api/rules/columns/channel')
+      .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/rules/columns/product')
+      .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
+      this.$httpBackend.flush();
+
+      this.scope.rule.channel = 'aurora';
+      this.scope.$digest();
+
+      expect(this.scope.ruleSignoffsRequired.length).toEqual(1);
+      expect(this.scope.ruleSignoffsRequired.roles['releng']).toEqual(2);
+    });
+
+    it("should be able to save changes", function() {
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
@@ -100,7 +121,7 @@ describe("controller: RuleEditCtrl", function() {
       expect(this.scope.errors).toEqual({});
     });
 
-    it("should should notice errors", function() {
+    it("should notice errors", function() {
       this.$httpBackend.expectGET('/api/releases?names_only=1')
       .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')

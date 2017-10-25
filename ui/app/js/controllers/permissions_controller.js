@@ -1,5 +1,5 @@
 angular.module("app").controller('PermissionsController',
-function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal, Page) {
+function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal, Page, PermissionsRequiredSignoffs, Helpers) {
 
   Page.setTitle('Permissions');
 
@@ -18,6 +18,10 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
       $scope.users = _.map(response.users, function (each) {
         return {username: each};
       });
+      $scope.permissions_count = $scope.users.length;
+      $scope.page_size_pair = [{id: 20, name: '20'},
+        {id: 50, name: '50'}, 
+        {id: $scope.permissions_count, name: 'All'}];
     })
     .error(function() {
       console.error(arguments);
@@ -28,10 +32,18 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
     });
   }
 
+  $scope.signoffRequirements = [];
+  PermissionsRequiredSignoffs.getRequiredSignoffs()
+    .then(function(payload) {
+      $scope.signoffRequirements = payload.data.required_signoffs;
+    });
+
   $scope.ordering = ['username'];
 
   $scope.currentPage = 1;
-  $scope.pageSize = 10;  // default
+  $scope.storedPageSize = JSON.parse(localStorage.getItem('permissions_page_size'));
+  $scope.pageSize = $scope.storedPageSize? $scope.storedPageSize.id : 20;
+  $scope.page_size = {id: $scope.pageSize, name: $scope.storedPageSize? $scope.storedPageSize.name : $scope.pageSize};
 
   $scope.filters = {
     search: $location.hash(),
@@ -92,6 +104,9 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
         user: function () {
           return user;
         },
+        permissionSignoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
   };
@@ -113,6 +128,9 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
         },
         user: function () {
           return $scope.user;
+        },
+        permissionSignoffRequirements: function() {
+          return $scope.signoffRequirements;
         },
       }
     });
@@ -136,9 +154,16 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
           sc = angular.copy(user);
           sc["change_type"] = "insert";
           return sc;
-        }
+        },
+        permissionSignoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
+  };
+
+  $scope.selectPageSize = function() {
+    Helpers.selectPageSize($scope, 'permissions_page_size');
   };
 
 

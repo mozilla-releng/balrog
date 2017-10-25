@@ -150,6 +150,19 @@ class TestPermissionsAPI_JSON(ViewTest):
         query = query.where(dbo.permissions.permission == 'admin')
         self.assertEqual(query.execute().fetchone(), ('admin', 'bob', {"products": ["a"]}, 1))
 
+    # TODO: find something that doesn't require signoff. and fix the damn ui
+    def testPermissionPutEmptyDictOptions(self):
+        # The default fixtures prevent us from creating permissions like this
+        # due to signoff requirements
+        dbo.permissionsRequiredSignoffs.t.delete().execute()
+        ret = self._put('/users/bob/permissions/admin', data=dict(options="{}"))
+        self.assertStatusCode(ret, 201)
+        self.assertEqual(ret.data, json.dumps(dict(new_data_version=1)), "Data: %s" % ret.data)
+        query = dbo.permissions.t.select()
+        query = query.where(dbo.permissions.username == 'bob')
+        query = query.where(dbo.permissions.permission == 'admin')
+        self.assertEqual(query.execute().fetchone(), ('admin', 'bob', None, 1))
+
     def testPermissionPutWithEmail(self):
         ret = self._put('/users/bob@bobsworld.com/permissions/admin', data=dict(options=json.dumps(dict(products=["a"]))))
         self.assertStatusCode(ret, 201)
@@ -396,11 +409,13 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.permissions.select({"permission": "release_locale", "username": "ashanti"})[0],
                 },
                 {
                     "sc_id": 4, "when": 76000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.permissions.select({"permission": "scheduled_change", "username": "mary"})[0],
                 },
                 {
                     "sc_id": 5, "when": 98000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
@@ -411,6 +426,7 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "sc_id": 6, "when": 38000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release", "username": "bob", "options": {"products": ["a", "b"]}, "data_version": 1,
                     "signoffs": {}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissions.select({"permission": "release", "username": "bob"})[0],
                 },
             ],
         }
@@ -430,16 +446,19 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 20000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release_locale", "username": "ashanti", "options": None, "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.permissions.select({"permission": "release_locale", "username": "ashanti"})[0],
                 },
                 {
                     "sc_id": 3, "when": 30000000, "scheduled_by": "bill", "change_type": "insert", "complete": True, "sc_data_version": 2,
                     "permission": "permission", "username": "bob", "options": None, "data_version": None, "signoffs": {},
                     "required_signoffs": {},
+                    # No original_row on completed changes.
                 },
                 {
                     "sc_id": 4, "when": 76000000, "scheduled_by": "bill", "change_type": "delete", "complete": False, "sc_data_version": 1,
                     "permission": "scheduled_change", "username": "mary", "options": None, "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1, "relman": 1},
+                    "original_row": dbo.permissions.select({"permission": "scheduled_change", "username": "mary"})[0],
                 },
                 {
                     "sc_id": 5, "when": 98000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
@@ -450,6 +469,7 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "sc_id": 6, "when": 38000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
                     "permission": "release", "username": "bob", "options": {"products": ["a", "b"]}, "data_version": 1,
                     "signoffs": {}, "required_signoffs": {"releng": 1},
+                    "original_row": dbo.permissions.select({"permission": "release", "username": "bob"})[0],
                 },
             ],
         }
@@ -511,6 +531,27 @@ class TestPermissionsScheduledChanges(ViewTest):
         expected = {
             "sc_id": 7, "scheduled_by": "bill", "change_type": "delete", "complete": False, "data_version": 1,
             "base_permission": "release", "base_username": "ashanti", "base_options": None, "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+        cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 7).execute().fetchall()
+        self.assertEquals(len(cond), 1)
+        cond_expected = {"sc_id": 7, "data_version": 1, "when": 400000000}
+        self.assertEquals(dict(cond[0]), cond_expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeNewPermissionEmptyDictOptions(self):
+        data = {
+            "when": 400000000, "permission": "release", "username": "jill", "options": '{}', "change_type": "insert",
+        }
+        ret = self._post("/scheduled_changes/permissions", data=data)
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {}})
+        r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 7, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1,
+            "base_permission": "release", "base_username": "jill", "base_options": None, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 7).execute().fetchall()

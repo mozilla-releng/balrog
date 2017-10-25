@@ -57,7 +57,16 @@ elif [ $1 == "extract-active-data" ]; then
         exit 1
     fi
     exec python scripts/manage-db.py -d ${DBURI} extract ${OUTPUT_FILE}
-    export
+elif [ $1 == "reset-stage-db" ]; then
+    if [ -z "${DBURI}" ]; then
+        echo "\${DBURI} must be set!"
+        exit 1
+    fi
+    if [ -z "${2}" ]; then
+        echo "magic word must be passed as second positional argument"
+        exit 1
+    fi
+    exec scripts/reset-stage-db.sh $DBURI $2
 elif [ $1 == "test" ]; then
     shift
     rc=0

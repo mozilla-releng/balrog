@@ -14,8 +14,7 @@ actions CDATA #IMPLIED
 openURL CDATA #IMPLIED
 notificationUrl CDATA #IMPLIED
 alertUrl CDATA #IMPLIED
-promptWaitTime CDATA #IMPLIED
-backgroundInterval CDATA #IMPLIED >
+promptWaitTime CDATA #IMPLIED>
 <!ELEMENT patch (#PCDATA)>
 <!ATTLIST patch
 type CDATA #REQUIRED

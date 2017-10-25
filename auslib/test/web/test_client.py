@@ -28,25 +28,31 @@ class TestGetSystemCapabilities(unittest.TestCase):
     def testUnprefixedInstructionSetOnly(self):
         self.assertEquals(
             client_api.getSystemCapabilities("SSE3"),
-            {"instructionSet": "SSE3", "memory": None}
+            {"instructionSet": "SSE3", "memory": None, "jaws": None}
         )
 
     def testUnprefixedInstructionSetAndMemory(self):
         self.assertEquals(
             client_api.getSystemCapabilities("SSE3,8095"),
-            {"instructionSet": "SSE3", "memory": 8095}
+            {"instructionSet": "SSE3", "memory": 8095, "jaws": None}
         )
 
     def testPrefixedInstructionSetAndMemory(self):
         self.assertEquals(
             client_api.getSystemCapabilities("ISET:SSE2,MEM:6321"),
-            {"instructionSet": "SSE2", "memory": 6321}
+            {"instructionSet": "SSE2", "memory": 6321, "jaws": None}
+        )
+
+    def testPrefixedInstructionSetMemoryAndJaws(self):
+        self.assertEquals(
+            client_api.getSystemCapabilities("ISET:SSE2,MEM:6321,JAWS:1"),
+            {"instructionSet": "SSE2", "memory": 6321, "jaws": True}
         )
 
     def testNothingProvided(self):
         self.assertEquals(
             client_api.getSystemCapabilities("NA"),
-            {"instructionSet": "NA", "memory": None}
+            {"instructionSet": "NA", "memory": None, "jaws": None}
         )
 
     def testNonIntegerMemory(self):
@@ -55,7 +61,7 @@ class TestGetSystemCapabilities(unittest.TestCase):
     def testUnknownField(self):
         self.assertEquals(
             client_api.getSystemCapabilities("ISET:SSE3,MEM:6721,PROC:Intel"),
-            {"instructionSet": "SSE3", "memory": 6721}
+            {"instructionSet": "SSE3", "memory": 6721, "jaws": None}
         )
 
 
@@ -1103,6 +1109,175 @@ class ClientTestMig64(ClientTestCommon):
 
     def testRuleNullQueryTrue(self):
         ret = self.client.get("/update/3/a/1.0/1/p/l/a/a/a/a/update.xml?mig64=1")
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+
+
+class ClientTestJaws(ClientTestCommon):
+    """Tests the expected real world scenarios for the JAWS parameter in
+    SYSTEM_CAPABILITIES."""
+
+    @classmethod
+    def setUpClass(cls):
+        # Error handlers are removed in order to give us better debug messages
+        cls.error_spec = app.error_handler_spec
+        # Ripped from https://github.com/mitsuhiko/flask/blob/1f5927eee2288b4aaf508af5dc1f148aa2140d91/flask/app.py#L394
+        app.error_handler_spec = {None: {}}
+
+    @classmethod
+    def tearDownClass(cls):
+        app.error_handler_spec = cls.error_spec
+
+    def setUp(self):
+        app.config["DEBUG"] = True
+        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
+        dbo.setDb("sqlite:///:memory:")
+        dbo.create()
+        self.client = app.test_client()
+        dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a",
+                                     data_version=1)
+        dbo.releases.t.insert().execute(name="a", product="a", data_version=1, data=createBlob("""
+{
+    "name": "a",
+    "schema_version": 1,
+    "appv": "1.0",
+    "extv": "1.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "2",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/z"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b",
+                                     jaws=True, data_version=1)
+        dbo.releases.t.insert().execute(name="b", product="b", data_version=1, data=createBlob("""
+{
+    "name": "b",
+    "schema_version": 1,
+    "appv": "2.0",
+    "extv": "2.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "12",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "13",
+                        "from": "*",
+                        "hashValue": "14",
+                        "fileUrl": "http://a.com/z1"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c",
+                                     jaws=False, data_version=1)
+        dbo.releases.t.insert().execute(name="c", product="c", data_version=1, data=createBlob("""
+{
+    "name": "c",
+    "schema_version": 1,
+    "appv": "3.0",
+    "extv": "3.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "22",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "23",
+                        "from": "*",
+                        "hashValue": "24",
+                        "fileUrl": "http://a.com/z2"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+
+    def testRuleFalseQueryNull(self):
+        ret = self.client.get("/update/6/c/1.0/2/p/l/a/a/a/a/a/update.xml")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testRuleFalseQueryTrue(self):
+        ret = self.client.get("/update/6/c/1.0/2/p/l/a/a/JAWS:1/a/a/update.xml")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testRuleFalseQueryFalse(self):
+        ret = self.client.get("/update/6/c/1.0/2/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:0/a/a/update.xml")
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="3.0" extensionVersion="3.0" buildID="22">
+        <patch type="complete" URL="http://a.com/z2" hashFunction="sha512" hashValue="24" size="23"/>
+    </update>
+</updates>
+""")
+
+    def testRuleTrueQueryNull(self):
+        ret = self.client.get("/update/6/b/1.0/2/p/l/a/a/a/a/a/update.xml")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testRuleTrueQueryTrue(self):
+        ret = self.client.get("/update/6/b/1.0/2/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:1/a/a/update.xml")
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="2.0" extensionVersion="2.0" buildID="12">
+        <patch type="complete" URL="http://a.com/z1" hashFunction="sha512" hashValue="14" size="13"/>
+    </update>
+</updates>
+""")
+
+    def testRuleTrueQueryFalse(self):
+        ret = self.client.get("/update/6/b/1.0/2/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:0/a/a/update.xml")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testRuleNullQueryNull(self):
+        ret = self.client.get("/update/6/a/1.0/1/p/l/a/a/a/a/a/update.xml")
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+
+    def testRuleNullQueryTrue(self):
+        ret = self.client.get("/update/6/a/1.0/1/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:1/a/a/update.xml")
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+
+    def testRuleNullQueryFalse(self):
+        ret = self.client.get("/update/6/a/1.0/1/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:0/a/a/update.xml")
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">

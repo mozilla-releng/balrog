@@ -40,16 +40,21 @@
     <div class="row" ng-show="!rule_id">
       <label>Product/Channel filter:</label>
       <select ng-model="pr_ch_filter" name="pr_ch_filter"
-        ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
+        ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair" ng-change="locationChanger()">
       </select>
     </div>
     <div class="row" ng-show="!rule_id">
       <label for="include_sc">Include Scheduled Changes?</label>
       <input type="checkbox" id="include_sc" ng-model="show_sc" checked>
     </div>
+    <div class="row page-size" ng-show="rules_count > 20">
+      <label>Page Size: </label>
+      <select ng-model="page_size" ng-name="page_size"
+        ng-options="page_size.name for page_size in page_size_pair track by page_size.id"
+        ng-change="selectPageSize()"></select>
+    </div>
   </div>
 </div>
-
 <div class="panel panel-default" style="clear:right"
      ng-repeat="rule in filtered_items = (rules | filter: filterScheduledChanges | filter: filterBySelect) | orderBy:orderRules | startFrom:(disableFilter || !rule_id) && ((currentPage - 1)*pageSize) | limitTo:pageSize">
   <div class="panel-heading">
@@ -89,11 +94,11 @@
                 ng-click="openNewScheduledDeleteModal(rule)">
             Schedule for Deletion
         </button>
-        <button ng-show="rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert'"
+        <button ng-show="ruleSignoffsRequired(rule).length === 0 && (rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert')"
                 class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">
             Update
         </button>
-        <button ng-show="rule.scheduled_change === null" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">
+        <button ng-show="ruleSignoffsRequired(rule).length === 0 && rule.scheduled_change === null" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">
             Delete
         </button>
         <button ng-show="rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert'"
@@ -205,6 +210,11 @@
             </a>
           </span>
       </h5>
+      <span ng-hide="(rule.fallbackMapping === null && !(!rule_id && show_sc && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping !== null )) || (rule.backgroundRate !== 100 && rule.scheduled_change.backgroundRate !== 100)" >
+        <span class="alert-danger">
+          <strong>Note!</strong> Fallback Mapping is unused when Background Rate is 100
+        </span>        
+     </span>
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="data_version" fieldtitle="Data Version"></rulefield>
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="rule_id" fieldtitle="Rule ID"></rulefield>
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="comment" fieldtitle="Comment"></rulefield>
@@ -227,6 +237,8 @@
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="memory" fieldtitle="Memory"></rulefield>
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="mig64" fieldtitle="64-bit Migration Opt-in"
                  help='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'></rulefield>
+      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="jaws" fieldtitle="JAWS Screen Reader Compatibility"
+                 help='Whether or not to match incoming queries that indicate a client that has an incompatible version of the JAWS screen reader installed. "Ignore" is usually what you want.'></rulefield>
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="update_type" fieldtitle="Update type"></rulefield>
       <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="headerArchitecture" fieldtitle="Header Architecture"></rulefield>
     </div>

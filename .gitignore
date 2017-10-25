@@ -18,4 +18,5 @@ ui/node_modules
 .DS_Store
 
 scripts/prod_db_dump.sql
+scripts/dump.sql
 .hypothesis

@@ -55,9 +55,6 @@
     promptWaitTime:
       type: number
       description: The number of seconds to wait before showing the dialog which prompts users to restart, overrides the in-app preference
-    backgroundInterval:
-      type: number
-      description: This decides how quickly or slowly Firefox downloads an MAR.
     # Top level fileUrls are useful primarily for release style builds,
     # where the URLs are predictable and only vary by locale and platform.
     # It"s worth noting that while we normally serve different channels

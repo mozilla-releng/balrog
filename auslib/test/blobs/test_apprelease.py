@@ -14,7 +14,7 @@ from auslib.errors import BadDataError
 from auslib.web.public.base import app
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, \
-    ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV7, ReleaseBlobV8, DesupportBlob, \
+    ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV8, DesupportBlob, \
     UnifiedFileUrlsMixin, ProofXMLMixin
 
 
@@ -2722,191 +2722,6 @@ class TestSchema6Blob(unittest.TestCase):
         self.assertRaises(BlobValidationError, self.blobH3.validate, 'h', self.whitelistedDomains)
 
 
-class TestSchema7Blob(unittest.TestCase):
-
-    def setUp(self):
-        self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('h',)}
-        app.config['DEBUG'] = True
-        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
-        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
-        dbo.setDb('sqlite:///:memory:')
-        dbo.create()
-        dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data=createBlob("""
-{
-    "name": "h1",
-    "schema_version": 7,
-    "platforms": {
-        "p": {
-            "buildID": "10",
-            "locales": {
-                "l": {}
-            }
-        }
-    }
-}
-"""))
-        self.blobH2 = ReleaseBlobV7()
-        self.blobH2.loadJSON("""
-{
-    "name": "h2",
-    "schema_version": 7,
-    "hashFunction": "sha512",
-    "appVersion": "31.0",
-    "displayVersion": "31.0",
-    "detailsUrl": "http://example.org/details/%LOCALE%",
-    "actions": "silent",
-    "openURL": "http://example.org/url/%LOCALE%",
-    "notificationURL": "http://example.org/notification/%LOCALE%",
-    "alertURL": "http://example.org/alert/%LOCALE%",
-    "showPrompt": false,
-    "showNeverForVersion": true,
-    "promptWaitTime": 12345,
-    "backgroundInterval": 123,
-    "fileUrls": {
-        "c1": {
-            "partials": {
-                "h1": "http://a.com/h1-partial.mar"
-            },
-            "completes": {
-                "*": "http://a.com/complete.mar"
-            }
-        },
-        "*": {
-            "partials": {
-                "h1": "http://a.com/h1-partial-catchall"
-            },
-            "completes": {
-                "*": "http://a.com/complete-catchall"
-            }
-        }
-    },
-    "platforms": {
-        "p": {
-            "buildID": 50,
-            "OS_FTP": "p",
-            "OS_BOUNCER": "p",
-            "locales": {
-                "l": {
-                    "partials": [
-                        {
-                            "filesize": 8,
-                            "from": "h1",
-                            "hashValue": "9"
-                        }
-                    ],
-                    "completes": [
-                        {
-                            "filesize": 40,
-                            "from": "*",
-                            "hashValue": "41"
-                        }
-                    ]
-                }
-            }
-        }
-    }
-}
-""")
-
-    def testGetPartialReleaseReferences_Happy_Case(self):
-        sample_release_blob_v7 = ReleaseBlobV7()
-        sample_release_blob_v7.loadJSON("""
-        {
-            "name": "h2",
-            "schema_version": 7,
-            "hashFunction": "sha512",
-            "appVersion": "31.0",
-            "displayVersion": "31.0",
-            "detailsUrl": "http://example.org/details/%LOCALE%",
-            "actions": "silent",
-            "openURL": "http://example.org/url/%LOCALE%",
-            "notificationURL": "http://example.org/notification/%LOCALE%",
-            "alertURL": "http://example.org/alert/%LOCALE%",
-            "showPrompt": false,
-            "showNeverForVersion": true,
-            "promptWaitTime": 12345,
-            "backgroundInterval": 123,
-            "fileUrls": {
-                "c1": {
-                    "partials": {
-                        "h1": "http://a.com/h1-partial.mar"
-                    },
-                    "completes": {
-                        "*": "http://a.com/complete.mar"
-                    }
-                },
-                "*": {
-                    "partials": {
-                        "h1": "http://a.com/h1-partial-catchall"
-                    },
-                    "completes": {
-                        "*": "http://a.com/complete-catchall"
-                    }
-                }
-            },
-            "platforms": {
-                "p": {
-                    "buildID": 50,
-                    "OS_FTP": "p",
-                    "OS_BOUNCER": "p",
-                    "locales": {
-                        "l": {
-                            "partials": [
-                                {
-                                    "filesize": 8,
-                                    "from": "h2",
-                                    "hashValue": "9"
-                                }
-                            ],
-                            "completes": [
-                                {
-                                    "filesize": 40,
-                                    "from": "*",
-                                    "hashValue": "41"
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-        """)
-        partial_releases = sample_release_blob_v7.getReferencedReleases()
-        self.assertTrue(2, len(partial_releases))
-        self.assertEquals(sorted(partial_releases), ['h1', 'h2'])
-
-    def testIsValid(self):
-        # Raises on error
-        self.blobH2.validate('h', self.whitelistedDomains)
-
-    def testSchema7OptionalAttributes(self):
-        updateQuery = {
-            "product": "h", "buildID": "10",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": None,
-        }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = [x.strip() for x in returned]
-        expected_header = '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="None" ' \
-            'buildID="50" detailsURL="http://example.org/details/l" showPrompt="false" showNeverForVersion="true" ' \
-            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
-            'alertURL="http://example.org/alert/l" promptWaitTime="12345" backgroundInterval="123">'
-        expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
-""", """
-<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
-"""]
-        expected = [x.strip() for x in expected]
-        expected_footer = "</update>"
-        self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
-        self.assertEqual(returned_footer.strip(), expected_footer.strip())
-
-
 class TestSchema8Blob(unittest.TestCase):
 
     def setUp(self):
@@ -2947,7 +2762,6 @@ class TestSchema8Blob(unittest.TestCase):
     "showPrompt": false,
     "showNeverForVersion": true,
     "promptWaitTime": 12345,
-    "backgroundInterval": 123,
     "binTransMerkleRoot": "merkle_root",
     "binTransCertificate": "cert",
     "binTransSCTList": "sct_list",
@@ -3017,7 +2831,7 @@ class TestSchema8Blob(unittest.TestCase):
         expected_header = '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="None" ' \
             'buildID="50" detailsURL="http://example.org/details/l" showPrompt="false" showNeverForVersion="true" ' \
             'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
-            'alertURL="http://example.org/alert/l" promptWaitTime="12345" backgroundInterval="123" ' \
+            'alertURL="http://example.org/alert/l" promptWaitTime="12345" ' \
             'binTransMerkleRoot="merkle_root" binTransCertificate="cert" binTransSCTList="sct_list">'
         expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" """ +

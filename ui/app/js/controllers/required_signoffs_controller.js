@@ -1,5 +1,5 @@
 angular.module("app").controller('RequiredSignoffsController',
-function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions, Page) {
+function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions, Page) {
 
   Page.setTitle('Signoffs');
 
@@ -42,6 +42,25 @@ function($scope, $modal, $q, ProductRequiredSignoffs, PermissionsRequiredSignoff
       }
     }
   }, true);
+
+  $scope.undoRemoveRole = function(roleName, rs) {
+    var product = Object.keys(rs)[0];
+    var channel = Object.keys(rs[product].channels)[0];
+
+    CSRF.getToken()
+    .then(function(csrf_token) {
+      var sc_id = $scope.required_signoffs[product].channels[channel][roleName].sc.sc_id;
+      var data = {
+        "csrf_token": csrf_token,
+        "sc_data_version": $scope.required_signoffs[product].channels[channel][roleName].sc.sc_data_version
+      };
+      ProductRequiredSignoffs.deleteScheduledChange(sc_id, data)
+      .success(function(response) {
+        $scope.required_signoffs[product].channels[channel][roleName].sc = null;
+      });
+    });
+
+  };
 
   ProductRequiredSignoffs.getRequiredSignoffs()
   .success(function(response) {

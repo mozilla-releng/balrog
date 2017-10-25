@@ -1,6 +1,6 @@
 /*global sweetAlert */
 angular.module('app').controller('EditRuleScheduledChangeCtrl',
-function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
+function ($scope, $modalInstance, CSRF, Rules, Releases, sc, original_row, signoffRequirements, Helpers) {
 
   $scope.names = [];
   Releases.getNames().then(function(names) {
@@ -22,6 +22,16 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
   $scope.saving = false;
   $scope.calendar_is_open = false;
   $scope.sc_type = "time";
+
+  $scope.$watch('sc', function() {
+    if (signoffRequirements) {
+      var target = $scope.sc;
+      if ($scope.sc.change_type === "delete") {
+        target = undefined;
+      }
+      $scope.scheduledChangeSignoffsRequired = Rules.ruleSignoffsRequired(original_row, target, signoffRequirements);
+    }
+  }, true);
 
   $scope.auto_time = false;
   $scope.toggleAutoTime = function(){
@@ -64,6 +74,19 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, sc) {
     asap.setMinutes(asap.getMinutes() + 5);
     $scope.sc.when = ($scope.auto_time) ? asap : $scope.sc.when;
 
+    // Evaluate the values entered for priority and background rate.
+    $scope.integer_validation_errors = Helpers.integerValidator({'priority': $scope.sc.priority, 'backgroundRate': $scope.sc.backgroundRate});
+    // Stop sending the request if any number validation errors.
+    if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.backgroundRate) {
+      $scope.saving = false;
+      sweetAlert(
+        "Form submission error",
+        "See fields highlighted in red.",
+        "error"
+      );
+      return;
+    }
+    
     CSRF.getToken()
     .then(function(csrf_token) {
       sc = angular.copy($scope.sc);

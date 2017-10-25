@@ -1,10 +1,11 @@
 /*global sweetAlert swal */
 angular.module('app').controller('UserPermissionsCtrl',
-function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
+function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permissionSignoffRequirements) {
 
   $scope.loading = true;
   $scope.users = users;
   $scope.currentItemTab = 1;
+
   $scope.is_edit = is_edit;
   $scope.permission = {
     permission: '',
@@ -24,7 +25,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
           p.options_as_json = JSON.stringify(p['options']);
         }
       });
-  
+      $scope.originalPermissions = angular.copy(permissions);
       $scope.user.permissions = permissions;
     });
 
@@ -60,9 +61,41 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
     $scope.user.permissions = [];
     $scope.user.roles = [];
   }
-  
+
 
   $scope.roles_list = [];
+  function fromFormData(permission) {
+    permission = angular.copy(permission);
+    try {
+      permission.options = permission.options_as_json && JSON.parse(permission.options_as_json);
+    } catch(e) {
+      // No options, I guess
+    }
+    return permission;
+  }
+
+  function permissionSignoffsRequired(currentPermission, newPermission) {
+    if (currentPermission) {
+      currentPermission = fromFormData(currentPermission);
+    }
+    if (newPermission) {
+      newPermission = fromFormData(newPermission);
+    }
+    return Permissions.permissionSignoffsRequired(currentPermission, newPermission, permissionSignoffRequirements);
+  }
+  $scope.$watch("permission", function(permission) {
+    $scope.permissionSignoffsRequired = permissionSignoffsRequired(permission);
+  }, true);
+  $scope.userPermissionsSignoffRequirements = [];
+  $scope.$watch("user.permissions", function(permissions) {
+    $scope.userPermissionsSignoffRequirements = permissions.map(function(permission, i) {
+      return {
+        signoffRequirements: permissionSignoffsRequired($scope.originalPermissions[i], permission),
+        deleteSignoffRequirements: permissionSignoffsRequired($scope.originalPermissions[i])
+      };
+    });
+  }, true);
+
   Permissions.getAllRoles()
   .success(function(response) {
     $scope.roles_list = response.roles;
@@ -91,7 +124,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   $scope.showRow = function () {
     return $scope.usersaved || $scope.is_edit;
   };
-    
+
   $scope.$watchCollection('permission', function(value) {
     value.options = value.options_as_json;
   });
@@ -140,7 +173,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
   };
 
   $scope.addPermission = function() {
-    // $scope.permission.options = $scope.permission.options_as_json;
+    $scope.permission.options = $scope.permission.options_as_json;
     $scope.saving = true;
     CSRF.getToken()
     .then(function(csrf_token) {
@@ -155,6 +188,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
         if ($scope.user.permissions){
           $scope.users.push($scope.user);
           $scope.permission.data_version = response.new_data_version;
+          $scope.originalPermissions.push(angular.copy($scope.permission));
           $scope.user.permissions.push($scope.permission);
           // reset the add form
           $scope.permission = {
@@ -274,6 +308,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
       Permissions.updatePermission($scope.user.username, permission, csrf_token)
       .success(function(response) {
         permission.data_version = response.new_data_version;
+        $scope.originalPermissions.push(angular.copy($scope.permission));
         $scope.user.permissions.push($scope.permission);
         $scope.permission = {
           permission: '',
@@ -293,14 +328,14 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user) {
           if(permission_found.length){
             sweetAlert(
               "Form submission error",
-              "This persmission has already been granted",
+              "This permission has already been granted",
               "error"
             );
           }
           else{
             sweetAlert(
               "Form submission error",
-              "Persmissions must be selected",
+              "Permissions must be selected",
               "error"
             );
           }
