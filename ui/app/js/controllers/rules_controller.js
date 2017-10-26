@@ -294,7 +294,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         sc: function() {
           // blank new default rule
           return {
-            base_row: undefined,
             product: product,
             channel: channel,
             backgroundRate: 0,
@@ -305,7 +304,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           };
         },
         original_row: function() {
-          return {};
+          return null;
         },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
@@ -359,11 +358,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         sc: function() {
           return {
-            "base_row": rule,
             "rule_id": rule.rule_id,
             "data_version": rule.data_version,
             "change_type": "delete"
           };
+        },
+        original_row: function() {
+          return rule;
         },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
@@ -387,13 +388,15 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           return sc;
         },
         original_row: function() {
-          return rule;
+          if (rule.scheduled_change.change_type === "insert") {
+            return null;
+          }
+          else {
+            return rule;
+          }
         },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
-        },
-        rule: function() {
-          return rule;
         },
       }
     });
