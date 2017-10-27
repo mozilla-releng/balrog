@@ -1,5 +1,7 @@
 import json
 import mock
+import datetime
+import time
 
 from auslib.global_state import dbo
 from auslib.test.admin.views.base import ViewTest
@@ -1206,10 +1208,11 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(json.loads(ret.data), expected)
 
     def testAddScheduledChangeExistingRule(self):
+        future_time = int(time.mktime((datetime.datetime.now() + datetime.timedelta(minutes=5)).timetuple()) * 1000)
         data = {
             "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "rule_id": 5,
             "priority": 80, "buildTarget": "d", "version": "3.3", "backgroundRate": 100, "mapping": "c", "update_type": "minor",
-            "data_version": 1, "change_type": "update",
+            "data_version": 1, "change_type": "update", "when": future_time
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -1228,13 +1231,14 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 8).execute().fetchall()
         self.assertEquals(len(cond), 1)
-        cond_expected = {"sc_id": 8, "data_version": 1, "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "when": None}
+        cond_expected = {"sc_id": 8, "data_version": 1, "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "when": future_time}
         self.assertEquals(dict(cond[0]), cond_expected)
 
     def testAddScheduledChangeExistingDeletingRule(self):
+        future_time = int(time.mktime((datetime.datetime.now() + datetime.timedelta(minutes=5)).timetuple()) * 1000)
         data = {
             "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "data_version": 1,
-            "rule_id": 5, "change_type": "delete",
+            "rule_id": 5, "change_type": "delete", "when": future_time
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -1253,7 +1257,7 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 8).execute().fetchall()
         self.assertEquals(len(cond), 1)
-        cond_expected = {"sc_id": 8, "data_version": 1, "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "when": None}
+        cond_expected = {"sc_id": 8, "data_version": 1, "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "when": future_time}
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
