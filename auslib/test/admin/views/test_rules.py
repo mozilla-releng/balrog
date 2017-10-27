@@ -1061,6 +1061,8 @@ class TestRuleScheduledChanges(ViewTest):
         dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=6, when=5500000, data_version=1)
         dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=12, changed_by="bill", timestamp=75, sc_id=6)
         dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=13, changed_by="bill", timestamp=76, sc_id=6, when=5500000, data_version=1)
+        dbo.rules.scheduled_changes.signoffs.t.insert().execute(sc_id=6, username="bill", role="releng")
+        dbo.rules.scheduled_changes.signoffs.t.insert().execute(sc_id=6, username="mary", role="relman")
 
         dbo.rules.scheduled_changes.t.insert().execute(
             sc_id=7, scheduled_by="bill", data_version=1, base_priority=40, base_backgroundRate=50, base_mapping="a", base_update_type="minor",
@@ -1121,7 +1123,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": "k", "buildID": None, "locale": None, "osVersion": None, "memory": None, "mig64": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {}, "required_signoffs": {"relman": 1},
+                    "change_type": "insert", "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"relman": 1},
                 },
                 {
                     "sc_id": 7, "when": 7500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 6, "priority": 40,
@@ -1190,7 +1192,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "buildTarget": None, "alias": None, "channel": "k", "buildID": None, "locale": None, "osVersion": None, "memory": None, "mig64": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {}, "required_signoffs": {"relman": 1},
+                    "change_type": "insert", "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"relman": 1},
                 },
                 {
                     "sc_id": 7, "when": 7500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 6, "priority": 40,
@@ -1450,7 +1452,7 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(len(rows), 2)
         ret = self._post("/scheduled_changes/rules/3", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 3, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 3, "signoffs": {'bill': 'releng'}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 3).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1468,7 +1470,37 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(db_data, expected)
         rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
             dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(rows), 0)
+        self.assertEquals(len(rows), 1)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeDiffUserResetSignOffs(self):
+        data = {
+            "when": 2900000, "priority": 150, "backgroundRate": 50, "update_type": "minor", "sc_data_version": 1,
+            "channel": "j"
+        }
+        rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
+            dbo.rules.scheduled_changes.signoffs.sc_id == 6).execute().fetchall()
+        self.assertEquals(len(rows), 2)
+        ret = self._post("/scheduled_changes/rules/6", data=data, username="julie")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {'julie': 'releng'}})
+        r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 6).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 6, "scheduled_by": "julie", "data_version": 2, "complete": False,
+            "base_priority": 150, "base_backgroundRate": 50, "base_mapping": "ab", "base_update_type": "minor",
+            "base_channel": "j", "base_buildID": None, "base_locale": None, "base_osVersion": None,
+            "base_product": "fake", "base_data_version": None, "base_alias": None,
+            "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
+            "base_headerArchitecture": None, "base_comment": None, "base_memory": None, "base_mig64": None, "base_jaws": None,
+            "base_instructionSet": None, "base_version": None, "base_rule_id": None, "base_buildTarget": None,
+            "change_type": "insert",
+        }
+        self.assertEquals(db_data, expected)
+        rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
+            dbo.rules.scheduled_changes.signoffs.sc_id == 6).execute().fetchall()
+        self.assertEquals(len(rows), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeCantRemoveProductWithoutPermission(self):
