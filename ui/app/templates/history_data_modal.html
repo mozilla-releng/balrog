@@ -5,15 +5,16 @@
   </div>
   <div>
     <div class="modal-body hs_modal_body">
-        <div><label>Rule Id:</label> {{hs.rule_id}}</div>
+        <div ng-if="hs.rule_id"><label>Rule Id:</label> {{hs.rule_id}}</div>
+        <div ng-if="hs.rule_id"><label>Rule Id:</label> {{hs.rule_id}}</div>
         <div><label>Change Id:</label> {{hs.change_id}}</div>
         <div><label>Changed By:</label> {{hs.changed_by}}</div>
         <div><label>Product: </label> {{hs.product}}</div>
-        <div><label>Date Changed: </label> {{hs.timestamp}}</div>
-        <div><label>Update Type: </label> {{hs.update_type}}</div>
-        <div><label>Mapping: </label> {{hs.mapping}}</div>
         <div><label>Data Version: </label> {{hs.data_version}}</div>
-        <div><label>Comment: </label> {{hs.comment}}</div>
+        <div><label>Date Changed: </label> {{hs.timestamp}}</div>   
+        <div ng-if="hs.rule_id"><label>Update Type: </label> {{hs.update_type}}</div>
+        <div ng-if="hs.rule_id"><label>Mapping: </label> {{hs.mapping}}</div>
+        <div ng-if="hs.rule_id"><label>Comment: </label> {{hs.comment}}</div>
     </div>
   </div>
   <div class="modal-footer">
