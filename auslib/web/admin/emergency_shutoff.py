@@ -92,7 +92,22 @@ def delete(shutoff_id, changed_by, transaction):
 @transactionHandler
 @handleGeneralExceptions('PUT')
 def disable_updates(shutoff_id, changed_by, transaction):
-    return Response(response='OK {} {}'.format(shutoff_id, changed_by))
+    shutoff = dbo.emergencyShutoff.getEmergencyShutoff(shutoff_id)
+    if not shutoff:
+        return problem(status=404,
+                       title="Not Found",
+                       detail="Shutoff wasn't found",
+                       ext={"exception": "Shutoff does not exist"})
+    if shutoff.updates_disabled:
+        return problem(
+            400, 'Bad Request', 'Invalid request for disabling updates',
+            ext={'data': 'Updates already disabled'})
+    where = get_columns_dict(shutoff_id=shutoff_id)
+    what = get_columns_dict(updates_disabled=True)
+    dbo.emergencyShutoff.update(
+        where=where, what=what, changed_by=changed_by, transaction=transaction)
+    dbo.emergencyShutoff.sc_table.insert(changed_by, transaction, change_type='update', **what)
+    return Response(status=200)
 
 
 def scheduled_changes():
