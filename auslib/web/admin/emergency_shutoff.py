@@ -1,9 +1,11 @@
+import time
 from flask import jsonify, Response
 from connexion import problem
 from jsonschema.compat import str_types
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
     requirelogin, handleGeneralExceptions, transactionHandler)
+from scheduled_changes import EnactScheduledChangeView, ScheduledChangesView
 
 
 def shutoff_already_exists(emergency_shutoff):
@@ -88,6 +90,13 @@ def delete(shutoff_id, changed_by, transaction):
     return Response(response='OK {} {}'.format(shutoff_id, changed_by))
 
 
+def schedule_reenable_updates(shutoff_id, changed_by, transaction):
+    asap_schedule = int(time.time() * 1000)
+    what = get_columns_dict(updates_disabled=False, when=asap_schedule)
+    dbo.emergencyShutoff.scheduled_changes.insert(
+        changed_by, transaction, change_type='update', **what)
+
+
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions('PUT')
@@ -106,16 +115,15 @@ def disable_updates(shutoff_id, changed_by, transaction):
     what = get_columns_dict(updates_disabled=True)
     dbo.emergencyShutoff.update(
         where=where, what=what, changed_by=changed_by, transaction=transaction)
-    dbo.emergencyShutoff.sc_table.insert(changed_by, transaction, change_type='update', **what)
+    schedule_reenable_updates(shutoff_id, changed_by, transaction)
     return Response(status=200)
 
 
 def scheduled_changes():
-    return 'OK'
+    view = ScheduledChangesView('emergency_shutoff', dbo.emergencyShutoff)
+    return view.get()
 
 
-@requirelogin
-@transactionHandler
-@handleGeneralExceptions('POST')
-def enact_updates_scheduled_for_reactivation(sc_id, changed_by, transaction):
-    return Response(response='OK {} {}'.format(sc_id, changed_by))
+def enact_updates_scheduled_for_reactivation(sc_id, changed_by):
+    view = EnactScheduledChangeView('emergency_shutoff', dbo.emergencyShutoff)
+    return view.post(sc_id)
