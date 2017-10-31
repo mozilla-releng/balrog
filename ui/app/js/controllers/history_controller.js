@@ -5,7 +5,7 @@ angular
     Page.setTitle("History");
 
     $scope.userInput = {
-      changedBy: [],
+      changedBy: "",
       dateRangeStart: "",
       dateRangeEnd: "",
       hs_pr_ch_filter: ""
@@ -20,33 +20,21 @@ angular
     $scope.checkBoxes = {};
     
     $scope.currentPage = 1;
-    $scope.pageSize = 100;
-    $scope.maxSize = 10;
+    $scope.pageSize = 10;
+    $scope.maxSize = 5;
 
-    $scope.checkbox_constants  = {
-      rules: 0,
-      releases:0,
-      permissions: 0,
-      permissions_required_signoffs: 0,
-      product_required_signoffs:0
-    };
+    $scope.data = {
+      objectOptions: [
+        {id: '1', name: 'default', value:'---Please select---' },
+        {id: '2', name: 'rules', value: 'Rules'},
+        {id: '3', name: 'releases', value: 'Releases'},
+        {id: '4', name: 'permissions', value: 'Permissions'},
+        {id: '5', name: 'product_required_signoffs', value: 'Product Required Signoffs'},
+        {id: '6', name: 'permissions_required_signoffs', value: 'Permissions Required Signoffs'},
+      ],
+      objectSelected:{id: '1',  name: 'default', value:'---Please select---' }
+      };
       
-    //Add and remove username or email tags
-    $scope.addChangedBy = function() {
-      $scope.userInput.changedBy.push({ name: $scope.changedBy });
-      $scope.changedBy = "";
-    };
-
-    $scope.deleteChangedBy= function(key) {
-      if ($scope.userInput.changedBy.length > 0 && $scope.changedBy.length === 0 &&
-        key === undefined) {
-        $scope.userInput.changedBy.pop();
-      } else if (key !== undefined) {
-        $scope.userInput.changedBy.splice(key, 1);
-      }
-    };
-    // User/email tag ends
-
     //Date range functions- To disable dates before start date
     function startDateOnSetTime() {
       $scope.$broadcast("start-date-changed");
@@ -124,81 +112,48 @@ angular
       return $scope.pr_ch_selected = pr_ch.split(",");
     };
     //Product/channel filter ends
-
-    
-    function optionChecked(choice) {
-      angular.forEach(choice, function(value, key) {
-        if (value === true) {
-          $scope.checkbox_constants[key]= 1; 
-        }else{
-          $scope.checkbox_constants[key] = 0;
-        }
-      });
-      return $scope.checkbox_constants;
-    }
-    
+   
     function checkParameters() {
-      $scope.checkboxValues = optionChecked($scope.checkBoxes);
-      angular.forEach($scope.checkboxValues, function(value, key){
-        if (value === 1) {
-          if ($scope.userInput.changedBy) {
-            var changedByArr = [];
-            $scope.userInput.changedBy.forEach(function(item) {
-              if (changedByArr.indexOf(item.name) === -1) {
-                changedByArr.push(item.name);
-              }
-              $scope.changedByValue = changedByArr;
-            });
-          }
-          if ($scope.userInput.dateRangeStart && $scope.userInput.dateRangeEnd) { 
-            $scope.hs_startDate = new Date($scope.userInput.dateRangeStart).getTime();
-            $scope.hs_endDate = new Date($scope.userInput.dateRangeEnd).getTime();
-          }
-          if ($scope.userInput.hs_pr_ch_filter && $scope.pr_ch_selected !== undefined) {
-            $scope.product = $scope.pr_ch_selected[0];
-            $scope.channel = $scope.pr_ch_selected[1];   
-          } 
-        } else {
-          // sweetAlert(
-          //   "Please check a box",
-          //   "You cannot proceed",
-          //   "error"
-          // );
-        }
-      })
+      if ($scope.data.objectSelected.id !== '1') {
+        $scope.objectValue = $scope.data.objectSelected.name;
+      }else{
+        sweetAlert(
+          "Please select an object",
+          "You cannot proceed",
+          "error"
+        );
+      }
+      if ($scope.userInput.changedBy !== ""){
+        $scope.changedByValue = $scope.userInput.changedBy.toLowerCase();
+      }
+      else {
+        $scope.changedByValue = "";
+      }
+      if ($scope.userInput.dateRangeStart && $scope.userInput.dateRangeEnd) { 
+        $scope.hs_startDate = new Date($scope.userInput.dateRangeStart).getTime();
+        $scope.hs_endDate = new Date($scope.userInput.dateRangeEnd).getTime();
+      }
+      else {
+        $scope.hs_startDate = "";
+        $scope.hs_endDate = "";
+      }
+      if ($scope.userInput.hs_pr_ch_filter && $scope.pr_ch_selected !== undefined) {
+        $scope.product = $scope.pr_ch_selected[0];
+        $scope.channel = $scope.pr_ch_selected[1];   
+      } 
+      else {
+        $scope.product = "";
+        $scope.channel = "";
+      }
     }
-
-    //Request response
-    function processResponse(response) {
-      var result = [];
-      $scope.history_count = 0;
-      angular.forEach(response, function(value, key){
-        $scope.changeType = key;
-        $scope.history_revisions = value.revisions;
-        $scope.history_count += value.count;
-        if ($scope.history_count > 0){
-          $scope.history_revisions.forEach(function(revision){
-            result.push(revision);
-          });
-        }else {
-            sweetAlert(
-              "error",
-              "No results matching the filter",
-              "error"   
-            );
-          }
-      });         
-      $scope.searchResult = result;
-      
-    }
-    //Request response ends
 
 
     $scope.searchHistory = function() {
+      $scope.searchResult = [];
       $scope.loading = true;
       checkParameters();
       var filterParams = {
-        checkboxValue: $scope.checkboxValues,
+        objectValue: $scope.objectValue,
         changedByValue: $scope.changedByValue,
         startDate: $scope.hs_startDate,
         endDate: $scope.hs_endDate,
@@ -207,14 +162,38 @@ angular
       };
       History.getHistory(filterParams)
       .success(function(response) {
-        if(Object.keys(response).length > 0){
-          $scope.tableResult = true;
-          processResponse(response); 
-        } else {
-          $scope.searchResult = [];
-          $scope.tableResult = false;
-          return $scope.searchResult;
+        $scope.tableResult = true;
+        var result = [];
+        $scope.changeType = [];
+        $scope.history_count = 0;
+        angular.forEach(response, function(value, key){
+          $scope.history_revisions = value.revisions;
+          $scope.history_required_signoffs = value.required_signoffs;
+          $scope.history_count += value.count;
+          if ($scope.history_count > 0){
+            if($scope.history_required_signoffs){
+              $scope.history_required_signoffs.forEach(function(revision){
+                $scope.revision = revision;
+                $scope.revision["type"] = key;
+                result.push($scope.revision);
+              });
+            }
+            if($scope.history_revisions){  
+              $scope.history_revisions.forEach(function(revision){
+                $scope.revision = revision;
+                $scope.revision["type"] = key;
+                result.push($scope.revision);                
+              });
+          }
+          $scope.searchResult = result;
         }
+          else {
+              sweetAlert(
+                "error",
+                "No results matching the filter",
+                "error"   
+              );
+            }      });         
       })
       .error(function() {
         console.error(arguments);
@@ -224,6 +203,22 @@ angular
         $scope.loading = false;
       });
     };
+
+    $scope.orderHistory = function(revision) {
+      if (revision.timestamp) {
+          return revision.timestamp * -1;
+      }
+    };
+
+    $scope.clearFilters = function() {
+      $scope.data.objectSelected = {id: '1',  name: 'default', value:'---Please select---' },
+      $scope.userInput = {
+        changedBy: "",
+        dateRangeStart: "",
+        dateRangeEnd: "",
+        hs_pr_ch_filter: ""
+      };
+    }
 
     $scope.openDataModal = function(change_id) {
       angular.forEach($scope.searchResult, function(revision){
@@ -237,10 +232,6 @@ angular
               hs: function() {
                 var hs = revision;
                 return hs;
-              },
-              hs_ct: function() {
-                var hs_ct = $scope.changeType;
-                return hs_ct;
               },
             }
           });

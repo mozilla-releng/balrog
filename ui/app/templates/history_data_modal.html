@@ -1,21 +1,35 @@
 <div>
   <div class="modal-header">
-    <h3 class="modal-title">History Type: {{ hs_ct }}</h3>
-    <h4 class="modal-title">Product/Channel: {{hs.product}}/{{hs.channel}}</h4>
+    <h3 class="modal-title">History Type: {{ hs.type }}</h3>
+    <h4 class="modal-title" ng-show="hs.type === 'Rules || Releases'">Product/Channel: {{hs.product}}/{{hs.channel}}</h4>
   </div>
   <div>
     <div class="modal-body hs_modal_body">
-        <div ng-if="hs.rule_id"><label>Rule Id:</label> {{hs.rule_id}}</div>
-        <div ng-if="hs.rule_id"><label>Rule Id:</label> {{hs.rule_id}}</div>
+
+        <div ng-show="hs.type === 'Permissions' || hs.type === 'Permissions scheduled change'"><label>Username: </label> {{hs.username}}</div>
+        <div ng-show="hs.type === 'Permissions' || hs.type === 'Permissions scheduled change'"><label>Permission: </label> {{hs.permission}}</div>
+        <div ng-show="hs.type === 'Rules'"><label>Rule Id:</label> {{hs.rule_id}}</div>
+        <div ng-if="hs.sc_id"><label>Scheduled Id:</label> {{hs.sc_id}}</div>
+        <div ng-if="hs.sc_id"><label>Scheduled By:</label> {{hs.scheduled_by}}</div>
+        <div ng-show="hs.type === 'Rules || Releases'"><label>Build Id:</label> {{hs.buildID || "null"}} </div>
+        <div ng-if="hs.sc_id"><label>Scheduled change type:</label> {{hs.change_type}}</div>
+        <div ng-if="hs.sc_id"><label>Schedule complete status:</label> {{hs.complete}}</div>
+        <div ng-if="hs.sc_id"><label>Scheduled data version:</label> {{hs.sc_data_version}}</div>
+        <div ng-if="hs.sc_id"><label>When scheduled change will occur:</label> {{hs.when | date:'yyyy-MM-dd HH:mm:ss Z'}}</div>
+        <div ng-show="hs.type === 'Releases'"><label>Name: </label> {{hs.name}}</div>
         <div><label>Change Id:</label> {{hs.change_id}}</div>
         <div><label>Changed By:</label> {{hs.changed_by}}</div>
-        <div><label>Product: </label> {{hs.product}}</div>
-        <div><label>Data Version: </label> {{hs.data_version}}</div>
-        <div><label>Date Changed: </label> {{hs.timestamp}}</div>   
-        <div ng-if="hs.rule_id"><label>Update Type: </label> {{hs.update_type}}</div>
-        <div ng-if="hs.rule_id"><label>Mapping: </label> {{hs.mapping}}</div>
-        <div ng-if="hs.rule_id"><label>Comment: </label> {{hs.comment}}</div>
+        <div ng-show="hs.type === 'Rules || Releases'"><label>Product: </label> {{hs.product}}</div>
+        <div ng-show="hs.data_version !== null"><label>Data Version: </label> {{hs.data_version}}</div>
+        <div><label>Date Changed: </label> {{hs.timestamp | date:'yyyy-MM-dd HH:mm:ss Z'}}</div>   
+        <div ng-show="hs.type === 'Rules || Releases'"><label>Background rate: </label> {{hs.backgroundRate}}</div>  
+        <div ng-show="hs.type === 'Rules || Releases'"><label>Update Type: </label> {{hs.update_type}}</div>
+        <div ng-show="hs.type === 'Rules || Releases'"><label>Mapping: </label> {{hs.mapping}}</div>
+        <div ng-show="hs.type === 'Rules || Releases'"><label>Comment: </label> {{hs.comment}}</div>
+        
     </div>
+
+
   </div>
   <div class="modal-footer">
     <button class="btn btn-default pull-right" ng-show="!saving" ng-click="cancel()">Close</button>

@@ -1,14 +1,7 @@
 angular.module("app").factory('History', function($http, $q, ScheduledChanges, Helpers) {
     var service = {
       getHistory: function(filterParams){
-        var url = '/api/history?releases=1';
-        if (filterParams.checkboxValue){
-          angular.forEach(filterParams.checkboxValue, function(value,key) {
-            if (value === 1) {
-              url += `&${key}=`+ value;
-            }
-          })
-        }
+        var url = '/api/' +(filterParams.objectValue) +'/history?';
         if (filterParams.changedByValue){
           url += '&changed_by=' + filterParams.changedByValue;
         }
@@ -19,10 +12,11 @@ angular.module("app").factory('History', function($http, $q, ScheduledChanges, H
           url += '&product=' + filterParams.product + '&channel=' + filterParams.channel;
         } else if (filterParams.product){
           url += '&product=' + filterParams.product;
-        }     
+        }
+        console.log(url,"ur");
         return $http.get(url) ;
       },
-    }
+    };
     return service; 
   });
   

@@ -6,127 +6,96 @@
   <hr>
   <div class="col-md-4 gutter-top search-filters">
     <form>
-      <div>
         <label>Search Filters</label>
-      </div>
       <div>
+        <div class="filter-group">
+          <h6 class="h-underlined">Objects: </h6>
+          <select name="objectselect" id="objectSelect" ng-options="option.value for option in data.objectOptions track by option.id"
+            ng-model="data.objectSelected"></select>
+          <br>
+        </div>
         <div>
-          <fieldset class="filter-group">
-            <div class="col-sm-12">
-              <input type="checkbox" ng-model="checkBoxes.rules" value=>
-              <span>Rules</span>
-            </div>
-            <div class="col-sm-12">
-                <input type="checkbox" ng-model="checkBoxes.releases">
-                <span>Releases</span>
-            </div>
-            <div class="col-sm-12">
-              <input type="checkbox" ng-model="checkBoxes.permissions">
-              <span>Permissions</span>
-            </div>
-            <div class="col-sm-12">
-                <input type="checkbox" ng-model="checkBoxes.product_required_signoffs">
-                <span>Product Required Signoffs</span>
-            </div>
-            
-            <div class="col-sm-12">
-                <input type="checkbox" ng-model="checkBoxes.permissions_required_signoffs">
-                <span>Persmissions Required Signoffs</span>
-            </div>
-          </fieldset>
-          <div>
-              <div class="filter-group" ng-show="checkBoxes.permissions_required_signoffs">
-                  <h6>Role</h6>
-                  <input type="text" ng-model="role" placeholder='Enter Role'/>     
-                </div>
-            <div class="filter-group">
-                <div>
-                  <h6 class="h-underlined">Changed By</h6>
-                </div>
-              <div class="user-input-ctn">
-                <div data-ng-repeat="(key, user) in userInput.changedBy" class="input-user">
-                    {{ user.name }}
-                    <div class="delete-user" data-ng-click="deleteChangedBy(key)">&times;</div>
-                </div>
-                <input type="text" data-tag-input="" data-ng-model="changedBy" placeholder='Add name' data-new-tag="addChangedBy()"
-                      data-delete-tag="deleteChangedBy()"/>
-              </div>       
-            </div>
-
-            <div class="filter-group">
-              <h6 class="h-underlined">Date range</h6>
-              <div class="dropdown form-group">
-                <a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#">
-                  <div class="input-group date">
-                    <input type="text" class="form-control" data-ng-model="userInput.dateRangeStart">
-                    <span class="input-group-addon">
-                      <i class="glyphicon glyphicon-calendar"></i>
-                    </span>
-                  </div>
-                </a>
-                <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                  <datetimepicker data-ng-model="userInput.dateRangeStart" data-datetimepicker-config="{ renderOn: 'end-date-changed' }" data-on-set-time="startDateOnSetTime()"
-                    data-before-render="startDateBeforeRender($dates)"></datetimepicker>
-                </ul>
-              </div>
-              <h6>to</h6>
-              <div class="dropdown form-group">
-                <a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#">
-                  <div class="input-group date">
-                    <input type="text" class="form-control" data-ng-model="userInput.dateRangeEnd">
-                    <span class="input-group-addon">
-                      <i class="glyphicon glyphicon-calendar"></i>
-                    </span>
-                  </div>
-                </a>
-                <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                  <datetimepicker data-ng-model="userInput.dateRangeEnd" data-datetimepicker-config="{ renderOn: 'start-date-changed' }" data-on-set-time="endDateOnSetTime()"
-                    data-before-render="endDateBeforeRender($view, $dates)"></datetimepicker>
-                </ul>
-              </div>
-            </div>
-
+          <div class="filter-group" ng-show="data.objectSelected.name === 'permissions_required_signoffs'">
+            <h6>Role</h6>
+            <input type="text" ng-model="role" placeholder='Enter Role' />
+          </div>
+          <div class="filter-group">
             <div>
-              <div class="filter-group">
-                <h6 class="h-underlined">Product / Channel
-                  <span tooltip="Remove filter option" tooltip-placement="right">
-                  </span>
-                </h6>
-                <select ng-model="userInput.hs_pr_ch_filter" ng-change=productChannelValue(userInput.hs_pr_ch_filter) name="hs_pr_ch_filter" ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
-                </select>
-              </div>
+              <h6 class="h-underlined">Changed By</h6>
             </div>
+            <div class="user-input-ctn">
+              <input type="text" data-tag-input="" ng-model="userInput.changedBy" placeholder='Add name' />
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <h6 class="h-underlined">Date range</h6>
+            <div class="dropdown">
+              <a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#">
+                <div class="input-group date">
+                  <input type="text" class="form-control" data-ng-model="userInput.dateRangeStart">
+                  <span class="input-group-addon">
+                    <i class="glyphicon glyphicon-calendar"></i>
+                  </span>
+                </div>
+              </a>
+              <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                <datetimepicker data-ng-model="userInput.dateRangeStart" data-datetimepicker-config="{ renderOn: 'end-date-changed' }" data-on-set-time="startDateOnSetTime()"
+                  data-before-render="startDateBeforeRender($dates)"></datetimepicker>
+              </ul>
+            </div>
+            <span>to</span>
+            <div class="dropdown form-group">
+              <a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#">
+                <div class="input-group date">
+                  <input type="text" class="form-control" data-ng-model="userInput.dateRangeEnd">
+                  <span class="input-group-addon">
+                    <i class="glyphicon glyphicon-calendar"></i>
+                  </span>
+                </div>
+              </a>
+              <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                <datetimepicker data-ng-model="userInput.dateRangeEnd" data-datetimepicker-config="{ renderOn: 'start-date-changed' }" data-on-set-time="endDateOnSetTime()"
+                  data-before-render="endDateBeforeRender($view, $dates)"></datetimepicker>
+              </ul>
+            </div>
+          </div>
+          <div class="filter-group" ng-hide="data.objectSelected.name === 'permissions' || data.objectSelected.name === 'permissions_required_signoff'">
+            <h6 class="h-underlined">Product / Channel </h6>
+            <select ng-model="userInput.hs_pr_ch_filter" ng-change=productChannelValue(userInput.hs_pr_ch_filter) name="hs_pr_ch_filter"
+              ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
+            </select>
           </div>
         </div>
       </div>
       <div>
         <button class="btn btn-primary" ng-click="searchHistory()">Search</button>
+        <button class="btn btn-primary" ng-click="clearFilters()">Clear Filters</button>
       </div>
     </form>
   </div>
 
   <div class="col-md-8">
-    <div class="content-wrapper">
-      <h4>History
-      <span class="count">{{history_count || 0}} items found
-       
-      </span></h4>
+    <div class="wrapper">
       <div class="table-responsive">
-        <div class="row pagination-container" ng-show="searchResult.length > pageSize">
-          <pagination 
-            class="pagination-sm"
-            total-items="searchResult.length"
-            ng-model="currentPage"
-            items-per-page="pageSize"
-            max-size="maxSize"
-            boundary-links="true">
-          </pagination>
+        <div>
+          <span class="pagination-container" ng-show="history_count > pageSize">
+            <pagination class="pagination-sm" total-items="history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
+              boundary-links="true">
+            </pagination>
+          </span>
+          <span style="float: right" class="count">{{history_count || 0}} item(s) found </span>
         </div>
-      
+
         <table class="table table-bordered table-hover table-striped">
           <thead>
             <tr>
-              <th>S/No</th>
+              <th ng-show="revision.rule_id">Rule Id</th>
+              <th ng-show="revision.name">Name</th>
+              <th ng-show="revision.role">Role</th>
+              <th ng-show="revision.username">Username</th>
+              <th ng-show="revision.rule_id || revision.name || revision.role">Product/Channel</th>
+              <th ng-show="revision.permission">Permission</th>
               <th>Object</th>
               <th>Changed By</th>
               <th>Date</th>
@@ -134,14 +103,19 @@
             </tr>
           </thead>
           <tbody ng-show="tableResult">
-            {{debugger}}
-            <tr ng-repeat="item in searchResult = searchResult | startFrom: (currentPage - 1)*pageSize | limitTo:pageSize">
-              <td>{{ $index+1 }}</td>
-              <td>{{item.product + ',' + item.channel}}
+            <tr ng-repeat="item in historyResult = searchResult | orderBy:orderHistory | startFrom: (currentPage - 1)*pageSize | limitTo:pageSize track by $index">
+              <td>{{item.rule_id || item.name || item.username || item.role}}</td>
+              <td ng-show="revision.permission">{{item.permission}}
+                  <a class="btn btn-default btn-xs" href="" ng-click="openDataModal(item.change_id)">
+                    <i class="glyphicon glyphicon-eye-open"></i>
+                  </a>
+                </td>
+              <td ng-show="revision.rule_id || revision.name ||revision.role">{{item.product + ' ' +item.channel}}
                 <a class="btn btn-default btn-xs" href="" ng-click="openDataModal(item.change_id)">
                   <i class="glyphicon glyphicon-eye-open"></i>
-              </a>
+                </a>
               </td>
+              <td>{{ item.type }}</td>
               <td>{{ item.changed_by }}</td>
               <td>{{ item.timestamp | date:'dd/MM/yyyy hh:mm a' }}</td>
               <td>{{ item.data_version }}</td>
