@@ -1,11 +1,10 @@
-import time
+from datetime import datetime, timedelta
 from flask import jsonify, Response
 from connexion import problem
-from jsonschema.compat import str_types
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
     requirelogin, handleGeneralExceptions, transactionHandler)
-from scheduled_changes import EnactScheduledChangeView, ScheduledChangesView
+from auslib.web.admin.views.scheduled_changes import EnactScheduledChangeView, ScheduledChangesView
 
 
 def shutoff_already_exists(emergency_shutoff):
@@ -22,7 +21,7 @@ def can_updating_product_or_channel(emergency_shutoff, emergency_shutoff_db):
 def get_columns_dict(**columns):
     where = {}
     for column, value in columns.iteritems():
-        if isinstance(value, str_types) and not value:
+        if not value:
             continue
         where[column] = value
     return where
@@ -90,9 +89,16 @@ def delete(shutoff_id, changed_by, transaction):
     return Response(response='OK {} {}'.format(shutoff_id, changed_by))
 
 
-def schedule_reenable_updates(shutoff_id, changed_by, transaction):
-    asap_schedule = int(time.time() * 1000)
-    what = get_columns_dict(updates_disabled=False, when=asap_schedule)
+def get_asap_when():
+    epoch = datetime(1970, 1, 1)
+    asap_date = (datetime.now() + timedelta(minutes=5))
+    return int((asap_date - epoch).total_seconds() * 1000)
+
+
+def schedule_reenable_updates(shutoff, changed_by, transaction):
+    what = get_columns_dict(when=get_asap_when())
+    shutoff['data_version'] += 1
+    what.update(shutoff)
     dbo.emergencyShutoff.scheduled_changes.insert(
         changed_by, transaction, change_type='update', **what)
 
@@ -107,15 +113,17 @@ def disable_updates(shutoff_id, changed_by, transaction):
                        title="Not Found",
                        detail="Shutoff wasn't found",
                        ext={"exception": "Shutoff does not exist"})
-    if shutoff.updates_disabled:
+    if shutoff['updates_disabled']:
         return problem(
             400, 'Bad Request', 'Invalid request for disabling updates',
             ext={'data': 'Updates already disabled'})
     where = get_columns_dict(shutoff_id=shutoff_id)
     what = get_columns_dict(updates_disabled=True)
-    dbo.emergencyShutoff.update(
-        where=where, what=what, changed_by=changed_by, transaction=transaction)
-    schedule_reenable_updates(shutoff_id, changed_by, transaction)
+    data_version = shutoff['data_version']
+    dbo.emergencyShutoff.update(where=where, what=what,
+                                old_data_version=data_version,
+                                changed_by=changed_by, transaction=transaction)
+    schedule_reenable_updates(shutoff, changed_by, transaction)
     return Response(status=200)
 
 

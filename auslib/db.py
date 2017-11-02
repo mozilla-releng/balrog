@@ -2476,7 +2476,7 @@ class EmergencyShutoff(AUSTable):
             Column('channel', String(75), nullable=False),
             Column('updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
             Column('additional_notification_list', String(500)))
-        AUSTable.__init__(self, db, dialect, scheduled_changes=True, versioned=False)
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
     def getEmergencyShutoff(self, shutoff_id):
         emergency_shutoff = self.select(where=[self.shutoff_id == shutoff_id])
