@@ -170,15 +170,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     return !!(false || $scope.filters.search.length);
   };
 
-  $scope.returnRuleType = function() {
-    var firstRuleId = $scope.rules[0].rule_id;
-    return $scope.rules.every(function(rule) {
-      return rule.rule_id === firstRuleId;
-    }) ? "Revision" : "All Rules";
-  };
-
   $scope.orderRules = function(rule) {
-    if($scope.returnRuleType() === "Revision"){
+    if($scope.rule_id){
       return rule.data_version * -1;
     }
      // Rules are sorted by priority. Rules that are pending (ie: still just a Scheduled Change)
