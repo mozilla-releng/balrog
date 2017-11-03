@@ -31,6 +31,8 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequiremen
   $scope.pr_ch_options = pr_ch_options;
 
   $scope.saveChanges = function () {
+   var r = confirm("You have changed the channel value. This can have unexpected impacts\n\nClick 'OK' to Confirm The Changes");
+   if (r == true) {
     $scope.saving = true;
 
     // Evaluate the values entered for priority and background rate.
@@ -90,10 +92,11 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequiremen
         $scope.saving = false;
       });
     });
-
+   }
   };
 
   $scope.cancel = function () {
     $modalInstance.dismiss('cancel');
   };
 });
+
