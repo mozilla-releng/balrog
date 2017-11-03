@@ -171,11 +171,15 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   };
 
   $scope.orderRules = function(rule) {
-    // Rules are sorted by priority. Rules that are pending (ie: still just a Scheduled Change)
+    if($scope.rule_id){
+      return rule.data_version * -1;
+    }
+     // Rules are sorted by priority. Rules that are pending (ie: still just a Scheduled Change)
     // will be inserted based on the priority in the Scheduled Change.
     // Rules that have Scheduled updates or deletes will remain sorted on their current priority
     // because it's more important to make it easy to assess current state than future state.
-    if (rule.priority === null || rule.priority === undefined) {
+
+    else if (rule.priority === null || rule.priority === undefined) {
         return rule.scheduled_change.priority * -1;
     }
     else {
