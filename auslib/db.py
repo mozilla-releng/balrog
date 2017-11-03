@@ -2476,7 +2476,7 @@ class EmergencyShutoff(AUSTable):
             Column('channel', String(75), nullable=False),
             Column('updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
             Column('additional_notification_list', String(500)))
-        AUSTable.__init__(self, db, dialect, scheduled_changes=True)
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def getEmergencyShutoff(self, shutoff_id):
         emergency_shutoff = self.select(where=[self.shutoff_id == shutoff_id])
@@ -2488,6 +2488,47 @@ class EmergencyShutoff(AUSTable):
     def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         ret = super(EmergencyShutoff, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         return ret.inserted_primary_key[0]
+
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
+        # If the product is being changed, we also need to make sure the user
+        # permission to modify _that_ product.
+        # if "product" in what:
+        #     if not self.db.hasPermission(changed_by, "rule", "modify", what["product"], transaction):
+        #         raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, what["product"]))
+
+        for current_rule in self.select(where=where, transaction=transaction):
+            if not self.db.hasPermission(changed_by, "rule", "modify", current_rule["product"], transaction):
+                raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_rule["product"]))
+
+            new_rule = current_rule.copy()
+            new_rule.update(what)
+            if not dryrun:
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_rule, new_rule], transaction=transaction)
+                verify_signoffs(potential_required_signoffs, signoffs)
+
+        return super(EmergencyShutoff, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version,
+                                                    transaction=transaction, dryrun=dryrun)
+
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        potential_required_signoffs = []
+        # The new row may change the product or channel, so we must look for
+        # Signoffs for both.
+        for row in affected_rows:
+            if not row:
+                continue
+            where = {}
+            # If product isn't present, or is None, it means the Rule affects
+            # all products, and we must leave it out of the where clause. If
+            # we included it, the query would only match rows where product is
+            # NULL.
+            if row.get("product"):
+                where["product"] = row["product"]
+            for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
+                # Channel supports globbing, so we must take that into account
+                # before deciding whether or not this is a match.
+                if not row.get("channel") or self._matchesRegex(row["channel"], rs["channel"]):
+                    potential_required_signoffs.append(rs)
+        return potential_required_signoffs
 
 
 class UTF8PrettyPrinter(pprint.PrettyPrinter):

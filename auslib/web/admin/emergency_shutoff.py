@@ -132,6 +132,7 @@ def scheduled_changes():
     return view.get()
 
 
+@requirelogin
 def enact_updates_scheduled_for_reactivation(sc_id, changed_by):
     view = EnactScheduledChangeView('emergency_shutoff', dbo.emergencyShutoff)
-    return view.post(sc_id)
+    return view.post(sc_id, changed_by=changed_by)
