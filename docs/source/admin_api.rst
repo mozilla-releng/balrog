@@ -56,7 +56,6 @@ The following parameters are supported:
 -   buildTarget
 -   osVersion
 -   distVersion
--   whitelist
 -   comment
 -   headerArchitecture
 
@@ -99,7 +98,6 @@ The following parameters are supported:
 -   buildTarget
 -   osVersion
 -   distVersion
--   whitelist
 -   comment
 -   headerArchitecture
 

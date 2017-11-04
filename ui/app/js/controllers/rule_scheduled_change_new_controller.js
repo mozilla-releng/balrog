@@ -1,5 +1,5 @@
 angular.module("app").controller("NewRuleScheduledChangeCtrl",
-function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes, sc, signoffRequirements, Helpers) {
+function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes, sc, original_row, signoffRequirements, Helpers) {
   $scope.names = [];
   Releases.getNames().then(function(names) {
     $scope.names = names;
@@ -36,7 +36,7 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
       if ($scope.sc.change_type === "delete") {
         target = undefined;
       }
-      $scope.scheduledChangeSignoffsRequired = Rules.ruleSignoffsRequired($scope.sc.original_row, target, signoffRequirements);
+      $scope.scheduledChangeSignoffsRequired = Rules.ruleSignoffsRequired(original_row, target, signoffRequirements);
     }
   }, true);
 
@@ -72,17 +72,19 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
     asap.setMinutes(asap.getMinutes() + 5);
     $scope.sc.when = ($scope.auto_time) ? asap : $scope.sc.when;
     
-    // Evaluate the values entered for priority and background rate.
-    $scope.integer_validation_errors = Helpers.integerValidator({'priority': $scope.sc.priority, 'backgroundRate': $scope.sc.backgroundRate});
-    // Stop sending the request if any number validation errors.
-    if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.backgroundRate) {
-      $scope.saving = false;
-      sweetAlert(
-        "Form submission error",
-        "See fields highlighted in red.",
-        "error"
-      );
-      return;
+    if ($scope.sc.change_type !== "delete") {
+      // Evaluate the values entered for priority and background rate.
+      $scope.integer_validation_errors = Helpers.integerValidator({'priority': $scope.sc.priority, 'backgroundRate': $scope.sc.backgroundRate});
+      // Stop sending the request if any number validation errors.
+      if($scope.integer_validation_errors.priority || $scope.integer_validation_errors.backgroundRate) {
+        $scope.saving = false;
+        sweetAlert(
+          "Form submission error",
+          "See fields highlighted in red.",
+          "error"
+        );
+        return;
+      }
     }
 
     CSRF.getToken()

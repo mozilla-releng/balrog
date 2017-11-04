@@ -105,6 +105,12 @@ Following tables show columns according to different Categories:
   |                        |                    | requesting the update has                        | memory to compare the incoming  | ">=8096"                   |
   |                        |                    |                                                  | one against                     |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
+  |                        | jaws               | Whether or not the the Rule should apply to      | Exact match only                | True, False, or NULL       |
+  |                        |                    | queries that indicate a client thas has an       |                                 |                            |
+  |                        |                    | incompatible version of the JAWS screen reader   |                                 |                            |
+  |                        |                    | installed. If set to True or False the Rule and  |                                 |                            |
+  |                        |                    | the query must match precisely.                  |                                 |                            |
+  |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | mig64              | Whether or not the Rule should apply to queries  | Exact match only                | True, False, or NULL       |
   |                        |                    | that have opted into 32 -> 64-bit migration.     |                                 |                            |
   |                        |                    | If set to True or False the Rule and the query   |                                 |                            |
@@ -145,9 +151,11 @@ Most of the Matchable database fields are present as distinct parts of the updat
 
 There are a few special cases to consider:
 
--   systemCapabilities contains comma separated data and breaks down into multple database columns (instructionSet, memory)
+-   systemCapabilities contains comma separated data and breaks down into multple database columns (instructionSet, memory, jaws)
 
 -   headerArchitecture is extracted from the User-Agent header
+
+-   mig64 is optional, and comes from the query string instead of the path
 
 
 The following logic is used to figure out which rule a request matches, and how to respond:
@@ -157,8 +165,6 @@ The following logic is used to figure out which rule a request matches, and how 
 -   Discard any rules where the rule specifies a channel, version, buildID, osVersion, any part of systemCapabilities, and/or locale, and that doesn't match the request. The method for each match is described in the table above.
 
     -   The channel has special handling to try "falling back" to a simpler channel, for example a request with release-cck-foo will also consider rules for 'release'. This only applies to channels containing '-cck-'.
-
-    -   Rules which specify a Whitelist will also be discarded if the request doesn't fall inside the Whitelist.
 
 -   Sort the remaining rules by priority, and keep the one with highest.
 
@@ -308,7 +314,7 @@ Changes that directly affect updates that clients receive (the Rules and Release
 
 Any changes to a Rule that would affect a product and channel combination specified in this table will require signoff. This includes Rules that don't specify a product or channel at all (because that is treated as a wildcard).
 
-Releases which are mapped to be a Rule's mapping, fallbackingMapping, or whitelist field require the same signoffs as the Rule. Releases that are not mapped to by a rule never require any signoff. It's important that they are inspected before mapping to them for the first time.
+Releases which are mapped to be a Rule's mapping or fallbackingMapping field require the same signoffs as the Rule. Releases that are not mapped to by a rule never require any signoff. It's important that they are inspected before mapping to them for the first time.
 
 If a change affects more than one product and channel combination, *all* affected combinations' required signoffs will be combined to find the full set of required. For example, if Firefox's release channel requires 3 signoffs from "relman" and Firefox's beta channel requires 2 signoffs from "releng", a change to a Rule that affects both channels will require 3 signoffs from "relman" and 2 from "releng". Changing a Release that is mapped to by Rules on the "release" and "beta" channel would also require the same signoffs.
 

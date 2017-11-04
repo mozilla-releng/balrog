@@ -573,12 +573,18 @@ class AUSTable(object):
             self.onUpdate(self, "UPDATE", changed_by, query, trans)
 
         ret = trans.execute(query)
+        # It's important that OutdatedDataError is raised as early as possible
+        # because callers may be able to handle it gracefully (and continue
+        # with their update). If we raise this _after_ adding history or merging
+        # with Scheduled Changes, we may end up altering the history or
+        # scheduled changes more than once if the caller ends up re-calling
+        # AUSTable.update() after handling the OutdatedDataError.
+        if ret.rowcount != 1:
+            raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         if self.history:
             trans.execute(self.history.forUpdate(new_row, changed_by))
         if self.scheduled_changes:
             self.scheduled_changes.mergeUpdate(orig_row, what, changed_by, trans)
-        if ret.rowcount != 1:
-            raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         return ret
 
     def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
@@ -1102,6 +1108,21 @@ class ScheduledChangeTable(AUSTable):
         self.conditions.validate(condition_columns)
         self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
 
+    def auto_signoff(self, changed_by, transaction, sc_id, dryrun, columns):
+        # - If the User scheduling a change only holds one Role, record a signoff with it.
+        # - If the User scheduling a change holds more than one Role, we cannot a Signoff, because
+        #   we don't know which Role we'd want to signoff with. The user will need to signoff
+        #   manually in these cases.
+        user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
+        if len(user_roles) == 1:
+            required_roles = set()
+            required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            if required_signoffs:
+                required_roles.update([rs["role"] for rs in required_signoffs])
+                if user_roles[0]["role"] in required_roles:
+                    self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
+                                         sc_id=sc_id, role=user_roles[0].get("role"))
+
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
         # We'll be retrieving condition information for each Scheduled Change,
@@ -1134,19 +1155,8 @@ class ScheduledChangeTable(AUSTable):
             if not self._dataVersionsAreSynced(sc_id, transaction):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s",
                                                  sc_id)
+            self.auto_signoff(changed_by, transaction, sc_id, dryrun, columns)
 
-            # - If the User scheduling a change only holds one Role, record a signoff with it.
-            # - If the User scheduling a change holds more than one Role, we cannot a Signoff, because
-            #   we don't know which Role we'd want to signoff with. The user will need to signoff
-            #   manually in these cases.
-            user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
-            required_roles = set()
-            required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
-            if required_signoffs:
-                required_roles.update([rs["role"] for rs in required_signoffs])
-            if len(user_roles) == 1 and user_roles[0]["role"] in required_roles:
-                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
-                                     sc_id=sc_id, role=user_roles[0].get("role"))
             return sc_id
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
@@ -1194,18 +1204,22 @@ class ScheduledChangeTable(AUSTable):
 
         base_what = self._prefixColumns(base_what)
         base_what["scheduled_by"] = changed_by
-        super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
+        ret = super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
+        sc_id = ret.last_updated_params()["sc_id"]
 
         for sc_id in affected_ids:
             if not self._dataVersionsAreSynced(sc_id, transaction):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s" % sc_id)
 
+        self.auto_signoff(changed_by, transaction, sc_id, dryrun, base_columns)
+
         for sc_id in affected_ids:
             where_signOff = {"sc_id": sc_id}
             signOffs = self.signoffs.select(where=where_signOff, transaction=transaction, columns=["sc_id", "username"])
             for signOff in signOffs:
-                where_signOff.update({"username": signOff["username"]})
-                self.signoffs.delete(where=where_signOff, changed_by=changed_by, transaction=transaction)
+                if signOff["username"] != changed_by:
+                    where_signOff.update({"username": signOff["username"]})
+                    self.signoffs.delete(where=where_signOff, changed_by=changed_by, transaction=transaction, reset_signoff=True)
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         conditions_where = []
@@ -1464,10 +1478,11 @@ class SignoffsTable(AUSTable):
     def update(self, where, what, changed_by=None, transaction=None, dryrun=False):
         raise AttributeError("Signoffs cannot be modified (only granted and revoked)")
 
-    def delete(self, where, changed_by=None, transaction=None, dryrun=False):
-        for row in self.select(where, transaction):
-            if not self.db.hasRole(changed_by, row["role"], transaction=transaction) and not self.db.isAdmin(changed_by, transaction=transaction):
-                raise PermissionDeniedError("Cannot revoke a signoff made by someone in a group you do not belong to")
+    def delete(self, where, changed_by=None, transaction=None, dryrun=False, reset_signoff=False):
+        if not reset_signoff:
+            for row in self.select(where, transaction):
+                if not self.db.hasRole(changed_by, row["role"], transaction=transaction) and not self.db.isAdmin(changed_by, transaction=transaction):
+                    raise PermissionDeniedError("Cannot revoke a signoff made by someone in a group you do not belong to")
 
         super(SignoffsTable, self).delete(where, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
@@ -1492,6 +1507,7 @@ class Rules(AUSTable):
                            Column('osVersion', String(1000)),
                            Column('memory', String(100)),
                            Column('instructionSet', String(1000)),
+                           Column('jaws', CompatibleBooleanColumn),
                            Column('mig64', CompatibleBooleanColumn),
                            Column('distribution', String(100)),
                            Column('distVersion', String(100)),
@@ -1600,11 +1616,12 @@ class Rules(AUSTable):
                 return True
         return False
 
-    def _mig64MatchesRule(self, ruleMig64, queryMig64):
-        """As with all other columns, if mig64 isn't present in the Rule, the Rule matches.
-        Unlike other columns, mig64 is optional in the update query, so we must handle False,
-        True, and None values. Note that None in the updateQuery is treated as "unknown",
-        i.e.: False and None are not the same thing.
+    def _booleanMatchesRule(self, ruleValue, queryValue):
+        """As with all other columns, if the value isn't present in the Rule, the Rule matches.
+        Unlike other columns, the non-existence of a boolean field in the updateQuery evaluates
+        to False, so we need to handle True, False, and None explicitly. Note that None in the
+        updateQuery is treated as "unknown", and will cause any Rule without an explicit value
+        for the field to match.
         The full truth table is:
         rule | query | matches?
           F      0        Y
@@ -1619,12 +1636,12 @@ class Rules(AUSTable):
 
         Additional context in https://bugzilla.mozilla.org/show_bug.cgi?id=1386756"""
 
-        if ruleMig64 is not None:
-            if queryMig64 is None or ruleMig64 != queryMig64:
+        if ruleValue is not None:
+            if queryValue is None or ruleValue != queryValue:
                 return False
         return True
 
-    def _simpleBooleanMatchesSubRule(self, subRuleString, queryString, substring):
+    def _simpleExpressionMatchesSubRule(self, subRuleString, queryString, substring):
         """Performs the actual logical 'AND' operation on a rule as well as partial/full string matching
            for each section of a rule.
            If all parts of the subRuleString match the queryString, then we have successfully resolved the
@@ -1640,7 +1657,7 @@ class Rules(AUSTable):
                 return False
         return True
 
-    def _simpleBooleanMatchesRule(self, ruleString, queryString, substring=True):
+    def _simpleExpressionMatchesRule(self, ruleString, queryString, substring=True):
         """Decides whether a column from a rule matches an incoming one using simplified boolean logic.
            Only two operators are supported: '&&' (and), ',' (or). A rule like 'AMD,SSE' will match incoming
            rules that contain either 'AMD' or 'SSE'. A rule like 'AMD&&SSE' will only match incoming rules
@@ -1655,7 +1672,7 @@ class Rules(AUSTable):
         decomposedRules = [[rule.strip() for rule in subRule.split('&&')] for subRule in ruleString.split(',')]
 
         for subRule in decomposedRules:
-            if self._simpleBooleanMatchesSubRule(subRule, queryString, substring):
+            if self._simpleExpressionMatchesSubRule(subRule, queryString, substring):
                 # We can immediately return True on the first match because this loop is iterating over an OR expression
                 # so we need just one match to pass.
                 return True
@@ -1755,7 +1772,7 @@ class Rules(AUSTable):
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to
             # break them out and create clauses for each one.
-            if not self._simpleBooleanMatchesRule(rule['osVersion'], updateQuery['osVersion']):
+            if not self._simpleExpressionMatchesRule(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
             if not self._csvMatchesRule(rule['instructionSet'], updateQuery.get('instructionSet', ""), substring=False):
@@ -1765,7 +1782,11 @@ class Rules(AUSTable):
             if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
                 continue
-            if not self._mig64MatchesRule(rule["mig64"], updateQuery.get("mig64")):
+            if not self._booleanMatchesRule(rule["mig64"], updateQuery.get("mig64")):
+                self.log.debug("%s doesn't match %s", rule['mig64'], updateQuery['mig64'])
+                continue
+            if not self._booleanMatchesRule(rule["jaws"], updateQuery.get("jaws")):
+                self.log.debug("%s doesn't match %s", rule['jaws'], updateQuery['jaws'])
                 continue
 
             matchingRules.append(rule)

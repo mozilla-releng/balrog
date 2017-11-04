@@ -88,23 +88,23 @@ class AdminView(MethodView):
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)
 
+    @transactionHandler
     @handleGeneralExceptions("POST")
     def post(self, *args, **kwargs):
         self.log.debug("processing POST request to %s" % request.path)
-        with dbo.begin() as trans:
-            return self._post(*args, transaction=trans, **kwargs)
+        return self._post(*args, **kwargs)
 
+    @transactionHandler
     @handleGeneralExceptions("PUT")
     def put(self, *args, **kwargs):
         self.log.debug("processing PUT request to %s" % request.path)
-        with dbo.begin() as trans:
-            return self._put(*args, transaction=trans, **kwargs)
+        return self._put(*args, **kwargs)
 
+    @transactionHandler
     @handleGeneralExceptions("DELETE")
     def delete(self, *args, **kwargs):
         self.log.debug("processing DELETE request to %s" % request.path)
-        with dbo.begin() as trans:
-            return self._delete(*args, transaction=trans, **kwargs)
+        return self._delete(*args, **kwargs)
 
 
 def serialize_signoff_requirements(requirements):

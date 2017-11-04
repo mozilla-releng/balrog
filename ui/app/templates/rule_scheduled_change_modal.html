@@ -144,21 +144,14 @@
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
-        <div class="form-group" ng-class="{'has-error': errors.distribution}">
-        <label for="id_distribution">Distribution</label>
-        <input type="text" class="form-control" id="id_distribution" ng-model="sc.distribution">
-        <p class="help-block" ng-show="errors.distribution">{{ errors.distribution.join(', ') }}</p>
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.buildTarget}">
         <label for="id_buildTarget">Build Target</label>
         <input type="text" class="form-control" id="id_buildTarget" ng-model="sc.buildTarget">
         <p class="help-block" ng-show="errors.buildTarget">{{ errors.buildTarget.join(', ') }}</p>
         </div>
       </div>
+    </div>
+    <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.osVersion}">
         <label for="id_osVersion">OS Version</label>
@@ -166,8 +159,6 @@
         <p class="help-block" ng-show="errors.osVersion">{{ errors.osVersion.join(', ') }}</p>
         </div>
       </div>
-    </div>
-    <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.instructionSet}">
         <label for="id_instructionSet">Instruction Set</label>
@@ -175,6 +166,8 @@
         <p class="help-block" ng-show="errors.instructionSet">{{ errors.instructionSet.join(', ') }}</p>
         </div>
       </div>
+    </div>
+    <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.memory}">
         <label for="id_memory">Memory</label>
@@ -182,20 +175,37 @@
         <p class="help-block" ng-show="errors.memory">{{ errors.memory.join(', ') }}</p>
         </div>
       </div>
+      <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
+        <div class="form-group" ng-class="{'has-error': errors.jaws}">
+          <label for="id_jaws">
+            JAWS Screen Reader Compatibility
+            <span class="glyphicon glyphicon-question-sign"
+                  title='Whether or not to match incoming queries that indicate a client that has an incompatible version of the JAWS screen reader installed. "Ignore" is usually what you want.'>
+            </span>
+          </label>
+          <select id="id_jaws" ng-model="sc.jaws" class="form-control"
+                  ng-options="value as key for (key, value) in {'Ignore': null, 'Yes': true, 'No': false}">
+            <!-- Angular creates an extra entry because one of our values is null. This hides it.
+                 From https://stackoverflow.com/a/24321497 -->
+            <option value="" ng-if="false"></option>
+          </select>
+          <p class="help-block" ng-show="errors.jaws">{{ errors.jaws.join(', ') }}</p>
+        </div>
+      </div>
     </div>
     <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
-        <div class="form-group" ng-class="{'has-error': errors.distVersion}">
-        <label for="id_distribution">Dist version</label>
-        <input type="text" class="form-control" id="id_distribution" ng-model="sc.distVersion">
-        <p class="help-block" ng-show="errors.distVersion">{{ errors.distVersion.join(', ') }}</p>
+        <div class="form-group" ng-class="{'has-error': errors.distribution}">
+        <label for="id_distribution">Distribution</label>
+        <input type="text" class="form-control" id="id_distribution" ng-model="sc.distribution">
+        <p class="help-block" ng-show="errors.distribution">{{ errors.distribution.join(', ') }}</p>
         </div>
       </div>
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
-        <div class="form-group" ng-class="{'has-error': errors.update_type}">
-        <label for="id_update_type">Update Type</label>
-        <input type="text" class="form-control" id="id_update_type" ng-model="sc.update_type">
-        <p class="help-block" ng-show="errors.update_type">{{ errors.update_type.join(', ') }}</p>
+        <div class="form-group" ng-class="{'has-error': errors.distVersion}">
+        <label for="id_distribution">Dist version</label>
+        <input type="text" class="form-control" id="id_distVersion" ng-model="sc.distVersion">
+        <p class="help-block" ng-show="errors.distVersion">{{ errors.distVersion.join(', ') }}</p>
         </div>
       </div>
     </div>
@@ -228,9 +238,16 @@
     <div class="row">
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.alias}">
-          <label for="id_distribution">Alias</label>
-          <input type="text" class="form-control" id="id_distribution" ng-model="sc.alias">
+          <label for="id_alias">Alias</label>
+          <input type="text" class="form-control" id="id_alias" ng-model="sc.alias">
           <p class="help-block" ng-show="errors.alias">{{ errors.alias.join(', ') }}</p>
+        </div>
+      </div>
+      <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
+        <div class="form-group" ng-class="{'has-error': errors.update_type}">
+        <label for="id_update_type">Update Type</label>
+        <input type="text" class="form-control" id="id_update_type" ng-model="sc.update_type">
+        <p class="help-block" ng-show="errors.update_type">{{ errors.update_type.join(', ') }}</p>
         </div>
       </div>
     </div>

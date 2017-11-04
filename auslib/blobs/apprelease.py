@@ -873,50 +873,6 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         return referencedReleases
 
 
-class ReleaseBlobV7(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """  Compatible with Gecko 50.0 and above, ie Firefox/Thunderbird 50.0 and above.
-
-    Changes from ReleaseBlobV6:
-        * Adds support for backgroundInterval
-
-    For further information:
-        * https://bugzilla.mozilla.org/show_bug.cgi?id=1309660
-
-    """
-    jsonschema = "apprelease-v7.yml"
-
-    # for the benefit of get*XML
-    optional_ = ('showPrompt', 'showNeverForVersion',
-                 'actions', 'openURL', 'notificationURL', 'alertURL',
-                 'promptWaitTime', 'backgroundInterval')
-    # params that can have %LOCALE% interpolated
-    interpolable_ = ('openURL', 'notificationURL', 'alertURL')
-
-    def __init__(self, **kwargs):
-        # ensure schema_version is set if we init ReleaseBlobV6 directly
-        Blob.__init__(self, **kwargs)
-        if 'schema_version' not in self.keys():
-            self['schema_version'] = 7
-
-    def getReferencedReleases(self):
-        """
-        :return: Returns set of names of partially referenced releases that the current
-        release references
-        """
-        referencedReleases = set()
-        for platform in self.get('platforms', {}):
-            for locale in self['platforms'][platform].get('locales', {}):
-                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
-                    referencedReleases.add(
-                        partial['from']
-                    )
-        for fileUrlKey in self.get('fileUrls', {}):
-            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
-                referencedReleases.add(partial)
-
-        return referencedReleases
-
-
 class ProofXMLMixin(object):
 
     def _getAdditionalPatchAttributes(self, patch):
@@ -931,7 +887,7 @@ class ProofXMLMixin(object):
 class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
     """
 
-    Changes from ReleaseBlobV7:
+    Changes from ReleaseBlobV6:
         * Adds support for ProofXMLMixin (placed as first parameter for inheritance preference)
 
     For further information:
@@ -943,7 +899,7 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
     # for the benefit of get*XML
     optional_ = ('showPrompt', 'showNeverForVersion',
                  'actions', 'openURL', 'notificationURL', 'alertURL',
-                 'promptWaitTime', 'backgroundInterval', 'binTransMerkleRoot',
+                 'promptWaitTime', 'binTransMerkleRoot',
                  'binTransCertificate', 'binTransSCTList')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('openURL', 'notificationURL', 'alertURL')

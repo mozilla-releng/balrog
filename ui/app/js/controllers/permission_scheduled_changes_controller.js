@@ -1,5 +1,6 @@
 angular.module("app").controller("PermissionScheduledChangesController",
-function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, $modal, $route, Releases, Page) {
+function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, $modal, $route, Releases, Page,
+         PermissionsRequiredSignoffs) {
 
   Page.setTitle('Scheduled Permission Changes');
 
@@ -40,6 +41,11 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
     $scope.loading = false;
   });
 
+  $scope.signoffRequirements = [];
+  PermissionsRequiredSignoffs.getRequiredSignoffs()
+    .then(function(payload) {
+      $scope.signoffRequirements = payload.data.required_signoffs;
+    });
 
   $scope.$watch("ordering_str", function(value) {
     $scope.ordering = value.value.split(",");
@@ -124,7 +130,10 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
             product: '',
             change_type: 'insert',
           };
-        }
+        },
+        permissionSignoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
       }
     });
   };
