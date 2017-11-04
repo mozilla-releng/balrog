@@ -405,15 +405,75 @@ paths:
               type: string
           examples:
             text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
-  
-  /rrp/history:
+
+  /rules/history:
     get:
       summary: Returns a list of all histories.
       description: >
-        Returns a list of all histories.
+        Returns a list of rules history.
       tags:
-        - "History Histories"
-      operationId: auslib.web.common.history_all.get_rrp_history
+        - "History Histories Rules"
+      operationId: auslib.web.common.history_all.get_rules_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of rules history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+        - $ref: '#/parameters/channelParam'
+      responses:
+        '200':
+          description: Successfully fetched rules history
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /releases/history:
+    get:
+      summary: Returns a list of releases history.
+      description: >
+        Returns a list of releases history.
+      tags:
+        - "History Histories Releases"
+      operationId: auslib.web.common.history_all.get_releases_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of releases history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+        - $ref: '#/parameters/channelParam'
+      responses:
+        '200':
+          description: Successfully fetched histories
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /permissions/history:
+    get:
+      summary: Returns a list of permissions history.
+      description: >
+        Returns a list of permissions history.
+      tags:
+        - "History Histories Permissions"
+      operationId: auslib.web.common.history_all.get_permissions_history
       consumes: []
       produces: [application/json]
       externalDocs:
@@ -430,102 +490,25 @@ paths:
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
         - $ref: '#/parameters/channelParam'
-        - name: rules
-          in: query
-          description: Indicates whether rules history should be included
-          type: integer
-          x-nullable: true
-          required: false
-        - name: releases
-          in: query
-          description: Indicates whether releases history should be included
-          type: integer
-          x-nullable: true
-          required: false
-        - name: permissions
-          in: query
-          description: Indicates whether permissions history should be included
-          type: integer
-          x-nullable: true
-          required: false
       responses:
         '200':
-          description: Successfully fetched histories
+          description: Successfully fetched permissions history
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /sc/history:
+  /product_required_signoff/history:
     get:
-      summary: Returns a list of scheduled changes histories.
+      summary: Returns a list of product required signoff history.
       description: >
-        Returns scheduled changes histories.
+        Returns product required signoff history.
       tags:
-        - "History SC"
-      operationId: auslib.web.common.history_all.get_sc_history
+        - "History Signoff Product"
+      operationId: auslib.web.common.history_all.get_product_required_signoffs_history
       consumes: []
       produces: [application/json]
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
-        description: "Returns a list of scheduled changes histories"
-      parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/limitParam'
-        - $ref: '#/parameters/pageParam'
-        - $ref: '#/parameters/changedByParam'
-        - $ref: '#/parameters/changeIdParam'
-        - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
-        - $ref: '#/parameters/timestampFromParam'
-        - $ref: '#/parameters/timestampToParam'
-        - name: permissions_scheduled_change
-          in: query
-          description: Indicates whether permissions_scheduled_change history should be included
-          type: integer
-          x-nullable: true
-          required: false
-        - name: rules_scheduled_change
-          in: query
-          description: Indicates whether rules_scheduled_change history should be included
-          type: integer
-          x-nullable: true
-          required: false
-        - name: releases_scheduled_change
-          in: query
-          description: Indicates whether releases_scheduled_change history should be included
-          type: integer
-          x-nullable: true
-          required: false
-        - name: permissions_required_signoff_scheduled_change
-          in: query
-          description: Indicates whether permissions_required_signoff_scheduled_change history should be included
-          type: integer
-          x-nullable: true
-          required: false
-        - name: product_required_signoff_scheduled_change
-          in: query
-          description: Indicates whether product_required_signoff_scheduled_change history should be included
-          type: integer
-          x-nullable: true
-          required: false
-      responses:
-        '200':
-          description: Successfully fetched histories
-        '400':
-          $ref: '#/responses/invalidFormData'
-
-  /required_signoff/history:
-    get:
-      summary: Returns a list of scheduled changes histories.
-      description: >
-        Returns scheduled changes histories.
-      tags:
-        - "History SC"
-      operationId: auslib.web.common.history_all.get_required_signoff_history
-      consumes: []
-      produces: [application/json]
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
-        description: "Returns a list of scheduled changes histories"
+        description: "Returns a list of product required signoff history"
       parameters:
         - $ref: '#/parameters/productParam'
         - $ref: '#/parameters/limitParam'
@@ -538,25 +521,205 @@ paths:
         - $ref: '#/parameters/timestampToParam'
         - name: role
           in: query
-          description: The role(s) required for product or permission signoff
+          description: The role(s) required for product signoff
           type: string
-          x-nullable: true
-          required: false
-        - name: permissions_required_signoffs
-          in: query
-          description: Indicates whether permissions_required_signoffs history should be included
-          type: integer
-          x-nullable: true
-          required: false
-        - name: product_required_signoffs
-          in: query
-          description: Indicates whether product_required_signoffs history should be included
-          type: integer
           x-nullable: true
           required: false
       responses:
         '200':
-          description: Successfully fetched histories
+          description: Successfully fetched product required signoff history
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /permissions_required_signoff/history:
+    get:
+      summary: Returns a list of permissions required signoff history.
+      description: >
+        Returns permissions required signoff history.
+      tags:
+        - "History Permissions Signoff"
+      operationId: auslib.web.common.history_all.get_permissions_required_signoffs_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of permissions required signoff history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+        - name: role
+          in: query
+          description: The role(s) required for permission signoff
+          type: string
+          x-nullable: true
+          required: false
+      responses:
+        '200':
+          description: Successfully fetched permissions required signoff history
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /rules_scheduled_change/history:
+    get:
+      summary: Returns a list of rules scheduled change history.
+      description: >
+        Returns rules scheduled change history.
+      tags:
+        - "History Rules Scheduled Change"
+      operationId: auslib.web.common.history_all.get_rules_scheduled_change_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of rules scheduled change history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+      responses:
+        '200':
+          description: Successfully fetched rules scheduled change history
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /release_scheduled_change/history:
+    get:
+      summary: Returns a list of releases scheduled change history.
+      description: >
+        Returns scheduled change histories.
+      tags:
+        - "History Releases Scheduled Change"
+      operationId: auslib.web.common.history_all.get_releases_scheduled_change_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of releases scheduled change history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+      responses:
+        '200':
+          description: Successfully fetched releases scheduled change history
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /permissions_scheduled_change/history:
+    get:
+      summary: Returns a list of permissions scheduled change history.
+      description: >
+        Returns permissions scheduled change history.
+      tags:
+        - "History SC"
+      operationId: auslib.web.common.history_all.get_permissions_scheduled_change_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of permissions scheduled changes history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+      responses:
+        '200':
+          description: Successfully fetched permissions scheduled changes history
+        '400':
+          $ref: '#/responses/invalidFormData'          
+
+  /permissions_required_signoff_scheduled_change/history:
+    get:
+      summary: Returns a list of permissions required signoff scheduled change history.
+      description: >
+        Returns permissions required signoff scheduled change history.
+      tags:
+        - "History Permissions Scheduled Change Signoff"
+      operationId: auslib.web.common.history_all.get_permission_required_signoff_scheduled_change_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of permissions required signoff scheduled change history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+        - name: role
+          in: query
+          description: The role(s) required for permissions scheduled change
+          type: string
+          x-nullable: true
+          required: false
+      responses:
+        '200':
+          description: Successfully fetched permissions required signoff scheduled change history
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /product_required_signoff_scheduled_change/history:
+    get:
+      summary: Returns a list of product required signoff scheduled change history.
+      description: >
+        Returns product required signoff scheduled change history.
+      tags:
+        - "History Product Signoff Scheduled Change"
+      operationId: auslib.web.common.history_all.get_product_required_signoff_scheduled_change_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of product required signoff scheduled change history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+        - name: role
+          in: query
+          description: The role(s) required product scheduled change
+          type: string
+          x-nullable: true
+          required: false
+      responses:
+        '200':
+          description: Successfully fetched product required signoff scheduled change history
         '400':
           $ref: '#/responses/invalidFormData'
 
