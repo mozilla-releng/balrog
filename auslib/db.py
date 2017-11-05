@@ -2511,42 +2511,45 @@ class EmergencyShutoff(AUSTable):
         return ret.inserted_primary_key[0]
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
-        # If the product is being changed, we also need to make sure the user
-        # permission to modify _that_ product.
-        # if "product" in what:
-        #     if not self.db.hasPermission(changed_by, "rule", "modify", what["product"], transaction):
-        #         raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, what["product"]))
+        for current_shutoff in self.select(where=where, transaction=transaction):
+            if not self.db.hasPermission(changed_by, "rule", "modify", current_shutoff["product"], transaction):
+                raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_shutoff["product"]))
 
-        for current_rule in self.select(where=where, transaction=transaction):
-            if not self.db.hasPermission(changed_by, "rule", "modify", current_rule["product"], transaction):
-                raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_rule["product"]))
-
-            new_rule = current_rule.copy()
-            new_rule.update(what)
+            new_shutoff = current_shutoff.copy()
+            new_shutoff.update(what)
             if not dryrun:
-                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_rule, new_rule], transaction=transaction)
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([new_shutoff], transaction=transaction)
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         return super(EmergencyShutoff, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version,
                                                     transaction=transaction, dryrun=dryrun)
 
+    def _matchesRegex(self, foo, bar):
+        # Expand wildcards and use ^/$ to make sure we don't succeed on partial
+        # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
+        # Channel length must be strictly greater than two
+        # And globbing is allowed at the end of channel-name only
+        if foo.endswith('*'):
+            if(len(foo) >= 3):
+                test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
+                test = '^{}.*$'.format(test[:-1])
+                if re.match(test, bar):
+                    return True
+                return False
+            else:
+                return False
+        elif (foo == bar):
+            return True
+        else:
+            return False
+
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = []
-        # The new row may change the product or channel, so we must look for
-        # Signoffs for both.
-        for row in affected_rows:
-            if not row:
-                continue
-            where = {}
-            # If product isn't present, or is None, it means the Rule affects
-            # all products, and we must leave it out of the where clause. If
-            # we included it, the query would only match rows where product is
-            # NULL.
-            if row.get("product"):
-                where["product"] = row["product"]
+        row = affected_rows[-1]
+        # Signoffs are required only to reenable updates.
+        if not row["updates_disabled"]:
+            where = {"product": row["product"]}
             for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
-                # Channel supports globbing, so we must take that into account
-                # before deciding whether or not this is a match.
                 if not row.get("channel") or self._matchesRegex(row["channel"], rs["channel"]):
                     potential_required_signoffs.append(rs)
         return potential_required_signoffs
