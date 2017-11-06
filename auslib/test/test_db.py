@@ -4570,7 +4570,7 @@ class TestChangeNotifiers(unittest.TestCase):
             changer()
             return mock_conn
 
-    def testOnInsert(self):
+    def testOnInsertRule(self):
         def doit():
             self.db.rules.insert("bob", product="foo", channel="bar", backgroundRate=100, priority=50, update_type="minor")
         mock_conn = self._runTest(doit)
@@ -4578,6 +4578,15 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'channel': 'bar'"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'rule_id':"))
+
+    def testOnInsertPermission(self):
+        def doit():
+            self.db.permissions.insert("bob", permission="admin", username="charlie", data_version=1)
+        mock_conn = self._runTest(doit)
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'permission': 'admin'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'username': 'charlie'"))
 
     def testOnUpdate(self):
         def doit():
