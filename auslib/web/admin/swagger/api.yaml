@@ -496,7 +496,7 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /product_required_signoff/history:
+  /product_required_signoffs/history:
     get:
       summary: Returns a list of product required signoff history.
       description: >
@@ -531,14 +531,14 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /permissions_required_signoff/history:
+  /permission_required_signoffs/history:
     get:
       summary: Returns a list of permissions required signoff history.
       description: >
         Returns permissions required signoff history.
       tags:
         - "History Permissions Signoff"
-      operationId: auslib.web.common.history_all.get_permissions_required_signoffs_history
+      operationId: auslib.web.common.history_all.get_permission_required_signoffs_history
       consumes: []
       produces: [application/json]
       externalDocs:
@@ -595,7 +595,7 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /release_scheduled_change/history:
+  /releases_scheduled_change/history:
     get:
       summary: Returns a list of releases scheduled change history.
       description: >
@@ -653,14 +653,14 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'          
 
-  /permissions_required_signoff_scheduled_change/history:
+  /permission_required_signoffs_scheduled_change/history:
     get:
       summary: Returns a list of permissions required signoff scheduled change history.
       description: >
         Returns permissions required signoff scheduled change history.
       tags:
         - "History Permissions Scheduled Change Signoff"
-      operationId: auslib.web.common.history_all.get_permission_required_signoff_scheduled_change_history
+      operationId: auslib.web.common.history_all.get_permission_required_signoffs_scheduled_change_history
       consumes: []
       produces: [application/json]
       externalDocs:
@@ -688,14 +688,14 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /product_required_signoff_scheduled_change/history:
+  /product_required_signoffs_scheduled_change/history:
     get:
       summary: Returns a list of product required signoff scheduled change history.
       description: >
         Returns product required signoff scheduled change history.
       tags:
         - "History Product Signoff Scheduled Change"
-      operationId: auslib.web.common.history_all.get_product_required_signoff_scheduled_change_history
+      operationId: auslib.web.common.history_all.get_product_required_signoffs_scheduled_change_history
       consumes: []
       produces: [application/json]
       externalDocs:

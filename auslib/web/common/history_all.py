@@ -52,105 +52,54 @@ def _get_histories(table, obj, process_revisions_callback=None):
 
 
 def get_rules_history():
+    """GET /rules/history"""
     history_table = dbo.rules.history
     return _get_histories(history_table, get_rules)
 
 
 def get_releases_history():
+    """GET /releases/history"""
     history_table = dbo.releases.history
     return _get_histories(history_table, get_releases, process_release_revisions)
 
 
 def get_permissions_history():
+    """GET /permissions/history"""
     history_table = dbo.permissions.history
     get_permissions = UsersView().get()
     return _get_histories(history_table, get_permissions)
 
 
 def get_permissions_scheduled_change_history():
-    """GET /history/scheduled_changes/permissions"""
+    """GET /permissions_scheduled_change/history"""
     return PermissionScheduledChangeHistoryView().get_all()
 
 
 def get_rules_scheduled_change_history():
-    """GET /history/scheduled_changes/permissions"""
+    """GET /rules_scheduled_change/history"""
     return RuleScheduledChangeHistoryView().get_all()
 
 
 def get_releases_scheduled_change_history():
-    """GET /history/scheduled_changes/permissions"""
+    """GET /releases_scheduled_change/history"""
     return ReleaseScheduledChangeHistoryView().get_all()
 
 
-def get_product_required_signoff_scheduled_change_history():
+def get_product_required_signoffs_scheduled_change_history():
+    """GET /product_required_signoffs_scheduled_change/history"""
     return ProductRequiredSignoffScheduledChangeHistoryView().get_all()
 
 
-def get_permission_required_signoff_scheduled_change_history():
+def get_permission_required_signoffs_scheduled_change_history():
+    """GET /permissions_required_signoff_scheduled_change/history"""
     return PermissionsRequiredSignoffScheduledChangeHistoryView().get_all()
 
 
 def get_product_required_signoffs_history():
+    """GET /product_required_signoffs/history"""
     return ProductRequiredSignoffsHistoryAPIView().get_all()
 
 
-def get_permissions_required_signoffs_history():
+def get_permission_required_signoffs_history():
+    """GET /permission_required_signoffs/history"""
     return PermissionsRequiredSignoffsHistoryAPIView().get_all()
-
-
-def history_methods():
-    return {
-        'rules': get_rules_history(),
-        'releases': get_releases_history(),
-        'permissions': get_permissions_history(),
-        'permissions_required_signoffs': get_permissions_required_signoffs_history(),
-        'product_required_signoffs': get_product_required_signoffs_history(),
-        'releases_scheduled_change': get_releases_scheduled_change_history(),
-        'rules_scheduled_change': get_rules_scheduled_change_history(),
-        'permissions_scheduled_change': get_permissions_scheduled_change_history(),
-        'permissions_required_signoff_scheduled_change': get_permission_required_signoff_scheduled_change_history(),
-        'product_required_signoff_scheduled_change': get_product_required_signoff_scheduled_change_history(),
-    }
-
-
-def get_rrp_history():
-    rrp_constants = ['rules', 'releases', 'permissions']
-    methods = history_methods()
-    histories = {}
-    for constant in rrp_constants:
-        if (request.args.get(constant)) == '1':
-            history = methods.get(constant)
-            histories[constant] = json.loads(history.data)
-    return histories
-
-
-def get_sc_history():
-    sc_constants = [
-        'rules_scheduled_change',
-        'releases_scheduled_change',
-        'permissions_scheduled_change',
-        'permissions_required_signoff_scheduled_change',
-        'product_required_signoff_scheduled_change',
-    ]
-    methods = history_methods()
-    histories = {}
-    for constant in sc_constants:
-        if (request.args.get(constant)) == '1':
-            history = methods.get(constant)
-            histories[constant] = json.loads(history.data)
-    return histories
-
-
-def get_required_signoff_history():
-    rrp_constants = [
-        'permissions_required_signoffs',
-        'product_required_signoffs',
-    ]
-    methods = history_methods()
-    histories = {}
-    print('request', request.args)
-    for constant in rrp_constants:
-        if (request.args.get(constant)) == '1':
-            history = methods.get(constant)
-            histories[constant] = json.loads(history.data)
-    return histories
