@@ -56,6 +56,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       if (sc.when !== null) {
         sc.when = new Date(sc.when);
       }
+      if (sc.original_row) {
+        // The 'sc.original_row' is effectively the Rule this scheduled change
+        // intends to change. By putting in a self-recursive pointer to the
+        // .scheduled_change into that we can display the schedule change,
+        // in the template, just like we're displaying rules regularly.
+        sc.original_row.scheduled_change = sc;
+      }
       return sc;
     });
   })

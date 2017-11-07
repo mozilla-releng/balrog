@@ -65,6 +65,11 @@
         <button ng-show="!scheduled_changes_rules_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
         <button ng-show="!scheduled_changes_rules_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
         <a ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-href="/scheduled_changes/rules/{{ sc.sc_id }}">History</a>
+
+        <span title="{{ humanizeDate(sc.when) }}"
+              class="label label-default">
+            Scheduled for <span style="text-transform: capitalize">{{ sc.change_type }}</span> <span ng-bind-html="formatMoment(sc.when)"></span>
+        </span>
       </div>
 
       <i title="Product" ng-show="!sc.product">no product</i>
@@ -93,105 +98,126 @@
         </ul>
       </span>
     </div>
+
     <hr style="clear: both" ng-show="! isEmpty(sc.required_signoffs)">
-    <div class="left" style="float: left">
-      <h5 title="Scheduled By">
-        Scheduled By: <b>{{ sc.scheduled_by ? sc.scheduled_by : current_user }}</b>
-      </h5>
-      <h5 ng-show="sc.when" title="When">
-        When: <b><span ng-bind-html="formatMoment(sc.when)"></span></b>
-      </h5>
-      <h5 ng-show="sc.telemetry_product" title="Telemetry Product">
-        Telemetry Product: <b>{{ sc.telemetry_product }}</b>
-      </h5>
-      <h5 ng-show="sc.telemetry_channel" title="Telemetry Channel">
-        Telemetry Channel: <b>{{ sc.telemetry_channel }}</b>
-      </h5>
-      <h5 ng-show="sc.telemetry_uptake" title="Telemetry Uptake">
-        Telemetry Uptake: <b>{{ sc.telemetry_uptake }}</b>
-      </h5>
-      <h5 title="Scheduled Change ID">
-        Scheduled Change ID: <b>{{ sc.sc_id }}</b>
-      </h5>
-      <h5 title="Data Version">
-        Data version: <b>{{ sc.sc_data_version }}</b>
-      </h5>
+
+    <h5 title="Scheduled By">
+      Scheduled By: <b>{{ sc.scheduled_by ? sc.scheduled_by : current_user }}</b>
+    </h5>
+    <h5 ng-show="sc.telemetry_product" title="Telemetry Product">
+      Telemetry Product: <b>{{ sc.telemetry_product }}</b>
+    </h5>
+    <h5 ng-show="sc.telemetry_channel" title="Telemetry Channel">
+      Telemetry Channel: <b>{{ sc.telemetry_channel }}</b>
+    </h5>
+    <h5 ng-show="sc.telemetry_uptake" title="Telemetry Uptake">
+      Telemetry Uptake: <b>{{ sc.telemetry_uptake }}</b>
+    </h5>
+    <h5 title="Scheduled Change ID">
+      Scheduled Change ID: <b>{{ sc.sc_id }}</b>
+    </h5>
+    <h5 title="Data Version">
+      Data version: <b>{{ sc.sc_data_version }}</b>
+    </h5>
+
+    <hr />
+
+    <div class="row" ng-init="rule = (sc.original_row)">
+      <div class="col-md-8">
+
+        <h5 title="Mapping" ng-show="rule.mapping || (rule.scheduled_change !== null && rule.scheduled_change.mapping)">
+          Mapping:
+            <span ng-show="rule.mapping">
+              <b ng-style="!rule_id && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
+                {{ rule.mapping }}
+              </b>
+              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.mapping)">
+                  <i class="glyphicon glyphicon-eye-open"></i>
+                  View
+              </a>
+              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.mapping }}">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                  Edit
+              </a>
+            </span>
+            <span ng-show="!rule_id && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping && rule.scheduled_change.mapping">
+              <b style="color: green" ng-show="rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping">
+                {{ rule.scheduled_change.mapping }}
+              </b>
+              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.scheduled_change.mapping)">
+                  <i class="glyphicon glyphicon-eye-open"></i>
+                  View
+              </a>
+              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.scheduled_change.mapping }}">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                  Edit
+              </a>
+            </span>
+        </h5>
+        <h5 title="Fallback Mapping" ng-show="rule.fallbackMapping || (rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping)">
+          Fallback Mapping:
+            <span ng-show="rule.fallbackMapping">
+              <b ng-style="!rule_id && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
+                {{ rule.fallbackMapping }}
+              </b>
+              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.fallbackMapping)">
+                  <i class="glyphicon glyphicon-eye-open"></i>
+                  View
+              </a>
+              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.fallbackMapping }}">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                  Edit
+              </a>
+            </span>
+            <span ng-show="!rule_id && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping && rule.scheduled_change.fallbackMapping">
+              <b style="color: green" ng-show="rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping">
+                {{ rule.scheduled_change.fallbackMapping }}
+              </b>
+              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.scheduled_change.fallbackMapping)">
+                  <i class="glyphicon glyphicon-eye-open"></i>
+                  View
+              </a>
+              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.scheduled_change.fallbackMapping }}">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                  Edit
+              </a>
+            </span>
+        </h5>
+        <span ng-hide="(rule.fallbackMapping === null && !(!rule_id && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping !== null )) || (rule.backgroundRate !== 100 && rule.scheduled_change.backgroundRate !== 100)" >
+          <span class="alert-danger">
+            <strong>Note!</strong> Fallback Mapping is unused when Background Rate is 100
+          </span>
+        </span>
+        <scrulefield rule="rule" fieldname="data_version" fieldtitle="Data Version"></scrulefield>
+        <scrulefield rule="rule" fieldname="rule_id" fieldtitle="Rule ID"></scrulefield>
+        <scrulefield rule="rule" fieldname="comment" fieldtitle="Comment"></scrulefield>
+
+      </div>
+
+      <div class="col-md-4">
+        <scrulefield rule="rule" fieldname="alias" fieldtitle="Alias"
+                   help="Can be used in place of rule_id in REST operations"></scrulefield>
+        <scrulefield rule="rule" fieldname="backgroundRate" fieldtitle="Background Rate"></scrulefield>
+        <scrulefield rule="rule" fieldname="priority" fieldtitle="Priority"></scrulefield>
+        <scrulefield rule="rule" fieldname="version" fieldtitle="Version"></scrulefield>
+        <scrulefield rule="rule" fieldname="buildID" fieldtitle="Build ID"></scrulefield>
+        <scrulefield rule="rule" fieldname="buildTarget" fieldtitle="Build Target"></scrulefield>
+        <scrulefield rule="rule" fieldname="locale" fieldtitle="Locale(s)"></scrulefield>
+        <scrulefield rule="rule" fieldname="distribution" fieldtitle="Distribution"></scrulefield>
+        <scrulefield rule="rule" fieldname="distVersion" fieldtitle="Distribution Version"></scrulefield>
+        <scrulefield rule="rule" fieldname="osVersion" fieldtitle="OS Version"></scrulefield>
+        <scrulefield rule="rule" fieldname="instructionSet" fieldtitle="Instruction Set"></scrulefield>
+        <scrulefield rule="rule" fieldname="memory" fieldtitle="Memory"></scrulefield>
+        <scrulefield rule="rule" fieldname="mig64" fieldtitle="64-bit Migration Opt-in"
+                   help='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'></scrulefield>
+        <scrulefield rule="rule" fieldname="jaws" fieldtitle="JAWS Screen Reader Compatibility"
+                   help='Whether or not to match incoming queries that indicate a client that has an incompatible version of the JAWS screen reader installed. "Ignore" is usually what you want.'></scrulefield>
+        <scrulefield rule="rule" fieldname="update_type" fieldtitle="Update type"></scrulefield>
+        <scrulefield rule="rule" fieldname="headerArchitecture" fieldtitle="Header Architecture"></scrulefield>
+      </div>
+
     </div>
 
-    <dl class="dl-horizontal" style="float:right">
-      <dt>Rule ID:</dt>
-      <dd ng-show="sc.rule_id">{{ sc.rule_id }}</dd>
-      <dd ng-show="!sc.rule_id">New!</dd>
-      <dt ng-show="sc.data_version">Data Version:</dt>
-      <dd>{{ sc.data_version }}</dd>
-      <dt ng-show="sc.mapping">Mapping:</dt>
-      <dd ng-show="sc.mapping">
-        <span>{{ sc.mapping }}</span>
-        <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(sc.mapping)">
-          <i class="glyphicon glyphicon-eye-open"></i>
-            View
-        </a>
-      </dd>
-      <dt>Fallback Mapping:</dt>
-      <dd ng-show="sc.fallbackMapping"><span>{{ sc.fallbackMapping }}</span>
-        <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(sc.fallbackMapping)">
-          <i class="glyphicon glyphicon-eye-open"></i>
-            View
-        </a>
-      </dd>
-      <dt ng-show="sc.alias" title="Can be used in place of rule_id in REST operations">Alias:</dt>
-      <dd>{{ sc.alias }}</dd>
-      <dt ng-show="sc.backgroundRate !== null">Rate:</dt>
-      <dd>{{ sc.backgroundRate }}</dd>
-      <dt ng-show="sc.priority !== null">Priority:</dt>
-      <dd>{{ sc.priority }}</dd>
-      <dt ng-show="sc.version">Version:</dt>
-      <dd>{{ sc.version }}</dd>
-      <dt ng-show="sc.buildID">Build ID:</dt>
-      <dd>{{ sc.buildID }}</dd>
-      <dt ng-show="sc.locale">Locale:</dt>
-      <dd>{{ sc.locale }}</dd>
-      <dt ng-show="sc.distribution">Distribution:</dt>
-      <dd>{{ sc.distribution }}</dd>
-      <dt ng-show="sc.buildTarget">Build Target:</dt>
-      <dd>{{ sc.buildTarget }}</dd>
-      <dt ng-show="sc.osVersion">OS Version:</dt>
-      <dd>{{ sc.osVersion }}</dd>
-      <dt ng-show="sc.instructionSet">Instruction Set:</dt>
-      <dd>{{ sc.instructionSet }}</dd>
-      <dt ng-show="sc.memory">Memory:</dt>
-      <dd>{{ sc.memory }}</dd>
-      <dt ng-show="sc.mig64 !== null && sc.mig64 !== undefined">
-        64-Bit Migration Opt-in
-        <span class="glyphicon glyphicon-question-sign"
-           title='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'>
-        </span>
-        :
-      </dt>
-      <dd ng-if="sc.mig64 === true">Yes</dd>
-      <dd ng-if="sc.mig64 === false">No</dd>
-      <dt ng-show="sc.jaws !== null && sc.jaws !== undefined">
-        JAWS Screen Reader Compatibility
-        <span class="glyphicon glyphicon-question-sign"
-           title='Whether or not to match incoming queries that indicate a client that has an incompatible version of the JAWS screen reader installed. "Ignore" is usually what you want.'>
-        </span>
-        :
-      </dt>
-      <dd ng-if="sc.jaws === true">Yes</dd>
-      <dd ng-if="sc.jaws === false">No</dd>
-      <dt ng-show="sc.distVersion">Dist Version:</dt>
-      <dd>{{ sc.distVersion }}</dd>
-      <dt ng-show="sc.update_type">Update type:</dt>
-      <dd>{{ sc.update_type }}</dd>
-      <dt ng-show="sc.headerArchitecture">Header Architecture:</dt>
-      <dd>{{ sc.headerArchitecture }}</dd>
-      <dt ng-show="sc.comment">Comment:</dt>
-      <dd>{{ sc.comment }}</dd>
-      <dt ng-show="sc.alias">Alias:</dt>
-      <dd>{{ sc.alias }}</dd>
-      <dt ng-show="sc.change_type">Change Type:</dt>
-      <dd>{{ sc.change_type }}</dd>
-    </dl>
 
   </div>
 <div class="panel-footer" ng-show="scheduled_changes_rules_count">
