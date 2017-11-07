@@ -261,7 +261,7 @@ class ScheduledChangeHistoryView(HistoryView):
 
     def get_all(self):
         try:
-            return self.get_all_revisions(
+            return self.get_revisions(
                 get_object_callback=lambda: ScheduledChangesView.get,
                 history_filters_callback=self._get_filters_all,
                 process_revisions_callback=self._process_revisions,

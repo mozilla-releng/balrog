@@ -93,26 +93,22 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
         return jsonify(count=total_count, required_signoffs=revisions)
 
     def get_all(self):
-        request = connexion.request
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', -1))
+        try:
+            page = int(connexion.request.args.get('page', 1))
+            limit = int(connexion.request.args.get('limit', 100))
+        except ValueError as msg:
+            self.log.warning("Bad input: %s", msg)
+            return problem(400, "Bad Request", str(msg))
+        offset = limit * (page - 1)
 
         query = self.table.history.t.count().where(self.table.history.data_version != null())
         total_count = query.execute().fetchone()[0]
 
         where = self._get_filters()
-
-        if limit >= 0 and page >= 1:
-            offset = limit * (page - 1)
-            revisions = self.table.history.select(
-                where=where, limit=limit, offset=offset,
-                order_by=[self.table.history.timestamp.desc()]
-            )
-        else:
-            revisions = self.table.history.select(
-                where=where,
-                order_by=[self.table.history.timestamp.desc()]
-            )
+        revisions = self.table.history.select(
+            where=where, limit=limit, offset=offset,
+            order_by=[self.table.history.timestamp.desc()]
+        )
 
         return jsonify(count=total_count, required_signoffs=revisions)
 
