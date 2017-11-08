@@ -9,11 +9,10 @@
      changing as a "diff", where the current value is struck out, and
      the scheduled change version is in green. if scheduled changes aren't
      being shown, we just show the current value plainly -->
-<span ng-style="showdiff && showsc && (fieldIsChanging(rule, fieldname) || rule.scheduled_change.change_type === 'delete')
-                ? {'text-decoration': 'line-through', 'color': 'red'} : {};">
+<span ng-class="{diffold: showdiff && showsc && (fieldIsChanging(rule, fieldname) || rule.scheduled_change.change_type === 'delete')}">
     {{ rule[fieldname] === true ? "Yes" : (rule[fieldname] === false ? "No" : rule[fieldname]) }}
 </span>
-<span style="color: green" ng-show="showdiff && showsc && fieldIsChanging(rule, fieldname)">
+<span class="diffnew" ng-show="showdiff && showsc && fieldIsChanging(rule, fieldname)">
     {{ rule.scheduled_change[fieldname] === true ? "Yes" : (rule.scheduled_change[fieldname] === false ? "No" : rule.scheduled_change[fieldname]) }}
 </span>
 </b>

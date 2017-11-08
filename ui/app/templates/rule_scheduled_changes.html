@@ -128,7 +128,7 @@
         <h5 title="Mapping" ng-show="rule.mapping || (rule.scheduled_change !== null && rule.scheduled_change.mapping)">
           Mapping:
             <span ng-show="rule.mapping">
-              <b ng-style="!rule_id && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
+              <b ng-class="{diffold: !rule_id && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping}">
                 {{ rule.mapping }}
               </b>
               <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.mapping)">
@@ -141,7 +141,7 @@
               </a>
             </span>
             <span ng-show="!rule_id && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping && rule.scheduled_change.mapping">
-              <b style="color: green" ng-show="rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping">
+              <b class="diffnew" ng-show="rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping">
                 {{ rule.scheduled_change.mapping }}
               </b>
               <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.scheduled_change.mapping)">
@@ -157,7 +157,7 @@
         <h5 title="Fallback Mapping" ng-show="rule.fallbackMapping || (rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping)">
           Fallback Mapping:
             <span ng-show="rule.fallbackMapping">
-              <b ng-style="!rule_id && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
+              <b ng-class="{diffold: !rule_id && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping}">
                 {{ rule.fallbackMapping }}
               </b>
               <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.fallbackMapping)">
@@ -170,7 +170,7 @@
               </a>
             </span>
             <span ng-show="!rule_id && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping && rule.scheduled_change.fallbackMapping">
-              <b style="color: green" ng-show="rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping">
+              <b class="diffnew" ng-show="rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping">
                 {{ rule.scheduled_change.fallbackMapping }}
               </b>
               <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.scheduled_change.fallbackMapping)">
