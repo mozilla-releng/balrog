@@ -44,7 +44,7 @@ def _get_histories(table, obj, process_revisions_callback=None):
                                    obj_not_found_msg='No history found',
                                    process_revisions_callback=process_revisions_callback)
     try:
-        return history_helper.get_unlimted_histories()
+        return history_helper.get_history()
     except (ValueError, AssertionError) as msg:
         log.warning("Bad input: %s", msg)
         return problem(400, "Bad Request", "Error occurred when trying to fetch histories",
