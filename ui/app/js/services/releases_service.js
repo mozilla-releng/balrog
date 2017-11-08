@@ -46,6 +46,19 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
         }
       });
     },
+    getUpDiff: function(sc_id) {
+      var url = '/api/diff/release/' + sc_id + '/data';
+      return $http({
+        url: url,
+        method: 'GET',
+        transformResponse: function(value) {
+          // If we don't do this, angular is going to try
+          // to parse the data as JSON just because it's
+          // a string.
+          return value;
+        }
+      });
+    },
     updateRelease: function(name, data, csrf_token) {
       data.csrf_token = csrf_token;
       data = Helpers.replaceEmptyStrings(data);

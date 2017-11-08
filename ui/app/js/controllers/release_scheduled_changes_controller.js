@@ -57,14 +57,13 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
   /* End openDataModal */
 
   $scope.openDiffModal = function(sc) {
-        console.log('view sc', sc);
         var modalInstance = $modal.open({
           templateUrl: 'release_data_modal.html',
-          controller: 'ReleaseDataCtrl',
+          controller: 'ScheduledReleaseUpdateDataCtrl',
           size: 'lg',
           backdrop: 'static',
           resolve: {
-            release: function () {
+            sc: function () {
               return sc;
             },
             diff: function() {
