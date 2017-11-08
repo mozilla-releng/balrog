@@ -53,32 +53,6 @@ class HistoryHelper():
         return jsonify(ret)
 
 
-def get_input_dict():
-    table_constants = [
-        'rules',
-        'releases',
-        'permissions',
-        'permissions_required_signoffs',
-        'product_required_signoffs',
-        'releases_scheduled_change',
-        'rules_scheduled_change',
-        'permissions_scheduled_change',
-        'permissions_required_signoff_scheduled_change',
-        'product_required_signoff_scheduled_change'
-    ]
-    reserved_filter_params = ['limit', 'page', 'timestamp_from', 'timestamp_to']
-    args = request.args
-    query_keys = []
-    query = {}
-    for key in args:
-        if key not in table_constants and key not in reserved_filter_params:
-            query_keys.append(key)
-
-    for key in query_keys:
-        query[key] = request.args.get(key)
-    return jsonify(query_keys=query_keys, query=query)
-
-
 history_keys = ('timestamp', 'change_id', 'data_version', 'changed_by')
 
 
