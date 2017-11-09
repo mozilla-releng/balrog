@@ -162,6 +162,7 @@ angular
       };
       History.getHistory(filterParams)
       .success(function(response) {
+        console.log(response,"response");
         $scope.tableResult = true;
         var result = [];
         $scope.changeType = [];
@@ -185,6 +186,7 @@ angular
                 result.push($scope.revision);                
               });
           }
+          console.log(result,"result");
           $scope.searchResult = result;
         }
           else {
@@ -193,7 +195,8 @@ angular
                 "No results matching the filter",
                 "error"   
               );
-            }      });         
+            }
+          });         
       })
       .error(function() {
         console.error(arguments);
@@ -211,14 +214,14 @@ angular
     };
 
     $scope.clearFilters = function() {
-      $scope.data.objectSelected = {id: '1',  name: 'default', value:'---Please select---' },
+      $scope.data.objectSelected = {id: '1',  name: 'default', value:'---Please select---' };
       $scope.userInput = {
         changedBy: "",
         dateRangeStart: "",
         dateRangeEnd: "",
         hs_pr_ch_filter: ""
       };
-    }
+    };
 
     $scope.openDataModal = function(change_id) {
       angular.forEach($scope.searchResult, function(revision){

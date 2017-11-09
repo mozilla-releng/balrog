@@ -52,6 +52,19 @@ class HistoryHelper():
         ret['count'] = total_count
         return jsonify(ret)
 
+def get_input_dict():
+    reserved_filter_params = ['limit', 'page', 'timestamp_from', 'timestamp_to']
+    args = request.args
+    query_keys = []
+    query = {}
+    for key in args:
+        if key not in reserved_filter_params:
+            query_keys.append(key)
+
+    for key in query_keys:
+        query[key] = request.args.get(key)
+    return jsonify(query_keys=query_keys, query=query)
+
 
 def get_input_dict():
     reserved_filter_params = ['limit', 'page', 'timestamp_from', 'timestamp_to']
