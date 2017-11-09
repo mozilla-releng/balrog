@@ -376,6 +376,34 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
+  /scheduled_change/diff/release/{sc_id}/{field}:
+    get:
+      summary: Returns a diff of the value of the named field
+      description: >
+        Returns a diff of the value of the named field from the named object at the specified sc_id vs the previous change to that object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#sc-view-object-change-id-field)
+      tags:
+        - History
+      operationId: auslib.web.admin.views.mapper.scheduled_release_diff_get
+      consumes: []
+      produces:
+        - application/json
+        - text/plain
+      externalDocs:
+        description: "Returns a diff of the value of the named field from the named object at the specified sc_id vs the previous change to that object"
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#sc-view-object-change-id-field"
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/field_name_param'
+      responses:
+        '200':
+          description: Successfully fetched the requested diff value
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+
+
   /history/view/release/{change_id}/{field}:
     get:
       summary: Returns the value of the named field from the named object at specified change_id

@@ -622,3 +622,49 @@ class ReleaseDiffView(ReleaseFieldView):
         )
 
         return Response('\n'.join(result), content_type='text/plain')
+
+
+class ScheduledReleaseFieldView(AdminView):
+
+    def __init__(self):
+        self.table = dbo.releases.scheduled_changes
+
+    def get_value(self, sc_id, field=None):
+        data = self.table.select(where={"sc_id": sc_id}, transaction=None)[0]
+        if not data:
+            abort(400, 'Bad sc_id')
+        if not field:
+            return data
+        if field not in data:
+            raise KeyError('Bad field')
+        return data[field]
+
+
+class ScheduledReleaseDiffView(ScheduledReleaseFieldView):
+    """/diff/:sc_id/:field"""
+
+    @staticmethod
+    def get_release(sc):
+        data = dbo.releases.select(where={"name": sc["base_name"], "product": sc["base_product"]}, limit=1)[0]
+        if not data:
+            abort(400, 'Bad sc_id')
+        return data
+
+    def get(self, sc_id, field):
+        sc = self.get_value(sc_id)
+        release = self.get_release(sc)
+
+        if field not in release:
+            return problem(400, "Bad Request", "Bad field")
+
+        previous = json.dumps(release[field], indent=2, sort_keys=True)
+        value = json.dumps(sc["base_{}".format(field)], indent=2, sort_keys=True)
+        result = difflib.unified_diff(
+            previous.splitlines(),
+            value.splitlines(),
+            fromfile="Data Version {}".format(release["data_version"]),
+            tofile="Data Version {}".format(sc["data_version"]),
+            lineterm=""
+        )
+
+        return Response('\n'.join(result), content_type='text/plain')
