@@ -1,0 +1,58 @@
+parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changed_by_param'
+        - $ref: '#/parameters/change_id_param'
+        - $ref: '#/parameters/timestamp_param'
+        - $ref: '#/parameters/data_version_param'
+        - name: rules
+          in: query
+          description: Indicates whether rules history should be included
+          type: integer
+          x-nullable: true
+          required: false
+        - name: releases
+          in: query
+          description: Indicates whether releases history should be included
+          type: integer
+          x-nullable: true
+          required: false
+        - name: permissions
+          in: query
+          description: Indicates whether permissions history should be included
+          type: integer
+          x-nullable: true
+          required: false
+
+changedByParam:
+    name: changed_by
+    in: query
+    description: The username who made the requested changes.
+    type: string
+    x-nullable: true
+    required: false
+
+  changeIdParam:
+    name: change_id
+    in: query
+    description: The change_id value to filter hsitory by.
+    type: integer
+    x-nullable: true
+    required: false
+
+  timestampParam:
+    name: timestamp
+    in: query
+    description: timestamp at which the requested change was made.
+    type: integer
+    x-nullable: true
+    required: false
+  
+  dataVersionParam:
+    name: data_version
+    in: query
+    description: data_version field value to filter history by.
+    type: integer
+    x-nullable: true
+    required: false

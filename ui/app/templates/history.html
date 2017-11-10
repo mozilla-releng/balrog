@@ -15,10 +15,6 @@
           <br>
         </div>
         <div>
-          <div class="filter-group" ng-show="data.objectSelected.name === 'permissions_required_signoffs'">
-            <h6>Role</h6>
-            <input type="text" ng-model="role" placeholder='Enter Role' />
-          </div>
           <div class="filter-group">
             <div>
               <h6 class="h-underlined">Changed By</h6>
@@ -80,7 +76,8 @@
       <div class="table-responsive">
         <div>
           <span class="pagination-container" ng-show="history_count > pageSize">
-            <pagination class="pagination-sm" total-items="history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
+            <pagination class="pagination-sm"
+            total-items="history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
               boundary-links="true">
             </pagination>
           </span>
@@ -103,7 +100,7 @@
             </tr>
           </thead>
           <tbody ng-show="tableResult">
-            <tr ng-repeat="item in historyResult = searchResult | orderBy:orderHistory | startFrom: (currentPage - 1)*pageSize | limitTo:pageSize track by $index">
+            <tr ng-repeat="item in historyResult = searchResult | orderBy:orderHistory track by $index">
               <td>{{item.rule_id || item.name || item.username || item.role}}</td>
               <td ng-show="revision.permission">{{item.permission}}
                   <a class="btn btn-default btn-xs" href="" ng-click="openDataModal(item.change_id)">

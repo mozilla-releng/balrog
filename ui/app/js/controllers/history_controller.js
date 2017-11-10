@@ -149,61 +149,63 @@ angular
 
 
     $scope.searchHistory = function() {
-      $scope.searchResult = [];
+      $scope.searchResult.length = 0;
       $scope.loading = true;
       checkParameters();
-      var filterParams = {
-        objectValue: $scope.objectValue,
-        changedByValue: $scope.changedByValue,
-        startDate: $scope.hs_startDate,
-        endDate: $scope.hs_endDate,
-        product: $scope.product,
-        channel: $scope.channel
-      };
-      History.getHistory(filterParams)
-      .success(function(response) {
-        console.log(response,"response");
-        $scope.tableResult = true;
-        var result = [];
-        $scope.changeType = [];
-        $scope.history_count = 0;
-        angular.forEach(response, function(value, key){
-          $scope.history_revisions = value.revisions;
-          $scope.history_required_signoffs = value.required_signoffs;
-          $scope.history_count += value.count;
-          if ($scope.history_count > 0){
-            if($scope.history_required_signoffs){
-              $scope.history_required_signoffs.forEach(function(revision){
-                $scope.revision = revision;
-                $scope.revision["type"] = key;
-                result.push($scope.revision);
-              });
+      $scope.$watch("currentPage", function(page) {
+        var filterParams = {
+          objectValue: $scope.objectValue,
+          changedByValue: $scope.changedByValue,
+          startDate: $scope.hs_startDate,
+          endDate: $scope.hs_endDate,
+          product: $scope.product,
+          channel: $scope.channel
+        };
+        console.log(page, filterParams);
+        History.getHistory(filterParams, page)
+        .success(function(response) {
+          $scope.tableResult = true;
+          var result = [];
+          $scope.changeType = [];
+          $scope.history_count = 0;
+          angular.forEach(response, function(value, key){
+            $scope.history_revisions = value.revisions;
+            $scope.history_required_signoffs = value.required_signoffs;
+            $scope.history_count += value.count;
+            if ($scope.history_count > 0){
+              if($scope.history_required_signoffs){
+                $scope.history_required_signoffs.forEach(function(revision){
+                  $scope.revision = revision;
+                  $scope.revision["type"] = key;
+                  result.push($scope.revision);
+                });
+              }
+              if($scope.history_revisions){  
+                $scope.history_revisions.forEach(function(revision){
+                  $scope.revision = revision;
+                  $scope.revision["type"] = key;
+                  result.push($scope.revision);                
+                });
             }
-            if($scope.history_revisions){  
-              $scope.history_revisions.forEach(function(revision){
-                $scope.revision = revision;
-                $scope.revision["type"] = key;
-                result.push($scope.revision);                
-              });
+            console.log(result,"result");
+            $scope.searchResult = result;
           }
-          console.log(result,"result");
-          $scope.searchResult = result;
-        }
           else {
               sweetAlert(
                 "error",
                 "No results matching the filter",
                 "error"   
               );
-            }
-          });         
-      })
-      .error(function() {
-        console.error(arguments);
-        $scope.failed = true;
-      })
-      .finally(function() {
-        $scope.loading = false;
+          }
+        });         
+        })
+        .error(function() {
+          console.error(arguments);
+          $scope.failed = true;
+        })
+        .finally(function() {
+          $scope.loading = false;
+        });
       });
     };
 

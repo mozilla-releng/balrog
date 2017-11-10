@@ -1,7 +1,8 @@
 angular.module("app").factory('History', function($http, $q, ScheduledChanges, Helpers) {
     var service = {
-      getHistory: function(filterParams){
+      getHistory: function(filterParams, page){
         var url = '/api/' +(filterParams.objectValue) +'/history?';
+        url += '&page=' + page;
         if (filterParams.changedByValue){
           url += '&changed_by=' + filterParams.changedByValue;
         }

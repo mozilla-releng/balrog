@@ -1,370 +1,354 @@
 describe("Service: History", function() {
-    
-      beforeEach(function() {
-        module("app");
-      });
-    
-      beforeEach(inject(function(History, $httpBackend) {
-        this.$httpBackend = $httpBackend;
-      }));
-    
-      afterEach(function() {
-        this.$httpBackend.verifyNoOutstandingRequest();
-        this.$httpBackend.verifyNoOutstandingExpectation();
-      });
-    
-      it('should return all rules even empty', inject(function(Rules, History) {
-        var sample_response = {rules: [], count: 0};
-        this.$httpBackend.expectGET('/api/rules')
+  beforeEach(function() {
+    module("app");
+  });
+
+  beforeEach(
+    inject(function(History, $httpBackend) {
+      this.$httpBackend = $httpBackend;
+    })
+  );
+
+  afterEach(function() {
+    this.$httpBackend.verifyNoOutstandingRequest();
+    this.$httpBackend.verifyNoOutstandingExpectation();
+  });
+
+  var sample_rules_response = {
+    Rules: {
+      count: 2,
+      revisions: [
+        {
+          alias: null,
+          backgroundRate: 100,
+          buildID: null,
+          buildTarget: "WINNT_x86-msvc-x64",
+          change_id: 9490,
+          changed_by: "hope.ngerebara@gmail.com",
+          channel: "release-cdntest",
+          comment: "Watershed",
+          priority: 94,
+          product: "Firefox",
+          rule_id: 665,
+          timestamp: 1508923005724,
+          update_type: "minor",
+          version: "<56.0.1"
+        },
+        {
+          alias: null,
+          backgroundRate: 100,
+          buildID: null,
+          buildTarget: "WINNT_x86-msvc-x64",
+          change_id: 9499,
+          changed_by: "hope.ngerebara@gmail.com",
+          channel: "release-cdntest",
+          comment: "Watershed 2",
+          priority: 94,
+          product: "Firefox",
+          rule_id: 666,
+          timestamp: 1508923005755,
+          update_type: "minor",
+          version: "<56.0.1"
+        }
+      ]
+    },
+    "Rules scheduled change": {
+      count: 1,
+      revisions: [
+        {
+          alias: null,
+          backgroundRate: 0,
+          buildID: ">=20170730030209",
+          buildTarget: null,
+          change_id: 2,
+          change_type: "update",
+          changed_by: "hopez",
+          channel: "nightlytest",
+          mapping: "Thunderbird-comm-central-nightly-latest",
+          product: "Thunderbird",
+          rule_id: 633,
+          sc_data_version: 1,
+          sc_id: 1,
+          scheduled_by: "balrogadmin",
+          timestamp: 1509379903963,
+          update_type: "minor"
+        }
+      ]
+    }
+  };
+
+  it(
+    "should return all rules even empty",
+    inject(function(Rules) {
+      var sample_response = { rules: [], count: 0 };
+      this.$httpBackend
+        .expectGET("/api/rules")
         .respond(200, JSON.stringify(sample_response));
-        Rules.getRules().success(function(response) {
-          expect(response.count).toEqual(0);
-          expect(response.rules).toEqual([]);
-        });
-        this.$httpBackend.flush();
-      }));
-    
-      it('should return all rules with something', inject(function(Rules) {
-        var sample_rule = {
-          product: 'Firefox'
-        };
-        var sample_response = {
-          rules: [sample_rule],
-          count: 1,
-        };
-        this.$httpBackend.expectGET('/api/rules')
+      Rules.getRules().success(function(response) {
+        expect(response.count).toEqual(0);
+        expect(response.rules).toEqual([]);
+      });
+      this.$httpBackend.flush();
+    })
+  );
+
+  it(
+    "should return all rules with something",
+    inject(function(Rules) {
+      var sample_rule = {
+        product: "Firefox"
+      };
+      var sample_response = {
+        rules: [sample_rule],
+        count: 1
+      };
+      this.$httpBackend
+        .expectGET("/api/rules")
         .respond(200, JSON.stringify(sample_response));
-        Rules.getRules().success(function(response) {
-          expect(response.count).toEqual(1);
-          expect(response.rules[0]).toEqual(sample_rule);
-        });
-        this.$httpBackend.flush();
-      }));
-      
+      Rules.getRules().success(function(response) {
+        expect(response.count).toEqual(1);
+        expect(response.rules[0]).toEqual(sample_rule);
+      });
+      this.$httpBackend.flush();
+    })
+  );
+
+  it("should return all rules history",
+    inject(function(History) {
+      var page = 1;
       var filterParams = {
         objectValue: "rules",
-        // changedByValue: ,
-        // startDate: $scope.hs_startDate,
-        // endDate: $scope.hs_endDate,
-        // product: $scope.product,
-        // channel: $scope.channel
+        changedByValue: "hope.ngerebara@gmail.com",
+        startDate: 1508923005724,
+        endDate: 1508923005755
       };
-      it('should return all rules history', inject(function(History) {
-        var sample_rules_response = {
-            "Rules": {
-                "count": 2,
-                "revisions": [
-                  {
-                    "alias": null,
-                    "backgroundRate": 100,
-                    "buildID": null,
-                    "buildTarget": "WINNT_x86-msvc-x64",
-                    "change_id": 9490,
-                    "changed_by": "testemail1@mozilla.com",
-                    "channel": "release-cdntest",
-                    "comment": "Watershed rule to update 56.0 win32 users who are eligible for win64 to 56.0.2",
-                    "data_version": 3,
-                    "distVersion": null,
-                    "distribution": null,
-                    "fallbackMapping": null,
-                    "headerArchitecture": null,
-                    "instructionSet": null,
-                    "jaws": null,
-                    "locale": null,
-                    "mapping": "Firefox-56.0.2-build1-win64-migration-WNP",
-                    "memory": ">2048",
-                    "mig64": true,
-                    "osVersion": null,
-                    "priority": 94,
-                    "product": "Firefox",
-                    "rule_id": 665,
-                    "timestamp": 1508923005724,
-                    "update_type": "minor",
-                    "version": "<56.0.1"
-                  },
-                  {
-                    "alias": null,
-                    "backgroundRate": 100,
-                    "buildID": null,
-                    "buildTarget": null,
-                    "change_id": 9489,
-                    "changed_by": "testemail2@mozilla.com",
-                    "channel": "release-cdntest",
-                    "comment": "Show mobile promotion WNP to users who stayed on 56.0 (win64-migrated users have already seen it in 56.0.1)",
-                    "data_version": 2,
-                    "distVersion": null,
-                    "distribution": null,
-                    "fallbackMapping": null,
-                    "headerArchitecture": null,
-                    "instructionSet": null,
-                    "jaws": null,
-                    "locale": null,
-                    "mapping": "Firefox-56.0.2-build1-WNP",
-                    "memory": null,
-                    "mig64": null,
-                    "osVersion": null,
-                    "priority": 92,
-                    "product": "Firefox",
-                    "rule_id": 666,
-                    "timestamp": 1508923005671,
-                    "update_type": "minor",
-                    "version": "<56.0.1"
-                  }
-                ]
-            },
-            "Rules scheduled change": {
-              "count": 1,
-              "revisions": [
-                {
-                  "alias": null,
-                  "backgroundRate": 0,
-                  "buildID": ">=20170730030209",
-                  "buildTarget": null,
-                  "change_id": 2,
-                  "change_type": "update",
-                  "changed_by": "balrogadmin",
-                  "channel": "nightlytest",
-                  "comment": "bug 1386230 For all builds after 20170731030207 renable updates to latest nightly.",
-                  "complete": false,
-                  "data_version": 2,
-                  "distVersion": null,
-                  "distribution": null,
-                  "fallbackMapping": null,
-                  "headerArchitecture": null,
-                  "instructionSet": null,
-                  "jaws": null,
-                  "locale": null,
-                  "mapping": "Thunderbird-comm-central-nightly-latest",
-                  "memory": null,
-                  "mig64": null,
-                  "osVersion": null,
-                  "priority": 89,
-                  "product": "Thunderbird",
-                  "rule_id": 633,
-                  "sc_data_version": 1,
-                  "sc_id": 1,
-                  "scheduled_by": "balrogadmin",
-                  "telemetry_channel": null,
-                  "telemetry_product": null,
-                  "telemetry_uptake": null,
-                  "timestamp": 1509379903963,
-                  "update_type": "minor",
-                  "version": null,
-                  "when": 1510700400000
-                }
-              ]
-            }
-        };
-        
-        this.$httpBackend.expectGET('/api/' + filterParams.objectValue +'/history?')
+      this.$httpBackend
+      .expectGET("/api/" +filterParams.objectValue +"/history?&page=" +page +
+          "&changed_by=" +filterParams.changedByValue +
+          "&timestamp_from=" +filterParams.startDate +
+          "&timestamp_to=" + filterParams.endDate
+      )
         .respond(200, JSON.stringify(sample_rules_response));
-        var result =[];
-        angular.forEach(sample_rules_response,function(value,key){
-            result.push(value.revisions);
-        })
-        History.getHistory(filterParams).success(function(response) {
-            var index = 0;
-            angular.forEach(response, function(value, key){
-                // console.log(result[index], index)
-                // console.log('***************')
-                // expect(value.count).toEqual(2);
-                expect(value.revisions).toEqual(result[index++]);
-            })
+      var result = [];
+      angular.forEach(sample_rules_response, function(value, key) {
+        result.push(value.revisions);
+      });
+      History.getHistory(filterParams, page).success(function(response) {
+        var index = 0;
+        angular.forEach(response, function(value, key) {
+          expect(value.revisions).toEqual(result[index++]);
         });
-        this.$httpBackend.flush();
-      }));
-    
-    //   it('should return an individual rule', inject(function(Rules) {
-    //     var sample_response = {
-    //       change_id: 123,
-    //       product: "Firefox",
-    //       data_version: 3,
-    //     };
-    //     this.$httpBackend.expectGET('/api/rules/1')
-    //     .respond(200, JSON.stringify(sample_response));
-    //     Rules.getRule(1).success(function(response) {
-    //       expect(response).toEqual(sample_response);
-    //     });
-    //     this.$httpBackend.flush();
-    //   }));
-    
-    //   it('should update an individual rule', inject(function(Rules) {
-    //     var sample_response = {
-    //       new_data_version: 4,
-    //     };
-    //     this.$httpBackend.expectPUT('/api/rules/1')
-    //     .respond(200, JSON.stringify(sample_response));
-    //     Rules.updateRule(1, {}).success(function(response) {
-    //       expect(response).toEqual(sample_response);
-    //     });
-    //     this.$httpBackend.flush();
-    //   }));
-    
-    //   it('should be to delete an individual rule', inject(function(Rules) {
-    //     var sample_response = {
-    //       new_data_version: 4,
-    //     };
-    //     var delete_url = '/api/rules/1?data_version=123&csrf_token=mytoken'
-    //     this.$httpBackend.expectDELETE(delete_url)
-    //     .respond(200, '');
-    //     Rules.deleteRule(1, {data_version: 123}, 'mytoken')
-    //     .success(function(response) {
-    //       expect(response).toEqual('');
-    //     });
-    //     this.$httpBackend.flush();
-    //   }));
-    
-    //   it('should be able to add an invidual rule', inject(function(Rules) {
-    //     this.$httpBackend.expectPOST('/api/rules')
-    //     .respond(200, '123');
-    //     Rules.addRule({product: "firefox"}, 'mytoken')
-    //     .success(function(response) {
-    //       expect(response).toEqual('123');
-    //     });
-    //     this.$httpBackend.flush();
-    //   }));
-    
-    //   it('should be able to add an revert a rule', inject(function(Rules) {
-    //     var url = '/api/rules/123/revisions';
-    //     this.$httpBackend.expectPOST(url)
-    //     .respond(200, '');
-    //     Rules.revertRule(123, 987, 'mytoken')
-    //     .success(function(response) {
-    //       expect(response).toEqual('');
-    //     });
-    //     this.$httpBackend.flush();
-    //   }));
-    
-    //   it("should return all scheduled rule changes", inject(function(Rules) {
-    //     var sample_sc = {
-    //       "sc_id": 1,
-    //       "scheduled_by": "jess",
-    //       "complete": false,
-    //       "when": new Date(123456789),
-    //       "base_rule_id": 2,
-    //       "base_product": "Firefox",
-    //       "base_channel": "release",
-    //       "base_data_version": 1
-    //     };
-    //     var sample_response = {
-    //       count: 1,
-    //       scheduled_changes: [sample_sc]
-    //     };
-    //     this.$httpBackend.expectGET("/api/scheduled_changes/rules?all=1")
-    //     .respond(200, JSON.stringify(sample_response));
-    //     Rules.getScheduledChanges().success(function(response) {
-    //       expect(response.count).toEqual(1);
-    //       expect(response.scheduled_changes[0]).toEqual(sample_sc);
-    //     });
-    //   }));
-    
-    //   it("should return a single scheduled rule change", inject(function(Rules) {
-    //     var sample_response = {
-    //       "sc_id": 1,
-    //       "scheduled_by": "jess",
-    //       "complete": false,
-    //       "when": new Date(123456789),
-    //       "base_rule_id": 2,
-    //       "base_product": "Firefox",
-    //       "base_channel": "release",
-    //       "base_data_version": 1
-    //     };
-    //     this.$httpBackend.expectGET("/api/scheduled_changes/rules/1")
-    //     .respond(200, JSON.stringify(sample_response));
-    //     Rules.getScheduledChange(1).success(function(response) {
-    //       expect(response).toEqual(sample_response);
-    //     });
-    //   }));
-    
-    //   it("should be able to create a scheduled change", inject(function(Rules) {
-    //     var sample_response = {
-    //       sc_id: 1
-    //     };
-    //     this.$httpBackend.expectPOST("/api/scheduled_changes/rules")
-    //     .respond(200, JSON.stringify(sample_response));
-    //     Rules.addScheduledChange({"when": new Date(123456789), "base_product": "Foo"}, "csrf").success(function(response) {
-    //       expect(response.sc_id).toEqual(1);
-    //     });
-    //   }));
-    
-    //   it("should be able to update a scheduled change", inject(function(Rules) {
-    //     var sample_response = {
-    //       new_data_version: 2
-    //     };
-    //     this.$httpBackend.expectPOST("/api/scheduled_changes/rules/2")
-    //     .respond(200, JSON.stringify(sample_response));
-    //     Rules.updateScheduledChange(2, {"when": new Date(123456789), "base_mapping": "abc", "data_version": 1}, "csrf")
-    //     .success(function(response) {
-    //       expect(response).toEqual(sample_response);
-    //     });
-    //   }));
-    
-    //   it("should be able to delete a scheduled change", inject(function(Rules) {
-    //     this.$httpBackend.expectDELETE("/api/scheduled_changes/rules/3?data_version=2&csrf_token=csrf")
-    //     .respond(200);
-    //     Rules.deleteScheduledChange(3, {sc_data_version: 2}, "csrf");
-    //   }));
-    
-    //   // todo: add sc history methods
-    
-    //   it("should respect both old and new rule", inject(function(Rules) {
-    //     var signoffRequirements = [
-    //       {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
-    //       {product: "Firefox", channel: "release", role: "relman", signoffs_required: 4},
-    //     ];
-    //     var oldRule = {product: "Firefox", channel: "nightly", mapping: "Firefox"};
-    //     var newRule = {product: "Firefox", channel: "release", mapping: "Firefox"};
-    //     var signoffsRequired = Rules.ruleSignoffsRequired(oldRule, newRule, signoffRequirements);
-    //     expect(signoffsRequired.length).toBe(2);
-    //     expect(signoffsRequired.roles['releng']).toBe(2);
-    //     expect(signoffsRequired.roles['relman']).toBe(4);
-    //   }));
-    
-    //   it("should take maximum of required signoffs", inject(function(Rules) {
-    //     var signoffRequirements = [
-    //       {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
-    //       {product: "Firefox", channel: "nightly", role: "relman", signoffs_required: 4},
-    //       {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 3},
-    //       {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
-    //     ];
-    //     var rule = {product: "Firefox", channel: "nightly", mapping: "Firefox"};
-    //     var signoffsRequired = Rules.ruleSignoffsRequired(rule, undefined, signoffRequirements);
-    //     expect(signoffsRequired.length).toBe(2);
-    //     expect(signoffsRequired.roles['releng']).toBe(3);
-    //     expect(signoffsRequired.roles['relman']).toBe(4);
-    //   }));
-    
-    //   it("should match globs", inject(function(Rules) {
-    //     var signoffRequirements = [
-    //       {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
-    //     ];
-    //     var rule = {product: "Firefox", channel: "night*", mapping: "Firefox"};
-    //     var signoffsRequired = Rules.ruleSignoffsRequired(rule, undefined, signoffRequirements);
-    //     expect(signoffsRequired.length).toBe(1);
-    //     expect(signoffsRequired.roles['releng']).toBe(2);
-    //   }));
-    
-    //   it("should match missing channels against all channels", inject(function(Rules) {
-    //     var signoffRequirements = [
-    //       {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
-    //       {product: "Firefox", channel: "release", role: "relman", signoffs_required: 2},
-    //       {product: "Firefox", channel: "esr", role: "admin", signoffs_required: 2},
-    //     ];
-    //     var rule = {product: "Firefox", mapping: "Firefox"};
-    //     var signoffsRequired = Rules.ruleSignoffsRequired(rule, undefined, signoffRequirements);
-    //     expect(signoffsRequired.length).toBe(3);
-    //     expect(signoffsRequired.roles['releng']).toBe(2);
-    //     expect(signoffsRequired.roles['relman']).toBe(2);
-    //     expect(signoffsRequired.roles['admin']).toBe(2);
-    //   }));
-    
-    //   it("should match only if both product and channel match", inject(function(Rules) {
-    //     var signoffRequirements = [
-    //       {product: "Firefox", channel: "nightly", role: "releng", signoffs_required: 2},
-    //     ];
-    //     var rule = {product: "Firefox", channel: "aurora", mapping: "Firefox"};
-    //     var signoffsRequired = Rules.ruleSignoffsRequired(rule, undefined, signoffRequirements);
-    //     expect(signoffsRequired.length).toBe(0);
-    //   }));
+      });
+      this.$httpBackend.flush();
+    })
+  );
+
+  it(
+    "should return all releases history based the filter option",
+    inject(function(History) {
+      var sample_releases_response = {
+        Releases: {
+          count: 2,
+          revisions: [
+            {
+              _different: [],
+              _time_ago: "3 days ago",
+              change_id: 12635504,
+              changed_by: "hope.ngerebara@gmail.com",
+              data_version: 798882,
+              name: "Firefox-mozilla-central-nightly-latest",
+              product: "Firefox",
+              read_only: "False",
+              timestamp: 1509976085599
+            },
+            {
+              _different: ["data"],
+              _time_ago: "3 days ago",
+              change_id: 12635482,
+              changed_by: "hope.ngerebara@gmail.com",
+              data_version: 798881,
+              name: "Firefox-mozilla-central-nightly-latest",
+              product: "Firefox",
+              read_only: "False",
+              timestamp: 1509975599716
+            }
+          ]
+        },
+        "Releases Scheduled Change": {
+          count: 1,
+          revisions: [
+            {
+              change_id: 5,
+              change_type: "delete",
+              changed_by: "hope.ngerebara@gmail.com",
+              complete: true,
+              data: null,
+              data_version: 1427,
+              name: "Devedition-56.0b1-build5",
+              product: "Devedition",
+              read_only: false,
+              sc_data_version: 2,
+              sc_id: 2,
+              scheduled_by: "balrogadmin",
+              timestamp: 1510284736310,
+              when: 1510284711868
+            }
+          ]
+        }
+      };
+      var page = 1;
+      var filterParams = {
+        objectValue: "releases",
+        changedByValue: "hope.ngerebara@gmail.com",
+        startDate: 1509976085599,
+        endDate: 1510284736310
+      };
+      var release_sample = [];
+      this.$httpBackend
+      .expectGET("/api/" +filterParams.objectValue +"/history?&page=" +page +
+          "&changed_by=" +filterParams.changedByValue +
+          "&timestamp_from=" +filterParams.startDate +
+          "&timestamp_to=" + filterParams.endDate
+      )
+        .respond(200, JSON.stringify(sample_releases_response));
+      var result = [];
+      angular.forEach(sample_releases_response, function(value, key) {
+        result.push(value.revisions);
+      });
+      History.getHistory(filterParams, page).success(function(response) {
+        var index = 0;
+        angular.forEach(response, function(value, key) {
+          expect(value.revisions).toEqual(result[index++]);
+        });
+      });
+      this.$httpBackend.flush();
+    })
+  );
+
+  it("should return all Permisions history based the filter option",
+    inject(function(History) {
+      var sample_permissions_response = {
+        "Permissions": {
+          "count": 3,
+          "revisions": [
+            {
+              "change_id": 10,
+              "changed_by": "hope.ngerebara@gmail.com",
+              "data_version": 1,
+              "options": {
+                "products": [
+                  "Widevine"
+                ]
+              },
+              "permission": "admin",
+              "timestamp": 1510101325319,
+              "username": "test"
+            },
+            {
+              "change_id": 8,
+              "changed_by": "hope.ngerebara@gmail.com",
+              "data_version": 1,
+              "options": {
+                "products": [
+                  "GMP"
+                ]
+              },
+              "permission": "release",
+              "timestamp": 1510100637074,
+              "username": "hopez"
+            },
+          ]
+          },
+          "Permissions Scheduled Change": {
+            "count": 2,
+            "revisions": [
+              {
+                "change_id": 3,
+                "change_type": "insert",
+                "changed_by": "hope@gmail.com",
+                "complete": true,
+                "data_version": null,
+                "options": {
+                  "products": [
+                    "GMP"
+                  ]
+                }
+              }
+            ]
+            }
+          }
+      var page = 1;
+      var filterParams = {
+        objectValue: "permissions",
+        changedByValue: "hope.ngerebara@gmail.com",
+        startDate: 1510101325319,
+        endDate: 1510100637074
+      };
+      this.$httpBackend
+      .expectGET("/api/" +filterParams.objectValue +"/history?&page=" +page +
+          "&changed_by=" +filterParams.changedByValue +
+          "&timestamp_from=" +filterParams.startDate +
+          "&timestamp_to=" + filterParams.endDate
+      )
+        .respond(200, JSON.stringify(sample_permissions_response));
+      var result = [];
+      angular.forEach(sample_permissions_response, function(value, key) {
+        result.push(value.revisions);
+      });
+      History.getHistory(filterParams, page).success(function(response) {
+        var index = 0;
+        angular.forEach(response, function(value, key) {
+          expect(value.revisions).toEqual(result[index++]);
+        });
+      });
+      this.$httpBackend.flush();
+    })
+  );
+
+  it("should return all Product signoffs history based the filter option",
+  inject(function(History) {
+    var sample_product_signoffs_response = {
+      "Product Required Signoffs": {
+        "count": 1,
+        "required_signoffs": [
+          {
+            "change_id": 2,
+            "changed_by": "balrogadmin",
+            "channel": "beta-cdntest",
+            "data_version": 1,
+            "product": "Firefox",
+            "role": "releng",
+            "signoffs_required": 1,
+            "timestamp": 1510100702118
+          }
+        ]
+      },
+    }
+    var page = 1;
+    var filterParams = {
+      objectValue: "product_required_signoffs",
+      changedByValue: "hope@gmail.com",
+      startDate: 1510101325319,
+      endDate: 1510100637060
+    };
+    this.$httpBackend
+    .expectGET("/api/" +filterParams.objectValue +"/history?&page=" +page +
+        "&changed_by=" +filterParams.changedByValue +
+        "&timestamp_from=" +filterParams.startDate +
+        "&timestamp_to=" + filterParams.endDate
+    )
+      .respond(200, JSON.stringify(sample_product_signoffs_response));
+    var result = [];
+    angular.forEach(sample_product_signoffs_response, function(value, key) {
+      result.push(value.revisions);
     });
-    
+    History.getHistory(filterParams, page).success(function(response) {
+      var index = 0;
+      angular.forEach(response, function(value, key) {
+        expect(value.revisions).toEqual(result[index++]);
+      });
+    });
+    this.$httpBackend.flush();
+  })
+);
+});
