@@ -47,6 +47,10 @@
             <li ng-class="{active: isOn('/required_signoffs')}">
                 <a href="/required_signoffs">Required Signoffs</a>
             </li>
+
+            <li ng-class="{active: isOn('/change_logs')}">
+              <a href="/change_logs">Changelogs</a>
+          </li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>

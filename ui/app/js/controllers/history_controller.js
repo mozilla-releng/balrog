@@ -161,7 +161,6 @@ angular
           product: $scope.product,
           channel: $scope.channel
         };
-        console.log(page, filterParams);
         History.getHistory(filterParams, page)
         .success(function(response) {
           $scope.tableResult = true;
@@ -223,6 +222,23 @@ angular
         dateRangeEnd: "",
         hs_pr_ch_filter: ""
       };
+    };
+
+    $scope.openDiffModal = function(revision) {
+      var modalInstance = $modal.open({
+        templateUrl: 'release_data_modal.html',
+        controller: 'ReleaseDataCtrl',
+        size: 'lg',
+        backdrop: 'static',
+        resolve: {
+          release: function () {
+            return revision;
+          },
+          diff: function() {
+            return true;
+          }
+        }
+      });
     };
 
     $scope.openDataModal = function(change_id) {

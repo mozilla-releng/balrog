@@ -80,7 +80,7 @@ angular.module("app").config(function($routeProvider, $locationProvider) {
     reloadOnSearch: false
   })
 
-  .when('/history', {
+  .when('/change_logs', {
     templateUrl: 'history.html',
     controller: 'HistoryController',
     reloadOnSearch: false

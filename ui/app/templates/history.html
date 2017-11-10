@@ -56,7 +56,8 @@
               </ul>
             </div>
           </div>
-          <div class="filter-group" ng-hide="data.objectSelected.name === 'permissions' || data.objectSelected.name === 'permissions_required_signoff'">
+          <div class="filter-group" ng-hide="data.objectSelected.name === 'permissions'
+            || data.objectSelected.name === 'permissions_required_signoffs'">
             <h6 class="h-underlined">Product / Channel </h6>
             <select ng-model="userInput.hs_pr_ch_filter" ng-change=productChannelValue(userInput.hs_pr_ch_filter) name="hs_pr_ch_filter"
               ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
@@ -87,35 +88,39 @@
         <table class="table table-bordered table-hover table-striped">
           <thead>
             <tr>
-              <th ng-show="revision.rule_id">Rule Id</th>
+              <th ng-show="revision.rule_id">Rule_Id / Alais</th>
               <th ng-show="revision.name">Name</th>
               <th ng-show="revision.role">Role</th>
               <th ng-show="revision.username">Username</th>
-              <th ng-show="revision.rule_id || revision.name || revision.role">Product/Channel</th>
+              <th ng-show="revision.rule_id || revision.name || revision.role">{{ (revision.rule_id) ? 'Product/Channel' : 'Product' }}</th>
               <th ng-show="revision.permission">Permission</th>
               <th>Object</th>
               <th>Changed By</th>
               <th>Date</th>
               <th>Data Version</th>
+              <th ng-show="revision.name">Data</th>
             </tr>
           </thead>
           <tbody ng-show="tableResult">
             <tr ng-repeat="item in historyResult = searchResult | orderBy:orderHistory track by $index">
-              <td>{{item.rule_id || item.name || item.username || item.role}}</td>
-              <td ng-show="revision.permission">{{item.permission}}
-                  <a class="btn btn-default btn-xs" href="" ng-click="openDataModal(item.change_id)">
-                    <i class="glyphicon glyphicon-eye-open"></i>
-                  </a>
-                </td>
-              <td ng-show="revision.rule_id || revision.name ||revision.role">{{item.product + ' ' +item.channel}}
+              <td>{{(item.alias && item.rule_id) ? item.alias : item.rule_id || item.name || item.username || item.role}}
                 <a class="btn btn-default btn-xs" href="" ng-click="openDataModal(item.change_id)">
                   <i class="glyphicon glyphicon-eye-open"></i>
                 </a>
+              </td>
+              <td ng-show="revision.permission">{{item.permission}}
+                </td>
+              <td ng-show="revision.rule_id || revision.name ||revision.role">{{item.product + ' ' +item.channel}}
               </td>
               <td>{{ item.type }}</td>
               <td>{{ item.changed_by }}</td>
               <td>{{ item.timestamp | date:'dd/MM/yyyy hh:mm a' }}</td>
               <td>{{ item.data_version }}</td>
+              <td ng-show="item.name">
+                  <button class="btn btn-default btn-xs" href="" ng-click="openDiffModal(revision)">
+                      <i>View Diff</i>
+                  </button>
+              </td>
             </tr>
           </tbody>
         </table>
