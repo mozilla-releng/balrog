@@ -1,9 +1,12 @@
 /*global sweetAlert swal */
 angular.module('app').controller('UserPermissionsCtrl',
-function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permissionSignoffRequirements) {
+function ($scope, $modalInstance, CSRF, Permissions, users, roles, is_edit, user, permissionSignoffRequirements) {
 
   $scope.loading = true;
   $scope.users = users;
+  $scope.roles_list = roles;
+  $scope.originalPermissions = [];
+
   $scope.currentItemTab = 1;
 
   $scope.is_edit = is_edit;
@@ -14,9 +17,11 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
   $scope.errors = {
     permissions: {}
   };
+
   if($scope.is_edit){
     $scope.original_user = user;
     $scope.user = angular.copy(user);
+
     $scope.user.permissions = [];
     Permissions.getUserPermissions($scope.user.username)
     .then(function(permissions) {
@@ -29,29 +34,16 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
       $scope.user.permissions = permissions;
     });
 
-    $scope.user.roles = [];
-    Permissions.getUserRoles($scope.user.username)
-    .success(function(response) {
-      $scope.user.roles = response.roles;
-    })
-    .error(function(response) {
-      if (typeof response === 'object') {
-        $scope.errors = response;
-        sweetAlert(
-          "Failed to load User Roles",
-          "error"
-        );
-      } else if (typeof response === 'string') {
-        sweetAlert(
-          "Failed to load User Roles" +
-          "(" + response+ ")",
-          "error"
-        );
-      }
-    })
-    .finally(function() {
+    $scope.getUserRoles = function (username){
+      $scope.users.forEach(function(eachUser){
+        if(eachUser.username === username){
+          $scope.user.roles = eachUser.roles;
+        }
+      });
       $scope.loading = false;
-    });
+    };
+    $scope.getUserRoles($scope.user.username);
+
   }
   else {
     $scope.user = {
@@ -63,7 +55,6 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
   }
 
 
-  $scope.roles_list = [];
   function fromFormData(permission) {
     permission = angular.copy(permission);
     try {
@@ -96,27 +87,6 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
     });
   }, true);
 
-  Permissions.getAllRoles()
-  .success(function(response) {
-    $scope.roles_list = response.roles;
-  })
-  .error(function(response) {
-    if (typeof response === 'object') {
-      $scope.errors = response;
-      sweetAlert(
-        "Form submission error",
-        "See fields highlighted in red.",
-        "error"
-      );
-    } else if (typeof response === 'string') {
-      sweetAlert(
-        "Form submission error",
-        "Unable to submit successfully.\n" +
-        "(" + response+ ")",
-        "error"
-      );
-    }
-  });
 
   $scope.saving = false;
   $scope.usersaved = false;
@@ -136,7 +106,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, is_edit, user, permi
       Permissions.grantRole($scope.user.username, $scope.role.role, $scope.role.data_version, csrf_token)
       .success(function(response) {
         $scope.role.data_version = response.new_data_version;
-        $scope.user.roles.push($scope.role);
+        $scope.user.roles.push($scope.role.role);
 
         if (!($scope.role.role in $scope.roles_list)) {
           $scope.roles_list.push($scope.role.role);

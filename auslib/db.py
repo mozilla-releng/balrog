@@ -2295,10 +2295,21 @@ class Permissions(AUSTable):
                 raise ValueError('Unknown option "%s" for permission "%s"' % (opt, permission))
 
     def getAllUsers(self, transaction=None):
-        res_permissions = self.select(columns=[self.username], distinct=True, transaction=transaction)
-        res_roles = self.user_roles.select(columns=[self.user_roles.username], transaction=transaction)
-        res = res_roles + res_permissions
-        return list(set([r['username'] for r in res]))
+        res_users = self.select(columns=[self.username], distinct=True, transaction=transaction)
+        users_list = list(set([r['username'] for r in res_users]))
+        users = []
+        for user in users_list:
+            res_roles = self.user_roles.select(where=[
+                self.user_roles.username == user],
+                columns=[self.user_roles.role],
+                transaction=transaction)
+            roles_list = list([r['role'] for r in res_roles])
+            roles = {}
+            roles["roles"] = roles_list
+            user_roles = {}
+            user_roles[user] = roles
+            users.append(user_roles)
+        return sorted(users)
 
     def getAllPermissions(self, transaction=None):
         ret = defaultdict(dict)
@@ -2422,10 +2433,6 @@ class Permissions(AUSTable):
                                      columns=[self.user_roles.role, self.user_roles.data_version],
                                      distinct=True, transaction=transaction)
         return [{"role": r["role"], "data_version": r["data_version"]} for r in res]
-
-    def getAllRoles(self, transaction=None):
-        res = self.user_roles.select(columns=[self.user_roles.role], distinct=True, transaction=transaction)
-        return [r["role"] for r in res]
 
     def isAdmin(self, username, transaction=None):
         return bool(self.getPermission(username, "admin", transaction))

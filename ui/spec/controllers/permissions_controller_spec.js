@@ -6,8 +6,16 @@ describe("controller: PermissionsController", function() {
 
   var empty_user = '';
 
-  var sample_users = {
-    "users": ["peterbe", "bhearsum@example.com"]
+  var sample_users = {users: [
+    {
+      peterbe: {
+        roles: ['qa', 'releng']
+      }
+    }, {
+      bhearsum: {
+        roles: ['qa', 'releng']
+      }
+    }]
   };
 
   var sample_permissions = {
@@ -63,9 +71,13 @@ describe("controller: PermissionsController", function() {
       this.$httpBackend.flush();
       expect(this.scope.users.length).toEqual(2);
       expect(this.scope.users).toEqual([
-        {username: "peterbe"},
-        {username: "bhearsum@example.com"}
-      ]);
+        {
+          username: "peterbe",
+          roles: ['qa', 'releng']
+        }, {
+          username: "bhearsum",
+          roles: ['qa', 'releng']
+        }]);
     });
 
   });
@@ -122,8 +134,6 @@ describe("controller: PermissionsController", function() {
       this.$httpBackend.expectGET('/api/users')
       .respond(200, JSON.stringify(sample_users));
       this.$httpBackend.expectGET('/api/required_signoffs/permissions')
-      .respond(200, '{"required_signoffs": []}');
-      this.$httpBackend.expectGET('/api/users/roles')
       .respond(200, JSON.stringify(sample_all_roles));
       this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.scope.openNewModal();
@@ -136,10 +146,6 @@ describe("controller: PermissionsController", function() {
       .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.expectGET('/api/users/peterbe/permissions')
       .respond(200, JSON.stringify(sample_permissions));
-      this.$httpBackend.expectGET('/api/users/peterbe/roles')
-      .respond(200, JSON.stringify(sample_roles));
-      this.$httpBackend.expectGET('/api/users/roles')
-      .respond(200, JSON.stringify(sample_all_roles));
       this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.scope.openUpdateModal({username: "peterbe"});
     });

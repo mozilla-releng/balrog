@@ -54,7 +54,7 @@
           </div>
         <h4>Current Permissions</h4>
         <div class="panel panel-default"
-             ng-repeat="permission in user.permissions">
+             ng-repeat="permission in user.permissions track by $index">
           <div class="panel-heading">
               <div style="float: right">
                 <button class="btn btn-primary btn-xs" ng-show="!saving && !userPermissionsSignoffRequirements[$index].signoffRequirements.length" ng-click="updatePermission(permission)">Save changes</button>
@@ -103,7 +103,7 @@
               <button class="btn btn-primary btn-xs" ng-show="!saving" ng-click="revokeRole(role)">Revoke</button>
             </div>
             <h3 class="panel-title">
-              {{ role.role }}
+              {{ role }}
             </h3>
           </div>
         </div>
