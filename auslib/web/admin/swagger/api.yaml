@@ -275,14 +275,6 @@ parameters:
     x-nullable: true
     required: false
 
-  timestampParam:
-    name: timestamp
-    in: query
-    description: timestamp at which the requested change was made.
-    type: integer
-    x-nullable: true
-    required: false
-
   timestampFromParam:
     name: timestamp_from
     in: query
@@ -296,14 +288,6 @@ parameters:
     in: query
     description: timestamp to/below which history is filtered.
     type: integer
-    x-nullable: true
-    required: false
-
-  channelParam:
-    name: channel
-    in: query
-    description: channel stirng for filtering history.
-    type: string
     x-nullable: true
     required: false
 
@@ -426,10 +410,14 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
-        - $ref: '#/parameters/channelParam'
+        - name: channel
+          in: query
+          description: channel stirng for filtering history.
+          type: string
+          x-nullable: true
+          required: false
       responses:
         '200':
           description: Successfully fetched rules history
@@ -456,10 +444,8 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
-        - $ref: '#/parameters/channelParam'
       responses:
         '200':
           description: Successfully fetched histories
@@ -480,89 +466,16 @@ paths:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
         description: "Returns a list of rules, releases and permissions histories"
       parameters:
-        - $ref: '#/parameters/productParam'
         - $ref: '#/parameters/limitParam'
         - $ref: '#/parameters/pageParam'
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
-        - $ref: '#/parameters/channelParam'
       responses:
         '200':
           description: Successfully fetched permissions history
-        '400':
-          $ref: '#/responses/invalidFormData'
-
-  /product_required_signoffs/history:
-    get:
-      summary: Returns a list of product required signoff history.
-      description: >
-        Returns product required signoff history.
-      tags:
-        - "History Signoff Product"
-      operationId: auslib.web.common.history_all.get_product_required_signoffs_history
-      consumes: []
-      produces: [application/json]
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
-        description: "Returns a list of product required signoff history"
-      parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/limitParam'
-        - $ref: '#/parameters/pageParam'
-        - $ref: '#/parameters/changedByParam'
-        - $ref: '#/parameters/changeIdParam'
-        - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
-        - $ref: '#/parameters/timestampFromParam'
-        - $ref: '#/parameters/timestampToParam'
-        - name: role
-          in: query
-          description: The role(s) required for product signoff
-          type: string
-          x-nullable: true
-          required: false
-      responses:
-        '200':
-          description: Successfully fetched product required signoff history
-        '400':
-          $ref: '#/responses/invalidFormData'
-
-  /permission_required_signoffs/history:
-    get:
-      summary: Returns a list of permissions required signoff history.
-      description: >
-        Returns permissions required signoff history.
-      tags:
-        - "History Permissions Signoff"
-      operationId: auslib.web.common.history_all.get_permission_required_signoffs_history
-      consumes: []
-      produces: [application/json]
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
-        description: "Returns a list of permissions required signoff history"
-      parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/limitParam'
-        - $ref: '#/parameters/pageParam'
-        - $ref: '#/parameters/changedByParam'
-        - $ref: '#/parameters/changeIdParam'
-        - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
-        - $ref: '#/parameters/timestampFromParam'
-        - $ref: '#/parameters/timestampToParam'
-        - name: role
-          in: query
-          description: The role(s) required for permission signoff
-          type: string
-          x-nullable: true
-          required: false
-      responses:
-        '200':
-          description: Successfully fetched permissions required signoff history
         '400':
           $ref: '#/responses/invalidFormData'
 
@@ -586,7 +499,6 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
       responses:
@@ -615,7 +527,6 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
       responses:
@@ -644,7 +555,6 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
       responses:
@@ -673,7 +583,6 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
         - name: role
@@ -708,9 +617,14 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
+        - name: channel
+          in: query
+          description: channel stirng for filtering history.
+          type: string
+          x-nullable: true
+          required: false
         - name: role
           in: query
           description: The role(s) required product scheduled change
@@ -1398,6 +1312,40 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
+  /required_signoffs/product/history:
+    get:
+      summary: Returns a list of product required signoff history.
+      description: >
+        Returns product required signoff history.
+      tags:
+        - "History Signoff Product"
+      operationId: auslib.web.common.history_all.get_product_required_signoffs_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of product required signoff history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+        - name: role
+          in: query
+          description: The role(s) required for product signoff
+          type: string
+          x-nullable: true
+          required: false
+      responses:
+        '200':
+          description: Successfully fetched product required signoff history
+        '400':
+          $ref: '#/responses/invalidFormData'
+
   /required_signoffs/permissions:
     get:
       summary: Returns all the permissions required signoffs
@@ -1545,6 +1493,40 @@ paths:
           $ref: '#/responses/invalidFormData'
         '404':
           $ref: '#/responses/resourceNotFound'
+
+  /required_signoffs/permissions/history:
+    get:
+      summary: Returns a list of permissions required signoff history.
+      description: >
+        Returns permissions required signoff history.
+      tags:
+        - "History Permissions Signoff"
+      operationId: auslib.web.common.history_all.get_permission_required_signoffs_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of permissions required signoff history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+        - name: role
+          in: query
+          description: The role(s) required for permission signoff
+          type: string
+          x-nullable: true
+          required: false
+      responses:
+        '200':
+          description: Successfully fetched permissions required signoff history
+        '400':
+          $ref: '#/responses/invalidFormData'
 
   /users:
     get:
