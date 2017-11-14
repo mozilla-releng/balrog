@@ -1,6 +1,6 @@
 angular
   .module("app")
-  .controller("HistoryController", function($scope, $modal, $filter, Releases, Rules, History, Page ){
+  .controller("HistoryController", function($scope,$filter, $modal, $filter, Releases, Rules, History, Page ){
     
     Page.setTitle("History");
 
@@ -146,7 +146,9 @@ angular
         $scope.channel = "";
       }
     }
-
+    
+    searchHistoryLimit = 10;
+    combinedResults = [];
 
     $scope.searchHistory = function() {
       $scope.searchResult.length = 0;
@@ -186,8 +188,7 @@ angular
                   result.push($scope.revision);                
                 });
             }
-            console.log(result,"result");
-            $scope.searchResult = result;
+            
           }
           else {
               sweetAlert(
@@ -197,6 +198,12 @@ angular
               );
           }
         });         
+        combinedResults = combinedResults.concat(result);
+
+        // remove last elements in sorted respecting the limit
+        combinedResults = ($filter("orderBy")(combinedResults,"timestamp")).reverse();
+        $scope.searchResult = combinedResults.splice(0, searchHistoryLimit);
+
         })
         .error(function() {
           console.error(arguments);
