@@ -167,7 +167,6 @@ angular
         .success(function(response) {
           $scope.tableResult = true;
           var result = [];
-          $scope.changeType = [];
           $scope.history_count = 0;
           angular.forEach(response, function(value, key){
             $scope.history_revisions = value.revisions;

@@ -49,7 +49,7 @@
             </li>
 
             <li ng-class="{active: isOn('/change_logs')}">
-              <a href="/change_logs">Changelogs</a>
+              <a href="/change_logs">Change Logs</a>
           </li>
           </ul>
         </div><!--/.nav-collapse -->

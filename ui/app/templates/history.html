@@ -88,7 +88,8 @@
         <table class="table table-bordered table-hover table-striped">
           <thead>
             <tr>
-              <th ng-show="revision.rule_id">Rule_Id / Alais</th>
+              <th>sno</th>
+              <th ng-show="revision.rule_id">Rule Id / Alais</th>
               <th ng-show="revision.name">Name</th>
               <th ng-show="revision.role">Role</th>
               <th ng-show="revision.username">Username</th>
@@ -103,6 +104,7 @@
           </thead>
           <tbody ng-show="tableResult">
             <tr ng-repeat="item in historyResult = searchResult | orderBy:orderHistory track by $index">
+              <td>{{$index+1}}</td>
               <td>{{(item.alias && item.rule_id) ? item.alias : item.rule_id || item.name || item.username || item.role}}
                 <a class="btn btn-default btn-xs" href="" ng-click="openDataModal(item.change_id)">
                   <i class="glyphicon glyphicon-eye-open"></i>
