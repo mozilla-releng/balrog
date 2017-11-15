@@ -34,11 +34,16 @@ class TestEmergencyShutoff(ViewTest):
     def test_get_emergency_shutoff(self):
         resp = self._get('/emergency_shutoff/1')
         self.assertStatusCode(resp, 200)
+        self.assertIn('X-Data-Version', resp.headers)
         data = json.loads(resp.data)
         self.assertIn('product', data)
         self.assertEquals(data['product'], 'Firefox')
         self.assertIn('channel', data)
         self.assertEquals(data['channel'], 'nightly')
+
+    def test_get_emergency_shutoff_notfound(self):
+        resp = self._get('/emergency_shutoff/404')
+        self.assertStatusCode(resp, 404)
 
     def test_get_filtered_emergency_shutoffs(self):
         qs = {'product': 'Fennec'}
@@ -110,7 +115,7 @@ class TestEmergencyShutoff(ViewTest):
     def test_change_emergency_shutoff_not_found(self):
         data = {'product': 'Firefox',
                 'channel': 'test'}
-        resp = self._put('/emergency_shutoff/-1', data=data)
+        resp = self._put('/emergency_shutoff/404', data=data)
         self.assertStatusCode(resp, 404)
 
     def test_disable_updates(self):
@@ -126,7 +131,7 @@ class TestEmergencyShutoff(ViewTest):
             [sc for sc in resp_data['scheduled_changes'] if sc['shutoff_id'] == 2])
 
     def test_disable_updates_not_found(self):
-        resp = self._put('/emergency_shutoff/-1/disable_updates')
+        resp = self._put('/emergency_shutoff/404/disable_updates')
         self.assertStatusCode(resp, 404)
 
     def test_try_disable_already_disabled_updates(self):

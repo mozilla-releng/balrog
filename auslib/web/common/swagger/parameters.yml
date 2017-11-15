@@ -77,3 +77,9 @@ parameters:
     type: integer
     minimum: 0
     required: true
+
+  shutoff_id:
+    name: shutoff_id
+    in: path
+    required: true
+    type: integer

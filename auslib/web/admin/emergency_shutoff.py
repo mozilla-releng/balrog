@@ -1,5 +1,5 @@
 import time
-from flask import jsonify, Response
+from flask import Response
 from connexion import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
@@ -30,22 +30,6 @@ def get_columns_dict(include_nulls=False, **columns):
 def query_shutoffs(**columns):
     where = get_columns_dict(**columns)
     return dbo.emergencyShutoff.getEmergencyShutoffs(where)
-
-
-def get(product=None, channel=None):
-    shutoffs = query_shutoffs(product=product, channel=channel)
-    shutoffs_count = len(shutoffs)
-    return jsonify(count=shutoffs_count, shutoffs=shutoffs)
-
-
-def get_by_id(shutoff_id):
-    shutoff = dbo.emergencyShutoff.getEmergencyShutoff(shutoff_id)
-    if not shutoff:
-        return problem(status=404,
-                       title="Not Found",
-                       detail="Requested emergency shutoff wasn't found",
-                       ext={"exception": "Requested shutoff does not exist"})
-    return jsonify(shutoff)
 
 
 @requirelogin

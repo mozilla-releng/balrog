@@ -3406,12 +3406,12 @@ paths:
 # TODO Mover parametros, body, responses apos finalizar
   /emergency_shutoff:
     get:
-      summary: TODO
+      summary: List of emergency shut off optionally filtered by product/channel.
       description: >
-        TODO
+        Products/Channels available to shut off updates.
       tags:
         - Emergency Shutoff
-      operationId: auslib.web.admin.emergency_shutoff.get
+      operationId: auslib.web.common.emergency_shutoff.get
       produces:
         - application/json
       parameters:
@@ -3419,7 +3419,9 @@ paths:
         - $ref: '#/parameters/channel'
       responses:
         '200':
-          description: TODO
+          description: Emergency shut off list.
+          schema:
+            $ref: '#/definitions/EmergencyShutoffListGET'
 
     post:
       summary: TODO
@@ -3459,23 +3461,30 @@ paths:
 
   /emergency_shutoff/{shutoff_id}:
     get:
-      summary: TODO
+      summary: Emergency shut off.
       description: >
-        TODO
+        Get emergency shut off by Id.
       tags:
         - Emergency Shutoff
-      operationId: auslib.web.admin.emergency_shutoff.get_by_id
+      operationId: auslib.web.common.emergency_shutoff.get_by_id
       produces:
         - application/json
       parameters:
-        - name: shutoff_id
-          in: path
-          required: true
-          type: integer
+        - $ref: '#/parameters/shutoff_id'
       responses:
         '200':
-          description: TODO
-          
+          description: Shut off information.
+          schema:
+            $ref: "#/definitions/EmergencyShutoffObject"
+          headers:
+            X-Data-Version:
+              description: data version of the shut off
+              type: integer
+              format: int32
+              minimum: 1
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
     put:
       summary: TODO
       description: >
@@ -3665,18 +3674,6 @@ definitions:
         minLength: 1
         maxLength: 50
         example: releng
-
-  ChannelModel:
-    title: Channel
-    description: "model to define 'channel' field in request body."
-    type: object
-    properties:
-      channel:
-        description: The update channel of the application request an update.
-        type: string
-        minLength: 1
-        maxLength: 75
-        example: beta
 
   ProductNullable:
     title: Product Nullable
