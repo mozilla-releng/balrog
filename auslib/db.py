@@ -2492,11 +2492,11 @@ class Dockerflow(AUSTable):
 class EmergencyShutoff(AUSTable):
     def __init__(self, db, metadata, dialect):
         self.table = Table('emergency_shutoff', metadata,
-            Column('shutoff_id', Integer, primary_key=True, autoincrement=True),
-            Column('product', String(15), nullable=False),
-            Column('channel', String(75), nullable=False),
-            Column('updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
-            Column('additional_notification_list', String(500)))
+                           Column('shutoff_id', Integer, primary_key=True, autoincrement=True),
+                           Column('product', String(15), nullable=False),
+                           Column('channel', String(75), nullable=False),
+                           Column('updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
+                           Column('additional_notification_list', String(500)))
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def getEmergencyShutoff(self, shutoff_id):
@@ -2517,7 +2517,7 @@ class EmergencyShutoff(AUSTable):
 
             new_shutoff = current_shutoff.copy()
             new_shutoff.update(what)
-            if not dryrun:
+            if not dryrun and 'updates_disabled' in what:
                 potential_required_signoffs = self.getPotentialRequiredSignoffs([new_shutoff], transaction=transaction)
                 verify_signoffs(potential_required_signoffs, signoffs)
 
@@ -2547,7 +2547,7 @@ class EmergencyShutoff(AUSTable):
         potential_required_signoffs = []
         row = affected_rows[-1]
         # Signoffs are required only to reenable updates.
-        if not row["updates_disabled"]:
+        if not row['updates_disabled']:
             where = {"product": row["product"]}
             for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
                 if not row.get("channel") or self._matchesRegex(row["channel"], rs["channel"]):

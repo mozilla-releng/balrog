@@ -7,6 +7,14 @@ parameters:
     x-nullable: true
     required: false
 
+  channel:
+    name: channel
+    in: query
+    description: Name of the channel to filter.
+    type: string
+    x-nullable: true
+    required: false
+
   releaseParam:
     name: release
     in: path

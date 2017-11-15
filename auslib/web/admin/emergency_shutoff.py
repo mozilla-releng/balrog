@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+import time
 from flask import jsonify, Response
 from connexion import problem
 from auslib.global_state import dbo
@@ -18,13 +18,13 @@ def can_updating_product_or_channel(emergency_shutoff, emergency_shutoff_db):
     return True
 
 
-def get_columns_dict(**columns):
-    where = {}
+def get_columns_dict(include_nulls=False, **columns):
+    cols = {}
     for column, value in columns.iteritems():
-        if not value:
+        if not value and not include_nulls:
             continue
-        where[column] = value
-    return where
+        cols[column] = value
+    return cols
 
 
 def query_shutoffs(**columns):
@@ -78,7 +78,8 @@ def put(shutoff_id, emergency_shutoff, changed_by, transaction):
     where = get_columns_dict(shutoff_id=shutoff_id)
     what = get_columns_dict(**emergency_shutoff)
     dbo.emergencyShutoff.update(
-        where=where, what=what, changed_by=changed_by, transaction=transaction)
+        where=where, what=what, old_data_version=shutoff['data_version'],
+        changed_by=changed_by, transaction=transaction)
     return Response(status=200)
 
 
@@ -90,9 +91,9 @@ def delete(shutoff_id, changed_by, transaction):
 
 
 def get_asap_when():
-    epoch = datetime(1970, 1, 1)
-    asap_date = (datetime.now() + timedelta(minutes=5))
-    return int((asap_date - epoch).total_seconds() * 1000)
+    now = time.time()
+    minutes = 5 * 60
+    return int((now + minutes) * 1000)
 
 
 def schedule_reenable_updates(shutoff, changed_by, transaction):

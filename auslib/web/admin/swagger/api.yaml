@@ -3415,16 +3415,8 @@ paths:
       produces:
         - application/json
       parameters:
-        - name: product
-          in: query
-          description: TODO
-          required: false
-          type: string
-        - name: channel
-          in: query
-          description: TODO
-          required: false
-          type: string
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/channel'
       responses:
         '200':
           description: TODO
