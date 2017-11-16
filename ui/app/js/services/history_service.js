@@ -14,7 +14,6 @@ angular.module("app").factory('History', function($http, $q, ScheduledChanges, H
         } else if (filterParams.product){
           url += '&product=' + filterParams.product;
         }
-        console.log(url,"ur");
         return $http.get(url) ;
       },
     };

@@ -1,6 +1,6 @@
 angular
   .module("app")
-  .controller("HistoryController", function($scope,$filter, $modal, $filter, Releases, Rules, History, Page ){
+  .controller("HistoryController", function($scope,$modal, $filter, Releases, Rules, History, Page ){
     
     Page.setTitle("History");
 
