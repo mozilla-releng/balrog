@@ -88,6 +88,56 @@ class TestProductRequiredSignoffsHistoryView(ViewTest):
         self.assertEquals(got["count"], 2)
         self.assertEquals(got["required_signoffs"], expected)
 
+    def testGetAllRevisions(self):
+        ret = self._get("/required_signoffs/product/history", qs={})
+        self.assertStatusCode(ret, 200)
+
+        got = json.loads(ret.data)
+        expected = [
+            {
+                "change_id": 3,
+                "changed_by": "bill",
+                "timestamp": 25,
+                "product": "fake",
+                "channel": "k",
+                "role": "relman",
+                "signoffs_required": 1,
+                "data_version": 2,
+            },
+            {
+                "change_id": 2,
+                "changed_by": "bill",
+                "timestamp": 11,
+                "product": "fake",
+                "channel": "k",
+                "role": "relman",
+                "signoffs_required": 2,
+                "data_version": 1,
+            },
+        ]
+        self.assertEquals(got["count"], 2)
+        self.assertEquals(got["required_signoffs"], expected)
+
+    def testGetAllHistoryWithinTimeRange(self):
+        ret = self._get("/required_signoffs/permissions/history", qs={"timestamp_from": 20, "timestamp_to": 30})
+        self.assertStatusCode(ret, 200)
+
+        got = json.loads(ret.data)
+        expected = [
+            {
+                "change_id": 3,
+                "changed_by": "bill",
+                "timestamp": 25,
+                "product": "fake",
+                "channel": "k",
+                "role": "relman",
+                "signoffs_required": 1,
+                "data_version": 2,
+            },
+        ]
+        self.assertEquals(got["count"], 1)
+        self.assertEquals(got["required_signoffs"], expected)
+
 
 class TestProductRequiredSignoffsScheduledChanges(ViewTest):
     maxDiff = 10000
@@ -557,6 +607,53 @@ class TestPermissionsRequiredSignoffsHistoryView(ViewTest):
             },
         ]
         self.assertEquals(got["count"], 2)
+        self.assertEquals(got["required_signoffs"], expected)
+
+    def testGetAllHistory(self):
+        ret = self._get("/required_signoffs/permissions/history", qs={})
+        self.assertStatusCode(ret, 200)
+
+        got = json.loads(ret.data)
+        expected = [
+            {
+                "change_id": 3,
+                "changed_by": "bill",
+                "timestamp": 25,
+                "product": "doop",
+                "role": "releng",
+                "signoffs_required": 1,
+                "data_version": 2,
+            },
+            {
+                "change_id": 2,
+                "changed_by": "bill",
+                "timestamp": 11,
+                "product": "doop",
+                "role": "releng",
+                "signoffs_required": 2,
+                "data_version": 1,
+            },
+        ]
+        self.assertEquals(got["count"], 2)
+        self.assertEquals(got["required_signoffs"], expected)
+
+    def testGetAllHistoryWithinTimeRange(self):
+        ret = self._get("/required_signoffs/permissions/history", qs={"timestamp_from": 20, "timestamp_to": 30})
+        self.assertStatusCode(ret, 200)
+
+        got = json.loads(ret.data)
+        expected = [
+            {
+                "change_id": 3,
+                "changed_by": "bill",
+                "timestamp": 25,
+                "product": "doop",
+                "role": "releng",
+                "signoffs_required": 1,
+                "data_version": 2,
+            },
+        ]
+        self.assertEquals(got["count"], 1)
         self.assertEquals(got["required_signoffs"], expected)
 
 

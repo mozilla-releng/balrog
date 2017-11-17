@@ -98,6 +98,10 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
         offset = limit * (page - 1)
 
         query = self.table.history.t.count().where(self.table.history.data_version != null())
+        input_dict = get_input_dict()
+        request_query = json.loads(input_dict.data)['query']
+        for field in request_query:
+            query = query.where(getattr(self.table.history, field) == request_query.get(field))
         total_count = query.execute().fetchone()[0]
 
         where = self._get_filters()
