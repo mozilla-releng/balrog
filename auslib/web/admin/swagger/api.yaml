@@ -3424,9 +3424,8 @@ paths:
             $ref: '#/definitions/EmergencyShutoffListGET'
 
     post:
-      summary: TODO
-      description: >
-        TODO
+      summary: Creates an emergency shut off.
+      description: Creates an emergency shut off for given product/channel.
       tags:
         - Emergency Shutoff
       operationId: auslib.web.admin.emergency_shutoff.post
@@ -3437,27 +3436,15 @@ paths:
       parameters:
         - name: emergency_shutoff
           in: body
-          required: true
+          description: Emergency shut off data.
           schema:
-            type: object
-            properties:
-              product:
-                description: TODO
-                type: string
-              channel:
-                description: TODO
-                type: string
-              additional_notification_list:
-                description: TODO
-                type: string
-            required:
-              - product
-              - channel
+            allOf:
+              - $ref: '#/definitions/EmergencyShutOffModel'
       responses:
-        '200':
-          description: TODO
+        '201':
+          description: Successfully created an emergency shut off.
         '400':
-          description: TODO
+          $ref: '#/responses/invalidFormData'
 
   /emergency_shutoff/{shutoff_id}:
     get:
@@ -3486,9 +3473,8 @@ paths:
           $ref: '#/responses/resourceNotFound'
 
     put:
-      summary: TODO
-      description: >
-        TODO
+      summary: Update an emergency shut off.
+      description: Update an emergency shut off. The product/channel can not be the same than an existing emergency shut off.
       tags:
         - Emergency Shutoff
       operationId: auslib.web.admin.emergency_shutoff.put
@@ -3503,27 +3489,15 @@ paths:
           type: integer
         - name: emergency_shutoff
           in: body
-          required: true
+          description: Emergency shut off data.
           schema:
-            type: object
-            properties:
-              product:
-                description: TODO
-                type: string
-              channel:
-                description: TODO
-                type: string
-              additional_notification_list:
-                description: TODO
-                type: string
-            required:
-              - product
-              - channel
+            allOf:
+              - $ref: '#/definitions/EmergencyShutOffPutModel'
       responses:
         '200':
-          description: TODO
+          $ref: '#/responses/updateExistingObject'
         '400':
-          description: TODO
+          $ref: '#/responses/invalidFormData'
 
     delete:
       summary: TODO
@@ -4096,3 +4070,29 @@ definitions:
 
     #Warning: Do NOT add an example object here. Interferes with Example Value during
     # request generation in Swagger-UI
+
+  EmergencyShutOffModel:
+    title: Emergency shut off data.
+    description: Emergency shut off data.
+    type: object
+    allOf:
+      - $ref: '#/definitions/ProductModel'
+      - $ref: '#/definitions/ChannelModel'
+      - type: object
+        properties:
+          additional_notification_list:
+            description: Email notification list, additional to default mailing list.
+            type: ["string", "null"]
+    required:
+      - product
+      - channel
+
+  EmergencyShutOffPutModel:
+    title: Emergency shut off data.
+    description: Emergency shut off data.
+    type: object
+    allOf:
+      - $ref: '#/definitions/EmergencyShutOffModel'
+      - $ref: '#/definitions/DataVersionModel'
+    required:
+      - data_version

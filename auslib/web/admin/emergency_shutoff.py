@@ -1,5 +1,5 @@
 import time
-from flask import Response
+from flask import Response, jsonify
 from connexion import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
@@ -64,7 +64,8 @@ def put(shutoff_id, emergency_shutoff, changed_by, transaction):
     dbo.emergencyShutoff.update(
         where=where, what=what, old_data_version=shutoff['data_version'],
         changed_by=changed_by, transaction=transaction)
-    return Response(status=200)
+    shutoff = dbo.emergencyShutoff.getEmergencyShutoff(shutoff_id)
+    return jsonify(new_data_version=shutoff['data_version'])
 
 
 @requirelogin

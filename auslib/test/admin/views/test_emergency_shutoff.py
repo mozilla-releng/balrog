@@ -94,27 +94,28 @@ class TestEmergencyShutoff(ViewTest):
     def test_change_emergency_shutoff(self):
         data = {'product': 'Firefox',
                 'channel': 'release',
-                'additional_notification_list': 'foo@bar.com'}
+                'additional_notification_list': 'foo@bar.com', 'data_version': 1}
         resp = self._put('/emergency_shutoff/1', data=data.copy())
         self.assertStatusCode(resp, 200)
-
         resp = self._get('/emergency_shutoff/1')
         self.assertStatusCode(resp, 200)
         shutoff = json.loads(resp.data)
-
+        del data['data_version']
         for k, v in data.items():
+            if k == 'data_version':
+                v += 1
             self.assertIn(k, shutoff)
             self.assertEquals(v, shutoff[k])
 
     def test_change_to_existent_emergency_shutoff(self):
         data = {'product': 'Firefox',
-                'channel': 'test'}
+                'channel': 'test', 'data_version': 1}
         resp = self._put('/emergency_shutoff/1', data=data)
         self.assertStatusCode(resp, 400)
 
     def test_change_emergency_shutoff_not_found(self):
         data = {'product': 'Firefox',
-                'channel': 'test'}
+                'channel': 'test', 'data_version': 1}
         resp = self._put('/emergency_shutoff/404', data=data)
         self.assertStatusCode(resp, 404)
 
