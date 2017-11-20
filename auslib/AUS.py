@@ -52,9 +52,23 @@ class AUS:
         self.rand = functools.partial(randint, 0, 99)
         self.log = logging.getLogger(self.__class__.__name__)
 
+    def get_emergency_shutoff(self, product, channel):
+        where = dict(product=product, channel=channel)
+        emergency_shutoffs = dbo.emergencyShutoff.getEmergencyShutoffs(where=where)
+        return emergency_shutoffs[0] if emergency_shutoffs else None
+
     def evaluateRules(self, updateQuery):
         self.log.debug("Looking for rules that apply to:")
         self.log.debug(updateQuery)
+
+        if 'product' in updateQuery:
+            emergency_shutoff = self.get_emergency_shutoff(updateQuery['product'], updateQuery['channel'])
+            if emergency_shutoff and emergency_shutoff['updates_disabled']:
+                log_message = 'Updates are disabled for {}/{}, emergency shutoff id: {}.'.format(
+                    emergency_shutoff['product'], emergency_shutoff['channel'], emergency_shutoff['shutoff_id'])
+                self.log.debug(log_message)
+                return None, None
+
         rules = dbo.rules.getRulesMatchingQuery(
             updateQuery,
             fallbackChannel=getFallbackChannel(updateQuery['channel'])

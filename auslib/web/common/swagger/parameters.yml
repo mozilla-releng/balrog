@@ -7,7 +7,7 @@ parameters:
     x-nullable: true
     required: false
 
-  channel:
+  channelQueryParam:
     name: channel
     in: query
     description: Name of the channel to filter.

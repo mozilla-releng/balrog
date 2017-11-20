@@ -23,8 +23,12 @@ class TestEmergencyShutoff(ViewTest):
             base_data_version=1)
         dbo.emergencyShutoff.scheduled_changes.conditions.t.insert().execute(
             sc_id=1, data_version=1, when=1000000)
+        dbo.productRequiredSignoffs.t.insert().execute(
+            product="Thunderbird", channel="release", role="releng", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(
+            product="Firefox", channel="release", role="releng", signoffs_required=1, data_version=1)
 
-    def test_get_emergency_shutoffs(self):
+    def test_get_emergency_shutoff_list(self):
         resp = self._get('/emergency_shutoff')
         self.assertStatusCode(resp, 200)
         data = json.loads(resp.data)
@@ -91,6 +95,12 @@ class TestEmergencyShutoff(ViewTest):
         resp = self._post('/emergency_shutoff', data=data)
         self.assertStatusCode(resp, 400)
 
+    def test_try_create_for_product_with_no_required_signoff(self):
+        data = {'product': 'Test',
+                'channel': 'nightly'}
+        resp = self._post('/emergency_shutoff', data=data)
+        self.assertStatusCode(resp, 400)
+
     def test_change_emergency_shutoff(self):
         data = {'product': 'Firefox',
                 'channel': 'release',
@@ -119,6 +129,18 @@ class TestEmergencyShutoff(ViewTest):
         resp = self._put('/emergency_shutoff/404', data=data)
         self.assertStatusCode(resp, 404)
 
+    def test_delete_emergency_shutoff(self):
+        resp = self._delete('/emergency_shutoff/2', qs=dict(data_version=1))
+        self.assertStatusCode(resp, 200)
+
+    def test_delete_emergency_shutoff_not_found(self):
+        resp = self._delete('/emergency_shutoff/404', qs=dict(data_version=1))
+        self.assertStatusCode(resp, 404)
+
+    def test_delete_emergency_shutoff_with_sc(self):
+        resp = self._delete('/emergency_shutoff/3', qs=dict(data_version=1))
+        self.assertStatusCode(resp, 400)
+
     def test_disable_updates(self):
         resp = self._put('/emergency_shutoff/2/disable_updates')
         self.assertStatusCode(resp, 200)
@@ -138,6 +160,12 @@ class TestEmergencyShutoff(ViewTest):
     def test_try_disable_already_disabled_updates(self):
         resp = self._put('/emergency_shutoff/3/disable_updates')
         self.assertStatusCode(resp, 400)
+
+    def test_get_emergency_shutoff_scheduled_changes(self):
+        resp = self._get('/scheduled_changes/emergency_shutoff')
+        self.assertStatusCode(resp, 200)
+        resp_data = json.loads(resp.data)
+        self.assertEquals(resp_data['count'], 1)
 
     def test_enact_updates_scheduled_for_reactivation(self):
         resp = self._post('/scheduled_changes/emergency_shutoff/1/enact')

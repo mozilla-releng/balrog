@@ -3402,8 +3402,6 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
-# EMERGENCY SHUTOFF
-# TODO Mover parametros, body, responses apos finalizar
   /emergency_shutoff:
     get:
       summary: List of emergency shut off optionally filtered by product/channel.
@@ -3416,7 +3414,7 @@ paths:
         - application/json
       parameters:
         - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/channelQueryParam'
       responses:
         '200':
           description: Emergency shut off list.
@@ -3483,10 +3481,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - name: shutoff_id
-          in: path
-          required: true
-          type: integer
+        - $ref: '#/parameters/shutoff_id'
         - name: emergency_shutoff
           in: body
           description: Emergency shut off data.
@@ -3500,53 +3495,53 @@ paths:
           $ref: '#/responses/invalidFormData'
 
     delete:
-      summary: TODO
-      description: >
-        TODO
+      summary: Deletes an emergency shut off.
+      description: Deletes an emergency shut off.
       tags:
         - Emergency Shutoff
       operationId: auslib.web.admin.emergency_shutoff.delete
       produces:
         - application/json
       parameters:
-        - name: shutoff_id
-          in: path
-          required: true
-          type: integer
+        - $ref: '#/parameters/shutoff_id'
+        - $ref: '#/parameters/csrfTokenParam'
+        - $ref: '#/parameters/dataVersionParam'
       responses:
         '200':
-          description: TODO
+          description: Successfully deleted the shut off.
         '400':
-          description: TODO
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /emergency_shutoff/{shutoff_id}/disable_updates:
     put:
-      summary: TODO
+      summary: Disable updates for a product/channel.
       description: >
-        TODO
+        Disable updates for product/channel and schedules an ASAP change to reenable updates (signoffs is required to reenable the updates).
       tags:
         - Emergency Shutoff
       operationId: auslib.web.admin.emergency_shutoff.disable_updates
       produces:
         - application/json
       parameters:
-        - name: shutoff_id
-          in: path
-          required: true
-          type: integer
+        - $ref: '#/parameters/shutoff_id'
       responses:
         '200':
-          description: TODO
+          description: Successfully disable updates for product/channel.
         '400':
-          description: TODO
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /scheduled_changes/emergency_shutoff:
     get:
-      summary: TODO
+      summary: Returns scheduled changes for emergency shut off.
       description: >
-        TODO
+        Returns changes that was automatically scheduled when updates for a product/channel was disabled.
       tags:
         - Scheduled Changes
+        - Emergency Shutoff
       operationId: auslib.web.admin.emergency_shutoff.scheduled_changes
       produces:
         - application/json
@@ -3554,29 +3549,84 @@ paths:
         - $ref: '#/parameters/allSCParam'
       responses:
         '200':
-          description: TODO
-        '400':
-          description: TODO
+          description: JSON object with scheduled changes for emergency shut off.
+          schema:
+            type: object
+            required:
+              - scheduled_changes
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  scheduled_changes:
+                    description: Array where each element is a scheduled change for a emergency shut.
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCSignoffsModel'
+                        - $ref: '#/definitions/EmergencyShutoffObject'
+                        - properties:
+                            original_row:
+                              $ref: '#/definitions/EmergencyShutoffObject'
 
   /scheduled_changes/emergency_shutoff/{sc_id}/enact:
     post:
-      summary: TODO
+      summary: Execute the scheduled change for the emergency shut off.
       description: >
-        TODO
+        Execute the scheduled change for the emergency shut off and reenables the updates for the product/channel.
       tags:
+        - Scheduled Changes
         - Emergency Shutoff
       operationId: auslib.web.admin.emergency_shutoff.enact_updates_scheduled_for_reactivation
       produces:
         - application/json
       parameters:
-        - name: sc_id
-          in: path
-          required: true
-          type: integer
+        - $ref: '#/parameters/sc_id_param'
       responses:
         '200':
-          description: TODO
-# EMERGENCY SHUTOFF
+          description: Successfully enacted the scheduled change.
+
+  /scheduled_changes/emergency_shutoff/{sc_id}/signoffs:
+    post:
+      summary: Signs off on the given emergency shut off.
+      description: Signs off on the given emergency shut off.
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.scheduled_changes_signoffs
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/sc_signoff_post_body_param'
+      responses:
+        '200':
+          description: Successfully signed off on the given scheduled change.
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    delete:
+      summary: Removes an existing Signoff from the emergency shut off Scheduled Change.
+      description: Removes an existing Signoff from the emergency shut off Scheduled Change.
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.scheduled_changes_signoffs_delete
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/usernameQueryParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the signoff on the given scheduled change.
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
 definitions:
   CSRFModel:
@@ -4070,22 +4120,6 @@ definitions:
 
     #Warning: Do NOT add an example object here. Interferes with Example Value during
     # request generation in Swagger-UI
-
-  EmergencyShutOffModel:
-    title: Emergency shut off data.
-    description: Emergency shut off data.
-    type: object
-    allOf:
-      - $ref: '#/definitions/ProductModel'
-      - $ref: '#/definitions/ChannelModel'
-      - type: object
-        properties:
-          additional_notification_list:
-            description: Email notification list, additional to default mailing list.
-            type: ["string", "null"]
-    required:
-      - product
-      - channel
 
   EmergencyShutOffPutModel:
     title: Emergency shut off data.

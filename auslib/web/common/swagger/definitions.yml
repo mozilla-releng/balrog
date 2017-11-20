@@ -413,16 +413,28 @@ definitions:
                 version: null
                 whitelist: null
 
+  EmergencyShutOffModel:
+    title: Emergency shut off data.
+    description: Emergency shut off data.
+    type: object
+    allOf:
+      - $ref: '#/definitions/ProductModel'
+      - $ref: '#/definitions/ChannelModel'
+      - type: object
+        properties:
+          additional_notification_list:
+            description: Email notification list, additional to default mailing list.
+            type: ["string", "null"]
+    required:
+      - product
+      - channel
+
   EmergencyShutoffObject:
     title: Emergency shut off information.
     description: Information about product/channel available to shut off updates.
     type: object
-    required:
-      - product
-      - channel
     allOf:
-      - $ref: '#/definitions/ProductModel'
-      - $ref: '#/definitions/ChannelModel'
+      - $ref: '#/definitions/EmergencyShutOffModel'
       - $ref: '#/definitions/DataVersionModel'
       - type: object
         properties:
@@ -433,9 +445,6 @@ definitions:
           updates_disabled:
             description: Indicates if updates are disabled for product/channel.
             type: boolean
-          additional_notification_list:
-            description: Email notification list, additional to default mailing list.
-            type: ["string", "null"]
 
   EmergencyShutoffListGET:
     title: List of emergency shut offs.

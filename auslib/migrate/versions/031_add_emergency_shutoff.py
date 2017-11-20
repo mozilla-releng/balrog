@@ -122,5 +122,7 @@ def downgrade(migrate_engine):
     Table('emergency_shutoff_history', metadata, autoload=True).drop()
     Table('emergency_shutoff_scheduled_changes', metadata, autoload=True).drop()
     Table('emergency_shutoff_scheduled_changes_history', metadata, autoload=True).drop()
+    Table('emergency_shutoff_scheduled_changes_conditions', metadata, autoload=True).drop()
+    Table('emergency_shutoff_scheduled_changes_conditions_history', metadata, autoload=True).drop()
     Table('emergency_shutoff_scheduled_changes_signoffs', metadata, autoload=True).drop()
     Table('emergency_shutoff_scheduled_changes_signoffs_history', metadata, autoload=True).drop()

@@ -4,7 +4,8 @@ from connexion import problem
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
     requirelogin, handleGeneralExceptions, transactionHandler)
-from auslib.web.admin.views.scheduled_changes import EnactScheduledChangeView, ScheduledChangesView
+from auslib.web.admin.views.scheduled_changes import (
+    EnactScheduledChangeView, ScheduledChangesView, SignoffsView)
 
 
 def shutoff_already_exists(emergency_shutoff):
@@ -16,6 +17,11 @@ def can_updating_product_or_channel(emergency_shutoff, emergency_shutoff_db):
     if emergency_shutoff['product'] != emergency_shutoff_db['product'] or emergency_shutoff['channel'] != emergency_shutoff_db['channel']:
         return not shutoff_already_exists(emergency_shutoff)
     return True
+
+
+def product_requires_signoffs(product):
+    rs = dbo.productRequiredSignoffs.select(where=dict(product=product))
+    return bool(rs)
 
 
 def get_columns_dict(include_nulls=False, **columns):
@@ -40,6 +46,10 @@ def post(emergency_shutoff, changed_by, transaction):
         return problem(
             400, 'Bad Request', 'Invalid Emergency shutoff data',
             ext={'data': 'Emergency shutoff for product/channel already exists.'})
+    if not product_requires_signoffs(emergency_shutoff['product']):
+        return problem(
+            400, 'Bad Request', 'Invalid Emergency shutoff data',
+            ext={'data': 'The given product should requires signoffs.'})
     shutoff = dbo.emergencyShutoff.insert(
         changed_by=changed_by, transaction=transaction, **emergency_shutoff)
     return Response(status=201, response=str(shutoff))
@@ -59,6 +69,10 @@ def put(shutoff_id, emergency_shutoff, changed_by, transaction):
         return problem(
             400, 'Bad Request', 'Invalid Emergency shutoff data',
             ext={'data': 'Emergency shutoff for product/channel already exists.'})
+    if not product_requires_signoffs(emergency_shutoff['product']):
+        return problem(
+            400, 'Bad Request', 'Invalid Emergency shutoff data',
+            ext={'data': 'The given product should requires signoffs.'})
     where = get_columns_dict(shutoff_id=shutoff_id)
     what = get_columns_dict(**emergency_shutoff)
     dbo.emergencyShutoff.update(
@@ -71,8 +85,18 @@ def put(shutoff_id, emergency_shutoff, changed_by, transaction):
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions('DELETE')
-def delete(shutoff_id, changed_by, transaction):
-    return Response(response='OK {} {}'.format(shutoff_id, changed_by))
+def delete(shutoff_id, data_version, changed_by, transaction, **kwargs):
+    shutoff = dbo.emergencyShutoff.getEmergencyShutoff(shutoff_id)
+    if not shutoff:
+        return problem(status=404,
+                       title="Not Found",
+                       detail="Shutoff wasn't found",
+                       ext={"exception": "Shutoff does not exist"})
+    where = get_columns_dict(shutoff_id=shutoff_id)
+    dbo.emergencyShutoff.delete(where=where, changed_by=changed_by,
+                                old_data_version=data_version,
+                                transaction=transaction)
+    return Response(status=200)
 
 
 def get_asap_when():
@@ -116,6 +140,16 @@ def disable_updates(shutoff_id, changed_by, transaction):
 def scheduled_changes():
     view = ScheduledChangesView('emergency_shutoff', dbo.emergencyShutoff)
     return view.get()
+
+
+def scheduled_changes_signoffs(sc_id):
+    view = SignoffsView('emergency_shutoff', dbo.emergencyShutoff)
+    return view.post(sc_id)
+
+
+def scheduled_changes_signoffs_delete(sc_id):
+    view = SignoffsView('emergency_shutoff', dbo.emergencyShutoff)
+    return view.delete(sc_id)
 
 
 @requirelogin
