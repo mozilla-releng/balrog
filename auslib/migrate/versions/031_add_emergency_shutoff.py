@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Table, Column, Integer, BigInteger, String, MetaData)
+    Table, Column, Integer, BigInteger, String, Boolean, MetaData)
 from auslib.db import CompatibleBooleanColumn
 
 
@@ -11,9 +11,9 @@ emergency_shutoff = Table(
     Column('shutoff_id', Integer, primary_key=True, autoincrement=True),
     Column('product', String(15), nullable=False),
     Column('channel', String(75), nullable=False),
-    Column('updates_disabled', CompatibleBooleanColumn, default=0, nullable=False),
+    Column('updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
     Column('additional_notification_list', String(500)),
-    Column("data_version", Integer))
+    Column("data_version", Integer, nullable=False))
 
 
 emergency_shutoff_history = Table(
@@ -23,7 +23,7 @@ emergency_shutoff_history = Table(
     Column('shutoff_id', Integer, nullable=False),
     Column('product', String(15)),
     Column('channel', String(75)),
-    Column('updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
+    Column('updates_disabled', CompatibleBooleanColumn, default=False),
     Column('additional_notification_list', String(500)),
     Column("data_version", Integer))
 
@@ -32,13 +32,13 @@ emergency_shutoff_scheduled_changes = Table(
     'emergency_shutoff_scheduled_changes', metadata,
     Column("sc_id", Integer, primary_key=True, autoincrement=True),
     Column("scheduled_by", String(100), nullable=False),
-    Column("complete", CompatibleBooleanColumn, default=False),
+    Column("complete", Boolean, default=False),
     Column("change_type", String(50), nullable=False),
-    Column("data_version", Integer),
-    Column('base_shutoff_id', Integer, nullable=False),
-    Column('base_product', String(15), nullable=False),
-    Column('base_channel', String(75), nullable=False),
-    Column('base_updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
+    Column("data_version", Integer, nullable=False),
+    Column('base_shutoff_id', Integer),
+    Column('base_product', String(15)),
+    Column('base_channel', String(75)),
+    Column('base_updates_disabled', CompatibleBooleanColumn, default=False),
     Column('base_additional_notification_list', String(500)),
     Column("base_data_version", Integer))
 
@@ -47,9 +47,9 @@ emergency_shutoff_scheduled_changes_history = Table(
     'emergency_shutoff_scheduled_changes_history', metadata,
     Column("change_id", Integer, primary_key=True, autoincrement=True),
     Column("changed_by", String(100), nullable=False),
-    Column("sc_id", Integer, autoincrement=True),
+    Column("sc_id", Integer, nullable=False, autoincrement=True),
     Column("scheduled_by", String(100)),
-    Column("complete", CompatibleBooleanColumn, default=False),
+    Column("complete", Boolean, default=False),
     Column("change_type", String(50)),
     Column("data_version", Integer),
     Column('base_shutoff_id', Integer),
@@ -63,7 +63,7 @@ emergency_shutoff_scheduled_changes_history = Table(
 emergency_shutoff_scheduled_changes_conditions = Table(
     'emergency_shutoff_scheduled_changes_conditions', metadata,
     Column("sc_id", Integer, primary_key=True, autoincrement=True),
-    Column("data_version", Integer))
+    Column("data_version", Integer, nullable=False))
 
 
 emergency_shutoff_scheduled_changes_conditions_history = Table( # noqa
@@ -104,7 +104,7 @@ def upgrade(migrate_engine):
         Column('timestamp', bigintType, nullable=False))
 
     emergency_shutoff_scheduled_changes_conditions.append_column(
-        Column("when", bigintType, nullable=False))
+        Column("when", bigintType))
     emergency_shutoff_scheduled_changes_conditions_history.append_column(
         Column('when', bigintType))
     emergency_shutoff_scheduled_changes_conditions_history.append_column(

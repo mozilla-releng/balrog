@@ -4718,6 +4718,14 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             "rules_scheduled_changes_signoffs_history",
             "user_roles",
             "user_roles_history",
+            "emergency_shutoff",
+            "emergency_shutoff_history",
+            "emergency_shutoff_scheduled_changes",
+            "emergency_shutoff_scheduled_changes_history",
+            "emergency_shutoff_scheduled_changes_conditions",
+            "emergency_shutoff_scheduled_changes_conditions_history",
+            "emergency_shutoff_scheduled_changes_signoffs",
+            "emergency_shutoff_scheduled_changes_signoffs_history",
         ])
 
         # autoincrement isn't tested as Sqlite does not support this outside of INTEGER PRIMARY KEYS.
@@ -4955,6 +4963,23 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table_name in base_jaws_tables:
                 self.assertNotIn("base_jaws", metadata.tables[table_name].c)
 
+    def _add_emergency_shutoff_tables(self, db, upgrade=True):
+        metadata = self._get_reflected_metadata(db)
+        shutoff_tables = ["emergency_shutoff",
+                          "emergency_shutoff_history",
+                          "emergency_shutoff_scheduled_changes",
+                          "emergency_shutoff_scheduled_changes_history",
+                          "emergency_shutoff_scheduled_changes_conditions",
+                          "emergency_shutoff_scheduled_changes_conditions_history",
+                          "emergency_shutoff_scheduled_changes_signoffs",
+                          "emergency_shutoff_scheduled_changes_signoffs_history"]
+        if upgrade:
+            for table in shutoff_tables:
+                self.assertIn(table, metadata.tables)
+        else:
+            for table in shutoff_tables:
+                self.assertNotIn(table, metadata.tables)
+
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
         """
         Tests the upgrades and downgrades for version 22 work properly.
@@ -5007,6 +5032,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            30: self._add_emergency_shutoff_tables,
             29: self._add_jaws_test,
             28: self._add_mig64_test,
             27: self._remove_systemCapabilities_test,
