@@ -14,6 +14,7 @@ from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
 from auslib.db import SignoffRequiredError
 from auslib.global_state import dbo
 from auslib.web.common.history import get_input_dict
+from sqlalchemy import and_
 
 
 class RequiredSignoffsView(AdminView):
@@ -97,14 +98,11 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
             return problem(400, "Bad Request", str(msg))
         offset = limit * (page - 1)
 
-        query = self.table.history.t.count().where(self.table.history.data_version != null())
-        input_dict = get_input_dict()
-        request_query = json.loads(input_dict.data)['query']
-        for field in request_query:
-            query = query.where(getattr(self.table.history, field) == request_query.get(field))
-        total_count = query.execute().fetchone()[0]
-
         where = self._get_filters()
+        total_count = self.table.history.t.count()\
+                                        .where(and_(*where))\
+                                        .execute().fetchone()[0]
+
         revisions = self.table.history.select(
             where=where, limit=limit, offset=offset,
             order_by=[self.table.history.timestamp.desc()]

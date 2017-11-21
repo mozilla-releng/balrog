@@ -119,7 +119,7 @@ class TestProductRequiredSignoffsHistoryView(ViewTest):
         self.assertEquals(got["required_signoffs"], expected)
 
     def testGetAllHistoryWithinTimeRange(self):
-        ret = self._get("/required_signoffs/permissions/history", qs={"timestamp_from": 20, "timestamp_to": 30})
+        ret = self._get("/required_signoffs/product/history", qs={"timestamp_from": 20, "timestamp_to": 30})
         self.assertStatusCode(ret, 200)
 
         got = json.loads(ret.data)
