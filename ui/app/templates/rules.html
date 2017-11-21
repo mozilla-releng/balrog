@@ -148,99 +148,102 @@
         </ul>
       </span>
     </div>
-    <hr style="clear: both" ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs)">
+    <hr ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs)">
 
-    <div class="left" style="float: left">
+    <div class="row">
+      <div class="col-md-8">
 
-      <h5 title="Mapping" ng-show="rule.mapping || (show_sc && rule.scheduled_change !== null && rule.scheduled_change.mapping)">
-        Mapping:
-          <span ng-show="rule.mapping">
-            <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
-              {{ rule.mapping }}
-            </b>
-            <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.mapping)">
-                <i class="glyphicon glyphicon-eye-open"></i>
-                View
-            </a>
-            <a class="btn btn-default btn-xs" href="/releases/#{{ rule.mapping }}">
-                <i class="glyphicon glyphicon-pencil"></i>
-                Edit
-            </a>
+        <h5 title="Mapping" ng-show="rule.mapping || (show_sc && rule.scheduled_change !== null && rule.scheduled_change.mapping)">
+          Mapping:
+            <span ng-show="rule.mapping">
+              <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
+                {{ rule.mapping }}
+              </b>
+              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.mapping)">
+                  <i class="glyphicon glyphicon-eye-open"></i>
+                  View
+              </a>
+              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.mapping }}">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                  Edit
+              </a>
+            </span>
+            <span ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping && rule.scheduled_change.mapping">
+              <b style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping">
+                {{ rule.scheduled_change.mapping }}
+              </b>
+              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.scheduled_change.mapping)">
+                  <i class="glyphicon glyphicon-eye-open"></i>
+                  View
+              </a>
+              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.scheduled_change.mapping }}">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                  Edit
+              </a>
+            </span>
+        </h5>
+        <h5 title="Fallback Mapping" ng-show="rule.fallbackMapping || (show_sc && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping)">
+          Fallback Mapping:
+            <span ng-show="rule.fallbackMapping">
+              <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
+                {{ rule.fallbackMapping }}
+              </b>
+              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.fallbackMapping)">
+                  <i class="glyphicon glyphicon-eye-open"></i>
+                  View
+              </a>
+              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.fallbackMapping }}">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                  Edit
+              </a>
+            </span>
+            <span ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping && rule.scheduled_change.fallbackMapping">
+              <b style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping">
+                {{ rule.scheduled_change.fallbackMapping }}
+              </b>
+              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.scheduled_change.fallbackMapping)">
+                  <i class="glyphicon glyphicon-eye-open"></i>
+                  View
+              </a>
+              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.scheduled_change.fallbackMapping }}">
+                  <i class="glyphicon glyphicon-pencil"></i>
+                  Edit
+              </a>
+            </span>
+        </h5>
+        <span ng-hide="(rule.fallbackMapping === null && !(!rule_id && show_sc && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping !== null )) || (rule.backgroundRate !== 100 && rule.scheduled_change.backgroundRate !== 100)" >
+          <span class="alert-danger">
+            <strong>Note!</strong> Fallback Mapping is unused when Background Rate is 100
           </span>
-          <span ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping && rule.scheduled_change.mapping">
-            <b style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping">
-              {{ rule.scheduled_change.mapping }}
-            </b>
-            <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.scheduled_change.mapping)">
-                <i class="glyphicon glyphicon-eye-open"></i>
-                View
-            </a>
-            <a class="btn btn-default btn-xs" href="/releases/#{{ rule.scheduled_change.mapping }}">
-                <i class="glyphicon glyphicon-pencil"></i>
-                Edit
-            </a>
-          </span>
-      </h5>
-      <h5 title="Fallback Mapping" ng-show="rule.fallbackMapping || (show_sc && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping)">
-        Fallback Mapping:
-          <span ng-show="rule.fallbackMapping">
-            <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
-              {{ rule.fallbackMapping }}
-            </b>
-            <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.fallbackMapping)">
-                <i class="glyphicon glyphicon-eye-open"></i>
-                View
-            </a>
-            <a class="btn btn-default btn-xs" href="/releases/#{{ rule.fallbackMapping }}">
-                <i class="glyphicon glyphicon-pencil"></i>
-                Edit
-            </a>
-          </span>
-          <span ng-show="!rule_id && show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping && rule.scheduled_change.fallbackMapping">
-            <b style="color: green" ng-show="show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping">
-              {{ rule.scheduled_change.fallbackMapping }}
-            </b>
-            <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.scheduled_change.fallbackMapping)">
-                <i class="glyphicon glyphicon-eye-open"></i>
-                View
-            </a>
-            <a class="btn btn-default btn-xs" href="/releases/#{{ rule.scheduled_change.fallbackMapping }}">
-                <i class="glyphicon glyphicon-pencil"></i>
-                Edit
-            </a>
-          </span>
-      </h5>
-      <span ng-hide="(rule.fallbackMapping === null && !(!rule_id && show_sc && rule.scheduled_change !== null && rule.scheduled_change.fallbackMapping !== null )) || (rule.backgroundRate !== 100 && rule.scheduled_change.backgroundRate !== 100)" >
-        <span class="alert-danger">
-          <strong>Note!</strong> Fallback Mapping is unused when Background Rate is 100
-        </span>        
-     </span>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="data_version" fieldtitle="Data Version"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="rule_id" fieldtitle="Rule ID"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="comment" fieldtitle="Comment"></rulefield>
+        </span>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="data_version" fieldtitle="Data Version"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="rule_id" fieldtitle="Rule ID"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="comment" fieldtitle="Comment"></rulefield>
 
-    </div>
+      </div>
 
-    <div style="float: right">
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="alias" fieldtitle="Alias"
-                 help="Can be used in place of rule_id in REST operations"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="backgroundRate" fieldtitle="Background Rate"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="priority" fieldtitle="Priority"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="version" fieldtitle="Version"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="buildID" fieldtitle="Build ID"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="buildTarget" fieldtitle="Build Target"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="locale" fieldtitle="Locale(s)"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="distribution" fieldtitle="Distribution"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="distVersion" fieldtitle="Distribution Version"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="osVersion" fieldtitle="OS Version"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="instructionSet" fieldtitle="Instruction Set"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="memory" fieldtitle="Memory"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="mig64" fieldtitle="64-bit Migration Opt-in"
-                 help='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="jaws" fieldtitle="JAWS Screen Reader Compatibility"
-                 help='Whether or not to match incoming queries that indicate a client that has an incompatible version of the JAWS screen reader installed. "Ignore" is usually what you want.'></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="update_type" fieldtitle="Update type"></rulefield>
-      <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="headerArchitecture" fieldtitle="Header Architecture"></rulefield>
+      <div class="col-md-4">
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="alias" fieldtitle="Alias"
+                   help="Can be used in place of rule_id in REST operations"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="backgroundRate" fieldtitle="Background Rate"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="priority" fieldtitle="Priority"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="version" fieldtitle="Version"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="buildID" fieldtitle="Build ID"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="buildTarget" fieldtitle="Build Target"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="locale" fieldtitle="Locale(s)"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="distribution" fieldtitle="Distribution"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="distVersion" fieldtitle="Distribution Version"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="osVersion" fieldtitle="OS Version"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="instructionSet" fieldtitle="Instruction Set"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="memory" fieldtitle="Memory"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="mig64" fieldtitle="64-bit Migration Opt-in"
+                   help='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="jaws" fieldtitle="JAWS Screen Reader Compatibility"
+                   help='Whether or not to match incoming queries that indicate a client that has an incompatible version of the JAWS screen reader installed. "Ignore" is usually what you want.'></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="update_type" fieldtitle="Update type"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="headerArchitecture" fieldtitle="Header Architecture"></rulefield>
+      </div>
+
     </div>
 
   </div>

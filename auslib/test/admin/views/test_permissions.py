@@ -574,7 +574,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions/2", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {'bill': 'releng'}})
 
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -599,7 +599,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEquals(len(rows), 2)
         ret = self._post("/scheduled_changes/permissions/2", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {'bill': 'releng'}})
 
         r = dbo.permissions.scheduled_changes.t.select().where(
             dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
@@ -609,6 +609,32 @@ class TestPermissionsScheduledChanges(ViewTest):
             "sc_id": 2, "complete": False, "data_version": 2, "scheduled_by": "bill", "change_type": "update",
             "base_permission": "release_locale",
             "base_username": "ashanti", "base_options": {"products": ["Thunderbird"]}, "base_data_version": 1,
+        }
+        self.assertEquals(db_data, expected)
+        rows = dbo.permissions.scheduled_changes.signoffs.t.select().where(
+            dbo.releases.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(rows), 0)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduleChangeExistingPermissionDiffUserResetSignOffs(self):
+        data = {
+            "options": '{"products": ["superfake"]}', "data_version": 1, "sc_data_version": 1, "when": 200000000,
+        }
+        rows = dbo.permissions.scheduled_changes.signoffs.t.select().where(
+            dbo.permissions.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(rows), 2)
+        ret = self._post("/scheduled_changes/permissions/2", data=data, username="bob")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {'bob': 'relman'}})
+
+        r = dbo.permissions.scheduled_changes.t.select().where(
+            dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 2, "complete": False, "data_version": 2, "scheduled_by": "bob", "change_type": "update",
+            "base_permission": "release_locale",
+            "base_username": "ashanti", "base_options": {"products": ["superfake"]}, "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
         rows = dbo.permissions.scheduled_changes.signoffs.t.select().where(
@@ -630,7 +656,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions/1", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {'bill': 'releng'}})
 
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
