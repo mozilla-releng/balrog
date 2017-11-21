@@ -64,7 +64,7 @@ class TestEmergencyShutoff(ViewTest):
         for shutoff in data['shutoffs']:
             self.assertEquals('nightly', shutoff['channel'])
 
-        qs = {'channel': 'test', 'product': 'Fennec'}
+        qs = {'channel': 'test', 'product': 'Firefox'}
         resp = self._get('/emergency_shutoff', qs=qs)
         self.assertStatusCode(resp, 200)
         data = json.loads(resp.data)

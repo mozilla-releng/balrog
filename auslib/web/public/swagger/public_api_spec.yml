@@ -295,3 +295,48 @@ paths:
           $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+
+  /api/v1/emergency_shutoff:
+    get:
+      summary: List of emergency shut off optionally filtered by product/channel.
+      description: >
+        Products/Channels available to shut off updates.
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.common.emergency_shutoff.get
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/channelQueryParam'
+      responses:
+        '200':
+          description: Emergency shut off list.
+          schema:
+            $ref: '#/definitions/EmergencyShutoffListGET'
+
+  /api/v1/emergency_shutoff/{shutoff_id}:
+    get:
+      summary: Emergency shut off.
+      description: >
+        Get emergency shut off by Id.
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.common.emergency_shutoff.get_by_id
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/shutoff_id'
+      responses:
+        '200':
+          description: Shut off information.
+          schema:
+            $ref: "#/definitions/EmergencyShutoffObject"
+          headers:
+            X-Data-Version:
+              description: data version of the shut off
+              type: integer
+              format: int32
+              minimum: 1
+        '404':
+          $ref: '#/responses/resourceNotFound'
