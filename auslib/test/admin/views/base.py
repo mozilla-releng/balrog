@@ -42,6 +42,8 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.t.insert().execute(permission='permission', username='bob', data_version=1)
         dbo.permissions.t.insert().execute(permission='release', username='bob',
                                            options=dict(products=['fake', "a", 'b'], actions=["create", "modify"]), data_version=1)
+        dbo.permissions.t.insert().execute(permission='release', username='julie', options=dict(products=['a'], actions=["modify"]), data_version=1)
+        dbo.permissions.t.insert().execute(permission='rule', username='julie', options=dict(products=['fake'], actions=["create"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='release_read_only', username='bob', options=dict(actions=["set"], products=["a", "b"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='rule', username='bob', options=dict(actions=["modify"], products=['a', "b"]), data_version=1)
         dbo.permissions.t.insert().execute(permission='release', username='ashanti', options=dict(actions=["modify"], products=['a']), data_version=1)
@@ -78,11 +80,41 @@ class ViewTest(unittest.TestCase):
             name='a', product='a', data=createBlob(dict(name='a', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
             name='ab', product='a', data=createBlob(dict(name='ab', hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.releases.history.t.insert().execute(change_id=1, timestamp=5, changed_by="bill", name='ab')
+        dbo.releases.history.t.insert().execute(
+            change_id=2, timestamp=6, changed_by="bill",
+            name='ab', product='a', data=createBlob(dict(name='ab', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
+            name='b', product='b', data=createBlob(dict(name='b', hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.releases.history.t.insert().execute(change_id=5, timestamp=15, changed_by="bill", name='b')
+        dbo.releases.history.t.insert().execute(
+            change_id=6, timestamp=16, changed_by="bill",
             name='b', product='b', data=createBlob(dict(name='b', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
             name='c', product='c', data=createBlob(dict(name='c', hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(name='d', product='d', data_version=1, data=createBlob("""
+{
+    "name": "d",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "d": {
+                    "complete": {
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+        dbo.releases.history.t.insert().execute(change_id=3, timestamp=9, changed_by="bill", name='d')
+        dbo.releases.history.t.insert().execute(change_id=4, timestamp=10, changed_by="bill",
+                                                name='d', product='d', data_version=1, data=createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -126,6 +158,10 @@ class ViewTest(unittest.TestCase):
         dbo.rules.t.insert().execute(rule_id=7, product='fake', priority=30, backgroundRate=85, mapping='a', update_type='minor', channel="c", data_version=1)
         dbo.rules.t.insert().execute(
             rule_id=8, product='fake2', priority=25, backgroundRate=100, mapping='a', update_type='minor', channel="c", mig64=True,
+            data_version=1
+        )
+        dbo.rules.t.insert().execute(
+            rule_id=9, product='fake3', priority=25, backgroundRate=100, mapping='a', update_type='minor', channel="c", jaws=True,
             data_version=1
         )
         self.client = app.test_client()

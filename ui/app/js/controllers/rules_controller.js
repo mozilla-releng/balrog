@@ -171,11 +171,15 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   };
 
   $scope.orderRules = function(rule) {
-    // Rules are sorted by priority. Rules that are pending (ie: still just a Scheduled Change)
+    if($scope.rule_id){
+      return rule.data_version * -1;
+    }
+     // Rules are sorted by priority. Rules that are pending (ie: still just a Scheduled Change)
     // will be inserted based on the priority in the Scheduled Change.
     // Rules that have Scheduled updates or deletes will remain sorted on their current priority
     // because it's more important to make it easy to assess current state than future state.
-    if (rule.priority === null || rule.priority === undefined) {
+
+    else if (rule.priority === null || rule.priority === undefined) {
         return rule.scheduled_change.priority * -1;
     }
     else {
@@ -294,7 +298,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         sc: function() {
           // blank new default rule
           return {
-            base_row: undefined,
             product: product,
             channel: channel,
             backgroundRate: 0,
@@ -303,6 +306,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             when: null,
             change_type: 'insert',
           };
+        },
+        original_row: function() {
+          return null;
         },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
@@ -328,9 +334,11 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         sc: function() {
           sc = angular.copy(rule);
-          sc.original_row = rule;
           sc["change_type"] = "update";
           return sc;
+        },
+        original_row: function() {
+          return rule;
         },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
@@ -354,11 +362,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         sc: function() {
           return {
-            "base_row": rule,
             "rule_id": rule.rule_id,
             "data_version": rule.data_version,
             "change_type": "delete"
           };
+        },
+        original_row: function() {
+          return rule;
         },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
@@ -379,14 +389,18 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       resolve: {
         sc: function() {
           var sc = angular.copy(rule.scheduled_change);
-          sc.original_row = rule;
           return sc;
+        },
+        original_row: function() {
+          if (rule.scheduled_change.change_type === "insert") {
+            return null;
+          }
+          else {
+            return rule;
+          }
         },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
-        },
-        rule: function() {
-          return rule;
         },
       }
     });

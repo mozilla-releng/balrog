@@ -2109,6 +2109,7 @@ paths:
                   fallbackMapping: null
                   headerArchitecture: null
                   instructionSet: null
+                  jaws: null
                   locale: null
                   mapping: "Firefox-45.7.0esr-build1"
                   memory: null
@@ -4216,6 +4217,7 @@ definitions:
       - fallbackMapping
       - headerArchitecture
       - instructionSet
+      - jaws
       - locale
       - mapping
       - memory

@@ -8,17 +8,17 @@
     "company": "Mozilla"
   },
   "devDependencies": {
-    "grunt": "^0.4.5",
-    "grunt-contrib-copy": "^0.7.0",
-    "grunt-contrib-jasmine": "^0.8.1",
-    "grunt-webfont": "^0.4.8",
-    "jasmine-given": "^2.6.2",
-    "lineman": "^0.34.0",
-    "lineman-angular": "^0.3.0",
+    "grunt": "0.4.5",
+    "grunt-contrib-copy": "0.7.0",
+    "grunt-contrib-jasmine": "0.8.2",
+    "grunt-webfont": "0.4.8",
+    "jasmine-given": "2.6.4",
+    "lineman": "0.34.4",
+    "lineman-angular": "0.3.0",
     "lineman-less": "0.1.0",
-    "phantomjs-prebuilt": "^2.1.12",
-    "protractor": "^1.2.0-beta1",
-    "testem": "^1.12.0"
+    "phantomjs-prebuilt": "2.1.15",
+    "protractor": "1.8.0",
+    "testem": "1.18.4"
   },
   "scripts": {
     "start": "./node_modules/.bin/lineman run",

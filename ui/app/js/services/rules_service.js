@@ -52,8 +52,10 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers
     addScheduledChange: function(data, csrf_token) {
       data = jQuery.extend({}, data);
       data = Helpers.replaceEmptyStrings(data);
-      if (data.when !== null) {
+      if (!!data.when) {
         data.when = data.when.getTime();
+      }else{
+          data.when = null;
       }
       data.csrf_token = csrf_token;
       return $http.post("/api/scheduled_changes/rules", data);
@@ -64,11 +66,11 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers
     updateScheduledChange: function(sc_id, data, csrf_token) {
       data = jQuery.extend({}, data);
       data = Helpers.replaceEmptyStrings(data);
-      if (data.when === null) {
-        data.when = "";
+      if (!!data.when) {
+        data.when = data.when.getTime();
       }
       else {
-        data.when = data.when.getTime();
+        data.when = null;
       }
       data.csrf_token = csrf_token;
       return $http.post("/api/scheduled_changes/rules/" + sc_id, data);

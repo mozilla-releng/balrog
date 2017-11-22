@@ -28,7 +28,7 @@ def getHeaderArchitecture(buildTarget, ua):
 def getSystemCapabilities(systemCapabilities):
     # Set defaults for the broken-down fields, because not all query versions
     # will have all values.
-    caps = {"instructionSet": None, "memory": None}
+    caps = {"instructionSet": None, "memory": None, "jaws": None}
     # New-style SYSTEM_CAPABILITIES, as implemented in https://bugzilla.mozilla.org/show_bug.cgi?id=1373367
     if systemCapabilities.startswith("ISET:"):
         for part in systemCapabilities.split(","):
@@ -37,7 +37,9 @@ def getSystemCapabilities(systemCapabilities):
                 caps["instructionSet"] = value
             elif key == "MEM":
                 caps["memory"] = int(value)
-    # Old-style, unprefixed SYSTEM_CAPABILITIES
+            elif key == "JAWS":
+                caps["jaws"] = bool(int(value))
+    # Old-style, unprefixed SYSTEM_CAPABILITIES. Only supports instructionSet and memory.
     else:
         parts = systemCapabilities.split(",")
         # The only known valid formats for this field are either a single part,

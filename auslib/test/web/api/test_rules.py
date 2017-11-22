@@ -40,7 +40,8 @@ class TestPublicRulesAPI(CommonTestBase):
                         channel=None, comment=None, distVersion=None,
                         distribution=None, fallbackMapping=None,
                         headerArchitecture=None, locale=None, version=None,
-                        osVersion=None, memory=None, instructionSet=None, mig64=None)
+                        osVersion=None, memory=None, instructionSet=None, mig64=None,
+                        jaws=None)
         ret = self.public_client.get("/api/v1/rules/moz-releng")
         self.assertEqual(ret.status_code, 200, ret.data)
         got = json.loads(ret.data)
