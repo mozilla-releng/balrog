@@ -35,6 +35,26 @@ def rows_to_dicts(rows):
     return map(dict, rows)
 
 
+def _matchesRegex(foo, bar):
+    # Expand wildcards and use ^/$ to make sure we don't succeed on partial
+    # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
+    # Channel length must be strictly greater than two
+    # And globbing is allowed at the end of channel-name only
+    if foo.endswith('*'):
+        if(len(foo) >= 3):
+            test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
+            test = '^{}.*$'.format(test[:-1])
+            if re.match(test, bar):
+                return True
+            return False
+        else:
+            return False
+    elif (foo == bar):
+        return True
+    else:
+        return False
+
+
 class AlreadySetupError(Exception):
 
     def __str__(self):
@@ -1535,28 +1555,9 @@ class Rules(AUSTable):
             for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
                 # Channel supports globbing, so we must take that into account
                 # before deciding whether or not this is a match.
-                if not row.get("channel") or self._matchesRegex(row["channel"], rs["channel"]):
+                if not row.get("channel") or _matchesRegex(row["channel"], rs["channel"]):
                     potential_required_signoffs.append(rs)
         return potential_required_signoffs
-
-    def _matchesRegex(self, foo, bar):
-        # Expand wildcards and use ^/$ to make sure we don't succeed on partial
-        # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
-        # Channel length must be strictly greater than two
-        # And globbing is allowed at the end of channel-name only
-        if foo.endswith('*'):
-            if(len(foo) >= 3):
-                test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
-                test = '^{}.*$'.format(test[:-1])
-                if re.match(test, bar):
-                    return True
-                return False
-            else:
-                return False
-        elif (foo == bar):
-            return True
-        else:
-            return False
 
     def _channelMatchesRule(self, ruleChannel, queryChannel, fallbackChannel):
         """Decides whether a channel from the rules matches an incoming one.
@@ -1566,9 +1567,9 @@ class Rules(AUSTable):
            check if the fallback version of the queryChannel matches the ruleChannel."""
         if ruleChannel is None:
             return True
-        if self._matchesRegex(ruleChannel, queryChannel):
+        if _matchesRegex(ruleChannel, queryChannel):
             return True
-        if self._matchesRegex(ruleChannel, fallbackChannel):
+        if _matchesRegex(ruleChannel, fallbackChannel):
             return True
 
     def _versionMatchesRule(self, ruleVersion, queryVersion):
@@ -2514,7 +2515,7 @@ class EmergencyShutoff(AUSTable):
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
         for current_shutoff in self.select(where=where, transaction=transaction):
             if not self.db.hasPermission(changed_by, "rule", "modify", current_shutoff["product"], transaction):
-                raise PermissionDeniedError("%s is not allowed to modify rules for product %s" % (changed_by, current_shutoff["product"]))
+                raise PermissionDeniedError("%s is not allowed to modify emergency shutoff for product %s" % (changed_by, current_shutoff["product"]))
 
             new_shutoff = current_shutoff.copy()
             new_shutoff.update(what)
@@ -2525,25 +2526,6 @@ class EmergencyShutoff(AUSTable):
         return super(EmergencyShutoff, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version,
                                                     transaction=transaction, dryrun=dryrun)
 
-    def _matchesRegex(self, foo, bar):
-        # Expand wildcards and use ^/$ to make sure we don't succeed on partial
-        # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
-        # Channel length must be strictly greater than two
-        # And globbing is allowed at the end of channel-name only
-        if foo.endswith('*'):
-            if(len(foo) >= 3):
-                test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
-                test = '^{}.*$'.format(test[:-1])
-                if re.match(test, bar):
-                    return True
-                return False
-            else:
-                return False
-        elif (foo == bar):
-            return True
-        else:
-            return False
-
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = []
         row = affected_rows[-1]
@@ -2551,7 +2533,7 @@ class EmergencyShutoff(AUSTable):
         if not row['updates_disabled']:
             where = {"product": row["product"]}
             for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
-                if not row.get("channel") or self._matchesRegex(row["channel"], rs["channel"]):
+                if not row.get("channel") or _matchesRegex(row["channel"], rs["channel"]):
                     potential_required_signoffs.append(rs)
         return potential_required_signoffs
 

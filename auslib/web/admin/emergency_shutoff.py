@@ -9,7 +9,8 @@ from auslib.web.admin.views.scheduled_changes import (
 
 
 def shutoff_already_exists(emergency_shutoff):
-    shutoffs = query_shutoffs(product=emergency_shutoff['product'], channel=emergency_shutoff['channel'])
+    where = get_columns_dict(product=emergency_shutoff['product'], channel=emergency_shutoff['channel'])
+    shutoffs = dbo.emergencyShutoff.getEmergencyShutoffs(where)
     return bool(shutoffs)
 
 
@@ -31,11 +32,6 @@ def get_columns_dict(include_nulls=False, **columns):
             continue
         cols[column] = value
     return cols
-
-
-def query_shutoffs(**columns):
-    where = get_columns_dict(**columns)
-    return dbo.emergencyShutoff.getEmergencyShutoffs(where)
 
 
 @requirelogin

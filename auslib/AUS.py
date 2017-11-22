@@ -61,7 +61,7 @@ class AUS:
         self.log.debug("Looking for rules that apply to:")
         self.log.debug(updateQuery)
 
-        if 'product' in updateQuery:
+        if 'product' in updateQuery and 'channel' in updateQuery:
             emergency_shutoff = self.get_emergency_shutoff(updateQuery['product'], updateQuery['channel'])
             if emergency_shutoff and emergency_shutoff['updates_disabled']:
                 log_message = 'Updates are disabled for {}/{}, emergency shutoff id: {}.'.format(
