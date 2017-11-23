@@ -117,7 +117,7 @@ describe("Service: History", function() {
     inject(function(History) {
       var page = 1;
       var filterParams = {
-        objectValue: "rules",
+        objectValue: "all_rules",
         changedByValue: "hope.ngerebara@gmail.com",
         startDate: 1508923005724,
         endDate: 1508923005755
@@ -198,7 +198,7 @@ describe("Service: History", function() {
       };
       var page = 1;
       var filterParams = {
-        objectValue: "releases",
+        objectValue: "all_releases",
         changedByValue: "hope.ngerebara@gmail.com",
         startDate: 1509976085599,
         endDate: 1510284736310
@@ -279,7 +279,7 @@ describe("Service: History", function() {
           }
       var page = 1;
       var filterParams = {
-        objectValue: "permissions",
+        objectValue: "all_permissions",
         changedByValue: "hope.ngerebara@gmail.com",
         startDate: 1510101325319,
         endDate: 1510100637074
@@ -326,7 +326,7 @@ describe("Service: History", function() {
     }
     var page = 1;
     var filterParams = {
-      objectValue: "product_required_signoffs",
+      objectValue: "all_product_required_signoffs",
       changedByValue: "hope@gmail.com",
       startDate: 1510101325319,
       endDate: 1510100637060

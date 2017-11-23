@@ -161,14 +161,14 @@ describe("controller: HistoryController", function() {
     it("should return the response when 'rules' object is selected", function() {
       this.scope.data.objectSelected = {
         id: "2",
-        name: "rules",
+        name: "all_rules",
         value: "Rules"
       };
       this.scope.searchHistory();
       this.$httpBackend
         .expectGET("/api/rules")
         .respond(200, '{"rules": [], "count": 0}');
-      this.$httpBackend.expectGET("/api/rules/history?&page=1")
+      this.$httpBackend.expectGET("/api/all_rules/history?&page=1")
         .respond(200,
           JSON.stringify({
             Rules: { count: 2, revisions: ["test2", "test"] },
@@ -188,7 +188,7 @@ describe("controller: HistoryController", function() {
     it("should return the data when the changed_by name is entered", function() {
       this.scope.data.objectSelected = {
         id: "2",
-        name: "rules",
+        name: "all_rules",
         value: "Rules"
       };
       this.scope.userInput = {
@@ -207,7 +207,7 @@ describe("controller: HistoryController", function() {
       });
       this.$httpBackend
         .expectGET(
-          "/api/rules/history?&page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1508923005671&timestamp_to=1508923005724"
+          "/api/all_rules/history?&page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1508923005671&timestamp_to=1508923005724"
         )
         .respond(200, JSON.stringify(sample_rules_response));
       this.$httpBackend
@@ -229,7 +229,7 @@ describe("controller: HistoryController", function() {
     it("should return data when 'release' object is selected", function() {
       this.scope.data.objectSelected = {
         id: "3",
-        name: "releases",
+        name: "all_releases",
         value: "Releases"
       };
       this.scope.userInput = {
@@ -247,7 +247,7 @@ describe("controller: HistoryController", function() {
       });
       this.$httpBackend
         .expectGET(
-          "/api/releases/history?&page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1508923005671&timestamp_to=1508923005724"
+          "/api/all_releases/history?&page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1508923005671&timestamp_to=1508923005724"
         )
         .respond(200, JSON.stringify(sample_releases_response));
       this.$httpBackend
@@ -269,7 +269,7 @@ describe("controller: HistoryController", function() {
     it("should return data when 'permissions' object is selected", function() {
       this.scope.data.objectSelected = {
         id: "4",
-        name: "permissions",
+        name: "all_permissions",
         value: "Permissions"
       };
       this.scope.userInput = {
@@ -287,7 +287,7 @@ describe("controller: HistoryController", function() {
       });
       this.$httpBackend
         .expectGET(
-          "/api/permissions/history?&page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1510747027497&timestamp_to=1510747027498"
+          "/api/all_permissions/history?&page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1510747027497&timestamp_to=1510747027498"
         )
         .respond(200, JSON.stringify(sample_permissions_response));
       this.$httpBackend
