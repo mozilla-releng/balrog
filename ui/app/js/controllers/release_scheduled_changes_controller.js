@@ -59,7 +59,7 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
   $scope.openDiffModal = function(sc) {
         var modalInstance = $modal.open({
           templateUrl: 'release_data_modal.html',
-          controller: 'ScheduledReleaseUpdateDataCtrl',
+          controller: 'ScheduledReleaseDiffCtrl',
           size: 'lg',
           backdrop: 'static',
           resolve: {
