@@ -40,7 +40,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 0)
-        self.assertEquals(request.call_count, 5)
+        self.assertEquals(request.call_count, 6)
 
     @asynctest.patch("time.time")
     async def testTimeBasedNotReadyRules(self, time, time_is_ready, telemetry_is_ready, request):
@@ -50,7 +50,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 1)
-        self.assertEquals(request.call_count, 5)
+        self.assertEquals(request.call_count, 6)
 
     @asynctest.patch("time.time")
     async def testTimeBasedNotReadyReleases(self, time, time_is_ready, telemetry_is_ready, request):
@@ -60,7 +60,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 1)
-        self.assertEquals(request.call_count, 5)
+        self.assertEquals(request.call_count, 6)
 
     @asynctest.patch("time.time")
     async def testTimeBasedNotReadyPermissions(self, time, time_is_ready, telemetry_is_ready, request):
@@ -70,7 +70,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 1)
-        self.assertEquals(request.call_count, 5)
+        self.assertEquals(request.call_count, 6)
 
     @asynctest.patch("time.time")
     async def testTimeBasedIsNotReadyRequiredSignoffs(self, time, time_is_ready, telemetry_is_ready, request):
@@ -87,7 +87,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 2)
-        self.assertEquals(request.call_count, 5)
+        self.assertEquals(request.call_count, 6)
 
     @asynctest.patch("time.time")
     async def testTimeBasedIsReadyRules(self, time, time_is_ready, telemetry_is_ready, request):
@@ -97,7 +97,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 1)
-        self.assertEquals(request.call_count, 6)
+        self.assertEquals(request.call_count, 7)
 
     @asynctest.patch("time.time")
     async def testTimeBasedIsReadyReleases(self, time, time_is_ready, telemetry_is_ready, request):
@@ -107,7 +107,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 1)
-        self.assertEquals(request.call_count, 6)
+        self.assertEquals(request.call_count, 7)
 
     @asynctest.patch("time.time")
     async def testTimeBasedIsReadyPermissions(self, time, time_is_ready, telemetry_is_ready, request):
@@ -117,7 +117,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 1)
-        self.assertEquals(request.call_count, 6)
+        self.assertEquals(request.call_count, 7)
 
     @asynctest.patch("time.time")
     async def testTimeBasedIsReadyRequiredSignoffs(self, time, time_is_ready, telemetry_is_ready, request):
@@ -134,7 +134,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 2)
-        self.assertEquals(request.call_count, 7)
+        self.assertEquals(request.call_count, 8)
 
     @asynctest.patch("balrogagent.cmd.get_telemetry_uptake")
     async def testTelemetryBasedNotReady(self, get_telemetry_uptake, time_is_ready, telemetry_is_ready, request):
@@ -144,7 +144,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 1)
         self.assertEquals(time_is_ready.call_count, 0)
-        self.assertEquals(request.call_count, 5)
+        self.assertEquals(request.call_count, 6)
 
     @asynctest.patch("balrogagent.cmd.get_telemetry_uptake")
     async def testTelemetryBasedIsReady(self, get_telemetry_uptake, time_is_ready, telemetry_is_ready, request):
@@ -154,7 +154,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 1)
         self.assertEquals(time_is_ready.call_count, 0)
-        self.assertEquals(request.call_count, 6)
+        self.assertEquals(request.call_count, 7)
 
     @asynctest.patch("time.time")
     async def testMultipleEndpointsAtOnce(self, time, time_is_ready, telemetry_is_ready, request):
@@ -166,7 +166,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 3)
-        self.assertEquals(request.call_count, 8)
+        self.assertEquals(request.call_count, 9)
 
     @asynctest.patch("time.time")
     async def testMultipleChangesOneEndpoint(self, time, time_is_ready, telemetry_is_ready, request):
@@ -181,13 +181,15 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 3)
-        self.assertEquals(request.call_count, 8)
+        self.assertEquals(request.call_count, 9)
         called_endpoints = [call[0][1] for call in request.call_args_list]
         self.assertIn('/scheduled_changes/releases', called_endpoints)
         self.assertIn('/scheduled_changes/permissions', called_endpoints)
         self.assertIn('/scheduled_changes/rules', called_endpoints)
+        self.assertIn('/scheduled_changes/emergency_shutoff', called_endpoints)
         self.assertIn('/scheduled_changes/releases/4/enact', called_endpoints)
         self.assertIn('/scheduled_changes/releases/5/enact', called_endpoints)
+        self.assertIn('/scheduled_changes/releases/6/enact', called_endpoints)
         self.assertIn('/scheduled_changes/releases/6/enact', called_endpoints)
 
     @asynctest.patch("time.time")
@@ -204,7 +206,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 1)
-        self.assertEquals(request.call_count, 6)
+        self.assertEquals(request.call_count, 7)
 
     @asynctest.patch("time.time")
     async def testSignoffsAbsent(self, time, time_is_ready, telemetry_is_ready, request):
@@ -220,7 +222,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 1)
-        self.assertEquals(request.call_count, 5)
+        self.assertEquals(request.call_count, 6)
 
     @asynctest.patch("time.time")
     async def testRightEnactOrderForMultipleEndpointsAtOnce(self, time, time_is_ready, telemetry_is_ready, request):
@@ -253,7 +255,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEquals(telemetry_is_ready.call_count, 0)
         self.assertEquals(time_is_ready.call_count, 11)
-        self.assertEquals(request.call_count, 16)
+        self.assertEquals(request.call_count, 17)
         called_endpoints = [call[0][1] for call in request.call_args_list]
         self.assertLess(called_endpoints.index('/scheduled_changes/rules'), called_endpoints.index('/scheduled_changes/releases'))
         self.assertLess(called_endpoints.index('/scheduled_changes/rules/1/enact'), called_endpoints.index('/scheduled_changes/rules/4/enact'))
