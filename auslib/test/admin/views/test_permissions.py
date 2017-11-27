@@ -763,6 +763,51 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
+    def testGetScheduledChangeHistory(self):
+        ret = self._get("/permissions_scheduled_change/history")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        expected = {
+            "count": 7,
+            "revisions": [
+                {
+                    "change_id": 13, "changed_by": "bill", "complete": False, "timestamp": 405, "sc_id": 6, "scheduled_by": "bill",
+                    "change_type": "update", "data_version": 1, "permission": "release", "options": {"products": ["a", "b"]},
+                    "username": "bob", "when": 38000000, "sc_data_version": 1
+                },
+                {
+                    "change_id": 11, "changed_by": "bill", "complete": False, "timestamp": 205, "sc_id": 5, "scheduled_by": "bill",
+                    "change_type": "insert", "data_version": None, "permission": "rule", "username": "joe", "options": {"products": ["fake"]},
+                    "when": 98000000, "sc_data_version": 1
+                },
+                {
+                    "change_id": 9, "changed_by": "bill", "timestamp": 201, "sc_id": 4, "scheduled_by": "bill", "change_type": "delete", "data_version": None,
+                    "permission": "scheduled_change", "username": "mary", "complete": False, "options": None, "sc_data_version": 1, "when": 76000000
+                },
+                {
+                    "change_id": 7, "changed_by": "bill", "timestamp": 100, "sc_id": 3, "scheduled_by": "bill", "change_type": "insert",
+                    "data_version": None, "permission": "permission", "username": "bob", "options": None, "when": 30000000, "complete": True,
+                    "sc_data_version": 2,
+                },
+                {
+                    "change_id": 6, "changed_by": "bill", "timestamp": 61, "sc_id": 3, "scheduled_by": "bill", "change_type": "insert",
+                    "data_version": None, "permission": "permission", "username": "bob", "options": None, "when": 30000000, "complete": False,
+                    "sc_data_version": 1,
+                },
+                {
+                    "change_id": 4, "changed_by": "bill", "complete": False, "timestamp": 41, "sc_id": 2, "scheduled_by": "bill",
+                    "change_type": "update", "data_version": 1, "permission": "release_locale", "username": "ashanti", "options": None,
+                    "sc_data_version": 1, "when": 20000000
+                },
+                {
+                    "change_id": 2, "changed_by": "bill", "complete": False, "timestamp": 21, "sc_id": 1, "scheduled_by": "bill",
+                    "change_type": "insert", "data_version": None, "permission": "rule", "username": "janet", "options": {"products": ["foo"]},
+                    "sc_data_version": 1, "when": 10000000
+                },
+            ],
+        }
+
+        self.assertEquals(json.loads(ret.data), expected)
+
     @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="relman"), username="bob")
