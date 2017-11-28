@@ -64,7 +64,7 @@ def get_input_dict():
 
     for key in query_keys:
         query[key] = request.args.get(key)
-    return jsonify(query_keys=query_keys, query=query)
+    return query
 
 
 history_keys = ('timestamp', 'change_id', 'data_version', 'changed_by')
