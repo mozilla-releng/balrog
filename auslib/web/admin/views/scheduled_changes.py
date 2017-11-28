@@ -203,8 +203,7 @@ class ScheduledChangeHistoryView(HistoryView):
                 self.history_table.data_version != null()]
 
     def _get_filters_all(self, obj):
-        input_dict = get_input_dict()
-        query = json.loads(input_dict.data)['query']
+        query = get_input_dict()
         where = [False, False]
         try:
             where = [getattr(self.history_table, f) == query.get(f) for f in query]
