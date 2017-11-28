@@ -1787,7 +1787,7 @@ class Rules(AUSTable):
                 self.log.debug("%s doesn't match %s", rule['mig64'], updateQuery['mig64'])
                 continue
             if not self._booleanMatchesRule(rule["jaws"], updateQuery.get("jaws")):
-                self.log.debug("%s doesn't match %s", rule['jaws'], updateQuery['jaws'])
+                self.log.debug("%s doesn't match %s", rule['jaws'], updateQuery.get('jaws'))
                 continue
 
             matchingRules.append(rule)
