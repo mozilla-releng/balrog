@@ -1,4 +1,3 @@
-import json
 import logging
 from auslib.global_state import dbo
 from connexion import problem, request
@@ -96,10 +95,10 @@ def get_permission_required_signoffs_scheduled_change_history():
 
 
 def get_product_required_signoffs_history():
-    """GET /product_required_signoffs/history"""
+    """GET /required_signoffs/product/history"""
     return ProductRequiredSignoffsHistoryAPIView().get_all()
 
 
 def get_permission_required_signoffs_history():
-    """GET /permission_required_signoffs/history"""
+    """GET /required_signoffs/permissions/history"""
     return PermissionsRequiredSignoffsHistoryAPIView().get_all()
