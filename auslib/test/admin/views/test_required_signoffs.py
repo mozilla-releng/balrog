@@ -88,7 +88,7 @@ class TestProductRequiredSignoffsHistoryView(ViewTest):
         self.assertEquals(got["count"], 2)
         self.assertEquals(got["required_signoffs"], expected)
 
-    def testGetAllRevisions(self):
+    def testGetAllHistory(self):
         ret = self._get("/required_signoffs/product/history", qs={})
         self.assertStatusCode(ret, 200)
 
@@ -498,6 +498,84 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             ],
         }
         self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetAllScheduledChangeHistory(self):
+        ret = self._get("/product_required_signoffs_scheduled_change/history")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        expected = {
+            "count": 5,
+            "revisions": [
+                {
+                    "changed_by": "bill", "timestamp": 201, "sc_id": 4, "product": "fake", "data_version": 1, "change_type": "delete",
+                    "complete": False, "change_id": 9, "channel": "j", "sc_data_version": 1, "when": 400000000, "signoffs_required": None,
+                    "role": "releng", "scheduled_by": "bill"
+                },
+                {
+                    "changed_by": "bill", "timestamp": 100, "sc_id": 3, "product": "fake", "data_version": None, "change_type": "insert",
+                    "complete": False, "change_id": 7, "channel": "e", "sc_data_version": 2, "when": 300000000, "signoffs_required": 1,
+                    "role": "releng", "scheduled_by": "bill"
+                },
+                {
+                    "changed_by": "bill", "timestamp": 81, "sc_id": 3, "product": "fake", "data_version": None, "change_type": "insert",
+                    "complete": False, "change_id": 6, "channel": "e", "sc_data_version": 1, "when": 300000000, "signoffs_required": 2,
+                    "role": "releng", "scheduled_by": "bill"
+                },
+                {
+                    "changed_by": "bill", "timestamp": 41, "sc_id": 2, "product": "fake", "data_version": 1, "change_type": "update",
+                    "complete": False, "change_id": 4, "channel": "a", "sc_data_version": 1, "when": 200000000, "signoffs_required": 2,
+                    "role": "releng", "scheduled_by": "bill"
+                },
+                {
+                    "changed_by": "bill", "timestamp": 21, "sc_id": 1, "product": "fake", "data_version": None, "change_type": "insert",
+                    "complete": False, "change_id": 2, "channel": "a", "sc_data_version": 1, "when": 100000000, "signoffs_required": 1,
+                    "role": "relman", "scheduled_by": "bill"
+                },
+            ],
+        }
+        data = json.loads(ret.data)
+        revisions = data["revisions"]
+        expected_revisions = expected["revisions"]
+        for index in range(len(revisions)):
+            self.assertEquals(revisions[index]['product'], expected_revisions[index]['product'])
+            self.assertEquals(revisions[index]['scheduled_by'], expected_revisions[index]['scheduled_by'])
+            self.assertEquals(revisions[index]['change_id'], expected_revisions[index]['change_id'])
+            self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
+            self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
+        self.assertEquals(len(data["revisions"]), 5)
+
+    def testGetAllScheduledChangeHistoryWithinTimeRange(self):
+        ret = self._get("/product_required_signoffs_scheduled_change/history", qs={"timestamp_from": 41, "timestamp_to": 100})
+        self.assertEquals(ret.status_code, 200, ret.data)
+        expected = {
+            "count": 3,
+            "revisions": [
+                {
+                    "changed_by": "bill", "timestamp": 100, "sc_id": 3, "product": "fake", "data_version": None, "change_type": "insert",
+                    "complete": False, "change_id": 7, "channel": "e", "sc_data_version": 2, "when": 300000000, "signoffs_required": 1,
+                    "role": "releng", "scheduled_by": "bill"
+                },
+                {
+                    "changed_by": "bill", "timestamp": 81, "sc_id": 3, "product": "fake", "data_version": None, "change_type": "insert",
+                    "complete": False, "change_id": 6, "channel": "e", "sc_data_version": 1, "when": 300000000, "signoffs_required": 2,
+                    "role": "releng", "scheduled_by": "bill"
+                },
+                {
+                    "changed_by": "bill", "timestamp": 41, "sc_id": 2, "product": "fake", "data_version": 1, "change_type": "update",
+                    "complete": False, "change_id": 4, "channel": "a", "sc_data_version": 1, "when": 200000000, "signoffs_required": 2,
+                    "role": "releng", "scheduled_by": "bill"
+                },
+            ],
+        }
+        data = json.loads(ret.data)
+        revisions = data["revisions"]
+        expected_revisions = expected["revisions"]
+        for index in range(len(revisions)):
+            self.assertEquals(revisions[index]['product'], expected_revisions[index]['product'])
+            self.assertEquals(revisions[index]['scheduled_by'], expected_revisions[index]['scheduled_by'])
+            self.assertEquals(revisions[index]['change_id'], expected_revisions[index]['change_id'])
+            self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
+            self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
+        self.assertEquals(len(data["revisions"]), 3)
 
     @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):
@@ -1009,6 +1087,33 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                 },
             ],
         }
+        self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetScheduledChangeHistory(self):
+        ret = self._get("/required_signoffs/permissions/history")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        expected = {
+            "count": 2,
+            "required_signoffs": [
+                {
+                    "data_version": 2, "changed_by": "bill", "product": "doop", "change_id": 3, "role": "releng",
+                    "signoffs_required": 1, "timestamp": 25},
+                {
+                    "data_version": 1, "changed_by": "bill", "product": "doop", "change_id": 2, "role": "releng",
+                    "signoffs_required": 2, "timestamp": 11
+                },
+            ],
+        }
+        data = json.loads(ret.data)
+        revisions = data["required_signoffs"]
+        expected_revisions = expected["required_signoffs"]
+        for index in range(len(revisions)):
+            self.assertEquals(revisions[index]['product'], expected_revisions[index]['product'])
+            self.assertEquals(revisions[index]['timestamp'], expected_revisions[index]['timestamp'])
+            self.assertEquals(revisions[index]['change_id'], expected_revisions[index]['change_id'])
+            self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
+            self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
+        self.assertEquals(len(data["required_signoffs"]), 2)
         self.assertEquals(json.loads(ret.data), expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=100))
