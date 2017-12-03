@@ -16,6 +16,8 @@ services:
     command: admin-dev
     expose:
       - "7070"
+    ports:
+      - "7070:7070"
     volumes:
       - .:/app
     links:
