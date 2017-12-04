@@ -13,7 +13,7 @@ from flask import make_response, send_from_directory, Response
 from raven.contrib.flask import Sentry
 
 from auslib.AUS import AUS
-from auslib.util.swagger import SpecBuilder
+from specsynthase.specbuilder import SpecBuilder
 
 from auslib.errors import BadDataError
 

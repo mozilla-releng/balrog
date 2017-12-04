@@ -149,3 +149,5 @@ sphinxcontrib_websupport==1.0.1 \
     --hash=sha256:7a85961326aa3a400cd4ad3c816d70ed6f7c740acd7ce5d78cd0a67825072eb9
 typing==3.6.1 \
     --hash=sha256:c36dec260238e7464213dcd50d4b5ef63a507972f5780652e835d0228d0edace
+spec-synthase==0.1.6 \
+    --hash=sha256:9e891e32fad867e1ddc9f6d4806d81bd8933812b6b362b2d3ecd6c5188c38460
