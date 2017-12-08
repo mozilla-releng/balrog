@@ -1189,7 +1189,7 @@ paths:
         description: "Returns all of Users in Balrog's DB."
       responses:
         '200':
-          description: Get all users inclusive of their roles
+          description: Get all Users and their Roles
           schema:
             type: object
             properties:
@@ -1201,16 +1201,18 @@ paths:
                 items:
                   type: object
                 example: {
-                  "balrogadmin": [
-                    {
-                      "data_version": 1,
-                      "role": "releng"
-                    },
-                    {
-                      "data_version": 1,
-                      "role": "relman"
-                    }]
-                         }
+                  "balrogadmin": {
+                    "roles":[
+                      {
+                        "data_version": 1,
+                        "role": "releng"
+                      },
+                      {
+                        "data_version": 1,
+                        "role": "relman"
+                      }]
+                  }
+                }
 
 
   /users/{username}:

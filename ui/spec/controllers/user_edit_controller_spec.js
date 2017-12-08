@@ -11,10 +11,16 @@ describe("controller: UserPermissionsCtrl", function() {
   var users = [
     {
       username: "peterbe",
-      roles: ['qa', 'releng']
+      roles: [
+        { 'role': 'qa', 'data_version': 1 },
+        { 'role': 'releng', 'data_version': 1 }
+      ]
     }, {
       username: "bhearsum",
-      roles: ['qa', 'releng']
+      roles: [
+        { 'role': 'qa', 'data_version': 1 },
+        { 'role': 'releng', 'data_version': 1 }
+      ]
     }];
 
   var sample_permissions = {
@@ -25,9 +31,17 @@ describe("controller: UserPermissionsCtrl", function() {
   };
 
   var sample_roles = {
-    'roles': ['qa', 'releng']
-    };
-  var sample_all_roles = {'roles': ['qa', 'releng']};
+    'roles': [
+      { 'role': 'qa', 'data_version': 1 },
+      { 'role': 'releng', 'data_version': 1 }
+    ]
+  };
+  var sample_all_roles = {
+    'roles': [
+      { 'role': 'qa', 'data_version': 1 },
+      { 'role': 'releng', 'data_version': 1 }
+    ]
+  };
   var signoffRequirements = [];
 
   beforeEach(inject(function($controller, $rootScope, $location, $modal, Permissions, $httpBackend) {
@@ -79,7 +93,10 @@ describe("controller: UserPermissionsCtrl", function() {
           //   data_version: 1
           // }
         ],
-        roles : [ 'qa', 'releng']
+        roles: [
+          { 'role': 'qa', 'data_version': 1 },
+          { 'role': 'releng', 'data_version': 1 }
+        ]
       });
       // expect(this.scope.user.username).toEqual('peterbe');
       expect(this.scope.is_edit).toEqual(true);
@@ -142,7 +159,7 @@ describe("controller: UserPermissionsCtrl", function() {
       expect(this.scope.user.roles).toEqual(sample_roles.roles);
       this.$httpBackend.flush();
       expect(this.scope.saving).toEqual(false);
-      sample_roles.roles.push(new_role.role);
+      sample_roles.roles.push(new_role);
       expect(this.scope.user.roles).toEqual(sample_roles.roles);
     });
 

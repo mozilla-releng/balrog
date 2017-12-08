@@ -11,19 +11,15 @@ class TestUsersAPI_JSON(ViewTest):
         ret = self._get('/users')
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
-        self.assertEqual(data, (
-            {'users': [{
-                'ashanti': {'roles': []}},
-                {
-                'bill': {'roles': ['qa', 'releng']}},
-                {
-                'billy': {'roles': []}},
-                {
-                'bob': {'roles': ['relman']}},
-                {
-                'julie': {'roles': ['releng']}},
-                {
-                'mary': {'roles': ['relman']}}]}))
+        self.assertEqual(data, ({
+            'ashanti': {'roles': []},
+            'bill': {'roles': [
+                {'role': 'qa', 'data_version': 1},
+                {'role': 'releng', 'data_version': 1}]},
+            'billy': {'roles': []},
+            'bob': {'roles': [{'role': 'relman', 'data_version': 1}]},
+            'julie': {'roles': [{'role': 'releng', 'data_version': 1}]},
+            'mary': {'roles': [{'role': 'relman', 'data_version': 1}]}}))
 
 
 class TestCurrentUserAPI_JSON(ViewTest):

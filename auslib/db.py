@@ -2296,20 +2296,15 @@ class Permissions(AUSTable):
 
     def getAllUsers(self, transaction=None):
         res_users = self.select(columns=[self.username], distinct=True, transaction=transaction)
-        users_list = list(set([r['username'] for r in res_users]))
-        users = []
+        users_list = list([r['username'] for r in res_users])
+        users = {}
         for user in users_list:
             res_roles = self.user_roles.select(where=[
                 self.user_roles.username == user],
-                columns=[self.user_roles.role],
+                columns=[self.user_roles.role, self.user_roles.data_version],
                 transaction=transaction)
-            roles_list = list([r['role'] for r in res_roles])
-            roles = {}
-            roles["roles"] = roles_list
-            user_roles = {}
-            user_roles[user] = roles
-            users.append(user_roles)
-        return sorted(users)
+            users[user] = {"roles": res_roles}
+        return users
 
     def getAllPermissions(self, transaction=None):
         ret = defaultdict(dict)

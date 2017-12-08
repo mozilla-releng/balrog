@@ -6,16 +6,19 @@ describe("controller: PermissionsController", function() {
 
   var empty_user = '';
 
-  var sample_users = {users: [
-    {
-      peterbe: {
-        roles: ['qa', 'releng']
-      }
-    }, {
-      bhearsum: {
-        roles: ['qa', 'releng']
-      }
-    }]
+  var sample_users = {
+    peterbe: {
+      roles: [
+        { 'role': 'qa', 'data_version': 1 },
+        { 'role': 'releng', 'data_version': 1 }
+      ]
+    },
+    bhearsum: {
+      roles: [
+        { 'role': 'qa', 'data_version': 1 },
+        { 'role': 'releng', 'data_version': 1 }
+      ]
+    }
   };
 
   var sample_permissions = {
@@ -29,7 +32,7 @@ describe("controller: PermissionsController", function() {
     }
   };
 
-  var sample_roles = {
+    var sample_roles = {
     'roles': [
       {'role':'qa', 'data_version': 1},
       {'role':'releng', 'data_version':1}
@@ -56,7 +59,7 @@ describe("controller: PermissionsController", function() {
   describe("fetching all users", function() {
     it("should return all rules empty", function() {
       this.$httpBackend.expectGET('/api/users')
-      .respond(200, '{"users": []}');
+      .respond(200, '{}');
       this.$httpBackend.expectGET('/api/required_signoffs/permissions')
       .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.flush();
@@ -73,10 +76,16 @@ describe("controller: PermissionsController", function() {
       expect(this.scope.users).toEqual([
         {
           username: "peterbe",
-          roles: ['qa', 'releng']
+          roles: [
+            { 'role': 'qa', 'data_version': 1 },
+            { 'role': 'releng', 'data_version': 1 }
+          ]
         }, {
           username: "bhearsum",
-          roles: ['qa', 'releng']
+          roles: [
+            { 'role': 'qa', 'data_version': 1 },
+            { 'role': 'releng', 'data_version': 1 }
+          ]
         }]);
     });
 
@@ -85,7 +94,7 @@ describe("controller: PermissionsController", function() {
   describe("filter by search", function() {
     it("should return true always if no filters active", function() {
       this.$httpBackend.expectGET('/api/users')
-      .respond(200, '{"users": []}');
+      .respond(200, '{}');
       this.$httpBackend.expectGET('/api/required_signoffs/permissions')
       .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.flush();
@@ -98,7 +107,7 @@ describe("controller: PermissionsController", function() {
 
     it("should filter when only one search word name", function() {
       this.$httpBackend.expectGET('/api/users')
-      .respond(200, '{"users": []}');
+      .respond(200, '{}');
       this.$httpBackend.expectGET('/api/required_signoffs/permissions')
       .respond(200, '{"required_signoffs": []}');
       this.$httpBackend.flush();

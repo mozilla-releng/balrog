@@ -20,11 +20,11 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
     Permissions.getUsers()
       .success(function (response) {
         var users = [];
-        response.users.forEach(function (eachUser) {
-          var user = Object.keys(eachUser)[0];
+        var user = Object.keys(response);
+        user.forEach(function(eachUser){
           var eachElement = {};
-          eachElement['username'] = user;
-          eachElement['roles'] = eachUser[user].roles;
+          eachElement['roles'] = response[eachUser].roles;
+          eachElement['username'] = eachUser;
           users.push(eachElement);
         });
         $scope.users = users;
@@ -49,8 +49,8 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
     var roles = [];
     $scope.users.forEach(function (eachUser){
       eachUser.roles.forEach(function(role){
-        if(roles.indexOf(role)=== -1){
-            roles.push(role);
+        if(roles.indexOf(role.role)=== -1){
+            roles.push(role.role);
         }
       });
     });
@@ -60,7 +60,9 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
 
   $scope.filterUserByRole = function (role) {
     return function (user) {
-      return user.roles.indexOf(role) >= 0;
+      return user.roles.some(function(each){
+        return each.role === role;
+      });
     };
   };
 
@@ -208,9 +210,3 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
   };
 
 });
-
-
-
-
-
-

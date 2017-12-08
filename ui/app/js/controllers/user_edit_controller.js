@@ -18,31 +18,28 @@ function ($scope, $modalInstance, CSRF, Permissions, users, roles, is_edit, user
     permissions: {}
   };
 
-  if($scope.is_edit){
+  if ($scope.is_edit) {
     $scope.original_user = user;
     $scope.user = angular.copy(user);
 
     $scope.user.permissions = [];
     Permissions.getUserPermissions($scope.user.username)
-    .then(function(permissions) {
-      _.forEach(permissions, function(p) {
-        if (p.options) {
-          p.options_as_json = JSON.stringify(p['options']);
-        }
+      .then(function (permissions) {
+        _.forEach(permissions, function (p) {
+          if (p.options) {
+            p.options_as_json = JSON.stringify(p['options']);
+          }
+        });
+        $scope.originalPermissions = angular.copy(permissions);
+        $scope.user.permissions = permissions;
       });
-      $scope.originalPermissions = angular.copy(permissions);
-      $scope.user.permissions = permissions;
-    });
 
-    $scope.getUserRoles = function (username){
-      $scope.users.forEach(function(eachUser){
-        if(eachUser.username === username){
-          $scope.user.roles = eachUser.roles;
-        }
-      });
-      $scope.loading = false;
-    };
-    $scope.getUserRoles($scope.user.username);
+    $scope.users.forEach(function (eachUser) {
+      if (eachUser.username === $scope.user.username) {
+        $scope.user.roles = eachUser.roles;
+      }
+    });
+    $scope.loading = false;
 
   }
   else {
@@ -98,7 +95,6 @@ function ($scope, $modalInstance, CSRF, Permissions, users, roles, is_edit, user
   $scope.$watchCollection('permission', function(value) {
     value.options = value.options_as_json;
   });
-
   $scope.grantRole = function() {
     $scope.saving = true;
     CSRF.getToken()
@@ -106,8 +102,7 @@ function ($scope, $modalInstance, CSRF, Permissions, users, roles, is_edit, user
       Permissions.grantRole($scope.user.username, $scope.role.role, $scope.role.data_version, csrf_token)
       .success(function(response) {
         $scope.role.data_version = response.new_data_version;
-        $scope.user.roles.push($scope.role.role);
-
+        $scope.user.roles.push($scope.role);
         if (!($scope.role.role in $scope.roles_list)) {
           $scope.roles_list.push($scope.role.role);
         }

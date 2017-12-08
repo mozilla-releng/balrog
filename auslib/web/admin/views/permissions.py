@@ -19,7 +19,8 @@ class UsersView(AdminView):
         self.log.debug("Found users: %s", users)
         # We don't return a plain jsonify'ed list here because of:
         # http://flask.pocoo.org/docs/security/#json-security
-        return jsonify(dict(users=users))
+        # return jsonify(dict(users=users))
+        return jsonify(users)
 
 
 class SpecificUserView(AdminView):
