@@ -812,6 +812,7 @@ class TestRuleHistoryView(ViewTest):
         self.assertEquals(got["count"], 2)
         self.assertTrue(u"rule_id" in got["revisions"][0])
         self.assertTrue(u"backgroundRate" in got["revisions"][0])
+        self.assertTrue(u"timestamp" in got["revisions"][0])
 
     def testVersionMaxFieldLength(self):
         # Max field length of rules.version is 75
