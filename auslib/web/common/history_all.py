@@ -19,18 +19,15 @@ log = logging.getLogger(__name__)
 def _get_filters(obj, history_table):
     query = get_input_dict()
     where = [False, False]
-    try:
-        where = [getattr(history_table, f) == query.get(f) for f in query]
-        where.append(history_table.data_version != null())
-        if hasattr(history_table, 'product'):
-            where.append(history_table.product != null())
-        if request.args.get('timestamp_from'):
-            where.append(history_table.timestamp >= int(request.args.get('timestamp_from')))
-        if request.args.get('timestamp_to'):
-            where.append(history_table.timestamp <= int(request.args.get('timestamp_to')))
-        return where
-    except AttributeError:
-        return where
+    where = [getattr(history_table, f) == query.get(f) for f in query]
+    where.append(history_table.data_version != null())
+    if hasattr(history_table, 'product'):
+        where.append(history_table.product != null())
+    if request.args.get('timestamp_from'):
+        where.append(history_table.timestamp >= int(request.args.get('timestamp_from')))
+    if request.args.get('timestamp_to'):
+        where.append(history_table.timestamp <= int(request.args.get('timestamp_to')))
+    return where
 
 
 def _get_histories(table, obj, process_revisions_callback=None):

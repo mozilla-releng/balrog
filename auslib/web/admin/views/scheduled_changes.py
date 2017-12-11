@@ -204,17 +204,16 @@ class ScheduledChangeHistoryView(HistoryView):
     def _get_filters_all(self, obj):
         query = get_input_dict()
         where = [False, False]
-        try:
-            where = [getattr(self.history_table, f) == query.get(f) for f in query]
-            where.append(self.history_table.data_version != null())
-            request = connexion.request
-            if request.args.get('timestamp_from'):
-                where.append(self.history_table.timestamp >= int(request.args.get('timestamp_from')))
-            if request.args.get('timestamp_to'):
-                where.append(self.history_table.timestamp <= int(request.args.get('timestamp_to')))
-            return where
-        except AttributeError:
-            return where
+        where = [getattr(self.history_table, f) == query.get(f) for f in query]
+        where.append(self.history_table.data_version != null())
+        request = connexion.request
+        if hasattr(self.history_table, 'product'):
+            where.append(self.history_table.product != null())
+        if request.args.get('timestamp_from'):
+            where.append(self.history_table.timestamp >= int(request.args.get('timestamp_from')))
+        if request.args.get('timestamp_to'):
+            where.append(self.history_table.timestamp <= int(request.args.get('timestamp_to')))
+        return where
 
     def _get_what(self, change, changed_by, transaction):
         # There's a big 'ol assumption here that the primary Scheduled Changes
