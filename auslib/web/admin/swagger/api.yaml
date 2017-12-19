@@ -1189,7 +1189,7 @@ paths:
         description: "Returns all of Users in Balrog's DB."
       responses:
         '200':
-          description: Get all Users
+          description: Get all Users and their Roles
           schema:
             type: object
             properties:
@@ -1199,37 +1199,21 @@ paths:
                 uniqueItems: true
                 minItems: 0
                 items:
-                  type: string
-                example: ["balrogadmin"]
+                  type: object
+                example: {
+                  "balrogadmin": {
+                    "roles":[
+                      {
+                        "data_version": 1,
+                        "role": "releng"
+                      },
+                      {
+                        "data_version": 1,
+                        "role": "relman"
+                      }]
+                  }
+                }
 
-  /users/roles:
-    get:
-      summary: Returns all distinct user roles
-      description: >
-        Returns all unique roles defined for all users. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles).
-      tags:
-        - Users
-      operationId: auslib.web.admin.views.mapper.all_users_roles_get
-      consumes: []
-      produces:
-        - application/json
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#user-roles"
-        description: Returns all distinct user roles
-      responses:
-        '200':
-          description: Successfully fetched all user roles.
-          schema:
-            type: object
-            properties:
-              roles:
-                description: list of roles
-                type: array
-                uniqueItems: true
-                minItems: 0
-                items:
-                  type: string
-                example: ["releng", "qa"]
 
   /users/{username}:
     get:
@@ -1291,6 +1275,7 @@ paths:
         '403':
           $ref: '#/responses/unauthorizedUser'
 
+
   /users/{username}/permissions:
     get:
       summary: Returns all of the details about the user
@@ -1319,40 +1304,6 @@ paths:
                 options:
                   actions: ['create', 'modify']
 
-  /users/{username}/roles:
-    get:
-      summary: Returns list of user roles
-      description: >
-        Returns list of user roles as a json object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles).
-      tags:
-        - Users
-      operationId: auslib.web.admin.views.mapper.user_get_roles
-      consumes: []
-      produces:
-        - application/json
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id26"
-        description: Returns list of user roles
-      parameters:
-        - $ref: '#/parameters/usernameParam'
-      responses:
-        '200':
-          description: Successfully fetched the list of user roles.
-          schema:
-            type: object
-            properties:
-              roles:
-                description: list of roles
-                type: array
-                uniqueItems: true
-                minItems: 0
-                items:
-                  allOf:
-                    - $ref: '#/definitions/DataVersionModel'
-                    - $ref: '#/definitions/RoleModel'
-                  required:
-                    - data_version
-                    - role
 
   /users/{username}/roles/{role}:
     put:
