@@ -3412,9 +3412,6 @@ paths:
       operationId: auslib.web.common.emergency_shutoff.get
       produces:
         - application/json
-      parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/channelQueryParam'
       responses:
         '200':
           description: Emergency shut off list.
@@ -3444,7 +3441,7 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /emergency_shutoff/{shutoff_id}:
+  /emergency_shutoff/{product}/{channel}:
     get:
       summary: Emergency shut off.
       description: >
@@ -3455,12 +3452,13 @@ paths:
       produces:
         - application/json
       parameters:
-        - $ref: '#/parameters/shutoff_id'
+        - $ref: '#/parameters/productPathParam'
+        - $ref: '#/parameters/channelPathParam'
       responses:
         '200':
           description: Shut off information.
           schema:
-            $ref: "#/definitions/EmergencyShutoffObject"
+            $ref: "#/definitions/EmergencyShutOffModel"
           headers:
             X-Data-Version:
               description: data version of the shut off
@@ -3469,30 +3467,6 @@ paths:
               minimum: 1
         '404':
           $ref: '#/responses/resourceNotFound'
-
-    put:
-      summary: Update an emergency shut off.
-      description: Update an emergency shut off. The product/channel can not be the same than an existing emergency shut off.
-      tags:
-        - Emergency Shutoff
-      operationId: auslib.web.admin.emergency_shutoff.put
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - $ref: '#/parameters/shutoff_id'
-        - name: emergency_shutoff
-          in: body
-          description: Emergency shut off data.
-          schema:
-            allOf:
-              - $ref: '#/definitions/EmergencyShutOffPutModel'
-      responses:
-        '200':
-          $ref: '#/responses/updateExistingObject'
-        '400':
-          $ref: '#/responses/invalidFormData'
 
     delete:
       summary: Deletes an emergency shut off.
@@ -3503,32 +3477,13 @@ paths:
       produces:
         - application/json
       parameters:
-        - $ref: '#/parameters/shutoff_id'
+        - $ref: '#/parameters/productPathParam'
+        - $ref: '#/parameters/channelPathParam'
         - $ref: '#/parameters/csrfTokenParam'
         - $ref: '#/parameters/dataVersionParam'
       responses:
         '200':
           description: Successfully deleted the shut off.
-        '400':
-          $ref: '#/responses/invalidFormData'
-        '404':
-          $ref: '#/responses/resourceNotFound'
-
-  /emergency_shutoff/{shutoff_id}/disable_updates:
-    put:
-      summary: Disable updates for a product/channel.
-      description: >
-        Disable updates for product/channel and schedules an ASAP change to reenable updates (signoffs is required to reenable the updates).
-      tags:
-        - Emergency Shutoff
-      operationId: auslib.web.admin.emergency_shutoff.disable_updates
-      produces:
-        - application/json
-      parameters:
-        - $ref: '#/parameters/shutoff_id'
-      responses:
-        '200':
-          description: Successfully disable updates for product/channel.
         '400':
           $ref: '#/responses/invalidFormData'
         '404':
@@ -4120,13 +4075,3 @@ definitions:
 
     #Warning: Do NOT add an example object here. Interferes with Example Value during
     # request generation in Swagger-UI
-
-  EmergencyShutOffPutModel:
-    title: Emergency shut off data.
-    description: Emergency shut off data.
-    type: object
-    allOf:
-      - $ref: '#/definitions/EmergencyShutOffModel'
-      - $ref: '#/definitions/DataVersionModel'
-    required:
-      - data_version

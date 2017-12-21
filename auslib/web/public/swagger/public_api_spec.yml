@@ -306,16 +306,13 @@ paths:
       operationId: auslib.web.common.emergency_shutoff.get
       produces:
         - application/json
-      parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/channelQueryParam'
       responses:
         '200':
           description: Emergency shut off list.
           schema:
             $ref: '#/definitions/EmergencyShutoffListGET'
 
-  /api/v1/emergency_shutoff/{shutoff_id}:
+  /api/v1/emergency_shutoff/{product}/{channel}:
     get:
       summary: Emergency shut off.
       description: >
@@ -326,12 +323,13 @@ paths:
       produces:
         - application/json
       parameters:
-        - $ref: '#/parameters/shutoff_id'
+        - $ref: '#/parameters/productPathParam'
+        - $ref: '#/parameters/channelPathParam'
       responses:
         '200':
           description: Shut off information.
           schema:
-            $ref: "#/definitions/EmergencyShutoffObject"
+            $ref: "#/definitions/EmergencyShutOffModel"
           headers:
             X-Data-Version:
               description: data version of the shut off

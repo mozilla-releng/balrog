@@ -420,11 +420,6 @@ definitions:
     allOf:
       - $ref: '#/definitions/ProductModel'
       - $ref: '#/definitions/ChannelModel'
-      - type: object
-        properties:
-          additional_notification_list:
-            description: Email notification list, additional to default mailing list.
-            type: ["string", "null"]
     required:
       - product
       - channel

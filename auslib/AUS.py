@@ -52,22 +52,21 @@ class AUS:
         self.rand = functools.partial(randint, 0, 99)
         self.log = logging.getLogger(self.__class__.__name__)
 
-    def get_emergency_shutoff(self, product, channel):
+    def updates_are_disabled(self, product, channel):
         where = dict(product=product, channel=channel)
-        emergency_shutoffs = dbo.emergencyShutoff.getEmergencyShutoffs(where=where)
-        return emergency_shutoffs[0] if emergency_shutoffs else None
+        emergency_shutoffs = dbo.emergencyShutoffs.select(where=where)
+        return bool(emergency_shutoffs)
 
     def evaluateRules(self, updateQuery):
         self.log.debug("Looking for rules that apply to:")
         self.log.debug(updateQuery)
 
-        if 'product' in updateQuery and 'channel' in updateQuery:
-            emergency_shutoff = self.get_emergency_shutoff(updateQuery['product'], updateQuery['channel'])
-            if emergency_shutoff and emergency_shutoff['updates_disabled']:
-                log_message = 'Updates are disabled for {}/{}, emergency shutoff id: {}.'.format(
-                    emergency_shutoff['product'], emergency_shutoff['channel'], emergency_shutoff['shutoff_id'])
-                self.log.debug(log_message)
-                return None, None
+        if self.updates_are_disabled(updateQuery['product'], updateQuery['channel']) or \
+           self.updates_are_disabled(updateQuery['product'], getFallbackChannel(updateQuery['channel'])):
+            log_message = 'Updates are disabled for {}/{}.'.format(
+                updateQuery['product'], updateQuery['channel'])
+            self.log.debug(log_message)
+            return None, None
 
         rules = dbo.rules.getRulesMatchingQuery(
             updateQuery,

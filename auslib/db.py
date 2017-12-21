@@ -2260,6 +2260,7 @@ class Permissions(AUSTable):
         "permission": ["actions"],
         "required_signoff": ["products"],
         "scheduled_change": ["actions"],
+        "emergency_shutoff": ["actions", "products"],
     }
 
     def __init__(self, db, metadata, dialect):
@@ -2491,51 +2492,42 @@ class Dockerflow(AUSTable):
             super(Dockerflow, self).update(where=where, what=value, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
 
-class EmergencyShutoff(AUSTable):
+class EmergencyShutoffs(AUSTable):
     def __init__(self, db, metadata, dialect):
         self.table = Table('emergency_shutoff', metadata,
-                           Column('shutoff_id', Integer, primary_key=True, autoincrement=True),
-                           Column('product', String(15), nullable=False),
-                           Column('channel', String(75), nullable=False),
-                           Column('updates_disabled', CompatibleBooleanColumn, default=False, nullable=False),
-                           Column('additional_notification_list', String(500)))
+                           Column('product', String(15), nullable=False, primary_key=True),
+                           Column('channel', String(75), nullable=False, primary_key=True))
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
-    def getEmergencyShutoff(self, shutoff_id):
-        emergency_shutoff = self.select(where=[self.shutoff_id == shutoff_id])
-        return emergency_shutoff[0] if emergency_shutoff else None
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        if not self.db.hasPermission(changed_by, "emergency_shutoff", "create", columns.get("product"), transaction):
+            raise PermissionDeniedError(
+                "{} is not allowed to shut off updates for product {}".format(changed_by, columns.get("product")))
 
-    def getEmergencyShutoffs(self, where=None):
-        return self.select(where=where)
-
-    def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
-        ret = super(EmergencyShutoff, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
-        return ret.inserted_primary_key[0]
-
-    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
-        for current_shutoff in self.select(where=where, transaction=transaction):
-            if not self.db.hasPermission(changed_by, "rule", "modify", current_shutoff["product"], transaction):
-                raise PermissionDeniedError("%s is not allowed to modify emergency shutoff for product %s" % (changed_by, current_shutoff["product"]))
-
-            new_shutoff = current_shutoff.copy()
-            new_shutoff.update(what)
-            if not dryrun and 'updates_disabled' in what:
-                potential_required_signoffs = self.getPotentialRequiredSignoffs([new_shutoff], transaction=transaction)
-                verify_signoffs(potential_required_signoffs, signoffs)
-
-        return super(EmergencyShutoff, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version,
-                                                    transaction=transaction, dryrun=dryrun)
+        ret = super(EmergencyShutoffs, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        if not dryrun:
+            return ret.inserted_primary_key
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = []
         row = affected_rows[-1]
-        # Signoffs are required only to reenable updates.
-        if not row['updates_disabled']:
-            where = {"product": row["product"]}
-            for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
-                if not row.get("channel") or _matchesRegex(row["channel"], rs["channel"]):
-                    potential_required_signoffs.append(rs)
+        where = {"product": row["product"]}
+        for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
+            if not row.get("channel") or _matchesRegex(row["channel"], rs["channel"]):
+                potential_required_signoffs.append(rs)
         return potential_required_signoffs
+
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "emergency_shutoff", "delete", product, transaction):
+            raise PermissionDeniedError("%s is not allowed to delete shutoffs for product %s" % (changed_by, product))
+
+        if not dryrun:
+            for current_rule in self.select(where=where, transaction=transaction):
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_rule], transaction=transaction)
+                verify_signoffs(potential_required_signoffs, signoffs)
+
+        super(EmergencyShutoffs, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
 
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
@@ -2694,7 +2686,7 @@ class AUSDatabase(object):
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
         self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
-        self.emergencyShutoffTable = EmergencyShutoff(self, self.metadata, dialect)
+        self.emergencyShutoffTable = EmergencyShutoffs(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -2800,5 +2792,5 @@ class AUSDatabase(object):
         return self.dockerflowTable
 
     @property
-    def emergencyShutoff(self):
+    def emergencyShutoffs(self):
         return self.emergencyShutoffTable

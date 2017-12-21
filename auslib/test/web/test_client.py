@@ -1290,33 +1290,35 @@ class ClientTestJaws(ClientTestCommon):
 class ClientTestEmergencyShutoff(ClientTestBase):
     def setUp(self):
         super(ClientTestEmergencyShutoff, self).setUp()
-        dbo.emergencyShutoff.t.insert().execute(
-            shutoff_id=1, product='b', channel='a',
-            updates_disabled=False, data_version=1,
-            additional_notification_list='foo@bar.org')
-
-    def testShutoffUpdates(self):
-        update_xml = """<?xml version="1.0"?>
+        self.update_xml = """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
 """
-        ret = self.client.get('/update/3/b/1.0/1/p/l/a/a/a/a/update.xml')
-        self.assertUpdateEqual(ret, update_xml)
 
-        what = dict(updates_disabled=True)
-        dbo.emergencyShutoff.update(
-            where=dict(shutoff_id=1), what=what, changed_by='bill', old_data_version=1)
-        ret = self.client.get('/update/3/b/1.0/1/p/l/a/a/a/a/update.xml')
+    def testShutoffUpdates(self):
+        update_query = '/update/3/b/1.0/1/p/l/a/a/a/a/update.xml'
+        ret = self.client.get(update_query)
+        self.assertUpdateEqual(ret, self.update_xml)
+
+        dbo.emergencyShutoffs.t.insert().execute(
+            product='b', channel='a', data_version=1)
+
+        ret = self.client.get(update_query)
         self.assertUpdatesAreEmpty(ret)
 
-        what = dict(updates_disabled=False)
-        dbo.emergencyShutoff.update(
-            where=dict(shutoff_id=1), what=what, changed_by='bill', old_data_version=2)
-        ret = self.client.get('/update/3/b/1.0/1/p/l/a/a/a/a/update.xml')
-        self.assertUpdateEqual(ret, update_xml)
+    def testShutoffUpdatesFallbackChannel(self):
+        update_query = '/update/3/b/1.0/1/p/l/a-cck-foo/a/a/a/update.xml'
+        ret = self.client.get(update_query)
+        self.assertUpdateEqual(ret, self.update_xml)
+
+        dbo.emergencyShutoffs.t.insert().execute(
+            product='b', channel='a', data_version=1)
+
+        ret = self.client.get(update_query)
+        self.assertUpdatesAreEmpty(ret)
 
 
 class ClientTestWithErrorHandlers(ClientTestCommon):
