@@ -3405,9 +3405,9 @@ paths:
 
   /emergency_shutoff:
     get:
-      summary: List of emergency shut off optionally filtered by product/channel.
+      summary: List of emergency shut off.
       description: >
-        Products/Channels available to shut off updates.
+        Products/Channels that updates are disabled.
       tags:
         - Emergency Shutoff
       operationId: auslib.web.common.emergency_shutoff.get
@@ -3515,7 +3515,7 @@ paths:
               - type: object
                 properties:
                   scheduled_changes:
-                    description: Array where each element is a scheduled change for a emergency shut.
+                    description: Array where each element is a scheduled change for a emergency shut off.
                     type: array
                     minItems: 0
                     items:

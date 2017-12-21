@@ -2687,7 +2687,7 @@ class AUSDatabase(object):
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
         self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
-        self.emergencyShutoffTable = EmergencyShutoffs(self, self.metadata, dialect)
+        self.emergencyShutoffsTable = EmergencyShutoffs(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setDomainWhitelist(self, domainWhitelist):
