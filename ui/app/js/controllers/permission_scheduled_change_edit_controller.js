@@ -6,6 +6,7 @@ function ($scope, $modalInstance, CSRF, Permissions, sc) {
   $scope.permissions_list = [
     {value : "", name : "---Please select---"},
     {value : "admin", name : "Admin"},
+    {value : "emergency_shutoff", name : "Emergency Shutoff"},
     {value : "rule", name : "Rule"},
     {value : "release", name : "Release"},
     {value : "release_read_only", name : "Release Read Only"},

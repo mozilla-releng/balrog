@@ -1159,7 +1159,7 @@ class ScheduledChangeTable(AUSTable):
             ret.append(row)
         return ret
 
-    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+    def insert(self, changed_by, transaction=None, dryrun=False, allow_auto_signoff=True, **columns):
         base_columns, condition_columns = self._splitColumns(columns)
         if "change_type" not in base_columns:
             raise ValueError("Change type is required")
@@ -1176,7 +1176,8 @@ class ScheduledChangeTable(AUSTable):
             if not self._dataVersionsAreSynced(sc_id, transaction):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s",
                                                  sc_id)
-            self.auto_signoff(changed_by, transaction, sc_id, dryrun, columns)
+            if allow_auto_signoff:
+                self.auto_signoff(changed_by, transaction, sc_id, dryrun, columns)
 
             return sc_id
 
@@ -2253,6 +2254,7 @@ class Permissions(AUSTable):
        to ["GMP"] allows the user to modify GMP releases, but not Firefox."""
     allPermissions = {
         "admin": ["products"],
+        "emergency_shutoff": ["actions", "products"],
         "release": ["actions", "products"],
         "release_locale": ["actions", "products"],
         "release_read_only": ["actions", "products"],
@@ -2260,7 +2262,6 @@ class Permissions(AUSTable):
         "permission": ["actions"],
         "required_signoff": ["products"],
         "scheduled_change": ["actions"],
-        "emergency_shutoff": ["actions", "products"],
     }
 
     def __init__(self, db, metadata, dialect):
@@ -2494,7 +2495,7 @@ class Dockerflow(AUSTable):
 
 class EmergencyShutoffs(AUSTable):
     def __init__(self, db, metadata, dialect):
-        self.table = Table('emergency_shutoff', metadata,
+        self.table = Table('emergency_shutoffs', metadata,
                            Column('product', String(15), nullable=False, primary_key=True),
                            Column('channel', String(75), nullable=False, primary_key=True))
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})

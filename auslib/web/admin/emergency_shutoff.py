@@ -19,8 +19,8 @@ def shutoff_already_exists(product, channel):
     return bool(get_emergency_shutoff(product, channel))
 
 
-def product_requires_signoffs(product):
-    rs = dbo.productRequiredSignoffs.select(where=dict(product=product))
+def product_requires_signoffs(product, channel):
+    rs = dbo.productRequiredSignoffs.select(where=dict(product=product, channel=channel))
     return bool(rs)
 
 
@@ -40,10 +40,10 @@ def post(emergency_shutoff, changed_by, transaction):
         return problem(
             400, 'Bad Request', 'Invalid Emergency shutoff data',
             ext={'data': 'Emergency shutoff for product/channel already exists.'})
-    if not product_requires_signoffs(emergency_shutoff['product']):
+    if not product_requires_signoffs(emergency_shutoff['product'], emergency_shutoff['channel']):
         return problem(
             400, 'Bad Request', 'Invalid Emergency shutoff data',
-            ext={'data': 'The given product should requires signoffs.'})
+            ext={'data': 'The given product/channel should requires signoffs.'})
     emergency_shutoff = process_shutoff_post(emergency_shutoff)
     dbo.emergencyShutoffs.insert(
         changed_by=changed_by, transaction=transaction, **emergency_shutoff)
@@ -80,7 +80,7 @@ def schedule_reenable_updates(shutoff, changed_by, transaction):
     what = dict(when=get_asap_when())
     what.update(shutoff)
     dbo.emergencyShutoffs.scheduled_changes.insert(
-        changed_by, transaction, change_type='delete', **what)
+        changed_by, transaction, change_type='delete', allow_auto_signoff=False, **what)
 
 
 def scheduled_changes():
