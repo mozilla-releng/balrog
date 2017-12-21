@@ -1666,8 +1666,8 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         self.assertEquals(ret, expected)
 
-    def testGetScheduledChangeHistory(self):
-        ret = self._get("/releases_scheduled_change/history")
+    def testGetAllReleaseHistory(self):
+        ret = self._get("/all_releases/history")
         self.assertEquals(ret.status_code, 200, ret.data)
         ret = json.loads(ret.data)
         expected = {

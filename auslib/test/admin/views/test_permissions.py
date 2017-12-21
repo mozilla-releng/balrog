@@ -770,8 +770,8 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
-    def testGetScheduledChangeHistory(self):
-        ret = self._get("/permissions_scheduled_change/history")
+    def testGetAllPermissionsHistory(self):
+        ret = self._get("/all_permissions/history")
         self.assertEquals(ret.status_code, 200, ret.data)
         expected = {
             "count": 7,
