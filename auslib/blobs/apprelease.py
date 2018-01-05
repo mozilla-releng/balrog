@@ -1,6 +1,9 @@
+from collections import defaultdict
+import itertools
+
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
-from auslib.blobs.base import Blob
+from auslib.blobs.base import Blob, BlobValidationError
 from auslib.errors import BadDataError
 from auslib.util.versions import MozillaVersion
 
@@ -980,6 +983,28 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         updateLine += ">"
 
         return updateLine
+
+    def validate(self, *args, **kwargs):
+        super(ReleaseBlobV9, self).validate(*args, **kwargs)
+
+        # can speed this up by quickly finding potential conflicts by looking for
+        # fields present in multiple updateLine entries
+        found = defaultdict(int)
+
+        for group in self["updateLine"]:
+            locales = group["for"].get("locales") or ["*"]
+            versions = group["for"].get("versions") or ["*"]
+            channels = group["for"].get("channels") or ["*"]
+
+            for combo in itertools.product(locales, versions, channels):
+                # this doesn't work because we need to support * matching. probably need a real data structure
+                key = ".".join(combo)
+                for attr in group["fields"]:
+                    found[key] += 1
+
+        for f in found:
+            if found[f] > 1:
+                raise BlobValidationError(f, found[f])
 
     def getReferencedReleases(self):
         """

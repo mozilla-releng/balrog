@@ -2981,7 +2981,33 @@ class TestSchema9Blob(unittest.TestCase):
         pass
 
     def testCannotCreateBlobWithConflictingFields(self):
-        pass
+        bad_blob = {
+            "name": "bad",
+            "schema_version": 9,
+            "hashFunction": "sha512",
+            "updateLine": [
+                {
+                    "for": {},
+                    "fields": {
+                        "appVersion": "31.0.2",
+                        "displayVersion": "31.0.2",
+                        "detailsURL": "http://example.org/details/%LOCALE%",
+                        "type": "minor"
+                    }
+                },
+                {
+                    "for": {
+                        "locales": ["de", "fr"]
+                    },
+                    "fields": {
+                        "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                    }
+                }
+            ]
+        }
+        blob = ReleaseBlobV9(**bad_blob)
+        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine item 'detailsURL'",
+                                blob.validate, "h", self.whitelistedDomains)
 
 
 class TestDesupportBlob(unittest.TestCase):
