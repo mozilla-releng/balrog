@@ -929,6 +929,77 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
         return referencedReleases
 
 
+class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+    """
+
+    Changes from ReleaseBlobV8:
+
+    For further information:
+        * https://bugzilla.mozilla.org/show_bug.cgi?id=1400016
+
+    """
+    jsonschema = "apprelease-v9.yml"
+
+    # for the benefit of get*XML
+    optional_ = ('showPrompt', 'showNeverForVersion',
+                 'actions', 'openURL', 'notificationURL', 'alertURL',
+                 'promptWaitTime', 'binTransMerkleRoot',
+                 'binTransCertificate', 'binTransSCTList')
+    # params that can have %LOCALE% interpolated
+    interpolable_ = ('openURL', 'notificationURL', 'alertURL', 'detailsURL',)
+
+    def __init__(self, **kwargs):
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 9
+
+    def _getUpdateLineXML(self, buildTarget, locale, update_type):
+        attrs = {
+            "buildID": self.getBuildID(buildTarget, locale),
+            "type": update_type,
+        }
+        for group in self["updateLine"]:
+            for condition, values in group["for"].items():
+                if condition == "locales" and locale not in values:
+                    break
+            else:
+                # matched everything!
+                attrs.update(group["fields"])
+
+        for attr in self.interpolable_:
+            if attr in attrs:
+                attrs[attr] = attrs[attr].replace("%LOCALE%", locale)
+                attrs[attr] = attrs[attr].replace("%locale%", locale)
+
+        updateLine = "    <update"
+        for key in sorted(attrs.keys()):
+            value = attrs[key]
+            if isinstance(value, bool):
+                value = str(value).lower()
+            updateLine += ' {}="{}"'.format(key, value)
+        updateLine += ">"
+
+        return updateLine
+
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        referencedReleases = set()
+        for platform in self.get('platforms', {}):
+            for locale in self['platforms'][platform].get('locales', {}):
+                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
+                    referencedReleases.add(
+                        partial['from']
+                    )
+        for fileUrlKey in self.get('fileUrls', {}):
+            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+                referencedReleases.add(partial)
+
+        return referencedReleases
+
+
 class DesupportBlob(Blob):
     """ This blob is used to inform users that their OS is no longer supported. This is available
     on the client side since Firefox 24 (bug 843497).

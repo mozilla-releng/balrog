@@ -66,7 +66,7 @@
               displayVersion:
                 type: string
                 description: The displayVersion to return with the update. Generally, the client will show this in the UI. If set, the displayVersion at the locale level takes priority.
-              detailsUrl:
+              detailsURL:
                 type: string
                 description: An URL string to a web page with more information about this release. %LOCALE% may be used, which will be substituted with the locale of the update request.
               actions:
