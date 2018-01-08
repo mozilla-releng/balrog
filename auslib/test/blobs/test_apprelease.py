@@ -2980,6 +2980,7 @@ class TestSchema9Blob(unittest.TestCase):
     def testWithActions(self):
         pass
 
+    # TODO: more validation tests!
     def testCannotCreateBlobWithConflictingFields(self):
         bad_blob = {
             "name": "bad",
@@ -3006,7 +3007,7 @@ class TestSchema9Blob(unittest.TestCase):
             ]
         }
         blob = ReleaseBlobV9(**bad_blob)
-        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine item 'detailsURL'",
+        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
                                 blob.validate, "h", self.whitelistedDomains)
 
 

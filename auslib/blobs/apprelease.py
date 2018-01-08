@@ -1,6 +1,3 @@
-from collections import defaultdict
-import itertools
-
 from auslib.global_state import dbo
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob, BlobValidationError
@@ -987,24 +984,24 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
     def validate(self, *args, **kwargs):
         super(ReleaseBlobV9, self).validate(*args, **kwargs)
 
-        # can speed this up by quickly finding potential conflicts by looking for
-        # fields present in multiple updateLine entries
-        found = defaultdict(int)
+        conflicts = []
+        conflicting_values = []
 
-        for group in self["updateLine"]:
-            locales = group["for"].get("locales") or ["*"]
-            versions = group["for"].get("versions") or ["*"]
-            channels = group["for"].get("channels") or ["*"]
+        for group1 in self["updateLine"]:
+            for group2 in self["updateLine"]:
+                # Skip over groups that are identical - they can't conflict
+                if group1 == group2:
+                    continue
+                intersection = set(group1["fields"].keys()).intersection(group2["fields"].keys())
+                if len(intersection) > 0:
+                    for req in group1["for"]:
+                        if req not in group2["for"] or len(set(group1["for"][req].keys()).intersection(group2["for"][req].keys())):
+                            conflicts.append((group1["for"], group2["for"], intersection))
+                            conflicting_values.extend(intersection)
 
-            for combo in itertools.product(locales, versions, channels):
-                # this doesn't work because we need to support * matching. probably need a real data structure
-                key = ".".join(combo)
-                for attr in group["fields"]:
-                    found[key] += 1
-
-        for f in found:
-            if found[f] > 1:
-                raise BlobValidationError(f, found[f])
+        if conflicts:
+            conflicting_values = ", ".join(conflicting_values)
+            raise BlobValidationError("Multiple values found for updateLine items: {}".format(conflicting_values), conflicts)
 
     def getReferencedReleases(self):
         """
