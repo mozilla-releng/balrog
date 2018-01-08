@@ -992,12 +992,15 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                 # Skip over groups that are identical - they can't conflict
                 if group1 == group2:
                     continue
-                intersection = set(group1["fields"].keys()).intersection(group2["fields"].keys())
-                if len(intersection) > 0:
-                    for req in group1["for"]:
-                        if req not in group2["for"] or len(set(group1["for"][req].keys()).intersection(group2["for"][req].keys())):
-                            conflicts.append((group1["for"], group2["for"], intersection))
-                            conflicting_values.extend(intersection)
+                field_dupes = set(group1["fields"].keys()).intersection(group2["fields"].keys())
+                # No overlapping fields, no conflict!
+                if len(field_dupes) == 0:
+                    continue
+                # If there are overlapping fields, we need to see if what they apply to overlap in any way
+                for req in group1["for"]:
+                    if req not in group2["for"] or len(set(group1["for"][req].keys()).intersection(group2["for"][req].keys())):
+                        conflicts.append((group1["for"], group2["for"], field_dupes))
+                        conflicting_values.extend(field_dupes)
 
         if conflicts:
             conflicting_values = ", ".join(conflicting_values)
