@@ -767,6 +767,53 @@ class TestRuleHistoryView(ViewTest):
         self.assertTrue(u"rule_id" in got["rules"][0])
         self.assertTrue(u"backgroundRate" in got["rules"][0])
 
+    def testGetHistory(self):
+        # Make some changes to a rule
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                backgroundRate=71,
+                mapping='d',
+                priority=73,
+                data_version=1,
+                product='Firefox',
+                update_type='minor',
+                channel='nightly',
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
+        # and again
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                backgroundRate=72,
+                mapping='d',
+                priority=73,
+                data_version=2,
+                product='Firefux',
+                update_type='minor',
+                channel='nightly',
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
+
+        url = '/rules/history'
+        ret = self._get(url)
+        got = json.loads(ret.data)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertEquals(got["count"], 2)
+        self.assertTrue(u"rule_id" in got["revisions"][0])
+        self.assertTrue(u"backgroundRate" in got["revisions"][0])
+        self.assertTrue(u"timestamp" in got["revisions"][0])
+
     def testVersionMaxFieldLength(self):
         # Max field length of rules.version is 75
         version = '3.3,3.4,3.5,3.6,3.8,3.9,3.10,3.11'
@@ -1603,6 +1650,16 @@ class TestRuleScheduledChanges(ViewTest):
             ],
         }
         self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetAllScheduledChangeHistory(self):
+        ret = self._get("/rules_scheduled_change/history")
+        got = json.loads(ret.data)
+        self.assertEquals(ret.status_code, 200)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertEquals(got["count"], 8)
+        self.assertTrue(u"rule_id" in got["revisions"][0])
+        self.assertTrue(u"backgroundRate" in got["revisions"][0])
+        self.assertTrue(u"timestamp" in got["revisions"][0])
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testRevertScheduledChange(self):
