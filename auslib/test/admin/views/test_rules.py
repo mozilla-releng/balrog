@@ -809,10 +809,10 @@ class TestRuleHistoryView(ViewTest):
         ret = self._get(url)
         got = json.loads(ret.data)
         self.assertEquals(ret.status_code, 200, msg=ret.data)
-        self.assertEquals(got["count"], 2)
-        self.assertTrue(u"rule_id" in got["revisions"][0])
-        self.assertTrue(u"backgroundRate" in got["revisions"][0])
-        self.assertTrue(u"timestamp" in got["revisions"][0])
+        self.assertEquals(got["Rules"]["count"], 2)
+        self.assertTrue(u"rule_id" in got["Rules"]["revisions"][0])
+        self.assertTrue(u"backgroundRate" in got["Rules"]["revisions"][0])
+        self.assertTrue(u"timestamp" in got["Rules"]["revisions"][0])
 
     def testVersionMaxFieldLength(self):
         # Max field length of rules.version is 75
@@ -1656,10 +1656,10 @@ class TestRuleScheduledChanges(ViewTest):
         got = json.loads(ret.data)
         self.assertEquals(ret.status_code, 200)
         self.assertEquals(ret.status_code, 200, msg=ret.data)
-        self.assertEquals(got["count"], 8)
-        self.assertTrue(u"rule_id" in got["revisions"][0])
-        self.assertTrue(u"backgroundRate" in got["revisions"][0])
-        self.assertTrue(u"timestamp" in got["revisions"][0])
+        self.assertEquals(got["Rules scheduled change"]["count"], 8)
+        self.assertTrue(u"rule_id" in got["Rules scheduled change"]["revisions"][0])
+        self.assertTrue(u"backgroundRate" in got["Rules scheduled change"]["revisions"][0])
+        self.assertTrue(u"timestamp" in got["Rules scheduled change"]["revisions"][0])
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testRevertScheduledChange(self):

@@ -1898,6 +1898,8 @@ class TestReleaseHistoryView(ViewTest):
             self.assertEquals(revisions[index]['read_only'], expected_revisions[index]['read_only'])
             self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
             self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
+        print("++++++++++++++++++++++++++ data ++++++++++++++++++++++++++++")
+        print(data)
         self.assertEquals(len(history_data["revisions"]), 2)
 
     def testPostRevisionRollback(self):
