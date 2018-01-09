@@ -67,6 +67,8 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
   };
 
   $scope.saveChanges = function() {
+   var r = confirm("You have changed the channel value. This can have unexpected impacts\n\nClick 'OK' to Confirm The Changes");
+   if (r == true) {
     $scope.saving = true;
     asap = new Date();
     asap.setMinutes(asap.getMinutes() + 5);
@@ -120,9 +122,11 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
         $scope.saving = false;
       });
     });
+   }
   };
 
   $scope.cancel = function () {
     $modalInstance.dismiss('cancel');
   };
 });
+
