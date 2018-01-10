@@ -110,7 +110,6 @@ def matchVersion(ruleVersion, queryVersion):
 def matchLocale(ruleLocales, queryLocale):
     """Decides if a comma seperated list of locales in a rule matches an
     update request"""
-    # TODO: should make callers pass a list
     return matchCsv(ruleLocales, queryLocale, substring=False)
 
 

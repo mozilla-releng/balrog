@@ -59,7 +59,7 @@ services:
       - SECRET_KEY=blahblah
       - PORT=9090
       - LOG_FORMAT=plain
-      - LOG_LEVEL=DEBUG
+      - LOG_LEVEL=WARNING
     links:
       - balrogdb
 
