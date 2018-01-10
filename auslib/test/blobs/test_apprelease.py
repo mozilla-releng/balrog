@@ -2980,8 +2980,7 @@ class TestSchema9Blob(unittest.TestCase):
     def testWithActions(self):
         pass
 
-    # TODO: more validation tests!
-    def testCannotCreateBlobWithConflictingFields(self):
+    def testCannotCreateBlobWithConflictingFieldsAllAndLocale(self):
         bad_blob = {
             "name": "bad",
             "schema_version": 9,
@@ -3009,6 +3008,259 @@ class TestSchema9Blob(unittest.TestCase):
         blob = ReleaseBlobV9(**bad_blob)
         self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
                                 blob.validate, "h", self.whitelistedDomains)
+
+    def testCannotCreateBlobWithConflictingFieldsAllAndMultipleLocaleLists(self):
+        bad_blob = {
+            "name": "bad",
+            "schema_version": 9,
+            "hashFunction": "sha512",
+            "updateLine": [
+                {
+                    "for": {
+                        "locales": ["de"],
+                    },
+                    "fields": {
+                        "appVersion": "31.0.2",
+                        "displayVersion": "31.0.2",
+                        "detailsURL": "http://example.org/details/%LOCALE%",
+                        "type": "minor"
+                    }
+                },
+                {
+                    "for": {
+                        "locales": ["de", "fr"]
+                    },
+                    "fields": {
+                        "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                    }
+                }
+            ]
+        }
+        blob = ReleaseBlobV9(**bad_blob)
+        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
+                                blob.validate, "h", self.whitelistedDomains)
+
+    def testCannotCreateBlobWithConflictingFieldsAllAndChannel(self):
+        bad_blob = {
+            "name": "bad",
+            "schema_version": 9,
+            "hashFunction": "sha512",
+            "updateLine": [
+                {
+                    "for": {},
+                    "fields": {
+                        "appVersion": "31.0.2",
+                        "displayVersion": "31.0.2",
+                        "detailsURL": "http://example.org/details/%LOCALE%",
+                        "type": "minor"
+                    }
+                },
+                {
+                    "for": {
+                        "channels": ["release"]
+                    },
+                    "fields": {
+                        "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                    }
+                }
+            ]
+        }
+        blob = ReleaseBlobV9(**bad_blob)
+        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
+                                blob.validate, "h", self.whitelistedDomains)
+
+    def testCannotCreateBlobWithConflictingFieldsAllAndFallbackChannel(self):
+        bad_blob = {
+            "name": "bad",
+            "schema_version": 9,
+            "hashFunction": "sha512",
+            "updateLine": [
+                {
+                    "for": {
+                        "channels": ["release"],
+                    },
+                    "fields": {
+                        "appVersion": "31.0.2",
+                        "displayVersion": "31.0.2",
+                        "detailsURL": "http://example.org/details/%LOCALE%",
+                        "type": "minor"
+                    }
+                },
+                {
+                    "for": {
+                        "channels": ["release-cck-foo"],
+                    },
+                    "fields": {
+                        "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                    }
+                }
+            ]
+        }
+        blob = ReleaseBlobV9(**bad_blob)
+        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
+                                blob.validate, "h", self.whitelistedDomains)
+
+    def testCannotCreateBlobWithConflictingFieldsAllAndChannelGlob(self):
+        bad_blob = {
+            "name": "bad",
+            "schema_version": 9,
+            "hashFunction": "sha512",
+            "updateLine": [
+                {
+                    "for": {
+                        "channels": ["release"],
+                    },
+                    "fields": {
+                        "appVersion": "31.0.2",
+                        "displayVersion": "31.0.2",
+                        "detailsURL": "http://example.org/details/%LOCALE%",
+                        "type": "minor"
+                    }
+                },
+                {
+                    "for": {
+                        "channels": ["release*"],
+                    },
+                    "fields": {
+                        "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                    }
+                }
+            ]
+        }
+        blob = ReleaseBlobV9(**bad_blob)
+        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
+                                blob.validate, "h", self.whitelistedDomains)
+
+    def testCannotCreateBlobWithConflictingFieldsAllAndVersion(self):
+        bad_blob = {
+            "name": "bad",
+            "schema_version": 9,
+            "hashFunction": "sha512",
+            "updateLine": [
+                {
+                    "for": {},
+                    "fields": {
+                        "appVersion": "31.0.2",
+                        "displayVersion": "31.0.2",
+                        "detailsURL": "http://example.org/details/%LOCALE%",
+                        "type": "minor"
+                    }
+                },
+                {
+                    "for": {
+                        "versions": ["50.0"],
+                    },
+                    "fields": {
+                        "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                    }
+                }
+            ]
+        }
+        blob = ReleaseBlobV9(**bad_blob)
+        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
+                                blob.validate, "h", self.whitelistedDomains)
+
+    def testCannotCreateBlobWithConflictingFieldsAllAndVersionWithOperator(self):
+        bad_blob = {
+            "name": "bad",
+            "schema_version": 9,
+            "hashFunction": "sha512",
+            "updateLine": [
+                {
+                    "for": {
+                        "versions": ["<50.0"],
+                    },
+                    "fields": {
+                        "appVersion": "31.0.2",
+                        "displayVersion": "31.0.2",
+                        "detailsURL": "http://example.org/details/%LOCALE%",
+                        "type": "minor"
+                    }
+                },
+                {
+                    "for": {
+                        "versions": ["49.0"],
+                    },
+                    "fields": {
+                        "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                    }
+                }
+            ]
+        }
+        blob = ReleaseBlobV9(**bad_blob)
+        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
+                                blob.validate, "h", self.whitelistedDomains)
+
+    def testCannotCreateBlobWithConflictingFieldsByMultipleInputs(self):
+        bad_blob = {
+            "name": "bad",
+            "schema_version": 9,
+            "hashFunction": "sha512",
+            "updateLine": [
+                {
+                    "for": {
+                        "locales": ["de"],
+                        "channels": ["release*"],
+                        "versions": ["<50.0"],
+                    },
+                    "fields": {
+                        "appVersion": "31.0.2",
+                        "displayVersion": "31.0.2",
+                        "detailsURL": "http://example.org/details/%LOCALE%",
+                        "type": "minor"
+                    }
+                },
+                {
+                    "for": {
+                        "locales": ["de", "fr"],
+                        "channels": ["release"],
+                        "versions": ["49.0"],
+                    },
+                    "fields": {
+                        "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                    }
+                }
+            ]
+        }
+        blob = ReleaseBlobV9(**bad_blob)
+        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
+                                blob.validate, "h", self.whitelistedDomains)
+
+    def testCanCreateBlobWithOnlySomeOverlappingInputs(self):
+        bad_blob = {
+            "name": "bad",
+            "schema_version": 9,
+            "hashFunction": "sha512",
+            "updateLine": [
+                {
+                    "for": {
+                        "locales": ["de"],
+                        "channels": ["beta*"],
+                        "versions": ["<50.0"],
+                    },
+                    "fields": {
+                        "appVersion": "31.0.2",
+                        "displayVersion": "31.0.2",
+                        "detailsURL": "http://example.org/details/%LOCALE%",
+                        "type": "minor"
+                    }
+                },
+                {
+                    "for": {
+                        "locales": ["de", "fr"],
+                        "channels": ["release"],
+                        "versions": ["49.0"],
+                    },
+                    "fields": {
+                        "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                    }
+                }
+            ]
+        }
+        blob = ReleaseBlobV9(**bad_blob)
+        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
+                                blob.validate, "h", self.whitelistedDomains)
+
 
 
 class TestDesupportBlob(unittest.TestCase):
