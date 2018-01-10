@@ -3191,6 +3191,37 @@ class TestSchema9Blob(unittest.TestCase):
         self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
                                 blob.validate, "h", self.whitelistedDomains)
 
+    def testCannotCreateBlobWithConflictingFieldsVersionOperatorWithOperator(self):
+        bad_blob = {
+            "name": "bad",
+            "schema_version": 9,
+            "hashFunction": "sha512",
+            "updateLine": [
+                {
+                    "for": {
+                        "versions": ["<50.0"],
+                    },
+                    "fields": {
+                        "appVersion": "31.0.2",
+                        "displayVersion": "31.0.2",
+                        "detailsURL": "http://example.org/details/%LOCALE%",
+                        "type": "minor"
+                    }
+                },
+                {
+                    "for": {
+                        "versions": ["<49.0"],
+                    },
+                    "fields": {
+                        "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                    }
+                }
+            ]
+        }
+        blob = ReleaseBlobV9(**bad_blob)
+        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
+                                blob.validate, "h", self.whitelistedDomains)
+
     def testCannotCreateBlobWithConflictingFieldsByMultipleInputs(self):
         bad_blob = {
             "name": "bad",

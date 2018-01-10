@@ -5,6 +5,7 @@ from auslib.blobs.base import Blob, BlobValidationError
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.util.rulematching import matchChannel, matchLocale, matchVersion
+from auslib.util.comparison import strip_operator
 from auslib.util.versions import MozillaVersion
 
 
@@ -1003,31 +1004,52 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                 all_matches = []
                 for req in ("channels", "locales", "versions"):
                     matches = False
-                    if req == "channels":
-                        if req in group1["for"] and req in group2["for"]:
+                    if req not in group1["for"] or req not in group2["for"]:
+                        matches = True
+                    else:
+                        if req == "channels":
                             for (value1, value2) in itertools.product(group1["for"][req], group2["for"][req]):
-                                # Exact string match
-                                if value1 == value2:
-                                    matches = True
-                                    break
+                                # No globbing, still need to check for fallback channel matches
+                                if not value1.endswith("*") and not value2.endswith("*"):
+                                    if matchChannel(value1, value2, getFallbackChannel(value2)):
+                                        matches = True
+                                        break
+                                    if matchChannel(value2, value1, getFallbackChannel(value1)):
+                                        matches = True
+                                        break
                                 # One value has a glob that matches the other value
-                                if value1.endswith("*") and not value2.endswith("*"):
-                                    if matchChannel(value1, value2, ""):
+                                elif value1.endswith("*") and not value2.endswith("*"):
+                                    if matchChannel(value1, value2, getFallbackChannel(value2)):
                                         matches = True
                                         break
                                 elif value2.endswith("*") and not value1.endswith("*"):
-                                    if matchChannel(value2, value1, ""):
+                                    if matchChannel(value2, value1, getFallbackChannel(value1)):
                                         matches = True
                                         break
                                 # Both values have globs, and one is a substring of the other
-                                if value1.endswith("*") and value2.endswith("*"):
+                                elif value1.endswith("*") and value2.endswith("*"):
+                                    # TODO: do we have to care about fallback here?
                                     if value1[:-1] in value2[:-1] or value2[:-1] in value1[:-1]:
                                         matches = True
                                         break
-                    elif req == "locales":
-                        matches = True
-                    elif req == "versions":
-                        matches = True
+                        elif req == "locales":
+                            if set(group1["for"][req]).intersection(set(group2["for"][req])):
+                                matches = True
+                        elif req == "versions":
+                            for (value1, value2) in itertools.product(group1["for"][req], group2["for"][req]):
+                                # Check for exact matches - any exact match between two concrete
+                                # versions or two comparisons is a match.
+                                if value1 == value2:
+                                    matches = True
+                                    break
+                                # Also check for matches with version comparison involved
+                                elif matchVersion(value1, strip_operator(value2)):
+                                    matches = True
+                                    break
+                                elif matchVersion(value2, strip_operator(value1)):
+                                    matches = True
+                                    break
+
                     all_matches.append(matches)
 
                 if all(all_matches):
