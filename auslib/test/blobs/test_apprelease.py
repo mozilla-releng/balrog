@@ -3056,7 +3056,29 @@ class TestSchema9Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testWithActions(self):
-        pass
+        updateQuery = {
+            "product": "h", "buildID": "10", "version": "30.0",
+            "buildTarget": "p", "locale": "de", "channel": "release",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": None,
+        }
+        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_header = '<update actions="showURL" appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' \
+            ' displayVersion="31.0.2" openURL="http://example.org/url/de" type="minor">'
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected = [
+            '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
+            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
+        ]
+        expected = [x.strip() for x in expected]
+        self.assertItemsEqual(returned, expected)
+
+        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_footer = "</update>"
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testCannotCreateBlobWithConflictingFieldsAllAndLocale(self):
         bad_blob = {
