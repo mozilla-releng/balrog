@@ -3258,9 +3258,7 @@ class TestSchema9Blob(unittest.TestCase):
             ]
         }
         blob = ReleaseBlobV9(**bad_blob)
-        self.assertRaisesRegexp(BlobValidationError, "Multiple values found for updateLine items: detailsURL",
-                                blob.validate, "h", self.whitelistedDomains)
-
+        blob.validate("h", self.whitelistedDomains)
 
 
 class TestDesupportBlob(unittest.TestCase):

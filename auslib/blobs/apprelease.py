@@ -1,7 +1,10 @@
-from auslib.global_state import dbo
+import itertools
+
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob, BlobValidationError
+from auslib.global_state import dbo
 from auslib.errors import BadDataError
+from auslib.util.rulematching import matchChannel, matchLocale, matchVersion
 from auslib.util.versions import MozillaVersion
 
 
@@ -985,7 +988,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         super(ReleaseBlobV9, self).validate(*args, **kwargs)
 
         conflicts = []
-        conflicting_values = []
+        conflicting_values = set()
 
         for group1 in self["updateLine"]:
             for group2 in self["updateLine"]:
@@ -997,10 +1000,39 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                 if len(field_dupes) == 0:
                     continue
                 # If there are overlapping fields, we need to see if what they apply to overlap in any way
-                for req in group1["for"]:
-                    if req not in group2["for"] or len(set(group1["for"][req].keys()).intersection(group2["for"][req].keys())):
-                        conflicts.append((group1["for"], group2["for"], field_dupes))
-                        conflicting_values.extend(field_dupes)
+                all_matches = []
+                for req in ("channels", "locales", "versions"):
+                    matches = False
+                    if req == "channels":
+                        if req in group1["for"] and req in group2["for"]:
+                            for (value1, value2) in itertools.product(group1["for"][req], group2["for"][req]):
+                                # Exact string match
+                                if value1 == value2:
+                                    matches = True
+                                    break
+                                # One value has a glob that matches the other value
+                                if value1.endswith("*") and not value2.endswith("*"):
+                                    if matchChannel(value1, value2, ""):
+                                        matches = True
+                                        break
+                                elif value2.endswith("*") and not value1.endswith("*"):
+                                    if matchChannel(value2, value1, ""):
+                                        matches = True
+                                        break
+                                # Both values have globs, and one is a substring of the other
+                                if value1.endswith("*") and value2.endswith("*"):
+                                    if value1[:-1] in value2[:-1] or value2[:-1] in value1[:-1]:
+                                        matches = True
+                                        break
+                    elif req == "locales":
+                        matches = True
+                    elif req == "versions":
+                        matches = True
+                    all_matches.append(matches)
+
+                if all(all_matches):
+                    conflicts.append((group1["for"], group2["for"], field_dupes))
+                    conflicting_values.update(field_dupes)
 
         if conflicts:
             conflicting_values = ", ".join(conflicting_values)
