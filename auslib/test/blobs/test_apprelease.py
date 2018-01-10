@@ -2866,6 +2866,8 @@ class TestSchema9Blob(unittest.TestCase):
         "p": {
             "buildID": "10",
             "locales": {
+                "de": {},
+                "en-US": {},
                 "l": {}
             }
         }
@@ -2924,6 +2926,38 @@ class TestSchema9Blob(unittest.TestCase):
             "OS_FTP": "p",
             "OS_BOUNCER": "p",
             "locales": {
+                "de": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "9"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41"
+                        }
+                    ]
+                },
+                "en-US": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "9"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41"
+                        }
+                    ]
+                },
                 "l": {
                     "partials": [
                         {
@@ -2948,13 +2982,38 @@ class TestSchema9Blob(unittest.TestCase):
 
     def testWithoutActionsByLocale(self):
         updateQuery = {
-            "product": "h", "buildID": "10", "version": "31.0",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
+            "product": "h", "buildID": "10", "version": "30.0",
+            "buildTarget": "p", "locale": "l", "channel": "release",
             "osVersion": "a", "distribution": "a", "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/l"' \
+            ' displayVersion="31.0.2" type="minor">'
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected = [
+            '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
+            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
+        ]
+        expected = [x.strip() for x in expected]
+        self.assertItemsEqual(returned, expected)
+
+        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_footer = "</update>"
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+    def testWithoutActionsByChannel(self):
+        updateQuery = {
+            "product": "h", "buildID": "10", "version": "30.0",
+            "buildTarget": "p", "locale": "de", "channel": "c1",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": None,
+        }
+        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' \
             ' displayVersion="31.0.2" type="minor">'
         self.assertEqual(returned_header.strip(), expected_header.strip())
 
@@ -2971,11 +3030,30 @@ class TestSchema9Blob(unittest.TestCase):
         expected_footer = "</update>"
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
-    def testWithoutActionsByChannel(self):
-        pass
-
     def testWithoutActionsByVersion(self):
-        pass
+        updateQuery = {
+            "product": "h", "buildID": "10", "version": "31.0",
+            "buildTarget": "p", "locale": "de", "channel": "release",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": None,
+        }
+        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' \
+            ' displayVersion="31.0.2" type="minor">'
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected = [
+            '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
+            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
+        ]
+        expected = [x.strip() for x in expected]
+        self.assertItemsEqual(returned, expected)
+
+        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_footer = "</update>"
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testWithActions(self):
         pass

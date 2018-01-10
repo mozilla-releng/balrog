@@ -132,9 +132,7 @@ class ReleaseBlobBase(Blob):
         return patchXML
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        buildTarget = updateQuery["buildTarget"]
-        locale = updateQuery["locale"]
-        return self._getUpdateLineXML(buildTarget, locale, update_type)
+        return self._getUpdateLineXML(updateQuery, update_type)
 
     def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return '    </update>'
@@ -390,7 +388,9 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
             self.log.debug('%s\n%s' % (s, snippets[s].rstrip()))
         return snippets
 
-    def _getUpdateLineXML(self, buildTarget, locale, update_type):
+    def _getUpdateLineXML(self, updateQuery, update_type):
+        buildTarget = updateQuery["buildTarget"]
+        locale = updateQuery["locale"]
         appv = self.getAppv(buildTarget, locale)
         extv = self.getExtv(buildTarget, locale)
         buildid = self.getBuildID(buildTarget, locale)
@@ -457,7 +457,10 @@ class NewStyleVersionsMixin(object):
         """ For v2 schema, appVersion really is the app version """
         return self.getAppVersion(platform, locale)
 
-    def _getUpdateLineXML(self, buildTarget, locale, update_type):
+    def _getUpdateLineXML(self, updateQuery, update_type):
+        buildTarget = updateQuery["buildTarget"]
+        locale = updateQuery["locale"]
+
         displayVersion = self.getDisplayVersion(buildTarget, locale)
         appVersion = self.getAppVersion(buildTarget, locale)
         platformVersion = self.getPlatformVersion(buildTarget, locale)
@@ -957,23 +960,38 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         if 'schema_version' not in self.keys():
             self['schema_version'] = 9
 
-    def _getUpdateLineXML(self, buildTarget, locale, update_type):
+    def _getUpdateLineXML(self, updateQuery, update_type):
         attrs = {
-            "buildID": self.getBuildID(buildTarget, locale),
+            "buildID": self.getBuildID(updateQuery["buildTarget"], updateQuery["locale"]),
             "type": update_type,
         }
         for group in self["updateLine"]:
+            all_matches = []
             for condition, values in group["for"].items():
-                if condition == "locales" and locale not in values:
-                    break
-            else:
+                matches = False
+                if condition == "channels":
+                    for channel in values:
+                        if matchChannel(channel, updateQuery["channel"], getFallbackChannel(updateQuery["channel"])):
+                            matches = True
+                            break
+                elif condition == "locales":
+                    if updateQuery["locale"] in values:
+                        matches = True
+                elif condition == "versions":
+                    for version in values:
+                        if matchVersion(version, updateQuery["version"]):
+                            matches = True
+                            break
+                all_matches.append(matches)
+
+            if all(all_matches):
                 # matched everything!
                 attrs.update(group["fields"])
 
         for attr in self.interpolable_:
             if attr in attrs:
-                attrs[attr] = attrs[attr].replace("%LOCALE%", locale)
-                attrs[attr] = attrs[attr].replace("%locale%", locale)
+                attrs[attr] = attrs[attr].replace("%LOCALE%", updateQuery["locale"])
+                attrs[attr] = attrs[attr].replace("%locale%", updateQuery["locale"])
 
         updateLine = "    <update"
         for key in sorted(attrs.keys()):
