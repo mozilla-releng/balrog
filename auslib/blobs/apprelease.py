@@ -4,7 +4,7 @@ from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob, BlobValidationError
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
-from auslib.util.rulematching import matchChannel, matchLocale, matchVersion
+from auslib.util.rulematching import matchChannel, matchVersion
 from auslib.util.comparison import strip_operator
 from auslib.util.versions import MozillaVersion
 
@@ -1009,29 +1009,18 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                     else:
                         if req == "channels":
                             for (value1, value2) in itertools.product(group1["for"][req], group2["for"][req]):
-                                # No globbing, still need to check for fallback channel matches
-                                if not value1.endswith("*") and not value2.endswith("*"):
-                                    if matchChannel(value1, value2, getFallbackChannel(value2)):
-                                        matches = True
-                                        break
-                                    if matchChannel(value2, value1, getFallbackChannel(value1)):
-                                        matches = True
-                                        break
-                                # One value has a glob that matches the other value
-                                elif value1.endswith("*") and not value2.endswith("*"):
-                                    if matchChannel(value1, value2, getFallbackChannel(value2)):
-                                        matches = True
-                                        break
-                                elif value2.endswith("*") and not value1.endswith("*"):
-                                    if matchChannel(value2, value1, getFallbackChannel(value1)):
-                                        matches = True
-                                        break
-                                # Both values have globs, and one is a substring of the other
-                                elif value1.endswith("*") and value2.endswith("*"):
-                                    # TODO: do we have to care about fallback here?
-                                    if value1[:-1] in value2[:-1] or value2[:-1] in value1[:-1]:
-                                        matches = True
-                                        break
+                                # Exact match of concrete channel or two globs
+                                if value1 == value2:
+                                    matches = True
+                                    break
+                                # Logical match in either direction, which takes into account
+                                # globbing and fallback channels
+                                elif matchChannel(value1, value2.rstrip("*"), getFallbackChannel(value2.rstrip("*"))):
+                                    matches = True
+                                    break
+                                elif matchChannel(value2, value1.rstrip("*"), getFallbackChannel(value1.rstrip("*"))):
+                                    matches = True
+                                    break
                         elif req == "locales":
                             if set(group1["for"][req]).intersection(set(group2["for"][req])):
                                 matches = True
