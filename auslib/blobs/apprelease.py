@@ -968,7 +968,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
             "type": update_type,
         }
         for group in self["updateLine"]:
-            all_matches = []
+            condition_results = []
             for condition, values in group["for"].items():
                 matches = False
                 if condition == "channels":
@@ -984,9 +984,9 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                         if matchVersion(version, updateQuery["version"]):
                             matches = True
                             break
-                all_matches.append(matches)
+                condition_results.append(matches)
 
-            if all(all_matches):
+            if all(condition_results):
                 # matched everything!
                 attrs.update(group["fields"])
 
@@ -1019,19 +1019,20 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                 # Skip over groups that are identical - they can't conflict
                 if group1 == group2:
                     continue
+                # If there are no overlapping fields between the groups, there can't be a conflict
                 field_dupes = set(group1["fields"].keys()).intersection(group2["fields"].keys())
-                # No overlapping fields, no conflict!
                 if len(field_dupes) == 0:
                     continue
                 # If there are overlapping fields, we need to see if what they apply to overlap in any way
-                all_matches = []
-                for req in ("channels", "locales", "versions"):
+                condition_results = []
+                for cond in ("channels", "locales", "versions"):
                     matches = False
-                    if req not in group1["for"] or req not in group2["for"]:
+                    # If a condition is not specified for a group, it always matches anything
+                    if cond not in group1["for"] or cond not in group2["for"]:
                         matches = True
                     else:
-                        if req == "channels":
-                            for (value1, value2) in itertools.product(group1["for"][req], group2["for"][req]):
+                        if cond == "channels":
+                            for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
                                 # Exact match of concrete channel or two globs
                                 if value1 == value2:
                                     matches = True
@@ -1044,11 +1045,11 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                                 elif matchChannel(value2, value1.rstrip("*"), getFallbackChannel(value1.rstrip("*"))):
                                     matches = True
                                     break
-                        elif req == "locales":
-                            if set(group1["for"][req]).intersection(set(group2["for"][req])):
+                        elif cond == "locales":
+                            if set(group1["for"][cond]).intersection(set(group2["for"][cond])):
                                 matches = True
-                        elif req == "versions":
-                            for (value1, value2) in itertools.product(group1["for"][req], group2["for"][req]):
+                        elif cond == "versions":
+                            for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
                                 # Check for exact matches - any exact match between two concrete
                                 # versions or two comparisons is a match.
                                 if value1 == value2:
@@ -1062,9 +1063,9 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                                     matches = True
                                     break
 
-                    all_matches.append(matches)
+                    condition_results.append(matches)
 
-                if all(all_matches):
+                if all(condition_results):
                     conflicts.append((group1["for"], group2["for"], field_dupes))
                     conflicting_values.update(field_dupes)
 
