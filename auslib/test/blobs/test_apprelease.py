@@ -2880,12 +2880,12 @@ class TestSchema9Blob(unittest.TestCase):
     "name": "h2",
     "schema_version": 9,
     "hashFunction": "sha512",
+    "appVersion": "31.0.2",
+    "displayVersion": "31.0.2",
     "updateLine": [
         {
             "for": {},
             "fields": {
-                "appVersion": "31.0.2",
-                "displayVersion": "31.0.2",
                 "detailsURL": "http://example.org/details/%LOCALE%",
                 "type": "minor"
             }
@@ -3085,12 +3085,12 @@ class TestSchema9Blob(unittest.TestCase):
             "name": "bad",
             "schema_version": 9,
             "hashFunction": "sha512",
+            "appVersion": "31.0.2",
+            "displayVersion": "31.0.2",
             "updateLine": [
                 {
                     "for": {},
                     "fields": {
-                        "appVersion": "31.0.2",
-                        "displayVersion": "31.0.2",
                         "detailsURL": "http://example.org/details/%LOCALE%",
                         "type": "minor"
                     }
@@ -3114,14 +3114,14 @@ class TestSchema9Blob(unittest.TestCase):
             "name": "bad",
             "schema_version": 9,
             "hashFunction": "sha512",
+            "appVersion": "31.0.2",
+            "displayVersion": "31.0.2",
             "updateLine": [
                 {
                     "for": {
                         "locales": ["de"],
                     },
                     "fields": {
-                        "appVersion": "31.0.2",
-                        "displayVersion": "31.0.2",
                         "detailsURL": "http://example.org/details/%LOCALE%",
                         "type": "minor"
                     }
@@ -3145,12 +3145,12 @@ class TestSchema9Blob(unittest.TestCase):
             "name": "bad",
             "schema_version": 9,
             "hashFunction": "sha512",
+            "appVersion": "31.0.2",
+            "displayVersion": "31.0.2",
             "updateLine": [
                 {
                     "for": {},
                     "fields": {
-                        "appVersion": "31.0.2",
-                        "displayVersion": "31.0.2",
                         "detailsURL": "http://example.org/details/%LOCALE%",
                         "type": "minor"
                     }
@@ -3174,14 +3174,14 @@ class TestSchema9Blob(unittest.TestCase):
             "name": "bad",
             "schema_version": 9,
             "hashFunction": "sha512",
+            "appVersion": "31.0.2",
+            "displayVersion": "31.0.2",
             "updateLine": [
                 {
                     "for": {
                         "channels": ["release"],
                     },
                     "fields": {
-                        "appVersion": "31.0.2",
-                        "displayVersion": "31.0.2",
                         "detailsURL": "http://example.org/details/%LOCALE%",
                         "type": "minor"
                     }
@@ -3205,14 +3205,14 @@ class TestSchema9Blob(unittest.TestCase):
             "name": "bad",
             "schema_version": 9,
             "hashFunction": "sha512",
+            "appVersion": "31.0.2",
+            "displayVersion": "31.0.2",
             "updateLine": [
                 {
                     "for": {
                         "channels": ["release"],
                     },
                     "fields": {
-                        "appVersion": "31.0.2",
-                        "displayVersion": "31.0.2",
                         "detailsURL": "http://example.org/details/%LOCALE%",
                         "type": "minor"
                     }
@@ -3236,12 +3236,12 @@ class TestSchema9Blob(unittest.TestCase):
             "name": "bad",
             "schema_version": 9,
             "hashFunction": "sha512",
+            "appVersion": "31.0.2",
+            "displayVersion": "31.0.2",
             "updateLine": [
                 {
                     "for": {},
                     "fields": {
-                        "appVersion": "31.0.2",
-                        "displayVersion": "31.0.2",
                         "detailsURL": "http://example.org/details/%LOCALE%",
                         "type": "minor"
                     }
@@ -3265,14 +3265,14 @@ class TestSchema9Blob(unittest.TestCase):
             "name": "bad",
             "schema_version": 9,
             "hashFunction": "sha512",
+            "appVersion": "31.0.2",
+            "displayVersion": "31.0.2",
             "updateLine": [
                 {
                     "for": {
                         "versions": ["<50.0"],
                     },
                     "fields": {
-                        "appVersion": "31.0.2",
-                        "displayVersion": "31.0.2",
                         "detailsURL": "http://example.org/details/%LOCALE%",
                         "type": "minor"
                     }
@@ -3296,14 +3296,14 @@ class TestSchema9Blob(unittest.TestCase):
             "name": "bad",
             "schema_version": 9,
             "hashFunction": "sha512",
+            "appVersion": "31.0.2",
+            "displayVersion": "31.0.2",
             "updateLine": [
                 {
                     "for": {
                         "versions": ["<50.0"],
                     },
                     "fields": {
-                        "appVersion": "31.0.2",
-                        "displayVersion": "31.0.2",
                         "detailsURL": "http://example.org/details/%LOCALE%",
                         "type": "minor"
                     }
@@ -3327,6 +3327,8 @@ class TestSchema9Blob(unittest.TestCase):
             "name": "bad",
             "schema_version": 9,
             "hashFunction": "sha512",
+            "appVersion": "31.0.2",
+            "displayVersion": "31.0.2",
             "updateLine": [
                 {
                     "for": {
@@ -3335,8 +3337,6 @@ class TestSchema9Blob(unittest.TestCase):
                         "versions": ["<50.0"],
                     },
                     "fields": {
-                        "appVersion": "31.0.2",
-                        "displayVersion": "31.0.2",
                         "detailsURL": "http://example.org/details/%LOCALE%",
                         "type": "minor"
                     }
@@ -3362,6 +3362,8 @@ class TestSchema9Blob(unittest.TestCase):
             "name": "bad",
             "schema_version": 9,
             "hashFunction": "sha512",
+            "appVersion": "31.0.2",
+            "displayVersion": "31.0.2",
             "updateLine": [
                 {
                     "for": {
@@ -3370,8 +3372,6 @@ class TestSchema9Blob(unittest.TestCase):
                         "versions": ["<50.0"],
                     },
                     "fields": {
-                        "appVersion": "31.0.2",
-                        "displayVersion": "31.0.2",
                         "detailsURL": "http://example.org/details/%LOCALE%",
                         "type": "minor"
                     }

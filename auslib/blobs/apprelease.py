@@ -962,6 +962,8 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
 
     def _getUpdateLineXML(self, updateQuery, update_type):
         attrs = {
+            "appVersion": self.getLocaleOrTopLevelParam(updateQuery["buildTarget"], updateQuery["locale"], "appVersion"),
+            "displayVersion": self.getLocaleOrTopLevelParam(updateQuery["buildTarget"], updateQuery["locale"], "displayVersion"),
             "buildID": self.getBuildID(updateQuery["buildTarget"], updateQuery["locale"]),
             "type": update_type,
         }
@@ -1002,6 +1004,9 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         updateLine += ">"
 
         return updateLine
+
+    def getApplicationVersion(self, platform, locale):
+        return self.getLocaleOrTopLevelParam(platform, locale, 'appVersion')
 
     def validate(self, *args, **kwargs):
         super(ReleaseBlobV9, self).validate(*args, **kwargs)
