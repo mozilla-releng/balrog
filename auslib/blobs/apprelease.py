@@ -5,7 +5,7 @@ from auslib.blobs.base import Blob, BlobValidationError
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.util.rulematching import matchChannel, matchVersion
-from auslib.util.comparison import strip_operator
+from auslib.util.comparison import has_operator, strip_operator
 from auslib.util.versions import MozillaVersion
 
 
@@ -1056,12 +1056,14 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                                     matches = True
                                     break
                                 # Also check for matches with version comparison involved
-                                elif matchVersion(value1, strip_operator(value2)):
-                                    matches = True
-                                    break
-                                elif matchVersion(value2, strip_operator(value1)):
-                                    matches = True
-                                    break
+                                elif has_operator(value1) and not has_operator(value2):
+                                    if matchVersion(value1, value2):
+                                        matches = True
+                                        break
+                                elif has_operator(value2) and not has_operator(value1):
+                                    if matchVersion(value2, value1):
+                                        matches = True
+                                        break
 
                     condition_results.append(matches)
 
