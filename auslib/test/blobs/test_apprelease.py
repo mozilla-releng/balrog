@@ -3085,7 +3085,27 @@ class TestSchema9Blob(unittest.TestCase):
 
 @pytest.mark.parametrize("for1,for2", [
     (
+        {"versions": ["<49.0"]},
+        {"versions": ["49.0"]}
+    ),
+    (
+        {"versions": ["<49.0"]},
+        {"versions": [">=49.0"]}
+    ),
+    (
+        {"locales": ["ja"]},
+        {"locales": ["ja-JP-mac"]},
+    ),
+    (
         {"locales": ["de"], "channels": ["beta*"], "versions": ["<50.0"]},
+        {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}
+    ),
+    (
+        {"locales": ["de"], "channels": ["release"], "versions": ["<50.0"]},
+        {"locales": ["en-US", "fr"], "channels": ["release"], "versions": ["49.0"]}
+    ),
+    (
+        {"locales": ["de"], "channels": ["release"], "versions": ["<48.0"]},
         {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}
     ),
 ])
@@ -3134,6 +3154,14 @@ def testSchema9CanCreateValidBlobs(for1, for2):
         {"channels": ["release-cck-foo"]}
     ),
     (
+        {"channels": ["release*"]},
+        {"channels": ["release-cck-foo"]}
+    ),
+    (
+        {"channels": ["release-cck-foo"]},
+        {"channels": ["release-cck-*"]}
+    ),
+    (
         {"channels": ["release"]},
         {"channels": ["release*"]}
     ),
@@ -3146,8 +3174,16 @@ def testSchema9CanCreateValidBlobs(for1, for2):
         {"versions": ["49.0"]}
     ),
     (
+        {"versions": ["49.0"]},
+        {"versions": ["<=49.0"]}
+    ),
+    (
         {"versions": ["<50.0"]},
         {"versions": ["<49.0"]}
+    ),
+    (
+        {"versions": ["<50.0"]},
+        {"versions": [">=49.0"]}
     ),
     (
         {"locales": ["de"], "channels": ["release*"], "versions": ["<50.0"]},
