@@ -3182,8 +3182,28 @@ def testSchema9CanCreateValidBlobs(for1, for2):
         {"versions": ["<49.0"]}
     ),
     (
+        {"versions": [">50.0"]},
+        {"versions": [">49.0"]}
+    ),
+    (
+        {"versions": ["<50.0"]},
+        {"versions": [">49.0"]}
+    ),
+    (
         {"versions": ["<50.0"]},
         {"versions": [">=49.0"]}
+    ),
+    (
+        {"versions": [">49.0"]},
+        {"versions": ["<=50.0"]}
+    ),
+    (
+        {"versions": [">=49.0"]},
+        {"versions": ["<=50.0"]}
+    ),
+    (
+        {"versions": ["<=49.0"]},
+        {"versions": ["<=50.0"]}
     ),
     (
         {"locales": ["de"], "channels": ["release*"], "versions": ["<50.0"]},

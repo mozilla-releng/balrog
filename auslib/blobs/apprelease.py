@@ -1055,13 +1055,38 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                                 if value1 == value2:
                                     matches = True
                                     break
-                                # Also check for matches with version comparison involved
+                                # Check for matches where only one value has an operator
                                 elif has_operator(value1) and not has_operator(value2):
                                     if matchVersion(value1, value2):
                                         matches = True
                                         break
                                 elif has_operator(value2) and not has_operator(value1):
                                     if matchVersion(value2, value1):
+                                        matches = True
+                                        break
+                                # Finally, check for matches if both values have operators
+                                else:
+                                    comparable_values = []
+                                    for v in (value1, value2):
+                                        if "=" in v:
+                                            comparable_values.append(strip_operator(v))
+                                        elif v.startswith("<"):
+                                            parts = map(int, strip_operator(v).split("."))
+                                            for i in reversed(range(len(parts))):
+                                                if parts[i] == 0:
+                                                    parts[i] = 99
+                                                else:
+                                                    parts[i] -= 1
+                                                    break
+                                            comparable_values.append(".".join(map(str, parts)))
+                                        elif v.startswith(">"):
+                                            parts = map(int, strip_operator(v).split("."))
+                                            parts[-1] += 1
+                                            comparable_values.append(".".join(map(str, parts)))
+                                    if len(comparable_values) != 2:
+                                        raise BlobValidationError("Couldn't find comparable values for one of: %s, %s".format(value1, value2))
+
+                                    if matchVersion(value1, comparable_values[1]) or matchVersion(value2, comparable_values[0]):
                                         matches = True
                                         break
 
