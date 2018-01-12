@@ -940,9 +940,10 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
     """
 
     Changes from ReleaseBlobV8:
+        * Moved most <update> properties into new updateLine data structure
 
     For further information:
-        * https://bugzilla.mozilla.org/show_bug.cgi?id=1400016
+        * https://bugzilla.mozilla.org/show_bug.cgi?id=1369379
 
     """
     jsonschema = "apprelease-v9.yml"
@@ -960,6 +961,10 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
             "appVersion": self.getLocaleOrTopLevelParam(updateQuery["buildTarget"], updateQuery["locale"], "appVersion"),
             "displayVersion": self.getLocaleOrTopLevelParam(updateQuery["buildTarget"], updateQuery["locale"], "displayVersion"),
             "buildID": self.getBuildID(updateQuery["buildTarget"], updateQuery["locale"]),
+            # This is set to the update_type specified in the Rule, but will be
+            # overridden by one in an updateLine object, if it exists/applies.
+            # In the medium/long term we should remove update_type from the
+            # Rules table to avoid confusion.
             "type": update_type,
         }
         for group in self["updateLine"]:
@@ -967,18 +972,14 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
             for condition, values in group["for"].items():
                 matches = False
                 if condition == "channels":
-                    for channel in values:
-                        if matchChannel(channel, updateQuery["channel"], getFallbackChannel(updateQuery["channel"])):
-                            matches = True
-                            break
+                    if any(map(lambda c: matchChannel(c, updateQuery["channel"], getFallbackChannel(updateQuery["channel"])), values)):
+                        matches = True
                 elif condition == "locales":
                     if updateQuery["locale"] in values:
                         matches = True
                 elif condition == "versions":
-                    for version in values:
-                        if matchVersion(version, updateQuery["version"]):
-                            matches = True
-                            break
+                    if any(map(lambda v: matchVersion(v, updateQuery["version"]), values)):
+                        matches = True
                 condition_results.append(matches)
 
             if all(condition_results):
@@ -1083,7 +1084,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                                 elif v.startswith(">"):
                                     comparable_values.append(increment_version(strip_operator(v)))
                             if len(comparable_values) != 2:
-                                raise BlobValidationError("Couldn't find comparable values for one of: %s, %s".format(value1, value2))
+                                raise BlobValidationError("Couldn't find a comparable value for one of: %s, %s".format(value1, value2))
 
                             # Once we have comparable versions, we can check them!
                             if matchVersion(value1, comparable_values[1]) or matchVersion(value2, comparable_values[0]):
