@@ -3089,6 +3089,14 @@ class TestSchema9Blob(unittest.TestCase):
         {"versions": ["49.0"]}
     ),
     (
+        {"versions": [">49.0"]},
+        {"versions": ["49.0"]}
+    ),
+    (
+        {"versions": [">49.0"]},
+        {"versions": ["<=49.0"]}
+    ),
+    (
         {"versions": ["<49.0"]},
         {"versions": [">=49.0"]}
     ),
@@ -3139,6 +3147,10 @@ def testSchema9CanCreateValidBlobs(for1, for2):
 @pytest.mark.parametrize("for1,for2", [
     (
         {},
+        {},
+    ),
+    (
+        {},
         {"locales": ["de", "fr"]}
     ),
     (
@@ -3159,6 +3171,10 @@ def testSchema9CanCreateValidBlobs(for1, for2):
     ),
     (
         {"channels": ["release-cck-foo"]},
+        {"channels": ["release-cck-*"]}
+    ),
+    (
+        {"channels": ["release*"]},
         {"channels": ["release-cck-*"]}
     ),
     (
