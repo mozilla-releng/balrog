@@ -5,7 +5,6 @@
     - name
     - schema_version
     - hashFunction
-    - updateLine
   additionalProperties: false
   properties:
     name:
@@ -71,7 +70,7 @@
                   type: string
           fields:
             type: object
-            additionalPropreties: false
+            additionalProperties: false
             properties:
               type:
                 type: string
@@ -181,6 +180,12 @@
                               type: number
                               description: The buildID to serve for this locale"s updates. Overrides the platform-level buildID
                               pattern: ^[0-9]*$
+                        appVersion:
+                          type: string
+                          description: The version of the application represented by this Blob. If set, the locale level version overrides this one.
+                        displayVersion:
+                          type: string
+                          description: The displayVersion to return with the update. Generally, the client will show this in the UI. If set, the displayVersion at the locale level takes priority. If set, the locale level version overrides this one.
                         # Using lists instead of dicts for multiple updates
                         # gives us a way to reduce load a bit. As this is
                         # iterated over, each "from" release is looked up
