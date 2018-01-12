@@ -6,7 +6,7 @@ from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.util.rulematching import matchChannel, matchVersion
 from auslib.util.comparison import has_operator, strip_operator
-from auslib.util.versions import MozillaVersion
+from auslib.util.versions import MozillaVersion, decrement_version, increment_version
 
 
 class ReleaseBlobBase(Blob):
@@ -1066,26 +1066,24 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                                         break
                                 # Finally, check for matches if both values have operators
                                 else:
+                                    # We need to find a precise version from each version comparison
+                                    # to know whether or not there is overlap.
                                     comparable_values = []
                                     for v in (value1, value2):
+                                        # If the comparison is <= or >=, we can simple use the version
+                                        # in the string as the comparable version.
                                         if "=" in v:
                                             comparable_values.append(strip_operator(v))
+                                        # If it's a plain < or > comparison, we need to use the "next"
+                                        # or "previous" version.
                                         elif v.startswith("<"):
-                                            parts = map(int, strip_operator(v).split("."))
-                                            for i in reversed(range(len(parts))):
-                                                if parts[i] == 0:
-                                                    parts[i] = 99
-                                                else:
-                                                    parts[i] -= 1
-                                                    break
-                                            comparable_values.append(".".join(map(str, parts)))
+                                            comparable_values.append(decrement_version(strip_operator(v)))
                                         elif v.startswith(">"):
-                                            parts = map(int, strip_operator(v).split("."))
-                                            parts[-1] += 1
-                                            comparable_values.append(".".join(map(str, parts)))
+                                            comparable_values.append(increment_version(strip_operator(v)))
                                     if len(comparable_values) != 2:
                                         raise BlobValidationError("Couldn't find comparable values for one of: %s, %s".format(value1, value2))
 
+                                    # Once we have comparable versions, we can check them!
                                     if matchVersion(value1, comparable_values[1]) or matchVersion(value2, comparable_values[0]):
                                         matches = True
                                         break
