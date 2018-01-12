@@ -947,11 +947,6 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
     """
     jsonschema = "apprelease-v9.yml"
 
-    # for the benefit of get*XML
-    optional_ = ('showPrompt', 'showNeverForVersion',
-                 'actions', 'openURL', 'notificationURL', 'alertURL',
-                 'promptWaitTime', 'binTransMerkleRoot',
-                 'binTransCertificate', 'binTransSCTList')
     # params that can have %LOCALE% interpolated
     interpolable_ = ('openURL', 'notificationURL', 'alertURL', 'detailsURL',)
 
