@@ -6,7 +6,7 @@ if [ ! -e /app/.cache/mysql/db.done ]; then
     echo "Initializing DB..."
     python scripts/get-prod-db-dump.py
 
-    cat $LOCAL_DUMP | mysql -h balrogdb -u balrogadmin --password=balrogadmin balrog
+    xz -d -c $LOCAL_DUMP | mysql -h balrogdb -u balrogadmin --password=balrogadmin balrog
     mysql -h balrogdb -u balrogadmin --password=balrogadmin -e "insert into permissions (username, permission, data_version) values (\"balrogadmin\", \"admin\", 1)" balrog
     mysql -h balrogdb -u balrogadmin --password=balrogadmin -e "insert into user_roles (username, role, data_version) values (\"balrogadmin\", \"releng\", 1)" balrog
     touch /app/.cache/mysql/db.done
