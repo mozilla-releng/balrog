@@ -1011,6 +1011,13 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
     def validate(self, *args, **kwargs):
         super(ReleaseBlobV9, self).validate(*args, **kwargs)
 
+        # In addition to all of the normal schema validation, we need to ensure
+        # that there's no case where a single update request could get
+        # conflicting updateLine properties. Eg: if openURL is defined in
+        # multiple groups, we need to ensure there's no way that one request
+        # could match multiple groups. This largely means simulating rule
+        # rule matching for each property in the "for" section of an updateLine
+        # group.
         conflicts = []
         conflicting_values = set()
 
