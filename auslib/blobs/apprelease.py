@@ -1053,12 +1053,13 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                         matches = True
                 elif cond == "versions":
                     for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
-                        # Check for exact matches - any exact match between two concrete
-                        # versions or two comparisons is a match.
+                        # Any exact match between two concrete versions or two
+                        # comparisons means we have version overlap.
                         if value1 == value2:
                             matches = True
                             break
-                        # Check for matches where only one value has an operator
+                        # If only one version has an operator we can easily
+                        # see if it matches the other, concrete version.
                         elif has_operator(value1) and not has_operator(value2):
                             if matchVersion(value1, value2):
                                 matches = True
@@ -1067,7 +1068,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                             if matchVersion(value2, value1):
                                 matches = True
                                 break
-                        # Finally, check for matches if both values have operators
+                        # Finally, check for matches if both versions have operators
                         else:
                             # We need to find a precise version from each version comparison
                             # to know whether or not there is overlap.
