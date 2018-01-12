@@ -32,9 +32,19 @@
     displayVersion:
       type: string
       description: The displayVersion to return with the update. Generally, the client will show this in the UI. If set, the displayVersion at the locale level takes priority.
+    binTransMerkleRoot:
+      type: string
+      description: Merkle root from tree computed over SHA256SUMS used to construct domain name.
+    binTransCertificate:
+      type: string
+      description: Certificate received from script worker used to submit to CT.
+    binTransSCTList:
+      type: string
+      description: Signed certificate timestamp responses when valid certificate is submitted to logs.
     updateLine:
       type: array
       description: empty for means applies to everything. update lines stack, but cannot have the same field more than once for any update query. buildid could be here, in theory, except for nightlies. can remove most other fields from other sections
+      description: An array of objections containing updateLine fields and the requirements for them to apply. The same field can be specified in many different objects, but to avoid having multiple values for the same field, this can only be done if there is no overlap in requirements.
       items:
         type: object
         additionalProperties: false
@@ -42,21 +52,21 @@
           for:
             type: object
             additionalProperties: false
-            description: todo
+            description: The requirements that need to be met for the associated fields to be applied to a response.
             properties:
               locales:
                 type: array
-                description: todo
+                description: A list of locales
                 items:
                   type: string
               channels:
                 type: array
-                description: todo
+                description: A list of channel matching strings. A wildcard may be applied at the end of each string.
                 items:
                   type: string
               versions:
                 type: array
-                description: todo
+                description: A list of version matching strings. Exact versions may be specified, or comparisons with <, >, <=, or <= operators.
                 items:
                   type: string
           fields:
@@ -64,8 +74,10 @@
             additionalPropreties: false
             properties:
               type:
-                # todo: enforce major/minor
                 type: string
+                enum:
+                  - "minor"
+                  - "major"
               detailsURL:
                 type: string
                 description: An URL string to a web page with more information about this release. %LOCALE% may be used, which will be substituted with the locale of the update request.
@@ -90,15 +102,6 @@
               promptWaitTime:
                 type: number
                 description: The number of seconds to wait before showing the dialog which prompts users to restart, overrides the in-app preference
-              binTransMerkleRoot:
-                type: string
-                description: Merkle root from tree computed over SHA256SUMS used to construct domain name.
-              binTransCertificate:
-                type: string
-                description: Certificate received from script worker used to submit to CT.
-              binTransSCTList:
-                type: string
-                description: Signed certificate timestamp responses when valid certificate is submitted to logs.
     # Top level fileUrls are useful primarily for release style builds,
     # where the URLs are predictable and only vary by locale and platform.
     # It"s worth noting that while we normally serve different channels
