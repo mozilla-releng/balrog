@@ -1021,85 +1021,85 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         conflicts = []
         conflicting_values = set()
 
-        for group1 in self["updateLine"]:
-            for group2 in self["updateLine"]:
-                # Skip over groups that are identical - they can't conflict
-                if group1 == group2:
+        for (group1, group2) in itertools.product(self["updateLine"], self["updateLine"]):
+            # Skip over groups that are identical - they can't conflict
+            if group1 == group2:
+                continue
+            # If there are no overlapping fields between the groups, there can't be a conflict
+            field_dupes = set(group1["fields"].keys()).intersection(group2["fields"].keys())
+            if len(field_dupes) == 0:
+                continue
+            # If there are overlapping fields, we need to see if what they apply to overlap in any way
+            condition_results = []
+            for cond in ("channels", "locales", "versions"):
+                matches = False
+                # If a condition is not specified for a group, it always matches anything
+                if cond not in group1["for"] or cond not in group2["for"]:
+                    matches = True
                     continue
-                # If there are no overlapping fields between the groups, there can't be a conflict
-                field_dupes = set(group1["fields"].keys()).intersection(group2["fields"].keys())
-                if len(field_dupes) == 0:
-                    continue
-                # If there are overlapping fields, we need to see if what they apply to overlap in any way
-                condition_results = []
-                for cond in ("channels", "locales", "versions"):
-                    matches = False
-                    # If a condition is not specified for a group, it always matches anything
-                    if cond not in group1["for"] or cond not in group2["for"]:
+
+                if cond == "channels":
+                    for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
+                        # Exact match of concrete channel or two globs
+                        if value1 == value2:
+                            matches = True
+                            break
+                        # Logical match in either direction, which takes into account
+                        # globbing and fallback channels
+                        elif matchChannel(value1, value2.rstrip("*"), getFallbackChannel(value2.rstrip("*"))):
+                            matches = True
+                            break
+                        elif matchChannel(value2, value1.rstrip("*"), getFallbackChannel(value1.rstrip("*"))):
+                            matches = True
+                            break
+                elif cond == "locales":
+                    if set(group1["for"][cond]).intersection(set(group2["for"][cond])):
                         matches = True
-                    else:
-                        if cond == "channels":
-                            for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
-                                # Exact match of concrete channel or two globs
-                                if value1 == value2:
-                                    matches = True
-                                    break
-                                # Logical match in either direction, which takes into account
-                                # globbing and fallback channels
-                                elif matchChannel(value1, value2.rstrip("*"), getFallbackChannel(value2.rstrip("*"))):
-                                    matches = True
-                                    break
-                                elif matchChannel(value2, value1.rstrip("*"), getFallbackChannel(value1.rstrip("*"))):
-                                    matches = True
-                                    break
-                        elif cond == "locales":
-                            if set(group1["for"][cond]).intersection(set(group2["for"][cond])):
+                elif cond == "versions":
+                    for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
+                        # Check for exact matches - any exact match between two concrete
+                        # versions or two comparisons is a match.
+                        if value1 == value2:
+                            matches = True
+                            break
+                        # Check for matches where only one value has an operator
+                        elif has_operator(value1) and not has_operator(value2):
+                            if matchVersion(value1, value2):
                                 matches = True
-                        elif cond == "versions":
-                            for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
-                                # Check for exact matches - any exact match between two concrete
-                                # versions or two comparisons is a match.
-                                if value1 == value2:
-                                    matches = True
-                                    break
-                                # Check for matches where only one value has an operator
-                                elif has_operator(value1) and not has_operator(value2):
-                                    if matchVersion(value1, value2):
-                                        matches = True
-                                        break
-                                elif has_operator(value2) and not has_operator(value1):
-                                    if matchVersion(value2, value1):
-                                        matches = True
-                                        break
-                                # Finally, check for matches if both values have operators
-                                else:
-                                    # We need to find a precise version from each version comparison
-                                    # to know whether or not there is overlap.
-                                    comparable_values = []
-                                    for v in (value1, value2):
-                                        # If the comparison is <= or >=, we can simple use the version
-                                        # in the string as the comparable version.
-                                        if "=" in v:
-                                            comparable_values.append(strip_operator(v))
-                                        # If it's a plain < or > comparison, we need to use the "next"
-                                        # or "previous" version.
-                                        elif v.startswith("<"):
-                                            comparable_values.append(decrement_version(strip_operator(v)))
-                                        elif v.startswith(">"):
-                                            comparable_values.append(increment_version(strip_operator(v)))
-                                    if len(comparable_values) != 2:
-                                        raise BlobValidationError("Couldn't find comparable values for one of: %s, %s".format(value1, value2))
+                                break
+                        elif has_operator(value2) and not has_operator(value1):
+                            if matchVersion(value2, value1):
+                                matches = True
+                                break
+                        # Finally, check for matches if both values have operators
+                        else:
+                            # We need to find a precise version from each version comparison
+                            # to know whether or not there is overlap.
+                            comparable_values = []
+                            for v in (value1, value2):
+                                # If the comparison is <= or >=, we can simple use the version
+                                # in the string as the comparable version.
+                                if "=" in v:
+                                    comparable_values.append(strip_operator(v))
+                                # If it's a plain < or > comparison, we need to use the "next"
+                                # or "previous" version.
+                                elif v.startswith("<"):
+                                    comparable_values.append(decrement_version(strip_operator(v)))
+                                elif v.startswith(">"):
+                                    comparable_values.append(increment_version(strip_operator(v)))
+                            if len(comparable_values) != 2:
+                                raise BlobValidationError("Couldn't find comparable values for one of: %s, %s".format(value1, value2))
 
-                                    # Once we have comparable versions, we can check them!
-                                    if matchVersion(value1, comparable_values[1]) or matchVersion(value2, comparable_values[0]):
-                                        matches = True
-                                        break
+                            # Once we have comparable versions, we can check them!
+                            if matchVersion(value1, comparable_values[1]) or matchVersion(value2, comparable_values[0]):
+                                matches = True
+                                break
 
-                    condition_results.append(matches)
+                condition_results.append(matches)
 
-                if all(condition_results):
-                    conflicts.append((group1["for"], group2["for"], field_dupes))
-                    conflicting_values.update(field_dupes)
+            if all(condition_results):
+                conflicts.append((group1["for"], group2["for"], field_dupes))
+                conflicting_values.update(field_dupes)
 
         if conflicts:
             conflicting_values = ", ".join(conflicting_values)
