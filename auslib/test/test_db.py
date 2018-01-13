@@ -4398,13 +4398,16 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
                                 self.permissions.revokeRole, "bob", "dev", "bill", old_data_version=1)
 
     def testGetAllUsers(self):
-        self.assertEquals(set(self.permissions.getAllUsers()), set(["bill",
-                                                                    "bob",
-                                                                    "cathy",
-                                                                    "fred",
-                                                                    "george",
-                                                                    "janet",
-                                                                    "sean"]))
+        self.assertEquals(self.permissions.getAllUsers(), ({
+            'bill': {'roles': []},
+            'bob': {'roles': [
+                {'data_version': 1, 'role': 'dev'},
+                {'data_version': 1, 'role': 'releng'}]},
+            'cathy': {'roles': [{'data_version': 1, 'role': 'releng'}]},
+            'fred': {'roles': []},
+            'george': {'roles': []},
+            'janet': {'roles': [{'data_version': 1, 'role': 'releng'}]},
+            'sean': {'roles': []}}))
 
     def testCountAllUsers(self):
         self.assertEquals(self.permissions.countAllUsers(), 7)

@@ -19,7 +19,8 @@ class UsersView(AdminView):
         self.log.debug("Found users: %s", users)
         # We don't return a plain jsonify'ed list here because of:
         # http://flask.pocoo.org/docs/security/#json-security
-        return jsonify(dict(users=users))
+        # return jsonify(dict(users=users))
+        return jsonify(users)
 
 
 class SpecificUserView(AdminView):
@@ -259,22 +260,6 @@ class PermissionScheduledChangeHistoryView(ScheduledChangeHistoryView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         return super(PermissionScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
-
-
-class UserRolesView(AdminView):
-    """/users/:username/roles"""
-
-    def get(self, username):
-        roles = dbo.permissions.getUserRoles(username)
-        return jsonify({"roles": roles})
-
-
-class AllRolesView(AdminView):
-    """/users/roles"""
-
-    def get(self):
-        roles = dbo.permissions.getAllRoles()
-        return jsonify({"roles": roles})
 
 
 class UserRoleView(AdminView):

@@ -19,6 +19,8 @@ module.exports = function(lineman) {
         "vendor/js/moment.min.js",
         "vendor/js/sweet-alert.min.js",
         "vendor/js/angular-css-injector.min.js",
+        "vendor/bootstrap/js/bootstrap.min.js",
+
 
         "vendor/js/localforage.min.js",
         "vendor/js/angular-localForage.min.js",

@@ -13,6 +13,8 @@ from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeHistoryView
 from auslib.db import SignoffRequiredError
 from auslib.global_state import dbo
+from auslib.web.common.history import get_input_dict
+from sqlalchemy import and_
 
 
 class RequiredSignoffsView(AdminView):
@@ -48,6 +50,19 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
         self.decisionFields = decisionFields
         super(RequiredSignoffsHistoryAPIView, self).__init__(table=table)
 
+    def _get_filters(self):
+        query = get_input_dict()
+        where = [getattr(self.table.history, f) == query.get(f) for f in query]
+        where.append(self.table.history.data_version != null())
+        if hasattr(self.history_table, 'product'):
+            where.append(self.history_table.product != null())
+        request = connexion.request
+        if request.args.get('timestamp_from'):
+            where.append(self.history_table.timestamp >= int(request.args.get('timestamp_from')))
+        if request.args.get('timestamp_to'):
+            where.append(self.history_table.timestamp <= int(request.args.get('timestamp_to')))
+        return where
+
     def get(self, input_dict):
         if not self.table.select({f: input_dict.get(f) for f in self.decisionFields}):
             return problem(404, "Not Found", "Requested Required Signoff does not exist")
@@ -67,6 +82,27 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
 
         where = [getattr(self.table.history, f) == input_dict.get(f) for f in self.decisionFields]
         where.append(self.table.history.data_version != null())
+        revisions = self.table.history.select(
+            where=where, limit=limit, offset=offset,
+            order_by=[self.table.history.timestamp.desc()]
+        )
+
+        return jsonify(count=total_count, required_signoffs=revisions)
+
+    def get_all(self):
+        try:
+            page = int(connexion.request.args.get('page', 1))
+            limit = int(connexion.request.args.get('limit', 100))
+        except ValueError as msg:
+            self.log.warning("Bad input: %s", msg)
+            return problem(400, "Bad Request", str(msg))
+        offset = limit * (page - 1)
+
+        where = self._get_filters()
+        total_count = self.table.history.t.count()\
+                                        .where(and_(*where))\
+                                        .execute().fetchone()[0]
+
         revisions = self.table.history.select(
             where=where, limit=limit, offset=offset,
             order_by=[self.table.history.timestamp.desc()]
