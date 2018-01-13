@@ -2794,4 +2794,4 @@ class AUSDatabase(object):
 
     @property
     def emergencyShutoffs(self):
-        return self.emergencyShutoffTable
+        return self.emergencyShutoffsTable
