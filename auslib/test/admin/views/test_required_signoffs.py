@@ -625,8 +625,8 @@ class TestPermissionsRequiredSignoffsHistoryView(ViewTest):
                 "data_version": 2,
             },
         ]
-        self.assertEquals(got["count"], 1)
-        self.assertEquals(got["required_signoffs"], expected)
+        self.assertEquals(got["Permissions Required Signoffs"]["count"], 1)
+        self.assertEquals(got["Permissions Required Signoffs"]["required_signoffs"], expected)
 
 
 class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):

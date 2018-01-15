@@ -1675,26 +1675,36 @@ class TestReleasesScheduledChanges(ViewTest):
                 'count': 2,
                 'revisions': [
                     {
-                        '_different': [],
-                        '_time_ago': '3 days ago',
-                        'change_id': 12635504,
-                        'changed_by': 'hope.ngerebara@gmail.com',
-                        'data_version': 798882,
-                        'name': 'Firefox-mozilla-central-nightly-latest',
-                        'product': 'Firefox',
                         'read_only': 'False',
-                        'timestamp': 1509976085599
+                        'timestamp': 16,
+                        'name': 'b',
+                        '_different': [],
+                        'data_version': 1,
+                        'product': 'b',
+                        '_time_ago': '48 years and 584 months ago',
+                        'change_id': 6,
+                        'changed_by': 'bill'
                     },
                     {
-                        '_different': ['data'],
-                        '_time_ago': '3 days ago',
-                        'change_id': 12635482,
-                        'changed_by': 'hope.ngerebara@gmail.com',
-                        'data_version': 798881,
-                        'name': 'Firefox-mozilla-central-nightly-latest',
-                        'product': 'Firefox',
                         'read_only': 'False',
-                        'timestamp': 1509975599716
+                        'timestamp': 10,
+                        'name': 'd',
+                        '_different': ['name', 'data', 'product'],
+                        'data_version': 1,
+                        'product': 'd', '_time_ago': '48 years and 584 months ago',
+                        'change_id': 4,
+                        'changed_by': 'bill'
+                    },
+                    {
+                        'read_only': 'False',
+                        'timestamp': 6,
+                        'name': 'ab',
+                        '_different': ['name', 'data', 'product'],
+                        'data_version': 1,
+                        'product': 'a',
+                        '_time_ago': '48 years and 584 months ago',
+                        'change_id': 2,
+                        'changed_by': 'bill'
                     }
                 ]
             },
@@ -1716,17 +1726,15 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         history_data = data["Releases"]
         revisions = history_data["revisions"]
-        print(revisions, "==================data")
         expected_data = expected["Releases"]
         expected_revisions = expected_data["revisions"]
-        print(expected_revisions, "==================expected")
         for index in range(len(revisions)):
             self.assertEquals(revisions[index]['product'], expected_revisions[index]['product'])
             self.assertEquals(revisions[index]['timestamp'], expected_revisions[index]['timestamp'])
             self.assertEquals(revisions[index]['read_only'], expected_revisions[index]['read_only'])
             self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
             self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
-        self.assertEquals(len(history_data["revisions"]), 2)
+        self.assertEquals(len(history_data["revisions"]), 3)
 
     @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):
@@ -1801,26 +1809,35 @@ class TestReleaseHistoryView(ViewTest):
                 'count': 2,
                 'revisions': [
                     {
-                        '_different': [],
-                        '_time_ago': '3 days ago',
-                        'change_id': 12635504,
-                        'changed_by': 'hope.ngerebara@gmail.com',
-                        'data_version': 798882,
-                        'name': 'Firefox-mozilla-central-nightly-latest',
-                        'product': 'Firefox',
+                        'name': 'b',
+                        'change_id': 6,
                         'read_only': 'False',
-                        'timestamp': 1509976085599
+                        '_time_ago': '48 years and 584 months ago',
+                        'data_version': 1,
+                        '_different': [],
+                        'timestamp': 16,
+                        'product': 'b',
+                        'changed_by': 'bill'
                     },
                     {
-                        '_different': ['data'],
-                        '_time_ago': '3 days ago',
-                        'change_id': 12635482,
-                        'changed_by': 'hope.ngerebara@gmail.com',
-                        'data_version': 798881,
-                        'name': 'Firefox-mozilla-central-nightly-latest',
-                        'product': 'Firefox',
+                        'name': 'd',
+                        'change_id': 4,
                         'read_only': 'False',
-                        'timestamp': 1509975599716
+                        '_time_ago': '48 years and 584 months ago',
+                        'data_version': 1,
+                        '_different': ['name', 'data', 'product'],
+                        'timestamp': 10, 'product': 'd', 'changed_by': 'bill'
+                    },
+                    {
+                        'name': 'ab',
+                        'change_id': 2,
+                        'read_only': 'False',
+                        '_time_ago': '48 years and 584 months ago',
+                        'data_version': 1,
+                        '_different': ['name', 'data', 'product'],
+                        'timestamp': 6,
+                        'product': 'a',
+                        'changed_by': 'bill'
                     }
                 ]
             },
@@ -1842,54 +1859,6 @@ class TestReleaseHistoryView(ViewTest):
         }
         history_data = data["Releases"]
         revisions = history_data["revisions"]
-        print(revisions, "===============xxxxx data")
-        expected_data = expected["Releases"]
-        expected_revisions = expected_data["revisions"]
-        print(expected_revisions, "===============xxxxx expected_revisions")
-        for index in range(len(revisions)):
-            self.assertEquals(revisions[index]['product'], expected_revisions[index]['product'])
-            self.assertEquals(revisions[index]['timestamp'], expected_revisions[index]['timestamp'])
-            self.assertEquals(revisions[index]['read_only'], expected_revisions[index]['read_only'])
-            self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
-            self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
-        self.assertEquals(len(history_data["revisions"]), 2)
-
-    def testGetReleaseHistoryWithTimeRange(self):
-        url = '/all_releases/history'
-        ret = self._get(url, qs={"timestamp_from": 1509976085599})
-        self.assertEquals(ret.status_code, 200, msg=ret.data)
-        data = json.loads(ret.data)
-        expected = {
-            'Releases': {
-                'count': 2,
-                'revisions': [
-                    {
-                        '_different': [],
-                        '_time_ago': '3 days ago',
-                        'change_id': 12635504,
-                        'changed_by': 'hope.ngerebara@gmail.com',
-                        'data_version': 798882,
-                        'name': 'Firefox-mozilla-central-nightly-latest',
-                        'product': 'b',
-                        'read_only': 'False',
-                        'timestamp': 1509976085599
-                    },
-                    {
-                        '_different': ['data'],
-                        '_time_ago': '3 days ago',
-                        'change_id': 12635482,
-                        'changed_by': 'hope.ngerebara@gmail.com',
-                        'data_version': 798881,
-                        'name': 'Firefox-mozilla-central-nightly-latest',
-                        'product': 'b',
-                        'read_only': 'False',
-                        'timestamp': 1509975599716
-                    }
-                ]
-            }
-        }
-        history_data = data["Releases"]
-        revisions = history_data["revisions"]
         expected_data = expected["Releases"]
         expected_revisions = expected_data["revisions"]
         for index in range(len(revisions)):
@@ -1898,9 +1867,7 @@ class TestReleaseHistoryView(ViewTest):
             self.assertEquals(revisions[index]['read_only'], expected_revisions[index]['read_only'])
             self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
             self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
-        print("++++++++++++++++++++++++++ data ++++++++++++++++++++++++++++")
-        print(data)
-        self.assertEquals(len(history_data["revisions"]), 2)
+        self.assertEquals(len(history_data["revisions"]), 3)
 
     def testPostRevisionRollback(self):
         # Make some changes to a release
