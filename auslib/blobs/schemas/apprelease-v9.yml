@@ -42,7 +42,7 @@
       description: Signed certificate timestamp responses when valid certificate is submitted to logs.
     updateLine:
       type: array
-      description: An array of objections containing updateLine fields and the requirements for them to apply. The same field can be specified in many different objects, but to avoid having multiple values for the same field, this can only be done if there is no overlap in requirements.
+      description: An array of objects containing updateLine fields and the requirements for them to apply. The same field can be specified in many different objects, but to avoid having multiple values for the same field, this can only be done if there is no overlap in requirements.
       items:
         type: object
         additionalProperties: false

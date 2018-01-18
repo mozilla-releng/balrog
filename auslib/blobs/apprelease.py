@@ -943,7 +943,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         * Moved most <update> properties into new updateLine data structure
 
     For further information:
-        * https://bugzilla.mozilla.org/show_bug.cgi?id=1369379
+        * https://bugzilla.mozilla.org/show_bug.cgi?id=1400016
 
     """
     jsonschema = "apprelease-v9.yml"
@@ -1012,7 +1012,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         # conflicting updateLine properties. Eg: if openURL is defined in
         # multiple groups, we need to ensure there's no way that one request
         # could match multiple groups. This largely means simulating rule
-        # rule matching for each property in the "for" section of an updateLine
+        # matching for each property in the "for" section of an updateLine
         # group.
         conflicts = []
         conflicting_values = set()
