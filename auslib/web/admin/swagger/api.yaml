@@ -405,8 +405,8 @@ paths:
               type: string
           examples:
             text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
-
-  /all_rules/history:
+  
+  /rules/history:
     get:
       summary: Returns a list of all rules and it's scheduled change history.
       description: >
@@ -426,7 +426,6 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
         - $ref: '#/parameters/channelParam'
@@ -436,7 +435,7 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /all_releases/history:
+  /releases/history:
     get:
       summary: Returns a list of releases and it's scheduled change history.
       description: >
@@ -456,7 +455,6 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
         - $ref: '#/parameters/channelParam'
@@ -466,7 +464,7 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /all_permissions/history:
+  /permissions/history:
     get:
       summary: Returns a list of permissions and it's scheduled change history.
       description: >
@@ -486,7 +484,6 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
         - $ref: '#/parameters/channelParam'
@@ -496,7 +493,7 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /all_product_required_signoffs/history:
+  /product_required_signoffs/history:
     get:
       summary: Returns a list of product required signoff and it's scheduled change history.
       description: >
@@ -516,7 +513,6 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
         - name: role
@@ -531,7 +527,7 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /all_permissions_required_signoffs/history:
+  /permissions_required_signoffs/history:
     get:
       summary: Returns a list of permissions required signoffs and it's scheduled change history.
       description: >
@@ -551,7 +547,6 @@ paths:
         - $ref: '#/parameters/changedByParam'
         - $ref: '#/parameters/changeIdParam'
         - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
         - name: role

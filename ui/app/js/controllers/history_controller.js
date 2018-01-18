@@ -26,11 +26,11 @@ angular
     $scope.data = {
       objectOptions: [
         {id: '1', name: 'default', value:'---Please select---' },
-        {id: '2', name: 'all_rules', value: 'Rules'},
-        {id: '3', name: 'all_releases', value: 'Releases'},
-        {id: '4', name: 'all_permissions', value: 'Permissions'},
-        {id: '5', name: 'all_product_required_signoffs', value: 'Product Required Signoffs'},
-        {id: '6', name: 'all_permissions_required_signoffs', value: 'Permissions Required Signoffs'},
+        {id: '2', name: 'rules', value: 'Rules'},
+        {id: '3', name: 'releases', value: 'Releases'},
+        {id: '4', name: 'permissions', value: 'Permissions'},
+        {id: '5', name: 'product_required_signoffs', value: 'Product Required Signoffs'},
+        {id: '6', name: 'permissions_required_signoffs', value: 'Permissions Required Signoffs'},
       ],
       objectSelected:{id: '1',  name: 'default', value:'---Please select---' }
       };

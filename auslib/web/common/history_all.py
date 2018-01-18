@@ -24,6 +24,10 @@ def _get_filters(obj, history_table):
     where.append(history_table.data_version != null())
     if hasattr(history_table, 'product'):
         where.append(history_table.product != null())
+        if request.args.get('product'):
+            where.append(history_table.product == request.args.get('product'))
+        if request.args.get('channel'):
+            where.append(history_table.channel == request.args.get('channel'))
     if request.args.get('timestamp_from'):
         where.append(history_table.timestamp >= int(request.args.get('timestamp_from')))
     if request.args.get('timestamp_to'):
@@ -48,58 +52,13 @@ def _get_histories(table, obj, process_revisions_callback=None):
                        ext={"exception": str(msg)})
 
 
-def get_rules_history():
-    history_table = dbo.rules.history
-    return _get_histories(history_table, get_rules)
-
-
-def get_releases_history():
-    history_table = dbo.releases.history
-    return _get_histories(history_table, get_releases, process_release_revisions)
-
-
-def get_permissions_history():
-    history_table = dbo.permissions.history
-    get_permissions = UsersView().get()
-    return _get_histories(history_table, get_permissions)
-
-
-def get_permissions_scheduled_change_history():
-    return PermissionScheduledChangeHistoryView().get_all()
-
-
-def get_rules_scheduled_change_history():
-    return RuleScheduledChangeHistoryView().get_all()
-
-
-def get_releases_scheduled_change_history():
-    return ReleaseScheduledChangeHistoryView().get_all()
-
-
-def get_product_required_signoffs_scheduled_change_history():
-    return ProductRequiredSignoffScheduledChangeHistoryView().get_all()
-
-
-def get_permission_required_signoffs_scheduled_change_history():
-    return PermissionsRequiredSignoffScheduledChangeHistoryView().get_all()
-
-
-def get_product_required_signoffs_history():
-    return ProductRequiredSignoffsHistoryAPIView().get_all()
-
-
-def get_permissions_required_signoffs_history():
-    return PermissionsRequiredSignoffsHistoryAPIView().get_all()
-
-
 def rules_history():
-    methods = {
-        'rules': get_rules_history(),
-        'sc_rules': get_rules_scheduled_change_history()
-    }
+    """GET /rules/history"""
+    history_table = dbo.rules.history
+    rules = _get_histories(history_table, get_rules)
     history = {
-        'rules': methods.get('rules'),
-        'sc_rules': methods.get('sc_rules')
+        'rules': rules,
+        'sc_rules': RuleScheduledChangeHistoryView().get_all()
     }
     histories = {
         'Rules': json.loads(history['rules'].data),
@@ -109,13 +68,12 @@ def rules_history():
 
 
 def releases_history():
-    releases_methods = {
-        'releases': get_releases_history(),
-        'sc_releases': get_releases_scheduled_change_history()
-    }
+    """GET /releases/history"""
+    history_table = dbo.releases.history
+    releases = _get_histories(history_table, get_releases, process_release_revisions)
     releases_history = {
-        'releases': releases_methods.get('releases'),
-        'sc_releases': releases_methods.get('sc_releases')
+        'releases': releases,
+        'sc_releases': ReleaseScheduledChangeHistoryView().get_all()
     }
     histories = {
         'Releases': json.loads(releases_history['releases'].data),
@@ -125,13 +83,13 @@ def releases_history():
 
 
 def permissions_history():
-    permissions_methods = {
-        'permissions': get_permissions_history(),
-        'sc_permissions': get_permissions_scheduled_change_history()
-    }
+    """GET /permissions/history"""
+    history_table = dbo.permissions.history
+    get_permissions = UsersView().get()
+    permissions = _get_histories(history_table, get_permissions)
     permissions_history = {
-        'permissions': permissions_methods.get('permissions'),
-        'sc_permissions': permissions_methods.get('sc_permissions')
+        'permissions': permissions,
+        'sc_permissions': PermissionScheduledChangeHistoryView().get_all()
     }
     histories = {
         'Permissions': json.loads(permissions_history['permissions'].data),
@@ -141,13 +99,10 @@ def permissions_history():
 
 
 def product_required_signoffs_history():
-    product_required_signoffs_methods = {
-        'product_required_signoffs': get_product_required_signoffs_history(),
-        'sc_product_required_signoffs': get_product_required_signoffs_scheduled_change_history()
-    }
+    """GET /product_required_signoffs/history"""
     product_required_signoffs_history = {
-        'product_required_signoffs': product_required_signoffs_methods.get('product_required_signoffs'),
-        'sc_product_required_signoffs': product_required_signoffs_methods.get('sc_product_required_signoffs')
+        'product_required_signoffs': ProductRequiredSignoffsHistoryAPIView().get_all(),
+        'sc_product_required_signoffs': ProductRequiredSignoffScheduledChangeHistoryView().get_all()
     }
     histories = {
         'Product Required Signoffs': json.loads(product_required_signoffs_history['product_required_signoffs'].data),
@@ -157,13 +112,10 @@ def product_required_signoffs_history():
 
 
 def permissions_required_signoffs_history():
-    permissions_required_signoffs_methods = {
-        'permissions_required_signoffs': get_permissions_required_signoffs_history(),
-        'sc_permissions_required_signoffs': get_permission_required_signoffs_scheduled_change_history()
-    }
+    """GET /permissions_required_signoffs/history"""
     permissions_required_signoffs_history = {
-        'permissions_required_signoffs': permissions_required_signoffs_methods.get('permissions_required_signoffs'),
-        'sc_permissions_required_signoffs': permissions_required_signoffs_methods.get('sc_permissions_required_signoffs')
+        'permissions_required_signoffs': PermissionsRequiredSignoffsHistoryAPIView().get_all(),
+        'sc_permissions_required_signoffs': PermissionsRequiredSignoffScheduledChangeHistoryView().get_all()
     }
     histories = {
         'Permissions Required Signoffs': json.loads(permissions_required_signoffs_history['permissions_required_signoffs'].data),

@@ -805,7 +805,7 @@ class TestRuleHistoryView(ViewTest):
             "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
         )
 
-        url = '/all_rules/history'
+        url = '/rules/history'
         ret = self._get(url)
         got = json.loads(ret.data)
         self.assertEquals(ret.status_code, 200, msg=ret.data)
@@ -1651,8 +1651,8 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
-    def testGetAllRulesHistory(self):
-        ret = self._get("/all_rules/history")
+    def testGetRulesHistory(self):
+        ret = self._get("/rules/history")
         got = json.loads(ret.data)
         self.assertEquals(ret.status_code, 200)
         self.assertEquals(ret.status_code, 200, msg=ret.data)

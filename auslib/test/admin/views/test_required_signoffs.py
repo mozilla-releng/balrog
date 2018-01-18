@@ -88,8 +88,8 @@ class TestProductRequiredSignoffsHistoryView(ViewTest):
         self.assertEquals(got["count"], 2)
         self.assertEquals(got["required_signoffs"], expected)
 
-    def testGetAllProductRequiedSignoffsHistory(self):
-        ret = self._get("/all_product_required_signoffs/history", qs={})
+    def testGetProductRequiedSignoffsHistory(self):
+        ret = self._get("/product_required_signoffs/history", qs={})
         self.assertStatusCode(ret, 200)
 
         got = json.loads(ret.data)
@@ -118,8 +118,8 @@ class TestProductRequiredSignoffsHistoryView(ViewTest):
         self.assertEquals(got["Product Required Signoffs"]["count"], 2)
         self.assertEquals(got["Product Required Signoffs"]["required_signoffs"], expected)
 
-    def testGetAllProductRequiedSignoffsWithinTimeRange(self):
-        ret = self._get("/all_product_required_signoffs/history", qs={"timestamp_from": 20, "timestamp_to": 30})
+    def testGetProductRequiedSignoffsWithinTimeRange(self):
+        ret = self._get("/product_required_signoffs/history", qs={"timestamp_from": 20, "timestamp_to": 30})
         self.assertStatusCode(ret, 200)
 
         got = json.loads(ret.data)
@@ -609,8 +609,8 @@ class TestPermissionsRequiredSignoffsHistoryView(ViewTest):
         self.assertEquals(got["count"], 2)
         self.assertEquals(got["required_signoffs"], expected)
 
-    def testGetAllPermissionsHistoryWithinTimeRange(self):
-        ret = self._get("/all_permissions_required_signoffs/history", qs={"timestamp_from": 20, "timestamp_to": 30})
+    def testGetPermissionsRequiredSignoffsHistoryWithinTimeRange(self):
+        ret = self._get("/permissions_required_signoffs/history", qs={"timestamp_from": 20, "timestamp_to": 30})
         self.assertStatusCode(ret, 200)
 
         got = json.loads(ret.data)
@@ -983,8 +983,8 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
-    def testGetAllPermissionsRequiredSignoffsHistory(self):
-        ret = self._get("/all_permissions_required_signoffs/history")
+    def testGetPermissionsRequiredSignoffsHistory(self):
+        ret = self._get("/permissions_required_signoffs/history")
         self.assertEquals(ret.status_code, 200, ret.data)
         expected = {
             "count": 2,
