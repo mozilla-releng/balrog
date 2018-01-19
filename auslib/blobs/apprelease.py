@@ -892,7 +892,7 @@ class ProofXMLMixin(object):
 
 
 class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """
+    """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
 
     Changes from ReleaseBlobV6:
         * Adds support for ProofXMLMixin (placed as first parameter for inheritance preference)
@@ -937,7 +937,7 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
 
 
 class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """
+    """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
 
     Changes from ReleaseBlobV8:
         * Moved most <update> properties into new updateLine data structure
