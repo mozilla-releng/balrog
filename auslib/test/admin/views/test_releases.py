@@ -1671,42 +1671,58 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(ret.status_code, 200, ret.data)
         data = json.loads(ret.data)
         expected = {
-            'Releases': {
-                'count': 1,
-                'revisions': [
-                    {
-                        'read_only': 'False',
-                        'timestamp': 16,
-                        'name': 'b',
-                        '_different': [],
-                        'data_version': 1,
-                        'product': 'b',
-                        '_time_ago': '48 years and 584 months ago',
-                        'change_id': 6,
-                        'changed_by': 'bill'
-                    },
-                ]
-            },
-            'Releases Scheduled Change': {
-                'count': 2,
-                'revisions': [
-                    {
-                        "change_id": 9, "changed_by": "bill", "change_type": "delete", "complete": False, 
-                        "data": None, "data_version": 1, "name": "ab", "product": None, "read_only": False, "sc_data_version": 1,
-                        "sc_id": 4,"scheduled_by": "bill","timestamp": 26,  "when": 230000000,
-                    },
-                    {
-                        "change_id": 7,"change_type": "update", "changed_by": "bill", "complete": True,
-                        "data": {"hashfunction": "sha512", "name": "b", "schema_version": 1}, "data_version": 1, "name": "ab",
-                        "product": "b", "read_only": False, "sc_data_version": 2, "sc_id": 3,"scheduled_by": "bill",
-                        "timestamp": 25,  "when": 10000000,
-                    },
-                ]
-            },
-            
-        }
+                'Releases scheduled change': {
+                    'revisions': [
+                        {
+                            'change_id': 9,
+                            'read_only': False,
+                            'name': 'ab',
+                            'scheduled_by': 'bill',
+                            'when': 230000000,
+                            'changed_by': 'bill',
+                            'data_version': 1,
+                            'sc_id': 4,
+                            'product': None,
+                            'complete': False,
+                            'data': None,
+                            'timestamp': 26,
+                            'change_type': 'delete',
+                            'sc_data_version': 1
+                        },
+                        {
+                            'change_id': 7,
+                            'read_only': False,
+                            'name': 'b',
+                            'scheduled_by': 'bill',
+                            'when': 10000000,
+                            'changed_by': 'bill',
+                            'data_version': 1,
+                            'sc_id': 3,
+                            'product': 'b',
+                            'complete': True,
+                            'data': {'hashFunction': 'sha512', 'schema_version': 1, 'name': 'b'},
+                            'timestamp': 25,
+                            'change_type': 'update',
+                            'sc_data_version': 2}], 'count': 2
+                        },
+                        'Releases': {
+                            'revisions': [
+                                {
+                                    'change_id': 6,
+                                    'read_only': 'False',
+                                    'name': 'b',
+                                    '_different': [],
+                                    'changed_by': 'bill',
+                                    'data_version': 1,
+                                    'product': 'b',
+                                    'timestamp': 16,
+                                    '_time_ago': '48 years and 585 months ago'
+                                }],
+                                'count': 1
+                            }
+                        }
         self.assertEquals(data["Releases"]["count"], 1)
-        self.assertEquals(data["Releases Scheduled Change"], expected)
+        self.assertEquals(data["Releases scheduled change"], expected["Releases scheduled change"])
 
     @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):
