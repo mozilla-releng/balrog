@@ -1671,56 +1671,60 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEquals(ret.status_code, 200, ret.data)
         data = json.loads(ret.data)
         expected = {
-                'Releases scheduled change': {
-                    'revisions': [
-                        {
-                            'change_id': 9,
-                            'read_only': False,
-                            'name': 'ab',
-                            'scheduled_by': 'bill',
-                            'when': 230000000,
-                            'changed_by': 'bill',
-                            'data_version': 1,
-                            'sc_id': 4,
-                            'product': None,
-                            'complete': False,
-                            'data': None,
-                            'timestamp': 26,
-                            'change_type': 'delete',
-                            'sc_data_version': 1
-                        },
-                        {
-                            'change_id': 7,
-                            'read_only': False,
-                            'name': 'b',
-                            'scheduled_by': 'bill',
-                            'when': 10000000,
-                            'changed_by': 'bill',
-                            'data_version': 1,
-                            'sc_id': 3,
-                            'product': 'b',
-                            'complete': True,
-                            'data': {'hashFunction': 'sha512', 'schema_version': 1, 'name': 'b'},
-                            'timestamp': 25,
-                            'change_type': 'update',
-                            'sc_data_version': 2}], 'count': 2
-                        },
-                        'Releases': {
-                            'revisions': [
-                                {
-                                    'change_id': 6,
-                                    'read_only': 'False',
-                                    'name': 'b',
-                                    '_different': [],
-                                    'changed_by': 'bill',
-                                    'data_version': 1,
-                                    'product': 'b',
-                                    'timestamp': 16,
-                                    '_time_ago': '48 years and 585 months ago'
-                                }],
-                                'count': 1
-                            }
-                        }
+            'Releases scheduled change': {
+                'revisions': [
+                    {
+                        'change_id': 9,
+                        'read_only': False,
+                        'name': 'ab',
+                        'scheduled_by': 'bill',
+                        'when': 230000000,
+                        'changed_by': 'bill',
+                        'data_version': 1,
+                        'sc_id': 4,
+                        'product': None,
+                        'complete': False,
+                        'data': None,
+                        'timestamp': 26,
+                        'change_type': 'delete',
+                        'sc_data_version': 1
+                    },
+                    {
+                        'change_id': 7,
+                        'read_only': False,
+                        'name': 'b',
+                        'scheduled_by': 'bill',
+                        'when': 10000000,
+                        'changed_by': 'bill',
+                        'data_version': 1,
+                        'sc_id': 3,
+                        'product': 'b',
+                        'complete': True,
+                        'data': {'hashFunction': 'sha512', 'schema_version': 1, 'name': 'b'},
+                        'timestamp': 25,
+                        'change_type': 'update',
+                        'sc_data_version': 2
+                    }
+                ],
+                'count': 2
+            },
+            'Releases': {
+                'revisions': [
+                    {
+                        'change_id': 6,
+                        'read_only': 'False',
+                        'name': 'b',
+                        '_different': [],
+                        'changed_by': 'bill',
+                        'data_version': 1,
+                        'product': 'b',
+                        'timestamp': 16,
+                        '_time_ago': '48 years and 585 months ago'
+                    }
+                ],
+                'count': 1
+            }
+        }
         self.assertEquals(data["Releases"]["count"], 1)
         self.assertEquals(data["Releases scheduled change"], expected["Releases scheduled change"])
 
