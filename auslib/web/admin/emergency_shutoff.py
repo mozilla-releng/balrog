@@ -5,7 +5,7 @@ from auslib.global_state import dbo
 from auslib.web.admin.views.base import (
     requirelogin, handleGeneralExceptions, transactionHandler)
 from auslib.web.admin.views.scheduled_changes import (
-    EnactScheduledChangeView, ScheduledChangesView, SignoffsView)
+    EnactScheduledChangeView, ScheduledChangeView, ScheduledChangesView, SignoffsView)
 
 
 def get_emergency_shutoff(product, channel):
@@ -67,8 +67,13 @@ def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
     return view._post(sc_emergency_shutoff, transaction, changed_by, change_type)
 
 
-def update_scheduled_deletion():
-    pass
+@requirelogin
+@transactionHandler
+def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transaction):
+    if 'csrf_token' in sc_emergency_shutoff:
+        del sc_emergency_shutoff['csrf_token']
+    view = ScheduledChangeView('emergency_shutoff', dbo.emergencyShutoffs)
+    return view._post(sc_id, sc_emergency_shutoff, transaction, changed_by, sc_emergency_shutoff['sc_data_version'])
 
 
 def scheduled_changes_signoffs(sc_id):

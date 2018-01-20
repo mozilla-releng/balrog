@@ -3858,7 +3858,6 @@ paths:
             allOf:
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCTime'
-              - $ref: '#/definitions/SCUptake'
               - $ref: '#/definitions/EmergencyShutOffModel'
             properties:
               change_type:
@@ -3876,6 +3875,42 @@ paths:
             $ref: '#/definitions/SCIdModel'
         '400':
           $ref: '#/responses/invalidFormData'
+
+  /scheduled_changes/emergency_shutoff/{sc_id}:
+    post:
+      summary: Modifies existing scheduled change for a Emergency shut off.
+      description: >
+        Modifies existing scheduled change for a Emergency shut off. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.update_scheduled_deletion
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: "Modifies existing scheduled change for a Emergency shut off."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - name: sc_emergency_shutoff
+          in: body
+          description: Request body for editing sc Emergency shut off.
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/SCDataVersion'
+      responses:
+        '200':
+          $ref: '#/responses/updateExistingObject'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /scheduled_changes/emergency_shutoff/{sc_id}/enact:
     post:

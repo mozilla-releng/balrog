@@ -103,6 +103,26 @@ class TestEmergencyShutoff(ViewTest):
                                 .execute().fetchall()
         self.assertTrue(sc)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def test_update_scheduled_deletion(self):
+        data = {'when': 123454321, 'sc_data_version': 1}
+        ret = self._post("/scheduled_changes/emergency_shutoff/1", data=data)
+        self.assertEquals(ret.status_code, 200)
+        ret_data = json.loads(ret.data)
+        self.assertIn('new_data_version', ret_data)
+        self.assertEquals(ret_data['new_data_version'], 2)
+        sc_table = dbo.emergencyShutoffs.scheduled_changes
+        conditions_table = sc_table.conditions
+        sc = sc_table.t.select().where(sc_table.base_product == 'Firefox')\
+                                .where(sc_table.base_channel == 'nightly')\
+                                .where(sc_table.base_data_version == 1)\
+                                .where(sc_table.change_type == 'delete')\
+                                .where(sc_table.data_version == 2)\
+                                .where(conditions_table.sc_id == sc_table.sc_id)\
+                                .where(conditions_table.when == data['when'])\
+                                .execute().fetchall()
+        self.assertTrue(sc)
+
     def test_enact_updates_scheduled_for_reactivation(self):
         resp = self._post('/scheduled_changes/emergency_shutoff/1/enact')
         self.assertStatusCode(resp, 200)
