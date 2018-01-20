@@ -1159,7 +1159,7 @@ class ScheduledChangeTable(AUSTable):
             ret.append(row)
         return ret
 
-    def insert(self, changed_by, transaction=None, dryrun=False, allow_auto_signoff=True, **columns):
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         base_columns, condition_columns = self._splitColumns(columns)
         if "change_type" not in base_columns:
             raise ValueError("Change type is required")
@@ -1176,8 +1176,7 @@ class ScheduledChangeTable(AUSTable):
             if not self._dataVersionsAreSynced(sc_id, transaction):
                 raise MismatchedDataVersionError("Conditions data version is out of sync with main table for sc_id %s",
                                                  sc_id)
-            if allow_auto_signoff:
-                self.auto_signoff(changed_by, transaction, sc_id, dryrun, columns)
+            self.auto_signoff(changed_by, transaction, sc_id, dryrun, columns)
 
             return sc_id
 

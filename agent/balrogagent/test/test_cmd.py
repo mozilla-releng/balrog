@@ -190,7 +190,6 @@ class TestRunAgent(asynctest.TestCase):
         self.assertIn('/scheduled_changes/releases/4/enact', called_endpoints)
         self.assertIn('/scheduled_changes/releases/5/enact', called_endpoints)
         self.assertIn('/scheduled_changes/releases/6/enact', called_endpoints)
-        self.assertIn('/scheduled_changes/releases/6/enact', called_endpoints)
 
     @asynctest.patch("time.time")
     async def testSignoffsPresent(self, time, time_is_ready, telemetry_is_ready, request):

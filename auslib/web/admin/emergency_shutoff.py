@@ -1,5 +1,4 @@
 import json
-import time
 from flask import Response
 from connexion import problem
 from auslib.global_state import dbo
@@ -15,39 +14,20 @@ def get_emergency_shutoff(product, channel):
     return shutoffs[0] if shutoffs else None
 
 
-def shutoff_already_exists(product, channel):
+def shutoff_exists(product, channel):
     return bool(get_emergency_shutoff(product, channel))
-
-
-def product_requires_signoffs(product, channel):
-    rs = dbo.productRequiredSignoffs.select(where=dict(product=product, channel=channel))
-    return bool(rs)
-
-
-def process_shutoff_post(emergency_shutoff):
-    if 'csrf_token' in emergency_shutoff:
-        del emergency_shutoff['csrf_token']
-    if 'data_version' not in emergency_shutoff:
-        emergency_shutoff['data_version'] = 1
-    return emergency_shutoff
 
 
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions('POST')
 def post(emergency_shutoff, changed_by, transaction):
-    if shutoff_already_exists(emergency_shutoff['product'], emergency_shutoff['channel']):
+    if shutoff_exists(emergency_shutoff['product'], emergency_shutoff['channel']):
         return problem(
             400, 'Bad Request', 'Invalid Emergency shutoff data',
             ext={'data': 'Emergency shutoff for product/channel already exists.'})
-    if not product_requires_signoffs(emergency_shutoff['product'], emergency_shutoff['channel']):
-        return problem(
-            400, 'Bad Request', 'Invalid Emergency shutoff data',
-            ext={'data': 'The given product/channel should requires signoffs.'})
-    emergency_shutoff = process_shutoff_post(emergency_shutoff)
     dbo.emergencyShutoffs.insert(
-        changed_by=changed_by, transaction=transaction, **emergency_shutoff)
-    schedule_reenable_updates(emergency_shutoff, changed_by, transaction)
+        changed_by=changed_by, transaction=transaction, product=emergency_shutoff['product'], channel=emergency_shutoff['channel'])
     return Response(status=201,
                     content_type="application/json",
                     response=json.dumps(emergency_shutoff))
@@ -57,8 +37,7 @@ def post(emergency_shutoff, changed_by, transaction):
 @transactionHandler
 @handleGeneralExceptions('DELETE')
 def delete(product, channel, data_version, changed_by, transaction, **kwargs):
-    shutoff = get_emergency_shutoff(product, channel)
-    if not shutoff:
+    if not shutoff_exists(product, channel):
         return problem(status=404,
                        title="Not Found",
                        detail="Shutoff wasn't found",
@@ -70,22 +49,26 @@ def delete(product, channel, data_version, changed_by, transaction, **kwargs):
     return Response(status=200)
 
 
-def get_asap_when():
-    now = time.time()
-    minutes = 5 * 60
-    return int((now + minutes) * 1000)
-
-
-def schedule_reenable_updates(shutoff, changed_by, transaction):
-    what = dict(when=get_asap_when())
-    what.update(shutoff)
-    dbo.emergencyShutoffs.scheduled_changes.insert(
-        changed_by, transaction, change_type='delete', allow_auto_signoff=False, **what)
-
-
 def scheduled_changes():
     view = ScheduledChangesView('emergency_shutoff', dbo.emergencyShutoffs)
     return view.get()
+
+
+@requirelogin
+@transactionHandler
+def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
+    if 'csrf_token' in sc_emergency_shutoff:
+        del sc_emergency_shutoff['csrf_token']
+    change_type = sc_emergency_shutoff.get('change_type')
+    if change_type != 'delete':
+        return problem(400, "Bad Request", "Invalid or missing change_type")
+
+    view = ScheduledChangesView('emergency_shutoff', dbo.emergencyShutoffs)
+    return view._post(sc_emergency_shutoff, transaction, changed_by, change_type)
+
+
+def update_scheduled_deletion():
+    pass
 
 
 def scheduled_changes_signoffs(sc_id):

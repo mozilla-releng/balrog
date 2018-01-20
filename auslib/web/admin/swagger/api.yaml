@@ -3828,10 +3828,54 @@ paths:
                       type: object
                       allOf:
                         - $ref: '#/definitions/SCSignoffsModel'
-                        - $ref: '#/definitions/EmergencyShutoffObject'
+                        - $ref: '#/definitions/EmergencyShutOffModel'
                         - properties:
                             original_row:
-                              $ref: '#/definitions/EmergencyShutoffObject'
+                              $ref: '#/definitions/EmergencyShutOffModel'
+
+    post:
+      summary: Create scheduled change for emergency shut off.
+      description: >
+        Create scheduled change for a emergency shut off. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.schedule_deletion
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: "create scheduled change for emergency shut off."
+      parameters:
+        - name: sc_emergency_shutoff
+          in: body
+          description: Request body for sc emergency shut off
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/SCUptake'
+              - $ref: '#/definitions/EmergencyShutOffModel'
+            properties:
+              change_type:
+                description: type of change
+                type: string
+                enum:
+                  - delete
+                minLength: 1
+                maxLength: 50
+                example: update
+      responses:
+        '200':
+          description: Returns sc_id of change
+          schema:
+            $ref: '#/definitions/SCIdModel'
+        '400':
+          $ref: '#/responses/invalidFormData'
 
   /scheduled_changes/emergency_shutoff/{sc_id}/enact:
     post:

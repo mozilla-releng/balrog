@@ -420,26 +420,10 @@ definitions:
     allOf:
       - $ref: '#/definitions/ProductModel'
       - $ref: '#/definitions/ChannelModel'
+      - $ref: '#/definitions/DataVersionModel'
     required:
       - product
       - channel
-
-  EmergencyShutoffObject:
-    title: Emergency shut off information.
-    description: Information about product/channel available to shut off updates.
-    type: object
-    allOf:
-      - $ref: '#/definitions/EmergencyShutOffModel'
-      - $ref: '#/definitions/DataVersionModel'
-      - type: object
-        properties:
-          shutoff_id:
-            description: Shut off Id
-            type: integer
-            format: int32
-          updates_disabled:
-            description: Indicates if updates are disabled for product/channel.
-            type: boolean
 
   EmergencyShutoffListGET:
     title: List of emergency shut offs.
@@ -455,4 +439,4 @@ definitions:
             description: List of emergency shutoffs.
             type: array
             items:
-              $ref: '#/definitions/EmergencyShutoffObject'
+              $ref: '#/definitions/EmergencyShutOffModel'
