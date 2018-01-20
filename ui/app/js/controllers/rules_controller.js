@@ -321,6 +321,50 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
 
+  $scope.openNewScheduledDuplicateModal = function(rule) {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'rule_scheduled_change_modal.html',
+      controller: 'NewRuleScheduledChangeCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        scheduled_changes: function() {
+          return [];
+        },
+        sc: function() {
+          if(rule.scheduled_change !== null && rule.scheduled_change.change_type === "insert") {
+            sc = angular.copy(rule.scheduled_change);
+            delete sc.sc_id;
+            delete sc.sc_data_version;
+            delete sc.when;
+            delete sc.complete;
+            delete sc.change_type;
+
+          }
+          else {
+            sc = angular.copy(rule);
+          }
+          sc["change_type"] = "insert";
+          delete sc.data_version;
+          delete sc.rule_id;
+          delete sc.alias;
+          return sc;
+        },
+        original_row: function() {
+          return null;
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
+      }
+    });
+    modalInstance.result.then(function(sc) {
+      var rule = {"scheduled_change": sc};
+      $scope.rules.push(rule);
+    });
+  };
+
   $scope.openNewScheduledRuleChangeModal = function(rule) {
 
     var modalInstance = $modal.open({
