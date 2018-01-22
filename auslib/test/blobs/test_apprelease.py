@@ -3119,7 +3119,7 @@ class TestSchema9Blob(unittest.TestCase):
 ])
 def testSchema9CanCreateValidBlobs(for1, for2):
     good_blob = {
-        "name": "bad",
+        "name": "good",
         "schema_version": 9,
         "hashFunction": "sha512",
         "appVersion": "31.0.2",

@@ -1,14 +1,13 @@
+import jsonschema
+import logging
 from os import path
 import simplejson as json
-
-import jsonschema
-
 import yaml
-
-import logging
 
 from auslib.AUS import isSpecialURL
 from auslib.global_state import cache
+# To enable shared jsonschema validators
+import auslib.util.jsonschema_validators # noqa
 
 
 class BlobValidationError(ValueError):
@@ -128,7 +127,7 @@ class Blob(dict):
     def validate(self, product, whitelistedDomains):
         """Raises a BlobValidationError if the blob is invalid."""
         self.log.debug('Validating blob %s' % self)
-        validator = jsonschema.Draft4Validator(self.getSchema())
+        validator = jsonschema.Draft4Validator(self.getSchema(), format_checker=jsonschema.draft4_format_checker)
         # Normal usage is to use .validate(), but errors raised by it return
         # a massive error message that includes the entire blob, which is way
         # too big to be useful in the UI. Instead, we iterate over the

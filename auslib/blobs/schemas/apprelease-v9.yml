@@ -67,6 +67,7 @@
                 description: A list of version matching strings. Exact versions may be specified, or comparisons with <, >, <=, or <= operators.
                 items:
                   type: string
+                  format: version
           fields:
             type: object
             additionalProperties: false
