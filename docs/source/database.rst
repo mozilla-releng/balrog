@@ -117,8 +117,8 @@ Following tables show columns according to different Categories:
   |                        |                    | must match precisely.                            |                                 |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | version            | The version of the application requesting an     | Exact string match or exact     | "36.0" or "36.0,36.1,36.2" |
-  |                        |                    | update.                                          | matches from list of values or  | or ">=38.0a1"              |
-  |                        |                    |                                                  | operator plus version           |                            |
+  |                        |                    | update. Must be at least a two-part version      | matches from list of values or  | or ">=38.0a1"              |
+  |                        |                    | string.                                          | operator plus version           |                            |
   |                        |                    |                                                  | to compare the incoming         |                            |
   |                        |                    |                                                  | one against                     |                            |
   +------------------------+--------------------+--------------------------------------------------+---------------------------------+----------------------------+

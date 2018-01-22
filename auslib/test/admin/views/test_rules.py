@@ -212,6 +212,17 @@ class TestRulesAPI_JSON(ViewTest):
             self.assertEquals(len(r), 1)
             self.assertEquals(r[0]['version'], '%s4.0' % op)
 
+    def testVersionValidationRequiresAtLeastTwoPartVersion(self):
+        ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
+                                             channel="nightly", update_type="minor", version="5"))
+        self.assertEquals(ret.status_code, 400)
+
+    def testVersionValidationRequiresAtLeastTwoPartVersionWithOperator(self):
+        for op in operators:
+            ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
+                                                 channel="nightly", update_type="minor", version="%s5" % op))
+            self.assertEquals(ret.status_code, 400)
+
     def testBuildIDValidation(self):
         for op in operators:
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
