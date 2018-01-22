@@ -773,118 +773,122 @@ class TestPermissionsScheduledChanges(ViewTest):
     def testGetPermissionsHistory(self):
         ret = self._get("/permissions/history")
         self.assertEquals(ret.status_code, 200, ret.data)
-        expected = {'Permissions': {
-                    'count': 0,
-                    'revisions': []
-                    }, 'Permissions Scheduled Change': {
-                    'count': 7,
-                    'revisions': [
-                        {
-                            'change_id': 13,
-                            'change_type': 'update',
-                            'changed_by': 'bill',
-                            'complete': False,
-                            'data_version': 1,
-                            'options': {'products': ['a', 'b']},
-                            'permission': 'release',
-                            'sc_data_version': 1,
-                            'sc_id': 6,
-                            'scheduled_by': 'bill',
-                            'timestamp': 405,
-                            'username': 'bob',
-                            'when': 38000000
-                        },
-                        {
-                            'change_id': 11,
-                            'change_type': 'insert',
-                            'changed_by': 'bill',
-                            'complete': False,
-                            'data_version': None,
-                            'options': {'products': ['fake']},
-                            'permission': 'rule',
-                            'sc_data_version': 1,
-                            'sc_id': 5,
-                            'scheduled_by': 'bill',
-                            'timestamp': 205,
-                            'username': 'joe',
-                            'when': 98000000
-                        },
-                        {
-                            'change_id': 9,
-                            'change_type': 'delete',
-                            'changed_by': 'bill',
-                            'complete': False,
-                            'data_version': None,
-                            'options': None,
-                            'permission': 'scheduled_change',
-                            'sc_data_version': 1,
-                            'sc_id': 4,
-                            'scheduled_by': 'bill',
-                            'timestamp': 201,
-                            'username': 'mary',
-                            'when': 76000000
-                        },
-                        {
-                            'change_id': 7,
-                            'change_type': 'insert',
-                            'changed_by': 'bill',
-                            'complete': True,
-                            'data_version': None,
-                            'options': None,
-                            'permission': 'permission',
-                            'sc_data_version': 2,
-                            'sc_id': 3,
-                            'scheduled_by': 'bill',
-                            'timestamp': 100,
-                            'username': 'bob',
-                            'when': 30000000
-                        },
-                        {
-                            'change_id': 6,
-                            'change_type': 'insert',
-                            'changed_by': 'bill',
-                            'complete': False,
-                            'data_version': None,
-                            'options': None,
-                            'permission': 'permission',
-                            'sc_data_version': 1,
-                            'sc_id': 3,
-                            'scheduled_by': 'bill',
-                            'timestamp': 61,
-                            'username': 'bob',
-                            'when': 30000000
-                        },
-                        {
-                            'change_id': 4,
-                            'change_type': 'update',
-                            'changed_by': 'bill',
-                            'complete': False,
-                            'data_version': 1,
-                            'options': None,
-                            'permission': 'release_locale',
-                            'sc_data_version': 1,
-                            'sc_id': 2,
-                            'scheduled_by': 'bill',
-                            'timestamp': 41,
-                            'username': 'ashanti',
-                            'when': 20000000
-                        },
-                        {
-                            'change_id': 2,
-                            'change_type': 'insert',
-                            'changed_by': 'bill',
-                            'complete': False,
-                            'data_version': None,
-                            'options': {'products': ['foo']},
-                            'permission': 'rule',
-                            'sc_data_version': 1,
-                            'sc_id': 1,
-                            'scheduled_by': 'bill',
-                            'timestamp': 21,
-                            'username': 'janet',
-                            'when': 10000000
-                        }]
-                    }}
+        expected = {
+            'Permissions': {
+                'count': 0,
+                'revisions': []
+            },
+            'Permissions Scheduled Change': {
+                'count': 7,
+                'revisions': [
+                    {
+                        'change_id': 13,
+                        'change_type': 'update',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': 1,
+                        'options': {'products': ['a', 'b']},
+                        'permission': 'release',
+                        'sc_data_version': 1,
+                        'sc_id': 6,
+                        'scheduled_by': 'bill',
+                        'timestamp': 405,
+                        'username': 'bob',
+                        'when': 38000000
+                    },
+                    {
+                        'change_id': 11,
+                        'change_type': 'insert',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': None,
+                        'options': {'products': ['fake']},
+                        'permission': 'rule',
+                        'sc_data_version': 1,
+                        'sc_id': 5,
+                        'scheduled_by': 'bill',
+                        'timestamp': 205,
+                        'username': 'joe',
+                        'when': 98000000
+                    },
+                    {
+                        'change_id': 9,
+                        'change_type': 'delete',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': None,
+                        'options': None,
+                        'permission': 'scheduled_change',
+                        'sc_data_version': 1,
+                        'sc_id': 4,
+                        'scheduled_by': 'bill',
+                        'timestamp': 201,
+                        'username': 'mary',
+                        'when': 76000000
+                    },
+                    {
+                        'change_id': 7,
+                        'change_type': 'insert',
+                        'changed_by': 'bill',
+                        'complete': True,
+                        'data_version': None,
+                        'options': None,
+                        'permission': 'permission',
+                        'sc_data_version': 2,
+                        'sc_id': 3,
+                        'scheduled_by': 'bill',
+                        'timestamp': 100,
+                        'username': 'bob',
+                        'when': 30000000
+                    },
+                    {
+                        'change_id': 6,
+                        'change_type': 'insert',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': None,
+                        'options': None,
+                        'permission': 'permission',
+                        'sc_data_version': 1,
+                        'sc_id': 3,
+                        'scheduled_by': 'bill',
+                        'timestamp': 61,
+                        'username': 'bob',
+                        'when': 30000000
+                    },
+                    {
+                        'change_id': 4,
+                        'change_type': 'update',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': 1,
+                        'options': None,
+                        'permission': 'release_locale',
+                        'sc_data_version': 1,
+                        'sc_id': 2,
+                        'scheduled_by': 'bill',
+                        'timestamp': 41,
+                        'username': 'ashanti',
+                        'when': 20000000
+                    },
+                    {
+                        'change_id': 2,
+                        'change_type': 'insert',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': None,
+                        'options': {'products': ['foo']},
+                        'permission': 'rule',
+                        'sc_data_version': 1,
+                        'sc_id': 1,
+                        'scheduled_by': 'bill',
+                        'timestamp': 21,
+                        'username': 'janet',
+                        'when': 10000000
+                    }
+                ]
+            }
+        }
 
         self.assertEquals(json.loads(ret.data), expected)
 
