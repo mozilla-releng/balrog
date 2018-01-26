@@ -8,13 +8,15 @@ import logging
 import mock
 import unittest
 
+import pytest
+
 from auslib.AUS import SUCCEED, FAIL
 from auslib.global_state import dbo
 from auslib.errors import BadDataError
 from auslib.web.public.base import app
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobBase, ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, \
-    ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV8, DesupportBlob, \
+    ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV8, ReleaseBlobV9, DesupportBlob, \
     UnifiedFileUrlsMixin, ProofXMLMixin
 
 
@@ -2845,6 +2847,412 @@ class TestSchema8Blob(unittest.TestCase):
         self.assertEqual(returned_header.strip(), expected_header.strip())
         self.assertItemsEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+
+class TestSchema9Blob(unittest.TestCase):
+
+    def setUp(self):
+        self.specialForceHosts = ["http://a.com"]
+        self.whitelistedDomains = {'a.com': ('h',)}
+        app.config['DEBUG'] = True
+        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
+        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
+        dbo.setDb('sqlite:///:memory:')
+        dbo.create()
+        dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data=createBlob("""
+{
+    "name": "h1",
+    "schema_version": 9,
+    "updateLine": {},
+    "platforms": {
+        "p": {
+            "buildID": "10",
+            "locales": {
+                "de": {},
+                "en-US": {},
+                "l": {}
+            }
+        }
+    }
+}
+"""))
+        self.blobH2 = ReleaseBlobV9()
+        self.blobH2.loadJSON("""
+{
+    "name": "h2",
+    "schema_version": 9,
+    "hashFunction": "sha512",
+    "appVersion": "31.0.2",
+    "displayVersion": "31.0.2",
+    "updateLine": [
+        {
+            "for": {},
+            "fields": {
+                "detailsURL": "http://example.org/details/%LOCALE%",
+                "type": "minor"
+            }
+        },
+        {
+            "for": {
+                "locales": ["de", "en-US"],
+                "channels": ["release*"],
+                "versions": ["<31.0"]
+            },
+            "fields": {
+                "actions": "showURL",
+                "openURL": "http://example.org/url/%LOCALE%"
+            }
+        }
+    ],
+    "fileUrls": {
+        "c1": {
+            "partials": {
+                "h1": "http://a.com/h1-partial.mar"
+            },
+            "completes": {
+                "*": "http://a.com/complete.mar"
+            }
+        },
+        "*": {
+            "partials": {
+                "h1": "http://a.com/h1-partial-catchall"
+            },
+            "completes": {
+                "*": "http://a.com/complete-catchall"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 50,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "de": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "9"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41"
+                        }
+                    ]
+                },
+                "en-US": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "9"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41"
+                        }
+                    ]
+                },
+                "l": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "9"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+
+    def testWithoutActionsByLocale(self):
+        updateQuery = {
+            "product": "h", "buildID": "10", "version": "30.0",
+            "buildTarget": "p", "locale": "l", "channel": "release",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": None,
+        }
+        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/l"' \
+            ' displayVersion="31.0.2" type="minor">'
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected = [
+            '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
+            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
+        ]
+        expected = [x.strip() for x in expected]
+        self.assertItemsEqual(returned, expected)
+
+        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_footer = "</update>"
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+    def testWithoutActionsByChannel(self):
+        updateQuery = {
+            "product": "h", "buildID": "10", "version": "30.0",
+            "buildTarget": "p", "locale": "de", "channel": "c1",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": None,
+        }
+        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' \
+            ' displayVersion="31.0.2" type="minor">'
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected = [
+            '<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>',
+            '<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>'
+        ]
+        expected = [x.strip() for x in expected]
+        self.assertItemsEqual(returned, expected)
+
+        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_footer = "</update>"
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+    def testWithoutActionsByVersion(self):
+        updateQuery = {
+            "product": "h", "buildID": "10", "version": "31.0",
+            "buildTarget": "p", "locale": "de", "channel": "release",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": None,
+        }
+        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' \
+            ' displayVersion="31.0.2" type="minor">'
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected = [
+            '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
+            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
+        ]
+        expected = [x.strip() for x in expected]
+        self.assertItemsEqual(returned, expected)
+
+        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_footer = "</update>"
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+    def testWithActions(self):
+        updateQuery = {
+            "product": "h", "buildID": "10", "version": "30.0",
+            "buildTarget": "p", "locale": "de", "channel": "release",
+            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "force": None,
+        }
+        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_header = '<update actions="showURL" appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' \
+            ' displayVersion="31.0.2" openURL="http://example.org/url/de" type="minor">'
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected = [
+            '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
+            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
+        ]
+        expected = [x.strip() for x in expected]
+        self.assertItemsEqual(returned, expected)
+
+        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_footer = "</update>"
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+
+@pytest.mark.parametrize("for1,for2", [
+    (
+        {"versions": ["<49.0"]},
+        {"versions": ["49.0"]}
+    ),
+    (
+        {"versions": [">49.0"]},
+        {"versions": ["49.0"]}
+    ),
+    (
+        {"versions": [">49.0"]},
+        {"versions": ["<=49.0"]}
+    ),
+    (
+        {"versions": ["<49.0"]},
+        {"versions": [">=49.0"]}
+    ),
+    (
+        {"locales": ["ja"]},
+        {"locales": ["ja-JP-mac"]},
+    ),
+    (
+        {"locales": ["de"], "channels": ["beta*"], "versions": ["<50.0"]},
+        {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}
+    ),
+    (
+        {"locales": ["de"], "channels": ["release"], "versions": ["<50.0"]},
+        {"locales": ["en-US", "fr"], "channels": ["release"], "versions": ["49.0"]}
+    ),
+    (
+        {"locales": ["de"], "channels": ["release"], "versions": ["<48.0"]},
+        {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}
+    ),
+])
+def testSchema9CanCreateValidBlobs(for1, for2):
+    good_blob = {
+        "name": "good",
+        "schema_version": 9,
+        "hashFunction": "sha512",
+        "appVersion": "31.0.2",
+        "displayVersion": "31.0.2",
+        "updateLine": [
+            {
+                "for": for1,
+                "fields": {
+                    "detailsURL": "http://example.org/details/%LOCALE%",
+                    "type": "minor"
+                }
+            },
+            {
+                "for": for2,
+                "fields": {
+                    "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                }
+            }
+        ]
+    }
+    blob = ReleaseBlobV9(**good_blob)
+    blob.validate("h", {'a.com': ('h',)})
+
+
+@pytest.mark.parametrize("for1,for2", [
+    (
+        {},
+        {},
+    ),
+    (
+        {},
+        {"locales": ["de", "fr"]}
+    ),
+    (
+        {"locales": ["de"]},
+        {"locales": ["de", "fr"]}
+    ),
+    (
+        {},
+        {"channels": ["release"]}
+    ),
+    (
+        {"channels": ["release"]},
+        {"channels": ["release-cck-foo"]}
+    ),
+    (
+        {"channels": ["release*"]},
+        {"channels": ["release-cck-foo"]}
+    ),
+    (
+        {"channels": ["release-cck-foo"]},
+        {"channels": ["release-cck-*"]}
+    ),
+    (
+        {"channels": ["release*"]},
+        {"channels": ["release-cck-*"]}
+    ),
+    (
+        {"channels": ["release"]},
+        {"channels": ["release*"]}
+    ),
+    (
+        {},
+        {"versions": ["50.0"]}
+    ),
+    (
+        {"versions": ["<50.0"]},
+        {"versions": ["49.0"]}
+    ),
+    (
+        {"versions": ["49.0"]},
+        {"versions": ["<=49.0"]}
+    ),
+    (
+        {"versions": ["<50.0"]},
+        {"versions": ["<49.0"]}
+    ),
+    (
+        {"versions": [">50.0"]},
+        {"versions": [">49.0"]}
+    ),
+    (
+        {"versions": ["<50.0"]},
+        {"versions": [">49.0"]}
+    ),
+    (
+        {"versions": ["<50.0"]},
+        {"versions": [">=49.0"]}
+    ),
+    (
+        {"versions": [">49.0"]},
+        {"versions": ["<=50.0"]}
+    ),
+    (
+        {"versions": [">=49.0"]},
+        {"versions": ["<=50.0"]}
+    ),
+    (
+        {"versions": ["<=49.0"]},
+        {"versions": ["<=50.0"]}
+    ),
+    (
+        {"locales": ["de"], "channels": ["release*"], "versions": ["<50.0"]},
+        {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}
+    ),
+])
+def testSchema9CannotCreateBlobWithConflictingFields(for1, for2):
+    bad_blob = {
+        "name": "bad",
+        "schema_version": 9,
+        "hashFunction": "sha512",
+        "appVersion": "31.0.2",
+        "displayVersion": "31.0.2",
+        "updateLine": [
+            {
+                "for": for1,
+                "fields": {
+                    "detailsURL": "http://example.org/details/%LOCALE%",
+                    "type": "minor"
+                }
+            },
+            {
+                "for": for2,
+                "fields": {
+                    "detailsURL": "http://example.org/specialdetails/%LOCALE%",
+                }
+            }
+        ]
+    }
+    blob = ReleaseBlobV9(**bad_blob)
+    with pytest.raises(BlobValidationError) as excinfo:
+        blob.validate("h", {'a.com': ('h',)})
+    assert "Multiple values found for updateLine items: detailsURL" in excinfo.value
 
 
 class TestDesupportBlob(unittest.TestCase):

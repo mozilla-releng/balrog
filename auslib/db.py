@@ -19,7 +19,9 @@ import migrate.versioning.api
 
 from auslib.global_state import cache
 from auslib.blobs.base import createBlob, merge_dicts
-from auslib.util.comparison import string_compare, version_compare, int_compare
+from auslib.util.rulematching import matchChannel, matchVersion, matchBuildID, \
+    matchMemory, matchSimpleExpression, matchCsv, matchLocale, matchBoolean, \
+    matchRegex
 from auslib.util.timestamp import getMillisecondTimestamp
 
 import logging
@@ -1555,135 +1557,9 @@ class Rules(AUSTable):
             for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
                 # Channel supports globbing, so we must take that into account
                 # before deciding whether or not this is a match.
-                if not row.get("channel") or _matchesRegex(row["channel"], rs["channel"]):
+                if not row.get("channel") or matchRegex(row["channel"], rs["channel"]):
                     potential_required_signoffs.append(rs)
         return potential_required_signoffs
-
-    def _channelMatchesRule(self, ruleChannel, queryChannel, fallbackChannel):
-        """Decides whether a channel from the rules matches an incoming one.
-           If the ruleChannel is null, we match any queryChannel. We also match
-           if the channels match exactly, or match after wildcards in ruleChannel
-           are resolved. Channels may have a fallback specified, too, so we must
-           check if the fallback version of the queryChannel matches the ruleChannel."""
-        if ruleChannel is None:
-            return True
-        if _matchesRegex(ruleChannel, queryChannel):
-            return True
-        if _matchesRegex(ruleChannel, fallbackChannel):
-            return True
-
-    def _versionMatchesRule(self, ruleVersion, queryVersion):
-        """Decides whether a version from the rules matches an incoming version.
-           If the ruleVersion is null, we match any queryVersion. If it's not
-           null, we must either match exactly, or match a comparison operator."""
-        self.log.debug('ruleVersion: %s, queryVersion: %s', ruleVersion, queryVersion)
-        if ruleVersion is None:
-            return True
-        rulesVersionList = ruleVersion.split(",")
-        for rule in rulesVersionList:
-            if version_compare(queryVersion, rule):
-                return True
-        return False
-
-    def _buildIDMatchesRule(self, ruleBuildID, queryBuildID):
-        """Decides whether a buildID from the rules matches an incoming one.
-           If the ruleBuildID is null, we match any queryBuildID. If it's not
-           null, we must either match exactly, or match with a camparison
-           operator."""
-        if ruleBuildID is None:
-            return True
-        return string_compare(queryBuildID, ruleBuildID)
-
-    def _memoryMatchesRule(self, ruleMemory, queryMemory):
-        """Decides whether a memory value from the rules matches an incoming one.
-           If the ruleMemory is null, we match any queryMemory. If it's not
-           null, we must either match exactly, or match with a camparison
-           operator."""
-        if ruleMemory is None:
-            return True
-        return int_compare(queryMemory, ruleMemory)
-
-    def _csvMatchesRule(self, ruleString, queryString, substring=True):
-        """Decides whether a column from a rule matches an incoming one.
-           Some columns in a rule may specify multiple values delimited by a
-           comma. Once split we do a full or substring match against the query
-           string. Because we support substring matches, there's no need
-           to support globbing as well."""
-        if ruleString is None:
-            return True
-        for part in ruleString.split(','):
-            if substring and part in queryString:
-                return True
-            elif part == queryString:
-                return True
-        return False
-
-    def _booleanMatchesRule(self, ruleValue, queryValue):
-        """As with all other columns, if the value isn't present in the Rule, the Rule matches.
-        Unlike other columns, the non-existence of a boolean field in the updateQuery evaluates
-        to False, so we need to handle True, False, and None explicitly. Note that None in the
-        updateQuery is treated as "unknown", and will cause any Rule without an explicit value
-        for the field to match.
-        The full truth table is:
-        rule | query | matches?
-          F      0        Y
-          F      1        N
-          F     null      N
-          T      0        N
-          T      1        Y
-          T     null      N
-        null     0        Y
-        null     1        Y
-        null    null      Y
-
-        Additional context in https://bugzilla.mozilla.org/show_bug.cgi?id=1386756"""
-
-        if ruleValue is not None:
-            if queryValue is None or ruleValue != queryValue:
-                return False
-        return True
-
-    def _simpleExpressionMatchesSubRule(self, subRuleString, queryString, substring):
-        """Performs the actual logical 'AND' operation on a rule as well as partial/full string matching
-           for each section of a rule.
-           If all parts of the subRuleString match the queryString, then we have successfully resolved the
-           logical 'AND' operation and return True.
-           Partial matching makes use of Python's "<substring> in <string>" functionality, giving us the ability
-           for an incoming rule to match only a substring of a rule.
-           Full matching makes use of Python's "<string> in <list>" functionality, giving us the ability for
-           an incoming rule to exactly match the whole rule. Currently, incoming rules are comma-separated strings."""
-        for rule in subRuleString:
-            if substring and rule not in queryString:
-                return False
-            elif not substring and rule not in queryString.split(','):
-                return False
-        return True
-
-    def _simpleExpressionMatchesRule(self, ruleString, queryString, substring=True):
-        """Decides whether a column from a rule matches an incoming one using simplified boolean logic.
-           Only two operators are supported: '&&' (and), ',' (or). A rule like 'AMD,SSE' will match incoming
-           rules that contain either 'AMD' or 'SSE'. A rule like 'AMD&&SSE' will only match incoming rules
-           that contain both 'AMD' and 'SSE'.
-           This function can do substring matching or full string matching. When doing substring matching, a rule
-           specifying 'AMD,Windows 10' WILL match an incoming rule such as 'Windows 10.1.2'. When doing full string
-           matching, a rule specifying 'AMD,SSE' will NOT match an incoming rule that contains 'SSE3', but WILL match
-           an incoming rule that contains either 'AMD' or 'SSE3'."""
-        if ruleString is None:
-            return True
-
-        decomposedRules = [[rule.strip() for rule in subRule.split('&&')] for subRule in ruleString.split(',')]
-
-        for subRule in decomposedRules:
-            if self._simpleExpressionMatchesSubRule(subRule, queryString, substring):
-                # We can immediately return True on the first match because this loop is iterating over an OR expression
-                # so we need just one match to pass.
-                return True
-        return False
-
-    def _localeMatchesRule(self, ruleLocales, queryLocale):
-        """Decides if a comma seperated list of locales in a rule matches an
-        update request"""
-        return self._csvMatchesRule(ruleLocales, queryLocale, substring=False)
 
     def _isAlias(self, id_or_alias):
         if re.match("^[a-zA-Z][a-zA-Z0-9-]*$", str(id_or_alias)):
@@ -1759,35 +1635,35 @@ class Rules(AUSTable):
 
             # Resolve special means for channel, version, and buildID - dropping
             # rules that don't match after resolution.
-            if not self._channelMatchesRule(rule['channel'], updateQuery['channel'], fallbackChannel):
+            if not matchChannel(rule['channel'], updateQuery['channel'], fallbackChannel):
                 self.log.debug("%s doesn't match %s", rule['channel'], updateQuery['channel'])
                 continue
-            if not self._versionMatchesRule(rule['version'], updateQuery['version']):
+            if not matchVersion(rule['version'], updateQuery['version']):
                 self.log.debug("%s doesn't match %s", rule['version'], updateQuery['version'])
                 continue
-            if not self._buildIDMatchesRule(rule['buildID'], updateQuery['buildID']):
+            if not matchBuildID(rule['buildID'], updateQuery['buildID']):
                 self.log.debug("%s doesn't match %s", rule['buildID'], updateQuery['buildID'])
                 continue
-            if not self._memoryMatchesRule(rule['memory'], updateQuery.get("memory", "")):
+            if not matchMemory(rule['memory'], updateQuery.get("memory", "")):
                 self.log.debug("%s doesn't match %s", rule['memory'], updateQuery.get("memory"))
                 continue
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to
             # break them out and create clauses for each one.
-            if not self._simpleExpressionMatchesRule(rule['osVersion'], updateQuery['osVersion']):
+            if not matchSimpleExpression(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
-            if not self._csvMatchesRule(rule['instructionSet'], updateQuery.get('instructionSet', ""), substring=False):
+            if not matchCsv(rule['instructionSet'], updateQuery.get('instructionSet', ""), substring=False):
                 self.log.debug("%s doesn't match %s", rule['instructionSet'], updateQuery.get('instructionSet'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only
-            if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
+            if not matchLocale(rule['locale'], updateQuery['locale']):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
                 continue
-            if not self._booleanMatchesRule(rule["mig64"], updateQuery.get("mig64")):
+            if not matchBoolean(rule["mig64"], updateQuery.get("mig64")):
                 self.log.debug("%s doesn't match %s", rule['mig64'], updateQuery.get('mig64'))
                 continue
-            if not self._booleanMatchesRule(rule["jaws"], updateQuery.get("jaws")):
+            if not matchBoolean(rule["jaws"], updateQuery.get("jaws")):
                 self.log.debug("%s doesn't match %s", rule['jaws'], updateQuery.get('jaws'))
                 continue
 

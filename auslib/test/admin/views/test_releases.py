@@ -1062,6 +1062,29 @@ class TestReleasesAPI_JSON(ViewTest):
 """))
         self.assertStatusCode(ret, 400)
 
+    def testNewAppReleaseV9BadVersion(self):
+        ret = self._put("/releases/bad", data=dict(name="ueohueo", product="aa", blob="""
+{
+    "name": "bad",
+    "schema_version": 9,
+    "hashFunction": "sha512",
+    "appVersion": "31.0.2",
+    "displayVersion": "31.0.2",
+    "updateLine": [
+        {
+            "for": {
+                "versions": ["<49"]
+            },
+            "fields": {
+                "detailsURL": "http://example.org/details/%LOCALE%",
+                "type": "minor"
+            }
+        }
+    ]
+}
+"""))
+        self.assertStatusCode(ret, 400)
+
     def testNewReleasePutMismatchedName(self):
         ret = self._put("/releases/aaaa", data=dict(name="ueohueo", product="aa", blob="""
 {

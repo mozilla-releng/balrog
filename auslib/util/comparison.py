@@ -11,6 +11,14 @@ operators = {
 }
 
 
+def strip_operator(value):
+    return value.lstrip("<>=")
+
+
+def has_operator(value):
+    return value.startswith(("<", ">"))
+
+
 def get_op(pattern):
     # only alphanumeric characters means no operator
     if re.match('\w+', pattern):
