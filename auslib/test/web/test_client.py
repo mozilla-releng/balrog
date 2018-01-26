@@ -229,7 +229,6 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """))
-
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='c', update_type='minor', product='c',
                                      distribution='default', data_version=1)
         dbo.releases.t.insert().execute(name='c', product='c', data_version=1, data=createBlob("""
@@ -249,6 +248,32 @@ class ClientTestBase(ClientTestCommon):
                         "from": "*",
                         "hashValue": "13",
                         "fileUrl": "http://a.com/y"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+        dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping='c2', update_type='minor', product='c',
+                                     data_version=1)
+        dbo.releases.t.insert().execute(name='c2', product='c', data_version=1, data=createBlob("""
+{
+    "name": "c2",
+    "schema_version": 1,
+    "appv": "15.0",
+    "extv": "15.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "51",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "52",
+                        "from": "*",
+                        "hashValue": "53",
+                        "fileUrl": "http://a.com/x"
                     }
                 }
             }
@@ -656,7 +681,13 @@ class ClientTest(ClientTestBase):
 
     def testVersion2GetIgnoresRuleWithDistribution(self):
         ret = self.client.get('/update/2/c/10.0/1/p/l/a/a/update.xml')
-        self.assertUpdatesAreEmpty(ret)
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="15.0" extensionVersion="15.0" buildID="51">
+        <patch type="complete" URL="http://a.com/x" hashFunction="sha512" hashValue="53" size="52"/>
+    </update>
+</updates>
+""")
 
     def testVersion3Get(self):
         ret = self.client.get('/update/3/a/1.0/1/a/a/a/a/a/a/update.xml')
@@ -668,6 +699,46 @@ class ClientTest(ClientTestBase):
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+
+    def testVersion3GetWithDistribution(self):
+        ret = self.client.get('/update/3/c/1.0/1/p/l/a/a/default/a/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
+        <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="13" size="12"/>
+    </update>
+</updates>
+""")
+
+    def testVersion4GetWithDistribution(self):
+        ret = self.client.get('/update/4/c/1.0/1/p/l/a/a/default/a/a/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
+        <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="13" size="12"/>
+    </update>
+</updates>
+""")
+
+    def testVersion6GetWithDistribution(self):
+        ret = self.client.get('/update/6/c/1.0/1/p/l/a/a/SSE/default/a/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
+        <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="13" size="12"/>
+    </update>
+</updates>
+""")
+
+    def testVersion6GetDoesntMatchWrongDistribution(self):
+        ret = self.client.get('/update/6/c/1.0/1/p/l/a/a/SSE/a/a/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="15.0" extensionVersion="15.0" buildID="51">
+        <patch type="complete" URL="http://a.com/x" hashFunction="sha512" hashValue="53" size="52"/>
     </update>
 </updates>
 """)
