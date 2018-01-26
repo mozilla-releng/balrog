@@ -1581,18 +1581,19 @@ class Rules(AUSTable):
                 ((self.buildTarget == updateQuery['buildTarget']) | (self.buildTarget == null())) &
                 ((self.headerArchitecture == updateQuery['headerArchitecture']) | (self.headerArchitecture == null()))
             ]
-            # Query version 2 doesn't have distribution information, and to keep
-            # us maximally flexible, we won't match any rules that have
-            # distribution update set.
-            if updateQuery['queryVersion'] == 2:
-                where.extend([(self.distribution == null()) & (self.distVersion == null())])
-            # Only query versions 3 and 4 have distribution information, so we
-            # need to consider it.
-            if updateQuery['queryVersion'] in (3, 4):
+            if "distribution" in updateQuery:
                 where.extend([
-                    ((self.distribution == updateQuery['distribution']) | (self.distribution == null())) &
+                    ((self.distribution == updateQuery['distribution']) | (self.distribution == null()))
+                ])
+            else:
+                where.extend([(self.distribution == null())])
+
+            if "distVersion" in updateQuery:
+                where.extend([
                     ((self.distVersion == updateQuery['distVersion']) | (self.distVersion == null()))
                 ])
+            else:
+                where.extend([(self.distVersion == null())])
 
             self.log.debug("where: %s" % where)
             return self.select(where=where, transaction=transaction)
