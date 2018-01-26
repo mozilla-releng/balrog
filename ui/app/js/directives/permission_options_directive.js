@@ -8,6 +8,7 @@ angular.module('app').directive("permissionOptions", [function(){
         controller: function($scope, Releases){
             var allPermissions = {
                 "admin": ["products"],
+                "emergency_shutoff": ["actions", "products"],
                 "release": ["actions", "products"],
                 "release_locale": ["actions", "products"],
                 "release_read_only": ["actions", "products"],
@@ -27,6 +28,7 @@ angular.module('app').directive("permissionOptions", [function(){
             $scope.selected_options = [];
             $scope.actions = {
                 "admin": [],
+                "emergency_shutoff": ["create", "delete"],
                 "rule": ["create", "modify", "delete"],
                 "release": ["create", "modify", "delete"],
                 "release_read_only": ["set", "unset"],

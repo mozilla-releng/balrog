@@ -95,6 +95,18 @@ definitions:
         maxLength: 15
         example: Firefox
 
+  ChannelModel:
+    title: Channel
+    description: "model to define 'channel' field in request body."
+    type: object
+    properties:
+      channel:
+        description: The update channel of the application request an update.
+        type: string
+        minLength: 1
+        maxLength: 75
+        example: beta
+
   ReleaseName:
     title: Release Name
     description: name of release
@@ -400,3 +412,31 @@ definitions:
                 update_type: "minor"
                 version: null
                 whitelist: null
+
+  EmergencyShutOffModel:
+    title: Emergency shut off data.
+    description: Emergency shut off data.
+    type: object
+    allOf:
+      - $ref: '#/definitions/ProductModel'
+      - $ref: '#/definitions/ChannelModel'
+      - $ref: '#/definitions/DataVersionModel'
+    required:
+      - product
+      - channel
+
+  EmergencyShutoffListGET:
+    title: List of emergency shut offs.
+    description: Product/Channels available to shut off updates.
+    type: object
+    required:
+      - shutoffs
+    allOf:
+      - $ref: '#/definitions/CountModel'
+      - type: object
+        properties:
+          shutoffs:
+            description: List of emergency shutoffs.
+            type: array
+            items:
+              $ref: '#/definitions/EmergencyShutOffModel'

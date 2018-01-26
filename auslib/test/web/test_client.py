@@ -1287,6 +1287,40 @@ class ClientTestJaws(ClientTestCommon):
 """)
 
 
+class ClientTestEmergencyShutoff(ClientTestBase):
+    def setUp(self):
+        super(ClientTestEmergencyShutoff, self).setUp()
+        self.update_xml = """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+"""
+
+    def testShutoffUpdates(self):
+        update_query = '/update/3/b/1.0/1/p/l/a/a/a/a/update.xml'
+        ret = self.client.get(update_query)
+        self.assertUpdateEqual(ret, self.update_xml)
+
+        dbo.emergencyShutoffs.t.insert().execute(
+            product='b', channel='a', data_version=1)
+
+        ret = self.client.get(update_query)
+        self.assertUpdatesAreEmpty(ret)
+
+    def testShutoffUpdatesFallbackChannel(self):
+        update_query = '/update/3/b/1.0/1/p/l/a-cck-foo/a/a/a/update.xml'
+        ret = self.client.get(update_query)
+        self.assertUpdateEqual(ret, self.update_xml)
+
+        dbo.emergencyShutoffs.t.insert().execute(
+            product='b', channel='a', data_version=1)
+
+        ret = self.client.get(update_query)
+        self.assertUpdatesAreEmpty(ret)
+
+
 class ClientTestWithErrorHandlers(ClientTestCommon):
     """Most of the tests are run without the error handler because it gives more
        useful output when things break. However, we still need to test that our

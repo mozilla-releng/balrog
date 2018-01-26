@@ -37,6 +37,26 @@ def rows_to_dicts(rows):
     return map(dict, rows)
 
 
+def _matchesRegex(foo, bar):
+    # Expand wildcards and use ^/$ to make sure we don't succeed on partial
+    # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
+    # Channel length must be strictly greater than two
+    # And globbing is allowed at the end of channel-name only
+    if foo.endswith('*'):
+        if(len(foo) >= 3):
+            test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
+            test = '^{}.*$'.format(test[:-1])
+            if re.match(test, bar):
+                return True
+            return False
+        else:
+            return False
+    elif (foo == bar):
+        return True
+    else:
+        return False
+
+
 class AlreadySetupError(Exception):
 
     def __str__(self):
@@ -2109,6 +2129,7 @@ class Permissions(AUSTable):
        to ["GMP"] allows the user to modify GMP releases, but not Firefox."""
     allPermissions = {
         "admin": ["products"],
+        "emergency_shutoff": ["actions", "products"],
         "release": ["actions", "products"],
         "release_locale": ["actions", "products"],
         "release_read_only": ["actions", "products"],
@@ -2349,6 +2370,44 @@ class Dockerflow(AUSTable):
             super(Dockerflow, self).update(where=where, what=value, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
 
+class EmergencyShutoffs(AUSTable):
+    def __init__(self, db, metadata, dialect):
+        self.table = Table('emergency_shutoffs', metadata,
+                           Column('product', String(15), nullable=False, primary_key=True),
+                           Column('channel', String(75), nullable=False, primary_key=True))
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
+
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        if not self.db.hasPermission(changed_by, "emergency_shutoff", "create", columns.get("product"), transaction):
+            raise PermissionDeniedError(
+                "{} is not allowed to shut off updates for product {}".format(changed_by, columns.get("product")))
+
+        ret = super(EmergencyShutoffs, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        if not dryrun:
+            return ret.inserted_primary_key
+
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        potential_required_signoffs = []
+        row = affected_rows[-1]
+        where = {"product": row["product"]}
+        for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
+            if not row.get("channel") or _matchesRegex(row["channel"], rs["channel"]):
+                potential_required_signoffs.append(rs)
+        return potential_required_signoffs
+
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "emergency_shutoff", "delete", product, transaction):
+            raise PermissionDeniedError("%s is not allowed to delete shutoffs for product %s" % (changed_by, product))
+
+        if not dryrun:
+            for current_rule in self.select(where=where, transaction=transaction):
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_rule], transaction=transaction)
+                verify_signoffs(potential_required_signoffs, signoffs)
+
+        super(EmergencyShutoffs, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
+
+
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
@@ -2505,6 +2564,7 @@ class AUSDatabase(object):
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
         self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
+        self.emergencyShutoffsTable = EmergencyShutoffs(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -2608,3 +2668,7 @@ class AUSDatabase(object):
     @property
     def dockerflow(self):
         return self.dockerflowTable
+
+    @property
+    def emergencyShutoffs(self):
+        return self.emergencyShutoffsTable

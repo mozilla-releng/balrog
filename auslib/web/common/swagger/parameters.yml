@@ -7,6 +7,28 @@ parameters:
     x-nullable: true
     required: false
 
+  productPathParam:
+    name: product
+    in: path
+    description: Name of the product.
+    type: string
+    required: true
+
+  channelQueryParam:
+    name: channel
+    in: query
+    description: Name of the channel to filter.
+    type: string
+    x-nullable: true
+    required: false
+
+  channelPathParam:
+    name: channel
+    in: path
+    description: Release channel.
+    type: string
+    required: true
+
   releaseParam:
     name: release
     in: path
