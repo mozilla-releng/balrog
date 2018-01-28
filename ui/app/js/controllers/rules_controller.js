@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers, EmergencyShutoffs) {
 
   Page.setTitle('Rules');
 
@@ -141,6 +141,20 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           return Rules.ruleSignoffsRequired(rule, undefined, $scope.signoffRequirements);
         }
       };
+
+      EmergencyShutoffs.getEmergencyShutoffs().success(function(response_emergerncy_shutoffs) {
+        shutoffs = response_emergerncy_shutoffs.shutoffs;
+        
+        response.rules.forEach(function(rule) {
+          shutoff = shutoffs.find(function(element, index, array){
+            return element.product == rule.product && element.channel == rule.channel;
+          });
+
+          rule.updates_are_enabled = !shutoff;
+          rule.emergency_shutoff = shutoff;
+        });
+
+      });
     })
     .error(function() {
       console.error(arguments);
@@ -624,6 +638,45 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             "Background Rate": sc["backgroundRate"],
           };
         },
+      }
+    });
+  };
+
+  $scope.openDisableUpdatesModal = function(rule) {
+    var modal = $modal.open({
+      templateUrl: 'disable_updates_modal.html',
+      controller: 'DisableUpdatesModalCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        product: function() {
+          return rule.product;
+        },
+        channel: function() {
+          return rule.channel;
+        }
+      }
+    });
+    modal.result.then(function() {
+      $route.reload();
+    });
+  };
+
+  $scope.openScheduleEnableUpdateModal = function(emergency_shutoff) {
+    var modal = $modal.open({
+      templateUrl: 'enable_updates_scheduled_change_modal.html',
+      controller: 'EnableUpdatesScheduledChangeCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        sc: function () {
+          sc = angular.copy(emergency_shutoff);
+          sc['change_type'] = 'delete';
+          return sc;
+        },
+        required_signoffs: function() {
+          return [];
+        }
       }
     });
   };

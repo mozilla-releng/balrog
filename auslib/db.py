@@ -2401,8 +2401,8 @@ class EmergencyShutoffs(AUSTable):
             raise PermissionDeniedError("%s is not allowed to delete shutoffs for product %s" % (changed_by, product))
 
         if not dryrun:
-            for current_rule in self.select(where=where, transaction=transaction):
-                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_rule], transaction=transaction)
+            for current_emergency_shutoff in self.select(where=where, transaction=transaction):
+                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_emergency_shutoff], transaction=transaction)
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         super(EmergencyShutoffs, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)

@@ -76,6 +76,13 @@ def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transacti
     return view._post(sc_id, sc_emergency_shutoff, transaction, changed_by, sc_emergency_shutoff['sc_data_version'])
 
 
+@requirelogin
+@transactionHandler
+def delete_scheduled_deletion(sc_id, changed_by, transaction, **kwargs):
+    view = ScheduledChangeView('emergency_shutoff', dbo.emergencyShutoffs)
+    return view._delete(sc_id, transaction, changed_by)
+
+
 def scheduled_changes_signoffs(sc_id):
     view = SignoffsView('emergency_shutoff', dbo.emergencyShutoffs)
     return view.post(sc_id)

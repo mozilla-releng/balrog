@@ -3912,6 +3912,29 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
+    delete:
+      summary: Deletes the given Scheduled Change for Emergency Shutoff.
+      description: >
+        Deletes the given Scheduled Change for Emergency Shutoff. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.delete_scheduled_deletion
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the given scheduled change.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
   /scheduled_changes/emergency_shutoff/{sc_id}/enact:
     post:
       summary: Execute the scheduled change for the emergency shut off.

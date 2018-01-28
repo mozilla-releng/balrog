@@ -1,0 +1,33 @@
+<div class="modal-header">
+    <h3 class="modal-title">Enable updates for {{sc.product}}/{{sc.channel}}</h3>
+</div>
+<div class="modal-body">
+  <form role="form">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+        <label for="id_when">When (local time)</label>
+        <div class="form-group dropdown" is-open="calendar_is_open" ng-class="{'has-error': errors.when}">
+          <div class="input-group">
+            <span class="input-group-btn">
+               <label class="btn btn-default btn-asap" ng-click="toggleAutoTime()" id="btn__auto-time"><input type="checkbox" ng-show="false" ng-model="auto_time" auto-complete="off">ASAP</label>
+               <button class="btn btn-secondary dropdown-toggle" type="button" ng-disabled="auto_time"><i class="glyphicon glyphicon-calendar"></i></button>
+            </span>
+            <input type="text" id="id_when" class="form-control" data-ng-model="sc.when" ng-blur="setWhen()" ng-disabled="auto_time">
+            <span class="input-group-btn">
+              <button class="btn btn-secondary" type="button" ng-click="clearWhen()">Clear</button>
+            </span>
+          </div>
+          <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+            <datetimepicker data-ng-model="sc.when" data-datetimepicker-config="{ minuteStep: 5 }"
+                            data-on-set-time="setWhen(newDate)" />
+          </ul>
+          <p class="help-block" ng-show="errors.when">{{ errors.when.join(', ') }}</p>
+        </div>
+      </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div ng-show="saving" small-loader></div>
+  <button type="submit" class="btn btn-primary" ng-click="saveChanges()">Schedule Changes</button>
+  <button class="btn btn-default" ng-show="!saving" ng-click="cancel()">Cancel</button>
+</div>

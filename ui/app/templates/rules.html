@@ -109,6 +109,11 @@
            class="btn btn-default btn-xs" ng-href="/rules/{{ rule.rule_id }}">
             History
         </a>
+        <button class="btn btn-danger btn-xs" ng-show="rule.updates_are_enabled && rule.product && rule.channel" ng-click="openDisableUpdatesModal(rule)">
+          <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            &nbsp;EMERGENCY SHUTOFF&nbsp;
+          <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        </button>
         <span ng-show="show_sc && rule.scheduled_change !== null" title="{{ humanizeDate(rule.scheduled_change.when) }}"
               class="label label-default">
             Scheduled for <span style="text-transform: capitalize">{{ rule.scheduled_change.change_type }}</span> <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span>
@@ -243,10 +248,28 @@
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="update_type" fieldtitle="Update type"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="headerArchitecture" fieldtitle="Header Architecture"></rulefield>
       </div>
-
     </div>
-
   </div>
+
+  <div class="panel-footer" ng-show="!rule_id && !rule.updates_are_enabled" style="background-color: #d9534f">
+    <h5 style="color: white"><b>Updates are disabled for {{rule.product}}/{{rule.channel}}</b></h5>
+    <button class="btn btn-md btn-warning">
+        Revoke your Signoff
+    </button>
+    <button class="btn btn-primary btn-md">
+        Signoff as...
+    </button>
+    <button class="btn btn-success btn-md">
+        Enable updates
+    </button>
+    <button class="btn btn-warning btn-md">
+        Modify Pending Update
+    </button>
+    <button class="btn btn-warning btn-md" ng-click="openScheduleEnableUpdateModal(rule.emergency_shutoff)">
+        Schedule for enable the updates
+    </button>
+  </div>
+
   <div class="panel-footer" ng-show="rule_id">
     Changed by <code>{{ rule.changed_by }}</code>
     <span ng-bind-html="formatMoment(rule.timestamp)"></span>
