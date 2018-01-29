@@ -142,19 +142,32 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         }
       };
 
-      EmergencyShutoffs.getEmergencyShutoffs().success(function(response_emergerncy_shutoffs) {
+      EmergencyShutoffs.get().success(function(response_emergerncy_shutoffs) {
         shutoffs = response_emergerncy_shutoffs.shutoffs;
-        
         response.rules.forEach(function(rule) {
-          shutoff = shutoffs.find(function(element, index, array){
-            return element.product == rule.product && element.channel == rule.channel;
+          shutoff = shutoffs.find(function(shutoff){
+            return shutoff.product == rule.product && shutoff.channel == rule.channel;
           });
-
           rule.updates_are_enabled = !shutoff;
           rule.emergency_shutoff = shutoff;
         });
-
+      }).finally(function() {
+        EmergencyShutoffs.scheduledChanges()
+          .success(function(response_emergerncy_shutoffs_sc) {
+            shutoffs_sc = response_emergerncy_shutoffs_sc.scheduled_changes;
+            if(shutoffs_sc.length > 0) {
+              response.rules.forEach(function(rule) {
+                if(!rule.updates_are_enabled) {
+                  sc = shutoffs_sc.find(function(sc) {
+                    return sc.product == rule.emergency_shutoff.product && sc.channel == rule.emergency_shutoff.channel;
+                  });
+                  rule.emergency_shutoff.scheduled_change = sc;
+                }
+              });
+            }
+          });
       });
+
     })
     .error(function() {
       console.error(arguments);
@@ -662,6 +675,23 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
 
+  $scope.openEnableUpdatesModal = function(emergency_shutoff) {
+    var modal = $modal.open({
+      templateUrl: 'enable_updates_modal.html',
+      controller: 'EnableUpdatesCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        emergency_shutoff: function() {
+          return emergency_shutoff;
+        }
+      }
+    });
+    modal.result.then(function() {
+      $route.reload();
+    });
+  }
+
   $scope.openScheduleEnableUpdateModal = function(emergency_shutoff) {
     var modal = $modal.open({
       templateUrl: 'enable_updates_scheduled_change_modal.html',
@@ -676,10 +706,42 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         required_signoffs: function() {
           return [];
+        },
+        emergency_shutoff: function() {
+          return emergency_shutoff;
         }
       }
     });
+    modal.result.then(function(sc) {
+      emergency_shutoff.scheduled_change = sc;
+    });
   };
 
-
+  $scope.openScheduleEnableUpdateRevokeSignoffModal = function(sc) {
+    $modal.open({
+      templateUrl: "revoke_signoff_modal.html",
+      controller: "RevokeSignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Emergency Shutoff";
+        },
+        service: function() {
+          return EmergencyShutoffs;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        sc: function() {
+          return sc;
+        },
+        pk: function() {
+          return {
+            'Emergency Shutoff': `${sc.product}/${sc.channel}`
+          };
+        },
+        data: null
+      }
+    });
+  }
 });

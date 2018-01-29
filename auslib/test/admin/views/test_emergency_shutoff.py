@@ -123,8 +123,8 @@ class TestEmergencyShutoff(ViewTest):
                                 .execute().fetchall()
         self.assertTrue(sc)
 
-    def test_delete_scheduled_deletion(self):
-        ValueError("IMPL!!!!!!!!")
+    # def test_delete_scheduled_deletion(self):
+    #     ValueError("IMPL!!!!!!!!")
 
     def test_enact_updates_scheduled_for_reactivation(self):
         resp = self._post('/scheduled_changes/emergency_shutoff/1/enact')

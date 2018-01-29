@@ -252,20 +252,35 @@
   </div>
 
   <div class="panel-footer" ng-show="!rule_id && !rule.updates_are_enabled" style="background-color: #d9534f">
-    <h5 style="color: white"><b>Updates are disabled for {{rule.product}}/{{rule.channel}}</b></h5>
-    <button class="btn btn-md btn-warning">
+    <h5 style="color: white">
+      <b>Updates are disabled for {{rule.product}}/{{rule.channel}}</b>
+      <span ng-show="rule.emergency_shutoff.scheduled_change" title="{{ humanizeDate(rule.emergency_shutoff.scheduled_change.when) }}"
+            class="label label-default">
+            Scheduled for Enable Updates <span ng-bind-html="formatMoment(rule.emergency_shutoff.scheduled_change.when)"></span>
+      </span>
+    </h5>
+    <button class="btn btn-md btn-warning"
+            ng-show="rule.emergency_shutoff.scheduled_change && !isEmpty(rule.emergency_shutoff.scheduled_change.required_signoffs) && rule.emergency_shutoff.scheduled_change.signoffs.hasOwnProperty(current_user)"
+            ng-click="openScheduleEnableUpdateRevokeSignoffModal(rule.emergency_shutoff.scheduled_change)">
         Revoke your Signoff
     </button>
-    <button class="btn btn-primary btn-md">
+    <button class="btn btn-primary btn-md"
+            ng-show="rule.emergency_shutoff.scheduled_change && !isEmpty(rule.emergency_shutoff.scheduled_change.required_signoffs) && !rule.emergency_shutoff.scheduled_change.signoffs.hasOwnProperty(current_user)">
         Signoff as...
     </button>
-    <button class="btn btn-success btn-md">
+    <button class="btn btn-success btn-md"
+            ng-show="ruleSignoffsRequired(rule).length === 0 && !rule.emergency_shutoff.scheduled_change"
+            ng-click="openEnableUpdatesModal(rule.emergency_shutoff)">
         Enable updates
     </button>
-    <button class="btn btn-warning btn-md">
+    <button class="btn btn-warning btn-md"
+            ng-show="rule.emergency_shutoff.scheduled_change"
+            ng-click="openScheduleEnableUpdateModal(rule.emergency_shutoff)">
         Modify Pending Update
     </button>
-    <button class="btn btn-warning btn-md" ng-click="openScheduleEnableUpdateModal(rule.emergency_shutoff)">
+    <button class="btn btn-warning btn-md"
+            ng-show="!rule.emergency_shutoff.scheduled_change"
+            ng-click="openScheduleEnableUpdateModal(rule.emergency_shutoff)">
         Schedule for enable the updates
     </button>
   </div>

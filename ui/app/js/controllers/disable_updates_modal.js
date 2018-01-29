@@ -6,18 +6,15 @@ angular.module('app').controller('DisableUpdatesModalCtrl',
 
     $scope.disableUpdates = function() {
       $scope.saving = true;
-      EmergencyShutoffs.createEmergencyShutoff($scope.product, $scope.channel)
+      EmergencyShutoffs.create($scope.product, $scope.channel)
         .success(function(response) {
           $modalInstance.close(response);
+          sweetAlert("Disabling Updates", "Updates was disabled successfully!", "warning")
         })
         .error(function(response, status) {
           console.log(response);
           if (typeof response === 'object') {
-            sweetAlert(
-              "Form submission error",
-              response.data,
-              "error"
-            );
+            sweetAlert("Form submission error", response.data, "error");
           }
         })
         .finally(function() {

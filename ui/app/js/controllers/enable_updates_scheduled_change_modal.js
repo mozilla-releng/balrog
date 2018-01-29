@@ -1,6 +1,7 @@
 angular.module('app').controller('EnableUpdatesScheduledChangeCtrl',
-  function($scope, $modalInstance, CSRF, sc, required_signoffs, EmergencyShutoffs) {
+  function($scope, $modalInstance, CSRF, sc, required_signoffs, EmergencyShutoffs, emergency_shutoff) {
     $scope.sc = angular.copy(sc);
+    $scope.emergency_shutoff = emergency_shutoff;
     $scope.saving = false;
     $scope.auto_time = false;
     $scope.errors = {};
@@ -48,6 +49,10 @@ angular.module('app').controller('EnableUpdatesScheduledChangeCtrl',
               $scope.sc.sc_id = response.sc_id;
               $scope.sc.signoffs = response.signoffs;
               $modalInstance.close($scope.sc);
+              sweetAlert(
+                "Schedule for enable updates",
+                "Updates was scheduled to be enabled successfully.",
+                "success");
             })
             .error(function(response, status) {
               if (typeof response === 'object') {
@@ -62,6 +67,30 @@ angular.module('app').controller('EnableUpdatesScheduledChangeCtrl',
             .finally(function() {
               $scope.saving = false;
             });
+        });
+    };
+
+    $scope.deleteScheduledChange = function() {
+      CSRF.getToken()
+        .then(function(csrf_token) {
+          sc = $scope.emergency_shutoff.scheduled_change;
+          EmergencyShutoffs.deleteScheduledEnableUpdates(
+            sc.sc_id, sc.data_version, csrf_token)
+              .success(function(response) {
+                $modalInstance.close(null);
+                sweetAlert(
+                  "Deleting Scheduled Changes",
+                  "Scheduled Changes deleted successfully",
+                  "success"
+                );
+              })
+              .error(function(response) {
+                sweetAlert(
+                  "Deleting Scheduled Changes",
+                  "Error on delete scheduled change",
+                  "error"
+                );
+              });
         });
     };
 
