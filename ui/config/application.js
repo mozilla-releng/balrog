@@ -66,6 +66,12 @@ module.exports = function(lineman) {
             "cwd": "vendor/bootstrap",
             "src": "fonts/*",
             "dest": "generated"
+          },
+          {
+            "expand": true,
+            "cwd": "app/audio",
+            "src": "**",
+            "dest": "generated/audio"
           }
         ]
       },
@@ -88,6 +94,12 @@ module.exports = function(lineman) {
             "cwd": "vendor/bootstrap",
             "src": "fonts/*",
             "dest": "dist"
+          },
+          {
+            "expand": true,
+            "cwd": "app/audio",
+            "src": "**",
+            "dest": "dist/audio"
           }
         ]
       }

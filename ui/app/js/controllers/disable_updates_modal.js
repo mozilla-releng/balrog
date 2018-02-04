@@ -22,7 +22,12 @@ angular.module('app').controller('DisableUpdatesModalCtrl',
         });
     };
 
-    $scope.cancel = function () {
+    $scope.cancel = function() {
       $modalInstance.dismiss('cancel');
     };
+
+    (function() {
+      var audio = new Audio('audio/emergency.mp3');
+      audio.play();
+    })();
   });
