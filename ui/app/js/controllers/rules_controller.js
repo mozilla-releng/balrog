@@ -767,6 +767,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           $scope.current_emergency_shutoff.sc.sc_id,
           $scope.current_emergency_shutoff.sc.data_version,
           csrf_token).success(function() {
+            $route.reload();
             sweetAlert(
               "Enabling Updates",
               "Scheduled Enable Updates deleted successfully.",

@@ -75,7 +75,7 @@
     </h4>
   </div>
   <div class="panel-body">
-
+    <div ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.required_signoffs)">
       <span style="float: left">
         <h4>Before this change can be enacted, it must be signed off on by:</h4>
         <ul>
@@ -84,7 +84,7 @@
           </li>
         </ul>
       </span>
-      <span style="float: right" >
+      <span style="float: right" ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.signoffs)">
         <h4>This change has already been signed off by:</h4>
         <ul>
           <li ng-repeat="(username, signoff_role) in current_emergency_shutoff.sc.signoffs">
@@ -92,28 +92,33 @@
           </li>
         </ul>
       </span>
-      <hr />
+    </div>
+    <hr ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.required_signoffs)" />
 
-      <div class="row" style="padding-left: 15px;">
-        <div class="col-sm-12">
-          <button class="btn btn-md btn-danger"
-                  ng-click="openEnableUpdateRevokeSignoffModal()">
-              Revoke your Signoff
-          </button>
-          <button class="btn btn-primary btn-md"
-                  ng-click="openEnableUpdateSignoffModal()">
-              Signoff as...
-          </button>
-          <button class="btn btn-success btn-md"
-                  ng-click="openEnableUpdatesModal()">
-              Enable updates
-          </button>
-          <button class="btn btn-success btn-danger"
-                  ng-click="deleteScheduledEnableUpdates()">
-              Delete Scheduled Enable Update
-          </button>
-        </div>
+    <div class="row">
+      <div class="col-sm-12">
+        <button class="btn btn-md btn-danger"
+                ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.required_signoffs) && current_emergency_shutoff.sc.signoffs.hasOwnProperty(current_user)"
+                ng-click="openEnableUpdateRevokeSignoffModal()">
+            Revoke your Signoff
+        </button>
+        <button class="btn btn-primary btn-md"
+                ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.required_signoffs) && !current_emergency_shutoff.sc.signoffs.hasOwnProperty(current_user)"
+                ng-click="openEnableUpdateSignoffModal()">
+            Signoff as...
+        </button>
+        <button class="btn btn-success btn-md"
+                ng-show="!current_emergency_shutoff.sc"
+                ng-click="openEnableUpdatesModal()">
+            Enable updates
+        </button>
+        <button class="btn btn-success btn-danger"
+                ng-show="current_emergency_shutoff.sc"
+                ng-click="deleteScheduledEnableUpdates()">
+            Delete Scheduled Enable Update
+        </button>
       </div>
+    </div>
   </div>
 </div>
 

@@ -16,7 +16,7 @@ angular.module('app').factory('EmergencyShutoffs', function($http, ScheduledChan
     },
     scheduleEnableUpdates: function(shutoff, csrf_token) {
       when = new Date();
-      when.setSeconds(when.getSeconds() + 30);
+      when.setSeconds(when.getSeconds() + 10);
 
       data = angular.copy(shutoff);
       data.change_type = 'delete';
