@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers, EmergencyShutoffs) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers, EmergencyShutoffs, CSRF) {
 
   Page.setTitle('Rules');
 
@@ -16,6 +16,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.rules = [];
   $scope.pr_ch_filter = "";
   $scope.show_sc = true;
+  $scope.emergency_shutoffs = [];
+  $scope.current_emergency_shutoff = null;
 
   function changeLocationWithFilterParams(filterParamsString) {
     localStorage.setItem("pr_ch_filter", filterParamsString);
@@ -142,28 +144,18 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         }
       };
 
-      EmergencyShutoffs.get().success(function(response_emergerncy_shutoffs) {
-        shutoffs = response_emergerncy_shutoffs.shutoffs;
-        response.rules.forEach(function(rule) {
-          shutoff = shutoffs.find(function(shutoff){
-            return shutoff.product == rule.product && shutoff.channel == rule.channel;
-          });
-          rule.updates_are_enabled = !shutoff;
-          rule.emergency_shutoff = shutoff;
-        });
+      EmergencyShutoffs.get().success(function(response_emergency_shutoffs) {
+        $scope.emergency_shutoffs = response_emergency_shutoffs.shutoffs;
       }).finally(function() {
         EmergencyShutoffs.scheduledChanges()
-          .success(function(response_emergerncy_shutoffs_sc) {
-            shutoffs_sc = response_emergerncy_shutoffs_sc.scheduled_changes;
-            if(shutoffs_sc.length > 0) {
-              response.rules.forEach(function(rule) {
-                if(!rule.updates_are_enabled) {
-                  sc = shutoffs_sc.find(function(sc) {
-                    return sc.product == rule.emergency_shutoff.product && sc.channel == rule.emergency_shutoff.channel;
-                  });
-                  rule.emergency_shutoff.scheduled_change = sc;
-                }
-              });
+          .success(function(response_emergency_shutoffs_sc) {
+            if($scope.emergency_shutoffs.length > 0) {
+              shutoffs_sc = response_emergency_shutoffs_sc.scheduled_changes;
+              if(shutoffs_sc.length > 0) {
+                $scope.emergency_shutoffs.forEach(function(shutoff) {
+                  shutoff.sc = EmergencyShutoffs.shutoffScheduledEnableChange(shutoff, shutoffs_sc);
+                });
+              }
             }
           });
       });
@@ -183,6 +175,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       localStorage.setItem("pr_ch_filter", value);
     }
     $scope.pr_ch_selected = value.split(',');
+    $scope.setEmergencyShutoff($scope.pr_ch_selected);
   });
 
   $scope.selectPageSize = function() {
@@ -275,6 +268,14 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     changeLocationWithFilterParams($scope.pr_ch_filter);
   };
 
+  $scope.setEmergencyShutoff = function(pr_ch_selected) {
+    if(pr_ch_selected.length > 0) {
+      $scope.current_emergency_shutoff =
+        $scope.emergency_shutoffs.find(function(shutoff) {
+          return shutoff.product == pr_ch_selected[0] && shutoff.channel == pr_ch_selected[1];
+        });
+    }
+  };
 
   $scope.openUpdateModal = function(rule) {
 
@@ -655,7 +656,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
 
-  $scope.openDisableUpdatesModal = function(rule) {
+  $scope.openDisableUpdatesModal = function() {
     var modal = $modal.open({
       templateUrl: 'disable_updates_modal.html',
       controller: 'DisableUpdatesModalCtrl',
@@ -663,10 +664,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       backdrop: 'static',
       resolve: {
         product: function() {
-          return rule.product;
+          return $scope.pr_ch_selected[0];
         },
         channel: function() {
-          return rule.channel;
+          return $scope.pr_ch_selected[1];
         }
       }
     });
@@ -675,7 +676,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
 
-  $scope.openEnableUpdatesModal = function(emergency_shutoff) {
+  $scope.openEnableUpdatesModal = function() {
     var modal = $modal.open({
       templateUrl: 'enable_updates_modal.html',
       controller: 'EnableUpdatesCtrl',
@@ -683,7 +684,10 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       backdrop: 'static',
       resolve: {
         emergency_shutoff: function() {
-          return emergency_shutoff;
+          return $scope.current_emergency_shutoff;
+        },
+        signoffs_requirements: function() {
+          return $scope.signoffRequirements;
         }
       }
     });
@@ -692,32 +696,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   }
 
-  $scope.openScheduleEnableUpdateModal = function(emergency_shutoff) {
-    var modal = $modal.open({
-      templateUrl: 'enable_updates_scheduled_change_modal.html',
-      controller: 'EnableUpdatesScheduledChangeCtrl',
-      size: 'lg',
-      backdrop: 'static',
-      resolve: {
-        sc: function () {
-          sc = angular.copy(emergency_shutoff);
-          sc['change_type'] = 'delete';
-          return sc;
-        },
-        required_signoffs: function() {
-          return [];
-        },
-        emergency_shutoff: function() {
-          return emergency_shutoff;
-        }
-      }
-    });
-    modal.result.then(function(sc) {
-      emergency_shutoff.scheduled_change = sc;
-    });
-  };
-
-  $scope.openScheduleEnableUpdateRevokeSignoffModal = function(sc) {
+  $scope.openEnableUpdateRevokeSignoffModal = function() {
     $modal.open({
       templateUrl: "revoke_signoff_modal.html",
       controller: "RevokeSignoffCtrl",
@@ -733,15 +712,66 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           return $scope.current_user;
         },
         sc: function() {
-          return sc;
+          return $scope.current_emergency_shutoff.sc;
         },
         pk: function() {
           return {
-            'Emergency Shutoff': `${sc.product}/${sc.channel}`
+            'Emergency Shutoff':
+              `${$scope.current_emergency_shutoff.product}/${$scope.current_emergency_shutoff.channel}`
           };
         },
         data: null
       }
     });
+  }
+
+  $scope.openEnableUpdateSignoffModal = function() {
+    var modalInstance = $modal.open({
+      templateUrl: "signoff_modal.html",
+      controller: "SignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Emergency Shutoff";
+        },
+        service: function() {
+          return EmergencyShutoffs;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        user_roles: function() {
+          return $scope.user_roles;
+        },
+        required_signoffs: function () {
+          return $scope.current_emergency_shutoff.sc["required_signoffs"];
+        },
+        sc: function() {
+          return $scope.current_emergency_shutoff.sc;
+        },
+        pk: function() {
+          return {
+            'Emergency Shutoff':
+              `${$scope.current_emergency_shutoff.product}/${$scope.current_emergency_shutoff.channel}`
+          };
+        },
+        data: null
+      }
+    });
+  };
+
+  $scope.deleteScheduledEnableUpdates = function() {
+    CSRF.getToken()
+      .then(function(csrf_token) {
+        EmergencyShutoffs.deleteScheduledEnableUpdates(
+          $scope.current_emergency_shutoff.sc.sc_id,
+          $scope.current_emergency_shutoff.sc.data_version,
+          csrf_token).success(function() {
+            sweetAlert(
+              "Enabling Updates",
+              "Scheduled Enable Updates deleted successfully.",
+              "success");
+          });
+      });
   }
 });

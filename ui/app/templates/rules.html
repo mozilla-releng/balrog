@@ -55,6 +55,68 @@
     </div>
   </div>
 </div>
+
+<div class="row" style="padding-bottom: 15px;"
+     ng-show="!current_emergency_shutoff && pr_ch_selected && pr_ch_selected.length > 1">
+  <div class="col-sm-12">
+    <button class="btn btn-danger btn-md"
+            ng-click="openDisableUpdatesModal()">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            &nbsp;EMERGENCY SHUTOFF for <b>{{pr_ch_selected[0]}}/{{pr_ch_selected[1]}}</b>&nbsp;
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+    </button>
+  </div>
+</div>
+
+<div class="panel panel-default" ng-show="current_emergency_shutoff && pr_ch_selected && pr_ch_selected.length > 1" style="border-color: #d9534f !important">
+  <div class="panel-heading" style="background-color: #d9534f">
+    <h4 style="color: white">
+      <b>Updates are disabled for {{pr_ch_selected[0]}}/{{pr_ch_selected[1]}}</b>
+    </h4>
+  </div>
+  <div class="panel-body">
+
+      <span style="float: left">
+        <h4>Before this change can be enacted, it must be signed off on by:</h4>
+        <ul>
+          <li ng-repeat="(rs_role, signoffs_required) in current_emergency_shutoff.sc.required_signoffs">
+             {{ signoffs_required }} member(s) of {{ rs_role }}
+          </li>
+        </ul>
+      </span>
+      <span style="float: right" >
+        <h4>This change has already been signed off by:</h4>
+        <ul>
+          <li ng-repeat="(username, signoff_role) in current_emergency_shutoff.sc.signoffs">
+            {{ username }} ({{ signoff_role }})
+          </li>
+        </ul>
+      </span>
+      <hr />
+
+      <div class="row" style="padding-left: 15px;">
+        <div class="col-sm-12">
+          <button class="btn btn-md btn-danger"
+                  ng-click="openEnableUpdateRevokeSignoffModal()">
+              Revoke your Signoff
+          </button>
+          <button class="btn btn-primary btn-md"
+                  ng-click="openEnableUpdateSignoffModal()">
+              Signoff as...
+          </button>
+          <button class="btn btn-success btn-md"
+                  ng-click="openEnableUpdatesModal()">
+              Enable updates
+          </button>
+          <button class="btn btn-success btn-danger"
+                  ng-click="deleteScheduledEnableUpdates()">
+              Delete Scheduled Enable Update
+          </button>
+        </div>
+      </div>
+  </div>
+</div>
+
 <div class="panel panel-default" style="clear:right"
      ng-repeat="rule in filtered_items = (rules | filter: filterScheduledChanges | filter: filterBySelect) | orderBy:orderRules | startFrom:(disableFilter || !rule_id) && ((currentPage - 1)*pageSize) | limitTo:pageSize">
   <div class="panel-heading">
@@ -109,11 +171,6 @@
            class="btn btn-default btn-xs" ng-href="/rules/{{ rule.rule_id }}">
             History
         </a>
-        <button class="btn btn-danger btn-xs" ng-show="rule.updates_are_enabled && rule.product && rule.channel" ng-click="openDisableUpdatesModal(rule)">
-          <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            &nbsp;EMERGENCY SHUTOFF&nbsp;
-          <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-        </button>
         <span ng-show="show_sc && rule.scheduled_change !== null" title="{{ humanizeDate(rule.scheduled_change.when) }}"
               class="label label-default">
             Scheduled for <span style="text-transform: capitalize">{{ rule.scheduled_change.change_type }}</span> <span ng-bind-html="formatMoment(rule.scheduled_change.when)"></span>
@@ -248,43 +305,10 @@
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="update_type" fieldtitle="Update type"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="headerArchitecture" fieldtitle="Header Architecture"></rulefield>
       </div>
+
     </div>
-  </div>
 
-  <div class="panel-footer" ng-show="!rule_id && !rule.updates_are_enabled" style="background-color: #d9534f">
-    <h5 style="color: white">
-      <b>Updates are disabled for {{rule.product}}/{{rule.channel}}</b>
-      <span ng-show="rule.emergency_shutoff.scheduled_change" title="{{ humanizeDate(rule.emergency_shutoff.scheduled_change.when) }}"
-            class="label label-default">
-            Scheduled for Enable Updates <span ng-bind-html="formatMoment(rule.emergency_shutoff.scheduled_change.when)"></span>
-      </span>
-    </h5>
-    <button class="btn btn-md btn-warning"
-            ng-show="rule.emergency_shutoff.scheduled_change && !isEmpty(rule.emergency_shutoff.scheduled_change.required_signoffs) && rule.emergency_shutoff.scheduled_change.signoffs.hasOwnProperty(current_user)"
-            ng-click="openScheduleEnableUpdateRevokeSignoffModal(rule.emergency_shutoff.scheduled_change)">
-        Revoke your Signoff
-    </button>
-    <button class="btn btn-primary btn-md"
-            ng-show="rule.emergency_shutoff.scheduled_change && !isEmpty(rule.emergency_shutoff.scheduled_change.required_signoffs) && !rule.emergency_shutoff.scheduled_change.signoffs.hasOwnProperty(current_user)">
-        Signoff as...
-    </button>
-    <button class="btn btn-success btn-md"
-            ng-show="ruleSignoffsRequired(rule).length === 0 && !rule.emergency_shutoff.scheduled_change"
-            ng-click="openEnableUpdatesModal(rule.emergency_shutoff)">
-        Enable updates
-    </button>
-    <button class="btn btn-warning btn-md"
-            ng-show="rule.emergency_shutoff.scheduled_change"
-            ng-click="openScheduleEnableUpdateModal(rule.emergency_shutoff)">
-        Modify Pending Update
-    </button>
-    <button class="btn btn-warning btn-md"
-            ng-show="!rule.emergency_shutoff.scheduled_change"
-            ng-click="openScheduleEnableUpdateModal(rule.emergency_shutoff)">
-        Schedule for enable the updates
-    </button>
   </div>
-
   <div class="panel-footer" ng-show="rule_id">
     Changed by <code>{{ rule.changed_by }}</code>
     <span ng-bind-html="formatMoment(rule.timestamp)"></span>
