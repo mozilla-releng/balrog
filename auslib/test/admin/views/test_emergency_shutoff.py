@@ -123,8 +123,12 @@ class TestEmergencyShutoff(ViewTest):
                                 .execute().fetchall()
         self.assertTrue(sc)
 
-    # def test_delete_scheduled_deletion(self):
-    #     ValueError("IMPL!!!!!!!!")
+    def test_delete_scheduled_deletion(self):
+        resp = self._delete('/scheduled_changes/emergency_shutoff/1', qs={'data_version': 1})
+        self.assertStatusCode(resp, 200)
+        sc_table = dbo.emergencyShutoffs.scheduled_changes
+        sc = sc_table.t.select().where(sc_table.sc_id == 1).execute().fetchall()
+        self.assertFalse(sc)
 
     def test_enact_updates_scheduled_for_reactivation(self):
         resp = self._post('/scheduled_changes/emergency_shutoff/1/enact')

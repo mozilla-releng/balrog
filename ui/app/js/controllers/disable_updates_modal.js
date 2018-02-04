@@ -9,7 +9,7 @@ angular.module('app').controller('DisableUpdatesModalCtrl',
       EmergencyShutoffs.create($scope.product, $scope.channel)
         .success(function(response) {
           $modalInstance.close(response);
-          sweetAlert("Disabling Updates", "Updates was disabled successfully!", "success")
+          sweetAlert("Disabling Updates", "Updates was disabled successfully!", "success");
         })
         .error(function(response, status) {
           console.log(response);

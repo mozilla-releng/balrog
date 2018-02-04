@@ -272,7 +272,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     if(pr_ch_selected.length > 0) {
       $scope.current_emergency_shutoff =
         $scope.emergency_shutoffs.find(function(shutoff) {
-          return shutoff.product == pr_ch_selected[0] && shutoff.channel == pr_ch_selected[1];
+          return shutoff.product === pr_ch_selected[0] && shutoff.channel === pr_ch_selected[1];
         });
     }
   };
@@ -694,7 +694,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     modal.result.then(function() {
       $route.reload();
     });
-  }
+  };
 
   $scope.openEnableUpdateRevokeSignoffModal = function() {
     $modal.open({
@@ -716,14 +716,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         pk: function() {
           return {
-            'Emergency Shutoff':
-              `${$scope.current_emergency_shutoff.product}/${$scope.current_emergency_shutoff.channel}`
+            'Emergency Shutoff': $scope.current_emergency_shutoff.product + '/' + $scope.current_emergency_shutoff.channel
           };
         },
         data: null
       }
     });
-  }
+  };
 
   $scope.openEnableUpdateSignoffModal = function() {
     var modalInstance = $modal.open({
@@ -751,8 +750,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         pk: function() {
           return {
-            'Emergency Shutoff':
-              `${$scope.current_emergency_shutoff.product}/${$scope.current_emergency_shutoff.channel}`
+            'Emergency Shutoff': $scope.current_emergency_shutoff.product + '/' + $scope.current_emergency_shutoff.channel
           };
         },
         data: null
@@ -774,5 +772,5 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
               "success");
           });
       });
-  }
+  };
 });

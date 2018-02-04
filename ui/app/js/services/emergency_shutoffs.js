@@ -1,15 +1,15 @@
 angular.module('app').factory('EmergencyShutoffs', function($http, ScheduledChanges) {
   var service = {
     get: function() {
-      return $http.get('/api/emergency_shutoff')
+      return $http.get('/api/emergency_shutoff');
     },
     create: function(product, channel) {
       data = {product, channel};
       return $http.post('/api/emergency_shutoff', data);
     },
     delete: function(product, channel, data_version, csrf_token) {
-      return $http.delete(
-          `/api/emergency_shutoff/${product}/${channel}?data_version=${data_version}&csrf_token=${encodeURIComponent(csrf_token)}`);
+      url = '/api/emergency_shutoff/' + product + '/' + channel + '?data_version=' + data_version + '&csrf_token=' + encodeURIComponent(csrf_token);
+      return $http.delete(url);
     },
     scheduledChanges: function() {
       return $http.get('/api/scheduled_changes/emergency_shutoff');
@@ -26,8 +26,8 @@ angular.module('app').factory('EmergencyShutoffs', function($http, ScheduledChan
       return $http.post("/api/scheduled_changes/emergency_shutoff", data);
     },
     deleteScheduledEnableUpdates: function(sc_id, data_version, csrf_token) {
-      return $http.delete(
-          `/api/scheduled_changes/emergency_shutoff/${sc_id}?data_version=${data_version}&csrf_token=${encodeURIComponent(csrf_token)}`);
+      url = '/api/scheduled_changes/emergency_shutoff/' + sc_id + '?data_version=' + data_version + '&csrf_token=' + encodeURIComponent(csrf_token);
+      return $http.delete(url);
     },
     signoffOnScheduledChange: function(sc_id, data) {
       var url = ScheduledChanges.signoffsUrl("emergency_shutoff", sc_id);
@@ -45,7 +45,7 @@ angular.module('app').factory('EmergencyShutoffs', function($http, ScheduledChan
     },
     shutoffScheduledEnableChange: function(shutoff, scheduled_changes) {
       return scheduled_changes.find(function(sc) {
-        return sc.product === shutoff.product && sc.channel == shutoff.channel;
+        return sc.product === shutoff.product && sc.channel === shutoff.channel;
       });
     }
   };
