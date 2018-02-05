@@ -9,7 +9,7 @@ import sys
 import time
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger, Boolean, join
+    create_engine, select, BigInteger, Boolean, join, union
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 import sqlalchemy.types
@@ -387,7 +387,10 @@ class AUSTable(object):
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
-        query = self._selectStatement(where=where, **kwargs)
+        if where and isinstance(where[0], list):
+            query = union(*list(map(lambda cond: self._selectStatement(where=cond, **kwargs), where[0])));
+        else:
+            query = self._selectStatement(where=where, **kwargs)
 
         if transaction:
             result = transaction.execute(query).fetchall()
@@ -1757,19 +1760,22 @@ class Releases(AUSTable):
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = []
+        rows = []
         for row in affected_rows:
             if not row:
                 continue
+            rows.append(row)
+        info = self.getReleaseInfo(name=[row['name'] for row in rows], transaction=transaction)
             # Releases do not affect live updates on their own, only the
             # product+channel combinations specified in Rules that point
             # to them. We need to find these Rules, and then return _their_
             # Required Signoffs.
-            info = self.getReleaseInfo(name=row["name"], transaction=transaction)
-            if info:
-                info = info[0]
-                for rule_id in info["rule_ids"]:
-                    rule = self.db.rules.select(where=[self.db.rules.rule_id == rule_id], transaction=transaction)[0]
-                    potential_required_signoffs.extend(self.db.rules.getPotentialRequiredSignoffs([rule], transaction=transaction))
+#            info = self.getReleaseInfo(name=row["name"], transaction=transaction)
+#            if info:
+#                info = info[0]
+#                for rule_id in info["rule_ids"]:
+#                    rule = self.db.rules.select(where=[self.db.rules.rule_id == rule_id], transaction=transaction)[0]
+#                    potential_required_signoffs.extend(self.db.rules.getPotentialRequiredSignoffs([rule], transaction=transaction))
         return potential_required_signoffs
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -1805,7 +1811,10 @@ class Releases(AUSTable):
                        transaction=None, nameOnly=False, name_prefix=None):
         where = []
         if name:
-            where.append(self.name == name)
+            if len(name) > 1 and not product:
+                where.append([[self.name == n] for n in name])
+            else:
+                where.append(self.name == name)
         if product:
             where.append(self.product == product)
         if name_prefix:
