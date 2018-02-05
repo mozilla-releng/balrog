@@ -388,7 +388,7 @@ class AUSTable(object):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
         if where and isinstance(where[0], list):
-            query = union(*list(map(lambda cond: self._selectStatement(where=cond, **kwargs), where[0])));
+            query = union(*list(map(lambda cond: self._selectStatement(where=cond, **kwargs), where[0])))
         else:
             query = self._selectStatement(where=where, **kwargs)
 
@@ -1759,7 +1759,7 @@ class Releases(AUSTable):
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        potential_required_signoffs = []
+        potential_required_signoffs = {}
         rows = []
         for row in affected_rows:
             if not row:
@@ -1770,12 +1770,12 @@ class Releases(AUSTable):
             # product+channel combinations specified in Rules that point
             # to them. We need to find these Rules, and then return _their_
             # Required Signoffs.
-#            info = self.getReleaseInfo(name=row["name"], transaction=transaction)
-#            if info:
-#                info = info[0]
-#                for rule_id in info["rule_ids"]:
-#                    rule = self.db.rules.select(where=[self.db.rules.rule_id == rule_id], transaction=transaction)[0]
-#                    potential_required_signoffs.extend(self.db.rules.getPotentialRequiredSignoffs([rule], transaction=transaction))
+        if info:
+            for row in info:
+                potential_required_signoffs[row['name']] = []
+                for rule_id in row["rule_ids"]:
+                    rule = self.db.rules.select(where=[self.db.rules.rule_id == rule_id], transaction=transaction)[0]
+                    potential_required_signoffs[row['name']] = self.db.rules.getPotentialRequiredSignoffs([rule], transaction=transaction)
         return potential_required_signoffs
 
     def setDomainWhitelist(self, domainWhitelist):
