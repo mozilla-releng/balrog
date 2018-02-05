@@ -78,6 +78,10 @@
                 ng-click="openEditScheduledRuleChangeModal(rule)">
             Modify Pending Rule
         </button>
+        <button class="btn btn-info btn-xs"
+                ng-click="openNewScheduledDuplicateModal(rule)">
+            Schedule Duplication
+        </button>
         <button ng-show="show_sc && rule.scheduled_change.change_type === 'update'" class="btn btn-warning btn-xs"
                 ng-click="openEditScheduledRuleChangeModal(rule)">
             Modify Pending Update
