@@ -364,7 +364,7 @@ class ReleasesAPIView(AdminView):
     def get(self, **kwargs):
         releases = release_list(connexion.request)
         if not connexion.request.args.get('names_only'):
-            requirements = dbo.releases.getPotentialRequiredSignoffs(releases)
+            requirements = dbo.releases.getPotentialRequiredSignoffs(releases, batch=True)
             for release in releases:
                 release['required_signoffs'] = serialize_signoff_requirements(requirements[release['name']])
         return serialize_releases(connexion.request, releases)
