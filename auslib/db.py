@@ -1778,12 +1778,19 @@ class Releases(AUSTable):
             # map rules according to rule_id
             rules_map = {rule['rule_id']: rule for rule in all_rules}
 
+            rs_cache = {}
+
             for row in info:
                 rs = []
                 potential_required_signoffs[row['name']] = []
                 for rule_id in row["rule_ids"]:
                     rule = rules_map[rule_id]
-                    rs.extend(self.db.rules.getPotentialRequiredSignoffs([rule], transaction=transaction))
+                    if rule_id in rs_cache:
+                        _rs = rs_cache[rule_id]
+                    else:
+                        _rs = self.db.rules.getPotentialRequiredSignoffs([rule], transaction=transaction)
+                        rs_cache[rule_id] = _rs
+                    rs.extend(_rs)
                 if batch:
                     potential_required_signoffs[row['name']] = rs
                 else:
