@@ -9,7 +9,7 @@ angular.module('app').controller('DisableUpdatesModalCtrl',
       EmergencyShutoffs.create($scope.product, $scope.channel)
         .success(function(response) {
           $modalInstance.close(response);
-          sweetAlert("Disabling Updates", "Updates was disabled successfully!", "success");
+          sweetAlert("Disabling Updates", "Updates were disabled successfully!", "success");
         })
         .error(function(response, status) {
           console.log(response);
@@ -25,9 +25,4 @@ angular.module('app').controller('DisableUpdatesModalCtrl',
     $scope.cancel = function() {
       $modalInstance.dismiss('cancel');
     };
-
-    (function() {
-      var audio = new Audio('audio/emergency.mp3');
-      audio.play();
-    })();
   });

@@ -4,7 +4,7 @@ angular.module('app').factory('EmergencyShutoffs', function($http, ScheduledChan
       return $http.get('/api/emergency_shutoff');
     },
     create: function(product, channel) {
-      data = {product, channel};
+      data = {'product': product, 'channel': channel};
       return $http.post('/api/emergency_shutoff', data);
     },
     delete: function(product, channel, data_version, csrf_token) {

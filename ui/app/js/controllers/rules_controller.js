@@ -671,8 +671,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         }
       }
     });
-    modal.result.then(function() {
-      $route.reload();
+    modal.result.then(function(emergency_shutoff) {
+      $scope.emergency_shutoffs.push(emergency_shutoff);
+      $scope.current_emergency_shutoff = emergency_shutoff;
     });
   };
 
@@ -692,7 +693,18 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       }
     });
     modal.result.then(function() {
-      $route.reload();
+      EmergencyShutoffs.scheduledChanges()
+        .success(function(response_emergency_shutoffs_sc) {
+          shutoffs_sc = response_emergency_shutoffs_sc.scheduled_changes;
+          $scope.current_emergency_shutoff.sc =
+            EmergencyShutoffs.shutoffScheduledEnableChange($scope.current_emergency_shutoff, shutoffs_sc);
+          if(!$scope.current_emergency_shutoff.sc) {
+            $scope.emergency_shutoffs = $scope.emergency_shutoffs.filter(function(eso) {
+              return eso.product !== $scope.current_emergency_shutoff.product || eso.channel !== $scope.current_emergency_shutoff.channel;
+            });
+            $scope.current_emergency_shutoff = null;
+          }
+        });
     });
   };
 
@@ -765,7 +777,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           $scope.current_emergency_shutoff.sc.sc_id,
           $scope.current_emergency_shutoff.sc.data_version,
           csrf_token).success(function() {
-            $route.reload();
+            $scope.current_emergency_shutoff.sc = null;
             sweetAlert(
               "Enabling Updates",
               "Scheduled Enable Updates deleted successfully.",

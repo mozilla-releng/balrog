@@ -24,6 +24,25 @@
 </h2>
 
 <div class="row">
+  <div class="col-sm-12 text-right">
+    <div class="row">
+      <label>Product/Channel filter:</label>
+      <select ng-model="pr_ch_filter" name="pr_ch_filter"
+        ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair" ng-change="locationChanger()">
+      </select>
+
+      <button class="btn btn-danger btn-sm"
+              ng-show="!current_emergency_shutoff && pr_ch_selected && pr_ch_selected.length > 1"
+              ng-click="openDisableUpdatesModal()">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            &nbsp;<b>Disable updates on the {{pr_ch_selected[0]}} {{pr_ch_selected[1]}} channel</b>&nbsp;
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="row">
   <div class="col-sm-7">
     <div class="pagination-container" ng-show="rules_count > pageSize">
       <pagination
@@ -32,17 +51,11 @@
         ng-model="currentPage"
         items-per-page="pageSize"
         max-size="maxSize"
-        boundary-links="true"
-      ></pagination>
+        boundary-links="true"></pagination>
     </div>
   </div>
+
   <div class="col-sm-5 text-right">
-    <div class="row" ng-show="!rule_id">
-      <label>Product/Channel filter:</label>
-      <select ng-model="pr_ch_filter" name="pr_ch_filter"
-        ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair" ng-change="locationChanger()">
-      </select>
-    </div>
     <div class="row" ng-show="!rule_id">
       <label for="include_sc">Include Scheduled Changes?</label>
       <input type="checkbox" id="include_sc" ng-model="show_sc" checked>
@@ -56,23 +69,11 @@
   </div>
 </div>
 
-<div class="row" style="padding-bottom: 15px;"
-     ng-show="!current_emergency_shutoff && pr_ch_selected && pr_ch_selected.length > 1">
-  <div class="col-sm-12">
-    <button class="btn btn-danger btn-md"
-            ng-click="openDisableUpdatesModal()">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            &nbsp;EMERGENCY SHUTOFF for <b>{{pr_ch_selected[0]}}/{{pr_ch_selected[1]}}</b>&nbsp;
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-    </button>
-  </div>
-</div>
-
 <div class="panel panel-default" ng-show="current_emergency_shutoff && pr_ch_selected && pr_ch_selected.length > 1" style="border-color: #d9534f !important">
   <div class="panel-heading" style="background-color: #d9534f">
-    <h4 style="color: white">
-      <b>Updates are disabled for {{pr_ch_selected[0]}}/{{pr_ch_selected[1]}}</b>
-    </h4>
+    <h3 class="panel-title" style="color: white">
+      Updates on the <b>{{pr_ch_selected[0]}} {{pr_ch_selected[1]}}</b> channel are disabled
+    </h3>
   </div>
   <div class="panel-body">
     <div ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.required_signoffs)">
@@ -115,7 +116,7 @@
         <button class="btn btn-success btn-danger"
                 ng-show="current_emergency_shutoff.sc"
                 ng-click="deleteScheduledEnableUpdates()">
-            Delete Scheduled Enable Update
+            Keep Updates Disabled
         </button>
       </div>
     </div>

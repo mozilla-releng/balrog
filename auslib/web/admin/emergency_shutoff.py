@@ -26,11 +26,11 @@ def post(emergency_shutoff, changed_by, transaction):
         return problem(
             400, 'Bad Request', 'Invalid Emergency shutoff data',
             ext={'data': 'Emergency shutoff for product/channel already exists.'})
-    dbo.emergencyShutoffs.insert(
+    inserted_shutoff = dbo.emergencyShutoffs.insert(
         changed_by=changed_by, transaction=transaction, product=emergency_shutoff['product'], channel=emergency_shutoff['channel'])
     return Response(status=201,
                     content_type="application/json",
-                    response=json.dumps(emergency_shutoff))
+                    response=json.dumps(inserted_shutoff))
 
 
 @requirelogin
