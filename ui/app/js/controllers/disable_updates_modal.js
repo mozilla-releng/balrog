@@ -12,7 +12,6 @@ angular.module('app').controller('DisableUpdatesModalCtrl',
           sweetAlert("Disabling Updates", "Updates were disabled successfully!", "success");
         })
         .error(function(response, status) {
-          console.log(response);
           if (typeof response === 'object') {
             sweetAlert("Form submission error", response.data, "error");
           }
