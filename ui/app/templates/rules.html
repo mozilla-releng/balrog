@@ -20,24 +20,23 @@
     Schedule a new Rule
     <i class="glyphicon glyphicon-plus"></i>
   </button>
+  <button class="btn btn-danger btn-sm" style="float: right"
+          ng-show="!current_emergency_shutoff && pr_ch_selected && pr_ch_selected.length > 1"
+          ng-click="openDisableUpdatesModal()">
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        &nbsp;<b>Disable updates on the {{pr_ch_selected[0]}} {{pr_ch_selected[1]}} channel</b>&nbsp;
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+  </button>
 
 </h2>
 
 <div class="row">
   <div class="col-sm-12 text-right">
-    <div class="row">
+    <div>
       <label>Product/Channel filter:</label>
       <select ng-model="pr_ch_filter" name="pr_ch_filter"
         ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair" ng-change="locationChanger()">
       </select>
-
-      <button class="btn btn-danger btn-sm"
-              ng-show="!current_emergency_shutoff && pr_ch_selected && pr_ch_selected.length > 1"
-              ng-click="openDisableUpdatesModal()">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            &nbsp;<b>Disable updates on the {{pr_ch_selected[0]}} {{pr_ch_selected[1]}} channel</b>&nbsp;
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-      </button>
     </div>
   </div>
 </div>
@@ -56,11 +55,11 @@
   </div>
 
   <div class="col-sm-5 text-right">
-    <div class="row" ng-show="!rule_id">
+    <div ng-show="!rule_id">
       <label for="include_sc">Include Scheduled Changes?</label>
       <input type="checkbox" id="include_sc" ng-model="show_sc" checked>
     </div>
-    <div class="row page-size" ng-show="rules_count > 20">
+    <div class="page-size" ng-show="rules_count > 20">
       <label>Page Size: </label>
       <select ng-model="page_size" ng-name="page_size"
         ng-options="page_size.name for page_size in page_size_pair track by page_size.id"
