@@ -26,11 +26,11 @@ def post(emergency_shutoff, changed_by, transaction):
         return problem(
             400, 'Bad Request', 'Invalid Emergency shutoff data',
             ext={'data': 'Emergency shutoff for product/channel already exists.'})
-    dbo.emergencyShutoffs.insert(
+    inserted_shutoff = dbo.emergencyShutoffs.insert(
         changed_by=changed_by, transaction=transaction, product=emergency_shutoff['product'], channel=emergency_shutoff['channel'])
     return Response(status=201,
                     content_type="application/json",
-                    response=json.dumps(emergency_shutoff))
+                    response=json.dumps(inserted_shutoff))
 
 
 @requirelogin
@@ -74,6 +74,13 @@ def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transacti
         del sc_emergency_shutoff['csrf_token']
     view = ScheduledChangeView('emergency_shutoff', dbo.emergencyShutoffs)
     return view._post(sc_id, sc_emergency_shutoff, transaction, changed_by, sc_emergency_shutoff['sc_data_version'])
+
+
+@requirelogin
+@transactionHandler
+def delete_scheduled_deletion(sc_id, changed_by, transaction, **kwargs):
+    view = ScheduledChangeView('emergency_shutoff', dbo.emergencyShutoffs)
+    return view._delete(sc_id, transaction, changed_by)
 
 
 def scheduled_changes_signoffs(sc_id):
