@@ -181,6 +181,21 @@ class TestRulesAPI_JSON(ViewTest):
         ret = self._post("/rules", data=data, username="jack")
         self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
+    def testNewRuleWithWhitespaceInLocale(self):
+        data = dict(
+            backgroundRate=31, mapping="a", priority=33, product="a",
+            update_type="minor", channel="nightly", locale="de, en-US, hu, it, zh-TW"
+        )
+        ret = self._post("/rules", data=data, username="billy")
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], "a")
+        self.assertEquals(r[0]['backgroundRate'], 31)
+        self.assertEquals(r[0]['priority'], 33)
+        self.assertEquals(r[0]['data_version'], 1)
+        self.assertEquals(r[0]['locale'], "de,en-US,hu,it,zh-TW")
+
     # A POST without the required fields shouldn't be valid
     def testMissingFields(self):
         # But we still need to pass product, because permission checking
