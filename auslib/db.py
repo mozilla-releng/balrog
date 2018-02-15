@@ -9,7 +9,7 @@ import sys
 import time
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger, Boolean, join, union_all
+    create_engine, select, BigInteger, Boolean, join
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 import sqlalchemy.types
@@ -1762,7 +1762,7 @@ class Releases(AUSTable):
             if not row:
                 continue
             rows.append(row)
-        info = self.getReleaseInfo(name=[row['name'] for row in rows], transaction=transaction)
+        info = self.getReleaseInfo(names=[row['name'] for row in rows], transaction=transaction)
         # Releases do not affect live updates on their own, only the
         # product+channel combinations specified in Rules that point
         # to them. We need to find these Rules, and then return _their_
@@ -1820,14 +1820,14 @@ class Releases(AUSTable):
             count, = self.getEngine().execute(self.t.count()).fetchone()
         return count
 
-    def getReleaseInfo(self, name=None, product=None, limit=None,
+    def getReleaseInfo(self, names=None, product=None, limit=None,
                        transaction=None, nameOnly=False, name_prefix=None):
         where = []
-        if name:
-            if isinstance(name, list):
-                where.append(self.name.in_(tuple(name)))
+        if names:
+            if isinstance(names, list):
+                where.append(self.name.in_(tuple(names)))
             else:
-                where.append(self.name == name)
+                where.append(self.name == names)
         if product:
             where.append(self.product == product)
         if name_prefix:
