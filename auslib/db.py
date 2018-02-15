@@ -387,10 +387,7 @@ class AUSTable(object):
         if hasattr(where, "keys"):
             where = [getattr(self, k) == v for k, v in where.iteritems()]
 
-        if where and isinstance(where[0], list):
-            query = union_all(*list(map(lambda cond: self._selectStatement(where=cond, **kwargs), where[0])))
-        else:
-            query = self._selectStatement(where=where, **kwargs)
+        query = self._selectStatement(where=where, **kwargs)
 
         if transaction:
             result = transaction.execute(query).fetchall()
@@ -1758,21 +1755,21 @@ class Releases(AUSTable):
         self.table.append_column(Column('data', BlobColumn(dataType), nullable=False))
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
-    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None, batch=False):
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = {}
         rows = []
         for row in affected_rows:
             if not row:
                 continue
             rows.append(row)
-        info = self.getReleaseInfo(name=[row['name'] for row in rows] if batch else rows[0]['name'], transaction=transaction, batch=batch)
+        info = self.getReleaseInfo(name=[row['name'] for row in rows], transaction=transaction)
         # Releases do not affect live updates on their own, only the
         # product+channel combinations specified in Rules that point
         # to them. We need to find these Rules, and then return _their_
         # Required Signoffs.
         if info:
             # get all rules as a union
-            q_rules = [[self.db.rules.rule_id == rule_id] for row in info for rule_id in row['rule_ids']]
+            q_rules = [self.db.rules.rule_id.in_(tuple([rule_id for row in info for rule_id in row['rule_ids']]))]
             all_rules = self.db.rules.select(where=q_rules, transaction=transaction)
 
             # map rules according to rule_id
@@ -1791,12 +1788,8 @@ class Releases(AUSTable):
                         _rs = self.db.rules.getPotentialRequiredSignoffs([rule], transaction=transaction)
                         rs_cache[rule_id] = _rs
                     rs.extend(_rs)
-                if batch:
-                    potential_required_signoffs[row['name']] = rs
-                else:
-                    potential_required_signoffs = rs
-                    break
-        return potential_required_signoffs
+                potential_required_signoffs[row['name']] = rs
+        return next(iter(potential_required_signoffs.values())) if len(potential_required_signoffs) is 1 else potential_required_signoffs
 
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
@@ -1828,11 +1821,11 @@ class Releases(AUSTable):
         return count
 
     def getReleaseInfo(self, name=None, product=None, limit=None,
-                       transaction=None, nameOnly=False, name_prefix=None, batch=False):
+                       transaction=None, nameOnly=False, name_prefix=None):
         where = []
         if name:
-            if batch and not nameOnly:
-                where.append([[self.name == n] for n in name])
+            if isinstance(name, list):
+                where.append(self.name.in_(tuple(name)))
             else:
                 where.append(self.name == name)
         if product:
