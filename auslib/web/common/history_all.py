@@ -26,6 +26,8 @@ def _get_filters(obj, history_table):
         where.append(history_table.product != null())
         if request.args.get('product'):
             where.append(history_table.product == request.args.get('product'))
+    if hasattr(history_table, 'channel'):
+        where.append(history_table.channel != null())
         if request.args.get('channel'):
             where.append(history_table.channel == request.args.get('channel'))
     if request.args.get('timestamp_from'):
@@ -99,7 +101,7 @@ def permissions_history():
 
 
 def product_required_signoffs_history():
-    """GET /product_required_signoffs/history"""
+    """GET /required_signoffs/product/history"""
     product_required_signoffs_history = {
         'product_required_signoffs': ProductRequiredSignoffsHistoryAPIView().get_all(),
         'sc_product_required_signoffs': ProductRequiredSignoffScheduledChangeHistoryView().get_all()

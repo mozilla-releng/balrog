@@ -4,13 +4,13 @@
     <span>History/Logs</span>
   </h2>
   <hr>
-  <div class="col-md-4 gutter-top search-filters">
+  <div class="col-md-3 gutter-top search-filters">
     <form>
         <label>Search Filters</label>
       <div>
         <div class="filter-group">
           <h6 class="h-underlined">Objects: </h6>
-          <select name="objectselect" id="objectSelect" ng-options="option.value for option in data.objectOptions track by option.id"
+          <select class="select-product" name="objectselect" id="objectSelect" ng-options="option.value for option in data.objectOptions track by option.id"
             ng-model="data.objectSelected"></select>
           <br>
         </div>
@@ -26,7 +26,7 @@
 
           <div class="filter-group">
             <h6 class="h-underlined">Date range</h6>
-            <div class="dropdown">
+            <div class="dropdown" >
               <a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#">
                 <div class="input-group date">
                   <input type="text" class="form-control" data-ng-model="userInput.dateRangeStart">
@@ -57,9 +57,11 @@
             </div>
           </div>
           <div class="filter-group" ng-hide="data.objectSelected.name === 'permissions'
-            || data.objectSelected.name === 'permissions_required_signoffs'">
-            <h6 class="h-underlined">Product / Channel </h6>
-            <select ng-model="userInput.hs_pr_ch_filter" ng-change=productChannelValue(userInput.hs_pr_ch_filter) name="hs_pr_ch_filter"
+            || data.objectSelected.name === 'required_signoffs/permissions'">
+            <h6 class="h-underlined">
+                {{ data.objectSelected.name !== 'releases' ? "Product / Channel" : "Product"}}
+               </h6>
+            <select class="select-product" ng-model="userInput.hs_pr_ch_filter" ng-change=productChannelValue(userInput.hs_pr_ch_filter) name="hs_pr_ch_filter"
               ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair">
             </select>
           </div>
@@ -72,13 +74,18 @@
     </form>
   </div>
 
-  <div class="col-md-8">
+  <div class="col-md-9">
     <div class="wrapper">
       <div class="table-responsive">
         <div>
           <span class="pagination-container" ng-show="history_count > pageSize">
-            <pagination class="pagination-sm"
-            total-items="history_count" ng-model="currentPage" items-per-page="pageSize" max-size="maxSize"
+            <pagination 
+              class="pagination-sm"
+              total-items="history_count" 
+              ng-model="currentPage"
+              items-per-page="pageSize"
+              max-size="maxSize"
+              nq-change="reloading"
               boundary-links="true">
             </pagination>
           </span>
@@ -89,7 +96,7 @@
           <thead>
             <tr>
               <th>sno</th>
-              <th ng-show="revision.rule_id">Rule Id / Alais</th>
+              <th ng-show="revision.rule_id">Rule Id / Alias</th>
               <th ng-show="revision.name">Name</th>
               <th ng-show="revision.role">Role</th>
               <th ng-show="revision.username">Username</th>

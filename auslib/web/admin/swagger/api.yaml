@@ -457,7 +457,6 @@ paths:
         - $ref: '#/parameters/historyDataVersionParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
-        - $ref: '#/parameters/channelParam'
       responses:
         '200':
           description: Successfully fetched releases and it's scheduled change histories
@@ -493,7 +492,7 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /product_required_signoffs/history:
+  /required_signoffs/product/history:
     get:
       summary: Returns a list of product required signoff and it's scheduled change history.
       description: >
@@ -515,6 +514,7 @@ paths:
         - $ref: '#/parameters/historyDataVersionParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
+        - $ref: '#/parameters/channelParam'
         - name: role
           in: query
           description: The role(s) required for product signoff
@@ -527,7 +527,7 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /permissions_required_signoffs/history:
+  /required_signoffs/permissions/history:
     get:
       summary: Returns a list of permissions required signoffs and it's scheduled change history.
       description: >
