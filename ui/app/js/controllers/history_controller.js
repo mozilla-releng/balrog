@@ -38,39 +38,47 @@ angular
       };
       
     //Date range functions- To disable dates before start date
-    function startDateOnSetTime() {
-      $scope.$broadcast("start-date-changed");
-    }
-    function endDateOnSetTime() {
-      $scope.$broadcast("end-date-changed");
+    $scope.toggleDropdown = function(newDate, model) {
+      jQuery('.dropdown.open').removeClass('open');   
+    };
+
+    $scope.endDateBeforeRender = endDateBeforeRender
+    $scope.endDateOnSetTime = endDateOnSetTime
+    $scope.startDateBeforeRender = startDateBeforeRender
+    $scope.startDateOnSetTime = startDateOnSetTime
+
+    function startDateOnSetTime () {
+      $scope.$broadcast('start-date-changed');
     }
 
-    function startDateBeforeRender($dates) {
+    function endDateOnSetTime () {
+      $scope.$broadcast('end-date-changed');
+    }
+
+    function startDateBeforeRender ($dates) {
       if ($scope.userInput.dateRangeEnd) {
         var activeDate = moment($scope.userInput.dateRangeEnd);
-        $dates.filter(function(date) {
-            return date.localDateValue() >= activeDate.valueOf();
-          }).forEach(function(date) {
-            date.selectable = false;
-          });
+
+        $dates.filter(function (date) {
+          return date.localDateValue() >= activeDate.valueOf()
+        }).forEach(function (date) {
+          date.selectable = false;
+        })
       }
     }
-    function endDateBeforeRender($view, $dates) {
+
+    function endDateBeforeRender ($view, $dates) {
       if ($scope.userInput.dateRangeStart) {
-        var activeDate = moment($scope.userInput.dateRangeStart)
-          .subtract(1, $view)
-          .add(1, "minute");
-        $dates.filter(function(date) {
-            return date.localDateValue() <= activeDate.valueOf();
-          }).forEach(function(date) {
-            date.selectable = false;
-          });
+        var activeDate = moment($scope.userInput.dateRangeStart).subtract(1, $view).add(1, 'minute');
+
+        $dates.filter(function (date) {
+          return date.localDateValue() <= activeDate.valueOf()
+        }).forEach(function (date) {
+          date.selectable = false;
+        })
       }
     }
-    $scope.endDateBeforeRender = endDateBeforeRender;
-    $scope.endDateOnSetTime = endDateOnSetTime;
-    $scope.startDateBeforeRender = startDateBeforeRender;
-    $scope.startDateOnSetTime = startDateOnSetTime;
+
     //-- Date range ends 
    
     //Product/ Channel  filter
