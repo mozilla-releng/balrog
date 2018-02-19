@@ -1725,8 +1725,17 @@ class TestReleasesScheduledChanges(ViewTest):
                 'count': 1
             }
         }
-        self.assertEquals(data["Releases"]["count"], 1)
-        self.assertEquals(data["Releases scheduled change"], expected["Releases scheduled change"])
+        history_data = data["Releases"]
+        revisions = history_data["revisions"]
+        expected_data = expected["Releases"]
+        expected_revisions = expected_data["revisions"]
+        for index in range(len(revisions)):
+            self.assertEquals(revisions[index]['product'], expected_revisions[index]['product'])
+            self.assertEquals(revisions[index]['timestamp'], expected_revisions[index]['timestamp'])
+            self.assertEquals(revisions[index]['read_only'], expected_revisions[index]['read_only'])
+            self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
+            self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
+        self.assertEquals(len(history_data["revisions"]), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):

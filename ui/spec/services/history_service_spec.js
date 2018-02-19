@@ -117,13 +117,13 @@ describe("Service: History", function() {
     inject(function(History) {
       var page = 1;
       var filterParams = {
-        objectValue: "all_rules",
+        objectValue: "rules",
         changedByValue: "hope.ngerebara@gmail.com",
         startDate: 1508923005724,
         endDate: 1508923005755
       };
       this.$httpBackend
-      .expectGET("/api/" +filterParams.objectValue +"/history?&page=" +page +
+      .expectGET("/api/" +filterParams.objectValue +"/history?page=" +page +
           "&changed_by=" +filterParams.changedByValue +
           "&timestamp_from=" +filterParams.startDate +
           "&timestamp_to=" + filterParams.endDate
@@ -198,14 +198,14 @@ describe("Service: History", function() {
       };
       var page = 1;
       var filterParams = {
-        objectValue: "all_releases",
+        objectValue: "releases",
         changedByValue: "hope.ngerebara@gmail.com",
         startDate: 1509976085599,
         endDate: 1510284736310
       };
       var release_sample = [];
       this.$httpBackend
-      .expectGET("/api/" +filterParams.objectValue +"/history?&page=" +page +
+      .expectGET("/api/" +filterParams.objectValue +"/history?page=" +page +
           "&changed_by=" +filterParams.changedByValue +
           "&timestamp_from=" +filterParams.startDate +
           "&timestamp_to=" + filterParams.endDate
@@ -279,13 +279,13 @@ describe("Service: History", function() {
           }
       var page = 1;
       var filterParams = {
-        objectValue: "all_permissions",
+        objectValue: "permissions",
         changedByValue: "hope.ngerebara@gmail.com",
         startDate: 1510101325319,
         endDate: 1510100637074
       };
       this.$httpBackend
-      .expectGET("/api/" +filterParams.objectValue +"/history?&page=" +page +
+      .expectGET("/api/" +filterParams.objectValue +"/history?page=" +page +
           "&changed_by=" +filterParams.changedByValue +
           "&timestamp_from=" +filterParams.startDate +
           "&timestamp_to=" + filterParams.endDate
@@ -326,13 +326,13 @@ describe("Service: History", function() {
     }
     var page = 1;
     var filterParams = {
-      objectValue: "all_product_required_signoffs",
+      objectValue: "required_signoffs/product",
       changedByValue: "hope@gmail.com",
       startDate: 1510101325319,
       endDate: 1510100637060
     };
     this.$httpBackend
-    .expectGET("/api/" +filterParams.objectValue +"/history?&page=" +page +
+    .expectGET("/api/" +filterParams.objectValue +"/history?page=" +page +
         "&changed_by=" +filterParams.changedByValue +
         "&timestamp_from=" +filterParams.startDate +
         "&timestamp_to=" + filterParams.endDate

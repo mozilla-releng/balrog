@@ -42,11 +42,6 @@ angular
       jQuery('.dropdown.open').removeClass('open');   
     };
 
-    $scope.endDateBeforeRender = endDateBeforeRender
-    $scope.endDateOnSetTime = endDateOnSetTime
-    $scope.startDateBeforeRender = startDateBeforeRender
-    $scope.startDateOnSetTime = startDateOnSetTime
-
     function startDateOnSetTime () {
       $scope.$broadcast('start-date-changed');
     }
@@ -60,10 +55,10 @@ angular
         var activeDate = moment($scope.userInput.dateRangeEnd);
 
         $dates.filter(function (date) {
-          return date.localDateValue() >= activeDate.valueOf()
+          return date.localDateValue() >= activeDate.valueOf();
         }).forEach(function (date) {
           date.selectable = false;
-        })
+        });
       }
     }
 
@@ -72,28 +67,30 @@ angular
         var activeDate = moment($scope.userInput.dateRangeStart).subtract(1, $view).add(1, 'minute');
 
         $dates.filter(function (date) {
-          return date.localDateValue() <= activeDate.valueOf()
+          return date.localDateValue() <= activeDate.valueOf();
         }).forEach(function (date) {
           date.selectable = false;
-        })
+        });
       }
     }
 
+    $scope.endDateBeforeRender = endDateBeforeRender;
+    $scope.endDateOnSetTime = endDateOnSetTime;
+    $scope.startDateBeforeRender = startDateBeforeRender;
+    $scope.startDateOnSetTime = startDateOnSetTime;
     //-- Date range ends 
    
     //Product/ Channel  filter
     function checkObjectSelected(name) {
-      if (name.name == 'default') {
+      if (name.name === 'default') {
         $scope.userInput.hs_pr_ch_filter = "";
-      } else if (name.name == 'releases') {
+      } else if (name.name === 'releases') {
         $scope.pr_ch_options = [];
         Releases.getProducts()
         .success(function(response_prs) {
-          console.log(response_prs, "getting here");
           response_prs.product.forEach(function(pr) {
             $scope.pr_ch_options.push(pr);
-            console.log($scope.pr_ch_options, "$scope.pr_ch_options");
-          })
+          });
         })
         .finally(function() {
           $scope.pr_ch_options.sort().unshift("");
@@ -154,9 +151,8 @@ angular
     };
  
     $scope.$watch("data.objectSelected", function(name) {
-      console.log(name,"in here");
       checkObjectSelected(name);
-    })
+    });
     //Product/channel filter ends
    
     function checkParameters() {
@@ -184,7 +180,6 @@ angular
         $scope.hs_endDate = "";
       }
       if ($scope.userInput.hs_pr_ch_filter && $scope.pr_ch_selected !== undefined) {
-        console.log($scope.pr_ch_selected, " $scope.pr_ch_selectedproducts");
         $scope.product = $scope.pr_ch_selected[0];
         $scope.channel = $scope.pr_ch_selected[1];   
       } 
@@ -208,7 +203,6 @@ angular
       };
       History.getHistory(filterParams, page)
       .success(function(response) {
-        console.log(response,"respone==========");
         $scope.tableResult = true;
         var result = [];
         $scope.history_count = 0;
@@ -216,10 +210,7 @@ angular
           $scope.history_count += parseInt(value.count);
           $scope.history_revisions = value.revisions;
           $scope.history_required_signoffs = value.required_signoffs;
-          // if ($scope.history_count > 0){
-          //   console.log($scope.history_count,"$scope.history_count");
             if($scope.history_required_signoffs){
-              console.log("in here in signoffs")
               $scope.history_required_signoffs.forEach(function(revision){
                 $scope.revision = revision;
                 $scope.revision["type"] = key;
@@ -232,7 +223,6 @@ angular
                 result.push($scope.revision);                
               });
           }      
-        // }
         else {
             sweetAlert(
               "error",
@@ -247,7 +237,6 @@ angular
       $scope.searchResult = combinedResults.splice(0, searchHistoryLimit);
       })
       .error(function() {
-        console.error(arguments);
         $scope.failed = true;
       })
       .finally(function() {
@@ -260,7 +249,9 @@ angular
       $scope.loading = true;
       checkParameters();
 
-      if (stopCurrentPageWatch) stopCurrentPageWatch();
+      if (stopCurrentPageWatch) {
+        stopCurrentPageWatch();
+      }
       stopCurrentPageWatch = $scope.$watch("currentPage", function(page) {
         loadPage(page);
       });

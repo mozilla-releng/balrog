@@ -118,6 +118,27 @@ describe("controller: HistoryController", function() {
       ]
     }
   };
+
+  var sample_required_sign_offs_permissions_response = {
+    Permissions_Required_Signoffs: {
+      count: 3,
+      required_signoffs: [
+        {
+          change_id: 5,
+          changed_by: "balrogadmin",
+          data_version: 1,
+          product: "Firefox",
+          role: "relman",
+          signoffs_required: 1,
+          timestamp: 1518710447841
+        },
+      ]
+    },
+    Permissions_Required_Signoffs_Sc: {
+      count: 4,
+      revisions: []
+    }
+  }
   var $scope;
   beforeEach(
     inject(function($controller, $rootScope, History, $httpBackend) {
@@ -135,11 +156,47 @@ describe("controller: HistoryController", function() {
     this.$httpBackend.verifyNoOutstandingExpectation();
   });
 
-  describe("fetching all History", function() {
-    it("should return an empty search result", function() {
+  // describe("fetching all History", function() {
+  //   it("should return an empty search result", function() {
+  //     this.$httpBackend
+  //       .expectGET("/api/rules")
+  //       .respond(200, '{"rules": [], "count": 0}');
+  //     this.$httpBackend
+  //       .expectGET("/api/rules/columns/product")
+  //       .respond(
+  //         200,
+  //         JSON.stringify({ product: ["Product1", "Product2"], count: 2 })
+  //       );
+  //     this.$httpBackend
+  //       .expectGET("/api/rules/columns/channel")
+  //       .respond(
+  //         200,
+  //         JSON.stringify({ channel: ["Channel1", "Channel2"], count: 2 })
+  //       );
+  //     this.$httpBackend.flush();
+  //     expect(this.scope.searchResult).toEqual([]);
+  //   });
+  // });
+
+  describe("Filters", function() {
+    it("should return the response when 'rules' object is selected", function() {
+      this.scope.data.objectSelected = {
+        id: "2",
+        name: "rules",
+        value: "Rules"
+      };
+      
+      this.scope.searchHistory();
       this.$httpBackend
         .expectGET("/api/rules")
         .respond(200, '{"rules": [], "count": 0}');
+      this.$httpBackend.expectGET("/api/rules/history?page=1")
+        .respond(200,
+          JSON.stringify({
+            Rules: { count: 2, revisions: ["test2", "test"] },
+            "Rules Scheduled Change": { count: 1, revisions: [] }
+          })
+        );
       this.$httpBackend
         .expectGET("/api/rules/columns/product")
         .respond(
@@ -153,42 +210,13 @@ describe("controller: HistoryController", function() {
           JSON.stringify({ channel: ["Channel1", "Channel2"], count: 2 })
         );
       this.$httpBackend.flush();
-      expect(this.scope.searchResult).toEqual([]);
-    });
-  });
-
-  describe("Filters", function() {
-    it("should return the response when 'rules' object is selected", function() {
-      this.scope.data.objectSelected = {
-        id: "2",
-        name: "all_rules",
-        value: "Rules"
-      };
-      this.scope.searchHistory();
-      this.$httpBackend
-        .expectGET("/api/rules")
-        .respond(200, '{"rules": [], "count": 0}');
-      this.$httpBackend.expectGET("/api/all_rules/history?&page=1")
-        .respond(200,
-          JSON.stringify({
-            Rules: { count: 2, revisions: ["test2", "test"] },
-            "Rules Scheduled Change": { count: 1, revisions: [] }
-          })
-        );
-      this.$httpBackend
-        .expectGET("/api/rules/columns/product")
-        .respond(200,JSON.stringify({ product: ["Product1", "Product2"], count: 2 }));
-      this.$httpBackend
-        .expectGET("/api/rules/columns/channel")
-        .respond(200,JSON.stringify({ channel: ["Channel1", "Channel2"], count: 2 }));
-      this.$httpBackend.flush();
       expect(this.scope.searchResult).toEqual(["test", "test2"]);
     });
 
     it("should return the data when the changed_by name is entered", function() {
       this.scope.data.objectSelected = {
         id: "2",
-        name: "all_rules",
+        name: "rules",
         value: "Rules"
       };
       this.scope.userInput = {
@@ -207,7 +235,7 @@ describe("controller: HistoryController", function() {
       });
       this.$httpBackend
         .expectGET(
-          "/api/all_rules/history?&page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1508923005671&timestamp_to=1508923005724"
+          "/api/rules/history?page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1508923005671&timestamp_to=1508923005724"
         )
         .respond(200, JSON.stringify(sample_rules_response));
       this.$httpBackend
@@ -226,10 +254,10 @@ describe("controller: HistoryController", function() {
       expect(this.scope.searchResult[1]).toEqual(result[0][0]);
     });
 
-    it("should return data when 'release' object is selected", function() {
+    it("should return data when 'releases' object is selected", function() {
       this.scope.data.objectSelected = {
         id: "3",
-        name: "all_releases",
+        name: "releases",
         value: "Releases"
       };
       this.scope.userInput = {
@@ -239,29 +267,20 @@ describe("controller: HistoryController", function() {
       };
       this.scope.searchHistory();
       this.$httpBackend
-        .expectGET("/api/rules")
-        .respond(200, '{"rules": [], "count": 0}');
+        .expectGET("/api/releases/columns/product")
+        .respond(
+          200,
+          JSON.stringify({ product: ["Product1", "Product2"], count: 2 })
+        );
       var result = [];
       angular.forEach(sample_releases_response, function(value, key) {
         result.push(value.revisions);
       });
       this.$httpBackend
         .expectGET(
-          "/api/all_releases/history?&page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1508923005671&timestamp_to=1508923005724"
+          "/api/releases/history?page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1508923005671&timestamp_to=1508923005724"
         )
         .respond(200, JSON.stringify(sample_releases_response));
-      this.$httpBackend
-        .expectGET("/api/rules/columns/product")
-        .respond(
-          200,
-          JSON.stringify({ product: ["Product1", "Product2"], count: 2 })
-        );
-      this.$httpBackend
-        .expectGET("/api/rules/columns/channel")
-        .respond(
-          200,
-          JSON.stringify({ channel: ["Channel1", "Channel2"], count: 2 })
-        );
       this.$httpBackend.flush();
       expect(this.scope.searchResult[1]).toEqual(result[0][0]);
     });
@@ -269,7 +288,7 @@ describe("controller: HistoryController", function() {
     it("should return data when 'permissions' object is selected", function() {
       this.scope.data.objectSelected = {
         id: "4",
-        name: "all_permissions",
+        name: "permissions",
         value: "Permissions"
       };
       this.scope.userInput = {
@@ -287,7 +306,7 @@ describe("controller: HistoryController", function() {
       });
       this.$httpBackend
         .expectGET(
-          "/api/all_permissions/history?&page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1510747027497&timestamp_to=1510747027498"
+          "/api/permissions/history?page=1&changed_by=hope.ngerebara@gmail.com&timestamp_from=1510747027497&timestamp_to=1510747027498"
         )
         .respond(200, JSON.stringify(sample_permissions_response));
       this.$httpBackend
@@ -304,6 +323,37 @@ describe("controller: HistoryController", function() {
         );
       this.$httpBackend.flush();
       expect(this.scope.searchResult).toEqual(result[0]);
+    });
+
+    it("should return data when 'permissions required signoffs' object is selected", function() {
+      this.scope.data.objectSelected = {
+        id: "6",
+        name: "required_signoffs/permissions",
+        value: "Permissions Required Signoffs"
+      };
+      this.scope.searchHistory();
+      this.$httpBackend
+        .expectGET("/api/rules")
+        .respond(200, '{"rules": [], "count": 0}');
+      this.$httpBackend
+        .expectGET(
+          "/api/required_signoffs/permissions/history?page=1"
+        )
+        .respond(200, JSON.stringify(sample_required_sign_offs_permissions_response));
+      this.$httpBackend
+        .expectGET("/api/rules/columns/product")
+        .respond(
+          200,
+          JSON.stringify({ product: ["Product1", "Product2"], count: 2 })
+        );
+      this.$httpBackend
+        .expectGET("/api/rules/columns/channel")
+        .respond(
+          200,
+          JSON.stringify({ channel: ["Channel1", "Channel2"], count: 2 })
+        );
+      this.$httpBackend.flush();
+      expect(this.scope.searchResult.length).toEqual(1);
     });
   });
 });

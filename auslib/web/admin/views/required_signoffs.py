@@ -53,7 +53,7 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
     def _get_filters(self):
         query = get_input_dict()
         where = [getattr(self.table.history, f) == query.get(f) for f in query]
-        where.append(self.table.history.data_version != null())      
+        where.append(self.table.history.data_version != null())
         request = connexion.request
         if hasattr(self.history_table, 'channel'):
             if request.args.get('channel'):

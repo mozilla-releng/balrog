@@ -485,7 +485,6 @@ paths:
         - $ref: '#/parameters/historyDataVersionParam'
         - $ref: '#/parameters/timestampFromParam'
         - $ref: '#/parameters/timestampToParam'
-        - $ref: '#/parameters/channelParam'
       responses:
         '200':
           description: Successfully fetched permissions and it's scheduled change history
