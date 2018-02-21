@@ -1824,10 +1824,7 @@ class Releases(AUSTable):
                        transaction=None, nameOnly=False, name_prefix=None):
         where = []
         if names:
-            if isinstance(names, list):
-                where.append(self.name.in_(tuple(names)))
-            else:
-                where.append(self.name == names)
+            where.append(self.name.in_(tuple(names)))
         if product:
             where.append(self.product == product)
         if name_prefix:
