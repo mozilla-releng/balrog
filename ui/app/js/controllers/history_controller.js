@@ -188,11 +188,10 @@ angular
         $scope.channel = "";
       }
     }
-    
-    searchHistoryLimit = 10;
-    combinedResults = [];
 
     function loadPage(page) {
+      var searchHistoryLimit = 10;
+      var combinedResults = [];
       var filterParams = {
         objectValue: $scope.objectValue,
         changedByValue: $scope.changedByValue,
@@ -202,46 +201,46 @@ angular
         channel: $scope.channel
       };
       History.getHistory(filterParams, page)
-      .success(function(response) {
-        $scope.tableResult = true;
-        var result = [];
-        $scope.history_count = 0;
-        angular.forEach(response, function(value, key){
-          $scope.history_count += parseInt(value.count);
-          $scope.history_revisions = value.revisions;
-          $scope.history_required_signoffs = value.required_signoffs;
-            if($scope.history_required_signoffs){
-              $scope.history_required_signoffs.forEach(function(revision){
-                $scope.revision = revision;
-                $scope.revision["type"] = key;
-                result.push($scope.revision);
-              });
-            } else if($scope.history_revisions){  
-              $scope.history_revisions.forEach(function(revision){
-                $scope.revision = revision;
-                $scope.revision["type"] = key;
-                result.push($scope.revision);                
-              });
-          }      
-        else {
-            sweetAlert(
-              "error",
-              "No results matching the filter",
-              "error"   
-            );
-        }
-      });         
-      combinedResults = combinedResults.concat(result);
-      // remove last elements in sorted respecting the limit
-      combinedResults = ($filter("orderBy")(combinedResults,"timestamp")).reverse();
-      $scope.searchResult = combinedResults.splice(0, searchHistoryLimit);
-      })
-      .error(function() {
-        $scope.failed = true;
-      })
-      .finally(function() {
-        $scope.loading = false;
-      });
+        .success(function(response) {
+          $scope.tableResult = true;
+          var result = [];
+          $scope.history_count = 0;
+          angular.forEach(response, function(value, key){
+            $scope.history_count += parseInt(value.count);
+            $scope.history_revisions = value.revisions;
+            $scope.history_required_signoffs = value.required_signoffs;
+              if($scope.history_required_signoffs){
+                $scope.history_required_signoffs.forEach(function(revision){
+                  $scope.revision = revision;
+                  $scope.revision["type"] = key;
+                  result.push($scope.revision);
+                });
+              } else if($scope.history_revisions){  
+                $scope.history_revisions.forEach(function(revision){
+                  $scope.revision = revision;
+                  $scope.revision["type"] = key;
+                  result.push($scope.revision);                
+                });
+              } 
+              else {
+                sweetAlert(
+                  "error",
+                  "No results matching the filter",
+                  "error"   
+                );
+            }
+          });
+          combinedResults = combinedResults.concat(result);
+          // remove last elements in sorted respecting the limit
+          combinedResults = ($filter("orderBy")(combinedResults,"timestamp")).reverse();
+          $scope.searchResult = combinedResults.splice(0, searchHistoryLimit);
+        })
+        .error(function() {
+          $scope.failed = true;
+        })
+        .finally(function() {
+          $scope.loading = false;
+        });
     }
 
     $scope.searchHistory = function() {
