@@ -714,7 +714,7 @@ class ScheduledChangesTableMixin(object):
             def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
                 for row in affected_rows:
                     if row["foo"] == "signofftest":
-                        return [{"role": "releng", "signoffs_required": 1}]
+                        return {"rs": [{"role": "releng", "signoffs_required": 1}]}
 
             def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
                 if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
