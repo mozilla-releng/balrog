@@ -1768,7 +1768,7 @@ class Releases(AUSTable):
         # to them. We need to find these Rules, and then return _their_
         # Required Signoffs.
         if info:
-            # get all rules as a union
+            # get all rules as one quey
             q_rules = [self.db.rules.rule_id.in_(tuple([rule_id for row in info for rule_id in row['rule_ids']]))]
             all_rules = self.db.rules.select(where=q_rules, transaction=transaction)
 
@@ -2259,7 +2259,8 @@ class Permissions(AUSTable):
             new_permission = current_permission.copy()
             new_permission.update(what)
             if not dryrun:
-                potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([current_permission, new_permission], transaction=transaction).values()))
+                potential_required_signoffs = next(
+                    iter(self.getPotentialRequiredSignoffs([current_permission, new_permission], transaction=transaction).values()))
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
