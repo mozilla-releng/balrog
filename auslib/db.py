@@ -1141,7 +1141,7 @@ class ScheduledChangeTable(AUSTable):
             required_roles = set()
             required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
             if required_signoffs:
-                required_roles.update([rs["role"] for rs in next(iter(required_signoffs.values()))])
+                required_roles.update([rs["role"] for rs in [obj for v in required_signoffs.values() for obj in v]])
                 if user_roles[0]["role"] in required_roles:
                     self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
                                          sc_id=sc_id, role=user_roles[0].get("role"))
@@ -1407,7 +1407,7 @@ class RequiredSignoffsTable(AUSTable):
             raise PermissionDeniedError("{} is not allowed to create new Required Signoffs.".format(changed_by))
 
         if not dryrun:
-            potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([columns], transaction=transaction).values()))
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
         return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
@@ -1422,7 +1422,7 @@ class RequiredSignoffsTable(AUSTable):
                 raise PermissionDeniedError("{} is not allowed to modify Required Signoffs.".format(changed_by))
 
             if not dryrun:
-                potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([rs, new_rs], transaction=transaction).values()))
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([rs, new_rs], transaction=transaction).values() for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         return super(RequiredSignoffsTable, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
@@ -1434,7 +1434,7 @@ class RequiredSignoffsTable(AUSTable):
 
         if not dryrun:
             for rs in self.select(where=where, transaction=transaction):
-                potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([rs], transaction=transaction).values()))
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([rs], transaction=transaction).values() for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         return super(RequiredSignoffsTable, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version,
@@ -1571,7 +1571,7 @@ class Rules(AUSTable):
             raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
 
         if not dryrun:
-            potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([columns], transaction=transaction).values()))
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
         ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
@@ -1714,7 +1714,8 @@ class Rules(AUSTable):
             new_rule = current_rule.copy()
             new_rule.update(what)
             if not dryrun:
-                potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([current_rule, new_rule], transaction=transaction).values()))
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_rule, new_rule], transaction=transaction).values(
+                ) for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version,
@@ -1731,7 +1732,7 @@ class Rules(AUSTable):
 
         if not dryrun:
             for current_rule in self.select(where=where, transaction=transaction):
-                potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([current_rule], transaction=transaction).values()))
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_rule], transaction=transaction).values() for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
@@ -1785,7 +1786,7 @@ class Releases(AUSTable):
                     if rule_id in rs_cache:
                         _rs = rs_cache[rule_id]
                     else:
-                        _rs = next(iter(self.db.rules.getPotentialRequiredSignoffs([rule], transaction=transaction).values()))
+                        _rs = [obj for v in self.db.rules.getPotentialRequiredSignoffs([rule], transaction=transaction).values() for obj in v]
                         rs_cache[rule_id] = _rs
                     rs.extend(_rs)
                 potential_required_signoffs[row['name']] = rs
@@ -1920,7 +1921,7 @@ class Releases(AUSTable):
             raise PermissionDeniedError("%s is not allowed to create releases for product %s" % (changed_by, columns["product"]))
 
         if not dryrun:
-            potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([columns], transaction=transaction).values()))
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
         ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
@@ -1976,7 +1977,8 @@ class Releases(AUSTable):
             new_release = current_release.copy()
             new_release.update(what)
             if not dryrun:
-                potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([current_release, new_release], transaction=transaction).values()))
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_release, new_release], transaction=transaction).values(
+                ) for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         for release in current_releases:
@@ -2108,7 +2110,7 @@ class Releases(AUSTable):
             raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, release["product"]))
 
         if not dryrun:
-            potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([release], transaction=transaction).values()))
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([release], transaction=transaction).values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
         super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction,
@@ -2228,7 +2230,7 @@ class Permissions(AUSTable):
             raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
 
         if not dryrun:
-            potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([columns], transaction=transaction).values()))
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
         self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
@@ -2261,8 +2263,8 @@ class Permissions(AUSTable):
             new_permission = current_permission.copy()
             new_permission.update(what)
             if not dryrun:
-                potential_required_signoffs = next(
-                    iter(self.getPotentialRequiredSignoffs([current_permission, new_permission], transaction=transaction).values()))
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([
+                    current_permission, new_permission], transaction=transaction).values() for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
@@ -2276,7 +2278,8 @@ class Permissions(AUSTable):
         for current_permission in self.select(where=where, transaction=transaction):
             usernames.add(current_permission["username"])
             if not dryrun:
-                potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([current_permission], transaction=transaction).values()))
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_permission], transaction=transaction).values(
+                ) for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         if not dryrun:
@@ -2425,7 +2428,7 @@ class EmergencyShutoffs(AUSTable):
 
         if not dryrun:
             for current_rule in self.select(where=where, transaction=transaction):
-                potential_required_signoffs = next(iter(self.getPotentialRequiredSignoffs([current_rule], transaction=transaction).values()))
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_rule], transaction=transaction).values() for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         super(EmergencyShutoffs, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
