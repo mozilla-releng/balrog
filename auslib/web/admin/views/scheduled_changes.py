@@ -59,7 +59,7 @@ class ScheduledChangesView(AdminView):
                 # enacted.
                 if row["change_type"] != "delete":
                     affected_rows.append(base_row)
-                signoff_requirements = self.table.getPotentialRequiredSignoffs(affected_rows)
+                signoff_requirements = [obj for v in self.table.getPotentialRequiredSignoffs(affected_rows).values() for obj in v]
                 scheduled_change["required_signoffs"] = serialize_signoff_requirements(signoff_requirements)
 
             ret["scheduled_changes"].append(scheduled_change)

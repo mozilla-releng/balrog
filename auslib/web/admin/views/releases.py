@@ -271,7 +271,7 @@ class SingleReleaseView(AdminView):
 
     @requirelogin
     def _delete(self, release, changed_by, transaction):
-        releases = dbo.releases.getReleaseInfo(name=release, nameOnly=True, limit=1)
+        releases = dbo.releases.getReleaseInfo(names=release, nameOnly=True, limit=1)
         if not releases:
             return problem(404, "Not Found", "Release: %s not found" % release)
         release = releases[0]
@@ -305,7 +305,7 @@ class ReleaseReadOnlyView(AdminView):
 
     @requirelogin
     def _put(self, release, changed_by, transaction):
-        releases = dbo.releases.getReleaseInfo(name=release, nameOnly=True, limit=1)
+        releases = dbo.releases.getReleaseInfo(names=release, nameOnly=True, limit=1)
         if not releases:
             return problem(404, "Not Found", "Release: %s not found" % release)
 
@@ -364,14 +364,14 @@ class ReleasesAPIView(AdminView):
     def get(self, **kwargs):
         releases = release_list(connexion.request)
         if not connexion.request.args.get('names_only'):
+            requirements = dbo.releases.getPotentialRequiredSignoffs(releases)
             for release in releases:
-                requirements = dbo.releases.getPotentialRequiredSignoffs([release])
-                release['required_signoffs'] = serialize_signoff_requirements(requirements)
+                release['required_signoffs'] = serialize_signoff_requirements(requirements[release['name']])
         return serialize_releases(connexion.request, releases)
 
     @requirelogin
     def _post(self, changed_by, transaction):
-        if dbo.releases.getReleaseInfo(name=connexion.request.get_json().get("name"), transaction=transaction, nameOnly=True,
+        if dbo.releases.getReleaseInfo(names=connexion.request.get_json().get("name"), transaction=transaction, nameOnly=True,
                                        limit=1):
             return problem(400, "Bad Request", "Release: %s already exists" % connexion.request.get_json().get("name"),
                            ext={"data": "Database already contains the release"})
