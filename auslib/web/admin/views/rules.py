@@ -23,6 +23,10 @@ def process_rule_form(form_data):
 
     mapping_choices = [(item['name'], item['name']) for item in release_names]
 
+    if 'locale' in form_data:
+        locale = form_data['locale']
+        form_data['locale'] = ''.join(locale.split())
+
     # Replaces wtfForms validations
     rule_form_dict = dict()
     for key in form_data:

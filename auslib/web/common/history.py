@@ -54,7 +54,7 @@ class HistoryHelper():
 
 
 def get_input_dict():
-    reserved_filter_params = ['limit', 'page', 'timestamp_from', 'timestamp_to']
+    reserved_filter_params = ['limit', 'product', 'channel', 'page', 'timestamp_from', 'timestamp_to']
     args = request.args
     query_keys = []
     query = {}

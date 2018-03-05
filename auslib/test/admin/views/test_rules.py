@@ -181,6 +181,21 @@ class TestRulesAPI_JSON(ViewTest):
         ret = self._post("/rules", data=data, username="jack")
         self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
+    def testNewRuleWithWhitespaceInLocale(self):
+        data = dict(
+            backgroundRate=31, mapping="a", priority=33, product="a",
+            update_type="minor", channel="nightly", locale="de, en-US, hu, it, zh-TW"
+        )
+        ret = self._post("/rules", data=data, username="billy")
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], "a")
+        self.assertEquals(r[0]['backgroundRate'], 31)
+        self.assertEquals(r[0]['priority'], 33)
+        self.assertEquals(r[0]['data_version'], 1)
+        self.assertEquals(r[0]['locale'], "de,en-US,hu,it,zh-TW")
+
     # A POST without the required fields shouldn't be valid
     def testMissingFields(self):
         # But we still need to pass product, because permission checking
@@ -820,10 +835,10 @@ class TestRuleHistoryView(ViewTest):
         ret = self._get(url)
         got = json.loads(ret.data)
         self.assertEquals(ret.status_code, 200, msg=ret.data)
-        self.assertEquals(got["count"], 2)
-        self.assertTrue(u"rule_id" in got["revisions"][0])
-        self.assertTrue(u"backgroundRate" in got["revisions"][0])
-        self.assertTrue(u"timestamp" in got["revisions"][0])
+        self.assertEquals(got["Rules"]["count"], 2)
+        self.assertTrue(u"rule_id" in got["Rules"]["revisions"][0])
+        self.assertTrue(u"backgroundRate" in got["Rules"]["revisions"][0])
+        self.assertTrue(u"timestamp" in got["Rules"]["revisions"][0])
 
     def testVersionMaxFieldLength(self):
         # Max field length of rules.version is 75
@@ -1662,15 +1677,15 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
-    def testGetAllScheduledChangeHistory(self):
-        ret = self._get("/rules_scheduled_change/history")
+    def testGetRulesHistory(self):
+        ret = self._get("/rules/history")
         got = json.loads(ret.data)
         self.assertEquals(ret.status_code, 200)
         self.assertEquals(ret.status_code, 200, msg=ret.data)
-        self.assertEquals(got["count"], 8)
-        self.assertTrue(u"rule_id" in got["revisions"][0])
-        self.assertTrue(u"backgroundRate" in got["revisions"][0])
-        self.assertTrue(u"timestamp" in got["revisions"][0])
+        self.assertEquals(got["Rules scheduled change"]["count"], 8)
+        self.assertTrue(u"rule_id" in got["Rules scheduled change"]["revisions"][0])
+        self.assertTrue(u"backgroundRate" in got["Rules scheduled change"]["revisions"][0])
+        self.assertTrue(u"timestamp" in got["Rules scheduled change"]["revisions"][0])
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testRevertScheduledChange(self):
