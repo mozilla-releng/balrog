@@ -1756,7 +1756,7 @@ class Releases(AUSTable):
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        potential_required_signoffs = {'rs': []}
+        potential_required_signoffs = {}
         rows = []
         for row in affected_rows:
             if not row:
@@ -1768,7 +1768,7 @@ class Releases(AUSTable):
         # to them. We need to find these Rules, and then return _their_
         # Required Signoffs.
         if info:
-            # get all rules as one quey
+            # get all rules as one query
             q_rules = [self.db.rules.rule_id.in_(tuple([rule_id for row in info for rule_id in row['rule_ids']]))]
             all_rules = self.db.rules.select(where=q_rules, transaction=transaction)
 
@@ -1789,6 +1789,8 @@ class Releases(AUSTable):
                         rs_cache[rule_id] = _rs
                     rs.extend(_rs)
                 potential_required_signoffs[row['name']] = rs
+        else:
+            potential_required_signoffs['rs'] = []
         return potential_required_signoffs
 
     def setDomainWhitelist(self, domainWhitelist):
