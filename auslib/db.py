@@ -1542,29 +1542,30 @@ class Rules(AUSTable):
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = {}
+        rows = []
         # The new row may change the product or channel, so we must look for
         # Signoffs for both.
-        rows = []
         for row in affected_rows:
             if not row:
                 continue
             rows.append(row)
-        # If product isn't present, or is None, it means the Rule affects
-        # all products, and we must leave it out of the where clause. If
-        # we included it, the query would only match rows where product is
-        # NULL.
+
         where = {}
         cond = []
         for row in rows:
             if not row.get('product'):
+                # If product isn't present, or is None, it means the Rule affects
+                # all products, and we must leave it out of the where clause. If
+                # we included it, the query would only match rows where product is
+                # NULL. Since we are returning all rs, we can safely breakout of this loop
                 break
             cond.append(row["product"])
-        else:
+        else:  # nobreak
             where = [self.product.in_(tuple(cond))]
 
         q = self.db.productRequiredSignoffs.select(where=where, transaction=transaction)
 
-        # map query result using product as key
+        # map query result using product as the key
         q_map = {}
         for rs in q:
             if rs["product"] in q_map:
