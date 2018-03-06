@@ -25,7 +25,8 @@ def process_rule_form(form_data):
 
     if 'locale' in form_data:
         locale = form_data['locale']
-        form_data['locale'] = ''.join(locale.split())
+        if locale is not None:
+            form_data['locale'] = ''.join(locale.split())
 
     # Replaces wtfForms validations
     rule_form_dict = dict()
