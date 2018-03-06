@@ -1541,24 +1541,44 @@ class Rules(AUSTable):
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        potential_required_signoffs = {'rs': []}
+        potential_required_signoffs = {}
         # The new row may change the product or channel, so we must look for
         # Signoffs for both.
+        rows = []
         for row in affected_rows:
             if not row:
                 continue
-            where = {}
-            # If product isn't present, or is None, it means the Rule affects
-            # all products, and we must leave it out of the where clause. If
-            # we included it, the query would only match rows where product is
-            # NULL.
-            if row.get("product"):
-                where["product"] = row["product"]
-            for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
+            rows.append(row)
+        # If product isn't present, or is None, it means the Rule affects
+        # all products, and we must leave it out of the where clause. If
+        # we included it, the query would only match rows where product is
+        # NULL.
+        where = {}
+        cond = []
+        for row in rows:
+            if not row.get('product'):
+                break
+            cond.append(row["product"])
+        else:
+            where = [self.product.in_(tuple(cond))]
+
+        q = self.db.productRequiredSignoffs.select(where=where, transaction=transaction)
+
+        # map query result using product as key
+        q_map = {}
+        for rs in q:
+            if rs["product"] in q_map:
+                q_map[rs["product"]].append(rs)
+            else:
+                q_map[rs["product"]] = [rs]
+
+        for row in rows:
+            potential_required_signoffs[(row.get("product"), row.get("channel"))] = []
+            for rs in q_map.get(row["product"], []) if row.get("product") else q:
                 # Channel supports globbing, so we must take that into account
                 # before deciding whether or not this is a match.
-                if not row.get("channel") or matchRegex(row["channel"], rs["channel"]):
-                    potential_required_signoffs['rs'].append(rs)
+                if not row.get("channel") or matchRegex(row.get("channel"), rs["channel"]):
+                    potential_required_signoffs[(row.get("product"), row.get("channel"))].append(rs)
         return potential_required_signoffs
 
     def _isAlias(self, id_or_alias):
@@ -1776,18 +1796,15 @@ class Releases(AUSTable):
             # map rules according to rule_id
             rules_map = {rule['rule_id']: rule for rule in all_rules}
 
-            rs_cache = {}
+            # get all rs as one query
+            all_rs = self.db.rules.getPotentialRequiredSignoffs(all_rules, transaction=transaction)
 
             for row in info:
                 rs = []
                 potential_required_signoffs[row['name']] = []
                 for rule_id in row["rule_ids"]:
                     rule = rules_map[rule_id]
-                    if rule_id in rs_cache:
-                        _rs = rs_cache[rule_id]
-                    else:
-                        _rs = [obj for v in self.db.rules.getPotentialRequiredSignoffs([rule], transaction=transaction).values() for obj in v]
-                        rs_cache[rule_id] = _rs
+                    _rs = all_rs[(rule["product"], rule["channel"])]
                     rs.extend(_rs)
                 potential_required_signoffs[row['name']] = rs
         else:
