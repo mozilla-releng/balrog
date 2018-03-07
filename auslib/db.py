@@ -1140,9 +1140,10 @@ class ScheduledChangeTable(AUSTable):
         if len(user_roles):
             required_roles = set()
             required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
-            required_roles.update([rs["role"] for rs in [obj for v in required_signoffs.values() for obj in v] if required_signoffs])
+            if required_signoffs:
+                required_roles.update([rs["role"] for rs in [obj for v in required_signoffs.values() for obj in v]])
             possible_signoffs = list(filter(lambda role: role["role"] in required_roles, user_roles))
-            if required_signoffs and len(possible_signoffs) == 1:
+            if len(possible_signoffs) == 1:
                 self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
                                      sc_id=sc_id, role=possible_signoffs[0].get("role"))
 
