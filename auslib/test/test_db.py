@@ -915,7 +915,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         what = {"fooid": 3, "foo": "signofftest", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
         self.sc_table.insert(changed_by="mary", **what)
         user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "mary", "sc_id": 7})
-        self.assertEquals(len(user_role_rows), 0)
+        self.assertEquals(len(user_role_rows), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertRecordSignOffUnneededRole(self):
