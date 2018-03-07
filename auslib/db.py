@@ -1132,8 +1132,8 @@ class ScheduledChangeTable(AUSTable):
         self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
 
     def auto_signoff(self, changed_by, transaction, sc_id, dryrun, columns):
-        # - If the User scheduling a change only holds one Role, record a signoff with it.
-        # - If the User scheduling a change holds more than one Role, we cannot a Signoff, because
+        # - If the User scheduling a change only holds one of the required Roles, record a signoff with it.
+        # - If the User scheduling a change holds more than one of the required Roles, we cannot a Signoff, because
         #   we don't know which Role we'd want to signoff with. The user will need to signoff
         #   manually in these cases.
         user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
