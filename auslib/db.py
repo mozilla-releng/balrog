@@ -1137,14 +1137,14 @@ class ScheduledChangeTable(AUSTable):
         #   we don't know which Role we'd want to signoff with. The user will need to signoff
         #   manually in these cases.
         user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
-        if len(user_roles) == 1:
+        if len(user_roles):
             required_roles = set()
             required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
-            if required_signoffs:
-                required_roles.update([rs["role"] for rs in [obj for v in required_signoffs.values() for obj in v]])
-                if user_roles[0]["role"] in required_roles:
-                    self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
-                                         sc_id=sc_id, role=user_roles[0].get("role"))
+            required_roles.update([rs["role"] for rs in [obj for v in required_signoffs.values() for obj in v] if required_signoffs])
+            possible_signoffs = list(filter(lambda role: role["role"] in required_roles, user_roles))
+            if required_signoffs and len(possible_signoffs) == 1:
+                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
+                                     sc_id=sc_id, role=possible_signoffs[0].get("role"))
 
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
