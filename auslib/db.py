@@ -1532,7 +1532,7 @@ class Rules(AUSTable):
                            Column('instructionSet', String(1000)),
                            Column('jaws', CompatibleBooleanColumn),
                            Column('mig64', CompatibleBooleanColumn),
-                           Column('distribution', String(100)),
+                           Column('distribution', String(2000)),
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),
                            Column('comment', String(500)),

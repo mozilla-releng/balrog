@@ -13,6 +13,10 @@ from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
 from auslib.web.admin.views.history import HistoryView
 
 
+def remove_spaces_from_csv(csv):
+    return ''.join(csv.split())
+
+
 def process_rule_form(form_data):
     """
     Method to process either new/existing Rule form's data without wtfForm validations
@@ -24,8 +28,10 @@ def process_rule_form(form_data):
     mapping_choices = [(item['name'], item['name']) for item in release_names]
 
     if 'locale' in form_data:
-        locale = form_data['locale']
-        form_data['locale'] = ''.join(locale.split())
+        form_data['locale'] = remove_spaces_from_csv(form_data['locale'])
+
+    if 'distribution' in form_data:
+        form_data['distribution'] = remove_spaces_from_csv(form_data['distribution'])
 
     # Replaces wtfForms validations
     rule_form_dict = dict()
