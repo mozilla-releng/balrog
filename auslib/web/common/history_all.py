@@ -1,3 +1,4 @@
+import json
 import logging
 from auslib.global_state import dbo
 from connexion import problem, request
@@ -23,6 +24,12 @@ def _get_filters(obj, history_table):
     where.append(history_table.data_version != null())
     if hasattr(history_table, 'product'):
         where.append(history_table.product != null())
+        if request.args.get('product'):
+            where.append(history_table.product == request.args.get('product'))
+    if hasattr(history_table, 'channel'):
+        where.append(history_table.channel != null())
+        if request.args.get('channel'):
+            where.append(history_table.channel == request.args.get('channel'))
     if request.args.get('timestamp_from'):
         where.append(history_table.timestamp >= int(request.args.get('timestamp_from')))
     if request.args.get('timestamp_to'):
@@ -47,55 +54,73 @@ def _get_histories(table, obj, process_revisions_callback=None):
                        ext={"exception": str(msg)})
 
 
-def get_rules_history():
+def rules_history():
     """GET /rules/history"""
     history_table = dbo.rules.history
-    return _get_histories(history_table, get_rules)
+    rules = _get_histories(history_table, get_rules)
+    history = {
+        'rules': rules,
+        'sc_rules': RuleScheduledChangeHistoryView().get_all()
+    }
+    histories = {
+        'Rules': json.loads(history['rules'].data),
+        'Rules scheduled change': json.loads(history['sc_rules'].data)
+    }
+    return histories
 
 
-def get_releases_history():
+def releases_history():
     """GET /releases/history"""
     history_table = dbo.releases.history
-    return _get_histories(history_table, get_releases, process_release_revisions)
+    releases = _get_histories(history_table, get_releases, process_release_revisions)
+    releases_history = {
+        'releases': releases,
+        'sc_releases': ReleaseScheduledChangeHistoryView().get_all()
+    }
+    histories = {
+        'Releases': json.loads(releases_history['releases'].data),
+        'Releases scheduled change': json.loads(releases_history['sc_releases'].data)
+    }
+    return histories
 
 
-def get_permissions_history():
+def permissions_history():
     """GET /permissions/history"""
     history_table = dbo.permissions.history
     get_permissions = UsersView().get()
-    return _get_histories(history_table, get_permissions)
+    permissions = _get_histories(history_table, get_permissions)
+    permissions_history = {
+        'permissions': permissions,
+        'sc_permissions': PermissionScheduledChangeHistoryView().get_all()
+    }
+    histories = {
+        'Permissions': json.loads(permissions_history['permissions'].data),
+        'Permissions Scheduled Change': json.loads(permissions_history['sc_permissions'].data)
+    }
+    return histories
 
 
-def get_permissions_scheduled_change_history():
-    """GET /permissions_scheduled_change/history"""
-    return PermissionScheduledChangeHistoryView().get_all()
-
-
-def get_rules_scheduled_change_history():
-    """GET /rules_scheduled_change/history"""
-    return RuleScheduledChangeHistoryView().get_all()
-
-
-def get_releases_scheduled_change_history():
-    """GET /releases_scheduled_change/history"""
-    return ReleaseScheduledChangeHistoryView().get_all()
-
-
-def get_product_required_signoffs_scheduled_change_history():
-    """GET /product_required_signoffs_scheduled_change/history"""
-    return ProductRequiredSignoffScheduledChangeHistoryView().get_all()
-
-
-def get_permission_required_signoffs_scheduled_change_history():
-    """GET /permissions_required_signoff_scheduled_change/history"""
-    return PermissionsRequiredSignoffScheduledChangeHistoryView().get_all()
-
-
-def get_product_required_signoffs_history():
+def product_required_signoffs_history():
     """GET /required_signoffs/product/history"""
-    return ProductRequiredSignoffsHistoryAPIView().get_all()
+    product_required_signoffs_history = {
+        'product_required_signoffs': ProductRequiredSignoffsHistoryAPIView().get_all(),
+        'sc_product_required_signoffs': ProductRequiredSignoffScheduledChangeHistoryView().get_all()
+    }
+    histories = {
+        'Product Required Signoffs': json.loads(product_required_signoffs_history['product_required_signoffs'].data),
+        'Product Required Signoffs Scheduled Change': json.loads(product_required_signoffs_history['sc_product_required_signoffs'].data)
+    }
+    return histories
 
 
-def get_permission_required_signoffs_history():
-    """GET /required_signoffs/permissions/history"""
-    return PermissionsRequiredSignoffsHistoryAPIView().get_all()
+def permissions_required_signoffs_history():
+    """GET /permissions_required_signoffs/history"""
+    permissions_required_signoffs_history = {
+        'permissions_required_signoffs': PermissionsRequiredSignoffsHistoryAPIView().get_all(),
+        'sc_permissions_required_signoffs': PermissionsRequiredSignoffScheduledChangeHistoryView().get_all()
+    }
+    histories = {
+        'Permissions Required Signoffs': json.loads(permissions_required_signoffs_history['permissions_required_signoffs'].data),
+        'Permissions Required Signoffs Scheduled Change': json.loads(permissions_required_signoffs_history['sc_permissions_required_signoffs'].data)
+    }
+    return histories

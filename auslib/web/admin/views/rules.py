@@ -27,11 +27,10 @@ def process_rule_form(form_data):
 
     mapping_choices = [(item['name'], item['name']) for item in release_names]
 
-    if 'locale' in form_data:
-        form_data['locale'] = remove_spaces_from_csv(form_data['locale'])
-
-    if 'distribution' in form_data:
-        form_data['distribution'] = remove_spaces_from_csv(form_data['distribution'])
+    csv_columns = ['locale', 'distribution']
+    for column in csv_columns:
+        if column in form_data and form_data[column]:
+            form_data[column] = remove_spaces_from_csv(form_data[column])
 
     # Replaces wtfForms validations
     rule_form_dict = dict()

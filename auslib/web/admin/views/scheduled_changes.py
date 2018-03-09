@@ -59,7 +59,7 @@ class ScheduledChangesView(AdminView):
                 # enacted.
                 if row["change_type"] != "delete":
                     affected_rows.append(base_row)
-                signoff_requirements = self.table.getPotentialRequiredSignoffs(affected_rows)
+                signoff_requirements = [obj for v in self.table.getPotentialRequiredSignoffs(affected_rows).values() for obj in v]
                 scheduled_change["required_signoffs"] = serialize_signoff_requirements(signoff_requirements)
 
             ret["scheduled_changes"].append(scheduled_change)
@@ -207,8 +207,11 @@ class ScheduledChangeHistoryView(HistoryView):
         where = [getattr(self.history_table, f) == query.get(f) for f in query]
         where.append(self.history_table.data_version != null())
         request = connexion.request
-        if hasattr(self.history_table, 'product'):
-            where.append(self.history_table.product != null())
+        if hasattr(self.history_table, 'product' or ' channel'):
+            if request.args.get('product'):
+                where.append(self.history_table.base_product == request.args.get('product'))
+            if request.args.get('channel'):
+                where.append(self.history_table.base_channel == request.args.get('channel'))
         if request.args.get('timestamp_from'):
             where.append(self.history_table.timestamp >= int(request.args.get('timestamp_from')))
         if request.args.get('timestamp_to'):

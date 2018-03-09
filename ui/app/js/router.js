@@ -80,6 +80,12 @@ angular.module("app").config(function($routeProvider, $locationProvider) {
     reloadOnSearch: false
   })
 
+  .when('/change_logs', {
+    templateUrl: 'history.html',
+    controller: 'HistoryController',
+    reloadOnSearch: false
+  })
+
   ;
 
   $routeProvider.otherwise({ redirectTo: '/' });
