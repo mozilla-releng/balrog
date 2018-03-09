@@ -780,7 +780,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {"bill": "releng"}})
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)\
                                                                         .execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -826,7 +826,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {"bill": "releng"}})
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)\
                                                                         .execute().fetchall()
         self.assertEquals(len(r), 1)

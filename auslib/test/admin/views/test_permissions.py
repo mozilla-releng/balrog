@@ -489,7 +489,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {"bill": "releng"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -531,7 +531,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {"bill": "releng"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -552,7 +552,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {"bill": "releng"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -959,7 +959,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {"bill": "releng"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
