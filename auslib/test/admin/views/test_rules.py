@@ -143,20 +143,6 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(ret[0].get("version"), version)
         self.assertEquals(len(ret[0].get("version")), len(version))
 
-    def testNewRulePostJSON(self):
-        data = dict(
-            backgroundRate=31, mapping="c", priority=33, product="Firefox",
-            update_type="minor", channel="nightly"
-        )
-        ret = self._post("/rules", data=data)
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'c')
-        self.assertEquals(r[0]['backgroundRate'], 31)
-        self.assertEquals(r[0]['priority'], 33)
-        self.assertEquals(r[0]['data_version'], 1)
-
     def testNewRuleWithoutProductAdminPermission(self):
         data = dict(
             backgroundRate=31, mapping="a", priority=33, product="Firefox",
@@ -302,6 +288,17 @@ class TestRulesAPI_JSON(ViewTest):
                                              priority=33, product='Firefox',
                                              update_type='minor', channel='nightly', alias='test'))
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
+    def testNewRulePostWithDistributionList(self):
+        data = dict(
+            backgroundRate=31, mapping="c", priority=33, product="Firefox",
+            update_type="minor", channel="nightly", distribution="  mozilla1, mozilla2, mozilla3,mozilla4 "
+        )
+        ret = self._post("/rules", data=data)
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['distribution'], 'mozilla1,mozilla2,mozilla3,mozilla4')
 
 
 class TestSingleRuleView_JSON(ViewTest):

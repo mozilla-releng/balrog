@@ -3082,9 +3082,9 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
             fallbackChannel=''
         )
         expected = set([
-            ":a::::False",
-            "c:a::::False",
-            "b:e::::True",
+            ":a:::False",
+            "c:a:::False",
+            "b:e:::True",
         ])
         self.assertEquals(set(cache.caches["rules"].data.keys()), expected)
 

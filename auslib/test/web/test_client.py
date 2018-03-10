@@ -103,7 +103,7 @@ class ClientTestBase(ClientTestCommon):
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
         app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'f', 'response-a', 'response-b', 's', 'responseblob-a',
-                                                       'responseblob-b', 'q', 'fallback')}
+                                                       'responseblob-b', 'q', 'fallback', 'distTest')}
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
             f.write("""
@@ -115,7 +115,7 @@ class ClientTestBase(ClientTestCommon):
 """)
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e')})
+        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e', 'distTest')})
         self.client = app.test_client()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='b',
@@ -255,6 +255,33 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """))
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='distTest', update_type='minor', product='distTest',
+                                     distribution='mozilla1,mozilla2,mozilla3', data_version=1)
+        dbo.releases.t.insert().execute(name='distTest', product='distTest', data_version=1, data=createBlob("""
+{
+    "name": "distTest",
+    "schema_version": 1,
+    "appv": "10.0",
+    "extv": "10.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "11",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "12",
+                        "from": "*",
+                        "hashValue": "13",
+                        "fileUrl": "http://a.com/distTest"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+
         dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping='c2', update_type='minor', product='c',
                                      data_version=1)
         dbo.releases.t.insert().execute(name='c2', product='c', data_version=1, data=createBlob("""
@@ -729,6 +756,16 @@ class ClientTest(ClientTestBase):
 <updates>
     <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
         <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="13" size="12"/>
+    </update>
+</updates>
+""")
+
+    def testVersion6GetWithDistributionInList(self):
+        ret = self.client.get('/update/6/distTest/1.0/1/p/l/a/a/SSE/mozilla2/a/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
+        <patch type="complete" URL="http://a.com/distTest" hashFunction="sha512" hashValue="13" size="12"/>
     </update>
 </updates>
 """)
