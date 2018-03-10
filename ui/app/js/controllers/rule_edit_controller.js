@@ -26,9 +26,12 @@ function ($scope, $modalInstance, CSRF, Rules, Releases, rule, signoffRequiremen
     }
   }, true);
 
-
   $scope.saving = false;
   $scope.pr_ch_options = pr_ch_options;
+
+  $scope.removeWhiteSpaces = function(field) {
+    $scope.rule[field] = Helpers.replaceChar($scope.rule[field], ' ', '');
+  };
 
   $scope.saveChanges = function () {
     $scope.saving = true;
