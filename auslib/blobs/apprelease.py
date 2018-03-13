@@ -1017,7 +1017,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         conflicts = []
         conflicting_values = set()
 
-        for (group1, group2) in itertools.product(self["updateLine"], self["updateLine"]):
+        for (group1, group2) in itertools.product(self.get("updateLine", []), self.get("updateLine", [])):
             # Skip over groups that are identical - they can't conflict
             if group1 == group2:
                 continue
