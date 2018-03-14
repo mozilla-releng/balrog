@@ -967,7 +967,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
             # Rules table to avoid confusion.
             "type": update_type,
         }
-        for group in self["updateLine"]:
+        for group in self.get("updateLine"):
             condition_results = []
             for condition, values in group["for"].items():
                 matches = False
