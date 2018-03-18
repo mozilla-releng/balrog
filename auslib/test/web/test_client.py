@@ -850,10 +850,7 @@ class ClientTest(ClientTestBase):
 
     def testShouldNotServeUpdateForOldVersion(self):
         ret = self.client.get('/update/6/q/2.0/1/p/l/a/a/a/a/1/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
-<updates>
-</updates>
-""")
+        self.assertUpdatesAreEmpty(ret)
 
     def testVersion6GetWithoutInstructionSetMatch(self):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
