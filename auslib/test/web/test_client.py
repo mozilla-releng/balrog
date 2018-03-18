@@ -770,6 +770,14 @@ class ClientTest(ClientTestBase):
 </updates>
 """)
 
+    def testVersion6GetWithDistributionNotInList(self):
+        ret = self.client.get('/update/6/distTest/1.0/1/p/l/a/a/SSE/notinlist/a/update.xml')
+        self.assertUpdatesAreEmpty(ret)
+
+    def testVersion6GetNotMatchSubstringDistribution(self):
+        ret = self.client.get('/update/6/distTest/1.0/1/p/l/a/a/SSE/zilla/a/update.xml')
+        self.assertUpdatesAreEmpty(ret)
+
     def testVersion6GetDoesntMatchWrongDistribution(self):
         ret = self.client.get('/update/6/c/1.0/1/p/l/a/a/SSE/a/a/update.xml')
         self.assertUpdateEqual(ret, """<?xml version="1.0"?>
