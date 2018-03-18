@@ -71,9 +71,11 @@ Following tables show columns according to different Categories:
   |                        |                    | update.                                          | string with "*"                 |                            |
   |                        |                    |                                                  | character to glob               |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  |                        | distribution       | The partner distribution name of the application | Exact string match only         | "default" or               |
-  |                        |                    | requesting an update or "default" if the         |                                 | "yahoo"                    |
-  |                        |                    | application is not a partner build.              |                                 |                            |
+  |                        | distribution       | The partner distributions names that the         | Exact string match or           | "default", "yahoo" or      |
+  |                        |                    | application must send in order for the rule to   | comma separated list of         | "mozilla1, mozilla2"       |
+  |                        |                    | match or "default" if the application is not a   | distributions to do an exact    |                            |
+  |                        |                    | partner build. A comma separated list may be     | match on                        |                            | 
+  |                        |                    | used to list multiple distributions              |                                 |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | distVersion        | The version of the partner distribution of the   | Exact string match only         | "default" or               |
   |                        |                    | application requesting an update or "default"    |                                 | "1.19"                     |
