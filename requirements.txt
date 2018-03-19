@@ -87,9 +87,9 @@ packaging==17.1 \
 setuptools==39.0.1 \
     --hash=sha256:8010754433e3211b9cdbbf784b50f30e80bf40fc6b05eb5f865fab83300599b8 \
     --hash=sha256:bec7badf0f60e7fc8153fac47836edc41b74e5d541d7692e614e635720d6a7c7
-babel==2.4.0 \
-    --hash=sha256:e86ca5a3a6bb64b9bbb62b9dac37225ec0ab5dfaae3c2492ebd648266468042f \
-    --hash=sha256:8c98f5e5f8f5f088571f2c6bd88d530e331cbbcb95a7311a0db69d3dca7ec563
+babel==2.5.3 \
+    --hash=sha256:ad209a68d7162c4cff4b29cdebe3dec4cef75492df501b0049a9433c96ce6f80 \
+    --hash=sha256:8ce4cb6fdd4393edd323227cba3a077bceb2a6ce5201c902c65e730046f41f14
 imagesize==0.7.1 \
     --hash=sha256:6ebdc9e0ad188f9d1b2cdd9bc59cbe42bf931875e829e7a595e6b3abdc05cdfb --hash=sha256:0ab2c62b87987e3252f89d30b7cedbec12a01af9274af9ffa48108f2c13c6062
 pygments==2.2.0 \
