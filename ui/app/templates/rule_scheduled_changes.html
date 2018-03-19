@@ -152,7 +152,11 @@
       <dt ng-show="sc.locale">Locale:</dt>
       <dd>{{ sc.locale }}</dd>
       <dt ng-show="sc.distribution">Distribution:</dt>
-      <dd>{{ sc.distribution }}</dd>
+      <dd>
+        <span tooltip="{{sc.distribution.length > 20 ? sc.distribution : ''}}">
+          {{ sc.distribution | limitTo:20 }}{{sc.distribution.length > 20 ? '...' : ''}}
+        </span>
+      </dd>
       <dt ng-show="sc.buildTarget">Build Target:</dt>
       <dd>{{ sc.buildTarget }}</dd>
       <dt ng-show="sc.osVersion">OS Version:</dt>

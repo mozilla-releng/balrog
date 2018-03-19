@@ -27,6 +27,10 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, rules, rule, pr_c
     }
   }, true);
 
+  $scope.removeWhiteSpaces = function(field) {
+    $scope.rule[field] = Helpers.replaceChar($scope.rule[field], ' ', '');
+  };
+
   $scope.saveChanges = function () {
     $scope.saving = true;
     $scope.errors = {};

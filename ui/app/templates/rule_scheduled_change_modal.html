@@ -197,7 +197,7 @@
       <div class="col-md-6" ng-show= "sc.change_type !== 'delete'">
         <div class="form-group" ng-class="{'has-error': errors.distribution}">
         <label for="id_distribution">Distribution</label>
-        <input type="text" class="form-control" id="id_distribution" ng-model="sc.distribution">
+        <input type="text" class="form-control" id="id_distribution" ng-model="sc.distribution" ng-blur="removeWhiteSpaces('distribution')">
         <p class="help-block" ng-show="errors.distribution">{{ errors.distribution.join(', ') }}</p>
         </div>
       </div>
