@@ -118,8 +118,9 @@ raven==6.1.0 \
 connexion==1.2 \
     --hash=sha256:501e18c62c8b39729411e3b6a84979c2c7b5e4a425dd04d9ec43a953a5db091f \
     --hash=sha256:2e0c904b7bc69d8b8be0bc23cf3bee40a80ba768b5f8be9fe31024cb082661da
-clickclick==1.2.1 \
-    --hash=sha256:22eedfce2499d7a8c5b8c868fc93a495eb74bf7b753a6cb9ed2aa6a32a3ddd05 --hash=sha256:a342b98af1335041b70236131719c909305c4ebff56c110ab964ba585ff133aa
+clickclick==1.2.2 \
+    --hash=sha256:ab8f229fb9906a86634bdfc6fabfc2b665f44804170720db4f6e1d98f8a58f3d \
+    --hash=sha256:4a890aaa9c3990cfabd446294eb34e3dc89701101ac7b41c1bff85fc210f6d23
 strict-rfc3339==0.7 \
     --hash=sha256:5cad17bedfc3af57b399db0fed32771f18fc54bbd917e85546088607ac5e1277
 swagger-spec-validator==2.1.0 \
