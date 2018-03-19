@@ -118,8 +118,8 @@ sqlalchemy-migrate==0.7.2 \
     --hash=sha256:7f55c768ee26f143fedb11b365a4c57c3bbdb5211e049c7f04b8ae8107c28333 # pyup:ignore
 tempita==0.5.2 \
     --hash=sha256:cacecf0baa674d356641f1d406b8bff1d756d739c46b869a54de515d08e6fc9c
-uwsgi==2.0.15 \
-    --hash=sha256:572ef9696b97595b4f44f6198fe8c06e6f4e6351d930d22e5330b071391272ff
+uwsgi==2.0.17 \
+    --hash=sha256:3dc2e9b48db92b67bfec1badec0d3fdcc0771316486c5efa3217569da3528bf2
 Werkzeug==0.12.2 \
     --hash=sha256:e8549c143af3ce6559699a01e26fa4174f4c591dbee0a499f3cd4c3781cdec3d \
     --hash=sha256:903a7b87b74635244548b30d30db4c8947fe64c5198f58899ddcd3a13c23bb26
