@@ -54,6 +54,6 @@ yarl==1.1.1 \
     --hash=sha256:5580f22ac1298261cd24e8e584180d83e2cca9a6167113466d2d16cb2aa1f7b1 \
     --hash=sha256:e072edbd1c5628c0b8f97d00cf6c9fcd6a4ee2b5ded10d463fcb6eaa066cf40c \
     --hash=sha256:a69dd7e262cdb265ac7d5e929d55f2f3d07baaadd158c8f19caebf8dde08dfe8
-async_timeout==1.2.1 \
-    --hash=sha256:fe2f598eb140a444cc4ba15010f109259ad8eebcb11a9107fdb9ea32139bc722 \
-    --hash=sha256:380e9bfd4c009a14931ffe487499b0906b00b3378bb743542cfd9fbb6d8e4657
+async_timeout==2.0.1 \
+    --hash=sha256:9093db5b8ddbe4b8f6885d1a6e0ad84ae3155464cbf6877c387605244c285f3c \
+    --hash=sha256:00cff4d2dce744607335cba84e9929c3165632da2d27970dbc55802a0c7873d0
