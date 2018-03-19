@@ -60,29 +60,51 @@ def handleGeneralExceptions(messages):
     return wrap
 
 
+def transactionHandler(request_handler):
+    def decorated(*args, **kwargs):
+        trans = dbo.begin()
+        # Transactions are automatically rolled back by the context manager if
+        # _post raises an Exception, but we need to make sure they are also
+        # rolled back if the View returns any sort of error.
+        try:
+            ret = request_handler(*args, transaction=trans, **kwargs)
+            if ret.status_code >= 400:
+                trans.rollback()
+            else:
+                trans.commit()
+            return ret
+        except:
+            trans.rollback()
+            raise
+        finally:
+            trans.close()
+
+    return decorated
+
+
 class AdminView(MethodView):
 
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)
 
+    @transactionHandler
     @handleGeneralExceptions("POST")
     def post(self, *args, **kwargs):
         self.log.debug("processing POST request to %s" % request.path)
-        with dbo.begin() as trans:
-            return self._post(*args, transaction=trans, **kwargs)
+        return self._post(*args, **kwargs)
 
+    @transactionHandler
     @handleGeneralExceptions("PUT")
     def put(self, *args, **kwargs):
         self.log.debug("processing PUT request to %s" % request.path)
-        with dbo.begin() as trans:
-            return self._put(*args, transaction=trans, **kwargs)
+        return self._put(*args, **kwargs)
 
+    @transactionHandler
     @handleGeneralExceptions("DELETE")
     def delete(self, *args, **kwargs):
         self.log.debug("processing DELETE request to %s" % request.path)
-        with dbo.begin() as trans:
-            return self._delete(*args, transaction=trans, **kwargs)
+        return self._delete(*args, **kwargs)
 
 
 def serialize_signoff_requirements(requirements):

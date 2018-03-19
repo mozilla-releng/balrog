@@ -95,6 +95,18 @@ definitions:
         maxLength: 15
         example: Firefox
 
+  ChannelModel:
+    title: Channel
+    description: "model to define 'channel' field in request body."
+    type: object
+    properties:
+      channel:
+        description: The update channel of the application request an update.
+        type: string
+        minLength: 1
+        maxLength: 75
+        example: beta
+
   ReleaseName:
     title: Release Name
     description: name of release
@@ -324,6 +336,11 @@ definitions:
         type: ["boolean", "null"]
         example: true
 
+      jaws:
+        description: Whether or not the Rule should apply to queries that indicate a client that has an incompatible version of the JAWS screen reader installed. If set to false or true, the query and the rule must match precisely. If set to null, the jaws value in the updateQuery is ignored.
+        type: ["boolean", "null"]
+        example: true
+
   RuleObject:
     title: GET Operations on Rules
     description: "Operations on /rules GET"
@@ -343,6 +360,7 @@ definitions:
       - fallbackMapping
       - headerArchitecture
       - instructionSet
+      - jaws
       - locale
       - mapping
       - memory
@@ -382,6 +400,7 @@ definitions:
                 fallbackMapping: null
                 headerArchitecture: null
                 instructionSet: null
+                jaws: null
                 locale: null
                 mapping: "Firefox-45.7.0esr-build1"
                 memory: null
@@ -393,3 +412,31 @@ definitions:
                 update_type: "minor"
                 version: null
                 whitelist: null
+
+  EmergencyShutOffModel:
+    title: Emergency shut off data.
+    description: Emergency shut off data.
+    type: object
+    allOf:
+      - $ref: '#/definitions/ProductModel'
+      - $ref: '#/definitions/ChannelModel'
+      - $ref: '#/definitions/DataVersionModel'
+    required:
+      - product
+      - channel
+
+  EmergencyShutoffListGET:
+    title: List of emergency shut offs.
+    description: Product/Channels available to shut off updates.
+    type: object
+    required:
+      - shutoffs
+    allOf:
+      - $ref: '#/definitions/CountModel'
+      - type: object
+        properties:
+          shutoffs:
+            description: List of emergency shutoffs.
+            type: array
+            items:
+              $ref: '#/definitions/EmergencyShutOffModel'

@@ -23,6 +23,11 @@ def process_rule_form(form_data):
 
     mapping_choices = [(item['name'], item['name']) for item in release_names]
 
+    if 'locale' in form_data:
+        locale = form_data['locale']
+        if locale is not None:
+            form_data['locale'] = ''.join(locale.split())
+
     # Replaces wtfForms validations
     rule_form_dict = dict()
     for key in form_data:
@@ -200,6 +205,9 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
+        if connexion.request.get_json().get("when", None) is None:
+            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change "
+                                               "for a Rule")
         if connexion.request.get_json():
             change_type = connexion.request.get_json().get("change_type")
         else:

@@ -19,7 +19,8 @@ class UsersView(AdminView):
         self.log.debug("Found users: %s", users)
         # We don't return a plain jsonify'ed list here because of:
         # http://flask.pocoo.org/docs/security/#json-security
-        return jsonify(dict(users=users))
+        # return jsonify(dict(users=users))
+        return jsonify(users)
 
 
 class SpecificUserView(AdminView):
@@ -80,6 +81,8 @@ class SpecificPermissionView(AdminView):
                 options_dict = None
                 if connexion.request.get_json().get("options"):
                     options_dict = json.loads(connexion.request.get_json().get("options"))
+                    if len(options_dict) == 0:
+                        options_dict = None
 
                 dbo.permissions.update(where={"username": username, "permission": permission},
                                        what={"options": options_dict}, changed_by=changed_by,
@@ -93,6 +96,8 @@ class SpecificPermissionView(AdminView):
                 options_dict = None
                 if connexion.request.get_json().get("options"):
                     options_dict = json.loads(connexion.request.get_json().get("options"))
+                    if len(options_dict) == 0:
+                        options_dict = None
                 dbo.permissions.insert(changed_by, transaction=transaction, username=username, permission=permission,
                                        options=options_dict)
                 return Response(status=201, response=json.dumps(dict(new_data_version=1)))
@@ -112,6 +117,8 @@ class SpecificPermissionView(AdminView):
             options_dict = None
             if connexion.request.get_json().get("options"):
                 options_dict = json.loads(connexion.request.get_json().get("options"))
+                if len(options_dict) == 0:
+                    options_dict = None
 
             dbo.permissions.update(where={"username": username, "permission": permission},
                                    what={"options": options_dict}, changed_by=changed_by,
@@ -165,6 +172,8 @@ class PermissionScheduledChangesView(ScheduledChangesView):
 
         if what.get("options", None):
             what["options"] = json.loads(what.get("options"))
+            if len(what["options"]) == 0:
+                what["options"] = None
 
         if change_type in ["update", "delete"]:
             if not what.get("data_version", None):
@@ -213,6 +222,8 @@ class PermissionScheduledChangeView(ScheduledChangeView):
 
         if what.get("options", None):
             what["options"] = json.loads(what["options"])
+            if len(what["options"]) == 0:
+                what["options"] = None
 
         return super(PermissionScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
                                                                 connexion.request.get_json().get("sc_data_version"))
@@ -249,22 +260,6 @@ class PermissionScheduledChangeHistoryView(ScheduledChangeHistoryView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         return super(PermissionScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
-
-
-class UserRolesView(AdminView):
-    """/users/:username/roles"""
-
-    def get(self, username):
-        roles = dbo.permissions.getUserRoles(username)
-        return jsonify({"roles": roles})
-
-
-class AllRolesView(AdminView):
-    """/users/roles"""
-
-    def get(self):
-        roles = dbo.permissions.getAllRoles()
-        return jsonify({"roles": roles})
 
 
 class UserRoleView(AdminView):

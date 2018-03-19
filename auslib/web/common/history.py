@@ -53,6 +53,20 @@ class HistoryHelper():
         return jsonify(ret)
 
 
+def get_input_dict():
+    reserved_filter_params = ['limit', 'product', 'channel', 'page', 'timestamp_from', 'timestamp_to']
+    args = request.args
+    query_keys = []
+    query = {}
+    for key in args:
+        if key not in reserved_filter_params:
+            query_keys.append(key)
+
+    for key in query_keys:
+        query[key] = request.args.get(key)
+    return query
+
+
 history_keys = ('timestamp', 'change_id', 'data_version', 'changed_by')
 
 

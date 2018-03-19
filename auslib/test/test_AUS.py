@@ -52,7 +52,7 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
             while len(results) > 0:
                 updateQuery = dict(
                     channel='foo', force=force, buildTarget='a', buildID='0',
-                    locale='a', version='1.0',
+                    locale='a', version='1.0', product='bar'
                 )
                 r, _ = aus.evaluateRules(updateQuery)
                 tested += 1

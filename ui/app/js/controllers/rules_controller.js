@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers, EmergencyShutoffs, CSRF) {
 
   Page.setTitle('Rules');
 
@@ -16,6 +16,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.rules = [];
   $scope.pr_ch_filter = "";
   $scope.show_sc = true;
+  $scope.emergency_shutoffs = [];
+  $scope.current_emergency_shutoff = null;
 
   function changeLocationWithFilterParams(filterParamsString) {
     localStorage.setItem("pr_ch_filter", filterParamsString);
@@ -141,6 +143,23 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           return Rules.ruleSignoffsRequired(rule, undefined, $scope.signoffRequirements);
         }
       };
+
+      EmergencyShutoffs.get().success(function(response_emergency_shutoffs) {
+        $scope.emergency_shutoffs = response_emergency_shutoffs.shutoffs;
+      }).finally(function() {
+        EmergencyShutoffs.scheduledChanges()
+          .success(function(response_emergency_shutoffs_sc) {
+            if($scope.emergency_shutoffs.length > 0) {
+              shutoffs_sc = response_emergency_shutoffs_sc.scheduled_changes;
+              if(shutoffs_sc.length > 0) {
+                $scope.emergency_shutoffs.forEach(function(shutoff) {
+                  shutoff.sc = EmergencyShutoffs.shutoffScheduledEnableChange(shutoff, shutoffs_sc);
+                });
+              }
+            }
+          });
+      });
+
     })
     .error(function() {
       console.error(arguments);
@@ -156,6 +175,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       localStorage.setItem("pr_ch_filter", value);
     }
     $scope.pr_ch_selected = value.split(',');
+    $scope.setEmergencyShutoff($scope.pr_ch_selected);
   });
 
   $scope.selectPageSize = function() {
@@ -171,11 +191,15 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   };
 
   $scope.orderRules = function(rule) {
-    // Rules are sorted by priority. Rules that are pending (ie: still just a Scheduled Change)
+    if($scope.rule_id){
+      return rule.data_version * -1;
+    }
+     // Rules are sorted by priority. Rules that are pending (ie: still just a Scheduled Change)
     // will be inserted based on the priority in the Scheduled Change.
     // Rules that have Scheduled updates or deletes will remain sorted on their current priority
     // because it's more important to make it easy to assess current state than future state.
-    if (rule.priority === null || rule.priority === undefined) {
+
+    else if (rule.priority === null || rule.priority === undefined) {
         return rule.scheduled_change.priority * -1;
     }
     else {
@@ -244,6 +268,14 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     changeLocationWithFilterParams($scope.pr_ch_filter);
   };
 
+  $scope.setEmergencyShutoff = function(pr_ch_selected) {
+    if(pr_ch_selected.length > 0) {
+      $scope.current_emergency_shutoff =
+        $scope.emergency_shutoffs.find(function(shutoff) {
+          return shutoff.product === pr_ch_selected[0] && shutoff.channel === pr_ch_selected[1];
+        });
+    }
+  };
 
   $scope.openUpdateModal = function(rule) {
 
@@ -294,7 +326,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         sc: function() {
           // blank new default rule
           return {
-            base_row: undefined,
             product: product,
             channel: channel,
             backgroundRate: 0,
@@ -303,6 +334,53 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
             when: null,
             change_type: 'insert',
           };
+        },
+        original_row: function() {
+          return null;
+        },
+        signoffRequirements: function() {
+          return $scope.signoffRequirements;
+        },
+      }
+    });
+    modalInstance.result.then(function(sc) {
+      var rule = {"scheduled_change": sc};
+      $scope.rules.push(rule);
+    });
+  };
+
+  $scope.openNewScheduledDuplicateModal = function(rule) {
+
+    var modalInstance = $modal.open({
+      templateUrl: 'rule_scheduled_change_modal.html',
+      controller: 'NewRuleScheduledChangeCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        scheduled_changes: function() {
+          return [];
+        },
+        sc: function() {
+          if(rule.scheduled_change !== null && rule.scheduled_change.change_type === "insert") {
+            sc = angular.copy(rule.scheduled_change);
+            delete sc.sc_id;
+            delete sc.sc_data_version;
+            delete sc.when;
+            delete sc.complete;
+            delete sc.change_type;
+
+          }
+          else {
+            sc = angular.copy(rule);
+          }
+          sc["change_type"] = "insert";
+          delete sc.data_version;
+          delete sc.rule_id;
+          delete sc.alias;
+          return sc;
+        },
+        original_row: function() {
+          return null;
         },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
@@ -328,9 +406,11 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         sc: function() {
           sc = angular.copy(rule);
-          sc.original_row = rule;
           sc["change_type"] = "update";
           return sc;
+        },
+        original_row: function() {
+          return rule;
         },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
@@ -354,11 +434,13 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         },
         sc: function() {
           return {
-            "base_row": rule,
             "rule_id": rule.rule_id,
             "data_version": rule.data_version,
             "change_type": "delete"
           };
+        },
+        original_row: function() {
+          return rule;
         },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
@@ -379,14 +461,18 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
       resolve: {
         sc: function() {
           var sc = angular.copy(rule.scheduled_change);
-          sc.original_row = rule;
           return sc;
+        },
+        original_row: function() {
+          if (rule.scheduled_change.change_type === "insert") {
+            return null;
+          }
+          else {
+            return rule;
+          }
         },
         signoffRequirements: function() {
           return $scope.signoffRequirements;
-        },
-        rule: function() {
-          return rule;
         },
       }
     });
@@ -614,5 +700,133 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
     });
   };
 
+  $scope.openDisableUpdatesModal = function() {
+    var modal = $modal.open({
+      templateUrl: 'disable_updates_modal.html',
+      controller: 'DisableUpdatesModalCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        product: function() {
+          return $scope.pr_ch_selected[0];
+        },
+        channel: function() {
+          return $scope.pr_ch_selected[1];
+        }
+      }
+    });
+    modal.result.then(function(emergency_shutoff) {
+      $scope.emergency_shutoffs.push(emergency_shutoff);
+      $scope.current_emergency_shutoff = emergency_shutoff;
+    });
+  };
 
+  $scope.openEnableUpdatesModal = function() {
+    var modal = $modal.open({
+      templateUrl: 'enable_updates_modal.html',
+      controller: 'EnableUpdatesCtrl',
+      size: 'lg',
+      backdrop: 'static',
+      resolve: {
+        emergency_shutoff: function() {
+          return $scope.current_emergency_shutoff;
+        },
+        signoffs_requirements: function() {
+          return $scope.signoffRequirements;
+        }
+      }
+    });
+    modal.result.then(function() {
+      EmergencyShutoffs.scheduledChanges()
+        .success(function(response_emergency_shutoffs_sc) {
+          shutoffs_sc = response_emergency_shutoffs_sc.scheduled_changes;
+          $scope.current_emergency_shutoff.sc =
+            EmergencyShutoffs.shutoffScheduledEnableChange($scope.current_emergency_shutoff, shutoffs_sc);
+          if(!$scope.current_emergency_shutoff.sc) {
+            $scope.emergency_shutoffs = $scope.emergency_shutoffs.filter(function(eso) {
+              return eso.product !== $scope.current_emergency_shutoff.product || eso.channel !== $scope.current_emergency_shutoff.channel;
+            });
+            $scope.current_emergency_shutoff = null;
+          }
+        });
+    });
+  };
+
+  $scope.openEnableUpdateRevokeSignoffModal = function() {
+    $modal.open({
+      templateUrl: "revoke_signoff_modal.html",
+      controller: "RevokeSignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Emergency Shutoff";
+        },
+        service: function() {
+          return EmergencyShutoffs;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        sc: function() {
+          return $scope.current_emergency_shutoff.sc;
+        },
+        pk: function() {
+          return {
+            'Emergency Shutoff': $scope.current_emergency_shutoff.product + '/' + $scope.current_emergency_shutoff.channel
+          };
+        },
+        data: null
+      }
+    });
+  };
+
+  $scope.openEnableUpdateSignoffModal = function() {
+    var modalInstance = $modal.open({
+      templateUrl: "signoff_modal.html",
+      controller: "SignoffCtrl",
+      backdrop: "static",
+      resolve: {
+        object_name: function() {
+          return "Emergency Shutoff";
+        },
+        service: function() {
+          return EmergencyShutoffs;
+        },
+        current_user: function() {
+          return $scope.current_user;
+        },
+        user_roles: function() {
+          return $scope.user_roles;
+        },
+        required_signoffs: function () {
+          return $scope.current_emergency_shutoff.sc["required_signoffs"];
+        },
+        sc: function() {
+          return $scope.current_emergency_shutoff.sc;
+        },
+        pk: function() {
+          return {
+            'Emergency Shutoff': $scope.current_emergency_shutoff.product + '/' + $scope.current_emergency_shutoff.channel
+          };
+        },
+        data: null
+      }
+    });
+  };
+
+  $scope.deleteScheduledEnableUpdates = function() {
+    CSRF.getToken()
+      .then(function(csrf_token) {
+        EmergencyShutoffs.deleteScheduledEnableUpdates(
+          $scope.current_emergency_shutoff.sc.sc_id,
+          $scope.current_emergency_shutoff.sc.data_version,
+          csrf_token).success(function() {
+            $scope.current_emergency_shutoff.sc = null;
+            sweetAlert(
+              "Enabling Updates",
+              "Scheduled Enable Updates deleted successfully.",
+              "success");
+          });
+      });
+  };
 });

@@ -115,15 +115,16 @@ wtforms==2.1 \
 raven==6.1.0 \
     --hash=sha256:56dc9062dd42bca97350e5048ff417c914376366caa3b1b5f788b27ddc0a34b7 \
     --hash=sha256:02cabffb173b99d860a95d4908e8b1864aad1b8452146e13fd7e212aa576a884
-connexion==1.1.16 \
-    --hash=sha256:4973ba0d89fdccee0a7d9cbe2fdc099b9a3a32134d0587cdf50705abf2001000 \
-    --hash=sha256:59ce1475cc9df88c6e392d08d32e7cb48b926a5c0b1eb98ec724dde7d1ba82e5
+connexion==1.2 \
+    --hash=sha256:501e18c62c8b39729411e3b6a84979c2c7b5e4a425dd04d9ec43a953a5db091f \
+    --hash=sha256:2e0c904b7bc69d8b8be0bc23cf3bee40a80ba768b5f8be9fe31024cb082661da
 clickclick==1.2.1 \
     --hash=sha256:22eedfce2499d7a8c5b8c868fc93a495eb74bf7b753a6cb9ed2aa6a32a3ddd05 --hash=sha256:a342b98af1335041b70236131719c909305c4ebff56c110ab964ba585ff133aa
 strict-rfc3339==0.7 \
     --hash=sha256:5cad17bedfc3af57b399db0fed32771f18fc54bbd917e85546088607ac5e1277
 swagger-spec-validator==2.1.0 \
-    --hash=sha256:dc9219c6572ce0def6e1c160ca253c0e7fcde75812628f0c0199334f85bd138e
+    --hash=sha256:dc9219c6572ce0def6e1c160ca253c0e7fcde75812628f0c0199334f85bd138e \
+    --hash=sha256:aedacb6c6b475026a1b5ac218fb590382d08064e227da254eb961d17cfd2b7c1
 pathlib==1.0.1 \
     --hash=sha256:6940718dfc3eff4258203ad5021090933e5c04707d5ca8cc9e73c94a7894ea9f
 inflection==0.3.1 \
@@ -149,3 +150,5 @@ sphinxcontrib_websupport==1.0.1 \
     --hash=sha256:7a85961326aa3a400cd4ad3c816d70ed6f7c740acd7ce5d78cd0a67825072eb9
 typing==3.6.1 \
     --hash=sha256:c36dec260238e7464213dcd50d4b5ef63a507972f5780652e835d0228d0edace
+spec-synthase==0.1.6 \
+    --hash=sha256:9e891e32fad867e1ddc9f6d4806d81bd8933812b6b362b2d3ecd6c5188c38460

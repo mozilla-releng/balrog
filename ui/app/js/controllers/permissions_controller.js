@@ -6,35 +6,70 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
   $scope.loading = true;
   $scope.failed = false;
   $scope.username = $routeParams.username;
+  $scope.users = [];
+  $scope.tab = 1;
+
+
   if ($scope.username) {
     // history of a specific rule
     Permissions.getUserPermissions($scope.username)
-    .then(function(response) {
-      $scope.permissions = response;
-    });
+      .then(function (response) {
+        $scope.permissions = response;
+      });
   } else {
     Permissions.getUsers()
-    .success(function(response) {
-      $scope.users = _.map(response.users, function (each) {
-        return {username: each};
+      .success(function (response) {
+        var users = [];
+        var user = Object.keys(response);
+        user.forEach(function(eachUser){
+          var eachElement = {};
+          eachElement['roles'] = response[eachUser].roles;
+          eachElement['username'] = eachUser;
+          users.push(eachElement);
+        });
+        $scope.users = users;
+      })
+      .error(function () {
+        console.error(arguments);
+        $scope.failed = true;
+      })
+      .finally(function () {
+        $scope.loading = false;
+
       });
-      $scope.permissions_count = $scope.users.length;
-      $scope.page_size_pair = [{id: 20, name: '20'},
-        {id: 50, name: '50'}, 
-        {id: $scope.permissions_count, name: 'All'}];
-    })
-    .error(function() {
-      console.error(arguments);
-      $scope.failed = true;
-    })
-    .finally(function() {
-      $scope.loading = false;
-    });
+
+    $scope.permissions_count = $scope.users.length;
+    $scope.page_size_pair = [{ id: 20, name: '20' },
+    { id: 50, name: '50' },
+    { id: $scope.permissions_count, name: 'All' }];
+
   }
+
+  $scope.roles = function(){
+    var roles = [];
+    $scope.users.forEach(function (eachUser){
+      eachUser.roles.forEach(function(role){
+        if(roles.indexOf(role.role)=== -1){
+            roles.push(role.role);
+        }
+      });
+    });
+    return roles;
+  };
+
+
+  $scope.filterUserByRole = function (role) {
+    return function (user) {
+      return user.roles.some(function(each){
+        return each.role === role;
+      });
+    };
+  };
+
 
   $scope.signoffRequirements = [];
   PermissionsRequiredSignoffs.getRequiredSignoffs()
-    .then(function(payload) {
+    .then(function (payload) {
       $scope.signoffRequirements = payload.data.required_signoffs;
     });
 
@@ -49,11 +84,11 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
     search: $location.hash(),
   };
 
-  $scope.hasFilter = function() {
+  $scope.hasFilter = function () {
     return !!(false || $scope.filters.search.length);
   };
 
-  $scope.$watchCollection('filters.search', function(value) {
+  $scope.$watchCollection('filters.search', function (value) {
     $location.hash(value);
     Search.noticeSearchChange(
       value,
@@ -66,18 +101,20 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
   $scope.highlightSearch = Search.highlightSearch;
   // $scope.removeFilterSearchWord = Search.removeFilterSearchWord;
 
-  $scope.filterBySearch = function(item) {
+  $scope.filterBySearch = function (item) {
     // basically, look for a reason to NOT include this
     if (Search.word_regexes.length) {
       // every word in the word_regexes array needs to have some match
       var matches = 0;
-      _.each(Search.word_regexes, function(each) {
+      _.each(Search.word_regexes, function (each) {
         var regex = each[0];
         var on = each[1];
         // console.log(regex, on);
-        if ((on === '*' || on === 'username') && item.username && item.username.match(regex)) {
-          matches++;
-          return;
+        if ('username' in item) {
+          if ((on === '*' || on === 'username') && item.username && item.username.match(regex)) {
+            matches++;
+            return;
+          }
         }
       });
       return matches === Search.word_regexes.length;
@@ -87,7 +124,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
   };
   /* End filtering */
 
-  $scope.openUpdateModal = function(user) {
+  $scope.openUpdateModal = function (user) {
     $scope.is_edit = true;
     var modalInstance = $modal.open({
       templateUrl: 'permissions_modal.html',
@@ -104,15 +141,18 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
         user: function () {
           return user;
         },
-        permissionSignoffRequirements: function() {
+        permissionSignoffRequirements: function () {
           return $scope.signoffRequirements;
         },
+        roles: function() {
+          return $scope.roles();
+        }
       }
     });
   };
   /* End openUpdateModal */
 
-  $scope.openNewModal = function() {
+  $scope.openNewModal = function () {
     $scope.is_edit = false;
     var modalInstance = $modal.open({
       templateUrl: 'permissions_modal.html',
@@ -129,17 +169,20 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
         user: function () {
           return $scope.user;
         },
-        permissionSignoffRequirements: function() {
+        permissionSignoffRequirements: function () {
           return $scope.signoffRequirements;
         },
+        roles: function() {
+          return $scope.roles();
+        }
       }
     });
   };
-    /* End openNewModal */
+  /* End openNewModal */
 
 
 
-  $scope.openNewScheduledPermissionChangeModal = function(user) {
+  $scope.openNewScheduledPermissionChangeModal = function (user) {
 
     var modalInstance = $modal.open({
       templateUrl: 'permissions_scheduled_change_modal.html',
@@ -147,15 +190,15 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
       size: 'lg',
       backdrop: 'static',
       resolve: {
-        scheduled_changes: function() {
+        scheduled_changes: function () {
           return [];
         },
-        sc: function() {
+        sc: function () {
           sc = angular.copy(user);
           sc["change_type"] = "insert";
           return sc;
         },
-        permissionSignoffRequirements: function() {
+        permissionSignoffRequirements: function () {
           return $scope.signoffRequirements;
         },
       }
@@ -165,7 +208,5 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
   $scope.selectPageSize = function() {
     Helpers.selectPageSize($scope, 'permissions_page_size');
   };
-
-
 
 });

@@ -12,7 +12,7 @@ class TestRulesAPI_JSON(ViewTest):
     def testGetRules(self):
         ret = self._get("/rules")
         got = json.loads(ret.data)
-        self.assertEquals(got["count"], 8)
+        self.assertEquals(got["count"], 9)
 
     def testGetRulesWithProductFilter(self):
         ret = self._get("/rules", qs={"product": "fake"})
@@ -23,21 +23,21 @@ class TestRulesAPI_JSON(ViewTest):
                 "update_type": "minor", "channel": "a", "data_version": 1, "comment": None, "fallbackMapping": None,
                 "version": None, "buildID": None, "locale": None, "distribution": None, "osVersion": None,
                 "instructionSet": None, "distVersion": None, "headerArchitecture": None, "alias": None,
-                "memory": None, "mig64": None,
+                "memory": None, "mig64": None, "jaws": None,
             },
             {
                 "rule_id": 6, "product": "fake", "priority": 40, "backgroundRate": 50, "mapping": "a", "update_type": "minor",
                 "channel": "e", "data_version": 1, "buildTarget": None, "comment": None, "fallbackMapping": None,
                 "version": None, "buildID": None, "locale": None, "distribution": None, "osVersion": None,
                 "instructionSet": None, "distVersion": None, "headerArchitecture": None, "alias": None,
-                "memory": None, "mig64": None,
+                "memory": None, "mig64": None, "jaws": None,
             },
             {
                 "rule_id": 7, "product": "fake", "priority": 30, "backgroundRate": 85, "mapping": "a", "update_type": "minor",
                 "channel": "c", "data_version": 1, "buildTarget": None, "comment": None, "fallbackMapping": None,
                 "version": None, "buildID": None, "locale": None, "distribution": None, "osVersion": None,
                 "instructionSet": None, "distVersion": None, "headerArchitecture": None, "alias": None,
-                "memory": None, "mig64": None,
+                "memory": None, "mig64": None, "jaws": None,
             }
         ]
         self.assertEquals(got["count"], 3)
@@ -99,6 +99,18 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(r[0]['backgroundRate'], 33)
         self.assertEquals(r[0]['priority'], 0)
         self.assertEquals(r[0]['mig64'], True)
+        self.assertEquals(r[0]['data_version'], 1)
+
+    def testCreateRuleWithJaws(self):
+        ret = self._post('/rules', data=dict(backgroundRate=33, mapping='c', priority=0, jaws=True,
+                                             product='Firefox', update_type='minor', channel='nightly'))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], 'c')
+        self.assertEquals(r[0]['backgroundRate'], 33)
+        self.assertEquals(r[0]['priority'], 0)
+        self.assertEquals(r[0]['jaws'], True)
         self.assertEquals(r[0]['data_version'], 1)
 
     def testVersionMaxFieldLength(self):
@@ -169,6 +181,21 @@ class TestRulesAPI_JSON(ViewTest):
         ret = self._post("/rules", data=data, username="jack")
         self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
+    def testNewRuleWithWhitespaceInLocale(self):
+        data = dict(
+            backgroundRate=31, mapping="a", priority=33, product="a",
+            update_type="minor", channel="nightly", locale="de, en-US, hu, it, zh-TW"
+        )
+        ret = self._post("/rules", data=data, username="billy")
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], "a")
+        self.assertEquals(r[0]['backgroundRate'], 31)
+        self.assertEquals(r[0]['priority'], 33)
+        self.assertEquals(r[0]['data_version'], 1)
+        self.assertEquals(r[0]['locale'], "de,en-US,hu,it,zh-TW")
+
     # A POST without the required fields shouldn't be valid
     def testMissingFields(self):
         # But we still need to pass product, because permission checking
@@ -199,6 +226,17 @@ class TestRulesAPI_JSON(ViewTest):
             r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
             self.assertEquals(len(r), 1)
             self.assertEquals(r[0]['version'], '%s4.0' % op)
+
+    def testVersionValidationRequiresAtLeastTwoPartVersion(self):
+        ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
+                                             channel="nightly", update_type="minor", version="5"))
+        self.assertEquals(ret.status_code, 400)
+
+    def testVersionValidationRequiresAtLeastTwoPartVersionWithOperator(self):
+        for op in operators:
+            ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
+                                                 channel="nightly", update_type="minor", version="%s5" % op))
+            self.assertEquals(ret.status_code, 400)
 
     def testBuildIDValidation(self):
         for op in operators:
@@ -293,6 +331,7 @@ class TestSingleRuleView_JSON(ViewTest):
             alias=None,
             memory=None,
             mig64=None,
+            jaws=None,
         )
         self.assertEquals(json.loads(ret.data), expected)
         self.assertIn('X-CSRF-Token', ret.headers)
@@ -322,6 +361,7 @@ class TestSingleRuleView_JSON(ViewTest):
             alias="frodo",
             memory=None,
             mig64=None,
+            jaws=None,
         )
         self.assertEquals(json.loads(ret.data), expected)
 
@@ -386,6 +426,23 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEquals(r[0]['version'], '3.5')
         self.assertEquals(r[0]['buildTarget'], 'd')
 
+    def testPostChangeToJaws(self):
+        # Make some changes to a rule
+        ret = self._post('/rules/1', data=dict(jaws=True, data_version=1))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['jaws'], True)
+        self.assertEquals(r[0]['data_version'], 2)
+        # And that we didn't modify other fields
+        self.assertEquals(r[0]['update_type'], 'minor')
+        self.assertEquals(r[0]['version'], '3.5')
+        self.assertEquals(r[0]['buildTarget'], 'd')
+
     def testPostUnsetMig64(self):
         # Make some changes to a rule
         ret = self._post('/rules/8', data=dict(mig64=None, data_version=1))
@@ -397,6 +454,22 @@ class TestSingleRuleView_JSON(ViewTest):
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 8).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['mig64'], None)
+        self.assertEquals(r[0]['data_version'], 2)
+        # And that we didn't modify other fields
+        self.assertEquals(r[0]['update_type'], 'minor')
+        self.assertEquals(r[0]['priority'], 25)
+
+    def testPostUnsetJaws(self):
+        # Make some changes to a rule
+        ret = self._post('/rules/9', data=dict(jaws=None, data_version=1))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        load = json.loads(ret.data)
+        self.assertEquals(load['new_data_version'], 2)
+
+        # Assure the changes made it into the database
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == 9).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['jaws'], None)
         self.assertEquals(r[0]['data_version'], 2)
         # And that we didn't modify other fields
         self.assertEquals(r[0]['update_type'], 'minor')
@@ -720,6 +793,53 @@ class TestRuleHistoryView(ViewTest):
         self.assertTrue(u"rule_id" in got["rules"][0])
         self.assertTrue(u"backgroundRate" in got["rules"][0])
 
+    def testGetHistory(self):
+        # Make some changes to a rule
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                backgroundRate=71,
+                mapping='d',
+                priority=73,
+                data_version=1,
+                product='Firefox',
+                update_type='minor',
+                channel='nightly',
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
+        # and again
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                backgroundRate=72,
+                mapping='d',
+                priority=73,
+                data_version=2,
+                product='Firefux',
+                update_type='minor',
+                channel='nightly',
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
+
+        url = '/rules/history'
+        ret = self._get(url)
+        got = json.loads(ret.data)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertEquals(got["Rules"]["count"], 2)
+        self.assertTrue(u"rule_id" in got["Rules"]["revisions"][0])
+        self.assertTrue(u"backgroundRate" in got["Rules"]["revisions"][0])
+        self.assertTrue(u"timestamp" in got["Rules"]["revisions"][0])
+
     def testVersionMaxFieldLength(self):
         # Max field length of rules.version is 75
         version = '3.3,3.4,3.5,3.6,3.8,3.9,3.10,3.11'
@@ -911,8 +1031,8 @@ class TestRuleHistoryView(ViewTest):
 class TestSingleColumn_JSON(ViewTest):
 
     def testGetRules(self):
-        expected_product = ["fake", "fake2", "a"]
-        expected = dict(count=3, product=expected_product)
+        expected_product = ["fake", "fake2", "fake3", "a"]
+        expected = dict(count=4, product=expected_product)
         ret = self._get("/rules/columns/product")
         returned_data = json.loads(ret.data)
         self.assertEquals(returned_data['count'], expected['count'])
@@ -1014,6 +1134,8 @@ class TestRuleScheduledChanges(ViewTest):
         dbo.rules.scheduled_changes.conditions.t.insert().execute(sc_id=6, when=5500000, data_version=1)
         dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=12, changed_by="bill", timestamp=75, sc_id=6)
         dbo.rules.scheduled_changes.conditions.history.t.insert().execute(change_id=13, changed_by="bill", timestamp=76, sc_id=6, when=5500000, data_version=1)
+        dbo.rules.scheduled_changes.signoffs.t.insert().execute(sc_id=6, username="bill", role="releng")
+        dbo.rules.scheduled_changes.signoffs.t.insert().execute(sc_id=6, username="mary", role="relman")
 
         dbo.rules.scheduled_changes.t.insert().execute(
             sc_id=7, scheduled_by="bill", data_version=1, base_priority=40, base_backgroundRate=50, base_mapping="a", base_update_type="minor",
@@ -1039,7 +1161,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "update_type": "minor",
                     "data_version": 1, "alias": None, "product": "a", "channel": "a", "buildID": None, "locale": None, "memory": None, "mig64": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
-                    "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                    "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "jaws": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {},
                     "original_row": dbo.rules.getRule(1),
                 },
@@ -1047,21 +1169,21 @@ class TestRuleScheduledChanges(ViewTest):
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
                     "backgroundRate": 100, "product": "baz", "mapping": "ab", "update_type": "minor", "version": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None, "memory": None, "mig64": None,
-                    "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
+                    "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None, "jaws": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "insert", "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 3, "when": 2900000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
                     "backgroundRate": 100, "channel": "a", "mapping": "ghi", "update_type": "minor", "version": None, "memory": None, "mig64": None,
-                    "buildTarget": None, "alias": None, "product": None, "buildID": None, "locale": None, "osVersion": None,
+                    "buildTarget": None, "alias": None, "product": None, "buildID": None, "locale": None, "osVersion": None, "jaws": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
                     "change_type": "insert", "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"releng": 1},
                 },
                 {
                     "sc_id": 5, "when": 600000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 4, "priority": None,
-                    "backgroundRate": None, "channel": None, "mapping": None, "update_type": None, "version": None,
+                    "backgroundRate": None, "channel": None, "mapping": None, "update_type": None, "version": None, "jaws": None,
                     "buildTarget": None, "alias": None, "product": None, "buildID": None, "locale": None, "osVersion": None, "memory": None, "mig64": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": 1, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
@@ -1070,15 +1192,15 @@ class TestRuleScheduledChanges(ViewTest):
                 },
                 {
                     "sc_id": 6, "when": 5500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 100,
-                    "backgroundRate": 100, "product": "fake", "mapping": "ab", "update_type": "minor", "version": None,
+                    "backgroundRate": 100, "product": "fake", "mapping": "ab", "update_type": "minor", "version": None, "jaws": None,
                     "buildTarget": None, "alias": None, "channel": "k", "buildID": None, "locale": None, "osVersion": None, "memory": None, "mig64": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {}, "required_signoffs": {"relman": 1},
+                    "change_type": "insert", "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"relman": 1},
                 },
                 {
                     "sc_id": 7, "when": 7500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 6, "priority": 40,
-                    "backgroundRate": 50, "product": "fake", "mapping": "a", "update_type": "minor", "version": None,
+                    "backgroundRate": 50, "product": "fake", "mapping": "a", "update_type": "minor", "version": None, "jaws": None,
                     "buildTarget": None, "alias": None, "channel": "k", "buildID": None, "locale": None, "osVersion": None, "memory": None, "mig64": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
@@ -1099,13 +1221,13 @@ class TestRuleScheduledChanges(ViewTest):
                     "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "update_type": "minor",
                     "data_version": 1, "alias": None, "product": "a", "channel": "a", "buildID": None, "locale": None, "memory": None, "mig64": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
-                    "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                    "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "jaws": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {},
                     "original_row": dbo.rules.getRule(1),
                 },
                 {
                     "sc_id": 2, "when": 1500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 50,
-                    "backgroundRate": 100, "product": "baz", "mapping": "ab", "update_type": "minor", "version": None,
+                    "backgroundRate": 100, "product": "baz", "mapping": "ab", "update_type": "minor", "version": None, "jaws": None,
                     "buildTarget": None, "alias": None, "channel": None, "buildID": None, "locale": None, "osVersion": None, "memory": None, "mig64": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
@@ -1113,7 +1235,7 @@ class TestRuleScheduledChanges(ViewTest):
                 },
                 {
                     "sc_id": 3, "when": 2900000, "scheduled_by": "bill", "complete": False, "sc_data_version": 2, "rule_id": None, "priority": 150,
-                    "backgroundRate": 100, "channel": "a", "mapping": "ghi", "update_type": "minor", "version": None,
+                    "backgroundRate": 100, "channel": "a", "mapping": "ghi", "update_type": "minor", "version": None, "jaws": None,
                     "buildTarget": None, "alias": None, "product": None, "buildID": None, "locale": None, "osVersion": None, "memory": None, "mig64": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
@@ -1124,13 +1246,13 @@ class TestRuleScheduledChanges(ViewTest):
                     "version": "3.3", "buildTarget": "d", "backgroundRate": 0, "mapping": "c", "update_type": "minor",
                     "data_version": 1, "alias": None, "product": None, "channel": None, "buildID": None, "locale": None, "memory": None, "mig64": None,
                     "osVersion": None, "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
-                    "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+                    "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "jaws": None,
                     "change_type": "update", "signoffs": {}, "required_signoffs": {},
                     # No original row on "complete"
                 },
                 {
                     "sc_id": 5, "when": 600000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 4, "priority": None,
-                    "backgroundRate": None, "channel": None, "mapping": None, "update_type": None, "version": None,
+                    "backgroundRate": None, "channel": None, "mapping": None, "update_type": None, "version": None, "jaws": None,
                     "buildTarget": None, "alias": None, "product": None, "buildID": None, "locale": None, "osVersion": None, "memory": None, "mig64": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": 1, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
@@ -1139,15 +1261,15 @@ class TestRuleScheduledChanges(ViewTest):
                 },
                 {
                     "sc_id": 6, "when": 5500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": None, "priority": 100,
-                    "backgroundRate": 100, "product": "fake", "mapping": "ab", "update_type": "minor", "version": None,
+                    "backgroundRate": 100, "product": "fake", "mapping": "ab", "update_type": "minor", "version": None, "jaws": None,
                     "buildTarget": None, "alias": None, "channel": "k", "buildID": None, "locale": None, "osVersion": None, "memory": None, "mig64": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
-                    "change_type": "insert", "signoffs": {}, "required_signoffs": {"relman": 1},
+                    "change_type": "insert", "signoffs": {"bill": "releng", "mary": "relman"}, "required_signoffs": {"relman": 1},
                 },
                 {
                     "sc_id": 7, "when": 7500000, "scheduled_by": "bill", "complete": False, "sc_data_version": 1, "rule_id": 6, "priority": 40,
-                    "backgroundRate": 50, "product": "fake", "mapping": "a", "update_type": "minor", "version": None,
+                    "backgroundRate": 50, "product": "fake", "mapping": "a", "update_type": "minor", "version": None, "jaws": None,
                     "buildTarget": None, "alias": None, "channel": "k", "buildID": None, "locale": None, "osVersion": None, "memory": None, "mig64": None,
                     "distribution": None, "fallbackMapping": None, "distVersion": None, "headerArchitecture": None, "comment": None,
                     "data_version": None, "instructionSet": None, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
@@ -1158,15 +1280,16 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
+    @mock.patch('time.time', mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingRule(self):
         data = {
-            "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "rule_id": 5,
+            "rule_id": 5, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
             "priority": 80, "buildTarget": "d", "version": "3.3", "backgroundRate": 100, "mapping": "c", "update_type": "minor",
-            "data_version": 1, "change_type": "update",
+            "data_version": 1, "change_type": "update", "when": 1234567
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "signoffs": {"bill": "releng"}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1176,22 +1299,23 @@ class TestRuleScheduledChanges(ViewTest):
             "base_mapping": "c", "base_update_type": "minor", "base_data_version": 1, "data_version": 1, "sc_id": 8, "complete": False, "base_alias": None,
             "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None,
             "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_memory": None,
-            "base_mig64": None, "base_instructionSet": None, "change_type": "update",
+            "base_mig64": None, "base_instructionSet": None, "base_jaws": None, "change_type": "update",
         }
         self.assertEquals(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 8).execute().fetchall()
         self.assertEquals(len(cond), 1)
-        cond_expected = {"sc_id": 8, "data_version": 1, "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "when": None}
+        cond_expected = {"sc_id": 8, "data_version": 1, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "when": 1234567}
         self.assertEquals(dict(cond[0]), cond_expected)
 
+    @mock.patch('time.time', mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingDeletingRule(self):
         data = {
-            "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "data_version": 1,
-            "rule_id": 5, "change_type": "delete",
+            "rule_id": 5, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None,
+            "data_version": 1, "change_type": "delete", "when": 1234567
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "signoffs": {"bill": "releng"}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1201,12 +1325,12 @@ class TestRuleScheduledChanges(ViewTest):
             "base_mapping": None, "base_update_type": None, "base_data_version": 1, "data_version": 1, "sc_id": 8, "complete": False, "base_alias": None,
             "base_product": None, "base_channel": None, "base_buildID": None, "base_locale": None, "base_osVersion": None, "base_distribution": None,
             "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_memory": None,
-            "base_mig64": None, "base_instructionSet": None, "change_type": "delete",
+            "base_mig64": None, "base_instructionSet": None, "base_jaws": None, "change_type": "delete",
         }
         self.assertEquals(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 8).execute().fetchall()
         self.assertEquals(len(cond), 1)
-        cond_expected = {"sc_id": 8, "data_version": 1, "telemetry_product": "foo", "telemetry_channel": "bar", "telemetry_uptake": 42, "when": None}
+        cond_expected = {"sc_id": 8, "data_version": 1, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "when": 1234567}
         self.assertEquals(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
@@ -1227,7 +1351,7 @@ class TestRuleScheduledChanges(ViewTest):
             "base_update_type": "minor", "base_mapping": "a", "sc_id": 8, "data_version": 1, "complete": False, "base_data_version": None,
             "base_rule_id": None, "base_buildTarget": None, "base_version": None, "base_alias": None, "base_buildID": None, "base_locale": None,
             "base_osVersion": None, "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None,
-            "base_comment": None, "base_instructionSet": None, "change_type": "insert", "base_memory": None, "base_mig64": None,
+            "base_comment": None, "base_instructionSet": None, "change_type": "insert", "base_memory": None, "base_mig64": None, "base_jaws": None,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 8).execute().fetchall()
@@ -1341,7 +1465,7 @@ class TestRuleScheduledChanges(ViewTest):
             "base_product": "a", "base_channel": "a", "base_buildID": None, "base_locale": None, "base_osVersion": None,
             "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
             "base_headerArchitecture": None, "base_comment": None, "base_instructionSet": None, "base_memory": "888",
-            "base_mig64": None, "change_type": "update",
+            "base_mig64": None, "base_jaws": None, "change_type": "update",
         }
         self.assertEquals(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
@@ -1370,6 +1494,7 @@ class TestRuleScheduledChanges(ViewTest):
             "base_alias": None, "base_product": "a", "base_channel": "a", "base_buildID": None, "base_locale": None,
             "base_osVersion": None, "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None, "base_memory": None,
             "base_mig64": None, "base_headerArchitecture": None, "base_comment": None, "base_instructionSet": None, "change_type": "update",
+            "base_jaws": None,
         }
         self.assertEquals(db_data, expected)
 
@@ -1402,7 +1527,7 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEquals(len(rows), 2)
         ret = self._post("/scheduled_changes/rules/3", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 3, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 3, "signoffs": {'bill': 'releng'}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 3).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1413,14 +1538,44 @@ class TestRuleScheduledChanges(ViewTest):
             "base_channel": "a", "base_buildID": None, "base_locale": None, "base_osVersion": None,
             "base_product": None, "base_data_version": None, "base_alias": None,
             "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
-            "base_headerArchitecture": None, "base_comment": None, "base_memory": None, "base_mig64": None,
+            "base_headerArchitecture": None, "base_comment": None, "base_memory": None, "base_mig64": None, "base_jaws": None,
             "base_instructionSet": None, "base_version": None, "base_rule_id": None, "base_buildTarget": None,
             "change_type": "insert",
         }
         self.assertEquals(db_data, expected)
         rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
             dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(rows), 0)
+        self.assertEquals(len(rows), 1)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testUpdateScheduledChangeDiffUserResetSignOffs(self):
+        data = {
+            "when": 2900000, "priority": 150, "backgroundRate": 50, "update_type": "minor", "sc_data_version": 1,
+            "channel": "j"
+        }
+        rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
+            dbo.rules.scheduled_changes.signoffs.sc_id == 6).execute().fetchall()
+        self.assertEquals(len(rows), 2)
+        ret = self._post("/scheduled_changes/rules/6", data=data, username="julie")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {'julie': 'releng'}})
+        r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 6).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        db_data = dict(r[0])
+        expected = {
+            "sc_id": 6, "scheduled_by": "julie", "data_version": 2, "complete": False,
+            "base_priority": 150, "base_backgroundRate": 50, "base_mapping": "ab", "base_update_type": "minor",
+            "base_channel": "j", "base_buildID": None, "base_locale": None, "base_osVersion": None,
+            "base_product": "fake", "base_data_version": None, "base_alias": None,
+            "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None,
+            "base_headerArchitecture": None, "base_comment": None, "base_memory": None, "base_mig64": None, "base_jaws": None,
+            "base_instructionSet": None, "base_version": None, "base_rule_id": None, "base_buildTarget": None,
+            "change_type": "insert",
+        }
+        self.assertEquals(db_data, expected)
+        rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
+            dbo.rules.scheduled_changes.signoffs.sc_id == 6).execute().fetchall()
+        self.assertEquals(len(rows), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeCantRemoveProductWithoutPermission(self):
@@ -1472,7 +1627,7 @@ class TestRuleScheduledChanges(ViewTest):
             "rule_id": 1, "priority": 100, "version": "3.5", "buildTarget": "d", "backgroundRate": 100, "mapping": "b", "fallbackMapping": None,
             "update_type": "minor", "data_version": 2, "alias": None, "product": "a", "channel": "a", "buildID": None,
             "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
-            "comment": None, "instructionSet": None, "memory": None, "mig64": None,
+            "comment": None, "instructionSet": None, "memory": None, "mig64": None, "jaws": None,
         }
         self.assertEquals(dict(row), expected)
 
@@ -1483,12 +1638,12 @@ class TestRuleScheduledChanges(ViewTest):
         sc_row = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 2).execute().fetchall()[0]
         self.assertEquals(sc_row["complete"], True)
 
-        row = dbo.rules.t.select().where(dbo.rules.rule_id == 9).execute().fetchall()[0]
+        row = dbo.rules.t.select().where(dbo.rules.rule_id == 10).execute().fetchall()[0]
         expected = {
-            "rule_id": 9, "priority": 50, "version": None, "buildTarget": None, "backgroundRate": 100, "mapping": "ab", "fallbackMapping": None,
+            "rule_id": 10, "priority": 50, "version": None, "buildTarget": None, "backgroundRate": 100, "mapping": "ab", "fallbackMapping": None,
             "update_type": "minor", "data_version": 1, "alias": None, "product": "baz", "channel": None, "buildID": None,
             "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
-            "comment": None, "instructionSet": None, "memory": None, "mig64": None,
+            "comment": None, "instructionSet": None, "memory": None, "mig64": None, "jaws": None,
         }
         self.assertEquals(dict(row), expected)
 
@@ -1508,7 +1663,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
                     "version": None, "product": None, "buildTarget": None, "buildID": None, "locale": None,
                     "osVersion": None, "instructionSet": None, "distribution": None, "distVersion": None, "memory": None, "mig64": None,
-                    "headerArchitecture": None, "comment": None, "alias": None, "data_version": None, "change_type": "insert",
+                    "jaws": None, "headerArchitecture": None, "comment": None, "alias": None, "data_version": None, "change_type": "insert",
                 },
                 {
                     "change_id": 2, "changed_by": "bill", "timestamp": 6, "sc_id": 3, "scheduled_by": "bill", "when": 2000000, "sc_data_version": 1,
@@ -1516,11 +1671,21 @@ class TestRuleScheduledChanges(ViewTest):
                     "complete": False, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "rule_id": None,
                     "version": None, "product": None, "buildTarget": None, "buildID": None, "locale": None,
                     "osVersion": None, "instructionSet": None, "distribution": None, "distVersion": None, "memory": None, "mig64": None,
-                    "headerArchitecture": None, "comment": None, "alias": None, "data_version": None, "change_type": "insert",
+                    "jaws": None, "headerArchitecture": None, "comment": None, "alias": None, "data_version": None, "change_type": "insert",
                 },
             ],
         }
         self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetRulesHistory(self):
+        ret = self._get("/rules/history")
+        got = json.loads(ret.data)
+        self.assertEquals(ret.status_code, 200)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertEquals(got["Rules scheduled change"]["count"], 8)
+        self.assertTrue(u"rule_id" in got["Rules scheduled change"]["revisions"][0])
+        self.assertTrue(u"backgroundRate" in got["Rules scheduled change"]["revisions"][0])
+        self.assertTrue(u"timestamp" in got["Rules scheduled change"]["revisions"][0])
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testRevertScheduledChange(self):
@@ -1536,7 +1701,7 @@ class TestRuleScheduledChanges(ViewTest):
             "base_backgroundRate": 100, "base_channel": "a", "base_mapping": "def", "base_update_type": "minor", "base_version": None,
             "base_buildTarget": None, "base_alias": None, "base_product": None, "base_buildID": None, "base_locale": None, "base_osVersion": None,
             "base_distribution": None, 'base_fallbackMapping': None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None,
-            "base_data_version": None, "base_instructionSet": None, "base_memory": None, "base_mig64": None, "change_type": "insert",
+            "base_data_version": None, "base_instructionSet": None, "base_memory": None, "base_mig64": None, "base_jaws": None, "change_type": "insert",
         }
         self.assertEquals(db_data, expected)
         self.assertEquals(dbo.rules.scheduled_changes.conditions.history.t.count().execute().first()[0], 16)

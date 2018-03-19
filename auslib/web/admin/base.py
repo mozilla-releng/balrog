@@ -9,7 +9,7 @@ from flask import request
 from flask_compress import Compress
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 from raven.contrib.flask import Sentry
-from auslib.util.swagger import SpecBuilder
+from specsynthase.specbuilder import SpecBuilder
 
 log = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 Balrog
 ======
-|Coverage|
+|CI| |Coverage|
 
 Balrog is the software that runs the server side component of the update system used by Firefox and other Mozilla products.
 
@@ -82,6 +82,7 @@ License
 Balrog is released under `Mozilla Public License 2.0 <https://opensource.org/licenses/MPL-2.0>`_.
 
 
-
+.. |CI| image:: https://github.taskcluster.net/v1/repository/mozilla/balrog/master/badge.svg
+   :target: https://github.taskcluster.net/v1/repository/mozilla/balrog/master/latest
 .. |Coverage| image:: https://coveralls.io/repos/github/mozilla/balrog/badge.svg?branch=master
    :target: https://coveralls.io/github/mozilla/balrog?branch=master
