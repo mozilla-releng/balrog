@@ -8,5 +8,3 @@ branch: master
 
 # automatically discover requirements files
 search: True
-
-schedule: "every day"
