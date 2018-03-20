@@ -320,7 +320,7 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         with mock.patch('sqlalchemy.engine.base.Connection.close') as close:
             try:
                 self.test.insert(changed_by='bob', id=1, foo=1)
-            except:
+            except Exception:
                 pass
             self.assertTrue(close.called, "Connection.close() never called by insert()")
 

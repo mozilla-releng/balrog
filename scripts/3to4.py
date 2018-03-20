@@ -40,7 +40,7 @@ if __name__ == "__main__":
         try:
             rel = db.releases.getReleases(name=release)[0]
             blob = rel["data"]
-        except:
+        except Exception:
             log.debug("No such release '%s', skipping", release)
 
         if blob["schema_version"] == 4:
@@ -55,5 +55,5 @@ if __name__ == "__main__":
             v4Blob = ReleaseBlobV4.fromV3(blob)
             db.releases.updateRelease(release, args.name, rel["data_version"], blob=v4Blob)
             log.debug("Done")
-        except:
+        except Exception:
             log.exception("Failed to upgrade %s", release)

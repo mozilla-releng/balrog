@@ -49,7 +49,7 @@ def version_validator(field_value):
         except ValueError:
             raise jsonschema.ValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value"
                                              % (field_value, field_value))
-        except:
+        except Exception:
             raise jsonschema.ValidationError('Invalid input for %s . No Operator or Match found.' % field_value)
         # MozillaVersion doesn't error on empty strings
         if not hasattr(version, 'version'):
@@ -81,7 +81,7 @@ def integer_and_range_validator(field_name, field_value, min_val=None, max_val=N
         return True
     try:
         x = int(field_value)
-    except:
+    except Exception:
         raise jsonschema.ValidationError(message="Invalid input for %s. Not an integer." % field_name)
     if min_val is not None and x < min_val:
         raise jsonschema.ValidationError(message="%s field value should be an integer >= %s" % (field_name, min_val))

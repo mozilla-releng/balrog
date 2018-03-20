@@ -222,7 +222,7 @@ class AUSTransaction(object):
             # Also need to check for exceptions during commit!
             try:
                 self.commit()
-            except:
+            except Exception:
                 self.rollback()
                 raise
         finally:
@@ -238,7 +238,7 @@ class AUSTransaction(object):
         try:
             self.log.debug("Attempting to execute %s" % statement)
             return self.conn.execute(statement)
-        except:
+        except Exception:
             self.log.debug("Caught exception")
             # We want to raise our own Exception, so that errors are easily
             # caught by consumers. The dance below lets us do that without
@@ -252,7 +252,7 @@ class AUSTransaction(object):
     def commit(self):
         try:
             self.trans.commit()
-        except:
+        except Exception:
             klass, e, tb = sys.exc_info()
             self.rollback()
             e = TransactionError(e.args)
@@ -959,7 +959,7 @@ class ConditionsTable(AUSTable):
         if "when" in conditions:
             try:
                 time.gmtime(conditions["when"] / 1000)
-            except:
+            except Exception:
                 raise ValueError("Cannot parse 'when' as a unix timestamp.")
 
             if conditions["when"] < getMillisecondTimestamp():
@@ -2480,14 +2480,14 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
         if use_tls:
             conn.starttls()
             conn.ehlo()
-    except:
+    except Exception:
         table.log.exception("Failed to connect to SMTP server:")
         return
     try:
         if username and password:
             conn.login(username, password)
         conn.sendmail(from_addr, to_addr, msg.as_string())
-    except:
+    except Exception:
         table.log.exception("Failed to send change notification:")
     finally:
         conn.quit()

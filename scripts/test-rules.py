@@ -11,7 +11,7 @@ import site
 try:
     import json
     assert json  # to shut pyflakes up
-except:
+except Exception:
     import simplejson as json
 
 mydir = os.path.dirname(os.path.abspath(__file__))
