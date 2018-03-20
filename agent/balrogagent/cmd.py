@@ -67,7 +67,7 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     else:
                         logging.debug("Change %s is not ready", change["sc_id"])
 
-        except:
+        except Exception:
             logging.error("Encountered exception:", exc_info=True)
             if raise_exceptions:
                 raise

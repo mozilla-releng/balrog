@@ -7,7 +7,7 @@ import re
 try:
     import json
     assert json  # to shut pyflakes up
-except:
+except Exception:
     import simplejson as json
 
 from auslib.db import AUSDatabase
