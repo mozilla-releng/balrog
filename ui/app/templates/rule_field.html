@@ -11,17 +11,15 @@
      being shown, we just show the current value plainly -->
 
 {{field_value=rule[fieldname] === true ? "Yes" : (rule[fieldname] === false ? "No" : rule[fieldname]);""}}
-{{limit=(limittextto === undefined ? field_value.length : limittextto);""}}
-<span tooltip="{{field_value.length > limit ? field_value : ''}}" ng-style="showdiff && showsc && (fieldIsChanging(rule, fieldname) || rule.scheduled_change.change_type === 'delete')
+<span tooltip="{{field_value.length > limittextto ? field_value : ''}}" ng-style="showdiff && showsc && (fieldIsChanging(rule, fieldname) || rule.scheduled_change.change_type === 'delete')
                 ? {'text-decoration': 'line-through', 'color': 'red'} : {};">
 
-    {{field_value | limitTo:limit}} {{field_value.length > limit ? '...' : ''}}
+    {{field_value | limitTo:limittextto}} {{field_value.length > limittextto ? '...' : ''}}
 </span>
 
 {{sc_field_value=rule.scheduled_change[fieldname] === true ? "Yes" : (rule.scheduled_change[fieldname] === false ? "No" : rule.scheduled_change[fieldname]);""}}
-{{limit=(limittextto === undefined ? sc_field_value.length : limittextto);""}}
-<span tooltip="{{sc_field_value.length > limit ? sc_field_value : ''}}" style="color: green" ng-show="showdiff && showsc && fieldIsChanging(rule, fieldname)">
-    {{sc_field_value | limitTo:limit}} {{sc_field_value.length > limit ? '...' : ''}}
+<span tooltip="{{sc_field_value.length > limittextto_sc ? sc_field_value : ''}}" style="color: green" ng-show="showdiff && showsc && fieldIsChanging(rule, fieldname)">
+    {{sc_field_value | limitTo:limittextto_sc}} {{sc_field_value.length > limittextto_sc ? '...' : ''}}
 </span>
 </b>
 </h5>
