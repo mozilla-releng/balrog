@@ -320,7 +320,7 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         with mock.patch('sqlalchemy.engine.base.Connection.close') as close:
             try:
                 self.test.insert(changed_by='bob', id=1, foo=1)
-            except:
+            except Exception:
                 pass
             self.assertTrue(close.called, "Connection.close() never called by insert()")
 
@@ -3082,9 +3082,9 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
             fallbackChannel=''
         )
         expected = set([
-            ":a::::False",
-            "c:a::::False",
-            "b:e::::True",
+            ":a:::False",
+            "c:a:::False",
+            "b:e:::True",
         ])
         self.assertEquals(set(cache.caches["rules"].data.keys()), expected)
 
@@ -5020,6 +5020,23 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table_name in when_nullable_tables:
                 self.assertFalse(meta_data.tables[table_name].c.when.nullable)
 
+    def _test_rules_longer_distribution(self, db, upgrade=True):
+        upgraded_length = 2000
+        downgrade_length = 100
+        meta_data = self._get_reflected_metadata(db)
+        tables_list = ["rules", "rules_history"]
+        scheduled_changes_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
+        if upgrade:
+            for table_name in tables_list:
+                self.assertEquals(upgraded_length, meta_data.tables[table_name].c.distribution.type.length)
+            for table_name in scheduled_changes_tables:
+                self.assertEquals(upgraded_length, meta_data.tables[table_name].c.base_distribution.type.length)
+        else:
+            for table_name in tables_list:
+                self.assertEquals(downgrade_length, meta_data.tables[table_name].c.distribution.type.length)
+            for table_name in scheduled_changes_tables:
+                self.assertEquals(downgrade_length, meta_data.tables[table_name].c.base_distribution.type.length)
+
     def testVersionChangesWorkAsExpected(self):
         """
         Tests that downgrades and upgrades work as expected. Since the DB will never
@@ -5035,6 +5052,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            31: self._test_rules_longer_distribution,
             30: self._add_emergency_shutoff_tables,
             29: self._add_jaws_test,
             28: self._add_mig64_test,

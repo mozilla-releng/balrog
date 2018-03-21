@@ -32,7 +32,11 @@ angular.module("app").factory('Helpers', function() {
         }
       }
       return validation_results;
-    }
+    },
+    replaceChar: function(input, searchvalue, newvalue) {
+        var re = new RegExp(searchvalue, "g");
+        return input.replace(re, newvalue);
+    },
   };
   return service;
 });

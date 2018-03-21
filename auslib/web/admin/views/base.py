@@ -73,7 +73,7 @@ def transactionHandler(request_handler):
             else:
                 trans.commit()
             return ret
-        except:
+        except Exception:
             trans.rollback()
             raise
         finally:

@@ -41,13 +41,13 @@
 
     <h3 class="panel-title">
       <div style="float: right">
-        <i ng-if=" scheduled_changes_rules_count && $first && (currentPage == 1)">Current</i>
-        <button ng-show="!scheduled_changes_rules_count && (! isEmpty(sc['required_signoffs']) &&
-          !sc['signoffs'].hasOwnProperty(current_user))" class="btn btn-xs btn-primary" ng-click="signoff(sc)">
+        <i ng-if="scheduled_changes_rules_count && $first && (currentPage == 1)">Current</i>
+        <button class="btn btn-xs btn-primary" ng-click="signoff(sc)" ng-show="!isEmpty(sc['required_signoffs']) &&
+        !sc['signoffs'].hasOwnProperty(current_user)">
           Signoff as...
         </button>
-        <button ng-show="!scheduled_changes_rules_count && (! isEmpty(sc['required_signoffs']) &&
-          sc['signoffs'].hasOwnProperty(current_user))" class="btn btn-xs btn-danger" ng-click="revokeSignoff(sc)">
+        <button class="btn btn-xs btn-danger" ng-click="revokeSignoff(sc)" ng-show="!isEmpty(sc['signoffs']) &&
+        sc['signoffs'].hasOwnProperty(current_user)" >
           Revoke your Signoff
         </button>
         <button ng-show="!sc.complete" class="btn btn-default btn-xs" ng-click="openScheduledUpdateModal(sc)">Update</button>
@@ -79,8 +79,8 @@
           </li>
         </ul>
       </span>
+      <hr style="clear: both" ng-show="! isEmpty(sc.required_signoffs)">
     </div>
-    <hr style="clear: both" ng-show="! isEmpty(sc.required_signoffs)">
     <div class="left" style="float: left">
       <h5 title="Scheduled By">
         Scheduled By: <b>{{ sc.scheduled_by ? sc.scheduled_by : current_user }}</b>

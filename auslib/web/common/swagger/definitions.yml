@@ -274,10 +274,10 @@ definitions:
         example: 'Windows_NT 5.0'
 
       distribution:
-        description: The partner distribution name that the application must send in order for the rule to match.
+        description: The partner distributions names that the application must send in order for the rule to match. A comma separated list may be used to list multiple distributions.
         type: ["string", "null"]
         minLength: 0
-        maxLength: 100
+        maxLength: 2000
         example: default
 
       distVersion:

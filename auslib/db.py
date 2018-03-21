@@ -222,7 +222,7 @@ class AUSTransaction(object):
             # Also need to check for exceptions during commit!
             try:
                 self.commit()
-            except:
+            except Exception:
                 self.rollback()
                 raise
         finally:
@@ -238,7 +238,7 @@ class AUSTransaction(object):
         try:
             self.log.debug("Attempting to execute %s" % statement)
             return self.conn.execute(statement)
-        except:
+        except Exception:
             self.log.debug("Caught exception")
             # We want to raise our own Exception, so that errors are easily
             # caught by consumers. The dance below lets us do that without
@@ -252,7 +252,7 @@ class AUSTransaction(object):
     def commit(self):
         try:
             self.trans.commit()
-        except:
+        except Exception:
             klass, e, tb = sys.exc_info()
             self.rollback()
             e = TransactionError(e.args)
@@ -959,7 +959,7 @@ class ConditionsTable(AUSTable):
         if "when" in conditions:
             try:
                 time.gmtime(conditions["when"] / 1000)
-            except:
+            except Exception:
                 raise ValueError("Cannot parse 'when' as a unix timestamp.")
 
             if conditions["when"] < getMillisecondTimestamp():
@@ -1533,7 +1533,7 @@ class Rules(AUSTable):
                            Column('instructionSet', String(1000)),
                            Column('jaws', CompatibleBooleanColumn),
                            Column('mig64', CompatibleBooleanColumn),
-                           Column('distribution', String(100)),
+                           Column('distribution', String(2000)),
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),
                            Column('comment', String(500)),
@@ -1623,12 +1623,6 @@ class Rules(AUSTable):
                 ((self.buildTarget == updateQuery['buildTarget']) | (self.buildTarget == null())) &
                 ((self.headerArchitecture == updateQuery['headerArchitecture']) | (self.headerArchitecture == null()))
             ]
-            if "distribution" in updateQuery:
-                where.extend([
-                    ((self.distribution == updateQuery['distribution']) | (self.distribution == null()))
-                ])
-            else:
-                where.extend([(self.distribution == null())])
 
             if "distVersion" in updateQuery:
                 where.extend([
@@ -1645,9 +1639,9 @@ class Rules(AUSTable):
         # part, product and buildTarget will be the only applicable ones which
         # means we should get very high cache hit rates, as there's not a ton
         # of variability of possible combinations for those.
-        cache_key = "%s:%s:%s:%s:%s:%s" % \
+        cache_key = "%s:%s:%s:%s:%s" % \
             (updateQuery["product"], updateQuery["buildTarget"], updateQuery["headerArchitecture"],
-             updateQuery.get("distribution"), updateQuery.get("distVersion"), updateQuery["force"])
+             updateQuery.get("distVersion"), updateQuery["force"])
         rules = cache.get("rules", cache_key, getRawMatches)
 
         self.log.debug("Raw matches:")
@@ -1678,6 +1672,9 @@ class Rules(AUSTable):
                 continue
             if not matchCsv(rule['instructionSet'], updateQuery.get('instructionSet', ""), substring=False):
                 self.log.debug("%s doesn't match %s", rule['instructionSet'], updateQuery.get('instructionSet'))
+                continue
+            if not matchCsv(rule['distribution'], updateQuery.get('distribution', ""), substring=False):
+                self.log.debug("%s doesn't match %s", rule['distribution'], updateQuery.get('distribution'))
                 continue
             # Locales may be a comma delimited rule too, exact matches only
             if not matchLocale(rule['locale'], updateQuery['locale']):
@@ -2483,14 +2480,14 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
         if use_tls:
             conn.starttls()
             conn.ehlo()
-    except:
+    except Exception:
         table.log.exception("Failed to connect to SMTP server:")
         return
     try:
         if username and password:
             conn.login(username, password)
         conn.sendmail(from_addr, to_addr, msg.as_string())
-    except:
+    except Exception:
         table.log.exception("Failed to send change notification:")
     finally:
         conn.quit()
