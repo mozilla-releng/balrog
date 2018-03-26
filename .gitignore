@@ -9,6 +9,7 @@ cef.log
 .tox
 .swp
 *.egg-info
+.pytest_cache
 
 build
 generated
