@@ -31,4 +31,4 @@ async def request(api_root, path, method="GET", data={}, headers=default_headers
     async with aiohttp.request(method, url, data=json.dumps(data), headers=headers, auth=auth, loop=loop) as resp:
         # Raises on 400 code or higher, we can assume things are good if we make it past this.
         resp.raise_for_status()
-        return resp
+        return (await resp.json())
