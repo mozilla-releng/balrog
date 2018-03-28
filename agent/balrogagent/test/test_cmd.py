@@ -1,8 +1,5 @@
-import aiohttp
 import asyncio
 import asynctest
-import json
-from yarl import URL
 
 from ..cmd import run_agent
 
@@ -20,26 +17,12 @@ class TestRunAgent(asynctest.TestCase):
                 endpoint = '/'.join(endpoint.split('/')[-2:])
             else:
                 endpoint = endpoint.split('/')[-1]
-            response = aiohttp.client.ClientResponse(
-                "GET",
-                URL("http://balrog.fake/scheduled_changes/{}".format(endpoint)),
-                writer=None,
-                continue100=None,
-                timer=None,
-                request_info=None,
-                auto_decompress=None,
-                traces=None,
-                loop=loop,
-                session=None,
-            )
-            response.headers = {"Content-Type": "application/json"}
             changes = scheduled_changes.get(endpoint) or []
             if method != 'GET':
                 body = ""
             else:
                 body = {"count": len(changes), "scheduled_changes": changes}
-            response._body = bytes(json.dumps(body), "utf-8")
-            return response
+            return body
 
         request.side_effect = side_effect
 
