@@ -2,7 +2,7 @@
 set -e
 set -x
 
-LOCAL_DUMP="/app/scripts/prod_db_dump.sql"
+export LOCAL_DUMP="/app/scripts/prod_db_dump.sql"
 
 DBURI=$1
 MAGIC_WORD=$2
