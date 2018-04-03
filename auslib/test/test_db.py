@@ -3381,6 +3381,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
                 "schema_version": 1,
                 "name": "b",
                 "hashFunction": "sha512",
+                "has_wnp": False,
                 "platforms": {
                     "win": {
                         "locales": {

@@ -2085,6 +2085,7 @@ class TestSchema4Blob(unittest.TestCase):
             "name": "g2",
             "schema_version": 4,
             "hashFunction": "sha512",
+            "has_wnp": False,
             "fileUrls": {
                 "c1": {
                     "partials": {
@@ -2114,6 +2115,7 @@ class TestSchema4Blob(unittest.TestCase):
     "name": "g2",
     "schema_version": 4,
     "hashFunction": "sha512",
+    "has_wnp": false,
     "platforms": {
         "p": {
             "buildID": 40,

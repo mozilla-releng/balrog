@@ -23,12 +23,13 @@ class TestCreateBlob(unittest.TestCase):
 "schema_version": 2,
 "name": "blah"}"""
         blob = createBlob(data)
-        self.assertEquals(blob, dict(schema_version=2, name="blah"))
+        self.assertEquals(blob, dict(schema_version=2, name="blah", has_wnp=False))
 
     def testLoadDict(self):
         data = dict(
             schema_version=1,
-            name="foo"
+            name="foo",
+            has_wnp=False
         )
         blob = createBlob(data)
         self.assertEquals(blob, data)
@@ -52,6 +53,9 @@ class TestCreateBlob(unittest.TestCase):
                     },
                     "name": {
                         "type": "string"
+                    },
+                    "has_wnp": {
+                        "type": "boolean"
                     }
                 }
             }

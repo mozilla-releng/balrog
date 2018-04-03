@@ -53,6 +53,7 @@ class TestHistoryView(ViewTest):
     "detailsUrl": "blah",
     "fakePartials": true,
     "hashFunction": "sha512",
+    "has_wnp": false,
     "platforms": {
         "p": {
             "locales": {
