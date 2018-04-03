@@ -77,6 +77,15 @@ class ReleaseBlobBase(Blob):
                 raise BadDataError("No buildID for platform '%s'" % (platform))
             return self['platforms'][platform]['buildID']
 
+    @property
+    def has_wnp(self):
+        # check for What's new page for Blobs < v9
+        for group in self.get('openURL', []):
+            if '/whatsnew/' in group['fields'].get('openURL', ''):
+                return True
+        else:
+            return False
+
     def _getFromRelease(self, patch):
         # "*" is a special case for the "from" field that means "any release".
         # Because we know it doesn't exist in the database it's wasteful to
@@ -312,6 +321,8 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 1
+            
+        self['has_wnp'] = self.has_wnp
 
     def getAppv(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'appv')
@@ -529,6 +540,8 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         if 'schema_version' not in self.keys():
             self['schema_version'] = 2
 
+        self['has_wnp'] = self.has_wnp
+
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
     # converted to unit tests.
     def createSnippets(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
@@ -638,6 +651,8 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         if 'schema_version' not in self.keys():
             self['schema_version'] = 3
 
+        self['has_wnp'] = self.has_wnp
+
     def _getFtpFilename(self, patchKey, from_):
         return self.get("ftpFilenames", {}).get(patchKey, {}).get(from_, "")
 
@@ -735,6 +750,8 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         if 'schema_version' not in self.keys():
             self['schema_version'] = 4
 
+        self['has_wnp'] = self.has_wnp
+
     @classmethod
     def fromV3(cls, v3Blob):
         """Creates a v4 blob based on the v3 blob given."""
@@ -819,6 +836,8 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         if 'schema_version' not in self.keys():
             self['schema_version'] = 5
 
+        self['has_wnp'] = self.has_wnp
+
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
@@ -862,6 +881,8 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 6
+
+        self['has_wnp'] = self.has_wnp
 
     def getReferencedReleases(self):
         """
@@ -919,6 +940,8 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
         if 'schema_version' not in self.keys():
             self['schema_version'] = 8
 
+        self['has_wnp'] = self.has_wnp
+
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
@@ -957,6 +980,16 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 9
+
+        self['has_wnp'] = self.has_wnp
+
+    @property
+    def has_wnp(self):
+        for group in self.get('updateLine', []):
+            if '/whatsnew/' in group['fields'].get('openURL', ''):
+                return True
+        else:
+            return False
 
     def _getUpdateLineXML(self, updateQuery, update_type):
         attrs = {
