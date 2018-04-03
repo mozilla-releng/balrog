@@ -321,7 +321,6 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 1
-            
         self['has_wnp'] = self.has_wnp
 
     def getAppv(self, platform, locale):
@@ -539,7 +538,6 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 2
-
         self['has_wnp'] = self.has_wnp
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
@@ -650,7 +648,6 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 3
-
         self['has_wnp'] = self.has_wnp
 
     def _getFtpFilename(self, patchKey, from_):
@@ -749,7 +746,6 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 4
-
         self['has_wnp'] = self.has_wnp
 
     @classmethod
@@ -835,7 +831,6 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 5
-
         self['has_wnp'] = self.has_wnp
 
     def getReferencedReleases(self):
@@ -881,7 +876,6 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 6
-
         self['has_wnp'] = self.has_wnp
 
     def getReferencedReleases(self):
@@ -939,7 +933,6 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 8
-
         self['has_wnp'] = self.has_wnp
 
     def getReferencedReleases(self):
@@ -980,7 +973,6 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 9
-
         self['has_wnp'] = self.has_wnp
 
     @property
