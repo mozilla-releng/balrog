@@ -20,6 +20,9 @@ def get_rules():
             where[field] = request.args[field]
 
     rules = dbo.rules.getOrderedRules(where=where)
+    for rule in rules:
+        rule.update({'has_wnp': dbo.releases.getReleaseBlob(name=rule['mapping']).get('has_wnp', False)})
+
     return jsonify(count=len(rules), rules=rules)
 
 

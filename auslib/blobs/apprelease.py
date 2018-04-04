@@ -81,7 +81,7 @@ class ReleaseBlobBase(Blob):
     def has_wnp(self):
         # check for What's new page for Blobs < v9
         for group in self.get('openURL', []):
-            if '/whatsnew/' in group['fields'].get('openURL', ''):
+            if isinstance(group, dict) and '/whatsnew/' in group['fields'].get('openURL', ''):
                 return True
         else:
             return False
@@ -978,7 +978,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
     @property
     def has_wnp(self):
         for group in self.get('updateLine', []):
-            if '/whatsnew/' in group['fields'].get('openURL', ''):
+            if isinstance(group, dict) and '/whatsnew/' in group['fields'].get('openURL', ''):
                 return True
         else:
             return False
