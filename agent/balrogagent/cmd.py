@@ -27,12 +27,11 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                 resp = await client.request(balrog_api_root,
                                             "/scheduled_changes/%s" % endpoint,
                                             auth=auth, loop=loop)
-                sc = (await resp.json())["scheduled_changes"]
+                sc = resp["scheduled_changes"]
                 if endpoint == 'rules':
                     # Rules are sorted by priority, when available. Deletions will not have
                     # a priority set, so we treat them as the lowest priority possible.
                     sc = sorted(sc, key=lambda k: (k["when"], k["priority"] or 0), reverse=True)
-                resp.close()
                 logging.debug("Found %s", len(sc))
                 for change in sc:
                     logging.debug("Processing change %s", change["sc_id"])
@@ -62,8 +61,7 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     if ready:
                         logging.debug("Change %s is ready, enacting", change["sc_id"])
                         url = "/scheduled_changes/{}/{}/enact".format(endpoint, change["sc_id"])
-                        resp = await client.request(balrog_api_root, url, method="POST", auth=auth, loop=loop)
-                        resp.close()
+                        await client.request(balrog_api_root, url, method="POST", auth=auth, loop=loop)
                     else:
                         logging.debug("Change %s is not ready", change["sc_id"])
 
