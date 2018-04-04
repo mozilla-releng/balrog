@@ -20,8 +20,9 @@ def get_rules():
             where[field] = request.args[field]
 
     rules = dbo.rules.getOrderedRules(where=where)
+    blobs = dbo.releases.getReleaseBlobs(names=[rule['mapping'] or rule['fallbackMapping'] for rule in rules])
     for rule in rules:
-        rule.update({'has_wnp': dbo.releases.getReleaseBlob(name=rule['mapping']).get('has_wnp', False)})
+        rule.update({'has_wnp': blobs[rule['mapping'] or rule['fallbackMapping']]['data'].get('has_wnp', False)})
 
     return jsonify(count=len(rules), rules=rules)
 

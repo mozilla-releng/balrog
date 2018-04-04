@@ -1845,7 +1845,7 @@ class Releases(AUSTable):
             where.append(self.name.startswith(name_prefix))
         if nameOnly:
             column = [self.name]
-        else:
+        else: 
             column = [self.name, self.product, self.data_version, self.read_only]
 
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
@@ -1922,6 +1922,16 @@ class Releases(AUSTable):
             blob = cached_blob["blob"]
 
         return blob
+
+    def getReleaseBlobs(self, names, transaction=None):
+        dataVersions =  self.select(where=[self.name.in_(names)], columns=[self.name, self.data_version], transaction=transaction)
+        blobs = {version['name']: version for version in dataVersions}
+
+        q = self.select(where=[self.name.in_(names)], columns=[self.data], transaction=transaction)
+        for blob in q:
+            blobs[blob['data']['name']].update({'data': blob['data']})
+        return blobs
+    
 
     def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         if "name" not in columns or "product" not in columns or "data" not in columns:
