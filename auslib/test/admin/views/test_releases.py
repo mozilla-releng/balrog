@@ -1787,6 +1787,12 @@ class TestReleasesScheduledChanges(ViewTest):
         r = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 0)
 
+    def testReleasesScheduledChangeViewDiff(self):
+        table = dbo.releases.scheduled_changes
+        sc = table.select(where=[table.change_type == 'update'], limit=1)[0]
+        ret = self._get("/scheduled_change/diff/release/{}".format(sc['sc_id']))
+        self.assertEquals(ret.status_code, 200, ret.data)
+
 
 class TestReleaseHistoryView(ViewTest):
 
