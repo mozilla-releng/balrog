@@ -641,24 +641,23 @@ class ScheduledReleaseFieldView(AdminView):
 
 
 class ScheduledReleaseDiffView(ScheduledReleaseFieldView):
-    """/diff/:sc_id/:field"""
+    """/diff/:sc_id"""
 
-    @staticmethod
-    def get_release(sc):
+    def get_release(self, sc):
         data = dbo.releases.select(where={"name": sc["base_name"], "product": sc["base_product"]}, limit=1)[0]
         if not data:
             abort(400, 'Bad sc_id')
         return data
 
-    def get(self, sc_id, field):
+    def get(self, sc_id):
         sc = self.get_value(sc_id)
         release = self.get_release(sc)
 
-        if field not in release:
+        if 'data' not in release:
             return problem(400, "Bad Request", "Bad field")
 
-        previous = json.dumps(release[field], indent=2, sort_keys=True)
-        value = json.dumps(sc["base_{}".format(field)], indent=2, sort_keys=True)
+        previous = json.dumps(release['data'], indent=2, sort_keys=True)
+        value = json.dumps(sc["base_{}".format('data')], indent=2, sort_keys=True)
         result = difflib.unified_diff(
             previous.splitlines(),
             value.splitlines(),

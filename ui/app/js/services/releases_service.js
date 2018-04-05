@@ -47,7 +47,7 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
       });
     },
     getUpDiff: function(sc_id) {
-      var url = '/api/scheduled_change/diff/release/' + sc_id + '/data';
+      var url = '/api/scheduled_change/diff/release/' + sc_id;
       return $http({
         url: url,
         method: 'GET',
